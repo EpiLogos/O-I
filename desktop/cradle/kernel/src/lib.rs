@@ -37,6 +37,7 @@ pub mod action;
 pub mod graph;
 pub mod encounter;
 pub mod agency;
+pub mod session_space;
 pub mod files;
 pub mod composition;
 pub mod system_composition;
@@ -48,6 +49,7 @@ pub mod refs;
 pub mod world;
 pub mod commission;
 pub mod flow_cognition;
+pub mod development_field;
 
 pub use flow::{CentralClient, OwnerCallError};
 
@@ -211,6 +213,8 @@ pub enum KernelOp {
     /// owner operation are explicit unsupported states. Owner-side effects
     /// happen through the owner operation and are provable through the
     /// owner store; the kernel records nothing and emits nothing.
+    /// Public installed Central Action catalogue; read-only, no authority granted.
+    CentralActionsRead,
     InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
@@ -234,6 +238,7 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
     },
     AgencyRead { project: String },
+    SessionSpace { project: String, request: session_space::Request },
     /// Wave 6E: pending Returns tray — list/read plus human review/include
     /// through Central's native receiving operations (owner-validated).
     /// `project` names the project register's field; `None` is the ROOT
@@ -258,6 +263,16 @@ pub enum KernelOp {
     DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
     MaterialRead {target:material::Target},
+    /// Read the AIKit-owned Development Field at an explicitly disclosed
+    /// repository/worktree. `project` resolves through Central first; `cwd`
+    /// is then checked to be inside that disclosed Project, never used to
+    /// infer an Agent/session relation. AIKit supplies every Git fact.
+    DevelopmentFieldRead {
+        project: String,
+        cwd: ::std::path::PathBuf,
+        base_revision: String,
+        #[serde(default)] refs: Vec<String>,
+    },
     /// The re-pinned build view (queue cell B): the owner CLI reads it as
     /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
     /// `build discover`/`--binding` grammar is gone from the installed cut.
@@ -268,6 +283,8 @@ pub enum KernelOp {
     /// owner's own `factory development` family. The state path is the
     /// caller's disclosure — the desktop never invents a Factory state.
     FactoryDevelopmentRead { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, read: String, #[serde(default)] subject: Option<String> },
+    FactoryAttemptTaskRead { state_path: ::std::path::PathBuf, run_ref: String, task_ref: String },
+    FactoryAttemptTaskListRead { state_path: ::std::path::PathBuf, run_ref: String },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
@@ -355,6 +372,7 @@ pub enum KernelOpResult {
     /// The typed result of one owner-Action dispatch (`action.rs`): the
     /// owner payload verbatim, or an explicit named state.
     ActionDispatched { dispatch: action::ActionDispatch },
+    CentralActionsReading { data: serde_json::Value },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
     FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
@@ -362,11 +380,20 @@ pub enum KernelOpResult {
     /// revision, structured conflict, or the owner's own refusal.
     InstanceCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
+    SessionSpaceReading { project_ref: String, data: serde_json::Value },
     EncounterReading {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
+    /// AIKit's public Development Field `data` envelope, with the caller's
+    /// declared Project and cwd retained as adapter provenance. The reading
+    /// may report a different observed Git worktree; that owner observation
+    /// is preserved for the UI to disclose rather than corrected locally.
+    DevelopmentFieldReading { project: String, cwd: String, reading: development_field::Reading },
     FactoryDevelopmentReading {data:serde_json::Value},
+    /// Factory's structured task-level attempt and handoff reading.
+    FactoryAttemptTaskReading {data:serde_json::Value},
+    FactoryAttemptTaskListReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
@@ -476,6 +503,23 @@ impl Kernel {
                 Ok(KernelOpOutcome { receipts, result: KernelOpResult::Expression { data } })
             }
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
+            KernelOp::DevelopmentFieldRead { project, cwd, base_revision, refs } => {
+                let root = world::read_world(&self.client).map_err(|error| error.to_string())?;
+                let base = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
+                let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|row| row["name"].as_str() == Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                let project_root = base.join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let canonical_project = project_root.canonicalize().map_err(|error| format!("Central's disclosed Project location cannot be read: {error}"))?;
+                let canonical_cwd = cwd.canonicalize().map_err(|error| format!("Disclosed worktree cannot be read: {error}"))?;
+                if !canonical_cwd.starts_with(&canonical_project) {
+                    return Err("Disclosed worktree is outside Central's disclosed Project location".into());
+                }
+                let reading = development_field::Client::discover().read(&canonical_cwd, &base_revision, &refs)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::DevelopmentFieldReading {
+                    project,
+                    cwd: canonical_cwd.to_string_lossy().into_owned(),
+                    reading,
+                }})
+            }
             KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
                 if let Some(project)=&project {
                     let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
@@ -499,6 +543,24 @@ impl Kernel {
                 let args=factory::development_read_args(&state_path,&read,subject.as_deref(),suite_route);
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory development read failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
+            }
+            KernelOp::FactoryAttemptTaskListRead {state_path,run_ref} => {
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
+                let mut args:Vec<std::ffi::OsString>=Vec::new();
+                if suite_route { args.push("factory".into()); }
+                args.extend(["attempt".into(),"list".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),"--json".into()]);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt task list read failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-list-reading/v1"){return Err("Factory returned incompatible attempt task list reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskListReading{data}})
+            }
+            KernelOp::FactoryAttemptTaskRead {state_path,run_ref,task_ref} => {
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
+                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"task".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),task_ref.into(),"--json".into()]);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt task read failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-reading/v1"){return Err("Factory returned incompatible attempt task reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskReading{data}})
             }
             KernelOp::WorkcellStatusRead => {
                 let workcell=std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
@@ -568,6 +630,19 @@ impl Kernel {
                     self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
                 }
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
+            }
+            KernelOp::SessionSpace { project, request } => {
+                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(&project))).ok_or("Project is outside disclosed ground")?;
+                let cwd = std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let inspection = self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+                let project_ref = inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+                if let session_space::Request::Discover { project: requested } = &request {
+                    if requested != &project_ref { return Err("SessionSpace discovery Project identity mismatch".into()); }
+                }
+                let data = session_space::Client::discover().run(&cwd, &request, &project_ref)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SessionSpaceReading { project_ref, data } })
             }
             KernelOp::AgencyRead { project } => {
                 let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
@@ -719,6 +794,10 @@ impl Kernel {
                 let cwd = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
                 let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::EncounterJoined { reading } })
+            }
+            KernelOp::CentralActionsRead => {
+                let data = self.client.action_catalog().map_err(|error| error.to_string())?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::CentralActionsReading { data } })
             }
             KernelOp::InvokeAction { project, invocation } => {
                 // Central discloses the scope, exactly as the Knowledge/Graph

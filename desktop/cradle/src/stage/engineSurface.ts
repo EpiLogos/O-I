@@ -40,6 +40,32 @@ export interface StageRetainedLease {
   updatePresentation(request: unknown): unknown;
 }
 
+/** Bounded browser-visible state for the opted-in native walk. This is
+ * deliberately canvas/lifecycle evidence only: it neither reads nor changes
+ * the engine's simulation, recipes, targets, or GPU configuration. */
+export interface EngineSurfaceWalkObservation {
+  mounted: boolean;
+  canvasCount: number;
+  live: boolean;
+  activePresentationId: string | null;
+  lastPresentationEvent: "created" | "present" | "release";
+  lastPresentationId: string | null;
+  lifecycleRevision: number;
+  animationScheduled: boolean;
+  canvas: {
+    connected: boolean;
+    visibility: string;
+    display: string;
+    opacity: string;
+    position: string;
+    zIndex: string;
+    cssWidth: number;
+    cssHeight: number;
+    backingWidth: number;
+    backingHeight: number;
+  };
+}
+
 /** Overlay merge for authored patches: objects merge recursively, arrays
  * and scalars replace. This is recipe semantics — untouched keys persist —
  * NOT the engine's migrate-from-defaults semantics. */
@@ -70,6 +96,9 @@ export class EngineSurface {
   private revision = 0;
   private selectedIds: string[] = [];
   private live = false;
+  private lastPresentationEvent: "created" | "present" | "release" = "created";
+  private lastPresentationId: string | null = null;
+  private lifecycleRevision = 0;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private raf = 0;
   private last = 0;
@@ -92,6 +121,7 @@ export class EngineSurface {
     this.home = canvas.parentElement!;
     this.homeElement = element;
     this.homeStyle = canvas.style.cssText;
+    this.canvas.style.visibility = "hidden";
     this.element = element;
     this.onError = onError;
     const factory = window.OI_ENGINE_FACTORY;
@@ -148,16 +178,20 @@ export class EngineSurface {
     // law. Only a different LIVE presentation refuses.
     if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
+    this.canvas.style.visibility = "visible";
     this.activate(id, this.sceneFrom(stageRecipe(recipe)));
+    this.recordPresentationEvent("present", id);
     this.wake();
   }
 
   presentConfig(id: string, config: unknown, sceneRef?: string, selectedIds: string[] = []) {
     if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
-    this.live = true;
     if (this.retainedLeaseOwner) throw new Error("Release the native domain binding before authoring this stage");
+    this.live = true;
+    this.canvas.style.visibility = "visible";
     this.selectedIds = selectedIds;
     this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
+    this.recordPresentationEvent("present", id);
     this.wake();
   }
 
@@ -258,7 +292,7 @@ export class EngineSurface {
   }
 
   release(id: string) {
-    if (!this.active || this.active.id !== id) { this.clearTimers(); return; }
+    if (!this.active || this.active.id !== id) return;
     // Keep the renderer's current allocation while the retained owner is
     // absent. Re-entry with the same field size can then rebind the existing
     // GPU textures without a seed-changing resize; this carries no Personal
@@ -274,11 +308,17 @@ export class EngineSurface {
       this.retainedLeaseIdentity = null;
     }
     this.live = false;
+    this.sleep();
+    // A transition toward idle is not an empty frame. Hide the released
+    // presentation immediately; keep the native medium for the next scene.
+    this.canvas.style.visibility = "hidden";
     const idleConfig = retainedParticleCount === undefined
       ? IDLE_CONFIG
       : { ...IDLE_CONFIG, particleCount: retainedParticleCount };
     this.activate(STAGE_IDLE, this.sceneFrom(idleConfig, STAGE_IDLE));
     this.renderFrame(0);
+    this.active = null;
+    this.recordPresentationEvent("release", id);
   }
 
   command(command: EngineCommand) {
@@ -310,6 +350,32 @@ export class EngineSurface {
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
   telemetry(): unknown { try { return this.adapter.telemetry?.() ?? null; } catch { return null; } }
   capabilities() { return this.adapter.capabilities; }
+  walkObservation(): EngineSurfaceWalkObservation {
+    const computed = getComputedStyle(this.canvas);
+    const rect = this.canvas.getBoundingClientRect();
+    return {
+      mounted: document.body.contains(this.canvas),
+      canvasCount: document.querySelectorAll('canvas[data-oi-stage="engine"]').length,
+      live: this.live,
+      activePresentationId: this.active?.id ?? null,
+      lastPresentationEvent: this.lastPresentationEvent,
+      lastPresentationId: this.lastPresentationId,
+      lifecycleRevision: this.lifecycleRevision,
+      animationScheduled: this.raf !== 0,
+      canvas: {
+        connected: this.canvas.isConnected,
+        visibility: computed.visibility,
+        display: computed.display,
+        opacity: computed.opacity,
+        position: computed.position,
+        zIndex: computed.zIndex,
+        cssWidth: Math.max(0, Math.round(rect.width)),
+        cssHeight: Math.max(0, Math.round(rect.height)),
+        backingWidth: this.canvas.width,
+        backingHeight: this.canvas.height,
+      },
+    };
+  }
 
   dispose() {
     this.clearTimers();
@@ -326,6 +392,11 @@ export class EngineSurface {
   }
 
   private activate(id: string, scene: StageScene) { this.active = { id, scene, revision: ++this.revision }; }
+  private recordPresentationEvent(event: "created" | "present" | "release", id: string | null) {
+    this.lastPresentationEvent = event;
+    this.lastPresentationId = id;
+    this.lifecycleRevision += 1;
+  }
   private require(id: string): { id: string; scene: StageScene; revision: number } {
     if (!this.active || this.active.id !== id) throw new Error(`The engine surface is not presenting "${id}".`);
     return this.active;
@@ -344,12 +415,12 @@ export class EngineSurface {
   private sleep() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }
   private frame = (now: number) => {
     this.raf = 0;
-    if (!this.active) return;
-    if (document.hidden) { this.last = now; if(!this.paused)this.raf = requestAnimationFrame(this.frame); return; }
+    if (!this.active || !this.live) return;
+    if (document.hidden) { this.last = now; return; }
     const animate = !this.paused && (this.forceMotion || !this.reduced.matches);
     const delta = animate ? Math.min(0.05, Math.max(0.001, (now - this.last) / 1000)) : 0;
     this.last = now;
-    if (this.renderFrame(delta) && this.active && !this.paused) this.raf = requestAnimationFrame(this.frame);
+    if (this.renderFrame(delta) && this.active && this.live) this.raf = requestAnimationFrame(this.frame);
   };
   private renderFrame(delta: number): boolean {
     const element = this.element;

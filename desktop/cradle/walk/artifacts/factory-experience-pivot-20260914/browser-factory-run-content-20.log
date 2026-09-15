@@ -1,0 +1,20 @@
+PASS Native Build retains the selected Run identity
+PASS Displays actual Factory Run destination
+PASS Actual empty Candidate state remains empty
+PASS Actual empty execution state is not fabricated
+PASS Native Run Map retains the selected Run identity
+PASS Native Run Map discloses an actual work node
+PASS Selects the actual Factory work node
+PASS Shows the exact native semantic reference
+PASS Native Run Map supplies the work-node dependency edge
+PASS Renders the selected node incoming dependency
+PASS Renders the native dependency relation
+PASS Refresh re-reads the native Factory Build
+PASS Run Map selection survives the Build refresh
+PASS Reads canonical Central-to-Factory project link
+PASS Reads native Factory Build
+PASS Agent creation exposes the human intent
+PASS Intent precedes scope in reading and keyboard order
+PASS Optional profile defaults are disclosed on request
+PASS Incomplete intent does not submit an Agent proposal
+PASS No application page errors

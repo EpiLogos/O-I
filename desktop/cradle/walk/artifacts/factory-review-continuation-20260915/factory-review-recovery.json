@@ -1,0 +1,45 @@
+{
+  "standing": "C: production browser and real native Factory reads; corrupted presentation snapshots are refusal tests. No populated Candidate/Handoff or execution acceptance.",
+  "checks": [
+    "factory-handoff: damaged review preserves the workspace",
+    "factory-handoff: ordinary work retains its tab",
+    "factory-handoff: no automatic current-owner read replaces damaged material",
+    "factory-handoff: explicit Refresh performs one real owner read",
+    "factory-handoff: refresh settles without a read loop",
+    "factory-handoff: actual empty/missing material is never fabricated",
+    "factory-handoff: original draft survives explicit recovery",
+    "factory-material: damaged review preserves the workspace",
+    "factory-material: ordinary work retains its tab",
+    "factory-material: no automatic current-owner read replaces damaged material",
+    "factory-material: explicit Refresh performs one real owner read",
+    "factory-material: refresh settles without a read loop",
+    "factory-material: actual empty/missing material is never fabricated",
+    "factory-material: original draft survives explicit recovery",
+    "No application page errors"
+  ],
+  "errors": [],
+  "native": {
+    "contract": "factory.attempt-task-list-reading/v1",
+    "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+    "revision": 1,
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "runRevision": 2,
+    "sourceCurrent": true,
+    "taskRefs": [],
+    "topologyRevision": 2,
+    "totalTasks": 0
+  },
+  "requests": [
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+      "read": "build",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+    }
+  ]
+}

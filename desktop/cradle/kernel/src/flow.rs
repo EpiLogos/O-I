@@ -65,6 +65,7 @@ impl std::fmt::Display for OwnerCallError {
 impl std::error::Error for OwnerCallError {}
 
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
+#[serde(tag = "kind", rename_all = "kebab-case")]
 pub enum ReceivingRequest {
     List { #[serde(default)] after: Option<u64>, #[serde(default)] limit: Option<u64> },
     Read { return_ref: String },
@@ -105,6 +106,7 @@ pub enum ReceivingRequest {
 pub enum NowRequest {
     List { #[serde(default)] participant_refs: Option<Vec<String>> },
     Read { now_ref: String },
+    ProjectInspect,
 }
 
 /// Client for the Central owner Actions the kernel reads and writes
@@ -205,6 +207,18 @@ impl CentralClient {
                 Some(_) => {}
             }
         }
+        let encoded = serde_json::to_string(&input).map_err(|error| OwnerCallError::Malformed {
+            detail: format!("encode {action} input: {error}"),
+        })?;
+        self.call_owner(&["action", "run", action, &encoded], action)
+    }
+
+    /// Read public installed Action descriptors; disclosure grants no authority.
+    pub fn action_catalog(&self) -> Result<Value, OwnerCallError> {
+        self.call_owner(&["action", "list"], "action list")
+    }
+
+    fn call_owner(&self, args: &[&str], action: &str) -> Result<Value, OwnerCallError> {
         let mut command = Command::new(&self.executable);
         if self.suite_route {
             command.arg("central");
@@ -216,13 +230,7 @@ impl CentralClient {
         if let Some(root) = &self.central_root {
             command.arg("--root").arg(root);
         }
-        command
-            .arg("action")
-            .arg("run")
-            .arg(action)
-            .arg(serde_json::to_string(&input).map_err(|error| OwnerCallError::Malformed {
-                detail: format!("encode {action} input: {error}"),
-            })?);
+        command.args(args);
         let output = command.output().map_err(|error| OwnerCallError::Unavailable {
             detail: format!("launch {} for {action}: {error}", self.executable.display()),
         })?;
@@ -339,6 +347,10 @@ impl CentralClient {
             NowRequest::Read { now_ref } => {
                 input.insert("now_ref".to_owned(), json!(now_ref));
                 "central.now.read"
+            }
+            NowRequest::ProjectInspect => {
+                if project.is_none() { return Err(OwnerCallError::Refused {message:"Project NOW requires a disclosed Project".into()}); }
+                "projectcentral.now.inspect"
             }
         };
         self.run(action, Value::Object(input))
@@ -888,5 +900,21 @@ mod tests {
         assert_eq!(wire["expected"], "central.content-fnv1a64/v1:2389:e");
         assert_eq!(wire["current"], "central.content-fnv1a64/v1:2404:c");
         assert!(failure.to_string().contains("both sides preserved"));
+    }
+}
+
+#[cfg(test)]
+mod receiving_wire_contract_tests {
+    use super::ReceivingRequest;
+    #[test]
+    fn desktop_inbox_and_review_requests_use_the_disclosed_tagged_wire_contract() {
+        for value in [
+            serde_json::json!({"kind":"list","after":null,"limit":50}),
+            serde_json::json!({"kind":"review","return_ref":"return:one","expected_return_revision":"r1","disposition":"rejected","expected_source_revision":null}),
+            serde_json::json!({"kind":"mutate-field","source_ref":"source:one","document_id":"document:one","expected_revision":"r1","request_id":"request:one","field_id":"field:one","value":"Reviewed text"}),
+        ] {
+            let decoded: ReceivingRequest = serde_json::from_value(value.clone()).expect("desktop request must reach the native owner adapter");
+            assert_eq!(serde_json::to_value(decoded).unwrap(), value);
+        }
     }
 }

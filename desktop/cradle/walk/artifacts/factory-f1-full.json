@@ -1,0 +1,74 @@
+{
+  "standing": "C: running production web bundle with real native kernel; no provider or H claim",
+  "motion": "full",
+  "checks": [
+    "Same Agent DOM enters centre",
+    "Factory returned material is hosted in right region",
+    "Native Factory inspection remains explicitly accessible",
+    "Exactly one AgentLayer mounted",
+    "Ordinary writing survives exit",
+    "Same Agent DOM returns to ordinary shell",
+    "Ordinary geometry unchanged",
+    "Rapid composition switches preserve Agent DOM",
+    "Released Stage leaves no frozen overlay",
+    "Factory binding restores without recovery failure",
+    "Narrow shell leaves Factory and restores draft",
+    "No application page errors"
+  ],
+  "errors": [],
+  "before": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "10ed17e1-3535-4e52-a010-08dff3f0316f"
+      ],
+      "pinned": [],
+      "active": "10ed17e1-3535-4e52-a010-08dff3f0316f"
+    },
+    "surfaces": {
+      "10ed17e1-3535-4e52-a010-08dff3f0316f": {
+        "id": "10ed17e1-3535-4e52-a010-08dff3f0316f",
+        "kind": "draft",
+        "title": "Draft"
+      }
+    },
+    "closedStack": [],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  },
+  "after": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "10ed17e1-3535-4e52-a010-08dff3f0316f"
+      ],
+      "pinned": [],
+      "active": "10ed17e1-3535-4e52-a010-08dff3f0316f"
+    },
+    "surfaces": {
+      "10ed17e1-3535-4e52-a010-08dff3f0316f": {
+        "id": "10ed17e1-3535-4e52-a010-08dff3f0316f",
+        "kind": "draft",
+        "title": "Draft"
+      },
+      "b9a3ad35-7896-4659-a6d7-f0a14fe76fad": {
+        "id": "b9a3ad35-7896-4659-a6d7-f0a14fe76fad",
+        "kind": "factory",
+        "title": "Factory development"
+      }
+    },
+    "closedStack": [
+      "b9a3ad35-7896-4659-a6d7-f0a14fe76fad"
+    ],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  }
+}

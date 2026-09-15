@@ -211,3 +211,6 @@ export interface ActionInvocation {
   actionRef: string
   subjectRef: string
 }
+
+/** Exact native subject selected for document presentation, not an Action. */
+export interface FactoryMaterialSelection { subjectRef: string; label: string }

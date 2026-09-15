@@ -1,17 +1,20 @@
 import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
- import {encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
+import {addressableParticipants,encounter,mintDeliveryRef,taskRead,type A2aDifference,type A2aPeerFields,type AddressedPacket,type AddressedTurn,type DeliveryRecord,type Draft,type EncounterReading,type EncounterStatus,type EncounterTaskReading,type GroupReceipt,type GroupRecipient,type JournalPage,type PermissionDecision,type SendReceipt} from "./client";
 import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
 import {AddressedComposer,ACTIVE_PHASES,type AddressedFields,type DispatchState,type DeliveryHistoryEntry,type GroupState} from "./AddressedComposer";
-import {EncounterView} from "./EncounterView";
+import type {AddressableParticipantsState} from "./AddressedRecipientPicker";
+import {SessionControls} from "./SessionControls";
+import type {WorkingSurfaceSelection} from "./working-surface";
+import {EncounterView,type EncounterViewProps} from "./EncounterView";
 export interface EncounterExpressionReading {agentSessionRef?:string;state?:string;pending:boolean;completed?:number;inputRevision?:number;latestOwnerActivity?:{blockId:number;kind:string}}
 /** Ephemeral input buffering only. Every accepted edit and message is AIKit-owned. */
-export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean}) {
+export function EncounterSurface({binding,onView,presentation="tab",onExpression,concealed=false,complementary,onOpenWorkingSurface}:{binding:SurfaceBinding;onView:(view:NonNullable<SurfaceBinding["view"]>)=>void;presentation?:"tab"|"side"|"full";onExpression?:(reading:EncounterExpressionReading)=>void;concealed?:boolean;complementary?:EncounterViewProps["complementary"];onOpenWorkingSurface?:(selection:WorkingSurfaceSelection)=>Promise<void>}) {
  const kernel=useKernel();
  const [reading,setReading]=useState<EncounterReading>();const [status,setStatus]=useState<EncounterStatus>();
  const [providers,setProviders]=useState<{id:string;label:string}[]>([]);const [draft,setDraft]=useState("");
- const [error,setError]=useState<string>();const [pending,setPending]=useState(false);
+ const [error,setError]=useState<string>();const [startupError,setStartupError]=useState<string>();const [pollError,setPollError]=useState<string>();const [pending,setPending]=useState(false);const [retryGeneration,setRetryGeneration]=useState(0);
  const canonical=useRef<Draft>({revision:0,text:""});const input=useRef("");const dirty=useRef(false);const saving=useRef(false);const sending=useRef(false);const failed=useRef(false);
  const [before,setBefore]=useState<number>();
  const expression=useRef(onExpression);expression.current=onExpression;
@@ -30,18 +33,18 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   const poll=async()=>{
    if(hidden()){if(live)timer=setTimeout(poll,1000);return;}
    try {
-    const next=await read();if(!live)return;setReading(next);
+    const next=await read();if(!live)return;setReading(next);setPollError(undefined);
     if(!dirty.current&&!saving.current&&!sending.current&&next.draft.revision>=canonical.current.revision){canonical.current=next.draft;input.current=next.draft.text;setDraft(next.draft.text);}
     const current=next.connection ?? await call<EncounterStatus>({action:"status",agent_session:binding.ref!}).catch(()=>undefined);
     if(live)setStatus(current);
-   }catch(error){if(live)setError(String(error));}
+   }catch(error){if(live)setPollError(String(error));}
    if(live)timer=setTimeout(poll,750);
   };
-  void call({action:"start"}).then(()=>{if(live){void call<typeof providers>({action:"providers"}).then(rows=>{if(live)setProviders(rows);}).catch(error=>{if(live)setError(String(error));});void poll();}}).catch(error=>{if(live)setError(String(error));});
+  void call({action:"start"}).then(()=>{if(live){setStartupError(undefined);void call<typeof providers>({action:"providers"}).then(rows=>{if(live)setProviders(rows);}).catch(error=>{if(live)setStartupError(String(error));});void poll();}}).catch(error=>{if(live)setStartupError(String(error));});
   const onVisible=()=>{if(live&&!hidden()){clearTimeout(timer);void poll();}};
   document.addEventListener("visibilitychange",onVisible);
   return()=>{live=false;clearTimeout(timer);document.removeEventListener("visibilitychange",onVisible);};
- },[binding.ref,binding.project,before]);
+ },[binding.ref,binding.project,before,retryGeneration]);
  async function save() {
   if(!allowed("draft")||sending.current||saving.current||failed.current||!dirty.current)return;
   saving.current=true;setPending(true);
@@ -75,7 +78,7 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
  const recover=async()=>{try{const next=await read();canonical.current=next.draft;failed.current=false;dirty.current=input.current!==next.draft.text;setError(undefined);await save();}catch(error){setError(String(error));}};
  const permission=async(request_id:string,decision:PermissionDecision)=>{if(!allowed("permission"))return;setPending(true);setError(undefined);try{await call({action:"permission",agent_session:binding.ref!,request_id,decision});const next=await read();setReading(next);setStatus(next.connection);}catch(error){setError(String(error));}finally{setPending(false);}};
  // --- Addressed dispatch (6B): explicit machine turns, never the human draft. ---
- const alive=useRef(true);useEffect(()=>()=>{alive.current=false;},[]);
+ const alive=useRef(true);useEffect(()=>{alive.current=true;return()=>{alive.current=false;};},[]);
  const [dispatch,setDispatch]=useState<DispatchState>({kind:"idle"});
  // The session's actual task, if the owner bound one (queue cell 2). Read
  // once per session through the owner's own `encounter-task-read`; null is
@@ -88,6 +91,17 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
    .catch(()=>{if(live)setTask(undefined);});
   return()=>{live=false;};
  },[binding.ref,binding.project,kernel.transport]);
+ const [addressedFields,setAddressedFields]=useState<AddressedFields>({sender:"",audience:"",basis:"",sourceRefs:"",text:""});
+ const [addressable,setAddressable]=useState<AddressableParticipantsState>();
+ useEffect(()=>{
+  const sender=addressedFields.sender.trim();
+  if(!sender){setAddressable({kind:"awaiting-sender"});return;}
+  let live=true;const sources=addressedFields.sourceRefs.split(/[\s,]+/).filter(Boolean);setAddressable({kind:"loading"});
+  const timer=setTimeout(()=>{void addressableParticipants(kernel.transport,binding.project!,sender,sources).then(reading=>{
+   if(live)setAddressable({kind:"ready",participants:reading.participants});
+  }).catch(error=>{if(live)setAddressable({kind:"refused",error:String(error)});});},180);
+  return()=>{live=false;clearTimeout(timer);};
+ },[addressedFields.sender,addressedFields.sourceRefs,binding.project,kernel.transport]);
  const [addressedHistory,setAddressedHistory]=useState<DeliveryHistoryEntry[]>([]);
  const [service,setService]=useState<{running:boolean;pid?:number;detail?:string}>();
  const probe=async()=>{try{const health=await call<{protocol:string;pid:number}>({action:"health"});if(alive.current)setService({running:true,pid:health.pid});}catch(error){if(alive.current)setService({running:false,detail:String(error)});}};
@@ -216,11 +230,12 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   }catch(err){if(alive.current)setA2a({seed,busy:false,error:String(err)});}
   finally{if(alive.current)setPending(false);}
  };
- return <><EncounterView concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
+ const retryStart=()=>{setStartupError(undefined);setPollError(undefined);setRetryGeneration(value=>value+1);};
+ return <><EncounterView inspectControls={binding.project&&binding.ref&&binding.encounter?.space?<SessionControls project={binding.project} agentSession={binding.ref} space={binding.encounter.space} onOpenWorkingSurface={onOpenWorkingSurface}/>:undefined} complementary={complementary} concealed={concealed} presentation={presentation} plane={binding.view?.encounterPlane??"Conversation"} onPlane={encounterPlane=>onView({...binding.view,encounterPlane})} title={binding.title} onPermission={(id,decision)=>void permission(id,decision)} reading={reading} status={status} draft={draft} pending={pending||dirty.current||saving.current||sending.current||failed.current} error={error??startupError??pollError} providers={providers} onProvider={provider=>void connect(provider)} onDraft={change} onSend={()=>void send()} onCancel={()=>{if(!allowed("cancel"))return;void call({action:"cancel",agent_session:binding.ref!,reason:"User stopped the encounter"}).catch(error=>setError(String(error)));}} onEarlier={()=>setBefore(reading?.blocks[0]?.id)} onLatest={()=>setBefore(undefined)} readJournal={after=>call<JournalPage>({action:"read",agent_session:binding.ref!,after,limit:32})} space={binding.encounter?.space} deliveries={[...addressedHistory.map(h=>({ref:h.ref,phase:h.record.phase})),...(group?[{ref:group.ref,phase:`group — ${group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])]}
   nowRefs={(()=>{const refs:{ref:string;register:string|null}[]=addressedHistory.flatMap(h=>{const nowRef=(h.record as {now_ref?:unknown}).now_ref;return typeof nowRef==="string"&&nowRef?[{ref:nowRef,register:null}]:[];});const allocated=task?.allocation?.allocation?.now_ref;if(allocated&&!refs.some(r=>r.ref===allocated))refs.push({ref:allocated,register:task?.request?.central?.project??null});return refs;})()}
   taskBasisWithoutNow={!!task&&!task.allocation?.allocation?.now_ref}
   resume={resume} onReconnect={provider=>void reconnect(provider)}
   a2a={a2a} onA2aSeed={seedA2a} onA2aSend={(seed,fields)=>void sendA2a(seed,fields)}
-  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} task={task??undefined} group={group} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
- />{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}{reconnected&&!concealed&&<p className="encounter-reconnected" role="status">Reconnected to the recorded native session <code>{reconnected}</code> — nothing was replaced or silently created.</p>}</>;
+  addressed={<AddressedComposer disabled={status?.state==="Disconnected"} dispatch={dispatch} history={addressedHistory} service={service} agentSession={binding.ref??undefined} task={task??undefined} group={group} addressable={addressable} onDispatchFields={setAddressedFields} onGroupSend={(sender,recipients,packet)=>void sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void sendAddressed(turn,fields)}/>}
+ />{(startupError||pollError)&&!concealed&&<button onClick={retryStart} disabled={pending}>Retry connection check</button>}{failed.current&&!concealed&&<button onClick={()=>void recover()}>Apply my typing to the current shared draft</button>}{reconnected&&!concealed&&<p className="encounter-reconnected" role="status">Reconnected to the recorded native session <code>{reconnected}</code> — nothing was replaced or silently created.</p>}</>;
 }

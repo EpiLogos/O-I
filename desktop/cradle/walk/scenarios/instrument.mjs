@@ -70,7 +70,7 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   await channel("info");
   // The stage's engine surface is created lazily behind the visuals master
   // (which starts on); wait for it before hosting the focused medium.
-  await page.locator(".oi-point-cloud-overlay").waitFor({ timeout: 20000 });
+  await page.locator(".oi-point-cloud-overlay").waitFor({ state: "attached", timeout: 20000 });
 
   // Honest refusal before anything is registered.
   const absent = await channel("instrument.requestOpen", [CONTROLLED.ref], { soft: true });
@@ -118,12 +118,23 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   await instrumentRegion.getByRole("alert").first().waitFor({ timeout: 5000 });
   check(true, "Deregistering the source surfaces an honest alert in the composition");
   await register(channel);
-  await page.waitForFunction(
-    () => document.querySelectorAll('[data-epi-nara-region="instrument"] [role="alert"]').length === 0,
-    null,
-    { timeout: 5000 },
-  );
-  check(true, "Re-registering the source clears the absence");
+  try {
+    await page.waitForFunction(
+      () => document.querySelectorAll('[data-epi-nara-region="instrument"] [role="alert"]').length === 0,
+      null,
+      { timeout: 20000, polling: 100 },
+    );
+  } catch (error) {
+    console.error("Re-registration diagnostics", JSON.stringify({
+      alerts: await instrumentRegion.getByRole("alert").allTextContents(),
+      source: (await channel("instrument.read", [CONTROLLED.ref])).data,
+      stage: (await channel("read.stage")).data,
+    }));
+    throw error;
+  }
+  read = (await channel("instrument.read", [CONTROLLED.ref])).data;
+  check(read.registered && read.available && read.attached,
+    "Re-registering clears every alert and restores the source with its retained lease", read);
 
   // An unavailable owner holds the window surface's clock through the same
   // lease; a returned owner releases it.

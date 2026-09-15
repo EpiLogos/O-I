@@ -1,0 +1,93 @@
+{
+  "schema": "oi.cradle.git-review-retention/v1",
+  "standing": "Executed production build, real-owner decoder and browser/native presentation evidence. No Factory execution or human acceptance.",
+  "parent": "40d946db980088111c04cf1ba8b7cc2e0c81553a",
+  "main": "ee34fb9f1206188a4c567d1f4c4ca00bb929a604",
+  "source_sha256": {
+    "Cradle.tsx": "6d654d60f36a61154ca810c3f29976e8ac4d5277cfe631d0ae55cf0a2d49440e",
+    "returns/GitWorkingState.tsx": "817847828d4bf94c7e39b55b5f523e0e43f9fba128674d280c1f4c3b6ebb9999",
+    "surface/development-field-snapshot.ts": "904fbf81b882e315bfb1acb206a554204afa1d10cdae0508d8a2653320046237",
+    "surface/types.ts": "87429db3a317cbef15452cc065b6a8ee0dbf0176132aab7a75cb19fdf3f19634",
+    "surface/persist.ts": "0d341b706720ebda22e45b4ed540e660951bea0611564f08ccca3271e859f36f",
+    "surface/Workbench.tsx": "f83b94dbb117949d6a60721071ca92d206efae3f6257d007dfbac6b989f98f41",
+    "workspace/DetachedFrame.tsx": "ba8bd4bb98392d54597b562e1778b4ac987a89f3a2f811592d297620c1c580bb"
+  },
+  "native": {
+    "pid": 1146989,
+    "main_window": 6291459,
+    "detached_window": 6306409,
+    "captures": {
+      "right": {
+        "window": 6291459,
+        "displayed_patch_sections": [
+          {
+            "chars": 397,
+            "sha256": "28cf16de5220762fc6d9fbd1953a3b4185e237af40cc6df88fcd2cf169df4f24"
+          }
+        ]
+      },
+      "detached": {
+        "window": 6306409,
+        "displayed_patch_sections": [
+          {
+            "chars": 397,
+            "sha256": "28cf16de5220762fc6d9fbd1953a3b4185e237af40cc6df88fcd2cf169df4f24"
+          }
+        ]
+      },
+      "refreshed": {
+        "window": 6306409,
+        "displayed_patch_sections": [
+          {
+            "chars": 397,
+            "sha256": "3e2cd5c2e387d0fb69f2a5b9b8089814a732ad0bcfab2d59cfedac5f8dcf271e"
+          }
+        ]
+      },
+      "reloaded": {
+        "window": 6306409,
+        "displayed_patch_sections": [
+          {
+            "chars": 397,
+            "sha256": "3e2cd5c2e387d0fb69f2a5b9b8089814a732ad0bcfab2d59cfedac5f8dcf271e"
+          }
+        ]
+      },
+      "redocked": {
+        "window": 6291459,
+        "displayed_patch_sections": [
+          {
+            "chars": 397,
+            "sha256": "3e2cd5c2e387d0fb69f2a5b9b8089814a732ad0bcfab2d59cfedac5f8dcf271e"
+          }
+        ]
+      },
+      "ordinary": {
+        "window": 6291459,
+        "displayed_patch_sections": []
+      }
+    },
+    "claims": [
+      "Actual native displayed diff section survives detach unchanged.",
+      "Explicit Refresh in the detached window returns a different owner-observed diff.",
+      "Re-dock retains the explicitly refreshed displayed diff."
+    ],
+    "limits": [
+      "Native hashes cover the displayed diff section, not hidden patch sections. The separate browser walk checks the complete stored owner snapshot.",
+      "Ctrl-R was delivered to the detached window; screenshot continuity after it is recorded, without an independent navigation-event claim."
+    ],
+    "ordinary_workspace_restored": true,
+    "ordinary_persisted_tmux_marker": "OI_DESKTOP_PERSISTED_SURFACE_20260914"
+  },
+  "tests": {
+    "production_build": "passed",
+    "composition": 24,
+    "owner_snapshot": 17,
+    "conversation": 18,
+    "factory_workbench": 18,
+    "git_browser": 34,
+    "git_browser_receipt": "../git-return-ui.json"
+  },
+  "retention_limit_bytes": 65536,
+  "recorded_at": "2026-09-14T22:54:15.554843+00:00"
+}

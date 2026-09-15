@@ -1,0 +1,12 @@
+{
+  "desktop/cradle/src/Cradle.tsx": "0d5ca81d2ed9368544eb931ffde864d780499be48631803212dfce41dc3a14b4",
+  "desktop/cradle/src/contributions/factory/FactoryLive.tsx": "357a381677f77255274cf7c504c29d13c77dd4d9ca5afcb2706dcb62d345f21b",
+  "desktop/cradle/src/contributions/factory/FactoryRunsSurface.tsx": "8d4f685ca3cd0c667c9a57c209d6ac5296225f16d47d72c4402eacddb2503c21",
+  "desktop/cradle/src/surface/binding-reuse.ts": "e5f0b118601f667e7723a2a3c91be9b1bff84c0e5d7252adc32e0b43918b0f12",
+  "desktop/cradle/src/workspace/shell.css": "164c7e6e7f0a7950fe08ac379c1c9d63dc3cfb3c2f742fbb7cff4fbbd8bbb829",
+  "desktop/cradle/walk/factory-review-read.mjs": "e83a5a00ac0677173a15aad9764db37e07187d96c450a7e08d69a91bfa22adbd",
+  "desktop/cradle/walk/factory-live-updates.mjs": "78977df6281f90d853a7025ec76b8d056d6b6297d653cd42f6feddbe0dbff52d",
+  "desktop/cradle/walk/scenarios/instrument.mjs": "4dbb498a1d67420290fcd51eac2fcd36691cb8fd6f1d29b6f02dfe83686613c4",
+  "desktop/cradle/walk/scenarios/instrument-host.mjs": "940a3bc0363f067b7434c22e62633b927c5b08003b2a696d8551f3c5b0d20dbf",
+  "desktop/cradle/walk/scenarios/visuals.mjs": "a0458028b7de9ba59f10459b8faa4cbc2a8455359adec1ef60cc727f085061ab"
+}

@@ -1,0 +1,108 @@
+[
+  {
+    "name": "production-build",
+    "command": [
+      "npm",
+      "run",
+      "build"
+    ],
+    "exit_code": 0,
+    "log": "production-build.log"
+  },
+  {
+    "name": "expression-engine",
+    "command": [
+      "node",
+      "tests/expression-engine.mjs"
+    ],
+    "exit_code": 0,
+    "log": "expression-engine.log"
+  },
+  {
+    "name": "kernel-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "desktop/cradle/kernel/Cargo.toml",
+      "--all-targets",
+      "-j2"
+    ],
+    "exit_code": 0,
+    "log": "kernel-tests.log"
+  },
+  {
+    "name": "expression-native",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "desktop/cradle/kernel/Cargo.toml",
+      "--test",
+      "expression",
+      "-j2",
+      "--",
+      "--include-ignored"
+    ],
+    "exit_code": 0,
+    "log": "expression-native.log"
+  },
+  {
+    "name": "kernel-clippy",
+    "command": [
+      "cargo",
+      "clippy",
+      "--manifest-path",
+      "desktop/cradle/kernel/Cargo.toml",
+      "--all-targets",
+      "-j2",
+      "--",
+      "-D",
+      "warnings"
+    ],
+    "exit_code": 0,
+    "log": "kernel-clippy.log"
+  },
+  {
+    "name": "native-window-tests",
+    "command": [
+      "cargo",
+      "test",
+      "--manifest-path",
+      "desktop/cradle/src-tauri/Cargo.toml",
+      "--bin",
+      "oi-cradle",
+      "-j2",
+      "--",
+      "windows::tests"
+    ],
+    "exit_code": 0,
+    "log": "native-window-tests.log"
+  },
+  {
+    "name": "native-build",
+    "command": [
+      "cargo",
+      "build",
+      "--manifest-path",
+      "desktop/cradle/src-tauri/Cargo.toml",
+      "-j2"
+    ],
+    "exit_code": 0,
+    "log": "native-build.log"
+  },
+  {
+    "name": "cli-build",
+    "command": [
+      "cargo",
+      "build",
+      "--manifest-path",
+      "cli/Cargo.toml",
+      "--bin",
+      "oi",
+      "-j2"
+    ],
+    "exit_code": 0,
+    "log": "cli-build.log"
+  }
+]

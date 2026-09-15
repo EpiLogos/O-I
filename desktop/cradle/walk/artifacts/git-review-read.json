@@ -1,0 +1,35 @@
+{
+  "standing": "C: current public AIKit Development Field reads plus corrupt derivatives; no Git command or owner mutation",
+  "checks": [
+    "Actual owner exact-base reading is retainable",
+    "Exact decoder returns the actual owner reading",
+    "Rejects a snapshot for another display Project: comparison identity does not match this Surface",
+    "Rejects a snapshot for another worktree identity: comparison identity does not match this Surface",
+    "Rejects a snapshot for another requested comparison base: comparison identity does not match this Surface",
+    "Rejects a resolved base that differs from the retained owner diff: resolved base does not match the retained native diff",
+    "Rejects an oversized retained native patch: exceeds the 65536-byte presentation bound",
+    "Rejects a corrupt native repository field: owner Git reading is malformed",
+    "Keeps owner ProjectRef distinct from the desktop display Project",
+    "Retains an owner-reported worktree mismatch under the exact requested Surface identity",
+    "Git projection detects the retained owner/request worktree mismatch",
+    "A retained mismatched reading cannot be treated as a matching-worktree patch",
+    "Matching outer view retains the actual reviewed snapshot",
+    "Rejects a valid snapshot under a wrong outer worktree",
+    "Rejects a valid snapshot under a wrong outer comparison base",
+    "Retains a bounded recovery notice without an old snapshot",
+    "Rejects an oversized recovery notice"
+  ],
+  "source": {
+    "project": "O-I",
+    "cwd": "/home/frank/Central/Work/O-I",
+    "requestedBase": "HEAD",
+    "resolvedBase": "4f0018dcdac746d5dad0a02beb165b661fb26832",
+    "readingVersion": "aikit.development-field-reading/v1",
+    "ownerProjectRef": "project:o-i",
+    "patchChars": 7460
+  },
+  "decoder": {
+    "maxBytes": 65536,
+    "ownerWorktreeMismatch": "retained as owner evidence; developmentFieldWorktreeMismatch withholds its patch"
+  }
+}

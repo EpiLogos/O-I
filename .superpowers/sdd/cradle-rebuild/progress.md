@@ -1180,6 +1180,126 @@ C4 (graph presentation, ONE dedicated worker) dispatches next against a tree car
 - WALK (acceptance): rest 16/16 · system-settings 7/7 · bootstrap 15/15 · navigator 27/27; receipts + screenshots regenerated and committed (rest cold_start_fcp_ms 164).
 - Files: walk/scenarios/{rest,system-settings}.mjs, src/flow/DraftSurface.tsx (doc-comment only), walk/artifacts/{rest,system-settings,bootstrap,navigator}.json + screenshots regenerated. Branch agent/walk-recontract-rest-system-settings from origin/main 4ebd5ca9; PR #278.
 
+
+## 2026-09-14 — #289 Factory F1, Omarchy candidate
+- Base 1c340ab15177a899f64eb0bae87ce68d1a3d7c9a; owner-authorised remote isolated
+  lane at /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement.
+  Primary remote/local edits and K9 branch are untouched.
+- Factory SurfaceBinding foregrounds the same mounted AgentLayer in centre;
+  existing Factory owner reads move to right. RetainedRegionSurface is shell-only:
+  no QL adapter, new runtime identity or authority. Ordinary geometry is preserved.
+  Factory bindings now survive decode/reload.
+- D/C: TypeScript + Vite production build, real native Rust kernel build; app walk
+  via native walk bridge checks retained Agent DOM, draft, geometry, repeated
+  entry/exit, reload and narrow layout. Evidence: desktop/cradle/walk/factory-composition.mjs
+  and walk/artifacts/factory-f1-{reduced,full}.json (regenerated at current cut).
+- Native material: Linux Tauri debug binary built and launched against actual
+  Omarchy ground. AT-SPI reads confirmed the Factory owner inspection in the right
+  region. Native visual acceptance remains OPEN: monitor reported dpmsStatus=false,
+  compositor capture was black, X11 captures corrupted. Owner asked asynchronously
+  to wake/open/unlock the display. This is not an H or provider receipt.
+- Stage: semantic lifecycle cues/targets and a bounded factory.enter sequence
+  use the current native engine. Reduced motion skips presentation; readiness
+  never waits. A busy Stage declines optional composition expression.
+- Context checker: repaired external-URL misclassification of QL-MEF's UX source.
+  Remaining worktree gate is the explicit owner-authorised exception, not a pass.
+- F0 beyond shell: GitHub Factory 63d4147 and AIKit 856f454 were fetched as github/main
+  without moving their bundle-backed primary checkouts. AIKit SessionSpace open is
+  a persisted-state read, not native provider attachment. Exact provider entry and
+  Agent Expression/formation vertical remain to implement/verify.
+- F1 is a candidate, not programme closure. F2-F6 and first common-base K9 parity
+  remain required by the two governing Factory planning files.
+
+- Motion regression found and fixed: EngineSurface.release retained stage-idle as
+  an occupied presentation and left its RAF alive. Release now cancels RAF/timers,
+  renders the idle frame, clears the occupied slot, and stale releases do not
+  cancel a different presentation's timers. Full-motion re-entry now passes the
+  same 10 app checks; the previous failure is retained in factory-f1-failure.png.
+
+### Factory foundation correction — 2026-09-14
+
+Owner returned: the empty Agent panel reports unavailable gateway methods, the
+renderer visibly freezes, and the Factory presentation is not acceptable.
+Factory expansion is paused while these foundations are repaired; PR #292 stays
+draft. Previous C continuity receipts do not establish a usable live Factory
+vertical or visual/H acceptance.
+
+Readback: on Omarchy `oi aikit-session-space -C /home/frank/Central/Work/O-I list`
+fails `cannot exec AIKit SessionSpace aikit-session-space: No such file or directory`.
+AgentLayer's blanket gateway warning is hard-coded independently of that readback.
+The native encounter start/read path exists in kernel agency.rs; live conversation
+proof remains outstanding. Building the missing companion from AIKit GitHub main
+856f454 in its isolated remote worktree; no primary owner checkout edits.
+
+Renderer correction: release rendered one interpolated idle frame then stopped,
+leaving visible particles. The Stage now hides the released canvas explicitly and
+reveals it on presentation; added full-motion application assertion for invisibility.
+This supersedes the earlier assertion that one idle frame left no visible mark.
+
+Owner authorises a small demo job with real native operations for the live walk.
+No existing production Run is required; generated fixtures must not be claimed as
+actual provider activity or human Recognition.
+
+### Native encounter foundation readback — 2026-09-14
+
+Omarchy installation repaired: companion aikit-session-space built from AIKit
+856f454, installed alongside aikit; native registry source restored under
+~/.aikit/registries/oi-native-856f454; O-I matched through native Project
+Specification oi-desktop without changing its authored profile enables. Native
+project identity remains project:o-i. The suite installer now refuses readiness
+when its companion executable is absent. `cargo check --manifest-path
+cli/Cargo.toml -j 2` passed.
+
+The Pi demo connected but its model refused for missing credentials; retained as
+a failed provider attempt. Existing Codex ChatGPT login was read back, then the
+pinned @agentclientprotocol/codex-acp 1.11.0 adapter was installed and configured
+read-only through AIKit. No credential material was copied into artifacts.
+
+Native CUA typed and sent a message, AIKit recorded the actual assistant response
+“Cradle native conversation is live.” and completed event. Canonical refs:
+session-space/oi-factory-demo-20260914 and
+agent-session/oi-factory-codex-20260914; native provider session
+01a09ff3-f1fd-7f92-a156-2d85d11a9462.
+
+Native Draft → Factory → Draft then retained that exact AgentSession, provider
+session and transcript, with the response visible in the accompanying Agent.
+Receipts: desktop/cradle/walk/artifacts/encounter-codex-native-reply.json and
+factory-native-encounter-continuity.json. This is real conversation/arrangement
+evidence, not a Factory execution, tmux working-Surface, Agency authority or H
+acceptance claim. The owner rejected the earlier Factory UI; revised presentation
+hides source/dispatch plumbing behind disclosure, but remains a candidate.
+
+Full-motion production app walk passed including an actually mounted Stage
+becoming invisible on release. Native Factory rejection/locator persistence walk
+passed. F2–F6 remain open. No merged increment is claimed.
+
+
+## 2026-09-14 — #289/#292 experienced-product increment
+
+Continued `cradle-factory-arrangement` from owner correction `35d2aa0`, merging actual main `f0b4739` through `7c633da`. Factory retains central Run/work and the ordinary right pane for returned material. Ordinary expanded conversation has one transcript/composer with complementary Activity/Context/Inspect; return restores previous work. Project, AgentSession and SessionSpace jointly scope presentation and detached-window focus.
+
+Shared result variants now carry Factory material and native Git readings; Run Map nodes/relations are selectable; reviewed material survives failed refreshes. Session Inspect consumes native model and exact working-Surface operations. Agent and NOW readers preserve native scope/provenance. The installed Central Action catalogue gates the intent form: an unavailable `agent-profile.express` is not presented, and the incompatible proposal API is not substituted.
+
+Evidence: 103 real application browser checks, 24 layout checks, 3 native-window identity tests, 32 kernel library tests and 1 independent real Central catalogue parity test; production web/native Linux builds passed. Native CUA proved dialogue placement/return, exact existing tmux open, Git result maximize/detach/redock, and workspace recovery after graceful app restart. Receipt: `desktop/cradle/walk/artifacts/factory-experience-pivot-20260914/receipt.md` and sibling JSON/screenshots/logs.
+
+The actual Run remains queued with zero executions/Candidates/Evidence. New Agent admission/formation, full Start resolver, Factory execution→AgentSession/Activity/Return, opaque artifact resolution, Routine catalogue and full joined/all-harness/H acceptance remain open at their native owners. No full F0–F6 or merge completion is claimed.
+
+### Same-day review fix — retained Git material
+
+The first UI increment is `08b43f8`; current main `ee34fb9` was merged through `40d946d`. Review caught current-checkout rereads when Git Surfaces remounted. The follow-up preserves the exact bounded owner response across pane/window moves, redock and restore; explicit Refresh replaces it. Invalid saved material preserves the workspace with explicit recovery. No native Git operation or identity is reimplemented.
+
+Final follow-up evidence: production build, 34 real Git browser checks, 17 actual-owner decoder/refusal checks, 24 composition checks, 18 conversation and 18 Factory workspace checks. Native CUA observed the same displayed patch before/after detach, a different owner reading after explicit Refresh, that refreshed reading after redock, and the original ordinary working Surface after leaving Factory. Exact source hashes, captures and limits: `desktop/cradle/walk/artifacts/git-review-retention-20260914/receipt.md`. The first published cut's eight GitHub checks passed; subsequent-head CI is recorded on #292. The full native execution/admission/material/recurrence joins and human experience gate remain open.
+
+
+## 2026-09-15 — Factory review persistence and native NOW continuation
+
+Continued #289/#292 on the existing Omarchy branch from c05ffeb. Merged actual main 267a688 through d4a3d28, preserving all pre-existing walk artifacts and the frozen Factory runtime. Three bounded Luna/Terra workers supplied review/readiness and the two consumer slices; the primary integrated and verified.
+
+Factory material/Handoff Surfaces now retain bounded owner readings with exact identity and revision, explicit corrupted/oversized recovery, and independent detached review identity. NOW consumes placement-aware native reads and renders obligation/archive/placement fields. Production/native builds, kernel tests/clippy, real catalogue parity, 20 native NOW assertions and the conversation/Factory/Git/session/result recovery walks passed. Native restart recovered the same Codex Luna/low session, persisted terminal and ordinary return point. The compositor rule's X11 class mismatch was corrected on the host after direct observation.
+
+Receipt: `desktop/cradle/walk/artifacts/factory-review-continuation-20260915/receipt.md`. It carries exact logs, refs, hashes, screenshots, preservation verification and limits. A transient test scratch quota failure and the temporary-directory dependency of the native resident socket were recovered without replacing the provider.
+
+The native shared Start/admission, scoped Factory execution/Return, artifact body/Surface resolver, Routine catalogue/occurrence controls, correct requested-worktree Git basis and production Epi/Nara registration remain open. Existing Codex continuity is not Factory execution; Pi remains a failed credential-dependent attempt, other harnesses detection-only. Populated review and joined/all-harness/H acceptance are unproved; #292 stays draft. The one existing native NOW record can gain status/preserve refs, but the installed API cannot replace its result text. Read the accepted design and this receipt, then continue the joined walk against lane A's verified producer cut.
 ### 2026-09-15 — EX1: shared Expression application contract and native human/Agent operations
 
 PR #310 publishes `docs/contracts/EXPRESSION-APPLICATION-V1.md` before consumer
@@ -1193,6 +1313,10 @@ Evidence and exact commands: `desktop/cradle/walk/artifacts/expression-ex1/RECEI
 EX0 runtime/Studio intake, EX2–EX5 adapters and human creative judgement remain
 separately owned. No whole Expression Field completion is claimed.
 
+
+### Factory continuation — current-main integration verified
+
+U implementation `97c8bb9` now incorporates EX1/main `5b328af` through `946d51d`. Independent review kept Factory on the shared Stage and confirmed no production Epi/Nara registration. Post-merge production/native/CLI builds, kernel 32+8 tests, 9 real-Central Expression tests, 10 engine assertions, clippy and 3 window tests passed; conversation/Factory/recovery walks passed 18/18/15. The actual Omarchy app retained its persisted terminal and single composer after Factory return, and its protected socket plus freshly built CLI returned native Expression capabilities. The receipt has exact hashes/readbacks and logs under `main-integration/`. This generic API does not remove the Start/execution/artifact/Routine/Git-basis/instrument joins or the draft/human gate.
 ### 2026-09-15 — EX0: latest engine intake into the one Expression body (Point-Cloud-Demo 9443f58)
 
 - ENGINE INTAKE: the vendored expressions engine refreshed from 569a9eb to the
@@ -1251,6 +1375,17 @@ separately owned. No whole Expression Field completion is claimed.
   Lane aikit/ex0-engine-intake from origin/main 5b328af. EX1's
   presentConfig/updateConfig seam and authored data preserved untouched.
 
+
+### 2026-09-15 — Factory updates continue while ordinary work stays open
+
+Continued #289/#292 from d3ba557 on the existing Omarchy branch. U c7cb7fd adds composition-lifetime native Run observation, explicit quiet footer opening, exact cross-state Handoff reuse and compatible revision acknowledgement. Main 1503b14 (EX0/#315 and SharedField wayfinder/#316) is incorporated through e14c955. Background updates preserve central work, the canonical conversation draft, focus/layout and held right-side reviews. A real normal-click failure exposed the footer menu under the right pane; the shared open-menu stacking fix is verified by pointer hit ownership.
+
+Production browser/native-owner checks passed: live updates 24, existing conversation 27, review identity/refusal 17, workspace 18, recovery 15. Current-main production/WALK builds, vendor verification, engine 26 and controlled Stage walks 16/13/12 passed; the latter include real capture and context-loss recovery, not installed Epi/Nara acceptance. Initial renderer-test assumptions and readiness failures remain in the receipt with their final corrections. The native desktop and public SessionSpace operations preserved the same Codex Luna/low session and exact persisted working Surface. No provider/installation was replaced; the authorized Factory state still has zero executions/Candidates/Evidence/Returns.
+
+Receipt: `desktop/cradle/walk/artifacts/factory-live-continuation-20260915/receipt.md`, with exact commands, hashes, native readbacks, initial/final screenshots and byte-for-byte restoration of the 725-file post-main artifact baseline. Three bounded Luna/Terra workers supplied native readiness and independent review; the primary integrated and controlled the desktop.
+
+A's producer heads remain AIKit #311 at 192678b / #312 at aa48626 and Actuation #85 at fdabf5b. The shared Start/formation resolver, installed scoped Factory execution/Return, artifact body/Surface resolution, Routine operations, correct requested-worktree Git basis and real instrument registration still gate the joined campaign. New SharedField #317 at be67af20 supplies no Factory or Epi/Nara runtime contract; QL-MEF #197 at 502e417 is projection documentation only. This is a bounded F2/F4 advance; D/C and limited existing-session P/M do not establish full F0–F6 or H. Keep #292 draft and converge the same native NOW record through publication refs. Next: consume A's verified Start/execution/artifact cut and execute the accepted joined walk.
+
 ### 2026-09-15 — Lane C step 5 (U-SF1): the desktop opens the same hosted Shared Field refs the browser Explore page opens (shared-field-hosted 38/38; kernel 40 green; build green)
 
 - REAL (cell S→S0 · aperture mode): the hosted Shared Field is a third owner input of the graph reading, pulled per call through the O:I-owned client (`shared-field/spacetimedb/field.sh`, unmodified). Kernel `shared_field.rs` spawns `OI_SHARED_FIELD_CLIENT` (default `<repo>/shared-field/spacetimedb/field.sh`, repo = `OI_REPO_ROOT` or the crate's manifest dir climbed three levels), request JSON on stdin, envelope decoded like `knowledge.rs` — the client's own failure kinds (`unbound|unavailable|refused|malformed`) carried distinctly; `unbound`/`unavailable` are absence (`{state:"unavailable", detail}` as data, an explicit `Unavailable` graph input with the client's reason), never an error. `graph.rs` input 3: one node per hosted Explore entry (kind `hosted-<entry kind>`, `native_owner:"shared-field"`, provenance source `shared-field.projection`, revision = the entry's world projection revision, detail = [target uri/database, entry revision], `actions:[]`), one edge per hosted relation (spelling/endpoints verbatim); `GraphCounts.hosted_rows` (serde default); the "not implemented in this wave" deferred text is gone — `empty()` keeps `Deferred: not requested yet`. `KernelOp::SharedField{request}` → `KernelOpResult::SharedFieldReading{data}` (pull, emits nothing; the owner's refusal returns in the owner's words). Renderer: `src/knowledge/shared-field.ts` (`sharedField(transport,request)`, `hostedPublicationArgs(envelope,candidate)` building field/participant/entry through `createSharedField`/`createParticipant`/`createExploreEntry` — the desktop re-implements no contract); `graphAddress` returns `undefined` for hosted kinds instead of throwing; a hosted node in the Knowledge surface reads through `{kind:"read",ref}` and the detail dialog presents the Projection reading (entry, projections with projection_ref/revision/source revision, hosted relations, neighbourhood) with a provenance block naming the target and both revisions; "Open in tab"/"Pop out" disabled with the reason (no local address). `SharedFieldMaterial`: after the local envelope, "Publish to the hosted field" appears only when the kernel's `status` reports a bound target; the hosted result renders verbatim (hosted_projection_row, target, transport identity labelled as the client's SpaceTimeDB connection identity, not a human); an owner refusal renders in the owner's words. No store, no token in the renderer, no default target, no target name in kernel Rust or renderer TS.
@@ -1259,6 +1394,10 @@ separately owned. No whole Expression Field completion is claimed.
 - NOT WALKED / DEVIATIONS: the scratch project's own wiki cannot open through AIKit (`knowledge.provider_absent: SemanticWiki provider is absent from this Project world` — the same absence the committed `knowledge` receipt has been red with since 2026-09-05), so the UI walk opens the ROOT register's wiki; the hosted input is register-independent. Walk refs carry the fixture project id `editor-walk` rather than a `…:desktop:walk:` prefix, because the renderer derives them from the source ref and a walk-only string may not enter product code. `graphAddress`'s new `undefined` return needed a 4-line consumer guard in `src/knowledge/SearchOverlay.tsx` (outside the brief's lanes; tsc required it); `kernel/tests/graph_input.rs` (ignored candidate tests) re-worded from "deferred" to "named available/unavailable". The live field keeps three walk-origin projection rows on the walk's own field/participant (`projection:desktop:mu20o323` from the first, entry-invisible publish; `projection:desktop:probe-mu20qnn8` from a doorway probe of the same fault; `projection:desktop:mu20tln4` from the passing walk) — left in place, nothing withdrawn or deleted.
 - REMAINS: a hosted node's detail is read-only — no owner Action is disclosed for a hosted ref and none is invented (Lane C step 6/7 flows: Participant/Contact/Watch/Contribution/Encounter and the native-owner Return path); the client's `publish` should surface reducer outcomes instead of timing out (client owner); the `knowledge` floor suite's AIKit provider absence on scratch grounds is a standing red outside this unit.
 - Files: kernel/src/{shared_field.rs (new), graph.rs, lib.rs}, kernel/tests/{shared_field_graph.rs (new), shared-field-client/{snapshot.sh,unbound.sh,unavailable.sh,snapshot.json} (new), graph_input.rs}, src/kernel/types.ts, src/knowledge/{shared-field.ts (new), graph.ts, KnowledgeSurface.tsx, NodeDetails.tsx, SearchOverlay.tsx}, src/receiving/SharedFieldMaterial.tsx, walk/run.mjs, walk/scenarios/shared-field-hosted.mjs (new), walk/artifacts/shared-field-hosted.json + 3 screenshots. Branch `shared-field-lane-c-desktop` from `shared-field-lane-c` 93bdb1d.
+
+### Factory continuation — final SharedField main integration
+
+Main bca9f58 (#317) landed before U publication and is incorporated through 490fdc32. Kernel 49 passed/50 existing owner-gated ignores, clippy, native shell/bridge and production builds passed. Post-merge native-backed production walks passed live/conversation 27, workspace 18 and review recovery 15. The rebuilt app retained resident 589249, the exact persisted terminal and one composer after Factory return. The actual SharedField client now answers unbound status after normal local dependency installation and binding generation; no target/publication/service or owner installation was changed. The 729-file post-main artifact baseline is restored byte-for-byte. Final evidence is in the live-continuation receipt's shared-field-integration directory. Start/execution/artifact/Routine/Git/instrument and H gates remain as stated; #292 stays draft.
 
 ### 2026-09-15 — SF1: the first real desktop home for SharedField — Explore, the projected WorldPresentation as canvas body, and one real Share / Project path (explore-sf1 46/46 against the live second machine; shared-field 227 green; explore module tests 6 green; tsc + build green)
 
@@ -1282,3 +1421,11 @@ and explicit limits: `desktop/cradle/walk/artifacts/EX2-EX5-INTEGRATION.md`.
 The accepted contract is applied without new identities, stores, clocks, audio
 engines, Agent loops or inferred semantic relations. Sensory/material acceptance
 and undisclosed owner state are not claimed.
+
+### 2026-09-15 — Factory convergence with Explore, Nara and configuration
+
+Draft #292 now incorporates current main `dd0e5d5` through `cf4e21b`, preserving the accepted Factory Run/Build, returned-material, Handoff, Git, NOW, Agent/session and exact working-Surface consumers alongside Explore/WorldPresentation, Nara/Expression and configuration. Direct Omarchy inspection found and repaired a merged-shell regression: Expression composition now opens inside Inspect, so ordinary and promoted conversations retain the accepted Conversation / Activity / Context / Inspect planes and one composer.
+
+Production and native builds, kernel all-target tests, Factory/live-update/conversation/persistence browser walks and a real AT-SPI/compositor walk passed. The running desktop entered the queued Factory Run, promoted the existing conversation, and returned to `working-surface/oi-factory-demo-20260914-shell` with its persisted terminal marker. No prompt or terminal input was sent. All 33 pre-existing modified/untracked artifacts were restored byte-for-byte; new evidence is in `desktop/cradle/walk/artifacts/factory-main-convergence-20260915/receipt.md`.
+
+The Run still has zero executions, Candidates, Evidence and Returns. Shared Start/admission, installed scoped authority → Factory Execution, typed artifact resolution, Routine operations, requested-worktree Git correction and production Epi/Nara registration remain exact owner joins. The current Omarchy QL checkout cannot execute the controlled host walk because its HEAD lacks the adapter path, and O:I has no production registration callsite. D/C and the existing SessionSpace/terminal P/M evidence do not establish all-harness acceptance or human Recognition; #292 stays draft.

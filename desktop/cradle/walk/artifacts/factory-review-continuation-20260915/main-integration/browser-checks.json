@@ -1,0 +1,20 @@
+[
+  {
+    "name": "conversation-placement",
+    "exit_code": 0,
+    "log": "conversation-placement.log",
+    "passed_assertions": 18
+  },
+  {
+    "name": "factory-workbench",
+    "exit_code": 0,
+    "log": "factory-workbench.log",
+    "passed_assertions": 18
+  },
+  {
+    "name": "factory-review-recovery",
+    "exit_code": 0,
+    "log": "factory-review-recovery.log",
+    "passed_assertions": 15
+  }
+]

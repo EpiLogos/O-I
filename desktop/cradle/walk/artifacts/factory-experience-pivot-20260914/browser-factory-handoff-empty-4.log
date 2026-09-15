@@ -1,0 +1,4 @@
+PASS A queued Run without a retained task offers no phantom Handoff output
+PASS Missing handoff does not fabricate a document or continuation
+PASS Factory source and Run survive reload without an invented handoff
+PASS Reload rechecks the real empty retained-task relation

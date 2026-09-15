@@ -56,7 +56,7 @@ export interface MenuContext {
  * own canonical Actions arrive with the owner-seam units — none are
  * fabricated here (law 4).
  */
-const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank", "factory", "instrument", "explore", "presentation"]);
+const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank", "factory", "instrument", "factory-handoff", "factory-material", "project-now", "agents", "observatory", "draft", "development-field", "explore", "presentation"]);
 
 /** Actions disclosed for one binding (its tab / its content right-click). */
 export function bindingDisclosures(

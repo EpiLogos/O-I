@@ -1,5 +1,6 @@
 import {useEffect,useState} from "react";
 import type {AddressedPacket,AddressedTurn,DeliveryRecord,EncounterTaskReading,GroupRecipient} from "./client";
+import {AddressedRecipientPicker,type AddressableParticipant,type AddressableParticipantsState} from "./AddressedRecipientPicker";
 
 /** Explicit addressed work: a machine turn the sender composes and commits,
  * carried by the owner's addressed dispatch — never the shared human draft.
@@ -37,7 +38,7 @@ const TERMINAL_NOTE:Record<string,string>={
   cancelled:"The turn was cancelled.",
   "reconciled-no-replay":"Correlated with reviewed owner evidence; never replayed.",
 };
-export function AddressedComposer({disabled,dispatch,history,service,agentSession,task,group,onGroupSend,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;task?:EncounterTaskReading;group?:GroupState;onGroupSend?:(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>void;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
+export function AddressedComposer({disabled,dispatch,history,service,agentSession,task,group,addressable,onGroupSend,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;task?:EncounterTaskReading;group?:GroupState;addressable?:AddressableParticipantsState;onGroupSend?:(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>void;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
   const [sender,setSender]=useState("");const [audience,setAudience]=useState("");
   const [basis,setBasis]=useState("");const [sourceRefs,setSourceRefs]=useState("");
   const [text,setText]=useState("");const [selection,setSelection]=useState<{sourceRef:string}|undefined>();
@@ -61,11 +62,16 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
   const submit=()=>{if(running||disabled||!text.trim()||!sender.trim()||!audience.trim()||!basis.trim())return;
     onSend({delivery_ref:"",sender:sender.trim(),expected_binding_revision:basis.trim(),
       packet:{text,source_refs:sourceRefs.split(/[\s,]+/).filter(Boolean),audience:[audience.trim()]}},{sender,audience,basis,sourceRefs,text});};
-  const [recipientsLines,setRecipientsLines]=useState("");const [groupAudienceField,setGroupAudienceField]=useState("");
-  const parsedRecipients:GroupRecipient[]=recipientsLines.split("\n").map(line=>line.trim()).filter(Boolean).map(line=>{const [session,basis]=line.split(/\s+/);return {agent_session:session??"",expected_binding_revision:basis??""};}).filter(row=>row.agent_session&&row.expected_binding_revision);
-  const groupAudienceRefs=groupAudienceField.split(/[\s,]+/).filter(Boolean);
-  const groupReady=()=>!running&&!disabled&&!!sender.trim()&&!!text.trim()&&parsedRecipients.length>0&&groupAudienceRefs.length>0;
-  const submitGroup=()=>{if(groupReady()&&onGroupSend)onGroupSend(sender.trim(),parsedRecipients,{text,source_refs:sourceRefs.split(/[\s,]+/).filter(Boolean),audience:groupAudienceRefs});};
+  const [selectedRecipients,setSelectedRecipients]=useState<AddressableParticipant[]>([]);
+  const addressedParticipants=addressable??{kind:"awaiting-sender" as const};
+  // A changed owner reading invalidates a stale selection before it can form a
+  // send-group request. The sender/source filter is advisory; owner preflight
+  // remains the effect boundary.
+  useEffect(()=>{if(addressable?.kind!=="ready"){setSelectedRecipients([]);return;}
+    setSelectedRecipients(previous=>{const current=previous.filter(selected=>addressable.participants.some(participant=>participant.agent_session===selected.agent_session&&participant.agent_ref===selected.agent_ref&&participant.expected_binding_revision===selected.expected_binding_revision));return current.length===previous.length?previous:current;});
+  },[addressable]);
+  const groupReady=()=>!running&&!disabled&&addressedParticipants.kind==="ready"&&!!sender.trim()&&!!text.trim()&&selectedRecipients.length>0&&selectedRecipients.every(selected=>addressedParticipants.participants.some(candidate=>candidate.agent_session===selected.agent_session&&candidate.agent_ref===selected.agent_ref&&candidate.expected_binding_revision===selected.expected_binding_revision));
+  const submitGroup=()=>{if(groupReady()&&onGroupSend)onGroupSend(sender.trim(),selectedRecipients.map(participant=>({agent_session:participant.agent_session,expected_binding_revision:participant.expected_binding_revision})),{text,source_refs:sourceRefs.split(/[\s,]+/).filter(Boolean),audience:selectedRecipients.map(participant=>participant.agent_ref)});};
   const preview=`${sender.trim()||"—"} → ${audience.trim()||"—"} · basis ${basis.trim()||"—"} · ${sourceRefs.split(/[\s,]+/).filter(Boolean).length||"no"} source ref${sourceRefs.split(/[\s,]+/).filter(Boolean).length===1?"":"s"}`;
   return <section className="encounter-addressed" aria-label="Addressed request">
     <header><strong>Addressed request</strong><small>An explicit machine turn to this participant. It never reads or changes the shared draft above, and nothing is sent until you dispatch it.</small></header>
@@ -101,19 +107,18 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
     </div>}
     {dispatch.kind==="refused"&&<p className="encounter-addressed-refusal" role="alert">The owner refused this turn: {dispatch.error}</p>}
     {history.length>0&&<details className="encounter-addressed-history"><summary>Deliveries this view has dispatched ({history.length})</summary><ul>{history.map(entry=><li key={entry.ref}><code>{entry.ref}</code> — {entry.record.phase}{entry.duplicate?" (duplicate read)":''}</li>)}</ul></details>}
-    <details className="encounter-addressed-group">
+    {addressable&&<details className="encounter-addressed-group">
       <summary>Addressed group</summary>
-      <p>One packet, several explicitly named recipients. The owner admits the whole group before anything is dispatched; every recipient receives an independent durable result, and the fanout is never atomic. The packet above (sender, shared source refs, text) is what every recipient receives.</p>
-      <label>Group recipients — one per line: agent session + expected basis<textarea aria-label="Group recipients" disabled={disabled||running} value={recipientsLines} onChange={event=>setRecipientsLines(event.target.value)} rows={3} placeholder={"agent-session/… rev/1\nagent-session/… rev/2"} spellCheck={false}/></label>
-      <label>Group audience — the agent refs the group must agree on exactly<input aria-label="Group audience" disabled={disabled||running} value={groupAudienceField} onChange={event=>setGroupAudienceField(event.target.value)} placeholder="comma-separated agent refs" autoComplete="off" spellCheck={false}/></label>
+      <p>Choose from participants the owner has currently admitted for this sender and these shared source refs. Each selected participant receives an independently recorded delivery; this fanout does not create a shared conversation or membership.</p>
+      <AddressedRecipientPicker disabled={disabled||running} participants={addressedParticipants} selected={selectedRecipients} onChange={setSelectedRecipients}/>
       <div className="encounter-addressed-actions">
-        <span className="encounter-addressed-group-preview">{parsedRecipients.length||"no"} recipient{parsedRecipients.length===1?"":"s"} · audience {groupAudienceRefs.length||"none"}</span>
-        <button className="encounter-addressed-group-send" disabled={!groupReady()||!onGroupSend} onClick={submitGroup}>Dispatch to the group</button>
+        <span className="encounter-addressed-group-preview">{selectedRecipients.length||"no"} recipient{selectedRecipients.length===1?"":"s"} selected</span>
+        <button className="encounter-addressed-group-send" disabled={!groupReady()||!onGroupSend} onClick={submitGroup}>Dispatch to selected participants</button>
       </div>
       {group&&<div className="encounter-addressed-group-state" data-ref={group.ref}>
         {group.rows.map(row=><p key={row.agentSession} className="encounter-addressed-group-row" data-phase={row.error?"refused":row.phase}><code>{row.agentSession}</code> — {row.error??(row.duplicate?"already held by the owner — durable receipt, nothing resent":`phase: ${row.phase}`)}</p>)}
         <p>Group delivery <code>{group.ref}</code> — individually durable dispatch; no automatic replay of uncertain recipients.</p>
       </div>}
-    </details>
+    </details>}
   </section>;
 }

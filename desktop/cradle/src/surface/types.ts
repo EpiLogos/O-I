@@ -38,6 +38,16 @@ export const AGENCY_DEPTHS: readonly AgencyDepth[] = [
  * ('test', 'test:silent') — the single synthetic allowance of U0.3b. No fake
  * file trees, no invented owner semantics (law 4, law 7).
  */
+/** A retained owner reading for one explicitly chosen Git comparison. It is
+ * presentation state only: the desktop never derives or updates Git facts. */
+export interface DevelopmentFieldViewSnapshot {
+  project: string;
+  cwd: string;
+  requestedBase: string;
+  resolvedBase?: string;
+  reading: import("../kernel/types").DevelopmentFieldReading;
+}
+
 export interface SurfaceBinding {
   id: SurfaceId;
   kind: string;
@@ -48,9 +58,19 @@ export interface SurfaceBinding {
   address?: import("../kernel/types").KnowledgeAddress;
   encounter?: {space:string};
   browser?: {url:string};
-  terminal?: {cwd?:string};
+  terminal?: {
+    cwd?: string;
+    /** Exact AIKit owner binding for an already-persisted provider Surface. */
+    attachment?: {
+      kind: "aikit-session-space-working-surface";
+      space: string;
+      binding: string;
+      /** Kernel-resolved Project path used only by the public owner CLI. */
+      serviceCwd: string;
+    };
+  };
   flow?: {flowRef:string;path:string};
-  view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  view?: {developmentField?:{cwd:string;baseRevision?:string;snapshot?:DevelopmentFieldViewSnapshot;snapshotUnavailable?:string};factory?: {statePath:string;centralProjectRef?:string;projectRef?:string;runRef?:string;telemetryRef?:string;expectedRevision?:number;materialSnapshot?:import("../contributions/factory/factory-review-snapshot").FactoryMaterialReviewSnapshot;handoffSnapshot?:import("../contributions/factory/factory-review-snapshot").FactoryHandoffReviewSnapshot;snapshotUnavailable?:string};graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterReturnSurfaceId?:string;encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
   location?: import("../kernel/types").CentralLocation;
   /** SF1: a projected subject pinned as its own Surface (kind
    * 'presentation') carries the exact World/Projection/Presentation/
@@ -74,6 +94,8 @@ export interface TabGroupPane {
 }
 
 export interface SplitPane {
+  /** Retain an existing pane subtree as a shell region destination. */
+  regionHost?: boolean;
   type: "split";
   id: string;
   dir: PaneDir;
@@ -86,6 +108,14 @@ export type Pane = TabGroupPane | SplitPane;
 export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
 
 export interface LayoutState {
+  /** Presentation-only composition over the same Surface bindings and pane tree. */
+  composition?: {
+    bindingId: SurfaceId;
+    returnPaneId: string;
+    /** Opaque owner subject whose currently selected outputs occupy the region. */
+    collectionRef?: string;
+    ordinary: Pick<LayoutState, "root" | "focusedGroupId" | "maximizedGroupId" | "rightDepth" | "leftWidth" | "rightWidth" | "agencyDepth">;
+  };
   focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;
@@ -137,7 +167,7 @@ export interface ActionArg {
 /** The layout as it was at load — the restore point for `restore-layout`. */
 export type RestorePoint = Pick<
   LayoutState,
-  "root" | "surfaces" | "closedStack" | "focusedGroupId"
+  "root" | "surfaces" | "closedStack" | "focusedGroupId" | "composition"
 >;
 
 export const freshLayout = (): LayoutState => ({

@@ -40,7 +40,7 @@ impl Client {
     ) -> Result<Value, Error> {
         if !matches!(
             read,
-            "project" | "journey" | "run" | "workflow-units" | "workflow-unit" | "execution-telemetry" | "commission-read"
+            "central-project-link-read" | "project" | "journey" | "run" | "build" | "workflow-units" | "workflow-unit" | "execution-telemetry" | "commission-read"
         ) {
             return Err(incompatible("Unsupported Factory development read"));
         }
@@ -60,7 +60,11 @@ impl Client {
             .and_then(Value::as_str)
             .unwrap_or_default()
             .to_owned();
-        if !schema.starts_with("factory.") || !schema.ends_with("-reading/v1") {
+        if read == "build" {
+            if schema != "factory.build-view/v1" || data.get("provider_contract").and_then(Value::as_str) != Some("factory.build-view-provider/v1") {
+                return Err(incompatible("Unsupported Factory developmental Build view"));
+            }
+        } else if !schema.starts_with("factory.") || !schema.ends_with("-reading/v1") {
             return Err(incompatible("Unsupported Factory development reading"));
         }
         Ok(data)

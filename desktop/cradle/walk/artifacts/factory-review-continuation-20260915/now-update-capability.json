@@ -1,0 +1,30 @@
+{
+  "location": {
+    "path": "Work/O-I/ProjectCentral/now/agents/factory-experience-published-native-execution-2026-09-14.json",
+    "ref": "central:path:/home/frank/Central:Work/O-I/ProjectCentral/now/agents/factory-experience-published-native-execution-2026-09-14.json",
+    "root": "/home/frank/Central",
+    "schema": "central.path-ref/v1"
+  },
+  "operations": {
+    "history": {
+      "available": false,
+      "reason": "Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable"
+    },
+    "restore": {
+      "available": false,
+      "reason": "Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable"
+    },
+    "write": {
+      "available": false,
+      "reason": "Protected ground or owner state must use its native authored operation; ordinary file writes are unavailable"
+    }
+  },
+  "revision_at_read": "central.content-fnv1a64/v1:1366:7d55b16c212cbf7a",
+  "native_update_fields": [
+    "project",
+    "id",
+    "status",
+    "preserve_refs"
+  ],
+  "limitation": "projectcentral.now.update cannot revise the existing subject/result/evidence fields; ordinary file write is explicitly unavailable for owner state."
+}

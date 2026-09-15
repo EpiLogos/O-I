@@ -1,0 +1,392 @@
+{
+  "factory": {
+    "pid": 1529100,
+    "messageEntries": 0,
+    "observed": [
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          10
+        ],
+        "role": "page tab",
+        "name": "Working Surface"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0
+        ],
+        "role": "landmark",
+        "name": "Factory Runs and Build"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          6,
+          2
+        ],
+        "role": "button",
+        "name": "Conversation"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          6,
+          3
+        ],
+        "role": "button",
+        "name": "Leave Factory"
+      }
+    ]
+  },
+  "conversation": {
+    "pid": 1529100,
+    "messageEntries": 1,
+    "observed": [
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          10
+        ],
+        "role": "page tab",
+        "name": "Working Surface"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0,
+          0,
+          0
+        ],
+        "role": "toggle button",
+        "name": "Conversation"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0,
+          0,
+          1
+        ],
+        "role": "toggle button",
+        "name": "Activity"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0,
+          0,
+          2
+        ],
+        "role": "toggle button",
+        "name": "Context"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0,
+          0,
+          3
+        ],
+        "role": "toggle button",
+        "name": "Inspect"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0,
+          1,
+          0
+        ],
+        "role": "section",
+        "name": "Transcript"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          6,
+          2
+        ],
+        "role": "button",
+        "name": "Conversation"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          6,
+          3
+        ],
+        "role": "button",
+        "name": "Leave Factory"
+      }
+    ]
+  },
+  "return": {
+    "pid": 1529100,
+    "messageEntries": 1,
+    "observed": [
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          0,
+          10
+        ],
+        "role": "page tab",
+        "name": "Working Surface"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4
+        ],
+        "role": "scroll pane",
+        "name": "Working Surface"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0
+        ],
+        "role": "landmark",
+        "name": "Terminal surface"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          2,
+          0,
+          0,
+          4,
+          0,
+          1,
+          10
+        ],
+        "role": "list item",
+        "name": "sh-5.3$ printf OI_DESKTOP_PERSISTED_SURFACE_20260914"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          3,
+          1,
+          0,
+          0
+        ],
+        "role": "toggle button",
+        "name": "Conversation"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          3,
+          1,
+          0,
+          1
+        ],
+        "role": "toggle button",
+        "name": "Activity"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          3,
+          1,
+          0,
+          2
+        ],
+        "role": "toggle button",
+        "name": "Context"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          3,
+          1,
+          0,
+          3
+        ],
+        "role": "toggle button",
+        "name": "Inspect"
+      },
+      {
+        "path": [
+          0,
+          0,
+          1,
+          0,
+          0,
+          0,
+          0,
+          3,
+          1,
+          1,
+          0
+        ],
+        "role": "section",
+        "name": "Transcript"
+      }
+    ]
+  }
+}

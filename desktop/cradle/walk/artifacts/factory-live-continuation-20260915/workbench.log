@@ -1,0 +1,18 @@
+PASS No Factory banner, activity strip or Return rail
+PASS Factory retains the same accompanying Agent DOM
+PASS Factory parks the one accompanying view while Runs is central
+PASS Right host uses the existing pane grammar
+PASS Composition stays explicit in persisted presentation state
+PASS A related tab preserves writing during composition
+PASS Changing focused tab does not leave composition
+PASS No redundant Agent heading
+PASS No A2A exchange chrome in ordinary conversation
+PASS Mounted Stage releases without a frozen overlay
+PASS Explicit leave restores ordinary writing
+PASS Explicit leave restores ordinary shell geometry
+PASS Leave restores the same accompanying Agent DOM
+PASS Project Runs binding survives reload
+PASS Reload retains the composed arrangement
+PASS Reload retains the right pane destination
+PASS Reload then leave restores the persisted ordinary return point
+PASS No application page errors

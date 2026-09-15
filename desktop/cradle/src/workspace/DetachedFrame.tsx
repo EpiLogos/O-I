@@ -1,3 +1,8 @@
+import {exactFactoryReviewView} from "../contributions/factory/factory-review-snapshot";
+import {exactDevelopmentFieldView} from "../surface/development-field-snapshot";
+import {GitWorkingState} from "../returns/GitWorkingState";
+import {FactoryMaterialSurface} from "../contributions/factory/FactoryMaterialSurface";
+import {FactoryHandoffSurface} from "../contributions/factory/FactoryHandoffSurface";
 import {TerminalSurface} from "../terminal/TerminalSurface";
 import {DraftSurface} from "../flow/DraftSurface";
 import {FlowSurface} from "../flow/FlowSurface";
@@ -93,7 +98,15 @@ export function DetachedFrame() {
       try {
         const book=JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null");
         const view=book?.workspaces?.find((w:{id:string})=>w.id===r.workspace_id)?.layout?.surfaces?.[r.binding.id]?.view;
-        if(["Conversation","Activity","Context","Inspect"].includes(view?.encounterPlane))r.binding={...r.binding,view};
+        const heldDevelopment=r.binding.kind==="development-field"?r.binding.view?.developmentField:undefined;
+        const development=heldDevelopment&&r.binding.project?exactDevelopmentFieldView(view?.developmentField,{project:r.binding.project,cwd:heldDevelopment.cwd,requestedBase:heldDevelopment.baseRevision??"HEAD"}):undefined;
+        const heldFactory=r.binding.view?.factory;
+        const factory=heldFactory?.runRef&&(r.binding.kind==="factory-material"||r.binding.kind==="factory-handoff")
+          ? exactFactoryReviewView(view?.factory,{kind:r.binding.kind,statePath:heldFactory.statePath,runRef:heldFactory.runRef,subjectRef:r.binding.kind==="factory-material"?r.binding.ref:undefined},true)
+          : undefined;
+        if(development)r.binding={...r.binding,view:{...r.binding.view,developmentField:development}};
+        else if(factory)r.binding={...r.binding,view:{...r.binding.view,factory}};
+        else if(r.binding.kind==="encounter"&&["Conversation","Activity","Context","Inspect"].includes(view?.encounterPlane))r.binding={...r.binding,view:{...r.binding.view,encounterPlane:view.encounterPlane}};
       }catch{/* The main workspace owns recovery. */}
       if(disposed)return;
       setRecord(r);
@@ -103,9 +116,10 @@ export function DetachedFrame() {
   },[loadAttempt]);
   const updateView=async(view:NonNullable<SurfaceBinding["view"]>)=>{
     if(!record)return;
-    setRecord(current=>current?{...current,binding:{...current.binding,view}}:current);
-    try{await emitTo("main","oi:surface-view",{workspace_id:record.workspace_id,surface_id:record.binding.id,view});}
-    catch(error){setError(String(error));}
+    try {
+      await emitTo("main","oi:surface-view",{workspace_id:record.workspace_id,surface_id:record.binding.id,view});
+      setRecord(current=>current?.binding.id===record.binding.id?{...current,binding:{...current.binding,view}}:current);
+    } catch(error) {setError(String(error));throw error;}
   };
   const redock=useCallback(()=>{
     if(redockingRef.current)return;
@@ -133,8 +147,8 @@ export function DetachedFrame() {
       await result;
     }finally{if(timer)clearTimeout(timer);cleanup();}
   };
-  return <div className="desktop-shell detached-shell"><header className="desktop-bar"><strong className="desktop-brand">O-I</strong><span>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
-    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
+  return <div className="desktop-shell detached-shell"><header className="desktop-bar" data-tauri-drag-region><strong className="desktop-brand" data-tauri-drag-region>O-I</strong><span data-tauri-drag-region>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
+    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="development-field"&&record.binding.project&&record.binding.view?.developmentField?<GitWorkingState project={record.binding.project} cwd={record.binding.view.developmentField.cwd} baseRevision={record.binding.view.developmentField.baseRevision} snapshot={record.binding.view.developmentField.snapshot} snapshotUnavailable={record.binding.view.developmentField.snapshotUnavailable} onSnapshot={(snapshot,snapshotUnavailable)=>{const {snapshot:_snapshot,snapshotUnavailable:_unavailable,...configuration}=record.binding.view!.developmentField!;return updateView({...record.binding.view!,developmentField:{...configuration,...(snapshot?{snapshot}:{}),...(snapshotUnavailable?{snapshotUnavailable}:{})}});}}/>:record?.binding.kind==="factory-handoff"&&record.binding.ref&&record.binding.view?.factory?.statePath?<FactoryHandoffSurface key={record.binding.id} statePath={record.binding.view.factory.statePath} runRef={record.binding.ref} expectedRevision={record.binding.view.factory.expectedRevision} snapshot={record.binding.view.factory.handoffSnapshot} snapshotUnavailable={record.binding.view.factory.snapshotUnavailable} onReviewAccepted={review=>{const {handoffSnapshot:_snapshot,snapshotUnavailable:_unavailable,...configuration}=record.binding.view!.factory!;return updateView({...record.binding.view!,factory:{...configuration,expectedRevision:review.revision,...(review.snapshot?{handoffSnapshot:review.snapshot}:{}),...(review.snapshotUnavailable?{snapshotUnavailable:review.snapshotUnavailable}:{})}});}}/>:record?.binding.kind==="factory-material"&&record.binding.ref&&record.binding.view?.factory?.statePath&&record.binding.view.factory.runRef?<FactoryMaterialSurface key={record.binding.id} statePath={record.binding.view.factory.statePath} runRef={record.binding.view.factory.runRef} subjectRef={record.binding.ref} expectedRevision={record.binding.view.factory.expectedRevision} snapshot={record.binding.view.factory.materialSnapshot} snapshotUnavailable={record.binding.view.factory.snapshotUnavailable} onReviewAccepted={review=>{const {materialSnapshot:_snapshot,snapshotUnavailable:_unavailable,...configuration}=record.binding.view!.factory!;return updateView({...record.binding.view!,factory:{...configuration,expectedRevision:review.revision,...(review.snapshot?{materialSnapshot:review.snapshot}:{}),...(review.snapshotUnavailable?{snapshotUnavailable:review.snapshotUnavailable}:{})}});}}/>:record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view).catch(()=>{})} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
     {searchOpen&&<SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={record?.binding.project} onClose={()=>setSearchOpen(false)} onOpen={navigate}/>}
   </div>;
 }

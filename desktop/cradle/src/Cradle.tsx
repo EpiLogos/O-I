@@ -1,3 +1,11 @@
+import {exactFactoryReviewView} from "./contributions/factory/factory-review-snapshot";
+import {presentConversation,returnConversationToSide} from "./surface/conversation-placement";
+import {exactDevelopmentFieldView} from "./surface/development-field-snapshot";
+import {enterComposition,leaveComposition,presentBinding,selectCompositionCollection} from "./surface/composition";
+import {matchesSurfaceRequest} from "./surface/binding-reuse";
+import {FactoryLiveProvider,FactoryUpdates} from "./contributions/factory/FactoryLive";
+import {resolveWorkingSurface,type WorkingSurfaceSelection} from "./encounter/working-surface";
+import {SessionIngress} from "./encounter/SessionIngress";
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
 import {ExpressionStageProvider} from "./stage/ExpressionStage";
 import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
@@ -81,6 +89,7 @@ import { createPortal, flushSync } from "react-dom";
 
 function snapshotOf(state: LayoutState): RestorePoint {
   return {
+    composition: state.composition,
     root: state.root,
     surfaces: state.surfaces,
     closedStack: state.closedStack,
@@ -323,18 +332,18 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       execute("surface.activate", { surfaceId: binding.id });
       return;
     }
-    setState((s) => openBinding({ ...s, closedStack: s.closedStack.filter(id => id !== binding.id) }, makeSourceBinding(s, source.ref, source.path, project)));
+    setState((s) => presentBinding({ ...s, closedStack: s.closedStack.filter(id => id !== binding.id) }, makeSourceBinding(s, source.ref, source.path, project)));
   };
 
   const openEncounter=async(row:EncounterRow)=>{
     await encounter(kernel.transport,row.project,{action:"start"});
     await encounter(kernel.transport,row.project,{action:"read",agent_session:row.ref,after:0,limit:1});
-    if(kernel.transport.kind==="tauri") {const {invoke}=await import("@tauri-apps/api/core");if(await invoke<boolean>("window_focus_subject",{reference:row.ref}))return;}
-    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="encounter"&&binding.ref===row.ref);
+    if(kernel.transport.kind==="tauri") {const {invoke}=await import("@tauri-apps/api/core");if(await invoke<boolean>("window_focus_subject",{reference:row.ref,project:row.project,space:row.space}))return;}
+    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="encounter"&&binding.ref===row.ref&&binding.project===row.project&&binding.encounter?.space===row.space);
     const binding=existing??{id:crypto.randomUUID(),kind:"encounter",ref:row.ref,title:row.title,project:row.project,encounter:{space:row.space}};
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
     if(opened?.result!=="surface_opened")throw new Error("AIKit encounter surface could not be opened");
-    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
+    setState(s=>presentConversation(s,binding));
   };
 
   const openFile = async (location:CentralLocation) => {
@@ -374,7 +383,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     const binding=existing??{id:crypto.randomUUID(),kind:"file",ref,title:resolvedLocation.path.split("/").pop()??"File",project,location:resolvedLocation};
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"file",source_ref:binding.ref,title:binding.title});
     if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
-    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
+    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):presentBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
   /** The human's Day, through the owner's own route: `central.day.read`
@@ -408,7 +417,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
     const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
     if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
-    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : presentBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
     if(placement==="window") {
       try {
         const {invoke}=await import("@tauri-apps/api/core");
@@ -471,13 +480,67 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
 
   /// The Factory development reads surface (queue cell 3): the first 6D
   /// consumer, opened from the navigator like every global surface.
-  const openFactoryDevelopment = async () => {
+  const openFactoryDevelopment = async (project: string, projectRef?: string) => {
     const current = stateRef.current;
-    const existing = Object.values(current.surfaces).find(b=>b.kind==="factory");
-    const binding = existing ?? {id:crypto.randomUUID(),kind:"factory",title:"Factory development"};
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="factory" && b.project===project);
+    const binding: SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"factory",title:`${project} · Runs`,project,ref:projectRef};
     const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"factory",source_ref:undefined,title:binding.title});
     if (opened?.result !== "surface_opened") throw new Error("The Factory development surface could not be opened");
-    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+    setState(s=>enterComposition(s,binding));
+  };
+
+  const openObservatory = async (row: import("./encounter/EncounterList").EncounterRow) => {
+    const current=stateRef.current;
+    const existing=Object.values(current.surfaces).find(b=>b.kind==="observatory"&&b.ref===row.ref&&b.project===row.project);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"observatory",ref:row.ref,project:row.project,title:row.title,encounter:{space:row.space}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("Session Observatory could not be opened");
+    setState(s=>presentBinding(s,binding));
+  };
+
+  const openWorkingSurface = async (selection:WorkingSurfaceSelection) => {
+    const resolved=await resolveWorkingSurface(kernel.transport,selection);
+    const existing=Object.values(stateRef.current.surfaces).find(surface=>surface.kind==="terminal"&&surface.ref===resolved.binding.surface&&surface.project===selection.project&&surface.terminal?.attachment?.binding===resolved.binding.binding);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"terminal",title:"Working Surface",project:selection.project,ref:resolved.binding.surface,terminal:{attachment:{kind:"aikit-session-space-working-surface",space:selection.space,binding:resolved.binding.binding,serviceCwd:resolved.service_cwd}}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("Working Surface could not be opened");
+    setState(s=>presentBinding(s,binding));
+  };
+
+  const openSurfaceBinding = async (requested:SurfaceBinding, region:"centre"|"right"="centre") => {
+    const existing=Object.values(stateRef.current.surfaces).find(surface=>matchesSurfaceRequest(surface,requested));
+    const binding=existing??requested;
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("The selected Surface could not be opened");
+    setState(s=>presentBinding(s,binding,region));
+  };
+
+  const openProjectNow = async (project:string,projectRef?:string) => {
+    if(!projectRef)throw new Error("Central did not resolve this Project");
+    const existing=Object.values(stateRef.current.surfaces).find(b=>b.kind==="project-now"&&b.ref===projectRef);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"project-now",title:`${project} · NOW`,project,ref:projectRef};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:undefined,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("Project NOW could not be opened");
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):presentBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+
+  const openWorkingChanges=async(project:string,projectRef?:string)=>{
+    const cwd=terminalCwd(project);
+    if(!cwd||!projectRef)throw new Error("Central did not disclose this Project location.");
+    const existing=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="development-field"&&binding.project===project&&binding.view?.developmentField?.cwd===cwd);
+    const binding:SurfaceBinding=existing??{id:crypto.randomUUID(),kind:"development-field",title:"Working changes",project,ref:projectRef,view:{developmentField:{cwd}}};
+    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,title:binding.title});
+    if(opened?.result!=="surface_opened")throw new Error("The working changes Surface could not be opened.");
+    setState(state=>presentBinding(state,binding,state.composition?"right":"centre"));
+  };
+
+  const openProjectAgents = async (project: string, projectRef?: string) => {
+    const current = stateRef.current;
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="agents" && b.project===project);
+    const binding: SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"agents",title:`${project} · Agents`,project,ref:projectRef};
+    const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+    if (opened?.result !== "surface_opened") throw new Error("The Project Agents surface could not be opened");
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : presentBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
   const openFresh=(groupId?:string)=>{
@@ -758,7 +821,20 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         }catch(reason){error=String(reason);setWindowError(error);}
         if(e.payload.request_id&&e.payload.origin){const {emitTo}=await import("@tauri-apps/api/event");await emitTo(e.payload.origin,"oi:window-navigate-result",{request_id:e.payload.request_id,error});}
       });
-      const v=await listen<{workspace_id:string;surface_id:string;view:NonNullable<import("./surface/types").SurfaceBinding["view"]>}>("oi:surface-view",e=>{if(["Conversation","Activity","Context","Inspect"].includes(e.payload.view?.encounterPlane??""))workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,e.payload.view);});
+      const v=await listen<{workspace_id:string;surface_id:string;view:NonNullable<import("./surface/types").SurfaceBinding["view"]>}>("oi:surface-view",e=>{
+        const held=workspaceRef.current.workspaces.find(workspace=>workspace.id===e.payload.workspace_id)?.layout.surfaces[e.payload.surface_id];
+        const heldFactory=held?.view?.factory;
+        const factory=heldFactory?.runRef&&(held?.kind==="factory-material"||held?.kind==="factory-handoff")
+          ? exactFactoryReviewView(e.payload.view?.factory,{kind:held.kind,statePath:heldFactory.statePath,runRef:heldFactory.runRef,subjectRef:held.kind==="factory-material"?held.ref:undefined})
+          : undefined;
+        const heldDevelopment=held?.kind==="development-field"?held.view?.developmentField:undefined;
+        const development=heldDevelopment&&typeof held?.project==="string"
+          ? exactDevelopmentFieldView(e.payload.view?.developmentField,{project:held.project,cwd:heldDevelopment.cwd,requestedBase:heldDevelopment.baseRevision??"HEAD"})
+          : undefined;
+        if (development) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held!.view,developmentField:development});
+        else if(factory) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held!.view,factory});
+        else if(held?.kind==="encounter"&&["Conversation","Activity","Context","Inspect"].includes(e.payload.view?.encounterPlane??"")) workspaceRef.current.surfaceView(e.payload.workspace_id,e.payload.surface_id,{...held.view,encounterPlane:e.payload.view.encounterPlane});
+      });
       const c=await listen<{workspace_id:string;surface_id:string;bounds:import("./surface/types").NativeWindowBounds}>("oi:window-bounds",e=>workspaceRef.current.windowBounds(e.payload.workspace_id,e.payload.surface_id,e.payload.bounds));
       if(disposed){a();b();c();v();}else cleanups.push(a,b,c,v);
     });
@@ -843,7 +919,20 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   // Sidebar C6: the chat row for the encounter that is the active surface
   // reads as selected — `subjectBinding` above is already that binding.
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
-  const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
+  const [returnedHost,setReturnedHost]=useState<HTMLDivElement|null>(null);
+  const [companionHost,setCompanionHost]=useState<HTMLDivElement|null>(null);
+  const accompanyingBinding=groupsOf(state.root).map(group=>state.surfaces[group.active??""]).find(binding=>binding?.kind==="encounter"&&binding.ref===state.accompanying?.ref&&binding.project===state.accompanying?.project&&binding.encounter?.space===state.accompanying?.space);
+  const accompanyingDetached=state.detached?.some(entry=>{const binding=state.surfaces[entry.surfaceId];return binding?.kind==="encounter"&&binding.ref===state.accompanying?.ref&&binding.project===state.accompanying?.project&&binding.encounter?.space===state.accompanying?.space;});
+  const accompanyingTarget=accompanyingBinding?`[data-accompanying-host="${accompanyingBinding.id}"]`:state.composition||accompanyingDetached?"[data-accompanying-parking]":undefined;
+  const summonAgent=()=>{
+    if(state.composition&&state.accompanying)void openEncounter({...state.accompanying,title:"Conversation"}).catch(reason=>setWindowError(String(reason)));
+    else setState(s=>({...s,rightDepth:"panel"}));
+  };
+  const leaveFactory=()=>setState(leaveComposition);
+  const compositionControls=state.composition?<span className="composition-actions">
+    {state.accompanying&&<button onClick={summonAgent}>Conversation</button>}
+    <button onClick={leaveFactory}>Leave Factory</button>
+  </span>:null;
 
   // Close the menu on any pointerdown outside it.
   useEffect(() => {
@@ -863,19 +952,25 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
 
   return (
     <>
+      <div data-accompanying-parking hidden/>
       <ExpressionLayout layout={state}/>
       {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)}/>}
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
-      <DesktopShell onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <FactoryLiveProvider binding={state.composition?state.surfaces[state.composition.bindingId]:undefined}>
+      <DesktopShell companionHost={setCompanionHost} complementary={!!accompanyingBinding&&!state.composition} returnedHost={setReturnedHost} accompanyingTarget={accompanyingTarget} sessionIngress={<><FactoryUpdates onOpenRun={binding=>openFactoryDevelopment(binding.project!,binding.ref)} onOpenMaterial={(binding,selection)=>openSurfaceBinding({id:crypto.randomUUID(),kind:"factory-material",title:selection.label,project:binding.project,ref:selection.subjectRef,view:{factory:{statePath:binding.view!.factory!.statePath,runRef:binding.view!.factory!.runRef}}},"right")}/>{compositionControls}<SessionIngress project={workspace.current.project} selected={state.accompanying} onOpen={openObservatory}/></>} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
-        right={<AgentLayer project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
+        right={<AgentLayer onOpenWorkingSurface={openWorkingSurface} complementaryHost={accompanyingBinding&&!state.composition?companionHost:undefined} onReturnConversation={()=>accompanyingBinding&&setState(state=>returnConversationToSide(state,accompanyingBinding.id))} region={accompanyingTarget?"centre":"right"} project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error}
-        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={()=>void openFactoryDevelopment().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
+        navigator={workspaceSelector => <WorldNavigator onOpenWorkingChanges={openWorkingChanges} onOpenProjectNow={openProjectNow} onOpenAgents={openProjectAgents} onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={(project,ref)=>openFactoryDevelopment(project,ref)} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
       {state.root ? (
         <Workbench
-          onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
+          onOpenEncounter={openEncounter} onOpenWorkingSurface={openWorkingSurface} onOpenFile={openFile} onOpenBinding={binding=>openSurfaceBinding(binding,["factory-handoff","factory-material"].includes(binding.kind)?"right":"centre")} returnedHost={returnedHost} accompanying={state.accompanying}
+          onView={(id,view)=>{
+            workspace.surfaceView(workspace.current.id,id,view);
+            if(state.surfaces[id]?.kind==="factory")setState(current=>selectCompositionCollection(current,id,view.factory?.runRef));
+          }}
           workspaceName={workspace.current.name}
           state={state}
           menuOpen={!!menu}
@@ -897,6 +992,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         })()} />
       )}
       </DesktopShell>
+      </FactoryLiveProvider>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
       {searchOpen && <SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}

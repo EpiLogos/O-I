@@ -1,0 +1,17 @@
+{
+  "standing": "C: live browser and Central action catalogue; no populated Agent records or expression capability",
+  "checks": [
+    "Reads the live Central Action catalogue",
+    "Confirms Agent expression is unavailable in the live catalogue",
+    "Opens the Project Agents workspace",
+    "Shows truthful empty profile inventory",
+    "Shows truthful empty team inventory",
+    "Shows current Project sessions separately",
+    "Hides unsupported expression affordance",
+    "Offers workspace controls as secondary settings",
+    "Workspace settings starts collapsed",
+    "Does not surface irrelevant World errors",
+    "No application page errors"
+  ],
+  "errors": []
+}

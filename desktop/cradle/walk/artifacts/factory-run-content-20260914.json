@@ -1,0 +1,513 @@
+{
+  "standing": "C: actual application and native Factory executable; retained Run has no execution or Candidate, not positive joined-work proof",
+  "checks": [
+    "Native Build retains the selected Run identity",
+    "Displays actual Factory Run destination",
+    "Actual empty Candidate state remains empty",
+    "Actual empty execution state is not fabricated",
+    "Native Run Map retains the selected Run identity",
+    "Native Run Map discloses an actual work node",
+    "Selects the actual Factory work node",
+    "Shows the exact native semantic reference",
+    "Native Run Map supplies the work-node dependency edge",
+    "Renders the selected node incoming dependency",
+    "Renders the native dependency relation",
+    "Refresh re-reads the native Factory Build",
+    "Run Map selection survives the Build refresh",
+    "Reads canonical Central-to-Factory project link",
+    "Reads native Factory Build",
+    "Agent creation exposes the human intent",
+    "Intent precedes scope in reading and keyboard order",
+    "Optional profile defaults are disclosed on request",
+    "Incomplete intent does not submit an Agent proposal",
+    "No application page errors"
+  ],
+  "errors": [],
+  "responses": [
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "central-project-link-read",
+        "subject": "project:o-i"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.central-project-link-reading/v1",
+            "link": {
+              "centralProjectRef": "project:o-i",
+              "factoryProjectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+              "sourcePath": "/home/frank/Central/Work/O-I/ProjectCentral/project.json",
+              "sourceRevision": "blake3:df287183e1a42d6a76efc488cb479706b8f77aacf9deea835c915b10a471e6d8"
+            },
+            "project": {
+              "contract": "factory.project-reading/v1",
+              "journeys": [],
+              "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+              "projectRevision": 1,
+              "provenance": {
+                "factoryStateRevision": 1,
+                "owner": "factory",
+                "source": "canonical FactoryDevelopmentalState + Factory Journey registry",
+                "subjectRevision": 1
+              }
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "central-project-link-read",
+        "subject": "project:o-i"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.central-project-link-reading/v1",
+            "link": {
+              "centralProjectRef": "project:o-i",
+              "factoryProjectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+              "sourcePath": "/home/frank/Central/Work/O-I/ProjectCentral/project.json",
+              "sourceRevision": "blake3:df287183e1a42d6a76efc488cb479706b8f77aacf9deea835c915b10a471e6d8"
+            },
+            "project": {
+              "contract": "factory.project-reading/v1",
+              "journeys": [],
+              "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+              "projectRevision": 1,
+              "provenance": {
+                "factoryStateRevision": 1,
+                "owner": "factory",
+                "source": "canonical FactoryDevelopmentalState + Factory Journey registry",
+                "subjectRevision": 1
+              }
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "project",
+        "subject": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.project-reading/v1",
+            "journeys": [],
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "projectRevision": 1,
+            "provenance": {
+              "factoryStateRevision": 1,
+              "owner": "factory",
+              "source": "canonical FactoryDevelopmentalState + Factory Journey registry",
+              "subjectRevision": 1
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "run",
+        "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "actions": [
+              {
+                "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+                "applicableSubjectRefs": [],
+                "authorityOwner": "factory",
+                "currentlyApplicable": false,
+                "inputContract": "factory.action-projection/v1",
+                "label": "Request more evidence",
+                "requiredCapabilityRef": "capability/factory/request-evidence",
+                "resultContract": "factory.action-projection/v1",
+                "subjectKinds": [
+                  "candidate"
+                ]
+              }
+            ],
+            "agencies": [],
+            "candidates": [],
+            "contract": "factory.run-reading/v1",
+            "destination": "verify-corrected-desktop-header-and-continuity",
+            "evidence": [],
+            "executions": [],
+            "humanRequests": [],
+            "lifecycle": "seeded",
+            "owningJourneyRefs": [],
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "provenance": {
+              "factoryStateRevision": 1,
+              "owner": "factory",
+              "source": "canonical Factory Run/RunMap + Factory Build correlations",
+              "subjectRevision": 2
+            },
+            "revision": 2,
+            "routineInvocationRefs": [],
+            "runMap": {
+              "edges": [
+                {
+                  "from": "destination",
+                  "relation": "branches_to",
+                  "to": "work-verify-header-continuity"
+                }
+              ],
+              "nodes": {
+                "destination": {
+                  "id": "destination",
+                  "kind": "destination",
+                  "label": "verify-corrected-desktop-header-and-continuity",
+                  "semanticRef": null,
+                  "state": null
+                },
+                "work-verify-header-continuity": {
+                  "id": "work-verify-header-continuity",
+                  "kind": "work",
+                  "label": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree.",
+                  "semanticRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR",
+                  "state": "ready"
+                }
+              },
+              "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+              "topologyRevision": 2
+            },
+            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+            "thoughtAvailable": false,
+            "thoughtRefs": []
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_attempt_task_list_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.attempt-task-list-reading/v1",
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "revision": 1,
+            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+            "runRevision": 2,
+            "sourceCurrent": true,
+            "taskRefs": [],
+            "topologyRevision": 2,
+            "totalTasks": 0
+          },
+          "result": "factory_attempt_task_list_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "build",
+        "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.build-view/v1",
+            "provenance": {
+              "factoryStateRevision": 1,
+              "owner": "factory",
+              "runMapRevision": 2,
+              "runRevision": 2,
+              "source": "canonical FactoryBuildState + canonical Run/RunMap"
+            },
+            "providerContract": "factory.build-view-provider/v1",
+            "revision": 1,
+            "view": {
+              "actions": [
+                {
+                  "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+                  "label": "Request more evidence",
+                  "requiredCapabilityRef": "capability/factory/request-evidence",
+                  "subjectKinds": [
+                    "candidate"
+                  ]
+                }
+              ],
+              "agencies": [],
+              "candidates": [],
+              "claims": [],
+              "evidence": [],
+              "executions": [],
+              "frontier": {
+                "mode": "work",
+                "subjectRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR",
+                "summary": "RunMap frontier: Some(Ready)",
+                "title": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree."
+              },
+              "humanRequests": [],
+              "project": {
+                "label": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+                "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
+              },
+              "run": {
+                "label": "verify-corrected-desktop-header-and-continuity",
+                "runMapRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD/map",
+                "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+                "status": "queued"
+              },
+              "trajectories": []
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "central-project-link-read",
+        "subject": "project:o-i"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.central-project-link-reading/v1",
+            "link": {
+              "centralProjectRef": "project:o-i",
+              "factoryProjectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+              "sourcePath": "/home/frank/Central/Work/O-I/ProjectCentral/project.json",
+              "sourceRevision": "blake3:df287183e1a42d6a76efc488cb479706b8f77aacf9deea835c915b10a471e6d8"
+            },
+            "project": {
+              "contract": "factory.project-reading/v1",
+              "journeys": [],
+              "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+              "projectRevision": 1,
+              "provenance": {
+                "factoryStateRevision": 1,
+                "owner": "factory",
+                "source": "canonical FactoryDevelopmentalState + Factory Journey registry",
+                "subjectRevision": 1
+              }
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "project",
+        "subject": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.project-reading/v1",
+            "journeys": [],
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "projectRevision": 1,
+            "provenance": {
+              "factoryStateRevision": 1,
+              "owner": "factory",
+              "source": "canonical FactoryDevelopmentalState + Factory Journey registry",
+              "subjectRevision": 1
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "run",
+        "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "actions": [
+              {
+                "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+                "applicableSubjectRefs": [],
+                "authorityOwner": "factory",
+                "currentlyApplicable": false,
+                "inputContract": "factory.action-projection/v1",
+                "label": "Request more evidence",
+                "requiredCapabilityRef": "capability/factory/request-evidence",
+                "resultContract": "factory.action-projection/v1",
+                "subjectKinds": [
+                  "candidate"
+                ]
+              }
+            ],
+            "agencies": [],
+            "candidates": [],
+            "contract": "factory.run-reading/v1",
+            "destination": "verify-corrected-desktop-header-and-continuity",
+            "evidence": [],
+            "executions": [],
+            "humanRequests": [],
+            "lifecycle": "seeded",
+            "owningJourneyRefs": [],
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "provenance": {
+              "factoryStateRevision": 1,
+              "owner": "factory",
+              "source": "canonical Factory Run/RunMap + Factory Build correlations",
+              "subjectRevision": 2
+            },
+            "revision": 2,
+            "routineInvocationRefs": [],
+            "runMap": {
+              "edges": [
+                {
+                  "from": "destination",
+                  "relation": "branches_to",
+                  "to": "work-verify-header-continuity"
+                }
+              ],
+              "nodes": {
+                "destination": {
+                  "id": "destination",
+                  "kind": "destination",
+                  "label": "verify-corrected-desktop-header-and-continuity",
+                  "semanticRef": null,
+                  "state": null
+                },
+                "work-verify-header-continuity": {
+                  "id": "work-verify-header-continuity",
+                  "kind": "work",
+                  "label": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree.",
+                  "semanticRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR",
+                  "state": "ready"
+                }
+              },
+              "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+              "topologyRevision": 2
+            },
+            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+            "thoughtAvailable": false,
+            "thoughtRefs": []
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_development_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "read": "build",
+        "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.build-view/v1",
+            "provenance": {
+              "factoryStateRevision": 1,
+              "owner": "factory",
+              "runMapRevision": 2,
+              "runRevision": 2,
+              "source": "canonical FactoryBuildState + canonical Run/RunMap"
+            },
+            "providerContract": "factory.build-view-provider/v1",
+            "revision": 1,
+            "view": {
+              "actions": [
+                {
+                  "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+                  "label": "Request more evidence",
+                  "requiredCapabilityRef": "capability/factory/request-evidence",
+                  "subjectKinds": [
+                    "candidate"
+                  ]
+                }
+              ],
+              "agencies": [],
+              "candidates": [],
+              "claims": [],
+              "evidence": [],
+              "executions": [],
+              "frontier": {
+                "mode": "work",
+                "subjectRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR",
+                "summary": "RunMap frontier: Some(Ready)",
+                "title": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree."
+              },
+              "humanRequests": [],
+              "project": {
+                "label": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+                "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
+              },
+              "run": {
+                "label": "verify-corrected-desktop-header-and-continuity",
+                "runMapRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD/map",
+                "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+                "status": "queued"
+              },
+              "trajectories": []
+            }
+          },
+          "result": "factory_development_reading"
+        }
+      }
+    },
+    {
+      "request": {
+        "op": "factory_attempt_task_list_read",
+        "state_path": "desktop/cradle/walk/material/header-continuity.state.json",
+        "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD"
+      },
+      "result": {
+        "ok": true,
+        "outcome": {
+          "data": {
+            "contract": "factory.attempt-task-list-reading/v1",
+            "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+            "revision": 1,
+            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+            "runRevision": 2,
+            "sourceCurrent": true,
+            "taskRefs": [],
+            "topologyRevision": 2,
+            "totalTasks": 0
+          },
+          "result": "factory_attempt_task_list_reading"
+        }
+      }
+    }
+  ]
+}

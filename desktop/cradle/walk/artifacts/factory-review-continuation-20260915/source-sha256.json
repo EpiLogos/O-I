@@ -1,0 +1,18 @@
+{
+  "desktop/cradle/src-tauri/src/windows.rs": "e5fb789de586e8893ff569f6a455391f94633e9f608d088a4ce25f51108baa83",
+  "desktop/cradle/src/Cradle.tsx": "fd01c31f29ebcfd40304f64ec630e1b5fe5ff0bfa4561335f4fcb691027fa795",
+  "desktop/cradle/src/contributions/factory/FactoryHandoffSurface.tsx": "01f3ff5382555aa26a1633f15aa381573c24655adaa0cfc57bcebb1182c85640",
+  "desktop/cradle/src/contributions/factory/FactoryMaterialSurface.tsx": "e869009f7fa80b53ab855a4ddf5ca0bc6e6227084a0bc6331ba3be9e968ba558",
+  "desktop/cradle/src/contributions/factory/attempt-task.ts": "8d1de71eca036bcd0bf2e0d83ca079d6cb141298557dc848290a8b9ea8e59cd3",
+  "desktop/cradle/src/receiving/NowRelations.tsx": "ad439ac679a9ebc93ba18d59d407c65ef1c64d737f3ae30fc78583aa14084ec0",
+  "desktop/cradle/src/surface/Workbench.tsx": "1a212a99ee2fa81b8e7a2b28e264731049f9b33bd86e02576fc0495dfcc16849",
+  "desktop/cradle/src/surface/persist.ts": "9314ca23cdd5c4fd9cf968a18f457ca3978ade70a066c3a3bb3992e12982b6d2",
+  "desktop/cradle/src/surface/types.ts": "748f8564c3e4db9bab55ff3459528874c169b5c8e0e9c1244066f4e649bf4a73",
+  "desktop/cradle/src/workspace/DetachedFrame.tsx": "b7bc955dffc5f0e636c52725541c664d1e3dc5e85319aacde883c89977e4c8b9",
+  "desktop/cradle/walk/factory-run-content.mjs": "eb138eb5debcbf2048eea9eca3504e1580368466c25340f98f3651f19890e550",
+  "desktop/cradle/walk/run.mjs": "62d2f188eaaf20ba48f27c698cdbada8dbfbe71584fb423892bd3fc8d7d90411",
+  "desktop/cradle/walk/scenarios/now-relations.mjs": "620aa8ae147c3b7b4c7ee38b55fed4128895d1cf47145f997b8082ead17afc99",
+  "desktop/cradle/src/contributions/factory/factory-review-snapshot.ts": "58027c152644aceea23cc0482d5c1d3848b7329d1cd788d0385c3faf385ece32",
+  "desktop/cradle/walk/factory-review-read.mjs": "624ee017ead3f24026eb1f274e89d6297c4ca5033289e975f23deaddba0e3a05",
+  "desktop/cradle/walk/factory-review-recovery.mjs": "bb2fe47060c93ec2d9d862010857e494bab8258ef984d383d4cd6103e5df16b6"
+}

@@ -98,8 +98,27 @@ const WELCOME_CHAOS: NativeConfig = {
   },
 };
 
+/** A short, bounded arrangement disclosure on the shared native medium.
+ * Three formations gather around the central encounter; no node represents
+ * an Agent, Run, authority or completion percentage. */
+const FACTORY_GATHER: NativeConfig = (() => {
+  const scene = blankScene("Factory arrangement");
+  scene.entities = [-0.8, 0, 0.8].map((x, index) => {
+    const form = entity("Shell region", "O", {x, y: 0, z: 0});
+    form.id = `factory-region-${index}`;
+    form.size = {x: index === 1 ? 0.44 : 0.16, y: index === 1 ? 0.44 : 0.16};
+    form.share = index === 1 ? 3 : 1;
+    return form;
+  });
+  scene.field.params.count = 6000;
+  scene.field.params.size = 1.1;
+  return nativeExport(scene).config;
+})();
+
 export const RECIPES: Readonly<Record<string, NativeConfig>> = Object.freeze({
   [MARK_RECIPE]: MARK_CONFIG,
+  "factory.gather": FACTORY_GATHER,
+  "factory.settle": {fluid: {dispersion: 0.1, returnSpeed: 2.0}},
   [FOCUSED_INSTRUMENT_RECIPE]: FOCUSED_INSTRUMENT_CONFIG,
   "welcome.relational": WELCOME_RELATIONAL,
   "welcome.chaos": WELCOME_CHAOS,
@@ -118,6 +137,7 @@ export interface StageSequence {
 }
 
 export const SEQUENCES: Readonly<Record<string, StageSequence>> = Object.freeze({
+  "factory.enter": Object.freeze({steps: Object.freeze([{at: 0, recipe: "factory.gather"}, {at: 180, recipe: "factory.settle"}])}),
   "welcome.enter": Object.freeze({
     steps: Object.freeze([
       Object.freeze({ at: 0, recipe: "welcome.relational", disperse: 1.4 }),

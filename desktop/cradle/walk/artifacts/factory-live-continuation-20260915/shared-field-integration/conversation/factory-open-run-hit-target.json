@@ -1,0 +1,199 @@
+{
+  "button": {
+    "left": 893.453125,
+    "top": 788.5,
+    "width": 234,
+    "height": 22,
+    "text": "Open Run",
+    "role": null,
+    "styles": {
+      "position": "static",
+      "zIndex": "auto",
+      "overflow": "visible",
+      "transform": "none",
+      "opacity": "1",
+      "pointerEvents": "auto"
+    }
+  },
+  "point": {
+    "x": 1010.453125,
+    "y": 799.5
+  },
+  "hit": {
+    "tag": "BUTTON",
+    "id": "",
+    "className": "",
+    "role": null,
+    "text": "Open Run",
+    "box": {
+      "left": 893.453125,
+      "top": 788.5,
+      "width": 234,
+      "height": 22
+    },
+    "styles": {
+      "position": "static",
+      "zIndex": "auto",
+      "overflow": "visible",
+      "transform": "none",
+      "opacity": "1",
+      "pointerEvents": "auto"
+    }
+  },
+  "activeTab": "Factory live walk — Codex",
+  "buttonOwnsHit": true,
+  "ancestors": [
+    {
+      "tag": "BUTTON",
+      "id": "",
+      "className": "",
+      "box": {
+        "left": 893.453125,
+        "top": 788.5,
+        "width": 234,
+        "height": 22
+      },
+      "styles": {
+        "position": "static",
+        "zIndex": "auto",
+        "overflow": "visible",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "DIV",
+      "id": "",
+      "className": "session-ingress-menu",
+      "box": {
+        "left": 880.453125,
+        "top": 775.5,
+        "width": 260,
+        "height": 48
+      },
+      "styles": {
+        "position": "absolute",
+        "zIndex": "100",
+        "overflow": "auto",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "DETAILS",
+      "id": "",
+      "className": "",
+      "box": {
+        "left": 1088.90625,
+        "top": 841.5,
+        "width": 51.546875,
+        "height": 10
+      },
+      "styles": {
+        "position": "static",
+        "zIndex": "auto",
+        "overflow": "visible",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "DIV",
+      "id": "",
+      "className": "session-ingress factory-updates",
+      "box": {
+        "left": 1088.90625,
+        "top": 841.5,
+        "width": 51.546875,
+        "height": 10
+      },
+      "styles": {
+        "position": "relative",
+        "zIndex": "auto",
+        "overflow": "visible",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "FOOTER",
+      "id": "",
+      "className": "canvas-arrangement",
+      "box": {
+        "left": 0,
+        "top": 834,
+        "width": 1422,
+        "height": 24
+      },
+      "styles": {
+        "position": "relative",
+        "zIndex": "auto",
+        "overflow": "visible",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "DIV",
+      "id": "",
+      "className": "workspace-footer-edge",
+      "box": {
+        "left": 0,
+        "top": 834,
+        "width": 1422,
+        "height": 24
+      },
+      "styles": {
+        "position": "relative",
+        "zIndex": "80",
+        "overflow": "visible",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "DIV",
+      "id": "",
+      "className": "desktop-shell",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1422,
+        "height": 858
+      },
+      "styles": {
+        "position": "static",
+        "zIndex": "auto",
+        "overflow": "hidden",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    },
+    {
+      "tag": "DIV",
+      "id": "root",
+      "className": "",
+      "box": {
+        "left": 0,
+        "top": 0,
+        "width": 1422,
+        "height": 858
+      },
+      "styles": {
+        "position": "static",
+        "zIndex": "auto",
+        "overflow": "visible",
+        "transform": "none",
+        "opacity": "1",
+        "pointerEvents": "auto"
+      }
+    }
+  ]
+}

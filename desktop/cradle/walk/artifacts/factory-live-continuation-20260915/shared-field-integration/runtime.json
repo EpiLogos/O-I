@@ -1,0 +1,10 @@
+{
+  "source": "490fdc32a2a41675bf73ed31c095569f35baef10",
+  "main": "bca9f58aaddee23b22d22e7a27aec9c391dae413",
+  "bridgePid": 1529098,
+  "appPid": 1529100,
+  "residentPid": 589249,
+  "providerPreserved": true,
+  "appSha256": "df4eb2ace74a2cb12793baf732133d6a4da88a2d3b5c5682a0e89f7cc0a8880d",
+  "bridgeSha256": "25d12089f08aa777d63846c27646f3938dc955bbcdff29e6d74e8dc502941eb0"
+}

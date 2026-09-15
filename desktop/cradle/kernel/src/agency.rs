@@ -2,6 +2,7 @@
 //! filesystem isolation are not evidence of an AgentSession or live encounter.
 use serde_json::Value;
 use std::{
+    collections::BTreeSet,
     path::{Path, PathBuf},
     process::Command,
 };
@@ -121,6 +122,8 @@ fn read_project_with(
 pub enum EncounterRequest {
     Start,
     Providers,
+    ModelRead { agent_session:String },
+    ModelSelect { agent_session:String, provider_model_id:String, #[serde(default, skip_serializing_if="Option::is_none")] provider_reasoning_effort:Option<String> },
     Open { space:String, agent_session:String, provider:String },
     Read { agent_session:String, after:u64, limit:usize },
     View {agent_session:String,before:Option<u64>},
@@ -138,6 +141,9 @@ pub enum EncounterRequest {
     /// admission) before the first transport effect and every recipient gets
     /// an independent durable result; the fanout is never atomic.
     SendGroup { delivery_ref:String, sender:String, packet:AddressedPacket, recipients:Vec<GroupRecipient> },
+    /// Read-only owner preflight. Candidate sessions are derived only from the
+    /// Project's public SessionSpace discovery inside this kernel boundary.
+    AddressableParticipants { sender:String, source_refs:Vec<String> },
     /// Read one addressed delivery's durable owner receipt.
     Delivery { agent_session:String, delivery_ref:String },
     /// Resume the actually recorded native session identity. The owner refuses
@@ -166,8 +172,8 @@ pub struct GroupRecipient { pub agent_session:String, pub expected_binding_revis
 pub enum PermissionDecision {Selected {option_id:String},Cancelled}
 impl EncounterRequest {
     fn sessions(&self)->Vec<&str> {match self {
-        Self::Start|Self::Providers|Self::Health=>Vec::new(),
-        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
+        Self::Start|Self::Providers|Self::Health|Self::AddressableParticipants{..}=>Vec::new(),
+        Self::ModelRead{agent_session}|Self::ModelSelect{agent_session,..}|Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
         // The attachment gate covers every named participant of a group: a
         // session outside this Project's SessionSpaces is refused here, before
         // the owner sees the turn.
@@ -176,6 +182,17 @@ impl EncounterRequest {
 }
 impl Client {
     pub fn encounter(&self,cwd:&Path,project_ref:&str,request:&EncounterRequest)->Result<Value,String> {
+        let addressable_candidates=if matches!(request,EncounterRequest::AddressableParticipants{..}) {
+            let spaces=self.read_project(cwd,project_ref)?;
+            let rows=spaces.as_array().ok_or("AIKit SessionSpace discovery is not an array")?;
+            let mut candidates=BTreeSet::new();
+            for row in rows {
+                let sessions=row.get("agent_sessions").and_then(Value::as_object).ok_or("Unsupported native SessionSpace reading")?;
+                candidates.extend(sessions.keys().cloned());
+            }
+            if candidates.len()>128 {return Err("AIKit Project SessionSpace discovery returned more than 128 candidate sessions".into());}
+            candidates.into_iter().collect::<Vec<_>>()
+        } else {Vec::new()};
         let sessions=request.sessions();
         if !sessions.is_empty() {
             let spaces=self.read_project(cwd,project_ref)?;
@@ -191,7 +208,10 @@ impl Client {
         command.arg("-C").arg(cwd);
         if matches!(request,EncounterRequest::Start) {command.arg("encounter-start");}
         else {
-            let mut body=serde_json::to_value(request).map_err(|error|error.to_string())?;
+            let mut body=match request {
+                EncounterRequest::AddressableParticipants{sender,source_refs}=>serde_json::json!({"action":"addressable-participants","request":{"sender":sender,"source_refs":source_refs,"candidate_sessions":addressable_candidates}}),
+                _=>serde_json::to_value(request).map_err(|error|error.to_string())?,
+            };
             if matches!(request,EncounterRequest::Open{..}|EncounterRequest::Reconnect{..}) {body["cwd"]=serde_json::json!(cwd);}
             command.args(["encounter","--request-json"]).arg(body.to_string());
         }

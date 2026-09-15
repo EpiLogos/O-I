@@ -356,7 +356,8 @@ async function runScenario(name, { baseUrl }) {
     bridgeUrl = BRIDGE_URL;
   }
 
-  const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
+  const chromiumExecutable = process.env.WALK_CHROMIUM_EXECUTABLE ?? process.env.OI_CHROMIUM;
+  const browser = await chromium.launch(chromiumExecutable ? { executablePath: chromiumExecutable } : {});
   // An explicit context: leave/re-enter scenarios open a second page in the
   // SAME context (shared storage = the restored frame), which the implicit
   // browser.newPage() context refuses.
@@ -419,7 +420,7 @@ function resolveNames(args) {
   const names = [];
   for (const arg of args) {
     const canonical =
-      SCENARIOS[arg] ? arg : Object.keys(SCENARIOS).find((n) => SCENARIOS[n].aliases.includes(arg));
+      SCENARIOS[arg] ? arg : Object.keys(SCENARIOS).find((n) => SCENARIOS[n].aliases?.includes(arg));
     if (!canonical) {
       console.error(`unknown scenario \`${arg}\`; known: ${Object.keys(SCENARIOS).join(", ")}, all`);
       process.exit(2);

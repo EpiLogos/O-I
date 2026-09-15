@@ -1,3 +1,4 @@
+import {leaveComposition} from "../surface/composition";
 import {preservePresentation,latestRecovery} from "./recovery";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
 import { activateSurface, groupsOf, openBinding, redockBinding } from "../surface/engine";
@@ -79,18 +80,45 @@ export function useWorkspaces() {
   });
   const current = book.workspaces.find(w => w.id === book.active)!;
   const held = useRef(book); held.current = book;
-  useEffect(() => {
+  const heldRecovery = useRef(recovery); heldRecovery.current = recovery;
+  const persist = () => {
     // A corrupt store is retained for recovery, never overwritten by fallback.
-    if (book.active === "recovery" || (recovery && !recovery.key)) { setError("Saved workspaces could not be restored. The original data has been retained."); return; }
-    try { localStorage.setItem(KEY, JSON.stringify(book)); setError(null); }
-    catch { setError("Workspace changes could not be saved on this device."); }
+    if (held.current.active === "recovery" || (heldRecovery.current && !heldRecovery.current.key)) return false;
+    try { localStorage.setItem(KEY, JSON.stringify(held.current)); return true; }
+    catch { return false; }
+  };
+  useEffect(() => {
+    if (!persist()) { setError("Saved workspaces could not be restored or saved. The original data has been retained."); return; }
+    setError(null);
   }, [book,recovery]);
+  useEffect(() => {
+    const onPageHide = () => { persist(); };
+    const onVisibilityChange = () => { if (document.visibilityState === "hidden") persist(); };
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisibilityChange);
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+    // Tauri close-requested is the native close boundary; the synchronous
+    // localStorage write uses held.current so it cannot capture an old render.
+    if (typeof window !== "undefined" && "__TAURI_INTERNALS__" in window) {
+      void import("@tauri-apps/api/window").then(({getCurrentWindow}) =>
+        getCurrentWindow().onCloseRequested(() => { persist(); })
+      ).then(remove => { if (disposed) remove(); else unlisten = remove; }).catch(() => undefined);
+    }
+    return () => {
+      disposed = true;
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("visibilitychange", onVisibilityChange);
+      unlisten?.();
+    };
+  }, []);
   const update = (change: (w: Workspace) => Workspace) => setBook(b => ({ ...b, workspaces: b.workspaces.map(w => w.id === b.active ? change(w) : w) }));
   const setLayout = (change: SetStateAction<LayoutState>) => update(w => ({ ...w, layout: typeof change === "function" ? change(w.layout) : change }));
   useEffect(()=>subscribeFocusedInstrumentOpen(request=>{
     const source=focusedInstrumentSource(request.sourceRef);if(!source)return;
     const binding=focusedInstrumentBinding(request);
-    setLayout(state=>{
+    setLayout(current=>{
+      const state=leaveComposition(current);
       const existing=Object.values(state.surfaces).find(surface=>surface.kind==="instrument"&&surface.ref===request.sourceRef);
       const opened=existing
         ? groupsOf(state.root).some(group=>group.tabs.includes(existing.id))

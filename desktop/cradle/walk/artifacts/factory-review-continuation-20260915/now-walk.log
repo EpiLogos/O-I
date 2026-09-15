@@ -1,0 +1,33 @@
+serving the cradle at http://localhost:4173 (external)
+
+=== scenario: now-relations ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+  console.error: Failed to load resource: the server responded with a status of 404 (Not Found)
+PASS  Exactly one row marks the NOW it names, by the owner's ref
+PASS  A record without a NOW renders no NOW marker
+PASS  The kernel now route reads the project NOW through the owner
+PASS  The root register is read through the explicit-null convention
+PASS  The placement-aware native Action preserves the root register and exact NOW identity
+PASS  A project-scoped read of a root-register NOW is refused — registers never blur
+PASS  central.now.list through the kernel discloses the allocated NOW
+PASS  The NOW panel names the exact ref the record carried
+PASS  Task and purpose render verbatim from the owner's reading
+PASS  Lifecycle and source revision render verbatim
+PASS  Participants render exactly as the owner disclosed them
+PASS  Source relations render exactly as the owner disclosed them
+PASS  The record's own source appears among the NOW's relations
+PASS  Continuations render exactly as the owner disclosed them — an empty relation reads as none, never invented
+PASS  Native NOW obligations render from the owner's exact SourceRef list
+PASS  An active NOW discloses its absent archive ref honestly
+PASS  Placement-aware reading discloses the owner's destination
+PASS  Placement-aware reading discloses the owner's policy revision
+  screenshot: artifacts/now-relations-now-relations-rendered.png
+PASS  A record that names no NOW renders no NOW section at all
+PASS  The owner's own refusal is carried verbatim (Error: NOW ref is not allocated in this World…)
+  screenshot: artifacts/now-relations-now-refusal-verbatim.png
+  stopped walk-bridge
+  receipt: artifacts/now-relations.json — 20/20 checks, PASS
+
+=== walk summary ===
+PASS  now-relations — 20/20 checks

@@ -62,8 +62,22 @@ fn main() {
         let mut id=[0u8;16];for (i,byte) in id.iter_mut().enumerate(){*byte=u8::from_str_radix(&raw[i*2..i*2+2],16).expect("validated hex");}
         for window in &mut context.config_mut().app.windows {window.data_store_identifier=Some(id);window.create=false;}
     }
+    #[cfg(target_os = "linux")]
+    for window in &mut context.config_mut().app.windows {
+        window.decorations = false;
+    }
     let builder = material_protocol::register(tauri::Builder::default());
     builder
+        // Register the owner-supported single-instance plugin before the
+        // remaining plugins. A second launch is delivered to and focuses the
+        // existing main window instead of racing its WebKit workspace store.
+        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+            if let Some(window) = app.get_webview_window("main") {
+                let _ = window.unminimize();
+                let _ = window.show();
+                let _ = window.set_focus();
+            }
+        }))
         .plugin(tauri_plugin_dialog::init())
         .setup(|app| {
             app.manage(windows::Windows::default());
@@ -97,6 +111,13 @@ fn main() {
             }
             menus::install(app.handle(), &[], "")?;
             Ok(())
+        })
+        .on_page_load(|_webview, _payload| {
+            #[cfg(target_os = "linux")]
+            if matches!(_payload.event(), tauri::webview::PageLoadEvent::Finished)
+            {
+                menus::sync_window_menu_visibility(&_webview.app_handle());
+            }
         })
         .on_menu_event(|app, event| menus::dispatch(app, event.id().as_ref()))
         .invoke_handler(tauri::generate_handler![walk_diagnostics::expression_walk_observation,terminal::terminal_attach,terminal::terminal_poll,terminal::terminal_input,terminal::terminal_resize,terminal::terminal_checkpoint,terminal::terminal_reconcile,browser::browser_attach, browser::browser_control, browser::browser_reconcile, ground_dialog::choose_central_folder, menus::arrangement_menu, kernel_op, kernel_event_log, windows::window_detach, windows::window_binding, windows::window_redock, windows::window_focus_subject, windows::window_focus_main])

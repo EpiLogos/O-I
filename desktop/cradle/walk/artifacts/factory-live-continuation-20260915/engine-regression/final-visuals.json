@@ -1,0 +1,93 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "visuals",
+  "generated_at": "2026-09-15T02:36:29.689Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4189",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v26.8.1",
+    "platform": "linux"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 222417,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Visuals splits into Themes and Expression"
+    },
+    {
+      "ok": true,
+      "label": "Expression is the initial selected Visuals view"
+    },
+    {
+      "ok": true,
+      "label": "The expression layer starts on"
+    },
+    {
+      "ok": true,
+      "label": "Enabling Visuals hosts exactly one explicit preview canvas"
+    },
+    {
+      "ok": true,
+      "label": "The baked word reaches the running field"
+    },
+    {
+      "ok": true,
+      "label": "Capture produces a PNG download"
+    },
+    {
+      "ok": true,
+      "label": "Capture carries real image bytes (9214)"
+    },
+    {
+      "ok": true,
+      "label": "Off removes preview and window renderers — nothing runs hidden"
+    },
+    {
+      "ok": true,
+      "label": "The master switch reports the off state"
+    },
+    {
+      "ok": true,
+      "label": "On recreates the explicit preview renderer"
+    },
+    {
+      "ok": true,
+      "label": "Dark theme resolves onto the oi-desktop body"
+    },
+    {
+      "ok": true,
+      "label": "Light theme clears the override"
+    },
+    {
+      "ok": true,
+      "label": "Themes returns to the live Expression view by an explicit click"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 12555,
+      "data": {
+        "file": "visuals-visuals-expression.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 190,
+      "data": {
+        "file": "visuals-visuals-panel.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "visuals-visuals-expression.png",
+    "visuals-visuals-panel.png"
+  ]
+}

@@ -147,7 +147,7 @@ are not owner ratification or installed/human acceptance.
 
 When this host unit touches QL's living instrument, read `docs/cradle/03-UX-STATES.md`
 §L and `04-VERIFICATION.md` §8 with their explicit pending standing, then QL-MEF's
-`docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md`. Name the UX story, original owner
+[UX spine reconciliation](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md). Name the UX story, original owner
 intent, A/B criteria and native producer dependencies. Preserve the complete
 field rather than testing only what the renderer presently exposes.
 

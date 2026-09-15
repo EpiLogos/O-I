@@ -1,0 +1,116 @@
+import {chromium} from "playwright";
+import assert from "node:assert/strict";
+import {writeFileSync} from "node:fs";
+const browser=await chromium.launch({headless:true,executablePath:process.env.WALK_CHROMIUM_EXECUTABLE});
+const page=await browser.newPage({viewport:{width:1422,height:858}});
+const checks=[],errors=[];
+let developmentFieldReads=0;
+page.on("request",request=>{
+ if(request.method()!=="POST"||!request.url().endsWith("/op"))return;
+ try { if(JSON.parse(request.postData()??"{}").op==="development_field_read") developmentFieldReads+=1; } catch {}
+});
+const check=(value,name)=>{assert.ok(value,name);checks.push(name);console.log("PASS",name);};
+page.on("pageerror",error=>errors.push(String(error)));
+await page.addInitScript(() => {
+ window.__OI_KERNEL_BRIDGE__="http://127.0.0.1:4179";
+ sessionStorage.setItem("oi-cradle.welcome.v1","1");
+ if (sessionStorage.getItem("git-return.corrupt-on-boot")==="1") {
+   const key="oi-cradle.workspaces.v1";
+   const value=JSON.parse(localStorage.getItem(key)??"null");
+   for (const workspace of value?.workspaces??[]) for (const binding of Object.values(workspace?.layout?.surfaces??{}))
+     if (binding?.kind==="development-field" && binding.view?.developmentField?.snapshot) binding.view.developmentField.snapshot.reading.version="corrupt";
+   localStorage.setItem(key,JSON.stringify(value));
+   sessionStorage.removeItem("git-return.corrupt-on-boot");
+ }
+});
+try {
+ await page.goto(process.env.WALK_URL??"http://localhost:4173");
+ await page.getByRole("button",{name:"O-I",exact:true}).click();
+ const nav=page.getByRole("navigation",{name:"O-I work",exact:true});
+ await nav.getByRole("button",{name:"Changes",exact:true}).click();
+ const surface=page.getByRole("region",{name:"Uncommitted working changes",exact:true});
+ await surface.getByRole("region",{name:"Native Git patch",exact:true}).waitFor({timeout:120000});
+ check(await page.locator('[data-region="centre"] .git-working-state').count()===1,"Project Changes opens the real native Git reading centrally");
+ const before=await surface.locator(".git-working-state-patch pre").innerText();
+ const beforeSnapshot=await surface.innerText();
+ const persistedBefore=await page.evaluate(() => {
+   const value=JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null");
+   const workspace=value?.workspaces?.find((item)=>item.id===value.active);
+   const snapshots=Object.values(workspace?.layout?.surfaces??{}).filter((binding)=>binding?.kind==="development-field").map((binding)=>binding.view?.developmentField?.snapshot??null);
+   const nonGitSurfaceIds=Object.values(workspace?.layout?.surfaces??{}).filter((binding)=>binding?.kind!=="development-field").map((binding)=>binding.id).sort();
+   return {snapshots,nonGitSurfaceIds};
+ });
+ check(persistedBefore.snapshots.some(Boolean),"The exact native snapshot is persisted in the real workspace book");
+ const initialDevelopmentFieldReads=developmentFieldReads;
+ check(initialDevelopmentFieldReads>0,"Git reading came through the native development-field operation");
+ check(before.length>0,"Native patch body is rendered in the shared return document");
+ check(await surface.getByRole("heading",{level:2}).count()===1,"Git return has one document heading");
+ check(await surface.locator(".returned-document-section").first().locator(".git-working-state-patch").count()===1,"Actual patch is in What changed");
+ const patchSections=surface.getByRole("navigation",{name:"Changed patch sections",exact:true}).getByRole("button");
+ check(await patchSections.count()>1,"Native patch exposes multiple actual changed sections");
+ const selectedPatch=await patchSections.nth(1).innerText();
+ await patchSections.nth(1).click();
+ check((await surface.locator(".git-working-state-patch pre").innerText()).includes(selectedPatch),"Selecting a native changed section displays its returned diff");
+ check(await surface.getByText("missing",{exact:true}).count()>0,"Git read does not claim verification");
+ await nav.getByRole("button",{name:"Runs / Build",exact:true}).click();
+ await page.getByRole("region",{name:"Factory Runs and Build",exact:true}).waitFor();
+ await nav.getByRole("button",{name:"Changes",exact:true}).click();
+ await page.locator('[data-region="right"] .git-working-state-patch').waitFor({timeout:120000});
+ check(await page.locator('[data-region="right"] .git-working-state').count()===1,"Factory presents the selected native Git document in the existing right pane");
+ check(await page.locator(".git-working-state").count()===1,"One visible Git document after relocating its Surface");
+ const retainedSnapshot=await page.locator(".git-working-state").first().innerText();
+ check(retainedSnapshot===beforeSnapshot,"Pane moves retain the exact owner snapshot and basis");
+ check(developmentFieldReads===initialDevelopmentFieldReads,"Pane moves do not reread the native development field");
+ const persistedAfterMoves=await page.evaluate(() => { const v=JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null"); const w=v?.workspaces?.find((x)=>x.id===v.active); return {snapshots:Object.values(w?.layout?.surfaces??{}).filter((b)=>b?.kind==="development-field").map((b)=>b.view?.developmentField?.snapshot??null),nonGitSurfaceIds:Object.values(w?.layout?.surfaces??{}).filter((b)=>b?.kind!=="development-field").map((b)=>b.id).sort()}; });
+ check(JSON.stringify(persistedAfterMoves.snapshots)===JSON.stringify(persistedBefore.snapshots),"Pane moves retain the persisted owner snapshot");
+ check(persistedBefore.nonGitSurfaceIds.every((id)=>persistedAfterMoves.nonGitSurfaceIds.includes(id)),"Pane moves retain original non-Git surface identities");
+ const returnedPane=page.locator('[data-region="right"] .pane.group').filter({has:page.locator(".git-working-state")}).first();
+ const rightBefore=await returnedPane.boundingBox();
+ await returnedPane.getByRole("button",{name:"Maximize this pane",exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[data-region="right"]')?.getAttribute("data-depth")==="full");
+ await page.waitForTimeout(240);
+ const rightMaximized=await page.locator('[data-region="right"]').boundingBox();
+ check((rightMaximized?.width??0)>900,"Maximizing the returned Git pane uses the full right region at 1422px");
+ await returnedPane.getByRole("button",{name:"Restore pane arrangement",exact:true}).click();
+ await page.waitForFunction(()=>document.querySelector('[data-region="right"]')?.getAttribute("data-depth")==="panel");
+ await page.waitForTimeout(240);
+ const rightRestored=await returnedPane.boundingBox();
+ check(Math.abs((rightRestored?.width??0)-(rightBefore?.width??0))<=2,"Restoring the returned Git pane preserves its persisted right width");
+ await page.getByRole("button",{name:"Leave Factory",exact:true}).click();
+ await page.locator('[data-region="centre"] .git-working-state').waitFor();
+ check(await page.locator('[data-region="centre"] .git-working-state').count()===1,"Leaving restores the original central Git Surface");
+ check(await page.locator(".git-working-state").first().innerText()===beforeSnapshot,"Returning to centre retains the exact owner snapshot and basis");
+ check(developmentFieldReads===initialDevelopmentFieldReads,"Returning to centre does not reread the native development field");
+ await page.reload();
+ const reloaded=page.locator(".git-working-state").first();
+ await reloaded.waitFor({timeout:120000});
+ check(await reloaded.innerText()===beforeSnapshot,"Reload retains the exact owner snapshot and basis");
+ check(developmentFieldReads===initialDevelopmentFieldReads,"Reload uses the persisted owner snapshot without rereading");
+ const persistedAfterReload=await page.evaluate(() => { const v=JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1")??"null"); const w=v?.workspaces?.find((x)=>x.id===v.active); return {snapshots:Object.values(w?.layout?.surfaces??{}).filter((b)=>b?.kind==="development-field").map((b)=>b.view?.developmentField?.snapshot??null),nonGitSurfaceIds:Object.values(w?.layout?.surfaces??{}).filter((b)=>b?.kind!=="development-field").map((b)=>b.id).sort()}; });
+ check(JSON.stringify(persistedAfterReload.snapshots)===JSON.stringify(persistedBefore.snapshots),"Reload preserves the exact persisted owner snapshot");
+ check(persistedBefore.nonGitSurfaceIds.every((id)=>persistedAfterReload.nonGitSurfaceIds.includes(id)),"Reload preserves original non-Git surface identities");
+ const readsBeforeRefresh=developmentFieldReads;
+ await reloaded.getByRole("button",{name:"Refresh",exact:true}).click();
+ await page.waitForFunction(() => { const node=document.querySelector(".git-working-state"); const button=node?.querySelector("button"); return node?.getAttribute("aria-busy")==="false" && !button?.hasAttribute("disabled"); }, null, {timeout:120000});
+ check(developmentFieldReads>readsBeforeRefresh,"Explicit Refresh rereads the native development field");
+ check((await reloaded.innerText()).length>0,"Explicit Refresh returns a current owner snapshot");
+ await page.evaluate(() => sessionStorage.setItem("git-return.corrupt-on-boot","1"));
+ const persistedCorrupt=true;
+ check(persistedCorrupt,"Corrupts a derivative of the actual persisted owner snapshot");
+ const readsBeforeCorruptReload=developmentFieldReads;
+ await page.reload();
+ const corruptReload=page.locator(".git-working-state").first();
+ await corruptReload.waitFor({timeout:120000});
+ check(await corruptReload.count()===1,"Corrupt snapshot keeps the existing Git Surface binding");
+ check(developmentFieldReads===readsBeforeCorruptReload,"Corrupt snapshot does not trigger an automatic owner read");
+ check(await corruptReload.getByRole("button",{name:"Refresh",exact:true}).count()===1,"Corrupt snapshot retains explicit Refresh recovery");
+ const corruptReads=developmentFieldReads;
+ await corruptReload.getByRole("button",{name:"Refresh",exact:true}).click();
+ await page.waitForFunction(() => { const node=document.querySelector(".git-working-state"); const button=node?.querySelector("button"); return node?.getAttribute("aria-busy")==="false" && !button?.hasAttribute("disabled"); }, null, {timeout:120000});
+ check(developmentFieldReads>corruptReads,"Explicit Refresh recovers the corrupt snapshot with a fresh owner read");
+ check((await corruptReload.locator(".git-working-state-patch pre").innerText()).length>0,"Explicit Refresh restores the native patch after corrupt-snapshot recovery");
+ check(errors.length===0,"No application errors");
+ await page.screenshot({path:"walk/artifacts/git-return-ui.png"});
+ writeFileSync("walk/artifacts/git-return-ui.json",JSON.stringify({standing:"C: real web application and native AIKit Git read; no Factory execution or verification claim",checks,errors},null,2));
+} catch(error) {console.error(errors);console.error((await page.locator("body").innerText()).slice(0,4000));await page.screenshot({path:"walk/artifacts/git-return-ui-failure.png"});throw error;}
+finally{await browser.close();}

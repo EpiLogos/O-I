@@ -1,0 +1,138 @@
+{
+  "standing": "Native desktop CUA walk with real AIKit/Codex session and response; Factory execution/tmux/Agency/H acceptance not claimed",
+  "checks": [
+    "Draft to Factory with live accompanying conversation",
+    "Leave Factory returns Draft and accompanying conversation",
+    "Exact AgentSession/native session and transcript unchanged"
+  ],
+  "before": {
+    "actions": [
+      {
+        "enabled": false,
+        "reason": "An encounter requires a configured provider and no existing resident connection",
+        "ref": "aikit.encounter.open"
+      },
+      {
+        "enabled": true,
+        "reason": null,
+        "ref": "aikit.encounter.draft"
+      },
+      {
+        "enabled": true,
+        "reason": null,
+        "ref": "aikit.encounter.prompt"
+      },
+      {
+        "enabled": false,
+        "reason": "There is no active provider turn",
+        "ref": "aikit.encounter.cancel"
+      },
+      {
+        "enabled": false,
+        "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+        "ref": "aikit.encounter.permission"
+      }
+    ],
+    "agent_session": "agent-session/oi-factory-codex-20260914",
+    "blocks": [
+      {
+        "id": 3,
+        "kind": "user",
+        "text": "This is a live Cradle conversation acceptance test. Reply exactly: Cradle native conversation is live. Do not run tools or edit files."
+      },
+      {
+        "id": 4,
+        "kind": "assistant",
+        "text": "Cradle native conversation is live."
+      },
+      {
+        "id": 5,
+        "kind": "completed",
+        "text": ""
+      }
+    ],
+    "connection": {
+      "error": null,
+      "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+      "provider": {
+        "id": "oi-live-walk-codex",
+        "label": "Codex \u2014 live walk"
+      },
+      "resident": true,
+      "state": "Resident"
+    },
+    "draft": {
+      "revision": 13,
+      "text": ""
+    },
+    "more": false,
+    "permission_authority": "native-provider-consent",
+    "permissions": [],
+    "schema": "aikit.encounter-view/v1"
+  },
+  "after": {
+    "actions": [
+      {
+        "enabled": false,
+        "reason": "An encounter requires a configured provider and no existing resident connection",
+        "ref": "aikit.encounter.open"
+      },
+      {
+        "enabled": true,
+        "reason": null,
+        "ref": "aikit.encounter.draft"
+      },
+      {
+        "enabled": true,
+        "reason": null,
+        "ref": "aikit.encounter.prompt"
+      },
+      {
+        "enabled": false,
+        "reason": "There is no active provider turn",
+        "ref": "aikit.encounter.cancel"
+      },
+      {
+        "enabled": false,
+        "reason": "Only an actual pending provider consent request can be answered; this does not confer Actuation authority",
+        "ref": "aikit.encounter.permission"
+      }
+    ],
+    "agent_session": "agent-session/oi-factory-codex-20260914",
+    "blocks": [
+      {
+        "id": 3,
+        "kind": "user",
+        "text": "This is a live Cradle conversation acceptance test. Reply exactly: Cradle native conversation is live. Do not run tools or edit files."
+      },
+      {
+        "id": 4,
+        "kind": "assistant",
+        "text": "Cradle native conversation is live."
+      },
+      {
+        "id": 5,
+        "kind": "completed",
+        "text": ""
+      }
+    ],
+    "connection": {
+      "error": null,
+      "native_session_id": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+      "provider": {
+        "id": "oi-live-walk-codex",
+        "label": "Codex \u2014 live walk"
+      },
+      "resident": true,
+      "state": "Resident"
+    },
+    "draft": {
+      "revision": 13,
+      "text": ""
+    },
+    "more": false,
+    "permission_authority": "native-provider-consent",
+    "permissions": [],
+    "schema": "aikit.encounter-view/v1"
+  }
+}

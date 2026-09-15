@@ -1,0 +1,60 @@
+serving the cradle at http://localhost:4173 (external)
+
+=== scenario: visuals ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  Visuals splits into Themes and Expression
+PASS  Expression is the initial selected Visuals view
+PASS  The expression layer starts on
+  SCENARIO ERROR: locator.waitFor: Timeout 20000ms exceeded.
+Call log:
+  - waiting for locator('.oi-point-cloud-overlay') to be visible
+    5 × locator resolved to hidden <canvas aria-hidden="true" data-oi-stage="engine" class="oi-point-cloud-overlay"></canvas>
+
+    at Module.run (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/scenarios/visuals.mjs:26:49)
+    at async runScenario (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:377:5)
+    at async file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:450:18
+  stopped walk-bridge
+  receipt: artifacts/visuals.json — 3/3 checks, FAIL
+
+=== scenario: instrument ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  Opening with no registered source refuses, naming the absence
+PASS  The privileged composition portals into the shell's left and centre hosts
+PASS  The focused mode is announced once on the body
+PASS  The canonical right AgentLayer region stays mounted
+PASS  The composition hands the source a retained lease with checkpoint and recovery observation
+PASS  Focus, freeze, clock and Bimba commands reach the registered owner
+PASS  The composition mirrors the owner's temporal state
+PASS  Deregistering the source surfaces an honest alert in the composition
+  SCENARIO ERROR: page.waitForFunction: Timeout 5000ms exceeded.
+    at Module.run (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/scenarios/instrument.mjs:121:14)
+    at async runScenario (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:377:5)
+    at async file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:450:18
+  stopped walk-bridge
+  receipt: artifacts/instrument.json — 8/8 checks, FAIL
+
+=== scenario: instrument-host ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  The externally constructed QL adapter session registers through the owner registry
+PASS  Attach acknowledged natively: the first host exchange is the zero-frame read
+PASS  The session is available from its ready receipt
+PASS  Focus and freeze commands reach the controlled host on the session sequence
+PASS  A host refusal surfaces in the composition as refused
+PASS  An accepted advance admits the field block and moves the native cursor
+PASS  The composition mirrors the host's frozen temporal state
+  screenshot: artifacts/instrument-host-instrument-host-focused.png
+PASS  A real context loss puts the session into honest recovery
+PASS  The session restores its acknowledged checkpoint after the same canvas reports restoration
+PASS  Leaving the binding removes the composition
+PASS  The adapter's expression is detached with the binding
+PASS  Adapter provenance: sha256 of the served QL bytes
+  stopped walk-bridge
+  receipt: artifacts/instrument-host.json — 12/12 checks, PASS
+
+=== walk summary ===
+FAIL  visuals — 3/3 checks
+FAIL  instrument — 8/8 checks
+PASS  instrument-host — 12/12 checks

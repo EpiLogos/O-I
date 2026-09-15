@@ -1,0 +1,43 @@
+{
+  "schema": "oi-cradle-host-rendering-receipt/v1",
+  "standing": "applied and verified live Omarchy/Hyprland host correction; not portable O:I application source",
+  "scope": "only Hyprland class oi-cradle",
+  "observed_client": {
+    "class": "oi-cradle",
+    "pid": 929710,
+    "xwayland": false,
+    "tags_after_reload": []
+  },
+  "producer": {
+    "path": "/usr/share/omarchy/default/hypr/windows.lua",
+    "mechanism": "all windows receive +default-opacity; tag default-opacity is then assigned opacity 0.985 0.96",
+    "wallpaper": "/home/frank/.local/state/omarchy/current/theme/backgrounds/06-pointcloud-frame-c.png",
+    "wallpaper_sha256": "19b1ba88f6b38fe5e651dc26e617f19a6d45e159e01150bd8e0c5989ea5b40a0"
+  },
+  "applied_user_override": {
+    "path": "/home/frank/.config/hypr/hyprland.lua",
+    "before_backup": "/tmp/oi-u-hyprland-before-opacity.lua",
+    "rule": "o.window(\"^oi-cradle$\", { tag = \"-default-opacity\", opacity = \"1 1\" })",
+    "source_pattern": "/usr/share/omarchy/default/hypr/apps/steam.lua: o.window(\"steam.*\", { tag = \"-default-opacity\", opacity = \"1 1\" })"
+  },
+  "intermediate_result": {
+    "tag_removal_only": "removed default-opacity tag after the earlier default tag-matched opacity assignment, but did not remove the already assigned 0.985/0.96 opacity",
+    "fresh_mapped_client": { "pid": 929710, "xwayland": false, "tags": [] },
+    "capture": "/tmp/oi-u-native-wayland-final.png",
+    "outcome": "wallpaper grid remained"
+  },
+  "verification": {
+    "opaque_capture": "/tmp/oi-u-native-opaque-final.png",
+    "opaque_capture_sha256": "f18ae4a5ed32447f5934a31785170e9ccbd0f316694667417d62f0aa58520ab6",
+    "prior_grid_capture": "/tmp/oi-u-wayland-first.png",
+    "prior_grid_capture_sha256": "0f083f95a87ddef137e8495fd7013c0d5eba2afee4115f0a48176c9750468977",
+    "prior_blank_region_zero_shift_correlation": [0.9281, 0.9222, 0.9202, 0.9228],
+    "final_blank_region_horizontal_derivative_std": [0, 0, 0, 0],
+    "final_blank_region_wallpaper_contribution": "zero within these uniform-pixel samples",
+    "outcome": "fresh Wayland screenshot is uniform white in the same blank regions; wallpaper grid absent"
+  },
+  "limitations": [
+    "This verifies host composition for the observed oi-cradle window only.",
+    "No O:I source, WebKit setting, GPU flag, wallpaper, or other application behaviour was changed."
+  ]
+}

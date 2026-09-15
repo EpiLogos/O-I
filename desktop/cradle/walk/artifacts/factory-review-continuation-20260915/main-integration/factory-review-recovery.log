@@ -1,0 +1,15 @@
+PASS factory-handoff: damaged review preserves the workspace
+PASS factory-handoff: ordinary work retains its tab
+PASS factory-handoff: no automatic current-owner read replaces damaged material
+PASS factory-handoff: explicit Refresh performs one real owner read
+PASS factory-handoff: refresh settles without a read loop
+PASS factory-handoff: actual empty/missing material is never fabricated
+PASS factory-handoff: original draft survives explicit recovery
+PASS factory-material: damaged review preserves the workspace
+PASS factory-material: ordinary work retains its tab
+PASS factory-material: no automatic current-owner read replaces damaged material
+PASS factory-material: explicit Refresh performs one real owner read
+PASS factory-material: refresh settles without a read loop
+PASS factory-material: actual empty/missing material is never fabricated
+PASS factory-material: original draft survives explicit recovery
+PASS No application page errors

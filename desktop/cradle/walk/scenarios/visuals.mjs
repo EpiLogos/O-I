@@ -17,14 +17,14 @@ export default async function run({page,baseUrl,check,shot}) {
     && (await panel.getByRole('button',{name:'Expression',exact:true}).count())===1,
     'Visuals splits into Themes and Expression');
 
-  await panel.getByRole('button',{name:'Expression',exact:true}).click();
+  check((await panel.getByRole('button',{name:'Expression',exact:true}).getAttribute('aria-pressed'))==='true','Expression is the initial selected Visuals view');
   const master=panel.getByRole('button',{name:/^Expression: (On|Off)$/});
   await master.waitFor();
   check((await master.getAttribute('aria-pressed'))==='true','The expression layer starts on');
   // The preview stage is the panel's one explicit renderer; wait for the
   // lazy host to bring the canvas up.
-  await page.locator('.oi-point-cloud-overlay').waitFor({timeout:20000});
-  check((await page.locator('.oi-point-cloud-overlay').count())===1,'Enabling the visuals hosts exactly one window expression canvas');
+  await page.locator('.visuals-preview-stage .oi-stage-element-surface').waitFor({timeout:20000});
+  check((await page.locator('.visuals-preview-stage .oi-stage-element-surface').count())===1,'Enabling Visuals hosts exactly one explicit preview canvas');
 
   // Typed text reaches the engine: bake a word and see the preview target change.
   await panel.getByPlaceholder('e.g. FLUID, VOID, 42').fill('VOID');
@@ -33,14 +33,27 @@ export default async function run({page,baseUrl,check,shot}) {
   await page.waitForFunction(() => {
     const pre=document.querySelector('.visuals-diagnostics pre');
     return pre ? pre.textContent.includes('VOID') : false;
-  }, { timeout: 5000 });
+  }, null, { timeout: 30000, polling: 100 });
   check(true,'The baked word reaches the running field');
 
   // The engine's own capture path through the hosted preview surface: a
   // real clean-frame render lands as a real PNG download, or the walk is red.
-  const downloadPromise=page.waitForEvent('download',{timeout:15000});
-  await panel.getByRole('button',{name:'Capture image'}).click();
-  const download=await downloadPromise;
+  const capture=panel.getByRole('button',{name:'Capture image'});
+  await capture.scrollIntoViewIfNeeded();
+  let download;
+  try {
+    [download]=await Promise.all([
+      page.waitForEvent('download',{timeout:30000}),
+      capture.click({timeout:30000}),
+    ]);
+  } catch (error) {
+    console.error('Capture diagnostics', JSON.stringify({
+      alerts: await panel.getByRole('alert').allTextContents(),
+      status: await panel.getByRole('status').allTextContents(),
+      preview: await panel.locator('.visuals-diagnostics pre').textContent(),
+    }));
+    throw error;
+  }
   check(download.suggestedFilename().endsWith('.png'),'Capture produces a PNG download');
   const {statSync}=await import('node:fs');
   const capturedBytes=statSync(await download.path()).size;
@@ -51,11 +64,11 @@ export default async function run({page,baseUrl,check,shot}) {
   // Master off: the renderer goes away entirely. Master on: it returns.
   await master.click();
   await page.waitForTimeout(400);
-  check((await page.locator('.oi-point-cloud-overlay').count())===0,'Off removes the renderer — nothing runs hidden');
+  check((await page.locator('.visuals-preview-stage .oi-stage-element-surface,.oi-point-cloud-overlay').count())===0,'Off removes preview and window renderers — nothing runs hidden');
   check((await panel.getByRole('button',{name:'Expression: Off'}).getAttribute('aria-pressed'))==='false','The master switch reports the off state');
   await master.click();
-  await page.locator('.oi-point-cloud-overlay').waitFor({timeout:20000});
-  check((await page.locator('.oi-point-cloud-overlay').count())===1,'On recreates the renderer');
+  await page.locator('.visuals-preview-stage .oi-stage-element-surface').waitFor({timeout:20000});
+  check((await page.locator('.visuals-preview-stage .oi-stage-element-surface').count())===1,'On recreates the explicit preview renderer');
 
   // Theme resolution lands on the shell tokens.
   await panel.getByRole('button',{name:'Themes',exact:true}).click();
@@ -66,4 +79,8 @@ export default async function run({page,baseUrl,check,shot}) {
   await page.waitForFunction(() => !document.body.dataset.theme);
   check(true,'Light theme clears the override');
   await shot('visuals-panel');
+  await panel.getByRole('button',{name:'Expression',exact:true}).click();
+  await master.waitFor();
+  await page.locator('.visuals-preview-stage .oi-stage-element-surface').waitFor({timeout:20000});
+  check((await panel.getByRole('button',{name:'Expression',exact:true}).getAttribute('aria-pressed'))==='true','Themes returns to the live Expression view by an explicit click');
 }

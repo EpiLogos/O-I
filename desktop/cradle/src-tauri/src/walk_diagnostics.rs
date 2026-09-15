@@ -4,6 +4,35 @@ use serde::{Deserialize, Serialize};
 
 #[derive(Deserialize, Serialize)]
 #[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EngineCanvasObservation {
+    connected: bool,
+    visibility: String,
+    display: String,
+    opacity: String,
+    position: String,
+    z_index: String,
+    css_width: u32,
+    css_height: u32,
+    backing_width: u32,
+    backing_height: u32,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
+pub struct EngineObservation {
+    mounted: bool,
+    canvas_count: u8,
+    live: bool,
+    active_presentation_id: Option<String>,
+    last_presentation_event: String,
+    last_presentation_id: Option<String>,
+    lifecycle_revision: u64,
+    animation_scheduled: bool,
+    canvas: EngineCanvasObservation,
+}
+
+#[derive(Deserialize, Serialize)]
+#[serde(rename_all = "camelCase", deny_unknown_fields)]
 pub struct ExpressionObservation {
     frames: u64,
     requests: u64,
@@ -16,6 +45,18 @@ pub struct ExpressionObservation {
     paused: bool,
     reduced: bool,
     entries: usize,
+    engine: Option<EngineObservation>,
+}
+
+fn bounded_css_value(value: &str) -> bool {
+    value.len() <= 64
+}
+
+fn bounded_presentation_id(value: &str) -> bool {
+    value.len() <= 128
+        && value
+            .chars()
+            .all(|character| character.is_ascii_alphanumeric() || matches!(character, ':' | '-' | '_' | '.'))
 }
 
 #[tauri::command]
@@ -50,6 +91,27 @@ pub fn expression_walk_observation(
                 .forms
                 .iter()
                 .any(|name| !names.contains(&name.as_str()))
+            || report.engine.as_ref().is_some_and(|engine| {
+                engine.canvas_count > 4
+                    || engine.canvas.css_width > 32_768
+                    || engine.canvas.css_height > 32_768
+                    || engine.canvas.backing_width > 32_768
+                    || engine.canvas.backing_height > 32_768
+                    || !bounded_css_value(&engine.canvas.visibility)
+                    || !bounded_css_value(&engine.canvas.display)
+                    || !bounded_css_value(&engine.canvas.opacity)
+                    || !bounded_css_value(&engine.canvas.position)
+                    || !bounded_css_value(&engine.canvas.z_index)
+                    || !matches!(engine.last_presentation_event.as_str(), "created" | "present" | "release")
+                    || engine
+                        .active_presentation_id
+                        .as_deref()
+                        .is_some_and(|id| !bounded_presentation_id(id))
+                    || engine
+                        .last_presentation_id
+                        .as_deref()
+                        .is_some_and(|id| !bounded_presentation_id(id))
+            })
         {
             return Err("Expression observation exceeds bounded presentation contract".into());
         }

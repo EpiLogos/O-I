@@ -64,3 +64,14 @@
 .agent-layer[data-full="true"] :is(.agent-context,.agent-empty){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px));padding:32px 0}
 .agent-layer[data-full="true"] .agent-empty{justify-content:center;gap:20px;max-width:760px}
 .agent-layer[data-full="true"] .encounter[data-presentation="full"] :is(.encounter-transcript,.encounter-composer){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px))}
+
+/* #289 corrected sidecar: context supplies the title; one compact plane row. */
+.agent-layer .agent-planes{gap:8px;padding-inline:10px}
+.agent-plane-tools{display:flex;align-items:center;gap:3px;margin-left:auto}
+.agent-layer .agent-plane-tools button{width:18px;height:24px;border:0;display:grid;place-items:center}
+
+.agent-detail-host{display:flex;flex-direction:column;flex:1;min-height:0}
+.agent-detail-host>.encounter{flex:1;min-height:0}
+.agent-complementary .agent-body:has(.agent-context){overflow:auto}
+.agent-complementary .agent-context{flex:none;padding-bottom:8px}
+.agent-complementary .agent-context+.agent-detail-host{flex:none}

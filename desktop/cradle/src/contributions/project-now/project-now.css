@@ -1,0 +1,22 @@
+.project-now-surface{padding:24px;overflow:auto;height:100%;box-sizing:border-box;font-size:var(--oi-shell-type-body);display:flex;flex-direction:column;gap:24px}
+.project-now-surface header{display:flex;justify-content:space-between;gap:16px;align-items:start}
+.project-now-surface h2,.project-now-surface h3{margin:0;font-weight:550}
+.project-now-surface h3 small{color:var(--oi-muted-2);font-weight:400;margin-left:6px}
+.project-now-surface ul{list-style:none;padding:0;margin:8px 0 0}
+.project-now-surface li{display:grid;gap:6px;padding:12px 0;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.project-now-surface li span,.project-now-surface li small{color:var(--oi-muted-2)}
+.project-now-surface code{overflow-wrap:anywhere;font-size:var(--oi-shell-type-meta)}
+.project-now-surface li p{max-width:76ch;line-height:1.6;white-space:pre-wrap}
+.project-now-surface li button{text-align:left}
+.project-now-inactive{margin:0}
+.project-now-inactive>summary{cursor:pointer;color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
+.project-now-inactive>section{margin-top:12px}
+.project-now-surface h4{margin:0;font-size:var(--oi-shell-type-nav);font-weight:550}
+.project-now-return{margin-top:2px}
+.project-now-return summary{cursor:pointer;color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
+.project-now-references{display:grid;gap:7px;margin-top:10px;color:var(--oi-muted-2);font-size:var(--oi-shell-type-meta)}
+.project-now-references dl{display:grid;grid-template-columns:minmax(92px,auto) minmax(0,1fr);gap:8px;margin:0}
+.project-now-references dt{color:var(--oi-muted-2)}
+.project-now-references dd{min-width:0;margin:0;overflow-wrap:anywhere}
+.project-now-references details summary{cursor:pointer}
+.project-now-references ul{margin:6px 0 0;padding-left:16px}

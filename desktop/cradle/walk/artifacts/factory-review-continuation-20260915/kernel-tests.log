@@ -1,0 +1,165 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.07s
+     Running unittests src/lib.rs (desktop/cradle/kernel/target/debug/deps/oi_cradle_kernel-96264ff9f7d4a5f4)
+
+running 32 tests
+test events::tests::events_round_trip_over_the_wire_with_schema_and_version ... ok
+test events::tests::the_kernel_parse_boundary_refuses_foreign_and_stale_envelopes_by_reason ... ok
+test events::tests::focus_changed_carries_the_whole_relation_not_a_copy_of_selection ... ok
+test events::tests::the_log_orders_seqs_monotonically_from_one_with_no_gaps ... ok
+test events::tests::unknown_events_fail_closed_instead_of_degrading_into_another_variant ... ok
+test flow::tests::a_conflict_failure_is_structured_with_both_revisions ... ok
+test flow::receiving_wire_contract_tests::desktop_inbox_and_review_requests_use_the_disclosed_tagged_wire_contract ... ok
+test flow::tests::the_write_core_targets_the_owner_actions_and_writes_no_files_itself ... ok
+test focus::tests::a_ref_without_an_identifier_is_not_a_subject ... ok
+test focus::tests::clearing_returns_to_b0 ... ok
+test focus::tests::empty_relation_is_b0_no_focus ... ok
+test focus::tests::exactly_one_subject_is_held_never_an_accumulation ... ok
+test focus::tests::relation_slots_accept_only_whole_refs_and_round_trip ... ok
+test events::tests::the_kernel_parse_boundary_refuses_a_payload_the_kernel_could_not_produce ... ok
+test events::tests::every_event_variant_exists_and_is_typed ... ok
+test refs::tests::a_central_source_ref_travels_verbatim_and_whole ... ok
+test refs::tests::an_empty_ref_is_refused_rather_than_wrapped ... ok
+test system_composition::tests::discovery_is_uniform_across_all_six_owners ... ok
+test system_composition::tests::mounted_descriptor_passes_through_unmodified ... ok
+test system_composition::tests::non_v2_schema_is_degraded_not_fabricated ... ok
+test system_composition::tests::non_zero_exit_is_degraded_with_stderr ... ok
+test knowledge::tests::full_query_is_one_literal_operand_after_the_option_terminator ... ok
+test system_composition::tests::product_id_mismatch_is_degraded ... ok
+test system_composition::tests::oi_position_is_unavailable_when_the_census_cannot_be_read ... ok
+test system_composition::tests::spawn_failure_is_unavailable_with_reason ... ok
+test tests::an_edit_without_an_open_buffer_is_refused ... ok
+test tests::state_and_listing_ops_emit_nothing ... ok
+test world::tests::a_listing_row_carries_the_owner_ref_verbatim ... ok
+test world::tests::the_reading_core_lists_from_owner_disclosures_and_writes_no_files ... ok
+test system_composition::tests::reading_emits_exactly_seven_positions_oi_plus_six ... ok
+test system_composition::tests::oi_position_is_degraded_when_the_census_reports_warnings ... ok
+test knowledge::tests::actual_process_argv_preserves_queries_and_root_or_child_context ... ok
+
+test result: ok. 32 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 7.03s
+
+     Running unittests src/bin/walk-bridge.rs (desktop/cradle/kernel/target/debug/deps/walk_bridge-8673cfa007b324df)
+
+running 0 tests
+
+test result: ok. 0 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/action_dispatch.rs (desktop/cradle/kernel/target/debug/deps/action_dispatch-146bb840c680b3c1)
+
+running 7 tests
+test central_wiki_read_action_returns_the_owner_payload_unchanged ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test every_seeded_resolution_hit_invokes_its_open_action ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test open_dispatches_through_the_real_owner_and_records_exactly_one_familiarity_observation ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test owner_refusal_and_unavailable_are_explicit_verbatim_states ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test unknown_owner_and_malformed_refs_are_explicit_states ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test unsupported_spellings_are_explicit_states_naming_the_ref ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test wire_shape_is_stable_for_the_typed_consumer ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 7 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/composition_native.rs (desktop/cradle/kernel/target/debug/deps/composition_native-21893f758635eac2)
+
+running 1 test
+test actual_suite_composition_preserves_native_evidence ... ignored, requires explicit OI_BIN pointing to an actual built S executable
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/encounter.rs (desktop/cradle/kernel/target/debug/deps/encounter-bad456813e785884)
+
+running 10 tests
+test cancellation_is_terminal_and_supersedes_every_later_answer ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test grant_record_absence_names_the_owner_view_that_lacks_the_record ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test grant_record_disagreement_is_an_explicit_state_naming_both_owner_views ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test joined_read_carries_request_and_activity_identities_verbatim_across_all_sides ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test malformed_identity_refuses_before_any_owner_call ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test owner_refusal_carries_the_owner_message_verbatim ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test provider_loss_is_an_explicit_unavailable_state_with_owner_detail ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test reading_wire_shape_is_stable_and_carries_no_persistence_surface ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test stale_reply_is_explicit_when_a_later_disposition_already_exists ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test unknown_identity_is_explicit_when_no_queried_side_references_it ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 10 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/flow_changed_since.rs (desktop/cradle/kernel/target/debug/deps/flow_changed_since-9619ced01e3085c7)
+
+running 4 tests
+test a_malformed_thought_is_a_structural_error_naming_the_owner_shape ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test an_unavailable_side_is_named_never_faked_empty ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test compose_reports_owner_changes_above_the_thought_cursor ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test compose_returns_one_reading_with_both_sides_available ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/flow_cognition_dispatch.rs (desktop/cradle/kernel/target/debug/deps/flow_cognition_dispatch-cbf22b4f91dc2ce7)
+
+running 3 tests
+test now_subject_dispatch_reads_central_stream_and_surfaces_the_owner_preflight ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates with the NOW contemplation reading
+test owner_refusal_and_unavailable_pass_through_verbatim ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test structural_impossibility_a_boolean_or_auto_invocation_cannot_execute ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/flow_commission.rs (desktop/cradle/kernel/target/debug/deps/flow_commission-287a1a2d58b84f00)
+
+running 4 tests
+test agent_session_binds_as_the_write_actor ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test commission_lands_as_owner_revision_carrying_the_composition_verbatim ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test commission_requires_expected_revision_and_content ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+test stale_expected_revision_is_the_owner_structured_conflict ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 4 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/flow_return.rs (desktop/cradle/kernel/target/debug/deps/flow_return-2f9a7603c869647a)
+
+running 1 test
+test world_source_and_explicit_return_preserve_owner_identity_and_refusal ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/graph_input.rs (desktop/cradle/kernel/target/debug/deps/graph_input-e376b21af108e292)
+
+running 3 tests
+test absent_wiki_is_an_explicit_unavailable_input_not_an_empty_graph ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test graph_reading_wire_shape_is_stable_and_inputs_are_named ... ignored, requires actual OI_BIN/OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 3 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/material_bytes.rs (desktop/cradle/kernel/target/debug/deps/material_bytes-cb0873228a5fffcb)
+
+running 2 tests
+test binary_material_reads_base64_with_mime_hint_and_matches_bytes ... ignored, requires actual OI_CENTRAL_CTRL_BIN, or a real ctrl on PATH
+test nul_containing_file_refuses_text_read_but_succeeds_as_material ... ignored, requires actual OI_CENTRAL_CTRL_BIN, or a real ctrl on PATH
+
+test result: ok. 0 passed; 0 failed; 2 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/material_native.rs (desktop/cradle/kernel/target/debug/deps/material_native-0f99beaea21b08f7)
+
+running 1 test
+test receipt_bound_native_material_and_identity_refusal ... ignored, requires actual OI_BIN and OI_WORKCELL_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/native_action_catalog.rs (desktop/cradle/kernel/target/debug/deps/native_action_catalog-0f2bda58f38045f9)
+
+running 1 test
+test central_actions_read_matches_public_catalogue_without_kernel_state_change ... ignored, requires actual OI_BIN and OI_CENTRAL_ROOT for the configured public Central owner
+
+test result: ok. 0 passed; 0 failed; 1 ignored; 0 measured; 0 filtered out; finished in 0.00s
+
+     Running tests/source_cas.rs (desktop/cradle/kernel/target/debug/deps/source_cas-4ad27e4473707e64)
+
+running 12 tests
+test actual_owner_refs_content_and_wire_round_trip ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test browsing_other_projects_preserves_open_source_focus_and_dirty_buffer ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test changed_project_selection_cannot_reroute_an_open_buffers_save ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test genuinely_missing_owner_is_unavailable_without_fabricated_sources ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test history_is_durable_owner_state_and_rechecks_current_retrieval_gate ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test native_file_context_comes_from_central_manifest_and_cannot_be_rebound_to_another_root ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test native_files_are_read_without_adoption_and_focus_never_reowns_source_drafts ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test native_session_space_discovery_is_project_scoped_and_never_moves_work ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test ordinary_file_owner_cas_history_and_restore_through_consumer ... ignored, requires the ordinary-file owner candidate; run in its explicit consumer gate
+test real_aikit_wiki_read_search_focus_and_failed_use_do_not_forge_authority ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test real_cas_refuses_external_revision_and_preserves_both_sides ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+test real_operations_emit_one_ordered_receipt_per_state_change ... ignored, requires actual OI_CENTRAL_CTRL_BIN/OI_AIKIT_BIN frozen native candidates
+
+test result: ok. 0 passed; 0 failed; 12 ignored; 0 measured; 0 filtered out; finished in 0.00s

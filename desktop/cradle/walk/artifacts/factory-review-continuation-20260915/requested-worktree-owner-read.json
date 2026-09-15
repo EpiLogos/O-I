@@ -1,0 +1,114 @@
+{
+  "observed_at": "2026-09-15T00:22:56.797214+00:00",
+  "request": {
+    "op": "development_field_read",
+    "project": "O-I",
+    "cwd": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement",
+    "base_revision": "HEAD",
+    "refs": []
+  },
+  "outcome": {
+    "cwd": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement",
+    "project": "O-I",
+    "reading": {
+      "central_self_description": {
+        "availability": {
+          "reason": "no Central public self-description carrier is present in the Resource field; AIKit does not guess ProjectCentral/self paths",
+          "state": "unknown"
+        },
+        "self_description_refs": []
+      },
+      "executable_basis": {
+        "executable": "/home/frank/.local/bin/aikit",
+        "modality": "developer",
+        "package_version": "0.1.0",
+        "source_dirty": true,
+        "source_revision": "5e55dfadd4ac86dd3eea3f85de3b4cd2409a718e"
+      },
+      "git": {
+        "base_revision": "HEAD",
+        "current_diff_from_base": {
+          "base_revision": "HEAD",
+          "observed_head": "4f0018dcdac746d5dad0a02beb165b661fb26832",
+          "patch": "omitted: owner reports another working tree",
+          "truncated": false,
+          "untracked_paths": [
+            ".central/source-return.lock",
+            "ProjectCentral/now/agents/factory-experience-published-native-execution-2026-09-14.json",
+            "cli/src/bimba_map_command.rs"
+          ]
+        },
+        "world": {
+          "project": "project:o-i",
+          "provider": {
+            "capabilities": [
+              "inspect",
+              "reconcile",
+              "diff",
+              "history",
+              "worktrees",
+              "create-worktree",
+              "remove-worktree"
+            ],
+            "implementation_version": "git version 2.55.0",
+            "provider": "aikit:provider:native-git",
+            "status": {
+              "state": "available"
+            }
+          },
+          "repository": {
+            "ahead": 0,
+            "behind": 0,
+            "branch": "main",
+            "detached": false,
+            "head": "4f0018dcdac746d5dad0a02beb165b661fb26832",
+            "repository_root": "/home/frank/Central/Work/O-I",
+            "worktree_root": "/home/frank/Central/Work/O-I"
+          },
+          "version": "aikit.versioned-world/v1",
+          "working": {
+            "conflicted": [],
+            "staged": [],
+            "unstaged": [
+              ".central/source-change-horizon.json",
+              "cli/src/frontdoor.rs",
+              "cli/src/main.rs",
+              "cli/src/omarchy_host.rs",
+              "integrations/omarchy/org.epilogos.oi.switcher/Menu.qml"
+            ],
+            "untracked": [
+              ".central/source-return.lock",
+              "ProjectCentral/now/agents/factory-experience-published-native-execution-2026-09-14.json",
+              "cli/src/bimba_map_command.rs"
+            ]
+          },
+          "worktrees": [
+            {
+              "branch": "main",
+              "detached": false,
+              "head": "4f0018dcdac746d5dad0a02beb165b661fb26832",
+              "locked": false,
+              "path": "/home/frank/Central/Work/O-I",
+              "prunable": false
+            },
+            {
+              "branch": "cradle-factory-arrangement",
+              "detached": false,
+              "head": "d4a3d28c6e2a1350c3f9cb6ce9aa4a1d13789457",
+              "locked": false,
+              "path": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement",
+              "prunable": false
+            }
+          ]
+        }
+      },
+      "git_basis": {
+        "state": "available"
+      },
+      "subjects": [],
+      "truncated": false,
+      "version": "aikit.development-field-reading/v1"
+    },
+    "result": "development_field_reading"
+  }
+}

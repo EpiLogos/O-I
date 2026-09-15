@@ -37,7 +37,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
  if(!candidate)return null;
  const binding=bindings[candidate.bindingId];
  const choices=Object.values(bindings).filter(b=>b.kind==="encounter"&&b.ref&&b.project);
- if(accompanying&&!choices.some(b=>b.ref===accompanying.ref))choices.push({id:accompanying.ref,kind:"encounter",ref:accompanying.ref,project:accompanying.project,title:"Accompanying conversation",encounter:{space:accompanying.space}});
+ if(accompanying&&!choices.some(b=>b.ref===accompanying.ref&&b.project===accompanying.project&&b.encounter?.space===accompanying.space))choices.push({id:`accompanying:${JSON.stringify([accompanying.project,accompanying.ref,accompanying.space])}`,kind:"encounter",ref:accompanying.ref,project:accompanying.project,title:"Accompanying conversation",encounter:{space:accompanying.space}});
  const selected=choices.find(b=>b.id===(target||choices[0]?.id));
  const close=()=>{if(!busy)setCandidate(undefined);};
  /** Currency validation + provenance composition, shared by all three

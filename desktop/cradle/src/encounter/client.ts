@@ -1,6 +1,6 @@
 import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
-export type EncounterRequest = {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"send";agent_session:string;turn:AddressedTurn} | {action:"send-group";delivery_ref:string;sender:string;packet:AddressedPacket;recipients:GroupRecipient[]} | {action:"delivery";agent_session:string;delivery_ref:string} | {action:"reconnect";space:string;agent_session:string;provider:string};
+export type EncounterRequest = {action:"model-read";agent_session:string} | {action:"model-select";agent_session:string;provider_model_id:string;provider_reasoning_effort?:string} | {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"send";agent_session:string;turn:AddressedTurn} | {action:"send-group";delivery_ref:string;sender:string;packet:AddressedPacket;recipients:GroupRecipient[]} | {action:"addressable-participants";sender:string;source_refs:string[]} | {action:"delivery";agent_session:string;delivery_ref:string} | {action:"reconnect";space:string;agent_session:string;provider:string};
 /** Owner wire contract (bound ai-kit revision, `encounter_agency.rs`); field names verbatim. */
 export interface AddressedPacket {text:string;source_refs:string[];audience:string[]}
 /** `expected_task` is the owner's EncounterTaskBasis, validated owner-side
@@ -34,6 +34,19 @@ export function mintDeliveryRef():string {
   const bytes=new Uint8Array(8);crypto.getRandomValues(bytes);
   return `delivery/desktop-${Array.from(bytes,b=>b.toString(16).padStart(2,"0")).join("")}`;
 }
+
+/** Read-only AIKit admission projection. Candidate sessions are resolved by the
+ * O:I kernel from public Project SessionSpace discovery, never supplied by UI. */
+export interface AddressableParticipant {agent_session:string;agent_ref:string;expected_binding_revision:string}
+export interface AddressableParticipantsReading {schema:"aikit.encounter-addressable-participants/v1";participants:AddressableParticipant[]}
+export async function addressableParticipants(transport:KernelTransportStatus,project:string,sender:string,source_refs:string[]):Promise<AddressableParticipantsReading> {
+  const reading=await encounter<unknown>(transport,project,{action:"addressable-participants",sender,source_refs});
+  if(typeof reading!=="object"||reading===null)throw new Error("AIKit returned an incompatible addressable participant reading");
+  const value=reading as Partial<AddressableParticipantsReading>;
+  if(value.schema!=="aikit.encounter-addressable-participants/v1"||!Array.isArray(value.participants)||!value.participants.every(participant=>typeof participant?.agent_session==="string"&&typeof participant.agent_ref==="string"&&typeof participant.expected_binding_revision==="string"))throw new Error("AIKit returned an incompatible addressable participant reading");
+  return value as AddressableParticipantsReading;
+}
+
 export async function encounter<T>(transport:KernelTransportStatus,project:string,request:EncounterRequest):Promise<T> {
   const result=await kernelOp(transport,{op:"encounter",project,request});
   if(result.error || result.outcome?.result!=="encounter_reading")throw new Error(result.error??"AIKit did not return an encounter reading");

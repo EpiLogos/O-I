@@ -1,0 +1,65 @@
+{
+  "schema": "oi.factory-main-convergence-readback/v1",
+  "observed_at": "2026-09-15",
+  "main": "dd0e5d5ab2cbb8abdba257f1bb8dd3e1c29da05c",
+  "merge": "cf4e21b748eb77e446be17f9769d2c4470f3e4b7",
+  "runtime": {
+    "app_pid": 2160598,
+    "app_sha256": "ae6863cc3371a605e5d7838e0b3ed5100f9dab8bcaebdc6a7b89d84921765965",
+    "bridge_pid": 2150105,
+    "bridge_sha256": "40ea2f11a0a2b767b9b5164bcac9cadfa44caed65be7e996e0adea098e32d8b5",
+    "resident_pid": 589249,
+    "factory_override": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+    "factory_sha256": "a48c87ecb43244faef73e8c231f70594a738c7469e943cd0c1e7356cfe6dc133"
+  },
+  "session": {
+    "agent_session_ref": "agent-session/oi-factory-codex-20260914",
+    "session_space_ref": "session-space/oi-factory-demo-20260914",
+    "working_binding_ref": "working-surface/oi-factory-demo-20260914-shell",
+    "surface_ref": "surface/terminal/factory/shell",
+    "native_provider_session_ref": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+    "provider_ref": "oi-live-walk-codex",
+    "observed_model": "gpt-5.6-terra[xhigh]"
+  },
+  "factory": {
+    "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "standing": "queued",
+    "run_revision": 2,
+    "build_revision": 1,
+    "workflow_units": 1,
+    "executions": 0,
+    "candidates": 0,
+    "evidence": 0,
+    "retained_tasks": 0
+  },
+  "native_walk": {
+    "factory": {
+      "factory_runs_landmark": 1,
+      "right_result_region_present": true,
+      "returned_material_present": false
+    },
+    "conversation": {
+      "transcripts": 1,
+      "message_entries": 1,
+      "planes": ["Conversation", "Activity", "Context", "Inspect"]
+    },
+    "ordinary_return": {
+      "working_surface_scroll_panes": 1,
+      "terminal_surfaces": 1,
+      "persisted_marker_present": true,
+      "message_entries": 1,
+      "planes": ["Conversation", "Activity", "Context", "Inspect"]
+    }
+  },
+  "screenshots": {
+    "native-factory-entered.png": "26057fb875bf5cf4d3b0af097138b46bb8d688dd13c1dbd39013106cb0a725c9",
+    "native-factory-conversation.png": "e9004ad2c01bc8ee24991474723bafc1b2086c8235106394b363059a2e7eda52",
+    "native-factory-return.png": "9ddd8018e74403424bccb2fdd9b37e40aa3d94430639634aef838ad741d9fcbb",
+    "native-final-working-surface.png": "f3c0551f113df7dfa7d849370bf23a624966cfc2e37576541ab7c50532a77808"
+  },
+  "preservation": {
+    "backup": "/home/frank/.cache/codex/factory-campaign-20260915-pre-dd0e5d5",
+    "files_verified": 33,
+    "sha256_check": "passed"
+  }
+}

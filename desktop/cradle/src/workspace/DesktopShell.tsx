@@ -1,3 +1,4 @@
+import {RetainedRegionSurface} from "./RetainedRegionSurface";
 import {useShellGeometry} from "./geometry";
 import {requestResizeExpression} from "../shared/Expression";
 import {SystemPanel} from "./SystemPanel";
@@ -6,7 +7,7 @@ import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
 import { Glyph } from "./Glyph";
-import { focusGroup, groupsOf } from "../surface/engine";
+import { focusGroup, groupsOf, paneById } from "../surface/engine";
 
 type Side = "left" | "right";
 interface Props {
@@ -20,6 +21,11 @@ interface Props {
   /** FND-02: when provided, replaces the right region's legacy plane body
    * (the accompanying agent layer owns its own header/planes/composer). */
   right?: ReactNode;
+  sessionIngress?: ReactNode;
+  accompanyingTarget?: string;
+  complementary?:boolean;
+  companionHost?:(node:HTMLDivElement|null)=>void;
+  returnedHost?: (node:HTMLDivElement|null)=>void;
   namingRequest: "create" | "rename" | null; onNamingHandled: () => void;
   error: string | null; navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
 }
@@ -68,8 +74,13 @@ export function DesktopShell(p: Props) {
     window.addEventListener('blur', closeMenus);
     return () => { window.removeEventListener('pointerdown', closeMenus, true); window.removeEventListener('keydown', closeMenus, true); window.removeEventListener('blur', closeMenus); };
   }, []);
+  const composed = !!p.layout.composition;
   const l = p.layout;
-  const intended = (side: Side) => side === "left" ? l.agencyDepth : l.rightDepth ?? "strip";
+  const returnedMaximized = !!l.composition && !!l.maximizedGroupId
+    && groupsOf(paneById(l.root, l.composition.returnPaneId)).some(group => group.id === l.maximizedGroupId);
+  // This is presentation derived from the maximized group. It never writes
+  // rightDepth, so restoring maximize returns to the persisted side geometry.
+  const intended = (side: Side) => side === "left" ? l.agencyDepth : returnedMaximized ? "full" : l.rightDepth ?? "strip";
   // Responsive tiers (brief FND-01 A4): ≤1000px snaps the sidebar/agent to
   // their compact widths so both can stay open together (the study reference
   // at 900×760 keeps both; production used to starve the room and collapse
@@ -125,7 +136,9 @@ export function DesktopShell(p: Props) {
     window.addEventListener("keydown", onKey, true);
     return () => window.removeEventListener("keydown", onKey, true);
   }, [width < 640]);
-  const setDepth = (side: Side, value: AgencyDepth) => p.setLayout(s => ({ ...s, [side === "left" ? "agencyDepth" : "rightDepth"]: value }));
+  const setDepth = (side: Side, value: AgencyDepth) => {
+    p.setLayout(s => ({ ...s, [side === "left" ? "agencyDepth" : "rightDepth"]: value }));
+  };
   const toggle = (side: Side) => setDepth(side, intended(side) === "panel" ? "collapsed" : "panel");
   const toggleFull = (side: Side) => {
     setDepth(side, intended(side) === "full" ? "panel" : "full");
@@ -149,7 +162,9 @@ export function DesktopShell(p: Props) {
     window.addEventListener("keydown", onKey); return () => window.removeEventListener("keydown", onKey);
   });
   const clampWidth = (side: Side, value: number) => Math.max(side === "left" ? 200 : 240, Math.min(side === "left" ? Math.min(600,overlayLeft?width-40:width-440-(rightOpen&&!overlayRight?rightWidth:0)) : Math.min(720,overlayRight?width-40:width-440-(leftOpen?leftWidth:0)), value));
-  const resize = (side: Side, value: number) => p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: clampWidth(side, value) }));
+  const resize = (side: Side, value: number) => {
+    p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: clampWidth(side, value) }));
+  };
   const separator = (side: Side) => <div className={`region-resizer ${side}`} role="separator" aria-label={`Resize ${side} region`} aria-orientation="vertical"
     aria-valuenow={side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320}
     aria-valuemin={side === "left" ? 200 : 240} aria-valuemax={side === "left" ? 600 : 720} tabIndex={0}
@@ -228,7 +243,7 @@ export function DesktopShell(p: Props) {
 
         {p.children}
       </main>
-      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
+      <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label={composed?"Result region":"Agent and inspector region"}>
         {<>
           {right === "panel" && separator("right")}
           <div className="desktop-side-content">
@@ -238,13 +253,13 @@ export function DesktopShell(p: Props) {
            * (25/20px padding, 13px body type), which stays only for the
            * honest Context/History/System fallback that renders before the
            * agent layer replaces it. */}
-          {p.right ?? <>
+          {p.right ? <RetainedRegionSurface target={p.accompanyingTarget}>{p.right}</RetainedRegionSurface> : <>
             <div className="region-tools"><span>{p.subject.title}</span><button aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
             <nav className="inspector-planes" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
             <div className="inspector-body">
               {plane === "system" ? <SystemPanel/> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>
-          </>}</div>
+          </>}<div ref={p.companionHost} className="shell-companion-host" hidden={!p.complementary}/><div ref={p.returnedHost} className="shell-return-host" data-shell-return-host hidden={!composed}/></div>
         </>}
       </aside>
     </div>
@@ -255,6 +270,7 @@ export function DesktopShell(p: Props) {
           </div>
           <small className="arrangement-state">{l.maximizedGroupId ? "Focused view" : groupCount === 0 ? "Empty workspace" : `${groupCount} group${groupCount === 1 ? "" : "s"}`}</small>
           <span className="canvas-arrangement-spacer"/>
+          {p.sessionIngress}
           <details className="desktop-menu"><summary aria-label="Workspace actions"><Glyph name="more"/></summary><div>
             <button aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>
             <button aria-label="Rename workspace" onClick={() => { setName(p.workspace.name); setNaming("rename"); }}>Rename workspace</button>

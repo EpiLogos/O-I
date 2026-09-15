@@ -1,0 +1,10 @@
+{
+  "baseline": "/tmp/oi-factory-live-main-artifacts.json",
+  "filesVerified": 725,
+  "allRestoredByteForByte": true,
+  "originalPreMainFiles": 664,
+  "originalGroundRestoredBeforeMain": true,
+  "newFailureEvidenceKept": "engine-regression/initial-visuals-failure.png",
+  "ownerRuntimeRestarted": false,
+  "factoryInstallationChanged": false
+}

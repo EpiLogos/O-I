@@ -1,0 +1,14 @@
+   Compiling oi-cradle v0.1.0 (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src-tauri)
+warning: field `focused` is never read
+  --> src/browser.rs:37:5
+   |
+34 | struct Session {
+   |        ------- field in this struct
+...
+37 |     focused: bool,
+   |     ^^^^^^^
+   |
+   = note: `#[warn(dead_code)]` (part of `#[warn(unused)]`) on by default
+
+warning: `oi-cradle` (bin "oi-cradle") generated 1 warning
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 24.59s

@@ -1,0 +1,15 @@
+    Finished `test` profile [unoptimized + debuginfo] target(s) in 0.10s
+     Running tests/expression.rs (desktop/cradle/kernel/target/debug/deps/expression-611e732d155acbb0)
+
+running 9 tests
+test focus_projects_the_native_subject_without_invoking_it ... ok
+test automation_requires_explicit_manual_takeover_and_bounded_material ... ok
+test kernel_emits_one_attributed_receipt_only_when_draft_changes ... ok
+test edits_are_atomic_and_stale_concurrent_inputs_do_not_overwrite ... ok
+test composition_focus_roles_relations_and_fork_retain_native_identity ... ok
+test unavailable_bindings_and_wrong_targets_cannot_invoke ... ok
+test unknown_fields_and_undisclosed_actions_fail_closed ... ok
+test native_socket_and_human_kernel_share_one_state_and_reject_foreign_protocol ... ok
+test real_central_save_conflict_and_authority_refusal ... ok
+
+test result: ok. 9 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.18s

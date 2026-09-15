@@ -1,0 +1,53 @@
+PASS Entry retains one binding per source
+PASS Tiling retains the detached return-pane anchor
+PASS Redock after tile returns the binding to its original group
+PASS Closing final right tab retains its region destination
+PASS Split within right region stays in that subtree
+PASS Tiling retains returned material in the right region
+PASS Composition and region tree survive layout decoder
+PASS Leave restores ordinary geometry
+PASS Leave restores ordinary selection
+PASS Leave preserves detached binding identity
+PASS Native redock after leave retains one exact binding
+PASS Changing collection preserves explicitly pinned returned output
+PASS Changing collection clears unpinned returned output
+PASS Unpinned collection cleanup retains pinned output state
+PASS Decoder rejects duplicate visible surface identity
+PASS Decoder excludes detached and closed identities already visible
+PASS Conversation promotion retains the previous central work
+PASS Conversation return destination survives persistence
+PASS Returning conversation to the companion restores central work
+PASS Conversation relocation retains binding and native session identities
+PASS Side companion return leaves no central duplicate conversation
+PASS Conversation placement retains project and SessionSpace beside an identical session ref
+PASS Returning a same-ref conversation from another project cannot alter the accompanying placement
+PASS Returning the exact cross-project companion restores its retained prior work
+{
+  "standing": "C: production Surface engine and decoder, no owner execution assertion",
+  "checks": [
+    "Entry retains one binding per source",
+    "Tiling retains the detached return-pane anchor",
+    "Redock after tile returns the binding to its original group",
+    "Closing final right tab retains its region destination",
+    "Split within right region stays in that subtree",
+    "Tiling retains returned material in the right region",
+    "Composition and region tree survive layout decoder",
+    "Leave restores ordinary geometry",
+    "Leave restores ordinary selection",
+    "Leave preserves detached binding identity",
+    "Native redock after leave retains one exact binding",
+    "Changing collection preserves explicitly pinned returned output",
+    "Changing collection clears unpinned returned output",
+    "Unpinned collection cleanup retains pinned output state",
+    "Decoder rejects duplicate visible surface identity",
+    "Decoder excludes detached and closed identities already visible",
+    "Conversation promotion retains the previous central work",
+    "Conversation return destination survives persistence",
+    "Returning conversation to the companion restores central work",
+    "Conversation relocation retains binding and native session identities",
+    "Side companion return leaves no central duplicate conversation",
+    "Conversation placement retains project and SessionSpace beside an identical session ref",
+    "Returning a same-ref conversation from another project cannot alter the accompanying placement",
+    "Returning the exact cross-project companion restores its retained prior work"
+  ]
+}

@@ -1,0 +1,80 @@
+{
+  "standing": "C: actual web application with native kernel; not Factory execution or human visual acceptance",
+  "checks": [
+    "No Factory banner, activity strip or Return rail",
+    "Factory retains the same accompanying Agent DOM",
+    "Factory parks the one accompanying view while Runs is central",
+    "Right host uses the existing pane grammar",
+    "Composition stays explicit in persisted presentation state",
+    "A related tab preserves writing during composition",
+    "Changing focused tab does not leave composition",
+    "No redundant Agent heading",
+    "No A2A exchange chrome in ordinary conversation",
+    "Mounted Stage releases without a frozen overlay",
+    "Explicit leave restores ordinary writing",
+    "Explicit leave restores ordinary shell geometry",
+    "Leave restores the same accompanying Agent DOM",
+    "Project Runs binding survives reload",
+    "Reload retains the composed arrangement",
+    "Reload retains the right pane destination",
+    "Reload then leave restores the persisted ordinary return point",
+    "No application page errors"
+  ],
+  "before": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "5fdccf5d-8445-46f3-b781-6eb295709f2d"
+      ],
+      "pinned": [],
+      "active": "5fdccf5d-8445-46f3-b781-6eb295709f2d"
+    },
+    "surfaces": {
+      "5fdccf5d-8445-46f3-b781-6eb295709f2d": {
+        "id": "5fdccf5d-8445-46f3-b781-6eb295709f2d",
+        "kind": "draft",
+        "title": "Draft"
+      }
+    },
+    "closedStack": [],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  },
+  "after": {
+    "root": {
+      "type": "group",
+      "id": "g1",
+      "tabs": [
+        "5fdccf5d-8445-46f3-b781-6eb295709f2d",
+        "a70c3b8b-017a-46bf-a119-c617d4380ff4"
+      ],
+      "pinned": [],
+      "active": "5fdccf5d-8445-46f3-b781-6eb295709f2d"
+    },
+    "surfaces": {
+      "5fdccf5d-8445-46f3-b781-6eb295709f2d": {
+        "id": "5fdccf5d-8445-46f3-b781-6eb295709f2d",
+        "kind": "draft",
+        "title": "Draft"
+      },
+      "a70c3b8b-017a-46bf-a119-c617d4380ff4": {
+        "id": "a70c3b8b-017a-46bf-a119-c617d4380ff4",
+        "kind": "factory",
+        "title": "O-I · Runs",
+        "project": "O-I",
+        "ref": "project:o-i"
+      }
+    },
+    "closedStack": [],
+    "focusedGroupId": "g1",
+    "agencyDepth": "panel",
+    "rightDepth": "collapsed",
+    "leftWidth": 240,
+    "rightWidth": 320
+  },
+  "errors": []
+}

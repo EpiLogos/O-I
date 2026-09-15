@@ -8,10 +8,10 @@ set -e
 cd "$(git rev-parse --show-toplevel)"
 missing=0
 for p in $(
-  grep -ohE '(docs|skills|scripts|packages|desktop)/[A-Za-z0-9_./-]+' \
+  sed -E 's@https?://[^ )>]+@@g' \
     docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md \
     skills/cradle-execution/SKILL.md \
-    .superpowers/sdd/cradle-rebuild/ORCHESTRATOR-PROMPT.md 2>/dev/null | sort -u
+    .superpowers/sdd/cradle-rebuild/ORCHESTRATOR-PROMPT.md 2>/dev/null | grep -oE '(docs|skills|scripts|packages|desktop)/[A-Za-z0-9_./-]+' | sort -u
 ); do
   case "$p" in
     desktop/cradle*) continue ;; # created by execution (U0.3)

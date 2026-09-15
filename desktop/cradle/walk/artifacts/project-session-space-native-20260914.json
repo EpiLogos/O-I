@@ -1,0 +1,115 @@
+{
+  "schema": "oi.cradle.project-session-space-native/v1",
+  "observed_at": "2026-09-14T19:39:32.646891+00:00",
+  "standing": "M: native desktop create, Project binding and exact owner readback; no Agent, Agency, Factory execution or human acceptance claim",
+  "basis": {
+    "head": "f52d9ca81d70d282922b1c4f6133b98604d204e6",
+    "pending_sources": [
+      "desktop/cradle/src/contributions/agents/SessionSpaceControls.tsx",
+      "desktop/cradle/src/contributions/agents/agents.css"
+    ],
+    "pid": 890849,
+    "window_id": 6291459
+  },
+  "sequence": [
+    "Enter Reference and Label through the actual Agents surface",
+    "Review native creation preview",
+    "Create and prepare Project binding",
+    "Read native SessionSpace: revision 0, no Project binding",
+    "Apply reviewed binding for project:o-i",
+    "Desktop confirms workspace applied and confirmed",
+    "Independent native open and discover both return exact revision 1 and Project binding"
+  ],
+  "commands": [
+    "oi aikit-session-space -C /home/frank/Central/Work/O-I open session-space/oi-u-workspace-20260914",
+    "oi aikit-session-space -C /home/frank/Central/Work/O-I discover --project project:o-i"
+  ],
+  "created_readback": {
+    "version": "aikit.session-space-application/v1",
+    "revision": 0,
+    "definition": {
+      "version": "aikit.session-space/v1",
+      "id": "session-space/oi-u-workspace-20260914",
+      "projects": [],
+      "provenance": [
+        "AIKit SessionSpace definition"
+      ]
+    },
+    "label": "Factory UI acceptance workspace",
+    "project_contexts": {},
+    "agent_sessions": {},
+    "surfaces": {},
+    "working_surfaces": {},
+    "native_references": {}
+  },
+  "applied_readback": {
+    "version": "aikit.session-space-application/v1",
+    "revision": 1,
+    "definition": {
+      "version": "aikit.session-space/v1",
+      "id": "session-space/oi-u-workspace-20260914",
+      "projects": [
+        "project:o-i"
+      ],
+      "provenance": [
+        "AIKit SessionSpace definition"
+      ]
+    },
+    "label": "Factory UI acceptance workspace",
+    "project_contexts": {
+      "project:o-i": {
+        "reference": "context-resolution/082fbca28697f312",
+        "basis": {
+          "project_binding": {
+            "project": "project:o-i",
+            "constituent": "source:project:project:o-i:root",
+            "locator": {
+              "kind": "local-directory",
+              "path": "/home/frank/Central/Work/O-I"
+            },
+            "provider": "provider/projectcentral/filesystem",
+            "source": "source:central:project:o-i:manifest",
+            "legacy_aikit_project_id": null,
+            "legacy_project_spec_id": null
+          },
+          "resolver_hash": "e1ab661e96cc773c4264fe9bd35daf7ac50c960b9dbb09aba20f0b8ac5ef80e8",
+          "catalog_revision": "eaa760ff15ef0feb40883583c34f8d6ccab4c29724e68d648bd3c42b9bb77935",
+          "scopes": [
+            {
+              "kind": "project",
+              "depth": 0,
+              "origin": "/home/frank/Central/Work/O-I/.aikit/profile.toml"
+            }
+          ],
+          "context_sources": [],
+          "host": "host/localhost"
+        },
+        "provenance": [
+          "project:/home/frank/Central/Work/O-I/.aikit/profile.toml",
+          "resolver:e1ab661e96cc773c4264fe9bd35daf7ac50c960b9dbb09aba20f0b8ac5ef80e8",
+          "catalog:eaa760ff15ef0feb40883583c34f8d6ccab4c29724e68d648bd3c42b9bb77935"
+        ]
+      }
+    },
+    "agent_sessions": {},
+    "surfaces": {},
+    "working_surfaces": {},
+    "native_references": {}
+  },
+  "discovery_matches": 1,
+  "checks": {
+    "ui_confirmed": true,
+    "exact_persisted_ref": true,
+    "project_binding_confirmed": true,
+    "no_agent_or_surface_created": true
+  },
+  "consumer_corrections": [
+    "Decode actual top-level application array and nested definition identity in discover response",
+    "After an application attempt, retry binding preparation or readback without repeating the preceding apply"
+  ],
+  "limitations": [
+    "Recovery branches were reviewed; no transport failure was injected into the native owner.",
+    "Visible dotted rendering artifact remains unresolved at this observation."
+  ],
+  "screenshot": "project-session-space-native-20260914.png"
+}

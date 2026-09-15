@@ -4,7 +4,7 @@ import type {KernelTransportStatus} from "../../kernel/types";
  * Factory CLI's own (`factory.project-reading/v1`,
  * `factory.workflow-unit-list-reading/v1`, …), carried verbatim. The state
  * path is the caller's disclosure — the desktop never invents one. */
-export type DevelopmentRead = "project"|"journey"|"run"|"workflow-units"|"workflow-unit"|"execution-telemetry"|"commission-read";
+export type DevelopmentRead = "project"|"journey"|"run"|"build"|"workflow-units"|"workflow-unit"|"execution-telemetry"|"commission-read"|"central-project-link-read";
 export async function developmentRead<T=unknown>(transport:KernelTransportStatus,statePath:string,read:DevelopmentRead,subject?:string,project?:string):Promise<T> {
   const result=await kernelOp(transport,{op:"factory_development_read",project,state_path:statePath,read,subject});
   if(result.error || result.outcome?.result!=="factory_development_reading")throw new Error(result.error??"Factory development reading is unavailable");
