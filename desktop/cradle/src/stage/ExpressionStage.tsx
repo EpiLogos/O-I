@@ -68,6 +68,8 @@ export interface StagePresentationRequest {
    * canvas. Element targets are a later surface kind, not a scissor. */
   target?: string;
   paused?: boolean;
+  /** Deliberate, presentation-scoped reduced-motion override. */
+  forceMotion?: boolean;
 }
 
 export interface StagePresentation {
@@ -80,6 +82,12 @@ export interface StagePresentation {
   setContainer(container: HTMLElement | null): void;
   /** Play an authored sequence (recipes.ts) against this presentation. */
   play(sequence: string): void;
+  /** Native instrument controls operate on this presentation's existing field. */
+  command(command: Parameters<EngineSurface["command"]>[0]): void;
+  setPaused(paused: boolean): void;
+  setForceMotion(force: boolean): void;
+  capture(width?: number, height?: number): HTMLCanvasElement;
+  telemetry(): unknown;
   release(): void;
 }
 
@@ -178,7 +186,9 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     if (!surface) return null;
     if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
     else surface.present(request.id, request.recipe);
-    // Pause belongs to this presentation, not the reused window surface.
+    // Pause and deliberate motion belong to this presentation, not the
+    // reused window surface or whichever view acquires it next.
+    surface.setForceMotion(request.forceMotion ?? false);
     surface.setPaused(request.paused ?? false);
     const record = { id: request.id, plane: request.plane };
     presentations.current.set(request.id, record);
@@ -203,10 +213,16 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
         requireCurrent();
         surface.play(request.id, sequence);
       },
+      command(command) { requireCurrent(); surface.command(command); },
+      setPaused(paused) { requireCurrent(); surface.setPaused(paused); },
+      setForceMotion(force) { requireCurrent(); surface.setForceMotion(force); },
+      capture(width, height) { requireCurrent(); return surface.capture(width, height); },
+      telemetry() { requireCurrent(); return surface.telemetry(); },
       release() {
         if (!current()) return;
         presentations.current.delete(request.id);
         if (request.plane === "frontstate") setFrontstateCount((count) => Math.max(0, count - 1));
+        surface.setForceMotion(false);
         surface.release(request.id);
       },
     };
