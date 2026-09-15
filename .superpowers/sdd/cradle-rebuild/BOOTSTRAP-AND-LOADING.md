@@ -4,6 +4,19 @@ Owner addition, 6 September 2026. Extends the current execution programme;
 canonical cradle/03 A0–A3/degraded states remain the semantic basis. This is a
 full desktop lifecycle, not just a logo screen and not a six-product setup wizard.
 
+## Owner revision, 15 September 2026
+
+The full native Expression opening replaces the old braced SVG loading overlay.
+It paints before the workspace component graph is requested, while initial
+kernel/ground reads start immediately. The workspace composes beneath the field.
+The entry control waits for real field paint, initial state/boot settlement and
+workspace composition, then plays the inverse-to-host palette flight to rendered
+completion. There is no minimum branding delay or wall timer standing in for
+progress. Reduced motion paints the final still. A real engine failure supplies
+a named Continue path; disabling or skipping the opening permits composition
+without creating another loader. See the current owner rulings in
+`packages/oi-design-system/DESKTOP-LANGUAGE.md` for lifecycle and provenance.
+
 ## Two bootstraps with different owners
 
 Developer provisioning selects/builds/installs product artifacts through O-I
@@ -21,7 +34,7 @@ network and a wiki index are not prerequisites for a usable shell.
 
 | State | Truth and UI | Native seam / exit |
 |---|---|---|
-| BOOT-00 Host starting | Braced point-cloud mark only while shell is not yet usable; accessible operation label | Tauri host + kernel mount; ready immediately removes overlay, no minimum brand dwell |
+| BOOT-00 Host starting | Full native Expression field, with accessible state and real first-frame readiness | Kernel/ground observation begins immediately; after first paint the workspace composes beneath the field, with no minimum brand dwell |
 | BOOT-01 Returning installation | Read saved presentation schema and selected ground; observe, don't trust yesterday's availability | O-I presentation persistence → Central/CurrentWorld recognition; proceed independently for available surfaces |
 | BOOT-02 No recognized ground | One clear invitation to locate existing Central ground; explain that no files have been moved | Existing recognition/adoption inspect; native directory picker. Inspection never initializes or mutates a selected folder |
 | BOOT-03 Existing candidate | Show selected location, recognized identity and relevant limits; use existing work without reorganizing it | Confirm binding through owner contract. If initialization is needed, separately disclose/confirm its actual writes through the native owner |
@@ -33,7 +46,7 @@ network and a wiki index are not prerequisites for a usable shell.
 | BOOT-09 Workspace restoration | Restore pane tree/view state; validate each subject/session ref. Show exact missing/unavailable binding locally | Owner resolve/read/resume faculties. A saved ref is not saved authority. Retain drafts and original source route; never attach to a different session silently |
 | BOOT-10 Corrupt/older presentation state | Preserve recoverable bytes and last-good presentation; offer safe fresh arrangement and explicit recovery | O-I versioned persistence/migration; never reset canonical ground, delete held writing or treat corrupt state as successful empty restore |
 | BOOT-11 Offline/degraded runtime | Label last-observed readings and their age; preserve identity and working context; known absence is static | Owner health/reconnect/retry. Resume/attach only when natively supported and authorized; attach is not a new inference/commission |
-| BOOT-12 Ready | Usable shell, contextual sidebar and surfaces, optional discovery can continue locally | Cancel window overlay as soon as critical shell/ground decision is usable. Optional absence remains inspectable in System |
+| BOOT-12 Ready | Usable shell, contextual sidebar and surfaces, optional discovery can continue locally | Enable entry once critical shell/ground decision and workspace are usable; finish the person-triggered native flight before release. Optional absence remains inspectable in System |
 | BOOT-13 Upgrade/restart | Preserve session/ref identity, hold active operation on its material version, migrate presentation safely | Reconnect negotiation and native install/update contracts; do not swap active binaries, lose drafts, or call updated source an updated running provider |
 | BOOT-14 Runtime load/refresh | Loading belongs to the affected surface; retain known content with a freshness label where available | Central/AIKit/provider operation state; authoritative completion/failure/cancellation removes animation; retry only if a real Action exists |
 | BOOT-15 Gateway/ecology | Name absent, incompatible, scope-denied, disconnected or degraded ecology and the encounters not reachable; retain authorised last-observed identity/age | AgencyService → native AIKit Gateway discovery/attach/replay + Workcell service observation. Real retry/setup only when owner-disclosed; no second registry, stored credentials or auto-start/inference. Local Central remains usable |
@@ -45,8 +58,9 @@ Missing/cancelled/paused/error states are static, not perpetual animations.
 
 ## Focus, attention and accessible loading
 
-Use package `tokens.css`, `point-cloud.css` and `./loading`. Full-window scope is
-restricted to initial unready host/critical restoration. It is not a replacement
+Use package tokens and semantic status labels. The single native Expression
+stage owns the full-window opening described above. Full-window scope is
+restricted to that opening/critical restoration. It is not a replacement
 for A1's non-blocking recognition once controls are usable. Local operations use
 surface or inline scope and never take focus or move layout. Status updates are
 polite and semantic, not announced every animation frame. The logo is decorative;
