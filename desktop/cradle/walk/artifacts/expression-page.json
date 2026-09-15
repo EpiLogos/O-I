@@ -1,9 +1,9 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "expression-page",
-  "generated_at": "2026-09-15T02:56:05.102Z",
+  "generated_at": "2026-09-15T03:55:44.288Z",
   "environment": {
-    "base_url": "http://127.0.0.1:4285",
+    "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4185",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
@@ -12,8 +12,20 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6654,
+  "duration_ms": 5025,
   "checks": [
+    {
+      "ok": true,
+      "label": "The exact hosted live lease suppresses the iframe's standalone fallback so the page presents one coherent Expression body"
+    },
+    {
+      "ok": true,
+      "label": "A mismatched Expression ref cannot alter the hosted frame view"
+    },
+    {
+      "ok": true,
+      "label": "The same authored HTML keeps its explicit Expression fallback when opened standalone without a host lease"
+    },
     {
       "ok": true,
       "label": "Beings page embeds the exact native Expression ref"
@@ -48,6 +60,10 @@
     },
     {
       "ok": true,
+      "label": "Losing the exact live lease restores the authored page's explicit fallback"
+    },
+    {
+      "ok": true,
       "label": "Unavailable live renderer releases the stage and the page uses its explicit capture fallback"
     },
     {
@@ -66,18 +82,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T02:56:05.339Z",
+        "mounted_at": "2026-09-15T03:55:44.470Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4185"
         },
-        "url": "http://127.0.0.1:4285/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 14.2,
+      "duration_ms": 1,
       "seq_range": {
         "from": 2,
         "to": 2
@@ -90,6 +106,7 @@
               "entities": {},
               "expression_ref": "expression:page-ada",
               "provenance": [],
+              "refinements": [],
               "relations": {},
               "representations": [],
               "revision": 1,
@@ -120,7 +137,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1.1,
+      "duration_ms": 0.9,
       "seq_range": {
         "from": 3,
         "to": 3
@@ -146,6 +163,7 @@
               },
               "expression_ref": "expression:page-ada",
               "provenance": [],
+              "refinements": [],
               "relations": {},
               "representations": [],
               "revision": 2,
@@ -217,6 +235,7 @@
               },
               "expression_ref": "expression:page-ada",
               "provenance": [],
+              "refinements": [],
               "relations": {},
               "representations": [],
               "revision": 3,
@@ -249,7 +268,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 15.9,
+      "duration_ms": 14.8,
       "seq_range": {
         "from": 8,
         "to": 8
@@ -262,6 +281,7 @@
               "entities": {},
               "expression_ref": "expression:unrelated",
               "provenance": [],
+              "refinements": [],
               "relations": {},
               "representations": [],
               "revision": 1,
@@ -292,7 +312,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 62,
+      "duration_ms": 59,
       "data": {
         "file": "expression-page-live-return-capture.png"
       }
@@ -300,7 +320,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1.5,
+      "duration_ms": 1.1,
       "seq_range": {
         "from": 9,
         "to": 9
@@ -343,6 +363,7 @@
               },
               "expression_ref": "expression:page-ada",
               "provenance": [],
+              "refinements": [],
               "relations": {},
               "representations": [],
               "revision": 4,
@@ -375,7 +396,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 63,
+      "duration_ms": 45,
       "data": {
         "file": "expression-page-captured-fallback-page.png"
       }
@@ -383,16 +404,16 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 222,
+      "duration_ms": 56,
       "data": {
         "file": "expression-page-live-reentry.png"
       }
     }
   ],
   "metrics": {
-    "capture_width": 978,
-    "capture_height": 280,
-    "capture_distinct_sampled_colours": 39
+    "capture_width": 1280,
+    "capture_height": 785,
+    "capture_distinct_sampled_colours": 53
   },
   "screenshots": [
     "expression-page-live-return-capture.png",

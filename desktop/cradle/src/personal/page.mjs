@@ -101,6 +101,17 @@ function pageRuntime() {
   const changed=()=>{dirty=true;doc.meta.revision+=1;stateNode.textContent=serial(doc);status.textContent="Changes are in this page only. Save an HTML copy to keep them; native source Save is separate.";};
   const fields=()=>document.querySelectorAll("[data-field]");
   const mode=()=>{document.body.dataset.editing=String(editing);fields().forEach(el=>el.setAttribute("contenteditable",editing?"plaintext-only":"false"));document.getElementById("edit-page").textContent=editing?"Read":"Edit";document.getElementById("edit-page").setAttribute("aria-pressed",String(editing));document.querySelectorAll(".author-tools").forEach(el=>el.hidden=!editing);};
+  // A native host may suppress this document's explicit portable fallback
+  // only while it has admitted the exact same page and Expression revision.
+  // This message carries presentation state alone: it exposes no bridge,
+  // owner operation, file access, or renderer to the opaque frame.
+  window.addEventListener("message",event=>{
+    const value=event.data;if(parent===window||event.source!==parent||value?.type!=="oi:page-expression-host"||typeof value.token!=="string"||value.token.length>128||!Number.isSafeInteger(value.generation))return;
+    const expression=doc.page?.expression,page=value.page,requested=value.expression;
+    const accepted=!!expression&&page?.document_id===(doc.meta.documentId??null)&&page?.revision===doc.meta.revision&&requested?.ref===expression.expression_ref&&requested?.revision===expression.expression_revision;
+    if(accepted){const fallback=document.querySelector(".page-expression");if(fallback)fallback.hidden=value.live===true;}
+    parent.postMessage({type:"oi:page-expression-host-response",token:value.token,generation:value.generation,accepted,page:{document_id:doc.meta.documentId??null,revision:doc.meta.revision},expression:expression?{ref:expression.expression_ref,revision:expression.expression_revision}:null},"*");
+  });
   document.getElementById("edit-page").addEventListener("click",()=>{editing=!editing;mode();});
   document.addEventListener("input",event=>{const el=event.target.closest("[data-field]");if(!el||!editing)return;const key=el.dataset.field;const text=el.innerText.replace(/\r\n/g,"\n");if(el.dataset.section){const section=doc.page.sections.find(s=>s.id===el.dataset.section);if(section&&section[key]!==text){section[key]=text;changed();}}else{const target=key==="title"?doc.meta:doc.page;if(target[key]!==text){target[key]=text;changed();}}});
   for(const key of ["layout","tone"]){const select=document.getElementById(`page-${key}`);select.value=doc.appearance[key];select.addEventListener("change",()=>{doc.appearance[key]=select.value;document.body.dataset[key]=select.value;changed();});}
@@ -112,6 +123,7 @@ function pageRuntime() {
       const clone=document.documentElement.cloneNode(true);clone.querySelector("#ql-doc").textContent=serial(next);
       clone.querySelector("title").textContent=next.meta.title||next.meta.family;
       clone.querySelector("body").dataset.editing="false";clone.querySelectorAll("[contenteditable]").forEach(el=>el.setAttribute("contenteditable","false"));clone.querySelectorAll(".author-tools").forEach(el=>el.hidden=true);clone.querySelector("#edit-page").textContent="Edit";clone.querySelector("#edit-page").setAttribute("aria-pressed","false");clone.querySelector("#page-status").textContent="Portable document. Editing does not save back to its source automatically.";
+      const expressionFallback=clone.querySelector(".page-expression");if(expressionFallback)expressionFallback.hidden=false;
       const blob=new Blob(["<!doctype html>\n"+clone.outerHTML],{type:"text/html;charset=utf-8"});const url=URL.createObjectURL(blob);const a=document.createElement("a");a.href=url;a.download=`${next.meta.family}-${next.meta.documentId}.html`;a.click();setTimeout(()=>URL.revokeObjectURL(url),10000);doc=next;stateNode.textContent=serial(doc);dirty=false;status.textContent="HTML copy prepared. It includes the complete embedded data; this is not filtered publication or native source Save.";
     }catch(error){status.textContent=`HTML copy could not be prepared: ${error.message}`;}
   };
