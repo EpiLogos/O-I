@@ -1,7 +1,7 @@
 import {useShellGeometry} from "./geometry";
 import {requestResizeExpression} from "../shared/Expression";
-import {SystemPanel} from "./SystemPanel";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
+const SystemPanel=lazy(()=>import("./SystemPanel").then((module)=>({default:module.SystemPanel})));
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
@@ -9,6 +9,8 @@ import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 
 type Side = "left" | "right";
+const FOOTER_KEY="oi-shell-footer.v2";
+const FOOTER_LEGACY_KEY="oi-shell-footer-pinned";
 interface Props {
   layout: LayoutState; setLayout: Dispatch<SetStateAction<LayoutState>>;
   workspace: Workspace; workspaces: Workspace[];
@@ -30,7 +32,12 @@ export function DesktopShell(p: Props) {
   const [name, setName] = useState("");
   const [navigatorOverlay, setNavigatorOverlay] = useState(false);
   const overlayReturn = useRef<HTMLElement | null>(null);
-  const [footerPinned,setFooterPinned]=useState(()=>{try{return localStorage.getItem("oi-shell-footer-pinned")==="true";}catch{return false;}});
+  // The footer is a reveal surface; pinning is an explicit human action and
+  // the only thing that writes this key. The v1 key ("oi-shell-footer-pinned")
+  // is retired deliberately: a value persisted while the reveal logic was
+  // broken is not a preference, so it is removed rather than migrated and
+  // every installation starts unpinned under v2.
+  const [footerPinned,setFooterPinned]=useState(()=>{try{localStorage.removeItem(FOOTER_LEGACY_KEY);return localStorage.getItem(FOOTER_KEY)==="pinned";}catch{return false;}});
   // Finding (i): the persisted plane width is already known synchronously
   // (workspace/store.ts reads it before first render) — what produced the
   // transient narrow sidebar was the plane-width transition itself running
@@ -206,9 +213,9 @@ export function DesktopShell(p: Props) {
   const groupCount = groupsOf(l.root).length;
   return <div ref={host} className="desktop-shell" data-native={p.native} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
-      <button className="shell-region-toggle" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
+      <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
-      <button className="shell-region-toggle shell-agent-toggle" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
+      <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
     </header>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>
       <input aria-label="Workspace name" autoFocus value={name} onChange={e => setName(e.target.value)} />
@@ -239,10 +246,10 @@ export function DesktopShell(p: Props) {
            * honest Context/History/System fallback that renders before the
            * agent layer replaces it. */}
           {p.right ?? <>
-            <div className="region-tools"><span>{p.subject.title}</span><button aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
-            <nav className="inspector-planes" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
-            <div className="inspector-body">
-              {plane === "system" ? <SystemPanel/> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
+            <div className="region-tools oi-tool-row"><span className="oi-tool-row-title">{p.subject.title}</span><button className="oi-tool" aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button className="oi-tool" aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
+            <nav className="inspector-planes oi-plane-nav" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
+            <div className="inspector-body oi-sidecar">
+              {plane === "system" ? <Suspense fallback={null}><SystemPanel/></Suspense> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>
           </>}</div>
         </>}
@@ -255,12 +262,12 @@ export function DesktopShell(p: Props) {
           </div>
           <small className="arrangement-state">{l.maximizedGroupId ? "Focused view" : groupCount === 0 ? "Empty workspace" : `${groupCount} group${groupCount === 1 ? "" : "s"}`}</small>
           <span className="canvas-arrangement-spacer"/>
-          <details className="desktop-menu"><summary aria-label="Workspace actions"><Glyph name="more"/></summary><div>
-            <button aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>
-            <button aria-label="Rename workspace" onClick={() => { setName(p.workspace.name); setNaming("rename"); }}>Rename workspace</button>
-            <button onClick={p.onRecover}>Recover saved arrangement</button>
+          <details className="desktop-menu"><summary aria-label="Workspace actions"><Glyph name="more"/></summary><div className="oi-menu">
+            <button className="oi-menu-item" aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>
+            <button className="oi-menu-item" aria-label="Rename workspace" onClick={() => { setName(p.workspace.name); setNaming("rename"); }}>Rename workspace</button>
+            <button className="oi-menu-item" onClick={p.onRecover}>Recover saved arrangement</button>
           </div></details>
-          <button className="footer-pin" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem("oi-shell-footer-pinned",String(next));}catch{}}}><Glyph name="pin"/></button>
+          <button className="footer-pin oi-tool" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem(FOOTER_KEY,next?"pinned":"revealed");}catch{}}}><Glyph name="pin"/></button>
         </footer></div>
   </div>;
 }

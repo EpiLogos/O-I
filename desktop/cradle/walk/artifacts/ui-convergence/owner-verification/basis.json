@@ -1,0 +1,14 @@
+{
+  "factory": "fb854dede9876a0ea008afd62422ef9150fe5203",
+  "source": "git archive accepted origin/main",
+  "ql": "3a3d7dbcf6a898ce88a9093f858b8f254fff3cfe",
+  "oi": "be172a109f2f5e307cc34a8c0f62cfdc6e5825b1",
+  "oi_note": "Runtime worktree has parent-agent ExpressionStage changes; retained test imports EngineSurface and native QL projection. Its dependencies and test hashes are attached.",
+  "tested_file_sha256": {
+    "desktop/cradle/tests/nara-retained-field.mjs": "f45ed2445c187d22f27571e8475375ee1a1202761534fafe9066fa71e108066f",
+    "desktop/cradle/tests/nara-retained-page.ts": "36e68644fbccbb0b9fe3ba72578e746a0ee710b45745d579ebbd7f9012c11f62",
+    "desktop/cradle/src/stage/engineSurface.ts": "aa7aa7f85cd220da5ccd30846e570de0ce737f85bf11ae2f833ff1c45399179a",
+    "packages/oi-design-system/tokens.css": "48a1a5c8403ec13f6030468e52968b5ebcee1e457c08f0c150c050f9f1daeda3"
+  },
+  "snapshot_sha256": "171a4b5dff9889755b7593ea7ab694ba4c115289ff22e255faa6686e9216ef4c"
+}

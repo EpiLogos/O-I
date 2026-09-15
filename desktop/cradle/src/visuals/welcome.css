@@ -1,23 +1,18 @@
-/* Welcome frontstate: an exclusive, clean screen — the shell ground and
- * the point-cloud mark, nothing else. Entering fades the whole screen out
- * to reveal the workspace beneath.
- *
- * Layering: the scrim rides on the stage's frontstate plane
- * (--oi-z-stage-frontstate). While the frontstate presentation stands,
- * the stage raises the shared field canvas to the same altitude, where it
- * is a later body child — so the canvas paints the mark on this ground.
- * Popovers (80) and consent (above all tokens) would still win while it
- * stands; none exists at boot. Tokens only. */
+/* The engine paints the complete scene below these controls. The inverse
+ * CSS ground covers only import / first paint / failure; once ready, the
+ * full native field is visible without a scrim or a separate exit fade. */
 .oi-welcome {
   position: fixed;
   inset: 0;
-  z-index: var(--oi-z-stage-frontstate);
-  background: var(--oi-canvas-ground);
-  transition: opacity var(--oi-motion-normal) var(--oi-motion-ease);
+  z-index: calc(var(--oi-z-stage-frontstate) + 1);
+  background: var(--oi-inverse-canvas-ground);
+  color: var(--oi-inverse-foreground);
 }
-.oi-welcome-leaving {
-  opacity: 0;
-  pointer-events: none;
+.oi-welcome[data-field-ready="true"]:not([data-field-error="true"]) {
+  background: transparent;
+}
+.oi-welcome[data-phase="entering"] {
+  color: var(--oi-foreground);
 }
 .oi-welcome-enter {
   position: absolute;
@@ -31,29 +26,31 @@
   justify-items: center;
   gap: var(--oi-desktop-gap-xs);
   padding-block-end: 10vh;
-  color: var(--oi-foreground);
+  color: inherit;
   font-family: var(--oi-font-mono);
 }
+.oi-welcome-enter:disabled {
+  cursor: default;
+}
 .oi-welcome-enter:focus-visible {
-  outline: 2px solid var(--oi-focus);
-  outline-offset: -2px;
+  outline: var(--oi-focus-ring-width) solid currentColor;
+  outline-offset: calc(-1 * var(--oi-focus-ring-width));
 }
 .oi-welcome-mark {
   font-size: var(--oi-shell-type-ui);
   letter-spacing: var(--oi-shell-tracking);
   text-transform: uppercase;
-  color: var(--oi-muted-2);
 }
-.oi-welcome-hint {
-  font-size: var(--oi-shell-type-nav);
-  color: var(--oi-muted);
-}
+.oi-welcome-hint,
 .oi-welcome-detail {
   font-size: var(--oi-shell-type-nav);
-  color: var(--oi-muted-2);
 }
-@media (prefers-reduced-motion: reduce) {
-  .oi-welcome {
-    transition: none;
-  }
+.oi-welcome-error {
+  position: absolute;
+  inset-inline: 15%;
+  inset-block-end: 17vh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-nav);
 }

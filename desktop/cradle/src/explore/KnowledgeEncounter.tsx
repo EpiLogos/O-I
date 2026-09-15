@@ -82,10 +82,20 @@ export function KnowledgeEncounter({opened,page,onOpenRef}:{opened:unknown;page:
   // Navigating, changing modes, or replacing a reading releases its GPU locus.
   useLayoutEffect(()=>{
     if(selectedMode!=="expression"||expressionOutcome?.state!=="ready")return;
-    const active=stage.present({id:`explore-knowledge-expression:${mountId}`,plane:"overlay",recipe:"",config:expressionConfig(expressionOutcome.document),sceneRef:expressionOutcome.document.selection.scene_ref});
-    if(!active){setExpressionError(stage.error??"Expression stage is unavailable");return;}
-    active.setContainer(expressionHost.current);
-    return()=>active.release();
+    setExpressionError("");
+    let active:ReturnType<typeof stage.present>=null;
+    try {
+      active=stage.present({id:`explore-knowledge-expression:${mountId}`,plane:"overlay",recipe:"",config:expressionConfig(expressionOutcome.document),appearance:"host",sceneRef:expressionOutcome.document.selection.scene_ref});
+      // Opening or initial engine admission can defer this request. The
+      // stage availability update retries it; only an actual failure is an error.
+      if(!active){if(stage.error)setExpressionError(stage.error);return;}
+      active.setContainer(expressionHost.current);
+    } catch(error) {
+      active?.release();
+      setExpressionError(error instanceof Error?error.message:String(error));
+      return;
+    }
+    return()=>active?.release();
   },[selectedMode,expressionOutcome,stage,mountId]);
   const changeMode=(next:Mode)=>{epoch.current++;activeProjection.current?.abort();setExpressionBusy(false);setMode(next);};
   const express=async()=>{

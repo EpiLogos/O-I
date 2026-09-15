@@ -9,16 +9,7 @@
   background: var(--oi-sidebar-ground); color: var(--oi-foreground);
   border-right: 1px solid var(--oi-hairline);
   font-family: var(--oi-font-sans); font-size: var(--oi-shell-type-nav);
-  /* `--oi-loading-ground`/`--oi-loading-ink` are declared at :root against
-   * the un-themed `--oi-surface`/`--oi-foreground` defaults, so they resolve
-   * to white rather than the desktop palette even under `.oi-desktop` (the
-   * var() inside that :root declaration is captured at the root element,
-   * not re-evaluated per descendant). Re-pointing them here keeps every
-   * `Loading` mounted under this sidebar (FileTree, EncounterList, this
-   * surface's own "Reading Central…") on the sidebar's real ground instead
-   * of a white box. This is a design-system-wide gap outside this file. */
-  --oi-loading-ground: var(--oi-sidebar-ground);
-  --oi-loading-ink: var(--oi-foreground);
+
 }
 aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .world-navigator header { display: flex; align-items: center; gap: var(--oi-space-2); }
@@ -217,12 +208,12 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 
 /* Wave 6E cut 2: returns beside the open document (same receiving field,
  * same owner operations as the project tray, placed at the reading site). */
-.document-returns{border-top:1px solid #d9ddd2;padding:10px 14px;font-size:12px}
+.document-returns{border-top:1px solid var(--oi-rule);padding:10px 14px;font-size:12px}
 .document-returns header{display:flex;align-items:center;gap:8px}
 .document-returns header span{font-weight:500}
 .document-returns header small{opacity:.65}
 .document-returns .project-return{display:flex;gap:8px;align-items:center;width:100%;text-align:left;padding:5px 6px;border:1px solid transparent;border-radius:4px;background:transparent;font:inherit;color:inherit;cursor:pointer}
-.document-returns .project-return.return-open,.document-returns .project-return:hover{border-color:#cbd1c3}
+.document-returns .project-return.return-open,.document-returns .project-return:hover{border-color:var(--oi-hairline)}
 .return-anchor{opacity:.75}
 .return-last-error{opacity:.8;margin:6px 0 0}
 .return-now-mark{color:var(--oi-muted-2)}
@@ -240,23 +231,23 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 /* Wave 7: the four material states live in the ordinary canvas — the shared
  * projection strip and the accepted-revision strip sit beside the returns
  * strip, under the same document surface (no second panel architecture). */
-.shared-field-material,.document-contributions{border-top:1px solid #d9ddd2;padding:10px 14px;font-size:12px}
+.shared-field-material,.document-contributions{border-top:1px solid var(--oi-rule);padding:10px 14px;font-size:12px}
 .shared-field-material header,.document-contributions header{display:flex;align-items:center;gap:8px}
 .shared-field-material header span,.document-contributions header span{font-weight:500}
 .shared-field-material header small,.document-contributions header small{opacity:.65}
-.shared-field-quote{margin:4px 0;padding:6px 8px;border-left:3px solid #cbd1c3;white-space:pre-wrap;overflow-wrap:anywhere}
+.shared-field-quote{margin:4px 0;padding:6px 8px;border-left:3px solid var(--oi-hairline);white-space:pre-wrap;overflow-wrap:anywhere}
 .shared-field-fields{display:flex;flex-direction:column;gap:6px;margin:8px 0}
 .shared-field-fields label{display:flex;flex-direction:column;gap:2px;color:var(--oi-muted-2)}
-.shared-field-fields input,.shared-field-fields select{font:inherit;padding:3px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit}
+.shared-field-fields input,.shared-field-fields select{font:inherit;padding:3px 6px;border:1px solid var(--oi-hairline);border-radius:4px;background:inherit;color:inherit}
 .shared-field-actions{display:flex;align-items:center;justify-content:flex-end;gap:10px}
 .shared-field-actions span{opacity:.7;margin-right:auto}
-.shared-field-publish,.shared-field-withdraw-send{border:1px solid #cbd1c3;border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
+.shared-field-publish,.shared-field-withdraw-send{border:1px solid var(--oi-hairline);border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
 .shared-field-publish:hover,.shared-field-withdraw-send:hover{border-color:var(--oi-accent-ink)}
 .shared-field-withdraw{display:flex;flex-direction:column;gap:6px;margin-top:6px}
 .shared-field-withdraw label{display:flex;flex-direction:column;gap:2px;color:var(--oi-muted-2)}
-.shared-field-withdraw input{font:inherit;padding:3px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit}
+.shared-field-withdraw input{font:inherit;padding:3px 6px;border:1px solid var(--oi-hairline);border-radius:4px;background:inherit;color:inherit}
 .shared-field-published p{margin:4px 0}
-.document-contributions .accepted-contribution{padding:6px 0;border-bottom:1px dashed #e3e6dc}
+.document-contributions .accepted-contribution{padding:6px 0;border-bottom:1px dashed var(--oi-hairline-soft)}
 .document-contributions .accepted-contribution:last-child{border-bottom:0}
 .accepted-contribution-author{font-weight:500;margin-right:8px}
 .accepted-contribution-anchor,.accepted-contribution-reviewer{opacity:.7;margin-right:8px}
@@ -265,11 +256,11 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 
 /* Wave 7 A2A: the peer-exchange form and its returned difference live in the
  * same document strip — no second architecture. */
-.shared-field-a2a{margin-top:10px;border-top:1px dashed #e3e6dc;padding-top:8px}
+.shared-field-a2a{margin-top:10px;border-top:1px dashed var(--oi-hairline-soft);padding-top:8px}
 .shared-field-a2a-header{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
 .shared-field-a2a-header small{opacity:.65}
-.shared-field-a2a textarea{font:inherit;padding:4px 6px;border:1px solid #cbd1c3;border-radius:4px;background:inherit;color:inherit;width:100%;box-sizing:border-box}
-.shared-field-a2a-send{border:1px solid #cbd1c3;border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
+.shared-field-a2a textarea{font:inherit;padding:4px 6px;border:1px solid var(--oi-hairline);border-radius:4px;background:inherit;color:inherit;width:100%;box-sizing:border-box}
+.shared-field-a2a-send{border:1px solid var(--oi-hairline);border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
 .shared-field-a2a-send:hover:not(:disabled){border-color:var(--oi-accent-ink)}
 .shared-field-a2a-send:disabled{opacity:.5;cursor:default}
 .shared-field-a2a-difference p{margin:4px 0}

@@ -7,6 +7,8 @@ import {
   useState,
 } from "react";
 import { basicSetup } from "codemirror";
+import { HighlightStyle, syntaxHighlighting } from "@codemirror/language";
+import { tags } from "@lezer/highlight";
 import {
   EditorState,
   Compartment,
@@ -38,6 +40,29 @@ import { xml } from "@codemirror/lang-xml";
 import type { SurfaceBinding } from "../surface/types";
 import "./text-editor.css";
 import {useEditorMode} from "./EditorChrome";
+
+// basicSetup's defaultHighlightStyle is a light-only fallback. Installing
+// an explicit highlighter replaces that whole fallback, so retain its tag
+// families and text semantics while taking every colour from the host.
+const sourceHighlightStyle = HighlightStyle.define([
+  { tag: tags.meta, color: "var(--oi-syntax-meta)" },
+  { tag: [tags.link, tags.url], color: "var(--oi-syntax-link)", textDecoration: "underline" },
+  { tag: tags.heading, color: "var(--oi-syntax-heading)", textDecoration: "underline", fontWeight: "bold" },
+  { tag: tags.emphasis, fontStyle: "italic" },
+  { tag: tags.strong, fontWeight: "bold" },
+  { tag: tags.strikethrough, textDecoration: "line-through" },
+  { tag: tags.keyword, color: "var(--oi-syntax-keyword)" },
+  { tag: [tags.atom, tags.bool, tags.contentSeparator, tags.labelName], color: "var(--oi-syntax-atom)" },
+  { tag: [tags.literal, tags.inserted], color: "var(--oi-syntax-literal)" },
+  { tag: [tags.string, tags.deleted], color: "var(--oi-syntax-string)" },
+  { tag: [tags.regexp, tags.escape, tags.special(tags.string)], color: "var(--oi-syntax-special)" },
+  { tag: [tags.definition(tags.variableName), tags.definition(tags.propertyName)], color: "var(--oi-syntax-definition)" },
+  { tag: tags.local(tags.variableName), color: "var(--oi-syntax-variable)" },
+  { tag: [tags.typeName, tags.namespace, tags.className], color: "var(--oi-syntax-type)" },
+  { tag: [tags.special(tags.variableName), tags.macroName], color: "var(--oi-syntax-special)" },
+  { tag: tags.comment, color: "var(--oi-syntax-comment)" },
+  { tag: tags.invalid, color: "var(--oi-syntax-invalid)", textDecoration: "underline wavy" },
+]);
 export interface EditorHandle {
   readonly value: string;
   readonly selectionStart: number;
@@ -215,6 +240,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
     useLayoutEffect(() => {
       const extensions = [
         basicSetup,
+        syntaxHighlighting(sourceHighlightStyle),
         highlights,
         editable.current.of(
           EditorState.readOnly.of(!!callbacks.current.readOnly),

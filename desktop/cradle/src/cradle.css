@@ -1,77 +1,17 @@
 /*
- * Workbench + context menu + agency depths (U0.3b).
+ * Workbench, pane/tab chrome, context menu and the source/file surfaces.
  * Every colour, spacing, size, and motion value comes from
  * @epilogos/oi-design-system tokens — no raw values live here.
  * The rest shape itself keeps rest.css untouched (austere rest preserved).
+ * Dead generations (the agency column, test bindings, the textarea-era
+ * source editor, the study empty-state) were removed 2026-09-15 once their
+ * replacements were structurally in place.
  */
 
 .workbench {
   position: relative;
   display: flex;
   height: 100%;
-}
-
-/* ---------------------------------------------------------------------------
- * Agency column — depth states only (D17). At strip it is the same reserved
- * column as rest; at full it is a true overlay: the canvas is masked
- * dimensionally (its layout width is untouched), never reflowed.
- */
-
-.agency-column {
-  flex: none;
-  border-right: 1px solid var(--oi-rule);
-  transition: width var(--oi-motion-normal) var(--oi-motion-ease);
-}
-
-.agency-column.depth-collapsed {
-  width: 0;
-  border-right: none;
-}
-
-.agency-column.depth-strip {
-  width: var(--oi-space-7);
-}
-
-.agency-column.depth-panel {
-  width: calc(var(--oi-space-7) * 4);
-}
-
-/* Full = true overlay (D17). The column stays in flow at panel width, so
- * the canvas below keeps its layout — masked dimensionally, never reflowed. */
-.agency-column.depth-full {
-  position: relative;
-  width: calc(var(--oi-space-7) * 4);
-  z-index: 5;
-}
-
-.agency-overlay {
-  position: absolute;
-  top: 0;
-  bottom: 0;
-  left: 0;
-  width: 100vw;
-  background: var(--oi-surface);
-  z-index: 0;
-}
-
-.agency-note {
-  position: relative;
-  z-index: 1;
-  display: flex;
-  flex-direction: column;
-  gap: var(--oi-space-1);
-  padding: var(--oi-space-2);
-}
-
-.agency-note-label {
-  font-size: var(--oi-type-xs);
-  letter-spacing: var(--oi-tracking-label);
-  color: var(--oi-foreground);
-}
-
-.agency-note-body {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
 }
 
 /* ---------------------------------------------------------------------------
@@ -310,7 +250,7 @@
 }
 
 /* ---------------------------------------------------------------------------
- * Surface bodies — today only honestly-labelled test bindings.
+ * Surface bodies — the pane's one scroll owner beneath its tab strip.
  */
 
 .surface-body {
@@ -318,45 +258,6 @@
   min-height: 0;
   overflow: auto;
   padding: var(--oi-space-3);
-}
-
-.test-surface {
-  display: flex;
-  flex-direction: column;
-  gap: var(--oi-space-2);
-  max-width: calc(var(--oi-space-7) * 6);
-}
-
-.test-title {
-  color: var(--oi-foreground);
-  font-size: var(--oi-type-body);
-}
-
-.test-facts {
-  display: flex;
-  flex-direction: column;
-  gap: var(--oi-space-1);
-}
-
-.test-facts > div {
-  display: flex;
-  gap: var(--oi-space-2);
-  font-size: var(--oi-type-sm);
-}
-
-.test-facts dt {
-  color: var(--oi-muted);
-  min-width: var(--oi-space-7);
-}
-
-.test-facts dd {
-  color: var(--oi-foreground);
-}
-
-.test-note {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
-  max-width: calc(var(--oi-space-7) * 6);
 }
 
 /* ---------------------------------------------------------------------------
@@ -482,12 +383,6 @@
   color: var(--oi-muted-2);
 }
 
-.source-location {
-  flex: 1;
-  min-width: 0;
-  color: var(--oi-accent-ink);
-}
-
 .source-revision {
   letter-spacing: var(--oi-shell-tracking);
 }
@@ -505,11 +400,6 @@
 }
 
 .source-clean-marker {
-  color: var(--oi-muted-2);
-}
-
-.source-hint {
-  margin-left: auto;
   color: var(--oi-muted-2);
 }
 
@@ -547,8 +437,9 @@
   margin-left: auto;
 }
 
-/* The scrollable middle: editor body (gutter + textarea) plus any open
- * history / conflict disclosure, all above the fixed footer. */
+/* The scrollable middle of a source/file surface: the editor body plus any
+ * open history / conflict disclosure, all above the fixed footer. The
+ * CodeMirror editor (text-editor.css) sizes itself inside `.source-editor-body`. */
 .source-editor-scroll {
   flex: 1;
   min-height: 0;
@@ -565,61 +456,10 @@
   padding: 7px 15px 20px 0;
 }
 
-/* Finding 28: 8px line numbers beside 12px mono body read too small and
- * optically high against the text they key. 10px keeps the same 22.8px
- * (12px * 1.9) line box as the body so numbers and text stay in register. */
-.source-gutter {
-  width: 40px;
-  flex: none;
-  display: flex;
-  flex-direction: column;
-  align-items: center;
-  font: var(--oi-shell-type-ui) var(--oi-font-mono);
-  line-height: calc(var(--oi-shell-type-body) * 1.9);
-  color: var(--oi-muted-3);
-  user-select: none;
-}
-
-/* Shared by both the source (kernel-seam) and ordinary-file editors — one
- * mono editor grammar, keyed off the plain .source-textarea class both
- * surfaces render (brief FND-01 "Source/file surface chrome"). */
-.source-textarea {
-  flex: 1;
-  resize: none;
-  border: none;
-  outline: none;
-  appearance: none;
-  box-shadow: none;
-  background: transparent;
-  color: var(--oi-foreground);
-  caret-color: var(--oi-foreground);
-  font-size: var(--oi-shell-type-body);
-  font-family: var(--oi-font-mono);
-  line-height: calc(var(--oi-shell-type-body) * 1.9);
-  white-space: pre;
-  padding: 0;
-  min-width: 0;
-}
-
-.source-editor-foot {
-  height: 24px;
-  flex: none;
-  display: flex;
-  align-items: center;
-  justify-content: space-between;
-  padding: 0 15px;
-  background: var(--oi-canvas-ground);
-  border-top: 1px solid var(--oi-hairline-soft);
-  font-size: var(--oi-shell-type-eyebrow);
-  letter-spacing: var(--oi-shell-tracking);
-  text-transform: uppercase;
-  color: var(--oi-muted-2);
-}
-
 /* Finding 24: gold is the scarce meta-relation role only — a revision
  * conflict is not a meta-relation, it is the accent's own "needs attention"
  * signal, same as the dirty marker and the tab-active underline. */
-.source-editor.conflicted .source-textarea {
+.source-editor.conflicted .cm-editor {
   box-shadow: inset 2px 0 0 var(--oi-accent);
 }
 
@@ -802,7 +642,7 @@
 .source-save:disabled { color: var(--oi-muted); cursor: default; }
 .source-save:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-focus); }
 
-.source-history-toggle, .source-history button { font: inherit; color: var(--oi-muted); border: 1px solid var(--oi-rule); background: var(--oi-surface); padding: var(--oi-space-2); cursor: pointer; }
+.source-history button { font: inherit; color: var(--oi-muted); border: 1px solid var(--oi-rule); background: var(--oi-surface); padding: var(--oi-space-2); cursor: pointer; }
 .source-history { padding: var(--oi-space-4); border-top: 1px solid var(--oi-rule); overflow: auto; max-height: 35vh; flex-shrink: 0; }
 .source-history-heading { display: flex; align-items: center; justify-content: space-between; }
 .source-history h2 { font: inherit; margin: 0; }
@@ -811,52 +651,6 @@
 .source-history time { margin-left: var(--oi-space-4); color: var(--oi-muted); font-size: var(--oi-type-sm); }
 .source-history details { margin-top: var(--oi-space-2); font-size: var(--oi-type-sm); }
 .source-history dd { overflow-wrap: anywhere; }
-
-/* Empty pane — the study's "A space for your work" composition, keeping
- * the three real entries (brief FND-01 A9). Item (f): Rest renders as a
- * direct child of `.desktop-centre` (there is no `.pane.group` to carry the
- * card grammar when the workspace holds no surfaces), so it draws its own
- * card — same hairline/radius/ground as a split pane — instead of sitting
- * as a flat slab in the gutter. */
-.workspace-start {
-  height: 100%; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; padding: 20px;
-  color: var(--oi-muted-2);
-  background: var(--oi-canvas-ground);
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: var(--oi-shell-radius);
-  overflow: hidden;
-}
-.workspace-start > div { display: flex; flex-direction: column; align-items: center; gap: 12px; max-width: 26rem; text-align: center; }
-.workspace-start h2 { font-size: var(--oi-shell-type-heading); font-weight: 450; color: var(--oi-accent-ink); margin: 8px 0 0; }
-.workspace-start p { font-size: var(--oi-shell-type-ui); margin: 0 0 4px; color: var(--oi-muted-2); }
-.workspace-start nav { display: flex; flex-wrap: wrap; justify-content: center; gap: var(--oi-space-3); }
-.workspace-start button {
-  display: inline-flex; align-items: center; gap: 8px;
-  font: inherit; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink);
-  background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 6px;
-  padding: 6px 10px; cursor: pointer;
-  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
-}
-.workspace-start button:hover, .workspace-start button:focus-visible { background: var(--oi-wash); border-color: var(--oi-accent-soft); outline: none; }
-.workspace-start button kbd { font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
-.workspace-start > div > svg { flex: none; width: 26px; height: 26px; color: var(--oi-muted-2); }
-.workspace-start button svg { flex: none; width: 13px; height: 13px; }
-
-/* Focused writing — the quiet 35px "WRITING" bar over the paper canvas.
- * Item (f): the same card treatment as `.workspace-start` above — writing
- * mode is still Rest, still a direct child of `.desktop-centre`. */
-.rest.writing-mode {
-  display: flex; flex-direction: column;
-  background: var(--oi-canvas-ground);
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: var(--oi-shell-radius);
-  overflow: hidden;
-}
-.writing-mode-bar { display: flex; justify-content: space-between; align-items: center; height: 35px; flex: none; padding: 0 20px; border-bottom: 1px solid var(--oi-hairline-soft); color: var(--oi-muted-2); }
-.writing-mode-bar small { font-size: var(--oi-shell-type-eyebrow); letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; }
-.writing-mode-bar button { font: inherit; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); background: transparent; border: 0; padding: 0; cursor: pointer; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
-.writing-mode-bar button:hover, .writing-mode-bar button:focus-visible { color: var(--oi-accent-ink); outline: none; }
-.writing-mode .canvas { flex: 1; min-height: 0; }
 
 /* Owner cleanup: tabs scroll independently; pane actions stay within reach. */
 .tab-strip { overflow: hidden; }
@@ -869,16 +663,16 @@
 
 /* A status edge expands in flow, gently making room for its content. */
 .pane.group{position:relative;overflow:hidden}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status),.pane.group.focused > .pane-footer{position:relative;inset:auto;flex:none;z-index:15;height:3px;min-height:3px;padding-top:0;padding-bottom:0;overflow:hidden;transform:none;background:var(--oi-canvas-ground);border-top:1px solid var(--oi-hairline-soft);transition:height 420ms cubic-bezier(.22,.7,.25,1),min-height 420ms cubic-bezier(.22,.7,.25,1)}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status):not(:hover):not(:focus-within)>*{visibility:hidden}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.flow-footer,.browser-status):is(:hover,:focus-within),.pane.group.focused > .pane-footer:hover{height:24px;min-height:24px}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.browser-status),.pane.group.focused > .pane-footer{position:relative;inset:auto;flex:none;z-index:15;height:3px;min-height:3px;padding-top:0;padding-bottom:0;overflow:hidden;transform:none;background:var(--oi-canvas-ground);border-top:1px solid var(--oi-hairline-soft);transition:height 420ms cubic-bezier(.22,.7,.25,1),min-height 420ms cubic-bezier(.22,.7,.25,1)}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.browser-status):not(:hover):not(:focus-within)>*{visibility:hidden}
+.pane.group.focused :is(.editor-footer,.terminal-footer,.browser-status):is(:hover,:focus-within),.pane.group.focused > .pane-footer:hover{height:24px;min-height:24px}
 .surface-body,.surface-body *{scrollbar-width:none}.surface-body::-webkit-scrollbar,.surface-body *::-webkit-scrollbar{display:none;width:0;height:0}
 
 /* Writing surfaces already own a footer: keep one bottom status band. */
-.pane.group:has(.editor-footer, .browser-status, .terminal-footer, .flow-footer) > .pane-status { display: none; }
+.pane.group:has(.editor-footer, .browser-status, .terminal-footer) > .pane-status { display: none; }
 
 @media (prefers-reduced-motion: reduce) {
-  .pane.group, .pane-footer, .editor-footer, .browser-status, .terminal-footer, .flow-footer { transition-duration: 0.01ms !important; }
+  .pane.group, .pane-footer, .editor-footer, .browser-status, .terminal-footer { transition-duration: 0.01ms !important; }
 }
 
 .tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out)}
@@ -903,7 +697,7 @@
   display: inline-flex;
   gap: 0;
   margin-right: 8px;
-  border: 1px solid var(--oi-line, #ccc6);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
   border-radius: 6px;
   overflow: hidden;
 }
@@ -914,7 +708,7 @@
   font-size: var(--oi-shell-type-body);
 }
 .source-view-toggle button[aria-selected="true"] {
-  background: var(--oi-active, rgba(0,0,0,0.08));
+  background: var(--oi-wash);
 }
 
 .die-face-unavailable,
@@ -945,41 +739,7 @@
   margin-right: 8px;
   font-size: var(--oi-shell-type-body);
 }
-
-/* Factory development reads (queue cell 3): the owner's own developmental
- * readings, verbatim; the state path is the human's to name on this cut. */
-.factory-development{padding:18px 22px;display:flex;flex-direction:column;gap:14px;overflow:auto}
-.factory-development-header h2{margin:0;font-size:15px}
-.factory-development-header small{color:var(--oi-muted-2)}
-.factory-development-form{display:flex;flex-direction:column;gap:8px;border:1px solid var(--oi-hairline);border-radius:8px;padding:10px}
-.factory-development-form label{display:flex;flex-direction:column;gap:3px;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
-.factory-development-form input{border:1px solid var(--oi-hairline);border-radius:6px;padding:5px 8px;font:inherit;background:var(--oi-composer-ground);color:var(--oi-foreground)}
-.factory-development-actions{display:flex;gap:8px;flex-wrap:wrap}
-.factory-development-actions button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
-.factory-development-actions button:disabled{color:var(--oi-muted-2);cursor:default}
-.factory-development-reading h3,.factory-development-status h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
-.factory-development-reading pre{margin:0;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:11px;overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
-.factory-development-status dl{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav)}
-.factory-development-status dt{color:var(--oi-muted-2)}
-.factory-development-status dd{margin:0}
-.factory-development-status p{color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
-.factory-development-journeys h3,.factory-development-build h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
-.factory-development-build label{display:flex;flex-direction:column;gap:3px;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);margin-bottom:6px}
-.factory-development-build input{border:1px solid var(--oi-hairline);border-radius:6px;padding:5px 8px;font:inherit;background:var(--oi-composer-ground);color:var(--oi-foreground)}
-.factory-development-build button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
-.factory-development-build button:disabled{color:var(--oi-muted-2);cursor:default}
-.factory-journey,.factory-run{border:1px solid var(--oi-hairline);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.factory-run{margin:6px 0 0 14px}
-.factory-row-head{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;min-width:0}
-.factory-row-ref{font-size:11px;overflow-wrap:anywhere}
-.factory-row-note{color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
-.factory-journey summary,.factory-run summary,.factory-execution summary{cursor:pointer;font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2)}
-.factory-run-facts{margin:6px 0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav)}
-.factory-run-facts dt{color:var(--oi-muted-2)}
-.factory-run-facts dd{margin:0}
-.factory-executions{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-.factory-execution pre{margin:4px 0 0;padding:8px;border:1px solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:11px;overflow:auto;max-height:260px;white-space:pre-wrap;overflow-wrap:anywhere}
-.factory-telemetry{margin-top:6px}
-.factory-telemetry button{border:1px solid var(--oi-hairline);border-radius:7px;background:var(--oi-composer-ground);color:var(--oi-foreground);font:inherit;font-size:var(--oi-shell-type-nav);padding:4px 10px;cursor:pointer}
-.factory-telemetry button:disabled{color:var(--oi-muted-2);cursor:default}
-.factory-telemetry p{margin:6px 0 0;font-size:var(--oi-shell-type-nav);overflow-wrap:anywhere}
+/* The opening gates interaction without changing the workspace's layout. */
+.oi-workspace-mount { display: contents; }
+/* Match the opening before its JavaScript or native field can paint. */
+body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-ground); }

@@ -5,6 +5,7 @@
   "files": [
     "search.css",
     "tokens.css",
+    "desktop.css",
     "assets",
     "point-cloud.css",
     "loading.mjs",
@@ -25,7 +26,8 @@
     "./expression.css": "./expression.css",
     "./point-cloud/config": "./point-cloud/config.mjs",
     "./point-cloud/presets": "./point-cloud/presets.mjs",
-    "./expressions-engine/*": "./expressions-engine/*"
+    "./expressions-engine/*": "./expressions-engine/*",
+    "./desktop.css": "./desktop.css"
   },
   "peerDependencies": {
     "three": ">= 0.160"

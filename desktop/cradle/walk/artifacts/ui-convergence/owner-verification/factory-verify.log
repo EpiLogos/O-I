@@ -1,0 +1,39 @@
+
+> @epilogos/factory-build-surface@0.1.0 verify
+> npm run typecheck && npm run test && npm run build
+
+
+> @epilogos/factory-build-surface@0.1.0 typecheck
+> tsc --noEmit
+
+
+> @epilogos/factory-build-surface@0.1.0 test
+> vitest run
+
+
+ RUN  v2.1.9 /private/tmp/oi-ui-owner-verification-20260915/factory-ui
+
+ ✓ src/sssf.test.ts (3 tests) 3ms
+ ✓ src/read-model.test.ts (11 tests) 4ms
+ ✓ src/trace-conformance.test.ts (6 tests) 6ms
+ ✓ src/portable-only.test.tsx (2 tests) 47ms
+ ✓ src/components/ExecutionTraceExplorer.test.tsx (4 tests) 127ms
+ ✓ src/BuildSurface.test.tsx (6 tests) 235ms
+
+ Test Files  6 passed (6)
+      Tests  32 passed (32)
+   Start at  14:43:06
+   Duration  1.19s (transform 244ms, setup 579ms, collect 476ms, tests 422ms, environment 2.38s, prepare 425ms)
+
+
+> @epilogos/factory-build-surface@0.1.0 build
+> tsc -b && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 11 modules transformed.
+rendering chunks...
+computing gzip size...
+dist/style.css                 21.27 kB │ gzip: 4.01 kB
+dist/factory-build-surface.js  40.09 kB │ gzip: 8.42 kB
+✓ built in 78ms

@@ -1,0 +1,30 @@
+{
+  "oi_commit": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+  "accepted_main": "48e298bc2f1cea71b4d1f9367a9c81ebdf209800",
+  "files": {
+    "desktop/cradle/src/stage/engineSurface.ts": {
+      "bytes": 31803,
+      "sha256": "8ff18f6f929337b47d4dc81ebfab4e95ddde6f3efd2556de95a2139e14049a20"
+    },
+    "desktop/cradle/src/stage/ExpressionStage.tsx": {
+      "bytes": 19997,
+      "sha256": "89e96eda942d8e927a1d0788ccb4e4186e6c3fbf315ebe57b1315020d415f9b4"
+    },
+    "desktop/cradle/src/stage/nativeCues.ts": {
+      "bytes": 9040,
+      "sha256": "a7e8c5dc8426c17e2b6c4631a536714cee1125116a5b5c8bbbaaa78519dee35e"
+    },
+    "desktop/cradle/tests/nara-retained-field.mjs": {
+      "bytes": 10106,
+      "sha256": "969eecc890376ccb9afc294a3a77ca5bbb6bb5531d7dde47512d703257ae6ba1"
+    },
+    "desktop/cradle/tests/expression-provider-lifecycle.mjs": {
+      "bytes": 6048,
+      "sha256": "f70f4d585c11c8aeeca4306ff8f5ad4fbcd674d4c781dcb04b08878f13a44b50"
+    },
+    "desktop/cradle/tests/native-cues-lifecycle.mjs": {
+      "bytes": 8658,
+      "sha256": "27ad759698f872caa882fed6426f69c8655aec9afaadd2a89abd6addb1234a48"
+    }
+  }
+}

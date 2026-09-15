@@ -1,0 +1,181 @@
+{
+  "results": [
+    {
+      "name": "Canvas has one library entry and direct still/video icons, no compulsory editorial copy",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "All seven icon centres align in a thinner rail; Interact comes first",
+      "ok": true,
+      "evidence": [
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        },
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        },
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        },
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        },
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        },
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        },
+        {
+          "cy": 24,
+          "sy": 24,
+          "height": 30
+        }
+      ]
+    },
+    {
+      "name": "Every tool opens and closes its own surface in one click without mutating the expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Closing the Studio explicitly returns to the quiet canvas",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Orbital drag changes yaw/pitch without a field force or document edit",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Orbital pan and zoom share the saved camera and preserve working-plane settings",
+      "ok": true,
+      "evidence": {
+        "mode": "3d",
+        "yaw": 0.3509999504089354,
+        "pitch": 0.23399999999999999,
+        "zoom": 1.2214027581601699,
+        "panX": 16,
+        "panY": -13,
+        "plane": "XY",
+        "depth": 0,
+        "grid": false,
+        "snap": false
+      }
+    },
+    {
+      "name": "Axis targets and keyboard controls work without physics steps, target rebakes or reseeds",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Camera tool has no duplicate persistent toolbar or instruction pill",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Bottom-right XYZ values match the world-space pointer, not a corner status label",
+      "ok": true,
+      "evidence": {
+        "numbers": [
+          "+0.120",
+          "+0.065",
+          "+0.000"
+        ],
+        "bounds": {
+          "x": 1220.125,
+          "y": 901,
+          "width": 193.875,
+          "height": 15
+        }
+      }
+    },
+    {
+      "name": "Library is a full page with image/name/subtitle cards, not a modal",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Opening library clears field input and pauses its time without a reset",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "About and import/export live in the library; browsing does not change the expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Returning from library restores exactly the camera and active expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "A running field pauses for library browsing and resumes without time catch-up",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Modes open editable composition forks and retain the previous expression",
+      "ok": true,
+      "evidence": "composition-kundalini_focus"
+    },
+    {
+      "name": "Import adds a card without replacing the live expression",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "An imported ID conflict preserves both versions instead of overwriting current work",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Expression name and subtitle are editable in the library with safe literal text",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Expression export retains the compatible authoring envelope and the edited document",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Narrow layout keeps controller, capture and transport without horizontal overflow",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Library remains a scrollable single-column page on small screens",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Touch orbit changes the view without placing objects or applying field forces",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Storage-unavailable import remains in-session and offers honest portable export",
+      "ok": true,
+      "evidence": null
+    }
+  ],
+  "passed": 23,
+  "browserErrors": [],
+  "environment": "Chromium software WebGL; 2048-particle fixtures; declared storage double except explicit unavailable-storage case. Native state and trusted touch checked."
+}

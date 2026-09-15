@@ -1,8 +1,7 @@
 import {EncounterSurface} from "../encounter/EncounterSurface";
+import {lazy,Suspense} from "react";
 import {requestResizeExpression} from "../shared/Expression";
-import {SystemPanel} from "../workspace/SystemPanel";
-import {FactoryDevelopmentSurface} from "../contributions/factory/FactoryDevelopmentSurface";
-import {ExploreSurface,type ExploreSurfaceProps} from "../explore/ExploreSurface";
+import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
  * open (law 12: austere rest governs what is on screen; at zero surfaces
@@ -21,16 +20,23 @@ import { Glyph } from "../workspace/Glyph";
 import { Fragment, useEffect, useLayoutEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
-import { KnowledgeSurface } from "../knowledge/KnowledgeSurface";
 import { FileSurface } from "../files/FileSurface";
 import { SourceSurface } from "./SourceSurface";
 import { SourcesIndex } from "./SourcesIndex";
-import { BrowserSurface } from "../browser/BrowserSurface";
-import { TerminalSurface } from "../terminal/TerminalSurface";
 import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
 import { contains, groupsOf, renderOrder } from "./engine";
+// Expensive bodies load on first use, not at startup: the terminal (xterm),
+// the browser attachment, Explore and its presentation renderers, the
+// knowledge graph and its layout worker, the Factory contribution and the
+// System composition. Each is its own chunk; the workbench frame stays light.
+const ExploreSurface=lazy(()=>import("../explore/ExploreSurface").then((module)=>({default:module.ExploreSurface})));
+const TerminalSurface=lazy(()=>import("../terminal/TerminalSurface").then((module)=>({default:module.TerminalSurface})));
+const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=>({default:module.BrowserSurface})));
+const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((module)=>({default:module.KnowledgeSurface})));
+const FactoryDevelopmentSurface=lazy(()=>import("../contributions/factory/FactoryDevelopmentSurface").then((module)=>({default:module.FactoryDevelopmentSurface})));
+const SystemPanel=lazy(()=>import("../workspace/SystemPanel").then((module)=>({default:module.SystemPanel})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 
 export interface WorkbenchProps {
@@ -301,7 +307,10 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
-function SurfaceBody({
+function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
+  return <Suspense fallback={null}><SurfaceBodyImpl {...props}/></Suspense>;
+}
+function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
 }: {

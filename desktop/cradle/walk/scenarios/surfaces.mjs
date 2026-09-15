@@ -24,7 +24,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await page.keyboard.press('Meta+Shift+t');
   check(await page.locator('.tab').count()===5,'Keyboard reopens the same source binding');
   await tab(sources[4]).first().hover();
-  await tab(sources[4]).first().locator('.tab-close').click();
+  await page.getByRole('button',{name:`Close ${title(sources[4])}`,exact:true}).click();
   check(await page.locator('.tab').count()===4,'Pointer close operates on the requested tab');
   await tab(sources[3]).click(); await page.keyboard.press('Meta+d');
   check(await page.locator('.pane.group').count()===2,'Keyboard splits the active source to the right');
@@ -44,7 +44,10 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   check(await docText(page,'.pane.focused .cm-content')==='Retained through all frame operations.\n','Tiling and movement retain dirty source writing');
   await tab(sources[0]).click({button:'right'});
   const actions=await page.locator('.ctx-item').evaluateAll(es=>es.map(e=>e.dataset.actionRef));
-  check(JSON.stringify(actions)===JSON.stringify(['surface.close','surface.maximize','surface.split-right','surface.split-down','surface.pin']),'Source frame menu discloses exactly its operative frame actions');
+  const moveActions=actions.filter(ref=>ref?.startsWith('surface.move-to:'));
+  const groupIds=await page.locator('.pane.group').evaluateAll(groups=>groups.map(group=>group.dataset.groupId));
+  const selectedGroup=await tab(sources[0]).evaluate(el=>el.closest('.pane.group').dataset.groupId);
+  check(JSON.stringify(actions.filter(ref=>!ref?.startsWith('surface.move-to:')))===JSON.stringify(['surface.focus-tab','surface.close','surface.maximize','surface.split-right','surface.split-down','surface.pin'])&&JSON.stringify(moveActions)===JSON.stringify(groupIds.filter(id=>id!==selectedGroup).map(id=>`surface.move-to:${id}`)),'Source frame menu discloses its exact operations and existing destination panes');
   await page.getByRole('menuitem',{name:'Pin',exact:true}).click();
   check(await tab(sources[0]).getAttribute('data-pinned')==='true','Pointer menu pins the requested source');
   await page.keyboard.press('Meta+w');
@@ -58,7 +61,9 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   await tab(sources[1]).click({button:'right'});
   await page.getByRole('menuitem',{name:'Split right',exact:true}).click();
   check(await page.locator('.pane.group').count()===4,'Pointer menu splits the same real binding');
-  await tab(sources[1]).click({button:'right'}); await page.keyboard.press('Enter');
+  await tab(sources[1]).click({button:'right'});
+  await page.getByRole('menuitem',{name:'Close',exact:true}).focus();
+  await page.keyboard.press('Enter');
   check(await tab(sources[1]).count()===0,'Keyboard menu activation closes the selected view');
   await page.keyboard.press('Meta+Shift+t');
   check(await tab(sources[1]).count()===1,'Closed binding reopens without a new source identity');

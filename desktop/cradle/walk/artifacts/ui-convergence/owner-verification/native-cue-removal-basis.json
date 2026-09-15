@@ -1,0 +1,115 @@
+{
+  "oi_commit": "01421b659fe87e705beb1d85bfcf0b12ef354040",
+  "native_engine_commit": "703b6970bfd405c482c2a15985c09c8925ec3b7d",
+  "status": "Evidence before parent forward-port to subsequently accepted O:I main; rerun native engine gates after new owner intake.",
+  "files": {
+    "desktop/cradle/src/knowledge/GraphCanvas.tsx": {
+      "bytes": 12931,
+      "sha256": "64afc0c39d466e4b2ed536b6c876deb49d9b2175ad320675182982f28470f346"
+    },
+    "desktop/cradle/src/knowledge/KnowledgeSurface.tsx": {
+      "bytes": 14525,
+      "sha256": "fdd73420dc5542530e27925ec3c5b541da08ed0ad0c51013e75d9336de1aa174"
+    },
+    "desktop/cradle/src/knowledge/knowledge.css": {
+      "bytes": 16415,
+      "sha256": "29ffa3ddca36c4ea05c88de2186273c6a8823094aab0810b88432d84a5271030"
+    },
+    "desktop/cradle/src/shared/Expression.tsx": {
+      "bytes": 9160,
+      "sha256": "ce81a94306b9ca177ff12464e7f34daf98fd98cfaf25df2ae5e68026b6b09f67"
+    },
+    "desktop/cradle/src/shared/Loading.tsx": {
+      "bytes": 815,
+      "sha256": "faf04869cd50c65a5378a15ed22a27a555de7b204989494e31edd6d4747a8e06"
+    },
+    "desktop/cradle/src/shared/oi-expression-types.d.ts": {
+      "bytes": 524,
+      "sha256": "da248ab25f522edd98957621b48348ef9c5747d557f6cf55a6655ed492dd5d89"
+    },
+    "desktop/cradle/src/shared/oi-loading-types.d.ts": {
+      "bytes": 295,
+      "sha256": "cf06ecbd8e295c79038b6a4b62392ea730e262e81e782399f3f1097d55d98f74"
+    },
+    "desktop/cradle/src/stage/ExpressionStage.tsx": {
+      "bytes": 19442,
+      "sha256": "674e226f1be52fc477e75d658221e6adf2356bb08925adfe2cbb9c3107b7d4a9"
+    },
+    "desktop/cradle/src/stage/nativeCues.ts": {
+      "bytes": 9040,
+      "sha256": "a7e8c5dc8426c17e2b6c4631a536714cee1125116a5b5c8bbbaaa78519dee35e"
+    },
+    "desktop/cradle/src/stage/oi-expressions-engine.d.ts": {
+      "bytes": 8494,
+      "sha256": "33267426f58a01eee739442019afe6d5adbfa55a523a744b7ce649a3ce4e6f74"
+    },
+    "desktop/cradle/src/surfaces/navigator/navigator.css": {
+      "bytes": 22959,
+      "sha256": "e1383b525f71fa3c1bed3139a45585b7809ea94a510c21bb00927ad8b330c34c"
+    },
+    "desktop/cradle/tests/expression-provider-lifecycle.mjs": {
+      "bytes": 6029,
+      "sha256": "1505d6aac095cfc08fb1c618c01b0862e9cc76b07021f75afdf0b33a80774fa2"
+    },
+    "desktop/cradle/tests/nara-retained-field.mjs": {
+      "bytes": 10087,
+      "sha256": "72cf31171219ba12d19e1c2eee7af43c8b8f626564120c2a64fcdc44f55482f2"
+    },
+    "desktop/cradle/tests/native-cues-lifecycle.mjs": {
+      "bytes": 8658,
+      "sha256": "69483c0720ff6aa370973c497096279bdd77a58693314b16f58aa861e078672e"
+    },
+    "desktop/cradle/tests/visuals-preview-lifecycle.mjs": {
+      "bytes": 10775,
+      "sha256": "d935d832dea866c600599034a5f734b7fc457dd01071cbcbe5096263b23ac729"
+    },
+    "packages/oi-design-system/README.md": {
+      "bytes": 7846,
+      "sha256": "b319ba62044bf14b04c6632b7f719dd898f709040291103711927c633e115338"
+    },
+    "packages/oi-design-system/checks/browser.mjs": {
+      "bytes": 4890,
+      "sha256": "0676fab7c0a813d4e4edc2092fdbf2d2fd65935c7bc8a80b48f1053da1ae0d5f"
+    },
+    "packages/oi-design-system/checks/expression-browser.mjs": {
+      "bytes": 436,
+      "sha256": "b16105aa731d2a5ee8e522253386a53dab02e91db7af241e13d3ee005f7a9ddf"
+    },
+    "packages/oi-design-system/examples/expression.html": {
+      "bytes": 1172,
+      "sha256": "14ea8b57b8d1d59230b45fdc897d670e04a4a14239a228d6622c8f9a79ee64ac"
+    },
+    "packages/oi-design-system/examples/loading.html": {
+      "bytes": 2027,
+      "sha256": "0ae715066343306753fd81288f05001b31d39691b1951f95bba4be9d824ca312"
+    },
+    "packages/oi-design-system/expression.css": {
+      "bytes": 240,
+      "sha256": "745d4cd11626b34ed9e8520480c077ec2207287dfbcd6052c1602c59da3faf3b"
+    },
+    "packages/oi-design-system/expression.mjs": {
+      "bytes": 643,
+      "sha256": "65a8f63b26d6e9464df17cb39c49747dc2cced3686ccaf47d5642380b45228d6"
+    },
+    "packages/oi-design-system/loading.mjs": {
+      "bytes": 1728,
+      "sha256": "d380cb0a31f300b45cb56f12f9ca440e8aac89180f14cc50f3f6e0432436075a"
+    },
+    "packages/oi-design-system/point-cloud.css": {
+      "bytes": 945,
+      "sha256": "3b7d5efc6f3fd7ed08c29fb6cd4c2ba1c87f56b70eb1f6624bbcc9bd54c6ef7c"
+    },
+    "packages/oi-design-system/tokens.css": {
+      "bytes": 16017,
+      "sha256": "973be92feef6ab4acdc426d4044ea26bed23e206fb4bd2c54da37a7bf3589c60"
+    },
+    "desktop/cradle/src/stage/engineSurface.ts": {
+      "bytes": 31149,
+      "sha256": "c9b6cca25d0e9bb71852b470cdc205b589fc9c63bd47371f9cef018c3e73eb2c"
+    },
+    "packages/oi-design-system/expressions-engine/PROVENANCE.json": {
+      "bytes": 3376,
+      "sha256": "c66db4fe776148173b534b1eafa2db4c80c44bedd86efdeb5f9d8d25ac273b35"
+    }
+  }
+}

@@ -1,0 +1,60 @@
+serving the cradle at http://127.0.0.1:4321 (external)
+
+=== scenario: knowledge-expression ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Isolated owner ground reports the native SemanticWiki provider
+PASS  Installed AIKit returns real owner search hits
+PASS  Search preserves native owner order and labels
+PASS  Native owner search includes an addressable source/page result
+PASS  Search opens the exact native ProjectMap/source ref
+PASS  Native local whole projects through the Expression application
+PASS  Expression is visible in the shared stage
+  screenshot: artifacts/knowledge-expression-knowledge-expression-local-whole.png
+PASS  Return releases Expression back to the same knowledge page
+PASS  Search, page and Expression preserve the unsaved source buffer
+PASS  Native SemanticWiki search returns the exact fixture WikiSpace
+PASS  Keyboard activation selects and recentres the exact native graph subject
+PASS  Properties disclose the exact native ref and revision
+PASS  Browser acceptance truthfully discloses native-only popout availability
+PASS  Graph selection controls occupy the free region beside the movable inspector
+  screenshot: artifacts/knowledge-expression-graph-context-light.png
+PASS  Pin retains the exact native graph subject
+PASS  Follow can freeze the current native locus
+PASS  Pinned SemanticWiki whole presents through the same Expression stage
+PASS  The real projected glyph renders completely inside its artboard
+PASS  The native Wiki circle retains its whole shape at the desktop particle budget
+PASS  The knowledge Expression artboard inherits the host dark ground
+  screenshot: artifacts/knowledge-expression-graph-expression-dark.png
+  screenshot: artifacts/knowledge-expression-graph-context-narrow.png
+PASS  Selecting the graph subject creates a reversible recenter visit
+PASS  Back enables forward traversal over the same native graph state
+  stopped walk-bridge
+  receipt: artifacts/knowledge-expression.json — 22/22 checks, PASS
+
+=== scenario: expression-controls ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Selecting the entity in the UI retains its real native identity
+PASS  Enter commits a numeric edit through the real owner operation
+PASS  An empty numeric edit has an accessible explanation
+PASS  Invalid numeric text does not advance the native document
+PASS  Escape restores the current owner value and clears the invalid state
+PASS  A concurrent owner revision preserves the human draft without overwriting the new value
+PASS  Recovery actions sit outside input labels and remain distinct keyboard controls
+PASS  Use current accepts the owner value after a revision conflict
+PASS  Explicit retry commits the preserved draft against the current native revision
+PASS  Selecting an entity discloses its controls before the deeper pedagogical apparatus
+  screenshot: artifacts/expression-controls-expression-light.png
+  screenshot: artifacts/expression-controls-expression-dark.png
+PASS  Expression controls fit their actual container at 1000px
+PASS  Expression controls fit their actual container at 760px
+PASS  Expression controls fit their actual container at 640px
+PASS  Expression controls fit their actual container at 639px
+  screenshot: artifacts/expression-controls-expression-narrow.png
+  stopped walk-bridge
+  receipt: artifacts/expression-controls.json — 14/14 checks, PASS
+
+=== walk summary ===
+PASS  knowledge-expression — 22/22 checks · subjects=1 relations=0
+PASS  expression-controls — 14/14 checks · editor_width_at_1000=760 editor_width_at_760=520 editor_width_at_640=440 editor_width_at_639=639

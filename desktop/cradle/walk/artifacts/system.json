@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "system",
-  "generated_at": "2026-09-10T11:00:17.478Z",
+  "generated_at": "2026-09-15T13:08:56.899Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1013,
+  "duration_ms": 6058,
   "checks": [
     {
       "ok": true,
@@ -30,7 +30,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-10T11:00:17.583Z",
+        "mounted_at": "2026-09-15T13:08:56.997Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -41,19 +41,19 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 1,
+      "duration_ms": 5702.3,
       "data": {}
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 0.8,
+      "duration_ms": 1.4,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 15,
+      "duration_ms": 34,
       "data": {
         "file": "system-native-six-owner-composition.png"
       }

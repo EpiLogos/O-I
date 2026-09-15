@@ -1,8 +1,9 @@
 import type {ExpressionDocument} from "./types";
 import {blankScene} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
 import {nativeExport} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
-// Match the accepted engine's ink-on-paper material when a document has no
-// authored colour vocabulary. Raw engine defaults assume a dark backdrop.
+// Base material for a document with no authored colour vocabulary. Hosts
+// present this projection with appearance: "host" so the shared stage applies
+// current ink/paper and follows theme changes without changing the document.
 const material = nativeExport(blankScene()).config;
 /** A projection into the existing native engine, never a parallel scene/clock.
  * Domain values and source bodies have no path into this material vocabulary. */

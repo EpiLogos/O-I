@@ -56,13 +56,14 @@ if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1024 || BRIDGE_PORT > 65535)
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
+  "expression-controls": {module:"scenarios/expression-controls.mjs",kernel:true,aliases:[]},
   "expression-page": {module:"scenarios/expression-page.mjs",kernel:true,aliases:["ex5"]},
   refinement:{module:"scenarios/refinement.mjs",kernel:true,aliases:[]},
   "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
   recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
-  welcome: { module: "scenarios/welcome.mjs", kernel: false, aliases: [] },
+  welcome: { module: "scenarios/welcome.mjs", kernel: true, aliases: [] },
   instrument: { module: "scenarios/instrument.mjs", kernel: true, aliases: ["k9"] },
   "instrument-host": { module: "scenarios/instrument-host.mjs", kernel: true, aliases: ["k9-host"] },
   "instrument-native-host": { module: "scenarios/instrument-native-host.mjs", kernel: true, aliases: ["k9-native"] },

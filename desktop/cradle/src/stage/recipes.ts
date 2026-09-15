@@ -50,12 +50,12 @@ const FOCUSED_INSTRUMENT_CONFIG: NativeConfig = (() => {
   return nativeExport(scene).config;
 })();
 
-/** The opening flight, in two stages: the mark first goes relational
+/** The opening flight: the mark first goes relational
  * (attractors on, orbits up) and starts to swirl while still tethered;
  * ~half a second later chaos takes over and the tether cuts — the cloud
- * flies apart as the app takes over. (Moved verbatim from the bespoke
- * WelcomeField patches: the choreography is now authored material, not
- * React changing physics parameters.) */
+ * flies apart before the same field fades to the app. Offsets measure
+ * rendered simulation progress, so loading or a suspended window cannot
+ * cut the flight short. The choreography is authored stage material. */
 const WELCOME_RELATIONAL: NativeConfig = {
   fluid: {
     turbulence: 1.3,
@@ -98,30 +98,45 @@ const WELCOME_CHAOS: NativeConfig = {
   },
 };
 
+const WELCOME_RELEASE: NativeConfig = {
+  fluid: { returnSpeed: 0, dispersion: 2.4 },
+  material: { opacity: 0 },
+};
+
 export const RECIPES: Readonly<Record<string, NativeConfig>> = Object.freeze({
   [MARK_RECIPE]: MARK_CONFIG,
   [FOCUSED_INSTRUMENT_RECIPE]: FOCUSED_INSTRUMENT_CONFIG,
   "welcome.relational": WELCOME_RELATIONAL,
   "welcome.chaos": WELCOME_CHAOS,
+  "welcome.release": WELCOME_RELEASE,
 });
 
 export interface StageSequenceStep {
-  /** Offset from sequence start, in milliseconds. */
+  /** Rendered simulation milliseconds from sequence start. */
   at: number;
   recipe: string;
   /** Optional central disperse strength fired with the step. */
   disperse?: number;
+  /** Resolve a host palette at this scene boundary. */
+  appearance?: "host" | "inverse-host";
 }
 
 export interface StageSequence {
   steps: readonly StageSequenceStep[];
+  /** Successfully rendered simulation time, never a wall-clock timeout. */
+  duration: number;
+  /** The same field/background becomes transparent after the flight. */
+  fadeOutFrom?: number;
 }
 
 export const SEQUENCES: Readonly<Record<string, StageSequence>> = Object.freeze({
   "welcome.enter": Object.freeze({
+    duration: 2600,
+    fadeOutFrom: 1900,
     steps: Object.freeze([
-      Object.freeze({ at: 0, recipe: "welcome.relational", disperse: 1.4 }),
+      Object.freeze({ at: 0, recipe: "welcome.relational", disperse: 1.4, appearance: "host" as const }),
       Object.freeze({ at: 472, recipe: "welcome.chaos", disperse: 2.6 }),
+      Object.freeze({ at: 1900, recipe: "welcome.release" }),
     ]),
   }),
 });

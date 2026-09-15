@@ -1,0 +1,357 @@
+{
+  "basis": {
+    "head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+    "native": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313",
+    "indexSha256": "0df566dd65d928f1144f8d88c505e6e93884446b85191ca5d02921298b78b60a",
+    "finalIndexSha256": "0df566dd65d928f1144f8d88c505e6e93884446b85191ca5d02921298b78b60a",
+    "browser": "152.0.7977.84",
+    "viewport": {
+      "width": 1280,
+      "height": 820
+    },
+    "deviceScaleFactor": 2,
+    "authoredLogoParticleCount": 120000
+  },
+  "cases": [
+    {
+      "name": "light",
+      "enabled": true,
+      "earlyBodyObservation": {
+        "name": "initial-ground",
+        "at": 19.90000009536743,
+        "opening": null,
+        "theme": "light",
+        "color": "rgba(0, 0, 0, 0)"
+      },
+      "firstNativeDraw": {
+        "name": "native-first-framebuffer-draw",
+        "at": 226.40000009536743,
+        "clearColor": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "workspaceRequest": {
+        "name": "http://127.0.0.1:4321/assets/CradleFrame-AbCoPnSQ.js",
+        "startTime": 231.30000019073486,
+        "responseEnd": 244.60000038146973
+      },
+      "composed": {
+        "name": "workspace-composed",
+        "at": 296.2000002861023
+      },
+      "ready": {
+        "name": "ready-control",
+        "at": 302
+      },
+      "entering": {
+        "name": "entering",
+        "at": 1906.5
+      },
+      "entered": {
+        "name": "entered",
+        "at": 4511.5
+      },
+      "entryWallDurationMs": 2605,
+      "playback": {
+        "name": "welcome.enter",
+        "elapsed": 2616.5999999999995,
+        "duration": 2600,
+        "status": "completed"
+      },
+      "loading": {
+        "start": 226.40000009536743,
+        "end": 302,
+        "draws": 4,
+        "meanIntervalMs": 23.60000006357829,
+        "p95IntervalMs": null,
+        "maxIntervalMs": 58.5,
+        "fps": null
+      },
+      "rest": {
+        "start": 552,
+        "end": 1856.5,
+        "draws": 79,
+        "meanIntervalMs": 16.666666666666668,
+        "p95IntervalMs": 17.5,
+        "maxIntervalMs": 17.800000190734863,
+        "fps": 59.99999999999999
+      },
+      "flight": {
+        "start": 2156.5,
+        "end": 4411.5,
+        "draws": 135,
+        "meanIntervalMs": 16.668656715706213,
+        "p95IntervalMs": 17.59999990463257,
+        "maxIntervalMs": 20.90000009536743,
+        "fps": 59.99283667877926
+      },
+      "coveredBefore": true,
+      "canvasesBefore": 1,
+      "canvasesAfter": 1,
+      "heldContexts": [
+        {
+          "connected": true,
+          "lost": false,
+          "width": 2560,
+          "height": 1640,
+          "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+        }
+      ],
+      "idle": {
+        "durationMs": 1203.5999999046326,
+        "nativeDrawDelta": 0,
+        "allRafCallbackDelta": 0,
+        "stageFrameDelta": 0,
+        "live": false,
+        "scheduled": false,
+        "presentations": []
+      },
+      "focusedAfter": "root",
+      "legacyAfter": 0,
+      "engineResourceRequests": [
+        "http://127.0.0.1:4321/assets/engineSurface-DTFh6FDW.js",
+        "http://127.0.0.1:4321/assets/expressions-engine-C1RpZ5Vl.js",
+        "http://127.0.0.1:4321/assets/three-DVI_j9-M.js"
+      ],
+      "longTasks": [
+        {
+          "startTime": 103.7000002861023,
+          "duration": 126
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "name": "dark",
+      "enabled": true,
+      "earlyBodyObservation": {
+        "name": "initial-ground",
+        "at": 14.599999904632568,
+        "opening": null,
+        "theme": "light",
+        "color": "rgba(0, 0, 0, 0)"
+      },
+      "firstNativeDraw": {
+        "name": "native-first-framebuffer-draw",
+        "at": 180.90000009536743,
+        "clearColor": [
+          0,
+          0,
+          0,
+          0
+        ]
+      },
+      "workspaceRequest": {
+        "name": "http://127.0.0.1:4321/assets/CradleFrame-AbCoPnSQ.js",
+        "startTime": 184.7000002861023,
+        "responseEnd": 195.7000002861023
+      },
+      "composed": {
+        "name": "workspace-composed",
+        "at": 225.80000019073486
+      },
+      "ready": {
+        "name": "ready-control",
+        "at": 230.30000019073486
+      },
+      "entering": {
+        "name": "entering",
+        "at": 1822.5999999046326
+      },
+      "entered": {
+        "name": "entered",
+        "at": 4435.400000095367
+      },
+      "entryWallDurationMs": 2612.800000190735,
+      "playback": {
+        "name": "welcome.enter",
+        "elapsed": 2616.6000000000004,
+        "duration": 2600,
+        "status": "completed"
+      },
+      "loading": {
+        "start": 180.90000009536743,
+        "end": 230.30000019073486,
+        "draws": 4,
+        "meanIntervalMs": 15.266666730244955,
+        "p95IntervalMs": null,
+        "maxIntervalMs": 28.5,
+        "fps": null
+      },
+      "rest": {
+        "start": 480.30000019073486,
+        "end": 1772.5999999046326,
+        "draws": 78,
+        "meanIntervalMs": 16.662337662337663,
+        "p95IntervalMs": 17.40000009536743,
+        "maxIntervalMs": 17.5,
+        "fps": 60.01558846453624
+      },
+      "flight": {
+        "start": 2072.5999999046326,
+        "end": 4335.400000095367,
+        "draws": 136,
+        "meanIntervalMs": 16.66740741023311,
+        "p95IntervalMs": 17.300000190734863,
+        "maxIntervalMs": 18.5,
+        "fps": 59.99733344167496
+      },
+      "coveredBefore": true,
+      "canvasesBefore": 1,
+      "canvasesAfter": 1,
+      "heldContexts": [
+        {
+          "connected": true,
+          "lost": false,
+          "width": 2560,
+          "height": 1640,
+          "renderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)"
+        }
+      ],
+      "idle": {
+        "durationMs": 1203.1000003814697,
+        "nativeDrawDelta": 0,
+        "allRafCallbackDelta": 0,
+        "stageFrameDelta": 0,
+        "live": false,
+        "scheduled": false,
+        "presentations": []
+      },
+      "focusedAfter": "root",
+      "legacyAfter": 0,
+      "engineResourceRequests": [
+        "http://127.0.0.1:4321/assets/engineSurface-DTFh6FDW.js",
+        "http://127.0.0.1:4321/assets/expressions-engine-C1RpZ5Vl.js",
+        "http://127.0.0.1:4321/assets/three-DVI_j9-M.js"
+      ],
+      "longTasks": [
+        {
+          "startTime": 98.2000002861023,
+          "duration": 85
+        }
+      ],
+      "pageErrors": []
+    },
+    {
+      "name": "disabled",
+      "enabled": false,
+      "earlyBodyObservation": {
+        "name": "initial-ground",
+        "at": 9,
+        "opening": null,
+        "theme": "light",
+        "color": "rgba(0, 0, 0, 0)"
+      },
+      "workspaceRequest": {
+        "name": "http://127.0.0.1:4321/assets/CradleFrame-AbCoPnSQ.js",
+        "startTime": 29.199999809265137,
+        "responseEnd": 38.299999713897705
+      },
+      "composed": {
+        "name": "workspace-composed",
+        "at": 70.2999997138977
+      },
+      "entryWallDurationMs": null,
+      "playback": null,
+      "loading": null,
+      "rest": null,
+      "flight": null,
+      "coveredBefore": false,
+      "canvasesBefore": 0,
+      "canvasesAfter": 0,
+      "heldContexts": [],
+      "idle": {
+        "durationMs": 1201.7000002861023,
+        "nativeDrawDelta": 0,
+        "allRafCallbackDelta": 0,
+        "stageFrameDelta": null,
+        "live": null,
+        "scheduled": null,
+        "presentations": []
+      },
+      "focusedAfter": "root",
+      "legacyAfter": 0,
+      "engineResourceRequests": [],
+      "longTasks": [],
+      "pageErrors": []
+    }
+  ],
+  "checks": [
+    {
+      "label": "Same served build throughout all three cases",
+      "ok": true
+    },
+    {
+      "label": "light: zero browser errors and no legacy renderer after entry",
+      "ok": true
+    },
+    {
+      "label": "light: zero native draws and animation-frame callbacks during settled idle",
+      "ok": true
+    },
+    {
+      "label": "light: native first draw precedes real workspace chunk request",
+      "ok": true
+    },
+    {
+      "label": "light: workspace composes covered beneath field before entry",
+      "ok": true
+    },
+    {
+      "label": "light: actual rendered sequence completed before release",
+      "ok": true
+    },
+    {
+      "label": "light: exactly one healthy retained actual WebGL context and canvas",
+      "ok": true
+    },
+    {
+      "label": "light: idle stage frames stable with no live or scheduled presentation",
+      "ok": true
+    },
+    {
+      "label": "dark: zero browser errors and no legacy renderer after entry",
+      "ok": true
+    },
+    {
+      "label": "dark: zero native draws and animation-frame callbacks during settled idle",
+      "ok": true
+    },
+    {
+      "label": "dark: native first draw precedes real workspace chunk request",
+      "ok": true
+    },
+    {
+      "label": "dark: workspace composes covered beneath field before entry",
+      "ok": true
+    },
+    {
+      "label": "dark: actual rendered sequence completed before release",
+      "ok": true
+    },
+    {
+      "label": "dark: exactly one healthy retained actual WebGL context and canvas",
+      "ok": true
+    },
+    {
+      "label": "dark: idle stage frames stable with no live or scheduled presentation",
+      "ok": true
+    },
+    {
+      "label": "disabled: zero browser errors and no legacy renderer after entry",
+      "ok": true
+    },
+    {
+      "label": "disabled: zero native draws and animation-frame callbacks during settled idle",
+      "ok": true
+    },
+    {
+      "label": "disabled: no engine canvas, actual WebGL context or native/Three chunk request",
+      "ok": true
+    }
+  ],
+  "passed": true
+}

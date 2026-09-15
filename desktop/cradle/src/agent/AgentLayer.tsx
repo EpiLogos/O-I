@@ -1,12 +1,13 @@
 import {advanceCompletion} from "./expressionReading";
-import {useEffect,useRef,useState, type ReactNode} from "react";
+import {lazy,Suspense,useEffect,useRef,useState, type ReactNode} from "react";
+// The Expression composer reaches the engine projection; it loads with the Composition plane, not with the agent layer.
+const ExpressionView=lazy(()=>import("../expression/ExpressionView").then((module)=>({default:module.ExpressionView})));
 import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";
 import {EncounterList, type EncounterRow} from "../encounter/EncounterList";
 import {ExpressionAnchor} from "../shared/Expression";
 import type {FormName} from "@epilogos/oi-design-system/expression";
 import {EncounterSurface,type EncounterExpressionReading} from "../encounter/EncounterSurface";
-import {ExpressionView} from "../expression/ExpressionView";
 import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
 import {encounter} from "../encounter/client";
 import type {SurfaceBinding} from "../surface/types";
@@ -115,15 +116,15 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const encounterPlane: "Conversation" | "Activity" | "Inspect" = plane === "Activity"||plane === "Inspect" ? plane : "Conversation";
 
   return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
-    <header className="agent-head">
+    <header className="agent-head oi-context-head">
       <div className="agent-head-row">
         <ExpressionAnchor form={form}/>
-        <div><strong>Agent</strong><small>{project ? `Situated in ${project}` : "Situated in Central"}</small></div>
-        <button className="agent-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
-        <button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
+        <div className="oi-context-head-title"><strong>Agent</strong><small>{project ? `Situated in ${project}` : "Situated in Central"}</small></div>
+        <button className="agent-tool oi-tool" aria-label={full ? "Restore right region" : "Full right region"} onClick={onFull}><Glyph name={full ? "restore" : "expand"}/></button>
+        <button className="agent-tool oi-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button>
       </div>
     </header>
-    <nav className="agent-planes" aria-label="Right region planes">
+    <nav className="agent-planes oi-plane-nav" aria-label="Right region planes">
       {(["Conversation", "Activity", "Composition", "Context", "Inspect"] as const).map(name =>
         <button key={name} aria-pressed={plane === name} onClick={() => setPlane(name)}>{name}</button>)}
     </nav>
@@ -134,7 +135,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       {binding
         ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} presentation={full ? "full" : "side"} onExpression={setExpression} concealed={plane==="Context"||plane==="Composition"}/>
         : plane!=="Context"&&plane!=="Composition" ? <NoAccompanying project={project} onOpen={choose}/> : null}
-      {plane==="Composition"&&<ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/>}
+      {plane==="Composition"&&<Suspense fallback={null}><ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/></Suspense>}
       {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>
   </section>;
@@ -147,9 +148,9 @@ function NoAccompanying({project, onOpen}: {project?: string; onOpen: (row: Enco
   // The same truthful Agency Gateway absence line SystemPanel shows
   // (`.gateway-aperture`, workspace/SystemPanel.tsx) — no new operation,
   // just the same honest sentence wherever the person can land on it.
-  const gatewayNote = <p className="agent-note">Agency Gateway attach and stream operations are not exposed here. Existing local conversations remain available; see System.</p>;
-  if (!project) return <div className="agent-empty"><p>Select a project to bring its conversations here.</p>{gatewayNote}</div>;
-  return <div className="agent-empty">
+  const gatewayNote = <p className="agent-note oi-note">Agency Gateway attach and stream operations are not exposed here. Existing local conversations remain available; see System.</p>;
+  if (!project) return <div className="agent-empty oi-empty"><p>Select a project to bring its conversations here.</p>{gatewayNote}</div>;
+  return <div className="agent-empty oi-empty">
     <p>No accompanying agent yet. Choose a conversation attached to this project.</p>
     <EncounterList project={project} onOpen={onOpen}/>
     {gatewayNote}
@@ -163,26 +164,26 @@ function ContextPlane({subject, history, historyAvailable, accompanying}: {
 }) {
   const glyph = KIND_GLYPH[subject.kind ?? ""] ?? "file";
   const owner = KIND_OWNER[subject.kind ?? ""] ?? "Central";
-  return <div className="agent-context" key={subject.ref ?? "none"}>
-    <p className="agent-eyebrow">Current subject · Follows selection</p>
+  return <div className="agent-context oi-sidecar" key={subject.ref ?? "none"}>
+    <p className="agent-eyebrow oi-eyebrow">Current subject · Follows selection</p>
     {subject.ref ? <>
       <div className="agent-subject">
         <span className="agent-subject-icon"><Glyph name={glyph} size={16}/></span>
         <div><strong>{subject.title}</strong><span>{subject.kind ?? "surface"}{subject.project ? ` · ${subject.project}` : ""}</span></div>
       </div>
-      <dl>
+      <dl className="oi-kv">
         <dt>Project</dt><dd>{subject.project ?? "Not attached to a project"}</dd>
         <dt>Revision</dt><dd>{subject.revision ? subject.revision.slice(0, 10) : "Unknown"}</dd>
         <dt>State</dt><dd>{subject.dirty ? "Unsaved changes" : "Saved"}</dd>
         <dt>Owner</dt><dd>{owner}</dd>
       </dl>
       {historyAvailable
-        ? <details className="agent-section"><summary>History</summary>{history}</details>
-        : <p className="agent-note">No history operation is available for this subject.</p>}
-    </> : <p className="agent-note">Select a surface to inspect its context.</p>}
-    {accompanying && <div className="agent-section">
+        ? <details className="agent-section oi-disclosure"><summary>History</summary>{history}</details>
+        : <p className="agent-note oi-note">No history operation is available for this subject.</p>}
+    </> : <p className="agent-note oi-note">Select a surface to inspect its context.</p>}
+    {accompanying && <div className="agent-section oi-section">
       <h3>Bounds &amp; return</h3>
-      <dl>
+      <dl className="oi-kv">
         <dt>Working ground</dt><dd>{accompanying.project}</dd>
         <dt>Source changes</dt><dd>Human acceptance</dd>
         <dt>Permission authority</dt><dd>Native provider consent</dd>
