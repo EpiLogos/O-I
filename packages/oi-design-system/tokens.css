@@ -38,6 +38,9 @@
    * the paper/ink foundation. */
   --oi-world-surface: var(--oi-paper);
   --oi-world-foreground: var(--oi-ink);
+  /* World rule and muted: the same host hooks for hairlines and secondary text. */
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
 
   /* ===== section: spacing / rhythm ===== */
   --oi-space-1: 0.5rem;
@@ -170,6 +173,8 @@
   --oi-projection: #7c7c77;
   --oi-world-surface: var(--oi-paper);
   --oi-world-foreground: var(--oi-ink);
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
 }
 
 :root {
@@ -322,6 +327,10 @@
   --oi-focus: #eeeee8;
   --oi-relation: #7d7d77;
   --oi-projection: #8c8c86;
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
   /* shell vocabulary */
   --oi-shell-ground: #0b0b0a;
   --oi-sidebar-ground: #151514;

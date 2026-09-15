@@ -264,8 +264,8 @@ function markdownDocument(source: string, resolveAsset: (path: string) => string
  * consumer, and a hand-copied one drifts the moment the source tokens
  * move. `document.body` carries the `.oi-desktop` class (see index.html),
  * so its computed style resolves every custom property the same way any
- * other component in the shell does; each read falls back to the same
- * literal value the previous static sheet used only when the token itself
+ * other component in the shell does; each read falls back to a system
+ * colour keyword (never a literal palette value) only when the token itself
  * is genuinely empty (e.g. this iframe's `srcdoc` document has no host
  * stylesheet of its own to inherit through until this string is built). */
 function readShellToken(name: string, fallback: string): string {
@@ -275,10 +275,10 @@ function readShellToken(name: string, fallback: string): string {
 }
 
 function buildMarkdownStyle(): string {
-  const canvas = readShellToken("--oi-canvas-ground", "#eef0e7");
-  const ink = readShellToken("--oi-foreground", "#30372f");
-  const accent = readShellToken("--oi-accent", "#657852");
-  const wash = readShellToken("--oi-wash", "#e5e9dd");
+  const canvas = readShellToken("--oi-canvas-ground", "Canvas");
+  const ink = readShellToken("--oi-foreground", "CanvasText");
+  const accent = readShellToken("--oi-accent", "CanvasText");
+  const wash = readShellToken("--oi-wash", "color-mix(in srgb, CanvasText 8%, transparent)");
   const sans = readShellToken("--oi-font-sans", "'Avenir Next',Avenir,'Helvetica Neue',Arial,sans-serif");
   const mono = readShellToken("--oi-font-mono", "ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace");
   const prose = readShellToken("--oi-shell-type-prose", "13px");
