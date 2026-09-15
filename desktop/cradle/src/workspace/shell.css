@@ -197,29 +197,58 @@
  * disclosures. The one right-region toggle remains.
  */
 
-/* Finding 29 (brief): the bar lives on the centre plane's own tab-bar
- * ground, not the sidebar's. Item (c): the bar never wraps — nowrap plus
- * min-width:0 on the shrinking members so the workspace name and the
- * Return pill each get exactly the room they need instead of collapsing to
- * two lines. */
-.canvas-arrangement { height: var(--oi-shell-bar); min-height: var(--oi-shell-bar); flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: 10px; padding: 0 12px; background: var(--oi-pane-bar-ground); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-ui); }
-.canvas-arrangement > button { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; color: var(--oi-muted-2); border-radius: 5px; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+
+/* ---------------------------------------------------------------------------
+ * Workspace footer — a quiet reveal surface, not permanent chrome. At rest
+ * the edge is a hairline reveal strip at the window's bottom; approaching it
+ * with the pointer, or focusing into it from the keyboard (Tab reaches the
+ * workspace select), opens the status row in flow, gently making room — the
+ * same "status edge expands in flow" grammar the pane footers use. Pinning
+ * is an explicit human action (the pin control; persisted under
+ * oi-shell-footer.v2, the only writer), so unpinned survives navigation.
+ * While collapsed the row is inert — opacity 0, pointer-events none, its
+ * overflow clipped by the shell — so it never intercepts content. This is
+ * the one rule set for the footer; earlier generations are removed.
+ */
+.workspace-footer-edge { position: relative; flex: none; height: var(--oi-footer-edge); overflow: visible; z-index: var(--oi-z-nav-top); transition: height var(--oi-motion-plane) var(--oi-motion-ease-out); }
+.workspace-footer-edge::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--oi-footer-approach); }
+.canvas-arrangement { position: relative; height: var(--oi-footer-height); min-height: var(--oi-footer-height); flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: var(--oi-space-2); padding: 0 var(--oi-space-2); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: linear-gradient(to right, var(--oi-sidebar-ground) 0, var(--oi-sidebar-ground) var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width)); font-size: var(--oi-shell-type-ui); opacity: 0; pointer-events: none; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.workspace-footer-edge:is(:hover, :focus-within), .workspace-footer-edge[data-pinned="true"] { height: var(--oi-footer-height); }
+.workspace-footer-edge:is(:hover, :focus-within) .canvas-arrangement, .workspace-footer-edge[data-pinned="true"] .canvas-arrangement { opacity: 1; pointer-events: auto; }
+/* Row members: quiet icon controls, the workspace selector, the state label. */
+.canvas-arrangement > button { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--oi-shell-control); height: 22px; min-height: 22px; padding: 0; color: var(--oi-muted-2); border-radius: 5px; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .canvas-arrangement > button:hover, .canvas-arrangement > button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); outline: none; }
 .canvas-arrangement > button:disabled { opacity: .4; cursor: default; }
-.canvas-arrangement .workspace-select { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 0 1 auto; }
+.canvas-arrangement .workspace-select { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 0 1 auto; max-width: 24%; }
 .canvas-arrangement .workspace-select svg { flex: none; width: 9px; height: 9px; color: var(--oi-muted-2); }
 .canvas-arrangement .workspace-select select { width: auto; max-width: 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); font-weight: 500; color: var(--oi-accent-ink); }
 .canvas-arrangement .arrangement-state { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; }
-/* `.canvas-arrangement > button` above forces every direct-child button to
- * a fixed 26×26 icon body — `.w-return` is a direct-child button too, so it
- * was being squashed into that box with its "Return to arrangement ⎋" text
- * overflowing outside it, uncontained, over `.arrangement-state` next to it
- * (finding 4's actual mechanism). Explicit auto sizing here (specificity
- * (0,2,0), beats the (0,1,1) generic rule) restores its own content box. */
-.canvas-arrangement .w-return { width: auto; height: auto; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; white-space: nowrap; font-size: var(--oi-shell-type-meta); color: var(--oi-accent-ink); background: var(--oi-wash); border-radius: 5px; }
+.canvas-arrangement .focused-surface-context { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+/* `.canvas-arrangement > button` forces a fixed icon body — `.w-return` is a
+ * direct-child button with text, so it takes its own content box. */
+.canvas-arrangement .w-return { width: auto; height: 22px; min-height: 22px; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; white-space: nowrap; font-size: var(--oi-shell-type-meta); color: var(--oi-accent-ink); background: var(--oi-wash); border-radius: 5px; }
 .canvas-arrangement .w-return kbd { flex: none; font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
 .canvas-arrangement-spacer { flex: 1; }
 .canvas-arrangement > nav { margin-left: auto; display: flex; align-items: center; gap: 4px; }
+/* The pin is the one explicit control of the footer's own state: pressed
+ * reads in ink, unpressed in the row's muted register. */
+.canvas-arrangement .footer-pin { margin-left: auto; }
+.canvas-arrangement .footer-pin[aria-pressed="true"] { color: var(--oi-accent-ink); background: var(--oi-wash); }
+@media (max-width: 640px) {
+  .canvas-arrangement { gap: 5px; padding: 0 6px; }
+  .canvas-arrangement .workspace-select { max-width: 40%; }
+  .canvas-arrangement .workspace-select select { max-width: 120px; }
+  .canvas-arrangement .arrangement-state, .canvas-arrangement .focused-surface-context, .canvas-arrangement .w-return span { display: none; }
+}
+@media (pointer: coarse) {
+  .workspace-footer-edge:is(:hover, :focus-within), .workspace-footer-edge[data-pinned="true"] { height: 36px; }
+  .canvas-arrangement { height: 36px; min-height: 36px; }
+  .canvas-arrangement button, .canvas-arrangement > button, .canvas-arrangement .desktop-menu summary { min-width: 36px; min-height: 36px; }
+  .world-navigator .project-modes button { height: 32px; width: 28px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .workspace-footer-edge, .canvas-arrangement { transition: none; }
+}
 
 .desktop-menu { position: relative; color: var(--oi-muted-2); }
 .desktop-menu summary { display: flex; padding: 4px; cursor: pointer; list-style: none; border-radius: 5px; }
@@ -230,11 +259,10 @@
  * pane/agent chrome (spatial walk: "New workspace" unreachable with the
  * inspector open). Open upward into the canvas, aligned to the menu's right
  * edge — the strip's own z-index (50) carries the popover above panes. */
-.desktop-menu > div { position: absolute; bottom: 100%; top: auto; left: auto; right: 0; z-index: var(--oi-z-popover); display: grid; min-width: 200px; padding: 7px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
+.desktop-menu > div { position: absolute; bottom: calc(100% + var(--oi-space-1)); top: auto; left: auto; right: 0; max-width: calc(100vw - 16px); z-index: var(--oi-z-popover); display: grid; min-width: 200px; padding: 7px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
 .desktop-menu button { width: auto; height: auto; padding: 9px; justify-content: flex-start; text-align: left; border-radius: 5px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
 .desktop-menu button:hover { background: var(--oi-wash); }
 
-@media (max-width: 640px) { .canvas-arrangement { gap: 5px; padding: 0 6px; } .canvas-arrangement .workspace-select select { max-width: 120px; } .canvas-arrangement .arrangement-state { display: none; } }
 
 /* ---------------------------------------------------------------------------
  * The detached (native re-docked) window's own minimal top bar
@@ -293,25 +321,9 @@
 .ground-chooser label { display: grid; gap: 5px; }
 .ground-chooser input { min-width: 0; width: 100%; padding: 6px; border: var(--oi-shell-edge) solid var(--oi-hairline); color: inherit; background: var(--oi-sidebar-ground); }
 
-/* Workspace identity is a quiet whole-window footer; pane operations remain local. */
-.canvas-arrangement { height: 24px; min-height: 24px; gap: var(--oi-space-2); padding: 0 var(--oi-space-2); border-bottom: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: transparent; }
-.canvas-arrangement button, .canvas-arrangement > button, .canvas-arrangement .w-return { min-height: 22px; height: 22px; }
-.canvas-arrangement .workspace-select { max-width: 24%; }
-.canvas-arrangement .focused-surface-context { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
-.canvas-arrangement .desktop-menu > div { top: auto; bottom: calc(100% + var(--oi-space-1)); left: auto; right: 0; max-width: calc(100vw - 16px); }
 .desktop-centre { min-width: 0; }
 .desktop-side.left[data-overlay="true"] { position: absolute; inset: var(--oi-shell-gutter) auto var(--oi-shell-gutter) var(--oi-shell-gutter); width: min(300px, calc(100% - 32px)) !important; max-width: none; margin: 0; z-index: var(--oi-z-drawer); box-shadow: var(--oi-shadow-drawer); }
 .desktop-shell .region-scrim { position: absolute; inset: 0; width: 100%; height: 100%; background: color-mix(in srgb, var(--oi-ink) 19%, transparent); z-index: calc(var(--oi-z-drawer) - 1); }
-@media (max-width: 640px) {
-  .canvas-arrangement .focused-surface-context { display: none; }
-  .canvas-arrangement .workspace-select { max-width: 40%; }
-  .canvas-arrangement .w-return span { display: none; }
-}
-@media (pointer: coarse) {
-  .canvas-arrangement { height: 36px; min-height: 36px; }
-  .canvas-arrangement button, .canvas-arrangement > button, .canvas-arrangement .desktop-menu summary { min-width: 36px; min-height: 36px; }
-  .world-navigator .project-modes button { height: 32px; width: 28px; }
-}
 @media (min-width: 640px) { .desktop-centre { min-width: 440px; } .desktop-side.left { max-width: calc(100% - 452px); } }
 /* Page-standard specimen: bounded content with one scroll owner. */
 .system-panel { box-sizing: border-box; width: 100%; max-width: 920px; margin: 0 auto; padding: clamp(16px, 4vw, 40px); min-height: 0; overflow: auto; color: var(--oi-accent-ink); font-size: var(--oi-shell-type-body); line-height: 1.65; }
@@ -353,13 +365,6 @@
 .desktop-shell .region-resizer::after {content:none}
 .desktop-shell .desktop-side.left[data-overlay="true"] {position:absolute;inset:0 auto 0 0;z-index:var(--oi-z-drawer)}
 .desktop-shell[data-resizing] iframe {pointer-events:none}
-.workspace-footer-edge {position:relative;height:0;flex:none;z-index:50;transition:height var(--oi-motion-ui) var(--oi-motion-ease-out)}
-.workspace-footer-edge::before {content:"";position:absolute;bottom:0;left:0;right:0;height:4px}
-.workspace-footer-edge .canvas-arrangement {position:absolute;bottom:0;left:0;right:0;transform:translateY(100%);pointer-events:none;background:linear-gradient(to right,var(--oi-sidebar-ground) 0,var(--oi-sidebar-ground) var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width));transition:transform var(--oi-motion-ui) var(--oi-motion-ease-out)}
-.workspace-footer-edge:hover .canvas-arrangement,.workspace-footer-edge:focus-within .canvas-arrangement,.workspace-footer-edge[data-pinned="true"] .canvas-arrangement {transform:translateY(0);pointer-events:auto}
-.workspace-footer-edge[data-pinned="true"] {height:24px}
-.canvas-arrangement .footer-pin {margin-left:auto}
-@media(prefers-reduced-motion:reduce){.workspace-footer-edge,.workspace-footer-edge .canvas-arrangement{transition:none}}
 
 .desktop-shell{overflow:hidden}
 
@@ -383,12 +388,6 @@
 .central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
 .shell-topbar{padding-right:3px}.shell-agent-toggle{margin-left:5px}
 @media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:38px}}
-.workspace-footer-edge{height:3px;overflow:visible;transition:height 420ms cubic-bezier(.22,.7,.25,1)}
-.workspace-footer-edge .canvas-arrangement{position:relative;inset:auto;transform:none;height:24px;opacity:0;pointer-events:none;transition:opacity 300ms ease}
-.workspace-footer-edge:is(:hover,:focus-within),.workspace-footer-edge[data-pinned="true"]{height:24px}
-.workspace-footer-edge:is(:hover,:focus-within) .canvas-arrangement,.workspace-footer-edge[data-pinned="true"] .canvas-arrangement{opacity:1;transform:none;pointer-events:auto}
-
-@media(prefers-reduced-motion:reduce){.workspace-footer-edge,.workspace-footer-edge .canvas-arrangement{transition:none}}
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
    reserve (traffic lights when native, the navigator toggle otherwise),

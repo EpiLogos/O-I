@@ -50,8 +50,11 @@ try{
 
  // welcome → enter: a live presentation drives frames.
  await page.evaluate(()=>window.stageSurface.present('welcome.mark','oi.mark'));
- await page.waitForFunction(()=>window.stageSurface.frameCount>2);
- state=await observe(600);
+ // Software GL compiles the field's shaders lazily over the first frames
+ // (a several-hundred-millisecond stall right after the first render);
+ // observe the clock once the pipeline is warm, not during its warm-up.
+ await page.waitForFunction(()=>window.stageSurface.frameCount>10,null,{timeout:20000});
+ state=await observe(800);
  check(state.rafFired>=2&&state.frames>=2&&state.live&&state.dormant===false,`A live presentation runs the clock: ${JSON.stringify(state)}`);
  check(state.errors.length===0,'No engine error while presenting');
 

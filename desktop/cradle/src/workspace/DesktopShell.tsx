@@ -9,6 +9,8 @@ import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 
 type Side = "left" | "right";
+const FOOTER_KEY="oi-shell-footer.v2";
+const FOOTER_LEGACY_KEY="oi-shell-footer-pinned";
 interface Props {
   layout: LayoutState; setLayout: Dispatch<SetStateAction<LayoutState>>;
   workspace: Workspace; workspaces: Workspace[];
@@ -30,7 +32,12 @@ export function DesktopShell(p: Props) {
   const [name, setName] = useState("");
   const [navigatorOverlay, setNavigatorOverlay] = useState(false);
   const overlayReturn = useRef<HTMLElement | null>(null);
-  const [footerPinned,setFooterPinned]=useState(()=>{try{return localStorage.getItem("oi-shell-footer-pinned")==="true";}catch{return false;}});
+  // The footer is a reveal surface; pinning is an explicit human action and
+  // the only thing that writes this key. The v1 key ("oi-shell-footer-pinned")
+  // is retired deliberately: a value persisted while the reveal logic was
+  // broken is not a preference, so it is removed rather than migrated and
+  // every installation starts unpinned under v2.
+  const [footerPinned,setFooterPinned]=useState(()=>{try{localStorage.removeItem(FOOTER_LEGACY_KEY);return localStorage.getItem(FOOTER_KEY)==="pinned";}catch{return false;}});
   // Finding (i): the persisted plane width is already known synchronously
   // (workspace/store.ts reads it before first render) — what produced the
   // transient narrow sidebar was the plane-width transition itself running
@@ -260,7 +267,7 @@ export function DesktopShell(p: Props) {
             <button aria-label="Rename workspace" onClick={() => { setName(p.workspace.name); setNaming("rename"); }}>Rename workspace</button>
             <button onClick={p.onRecover}>Recover saved arrangement</button>
           </div></details>
-          <button className="footer-pin" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem("oi-shell-footer-pinned",String(next));}catch{}}}><Glyph name="pin"/></button>
+          <button className="footer-pin" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem(FOOTER_KEY,next?"pinned":"revealed");}catch{}}}><Glyph name="pin"/></button>
         </footer></div>
   </div>;
 }
