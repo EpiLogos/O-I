@@ -1,6 +1,6 @@
 # Factory live continuation — 2026-09-15
 
-Continues O-I #289 through existing draft #292 from `d3ba557e1515816e47934e695c274ee40ce0acaa`. The U implementation is `c7cb7fd`; accepted main `1503b144d031c98634c170d4c1f6ed697370b686` (EX0/#315 and SharedField wayfinder/#316) is incorporated through `e14c955a0af3b5ed8a7a70d4fb8cb50a4355723e`. Work stayed in the existing Omarchy checkout. Three bounded Luna/Terra workers supplied native readiness, acceptance and independent review; the primary owned integration, desktop, tests and publication.
+Continues O-I #289 through existing draft #292 from `d3ba557e1515816e47934e695c274ee40ce0acaa`. The U implementation is `c7cb7fd`; accepted main `1503b144d031c98634c170d4c1f6ed697370b686` (EX0/#315 and SharedField wayfinder/#316) was incorporated through `e14c955a0af3b5ed8a7a70d4fb8cb50a4355723e`. Subsequently, accepted main `bca9f58` (#317) was incorporated through `490fdc32`; its final native verification is recorded below. Work stayed in the existing Omarchy checkout. Three bounded Luna/Terra workers supplied native readiness, acceptance and independent review; the primary owned integration, desktop, tests and publication.
 
 Authority: `docs/experience/FACTORY-AGENCY.md`, #289 correction `35d2aa0`, #220 lane U allocation, SESSION-GROUNDING §11–14, and the accepted September 14 correction brief, arrangement wayfinder and Ta-Onta amendment. The implemented requirement is background arrival without focus theft or replacement of reviewed material (§5; wayfinder F2/F4). This receipt does not redefine that design.
 
@@ -16,7 +16,7 @@ A normal browser click exposed a real footer-menu defect: the right pane at z60 
 
 ## Executed checks
 
-| Check on the integrated source | Result |
+| Check before the final SharedField merge (e14c955) | Result |
 |---|---|
 | Production `npm run build`; separate `WALK=1 npm run build` | passed; production bundle restored after controlled walks |
 | `node walk/factory-live-updates.mjs` | 24 native-backed production-browser checks |
@@ -39,7 +39,7 @@ Initial engine walks had stale assumptions: a visible idle global canvas, a Mac-
 
 ## Actual Omarchy desktop and preserved material
 
-The existing app entered Factory, showed the same canonical conversation centrally, left to its prior terminal work, and retained one side composer. No prompt or terminal input was sent. `main-conversation.json`, `main-return.json/png` and the earlier native screenshots record the observation. Native binary PID 1356002 remains the previously verified `946d51d` build; its existing Vite server serves the integrated source. The resident/provider were not restarted or replaced.
+The existing app entered Factory, showed the same canonical conversation centrally, left to its prior terminal work, and retained one side composer. No prompt or terminal input was sent. `main-conversation.json`, `main-return.json/png` and the earlier native screenshots record the observation. Before the final SharedField integration, native binary PID 1356002 was the previously verified `946d51d` build, with its existing Vite server serving the integrated source. The later native restart is recorded below; the resident/provider remained in place.
 
 Public SessionSpace `open` and `resolve_working` returned:
 
@@ -55,6 +55,27 @@ The authorized `header-continuity.state.json` remains queued: Run revision 2, Bu
 
 All 664 original walk files were restored byte-for-byte before main integration. The 725-file post-main baseline then preserved both that ground and accepted main's new evidence; final restoration is recorded in `preservation-final.json`. New evidence lives only here. Mac working files were never written by this campaign; unrelated untracked arrivals were observed before publication and preserved. The Mac is only committed Git-object transport/authenticated publication.
 
+## Verification after SharedField merged
+
+SharedField #317 landed during final publication preparation as main `bca9f58aaddee23b22d22e7a27aec9c391dae413`. The primary incorporated it through `490fdc32a2a41675bf73ed31c095569f35baef10`, retaining both progress entries. Independent Terra review found the auto-merged Rust/TypeScript operation tags consistent and the new graph/material paths unavailable-safe without a bound target. Factory does not acquire a SharedField publication action from this merge.
+
+On this final source cut, kernel all-target checks passed **49 tests**, with **50 existing owner-gated ignores**; clippy passed. Native shell, bridge and production builds passed. The updated native app and bridge were restarted only after their successful builds, retaining the frozen Factory override and original resident PID 589249. Public SessionSpace resolution again returned the exact same working binding/Surface. The actual app entered Factory, promoted Conversation, returned to the persisted terminal and retained exactly one composer. No prompt or terminal input was sent. Native app PID 1529100 has SHA256 `df4eb2ace74a2cb12793baf732133d6a4da88a2d3b5c5682a0e89f7cc0a8880d`; the full safe readbacks and screenshot are under [shared-field-integration](./shared-field-integration/).
+
+The production/native bridge walks passed again: **27** live/conversation checks, **18** workspace checks and **15** review-recovery checks. The accepted new main artifacts and original user ground were restored against the **729-file** baseline after copying these new results. Earlier e14c955 evidence remains intact.
+
+The first real SharedField status invocation exposed missing local client dependencies, then missing generated bindings. The primary completed the repository's ordinary local setup in this checkout:
+
+```sh
+cd shared-field/spacetimedb
+npm install --no-save --package-lock=false
+cd ../..
+/home/frank/.local/share/spacetime/bin/2.8.1/spacetimedb-cli generate \
+  --lang typescript --out-dir shared-field/spacetimedb/module_bindings \
+  --module-path shared-field/spacetimedb
+```
+
+These are local dependency/code-generation effects; no hosted publication, target binding, service change or owner installation occurred. Both dependencies and bindings remain ignored build material. The actual new native kernel now returns `oi.shared-field.status/v1` with `bound:false`, and a snapshot returns explicit unavailable data naming the absent target. Initial failures and final native results are retained in `shared-field-integration/readbacks.json`. This establishes the merged generic client route and its honest unbound behavior; it supplies no Factory Start/execution/artifact or Epi/Nara registration contract.
+
 ## Current owner joins and standing
 
 AIKit #311 remains open at `192678b96bd1da42c25bdd3747511424c5fdb1de`, #312 at `aa48626516261f89d71281e1c61b1e31098e8274`, and Actuation #85 at `fdabf5b62ec8a726212982ac65af6a1b2d2c024a`. No newer A allocation/producer return was found in #220.
@@ -63,7 +84,7 @@ AIKit #311 remains open at `192678b96bd1da42c25bdd3747511424c5fdb1de`, #312 at `
 2. **Scoped authority → Factory execution/Return:** Actuation's published source implements `actuation.local-authority/v1` and issue/resolve/revoke. The installed CLI lacks those routes; a verified installed Factory/AIKit invocation correlating Agency, Run/Execution, session, Activity and Return is still required. Authority foundations exist. U does not manufacture caller-supplied authority booleans.
 3. **Artifact resolution:** native Build/task reads work, but no demonstrated public body/location/native-Surface resolver with immutable review basis and populated Return is available. Positive Candidate/Evidence arrival, repair/evidence actions and Recognition remain unproved.
 4. **Temporal/Git:** NOW reads remain operative. Routine catalogue/occurrence/last/next/enable/pause remain unavailable; the Day read's absent pointer is state absence. AIKit's requested-worktree Git reading still resolves the primary checkout; the consumer preserves its refusal to show a mismatched patch.
-5. **Instruments:** EX0's shared engine and EX1's generic Expression API are incorporated. O-I #317 at `be67af20` adds SharedField hosting/publication on an open PR, with no Factory operation or registered Epi/Nara adapter. QL-MEF #197 at `502e417` changes one projection document and explicitly changes no runtime. Neither establishes installed `ql.focused-instrument/v1` registration. The real ordinary/Epi-Nara/Factory/exact-work parity gate remains open.
+5. **Instruments:** EX0's shared engine and EX1's generic Expression API are incorporated. O-I #317 is now merged as `bca9f58` and its generic SharedField client route is operative but unbound, with no Factory operation or registered Epi/Nara adapter. QL-MEF #197 at `502e417` changes one projection document and explicitly changes no runtime. Neither establishes installed `ql.focused-instrument/v1` registration. The real ordinary/Epi-Nara/Factory/exact-work parity gate remains open.
 6. **Harnesses:** the existing Codex Luna/low session has bounded native continuity evidence. Pi's earlier credential failure and other detection-only harnesses remain separate from admitted harness acceptance.
 
 D/C covers the real consumer operations and executed regression checks above. P/M is limited to the existing Omarchy session/provider/terminal and presentation continuity. The selected-Run observer is a bounded F2/F4 advance; it is not the complete execution/activity horizon or F0–F6 acceptance. H remains the owner's act. #292 stays draft.

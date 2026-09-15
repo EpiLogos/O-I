@@ -1,0 +1,1005 @@
+{
+  "standing": "C: real browser, exact frozen Factory binary, isolated state; no execution/evidence/Return/recognition asserted",
+  "centralWork": "existing native Codex conversation",
+  "walkUrl": "http://localhost:4173",
+  "workflowInput": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/contracts/factory/fixtures/oi-self-hosting-workflow-mutation.json",
+  "binary": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+  "binarySha256": "a48c87ecb43244faef73e8c231f70594a738c7469e943cd0c1e7356cfe6dc133",
+  "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+  "centralProjectRef": "project:o-i",
+  "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+  "journeyRef": "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD",
+  "native": {
+    "proofRunBefore": {
+      "contract": "factory.run-reading/v1",
+      "provenance": {
+        "owner": "factory",
+        "factoryStateRevision": 5,
+        "subjectRevision": 2,
+        "source": "canonical Factory Run/RunMap + Factory Build correlations"
+      },
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "revision": 2,
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "owningJourneyRefs": [
+        "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD"
+      ],
+      "routineInvocationRefs": [],
+      "lifecycle": "seeded",
+      "destination": "Exercise the Factory developmental conformance surface",
+      "runMap": {
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+        "topologyRevision": 2,
+        "nodes": {
+          "barrier-implementation-reviewed": {
+            "id": "barrier-implementation-reviewed",
+            "kind": "gate",
+            "label": "Workflow barrier implementation-reviewed",
+            "state": null,
+            "semanticRef": null
+          },
+          "destination": {
+            "id": "destination",
+            "kind": "destination",
+            "label": "Exercise the Factory developmental conformance surface",
+            "state": null,
+            "semanticRef": null
+          },
+          "work-implement-compiler": {
+            "id": "work-implement-compiler",
+            "kind": "work",
+            "label": "Compile open Agent-first workflow source into stable Factory units",
+            "state": "planned",
+            "semanticRef": "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E"
+          },
+          "work-inspect-source": {
+            "id": "work-inspect-source",
+            "kind": "work",
+            "label": "Recover the current Factory architecture and source obligations",
+            "state": "ready",
+            "semanticRef": "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW"
+          },
+          "work-integrate-return": {
+            "id": "work-integrate-return",
+            "kind": "work",
+            "label": "Integrate implementation and independent review evidence",
+            "state": "planned",
+            "semanticRef": "workflow-unit:49ACFCP5MPWNPRWZ41ZYA6E59W"
+          },
+          "work-review-adversarially": {
+            "id": "work-review-adversarially",
+            "kind": "work",
+            "label": "Challenge identity and graph compilation under hostile inputs",
+            "state": "planned",
+            "semanticRef": "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X"
+          }
+        },
+        "edges": [
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-implement-compiler",
+            "relation": "requires"
+          },
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-review-adversarially",
+            "relation": "requires"
+          },
+          {
+            "from": "destination",
+            "to": "work-integrate-return",
+            "relation": "branches_to"
+          },
+          {
+            "from": "work-implement-compiler",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          },
+          {
+            "from": "work-integrate-return",
+            "to": "barrier-implementation-reviewed",
+            "relation": "requires"
+          },
+          {
+            "from": "work-review-adversarially",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          }
+        ]
+      },
+      "thoughtAvailable": false,
+      "thoughtRefs": [],
+      "agencies": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "label": "Factory conformance Agency",
+          "metagencyGrantRefs": [],
+          "actuationRef": "actuation:factory-conformance"
+        }
+      ],
+      "executions": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "executionRef": "execution:factory-conformance",
+          "status": "contract-fixture",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "harnessRef": "harness:factory-native-cli",
+          "surfaceRefs": [],
+          "workcellBindingRefs": []
+        }
+      ],
+      "evidence": [],
+      "candidates": [],
+      "humanRequests": [],
+      "actions": [
+        {
+          "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+          "label": "Request more evidence",
+          "subjectKinds": [
+            "candidate"
+          ],
+          "inputContract": "factory.action-projection/v1",
+          "resultContract": "factory.action-projection/v1",
+          "authorityOwner": "factory",
+          "requiredCapabilityRef": "capability/factory/request-evidence",
+          "currentlyApplicable": false,
+          "applicableSubjectRefs": []
+        }
+      ]
+    },
+    "proofRunAfter": {
+      "contract": "factory.run-reading/v1",
+      "provenance": {
+        "owner": "factory",
+        "factoryStateRevision": 6,
+        "subjectRevision": 3,
+        "source": "canonical Factory Run/RunMap + Factory Build correlations"
+      },
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "revision": 3,
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "owningJourneyRefs": [
+        "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD"
+      ],
+      "routineInvocationRefs": [],
+      "lifecycle": "seeded",
+      "destination": "Exercise the Factory developmental conformance surface",
+      "runMap": {
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+        "topologyRevision": 3,
+        "nodes": {
+          "barrier-implementation-reviewed": {
+            "id": "barrier-implementation-reviewed",
+            "kind": "gate",
+            "label": "Workflow barrier implementation-reviewed",
+            "state": null,
+            "semanticRef": null
+          },
+          "destination": {
+            "id": "destination",
+            "kind": "destination",
+            "label": "Exercise the Factory developmental conformance surface",
+            "state": null,
+            "semanticRef": null
+          },
+          "work-aikit-guardian-consumer": {
+            "id": "work-aikit-guardian-consumer",
+            "kind": "work",
+            "label": "AIKit Guardian concern: exercise the accepted Factory surface from the AIKit owner",
+            "state": "planned",
+            "semanticRef": "workflow-unit:2G7TR1Y0JE8GVKY9K50P35PC1S"
+          },
+          "work-factory-guardian-owner-surface": {
+            "id": "work-factory-guardian-owner-surface",
+            "kind": "work",
+            "label": "Factory Guardian concern: complete and verify the Factory-owned self-hosting surface",
+            "state": "ready",
+            "semanticRef": "workflow-unit:1AD8YZ9QPDKTG4E35029CSJPBV"
+          },
+          "work-implement-compiler": {
+            "id": "work-implement-compiler",
+            "kind": "work",
+            "label": "Compile open Agent-first workflow source into stable Factory units",
+            "state": "planned",
+            "semanticRef": "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E"
+          },
+          "work-inspect-source": {
+            "id": "work-inspect-source",
+            "kind": "work",
+            "label": "Recover the current Factory architecture and source obligations",
+            "state": "ready",
+            "semanticRef": "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW"
+          },
+          "work-integrate-return": {
+            "id": "work-integrate-return",
+            "kind": "work",
+            "label": "Integrate implementation and independent review evidence",
+            "state": "planned",
+            "semanticRef": "workflow-unit:49ACFCP5MPWNPRWZ41ZYA6E59W"
+          },
+          "work-oi-snapshot-188": {
+            "id": "work-oi-snapshot-188",
+            "kind": "work",
+            "label": "Complete the bounded O:I snapshot and issue 188 work",
+            "state": "planned",
+            "semanticRef": "workflow-unit:2MTYWY73CJQQ2G24X6293RSMCH"
+          },
+          "work-review-adversarially": {
+            "id": "work-review-adversarially",
+            "kind": "work",
+            "label": "Challenge identity and graph compilation under hostile inputs",
+            "state": "planned",
+            "semanticRef": "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X"
+          }
+        },
+        "edges": [
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-implement-compiler",
+            "relation": "requires"
+          },
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-review-adversarially",
+            "relation": "requires"
+          },
+          {
+            "from": "destination",
+            "to": "work-integrate-return",
+            "relation": "branches_to"
+          },
+          {
+            "from": "destination",
+            "to": "work-oi-snapshot-188",
+            "relation": "branches_to"
+          },
+          {
+            "from": "work-aikit-guardian-consumer",
+            "to": "work-factory-guardian-owner-surface",
+            "relation": "requires"
+          },
+          {
+            "from": "work-implement-compiler",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          },
+          {
+            "from": "work-integrate-return",
+            "to": "barrier-implementation-reviewed",
+            "relation": "requires"
+          },
+          {
+            "from": "work-oi-snapshot-188",
+            "to": "work-aikit-guardian-consumer",
+            "relation": "requires"
+          },
+          {
+            "from": "work-oi-snapshot-188",
+            "to": "work-factory-guardian-owner-surface",
+            "relation": "requires"
+          },
+          {
+            "from": "work-review-adversarially",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          }
+        ]
+      },
+      "thoughtAvailable": false,
+      "thoughtRefs": [],
+      "agencies": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "label": "Factory conformance Agency",
+          "metagencyGrantRefs": [],
+          "actuationRef": "actuation:factory-conformance"
+        }
+      ],
+      "executions": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "executionRef": "execution:factory-conformance",
+          "status": "contract-fixture",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "harnessRef": "harness:factory-native-cli",
+          "surfaceRefs": [],
+          "workcellBindingRefs": []
+        }
+      ],
+      "evidence": [],
+      "candidates": [],
+      "humanRequests": [],
+      "actions": [
+        {
+          "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+          "label": "Request more evidence",
+          "subjectKinds": [
+            "candidate"
+          ],
+          "inputContract": "factory.action-projection/v1",
+          "resultContract": "factory.action-projection/v1",
+          "authorityOwner": "factory",
+          "requiredCapabilityRef": "capability/factory/request-evidence",
+          "currentlyApplicable": false,
+          "applicableSubjectRefs": []
+        }
+      ]
+    },
+    "proofAttemptBefore": {
+      "contract": "factory.attempt-task-list-reading/v1",
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "runRevision": 2,
+      "taskRefs": [],
+      "totalTasks": 0
+    },
+    "proofAttemptAfter": {
+      "contract": "factory.attempt-task-list-reading/v1",
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "runRevision": 3,
+      "taskRefs": [],
+      "totalTasks": 0
+    },
+    "proofReceipt": {
+      "contract": "factory.developmental-mutation-receipt/v1",
+      "status": "applied",
+      "record": {
+        "contract": "factory.developmental-mutation/v1",
+        "request": {
+          "contract": "factory.developmental-mutation-request/v1",
+          "mutationRef": "mutation:factory-live-updates-proof",
+          "occurrenceRef": "occurrence:factory-live-updates-proof",
+          "source": {
+            "owner": "factory",
+            "reference": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+            "revision": "factory-201-v1",
+            "standing": "owner-native-observation"
+          },
+          "observedAt": "2026-09-09T12:01:00Z",
+          "mutation": {
+            "kind": "attach-workflow-source",
+            "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+            "workflowSource": {
+              "schemaVersion": "factory.agent-workflow-source/v1",
+              "coordinationContract": "factory.bounded-coordination/v1",
+              "source": {
+                "ref": "workflow-source:01K4Q7B8000VVK4R7NNH6E201A",
+                "revision": "factory-201-v1",
+                "digest": "e6aecc515dd6eba8acbe99ea68ca645a463f5cd306c0d8a290541972f5be11c5",
+                "flowRef": "issue:201"
+              },
+              "workflowKey": "factory-195-self-hosting",
+              "units": [
+                {
+                  "key": "factory-guardian-owner-surface",
+                  "developmentalConcern": "Factory Guardian concern: complete and verify the Factory-owned self-hosting surface",
+                  "requiredDifference": "Factory Commission and correlations are accepted on owner main",
+                  "returnContract": "owner-native Factory CI and PR evidence",
+                  "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201B",
+                  "basisRevision": "issue-201",
+                  "agentRequirements": {
+                    "agentRefs": [],
+                    "agentSetRefs": [],
+                    "agencyRefs": [
+                      "agency:01K4Q7B8000VVK4R7NNH6E202A"
+                    ]
+                  },
+                  "praxisRefs": [
+                    "praxis:01K4Q7B8000VVK4R7NNH6E203A"
+                  ],
+                  "capabilityRefs": [
+                    "capability:01K4Q7B8000VVK4R7NNH6E204A"
+                  ],
+                  "dependencies": [],
+                  "independenceFrom": [],
+                  "permittedEffects": [
+                    "factory-repository-change",
+                    "factory-owner-pr"
+                  ],
+                  "verificationObligations": [
+                    "factory-full-ci",
+                    "owner-main-acceptance"
+                  ],
+                  "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205A",
+                  "stopConditions": "Stop on owner-law conflict or failed production gate",
+                  "escalationConditions": "Escalate truthful unavailable owner evidence"
+                },
+                {
+                  "key": "aikit-guardian-consumer",
+                  "developmentalConcern": "AIKit Guardian concern: exercise the accepted Factory surface from the AIKit owner",
+                  "requiredDifference": "AIKit consumes the exact accepted Factory contract",
+                  "returnContract": "owner-native AIKit consumer evidence",
+                  "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201C",
+                  "basisRevision": "post-factory-201",
+                  "agentRequirements": {
+                    "agentRefs": [],
+                    "agentSetRefs": [],
+                    "agencyRefs": [
+                      "agency:01K4Q7B8000VVK4R7NNH6E202B"
+                    ]
+                  },
+                  "praxisRefs": [
+                    "praxis:01K4Q7B8000VVK4R7NNH6E203B"
+                  ],
+                  "capabilityRefs": [
+                    "capability:01K4Q7B8000VVK4R7NNH6E204B"
+                  ],
+                  "dependencies": [
+                    "factory-guardian-owner-surface"
+                  ],
+                  "independenceFrom": [],
+                  "permittedEffects": [
+                    "aikit-repository-change",
+                    "aikit-owner-pr"
+                  ],
+                  "verificationObligations": [
+                    "aikit-full-ci",
+                    "exact-factory-contract-pin"
+                  ],
+                  "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205B",
+                  "stopConditions": "Stop if Factory owner contract is not accepted",
+                  "escalationConditions": "Escalate contract drift or owner rejection"
+                },
+                {
+                  "key": "oi-snapshot-188",
+                  "developmentalConcern": "Complete the bounded O:I snapshot and issue 188 work",
+                  "requiredDifference": "The named O:I snapshot tranche has owner-native evidence",
+                  "returnContract": "owner-native O:I snapshot/#188 return",
+                  "subjectRef": "issue:01K4Q7B8000VVK4R7NNH6E201D",
+                  "basisRevision": "issue-188",
+                  "agentRequirements": {
+                    "agentRefs": [],
+                    "agentSetRefs": [],
+                    "agencyRefs": [
+                      "agency:01K4Q7B8000VVK4R7NNH6E202C"
+                    ]
+                  },
+                  "praxisRefs": [
+                    "praxis:01K4Q7B8000VVK4R7NNH6E203C"
+                  ],
+                  "capabilityRefs": [
+                    "capability:01K4Q7B8000VVK4R7NNH6E204C"
+                  ],
+                  "dependencies": [
+                    "factory-guardian-owner-surface",
+                    "aikit-guardian-consumer"
+                  ],
+                  "independenceFrom": [],
+                  "permittedEffects": [
+                    "oi-owner-change",
+                    "oi-snapshot-return"
+                  ],
+                  "verificationObligations": [
+                    "oi-owner-verification",
+                    "issue-188-return"
+                  ],
+                  "returnAddress": "return-address:01K4Q7B8000VVK4R7NNH6E205C",
+                  "stopConditions": "Stop if bounded scope expands beyond O:I snapshot/#188",
+                  "escalationConditions": "Escalate absent owner-native evidence"
+                }
+              ],
+              "barriers": [],
+              "nesting": []
+            }
+          }
+        }
+      }
+    },
+    "initialRun": {
+      "contract": "factory.run-reading/v1",
+      "provenance": {
+        "owner": "factory",
+        "factoryStateRevision": 5,
+        "subjectRevision": 2,
+        "source": "canonical Factory Run/RunMap + Factory Build correlations"
+      },
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "revision": 2,
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "owningJourneyRefs": [
+        "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD"
+      ],
+      "routineInvocationRefs": [],
+      "lifecycle": "seeded",
+      "destination": "Exercise the Factory developmental conformance surface",
+      "runMap": {
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+        "topologyRevision": 2,
+        "nodes": {
+          "barrier-implementation-reviewed": {
+            "id": "barrier-implementation-reviewed",
+            "kind": "gate",
+            "label": "Workflow barrier implementation-reviewed",
+            "state": null,
+            "semanticRef": null
+          },
+          "destination": {
+            "id": "destination",
+            "kind": "destination",
+            "label": "Exercise the Factory developmental conformance surface",
+            "state": null,
+            "semanticRef": null
+          },
+          "work-implement-compiler": {
+            "id": "work-implement-compiler",
+            "kind": "work",
+            "label": "Compile open Agent-first workflow source into stable Factory units",
+            "state": "planned",
+            "semanticRef": "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E"
+          },
+          "work-inspect-source": {
+            "id": "work-inspect-source",
+            "kind": "work",
+            "label": "Recover the current Factory architecture and source obligations",
+            "state": "ready",
+            "semanticRef": "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW"
+          },
+          "work-integrate-return": {
+            "id": "work-integrate-return",
+            "kind": "work",
+            "label": "Integrate implementation and independent review evidence",
+            "state": "planned",
+            "semanticRef": "workflow-unit:49ACFCP5MPWNPRWZ41ZYA6E59W"
+          },
+          "work-review-adversarially": {
+            "id": "work-review-adversarially",
+            "kind": "work",
+            "label": "Challenge identity and graph compilation under hostile inputs",
+            "state": "planned",
+            "semanticRef": "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X"
+          }
+        },
+        "edges": [
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-implement-compiler",
+            "relation": "requires"
+          },
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-review-adversarially",
+            "relation": "requires"
+          },
+          {
+            "from": "destination",
+            "to": "work-integrate-return",
+            "relation": "branches_to"
+          },
+          {
+            "from": "work-implement-compiler",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          },
+          {
+            "from": "work-integrate-return",
+            "to": "barrier-implementation-reviewed",
+            "relation": "requires"
+          },
+          {
+            "from": "work-review-adversarially",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          }
+        ]
+      },
+      "thoughtAvailable": false,
+      "thoughtRefs": [],
+      "agencies": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "label": "Factory conformance Agency",
+          "metagencyGrantRefs": [],
+          "actuationRef": "actuation:factory-conformance"
+        }
+      ],
+      "executions": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "executionRef": "execution:factory-conformance",
+          "status": "contract-fixture",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "harnessRef": "harness:factory-native-cli",
+          "surfaceRefs": [],
+          "workcellBindingRefs": []
+        }
+      ],
+      "evidence": [],
+      "candidates": [],
+      "humanRequests": [],
+      "actions": [
+        {
+          "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+          "label": "Request more evidence",
+          "subjectKinds": [
+            "candidate"
+          ],
+          "inputContract": "factory.action-projection/v1",
+          "resultContract": "factory.action-projection/v1",
+          "authorityOwner": "factory",
+          "requiredCapabilityRef": "capability/factory/request-evidence",
+          "currentlyApplicable": false,
+          "applicableSubjectRefs": []
+        }
+      ]
+    },
+    "initialAttempt": {
+      "contract": "factory.attempt-task-list-reading/v1",
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "runRevision": 2,
+      "taskRefs": [],
+      "totalTasks": 0
+    },
+    "nativeAfter": {
+      "contract": "factory.run-reading/v1",
+      "provenance": {
+        "owner": "factory",
+        "factoryStateRevision": 6,
+        "subjectRevision": 3,
+        "source": "canonical Factory Run/RunMap + Factory Build correlations"
+      },
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+      "revision": 3,
+      "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW",
+      "owningJourneyRefs": [
+        "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD"
+      ],
+      "routineInvocationRefs": [],
+      "lifecycle": "seeded",
+      "destination": "Exercise the Factory developmental conformance surface",
+      "runMap": {
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+        "topologyRevision": 3,
+        "nodes": {
+          "barrier-implementation-reviewed": {
+            "id": "barrier-implementation-reviewed",
+            "kind": "gate",
+            "label": "Workflow barrier implementation-reviewed",
+            "state": null,
+            "semanticRef": null
+          },
+          "destination": {
+            "id": "destination",
+            "kind": "destination",
+            "label": "Exercise the Factory developmental conformance surface",
+            "state": null,
+            "semanticRef": null
+          },
+          "work-aikit-guardian-consumer": {
+            "id": "work-aikit-guardian-consumer",
+            "kind": "work",
+            "label": "AIKit Guardian concern: exercise the accepted Factory surface from the AIKit owner",
+            "state": "planned",
+            "semanticRef": "workflow-unit:2G7TR1Y0JE8GVKY9K50P35PC1S"
+          },
+          "work-factory-guardian-owner-surface": {
+            "id": "work-factory-guardian-owner-surface",
+            "kind": "work",
+            "label": "Factory Guardian concern: complete and verify the Factory-owned self-hosting surface",
+            "state": "ready",
+            "semanticRef": "workflow-unit:1AD8YZ9QPDKTG4E35029CSJPBV"
+          },
+          "work-implement-compiler": {
+            "id": "work-implement-compiler",
+            "kind": "work",
+            "label": "Compile open Agent-first workflow source into stable Factory units",
+            "state": "planned",
+            "semanticRef": "workflow-unit:1AHR7012Z930Y5QJW42P2KCW2E"
+          },
+          "work-inspect-source": {
+            "id": "work-inspect-source",
+            "kind": "work",
+            "label": "Recover the current Factory architecture and source obligations",
+            "state": "ready",
+            "semanticRef": "workflow-unit:3C73CMWMP7956ZN0XFWD5FMFYW"
+          },
+          "work-integrate-return": {
+            "id": "work-integrate-return",
+            "kind": "work",
+            "label": "Integrate implementation and independent review evidence",
+            "state": "planned",
+            "semanticRef": "workflow-unit:49ACFCP5MPWNPRWZ41ZYA6E59W"
+          },
+          "work-oi-snapshot-188": {
+            "id": "work-oi-snapshot-188",
+            "kind": "work",
+            "label": "Complete the bounded O:I snapshot and issue 188 work",
+            "state": "planned",
+            "semanticRef": "workflow-unit:2MTYWY73CJQQ2G24X6293RSMCH"
+          },
+          "work-review-adversarially": {
+            "id": "work-review-adversarially",
+            "kind": "work",
+            "label": "Challenge identity and graph compilation under hostile inputs",
+            "state": "planned",
+            "semanticRef": "workflow-unit:7NYK8DYWHBMC6F573XDZN6H17X"
+          }
+        },
+        "edges": [
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-implement-compiler",
+            "relation": "requires"
+          },
+          {
+            "from": "barrier-implementation-reviewed",
+            "to": "work-review-adversarially",
+            "relation": "requires"
+          },
+          {
+            "from": "destination",
+            "to": "work-integrate-return",
+            "relation": "branches_to"
+          },
+          {
+            "from": "destination",
+            "to": "work-oi-snapshot-188",
+            "relation": "branches_to"
+          },
+          {
+            "from": "work-aikit-guardian-consumer",
+            "to": "work-factory-guardian-owner-surface",
+            "relation": "requires"
+          },
+          {
+            "from": "work-implement-compiler",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          },
+          {
+            "from": "work-integrate-return",
+            "to": "barrier-implementation-reviewed",
+            "relation": "requires"
+          },
+          {
+            "from": "work-oi-snapshot-188",
+            "to": "work-aikit-guardian-consumer",
+            "relation": "requires"
+          },
+          {
+            "from": "work-oi-snapshot-188",
+            "to": "work-factory-guardian-owner-surface",
+            "relation": "requires"
+          },
+          {
+            "from": "work-review-adversarially",
+            "to": "work-inspect-source",
+            "relation": "requires"
+          }
+        ]
+      },
+      "thoughtAvailable": false,
+      "thoughtRefs": [],
+      "agencies": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "label": "Factory conformance Agency",
+          "metagencyGrantRefs": [],
+          "actuationRef": "actuation:factory-conformance"
+        }
+      ],
+      "executions": [
+        {
+          "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA",
+          "executionRef": "execution:factory-conformance",
+          "status": "contract-fixture",
+          "agencyRef": "agency:factory/conformance",
+          "agentRef": "agent:factory-conformance",
+          "harnessRef": "harness:factory-native-cli",
+          "surfaceRefs": [],
+          "workcellBindingRefs": []
+        }
+      ],
+      "evidence": [],
+      "candidates": [],
+      "humanRequests": [],
+      "actions": [
+        {
+          "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+          "label": "Request more evidence",
+          "subjectKinds": [
+            "candidate"
+          ],
+          "inputContract": "factory.action-projection/v1",
+          "resultContract": "factory.action-projection/v1",
+          "authorityOwner": "factory",
+          "requiredCapabilityRef": "capability/factory/request-evidence",
+          "currentlyApplicable": false,
+          "applicableSubjectRefs": []
+        }
+      ]
+    }
+  },
+  "checks": [
+    "Native isolated workflow revision transition verified before browser walk",
+    "Initial missing state reports Run updates unavailable",
+    "Initial Candidate state is owner-reported empty",
+    "Initial Evidence state is owner-reported empty",
+    "Existing native conversation has one visible composer",
+    "Unchanged 5-second index poll does not fetch Build",
+    "Unchanged interval performs a compact native index poll",
+    "Unchanged 5-second index poll does not fetch Run",
+    "Conversation remains mounted before arrival",
+    "Native Run revision advances during browser walk",
+    "Native RunMap revision advances during browser walk",
+    "Footer reports Run updated",
+    "Conversation remains mounted during update",
+    "Unsent composer text survives background update",
+    "Background update preserves focus and persisted layout",
+    "Changed revision fetches selected Run",
+    "Owner refusal appears when only scratch state is moved",
+    "Restoring scratch state clears owner refusal after a real read",
+    "Open Run button owns its center hit target",
+    "Explicit Run refresh renders native workflow topology",
+    "Explicit Open Run performs native Build refresh",
+    "Explicit refresh preserves actual empty Candidate state",
+    "Returning from Run preserves the canonical unsent composer draft",
+    "Returning from Run preserves one composer",
+    "Explicit Run opening preserves ordinary draft text",
+    "Leaving Factory stops selected-Run polling",
+    "No application page errors"
+  ],
+  "errors": [],
+  "requests": [
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "project",
+      "subject": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "journey",
+      "subject": "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "run",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "run",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "build",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "run",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "project",
+      "subject": "project:01ARZ3NDEKTSV4RRFFQ69G5FAW"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "central-project-link-read",
+      "subject": "project:o-i"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "journey",
+      "subject": "journey:01ARZ3NDEKTSV4RRFFQ69G5FAD"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "run",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_development_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "read": "build",
+      "subject": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    },
+    {
+      "op": "factory_attempt_task_list_read",
+      "state_path": "/home/frank/.cache/oi-factory-289-20260915/tmp/factory-live-walk-Kpr779/developmental-state.json",
+      "run_ref": "run:01ARZ3NDEKTSV4RRFFQ69G5FAA"
+    }
+  ]
+}

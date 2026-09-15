@@ -24,5 +24,8 @@
   "nativeAppPid": 1356002,
   "nativeAppBuiltAt": "946d51de05837eaffe2f6ba6426723871f27b59a",
   "nativeAppWebContent": "Existing Vite source server, current e14c955 source; no native restart or provider replacement.",
-  "macUse": "Committed Git-object transport and authenticated GitHub publication only; no implementation checkout changes."
+  "macUse": "Committed Git-object transport and authenticated GitHub publication only; no implementation checkout changes.",
+  "finalSourceHead": "490fdc32a2a41675bf73ed31c095569f35baef10",
+  "finalMain": "bca9f58aaddee23b22d22e7a27aec9c391dae413",
+  "nativeRuntimeFieldsAboveDescribe": "pre-SharedField phase; final runtime is shared-field-integration/runtime.json"
 }

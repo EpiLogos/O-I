@@ -1,0 +1,266 @@
+{
+  "sharedFieldStatus": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "detail": "SharedField client failed (exit status: 127): /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/kernel/../../../shared-field/spacetimedb/field.sh: line 7: /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/node_modules/.bin/tsx: No such file or directory",
+        "owner_operation": "shared-field.projection",
+        "state": "unavailable"
+      },
+      "result": "shared_field_reading"
+    }
+  },
+  "working": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "binding": {
+          "agent_session": "agent-session/oi-factory-codex-20260914",
+          "binding": "working-surface/oi-factory-demo-20260914-shell",
+          "plan": {
+            "attach": "never",
+            "backend_extensions": {},
+            "capabilities": {
+              "config": {},
+              "disable": [],
+              "enable": [],
+              "profiles": [],
+              "skill-overlays": {},
+              "use": []
+            },
+            "id": "oi-factory-demo-20260914-working",
+            "lifecycle": "persist",
+            "mux": "tmux",
+            "name": "oi-factory-demo-20260914-working",
+            "root": "/home/frank/Central/Work/O-I",
+            "task": null,
+            "views": [
+              {
+                "focus": "shell",
+                "id": "factory",
+                "name": "Factory demo working Surface",
+                "steps": [
+                  {
+                    "capabilities": {
+                      "config": {},
+                      "disable": [],
+                      "enable": [],
+                      "profiles": [],
+                      "skill-overlays": {},
+                      "use": []
+                    },
+                    "command": [
+                      "sh"
+                    ],
+                    "cwd": "/home/frank/Central/Work/O-I",
+                    "focus": true,
+                    "name": "Factory demo shell",
+                    "pane": "shell",
+                    "restart": "never",
+                    "split": null,
+                    "view": "factory"
+                  }
+                ]
+              }
+            ],
+            "warnings": []
+          },
+          "plan_key": "factory/shell",
+          "provenance": [
+            "O:I #289 Factory live desktop acceptance demo; bounded tmux working Surface for the existing admitted AgentSession."
+          ],
+          "provider": "provider/tmux/current",
+          "surface": "surface/terminal/factory/shell"
+        },
+        "observation": {
+          "reading": {
+            "agent_session": "agent-session/oi-factory-codex-20260914",
+            "binding": "working-surface/oi-factory-demo-20260914-shell",
+            "live_native_id": "%5",
+            "native_standing": "reobserved-unproven",
+            "plan_id": "oi-factory-demo-20260914-working",
+            "plan_key": "factory/shell",
+            "plan_name": "oi-factory-demo-20260914-working",
+            "provenance": [
+              "persisted SessionSpace binding selected before provider operation",
+              "provider-native ids are re-observed and remain provenance"
+            ],
+            "provider": "provider/tmux/current",
+            "provider_observation": {
+              "bindings": [
+                {
+                  "kind": "session",
+                  "native_id": "oi-factory-demo-20260914-working",
+                  "provenance": [
+                    "tmux session binding"
+                  ]
+                },
+                {
+                  "kind": "view",
+                  "native_id": "Factory demo working Surface",
+                  "provenance": [
+                    "tmux view logical_key=factory"
+                  ]
+                },
+                {
+                  "canonical_ref": "surface/terminal/factory/shell",
+                  "kind": "surface",
+                  "native_id": "%5",
+                  "provenance": [
+                    "explicit tmux surface binding logical_key=factory/shell"
+                  ]
+                }
+              ],
+              "capabilities": {
+                "agent_session_attach_detach": false,
+                "conversation_surface": false,
+                "diff_surface": false,
+                "discover": true,
+                "editor_surface": false,
+                "focus": true,
+                "multi_project": true,
+                "open": true,
+                "preview_surface": false,
+                "reconstruct": true,
+                "select": true,
+                "surface_attach_detach": true,
+                "terminal_surface": true,
+                "test_surface": false
+              },
+              "health": "healthy",
+              "provenance": [
+                "tmux via aikit MuxAdapter; provider-native ids are provenance",
+                "observed over session plan oi-factory-demo-20260914-working"
+              ],
+              "provider": "provider/tmux/current",
+              "provider_version": "3.7c",
+              "schema": "aikit.working-environment-provider/v1"
+            },
+            "schema": "aikit.session-space-working-surface/v1",
+            "space": "session-space/oi-factory-demo-20260914",
+            "surface": "surface/terminal/factory/shell"
+          }
+        },
+        "service_cwd": "/home/frank/Central/Work/O-I"
+      },
+      "project_ref": "project:o-i",
+      "result": "session_space_reading"
+    }
+  },
+  "stateSha256": "05e3561d39d18447d92d2b95a499746ec5f2881ced5fb79c43fa2ecf58150763",
+  "run": {
+    "contract": "factory.run-reading/v1",
+    "provenance": {
+      "owner": "factory",
+      "factoryStateRevision": 1,
+      "subjectRevision": 2,
+      "source": "canonical Factory Run/RunMap + Factory Build correlations"
+    },
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "revision": 2,
+    "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+    "owningJourneyRefs": [],
+    "routineInvocationRefs": [],
+    "lifecycle": "seeded",
+    "destination": "verify-corrected-desktop-header-and-continuity",
+    "runMap": {
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+      "topologyRevision": 2,
+      "nodes": {
+        "destination": {
+          "id": "destination",
+          "kind": "destination",
+          "label": "verify-corrected-desktop-header-and-continuity",
+          "state": null,
+          "semanticRef": null
+        },
+        "work-verify-header-continuity": {
+          "id": "work-verify-header-continuity",
+          "kind": "work",
+          "label": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree.",
+          "state": "ready",
+          "semanticRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR"
+        }
+      },
+      "edges": [
+        {
+          "from": "destination",
+          "to": "work-verify-header-continuity",
+          "relation": "branches_to"
+        }
+      ]
+    },
+    "thoughtAvailable": false,
+    "thoughtRefs": [],
+    "agencies": [],
+    "executions": [],
+    "evidence": [],
+    "candidates": [],
+    "humanRequests": [],
+    "actions": [
+      {
+        "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+        "label": "Request more evidence",
+        "subjectKinds": [
+          "candidate"
+        ],
+        "inputContract": "factory.action-projection/v1",
+        "resultContract": "factory.action-projection/v1",
+        "authorityOwner": "factory",
+        "requiredCapabilityRef": "capability/factory/request-evidence",
+        "currentlyApplicable": false,
+        "applicableSubjectRefs": []
+      }
+    ]
+  },
+  "tasks": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "contract": "factory.attempt-task-list-reading/v1",
+        "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+        "revision": 1,
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+        "runRevision": 2,
+        "sourceCurrent": true,
+        "taskRefs": [],
+        "topologyRevision": 2,
+        "totalTasks": 0
+      },
+      "result": "factory_attempt_task_list_reading"
+    }
+  },
+  "sharedFieldStatusAfterDependencyInstall": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "detail": "SharedField client failed (exit status: 1): node:internal/modules/run_main:107\n    triggerUncaughtException(\n    ^\nError [ERR_MODULE_NOT_FOUND]: Cannot find module '/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/module_bindings/index' imported from /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/field-lib.ts\n    at finalizeResolution (node:internal/modules/esm/resolve:272:11)\n    at moduleResolve (node:internal/modules/esm/resolve:879:10)\n    at defaultResolve (node:internal/modules/esm/resolve:1006:11)\n    at nextResolve (node:internal/modules/esm/hooks:769:28)\n    at resolveBase (file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/node_modules/tsx/dist/esm/index.mjs?1789440813791:2:3744)\n    at async resolveDirectory (file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/node_modules/tsx/dist/esm/index.mjs?1789440813791:2:4237)\n    at async resolve (file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/node_modules/tsx/dist/esm/index.mjs?1789440813791:2:5355)\n    at async nextResolve (node:internal/modules/esm/hooks:769:22)\n    at async AsyncLoaderHooksOnLoaderHookWorker.resolve (node:internal/modules/esm/hooks:265:24)\n    at async handleMessage (node:internal/modules/esm/worker:251:18) {\n  code: 'ERR_MODULE_NOT_FOUND',\n  url: 'file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/shared-field/spacetimedb/module_bindings/index'\n}\n\nNode.js v26.8.1",
+        "owner_operation": "shared-field.projection",
+        "state": "unavailable"
+      },
+      "result": "shared_field_reading"
+    }
+  },
+  "sharedFieldAfterGenerationStatus": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "bound": false,
+        "reason": "no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.json",
+        "schema": "oi.shared-field.status/v1"
+      },
+      "result": "shared_field_reading"
+    }
+  },
+  "sharedFieldAfterGenerationSnapshot": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "detail": "no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.json",
+        "owner_operation": "shared-field.projection",
+        "state": "unavailable"
+      },
+      "result": "shared_field_reading"
+    }
+  }
+}
