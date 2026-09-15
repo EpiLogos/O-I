@@ -96,7 +96,7 @@ function mediumLabels(snapshot:FocusedInstrumentSnapshot){
   return [binding.literal?"literal":null,binding.glyph_ref?"glyph":null,binding.image_ref?"image":null,binding.musical_performance_ref?"musical":null,binding.enactment_ref?"enacted":null].filter((value):value is string=>!!value);
 }
 
-function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
+function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding:SurfaceBinding;sourcesOpen:boolean;onToggleSources:()=>void}){
   const stage=useExpressionStage();
   const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const [stageError,setStageError]=useState<string|null>(null);const leaseRef=useRef<RetainedExpressionLease|null>(null);const presentationRef=useRef<StagePresentation|null>(null);
   const presentationId=`k9:${binding.id}`;
@@ -156,6 +156,7 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
       <p className="k9-kicker">Focused instrument</p>
       <h1 className="k9-title">{binding.title}</h1>
       <p className="k9-quiet k9-mono">{snapshot?.event.subject_ref??ref}</p>
+      <button className="k9-btn" aria-pressed={sourcesOpen} onClick={onToggleSources}>{sourcesOpen?"Close sources":"Open sources"}</button>
     </div>
     <div className="k9-segment k9-chip" role="group" aria-label="Focused determinant">
       {(["m1","m2","m3","m4","m5"] as InstrumentFocus[]).map(focus=>
@@ -208,9 +209,10 @@ function FocusedInstrumentSurface({binding}:{binding:SurfaceBinding}){
  */
 export function FocusedInstrumentComposition({layout}:{layout:LayoutState}){
   const active=activeBindingId(layout);const binding=active?layout.surfaces[active]:undefined;const enabled=!!binding&&binding.kind==="instrument"&&!!binding.ref;
+  const [sourcesOpen,setSourcesOpen]=useState(false);
   const centre=usePortalHost(enabled?`.surface-body[data-binding-id="${CSS.escape(binding!.id)}"]`:".k9-no-centre",enabled);
   const left=usePortalHost('[data-region="left"] .desktop-side-content',enabled);
-  useEffect(()=>{if(!enabled)return;document.body.dataset.epiNaraMode="focused";return()=>{delete document.body.dataset.epiNaraMode;};},[enabled]);
+  useEffect(()=>{if(!enabled){setSourcesOpen(false);return;}document.body.dataset.epiNaraMode="focused";return()=>{delete document.body.dataset.epiNaraMode;};},[enabled]);
   if(!enabled||!binding)return null;
-  return <>{left?createPortal(<BimbaNavigator binding={binding}/>,left):null}{centre?createPortal(<FocusedInstrumentSurface binding={binding}/>,centre):null}</>;
+  return <>{sourcesOpen&&left?createPortal(<BimbaNavigator binding={binding}/>,left):null}{centre?createPortal(<FocusedInstrumentSurface binding={binding} sourcesOpen={sourcesOpen} onToggleSources={()=>setSourcesOpen(value=>!value)}/>,centre):null}</>;
 }
