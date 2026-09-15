@@ -1,0 +1,27 @@
+{
+  "currentness": {
+    "available": true,
+    "event_ref": "acceptance:continuous:dated-world",
+    "field_generation": "2",
+    "personal_current": true,
+    "personal_reception_generation": 2,
+    "profile_generation": 2,
+    "samples_elapsed": "1024",
+    "schema": "ql.personal-coupled-session/v1",
+    "subject_ref": "controlled:subject/one"
+  },
+  "event_ref": "acceptance:continuous:dated-world",
+  "exact_personal_replay": true,
+  "explicit_rereception_restored_currentness": true,
+  "m1_to_m5_focus_preserved_one_event": true,
+  "native_advance_did_not_rewrite_personal_basis": true,
+  "personal_reception_did_not_advance_field": true,
+  "profile_generation": 2,
+  "same_native_owner_preserved": true,
+  "schema": "ql.k8-personal-runtime-acceptance/v1",
+  "seven_independent_receivers": true,
+  "standing": "installed C++ field worker plus subject-bound #134 PersonalFieldInstance; receiver values are controlled source-qualified inputs, not owner-machine lived/clinical evidence",
+  "subject_ref": "controlled:subject/one",
+  "withdrawn_consent_refused": true,
+  "world_replacement_made_old_personal_reading_stale": true
+}
