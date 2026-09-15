@@ -1,8 +1,8 @@
 {
   "schema": "oi.native-source-contribution/v1",
   "owner": "software-factory",
-  "candidate": "fb854dede9876a0ea008afd62422ef9150fe5203",
-  "parent": "2fc3590693b68426b63f329eea82b3d4fcb2742a",
+  "candidate": "87d8785071b7de1cc73aefbb235fd59e4e43d756",
+  "parent": "fb854dede9876a0ea008afd62422ef9150fe5203",
   "entry": "factory-ui/src/index.ts",
   "runtime_exports": [
     "BuildSurface",
@@ -19,8 +19,8 @@
     "factory-ui/src/build-surface.css"
   ],
   "files_sha256": {
-    "factory-ui/src/BuildSurface.tsx": "03612799bbed5ce3c6a0333bef7cabe56b2df0917ecd2a845344c5f1e76e50f9",
-    "factory-ui/src/build-surface.css": "b69cfba1b7fe37cad97e312dab303477650c2eb551e60e8eb35e3dbb6c186fcf",
+    "factory-ui/src/BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
+    "factory-ui/src/build-surface.css": "9a2079018e3696297d3cade937e65a5bdcbe1c33d61d261a7c3713eda46d4e15",
     "factory-ui/src/components/ExecutionTraceExplorer.tsx": "75424ce8b65306ee96a3de7df9d275b6bac680359087b8e87660ccb2e0c59068",
     "factory-ui/src/components/PhaseDetail.tsx": "62a5f9c97427d9bb15002434816c5ddaf3a4ba86f3f59884a1ea7927986dec4d",
     "factory-ui/src/components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
@@ -38,7 +38,7 @@
   },
   "authority": "Host onAction is a request hook, never grant evidence; actual Factory/Actuation native authority required. This desktop cut has no native Factory Action dispatch: the host renders the owner-declared Actions undispatchable and says so.",
   "tests": {
-    "component_tests": 32,
+    "component_tests": 34,
     "typecheck": true,
     "library_and_declarations": true,
     "isolation": {
@@ -55,11 +55,11 @@
       "types": true
     }
   },
-  "standing": "Accepted native Factory main after PR #237; exact owner source, host-owned theme, scoped styles and canonical fixtures. Verified from the accepted main with 32 component tests, TypeScript and library build.",
+  "standing": "Verified native Factory PR #238 candidate, not yet merged; exact owner source on accepted main fb854ded. Host-owned theme, scoped styles and canonical fixtures; unavailable Actions disabled by their native owner. Verified by 34 component tests, TypeScript, library build and native CI.",
   "capture": "Exact Git blobs; update through owner candidate, never edit captured source",
   "captured_files_sha256": {
-    "BuildSurface.tsx": "03612799bbed5ce3c6a0333bef7cabe56b2df0917ecd2a845344c5f1e76e50f9",
-    "build-surface.css": "b69cfba1b7fe37cad97e312dab303477650c2eb551e60e8eb35e3dbb6c186fcf",
+    "BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
+    "build-surface.css": "9a2079018e3696297d3cade937e65a5bdcbe1c33d61d261a7c3713eda46d4e15",
     "components/ExecutionTraceExplorer.tsx": "75424ce8b65306ee96a3de7df9d275b6bac680359087b8e87660ccb2e0c59068",
     "components/PhaseDetail.tsx": "62a5f9c97427d9bb15002434816c5ddaf3a4ba86f3f59884a1ea7927986dec4d",
     "components/SessionCards.tsx": "d5d361028668550940d0f137cb2c268b7d7f8df2090cb97f513cac45a443f0d0",
