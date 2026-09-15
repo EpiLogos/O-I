@@ -1,0 +1,186 @@
+serving the cradle at http://127.0.0.1:4321 (external)
+
+=== scenario: welcome ===
+PASS  The welcome frontstate stands between the app and the person on first open
+PASS  Boot is one continuous frontstate — no second loader stands over it
+PASS  The frontstate field renders through the one window expression canvas
+PASS  The enter control is a real labelled control, not a bare scrim
+PASS  The workspace is already composed behind the frontstate
+PASS  Escape dissolves the frontstate and hands the app over
+PASS  A continuing session in the same window opens straight into the app
+  screenshot: artifacts/welcome-welcome-reduced-motion.png
+PASS  Reduced motion enters immediately without the dissolve flight
+  screenshot: artifacts/welcome-welcome-frontstate-rest.png
+  screenshot: artifacts/welcome-welcome-frontstate-dissolve.png
+PASS  After the dissolve the empty workspace is the app
+  screenshot: artifacts/welcome-welcome-frontstate-entered.png
+PASS  No presentation is live in the settled ordinary desktop
+PASS  The released production field renders no frames and schedules none ({"presentations":0,"frames":0,"scheduled":false,"live":false,"raf":0,"dormant":true,"canvases":1})
+PASS  The one engine canvas stays (context and resident field kept) and is marked dormant
+  receipt: artifacts/welcome.json — 12/12 checks, PASS
+
+=== scenario: rest ===
+PASS  Desktop cold start is below 3 seconds
+PASS  Missing native transport is reported as unavailable
+PASS  One spatial desktop hosts the empty workspace
+PASS  Exactly one contextual left region
+PASS  Unavailable owner produces no fabricated projects
+PASS  No persistent sidebar search input
+PASS  An empty workspace opens as the one fresh-surface composition
+PASS  No automatic textarea or address simulation at desktop start
+PASS  The fresh page offers only its real entries
+PASS  The rolling welcome prompt is the page heading
+PASS  No "back to workspace" control that only returns to this same page
+PASS  Writing opens with no register reachable at all
+PASS  Unsaved writing names its owner-section destination beside the ordinary Save, and fabricates no register choice
+PASS  The surface says the writing is unsaved rather than claiming owner ground
+PASS  Unsaved writing survives a relaunch
+PASS  The search aperture opens from the fresh page
+  screenshot: artifacts/rest-desktop-rest.png
+  receipt: artifacts/rest.json — 16/16 checks, PASS
+
+=== scenario: recovery ===
+PASS  Corrupt/unsupported presentation is retained byte for byte before recovery
+PASS  Explicit fresh arrangement restores normally
+PASS  Fresh arrangement and relaunch cannot overwrite retained original bytes
+PASS  Explicit recovery restores actual held writing
+PASS  Recovered writing remains durable after another relaunch
+  receipt: artifacts/recovery.json — 5/5 checks, PASS
+
+=== scenario: refinement ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Pen and @ are the only mode selectors
+PASS  Writing mode exposes its editing toolkit in the header
+PASS  CodeMirror saves exact text through the real Central source owner
+PASS  Standard selection accepts a visual highlight
+PASS  Highlighting does not modify the authored document
+PASS  Markdown toolbar applies formatting to the actual selected range
+PASS  Undo restores real document content
+PASS  Editor search and replace panel is available
+PASS  Folding the toolbar yields its height to document content
+PASS  Collapsed header keeps a usable reveal target
+PASS  Hovering pane content does not reveal its footer
+PASS  Only the bottom edge reveals the pane footer
+PASS  Footer expansion gives up document height instead of overlaying it
+PASS  Per-tab focus folds away the tab strip
+PASS  Document right-click uses shared menu styling with writing-specific actions
+PASS  Sidebar closes fully
+PASS  System row ends at the navigator bottom without exposing projects beneath
+PASS  Project scrolling stays structurally above System
+PASS  Folder and project rows have no separate arrow controls
+PASS  Resize affordance has no visible line
+PASS  Dragging changes live sidebar geometry and retains final width
+PASS  Workspace footer can be pinned
+PASS  Fresh canvas retains focused actions without Browse the web
+PASS  Welcome phrase component is integrated
+  screenshot: artifacts/refinement-fresh-canvas-refined.png
+PASS  Fresh Flow appends both exact entries to its real Central document
+PASS  Tab split creates a second real pane
+PASS  Per-tab move returns the selected tab and removes its emptied pane
+PASS  Right sidebar opens with usable width
+PASS  Right sidebar expands across the central canvas
+PASS  Global right toggle stays clickable above the full agent view
+PASS  Full agent mode conceals the entire canvas including its tab border
+PASS  Full agent content expands into a wider reading layout
+PASS  Right sidebar restores its previous width
+PASS  Right resize affordance is cursor-only too
+  screenshot: artifacts/refinement-editor-and-chrome-refined.png
+PASS  Compact-width sidebar dragging retains the chosen width
+PASS  Narrow overlay drawer resizes without snapping back
+PASS  Narrow shell has no horizontal overflow
+  stopped walk-bridge
+  receipt: artifacts/refinement.json — 37/37 checks, PASS
+
+=== scenario: shell-recovery ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  One-tab Split creates a usable empty sibling
+PASS  Empty split survives relaunch of the renderer
+PASS  Opening another source fills the focused empty pane
+PASS  Workspace footer visible at 1280
+PASS  Global top strip visible at 1280
+PASS  Both region toggles remain at the top at 1280
+PASS  No page overflow at 1280
+  screenshot: artifacts/shell-recovery-1280.png
+PASS  Workspace footer visible at 900
+PASS  Global top strip visible at 900
+PASS  Both region toggles remain at the top at 900
+PASS  No page overflow at 900
+  screenshot: artifacts/shell-recovery-900.png
+PASS  Workspace footer visible at 760
+PASS  Global top strip visible at 760
+PASS  Both region toggles remain at the top at 760
+PASS  No page overflow at 760
+  screenshot: artifacts/shell-recovery-760.png
+PASS  Workspace footer visible at 639
+PASS  Global top strip visible at 639
+PASS  Both region toggles remain at the top at 639
+PASS  No page overflow at 639
+PASS  Narrow canvas exposes one usable focused pane at 639
+PASS  Top strip switches the focused pane at 639
+PASS  Central is summonable at 639
+PASS  Overlay returns focus at 639
+PASS  Keyboard summons Central at 639
+  screenshot: artifacts/shell-recovery-639.png
+PASS  Workspace footer visible at 390
+PASS  Global top strip visible at 390
+PASS  Both region toggles remain at the top at 390
+PASS  No page overflow at 390
+PASS  Narrow canvas exposes one usable focused pane at 390
+PASS  Top strip switches the focused pane at 390
+PASS  Central is summonable at 390
+PASS  Overlay returns focus at 390
+PASS  Keyboard summons Central at 390
+  screenshot: artifacts/shell-recovery-390.png
+PASS  Responsive transitions preserve the pane tree
+PASS  Overlay preserves intended sidebar depth
+  screenshot: artifacts/shell-recovery-system-1280.png
+  screenshot: artifacts/shell-recovery-system-900.png
+PASS  Point-cloud proposals are not mounted in production
+  stopped walk-bridge
+  receipt: artifacts/shell-recovery.json — 36/36 checks, PASS
+
+=== scenario: surfaces ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Four owner sources open as four unique bindings
+PASS  Last opened source is the single kernel focus
+PASS  Opening an existing ref reuses its binding
+PASS  Keyboard closes the focused source view
+PASS  Keyboard reopens the same source binding
+PASS  Pointer close operates on the requested tab
+PASS  Keyboard splits the active source to the right
+PASS  Keyboard split keeps the DOM caret in the semantically active pane
+PASS  Keyboard focus moves to the neighbouring pane
+PASS  Keyboard moves the active binding into the neighbouring pane
+PASS  Keyboard creates a vertical split
+PASS  Keyboard tiles the four real sources
+PASS  Each tiled source has one editor
+  screenshot: artifacts/surfaces-native-sources-tiled.png
+PASS  Tiling and movement retain dirty source writing
+PASS  Source frame menu discloses its exact operations and existing destination panes
+PASS  Pointer menu pins the requested source
+PASS  Pinned source refuses keyboard close
+PASS  Pinned close is disclosed as disabled
+PASS  Keyboard unpins the same binding
+PASS  Pointer drag moves a source and removes its empty pane
+PASS  Pointer menu splits the same real binding
+PASS  Keyboard menu activation closes the selected view
+PASS  Closed binding reopens without a new source identity
+PASS  Reload restores pane tree, active tabs, pins and weights exactly
+PASS  Reload restores dirty writing through owner validation
+PASS  Browsing another project never replaces open work
+PASS  Browsing preserves the canonical focused source
+PASS  Kernel receipts stay contiguous across frame operations
+  screenshot: artifacts/surfaces-source-frame-menu.png
+  stopped walk-bridge
+  receipt: artifacts/surfaces.json — 28/28 checks, PASS
+
+=== walk summary ===
+PASS  welcome — 12/12 checks
+PASS  rest — 16/16 checks · cold_start_fcp_ms=64
+PASS  recovery — 5/5 checks
+PASS  refinement — 37/37 checks
+PASS  shell-recovery — 36/36 checks
+PASS  surfaces — 28/28 checks · open_4_tabs_ms=1226

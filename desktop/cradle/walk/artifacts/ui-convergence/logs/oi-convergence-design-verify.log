@@ -1,0 +1,22 @@
+
+> @epilogos/oi-design-system@0.1.0 verify
+> node checks/verify.mjs
+
+PASS  tokens.css section non-empty: foundation tokens (5 tokens)
+PASS  tokens.css section non-empty: semantic tokens — surface / text / muted / rule roles (10 tokens)
+PASS  tokens.css section non-empty: relation / focus / projection roles — scarce gold meta-relation (6 tokens)
+PASS  tokens.css section non-empty: spacing / rhythm (30 tokens)
+PASS  tokens.css section non-empty: typography (12 tokens)
+PASS  tokens.css section non-empty: radii (6 tokens)
+PASS  tokens.css section non-empty: z-layers (8 tokens)
+PASS  tokens.css section non-empty: motion (67 tokens)
+PASS  tokens.css section non-empty: focus / keyboard states (24 tokens)
+PASS  no unlisted section markers (none)
+PASS  no duplicate token names within a scope (0)
+PASS  gold stays scarce — only --oi-gold/--oi-meta-relation carry it (found: --oi-gold, --oi-meta-relation)
+PASS  reduced-motion convention present (motion durations collapse to 0.01ms)
+      tokens.css defines 168 unique --oi-* names across 17 blocks
+PASS  cradle var(--oi-*) references all resolve (104 files scanned)
+PASS  cradle raw hex/rgba/hsl colours = 0 (104 files scanned)
+
+verify: all checks pass

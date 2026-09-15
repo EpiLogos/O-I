@@ -1,9 +1,9 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "rest",
-  "generated_at": "2026-09-15T13:06:27.330Z",
+  "generated_at": "2026-09-15T14:07:03.099Z",
   "environment": {
-    "base_url": "http://localhost:4173",
+    "base_url": "http://127.0.0.1:4321",
     "bridge_url": null,
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 698,
+  "duration_ms": 678,
   "checks": [
     {
       "ok": true,
@@ -94,11 +94,11 @@
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 0.6,
+      "duration_ms": 0.3,
       "data": {
         "fcp_ms": 64,
-        "dom_content_loaded_ms": 35.2,
-        "load_ms": 35.3
+        "dom_content_loaded_ms": 37.5,
+        "load_ms": 37.5
       }
     },
     {
@@ -107,12 +107,12 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T13:06:27.400Z",
+        "mounted_at": "2026-09-15T14:07:03.173Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4321/"
       }
     },
     {
@@ -121,18 +121,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T13:06:27.944Z",
+        "mounted_at": "2026-09-15T14:07:03.693Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4321/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 19,
+      "duration_ms": 24,
       "data": {
         "file": "rest-desktop-rest.png"
       }

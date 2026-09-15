@@ -1,18 +1,18 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "refinement",
-  "generated_at": "2026-09-15T13:11:06.790Z",
+  "generated_at": "2026-09-15T14:07:14.266Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://127.0.0.1:4321",
+    "bridge_url": "http://127.0.0.1:4329",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": false,
-  "error": "Error: EISDIR: illegal operation on a directory, read\n    at readFileSync (node:fs:441:20)\n    at Module.run (file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/scenarios/refinement.mjs:77:8)\n    at async runScenario (file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/run.mjs:383:5)\n    at async file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/run.mjs:456:18",
-  "duration_ms": 7816,
+  "passed": true,
+  "error": null,
+  "duration_ms": 11454,
   "checks": [
     {
       "ok": true,
@@ -47,7 +47,7 @@
       "label": "Editor search and replace panel is available"
     },
     {
-      "ok": false,
+      "ok": true,
       "label": "Folding the toolbar yields its height to document content"
     },
     {
@@ -63,7 +63,7 @@
       "label": "Only the bottom edge reveals the pane footer"
     },
     {
-      "ok": false,
+      "ok": true,
       "label": "Footer expansion gives up document height instead of overlaying it"
     },
     {
@@ -109,6 +109,58 @@
     {
       "ok": true,
       "label": "Welcome phrase component is integrated"
+    },
+    {
+      "ok": true,
+      "label": "Fresh Flow appends both exact entries to its real Central document"
+    },
+    {
+      "ok": true,
+      "label": "Tab split creates a second real pane"
+    },
+    {
+      "ok": true,
+      "label": "Per-tab move returns the selected tab and removes its emptied pane"
+    },
+    {
+      "ok": true,
+      "label": "Right sidebar opens with usable width"
+    },
+    {
+      "ok": true,
+      "label": "Right sidebar expands across the central canvas"
+    },
+    {
+      "ok": true,
+      "label": "Global right toggle stays clickable above the full agent view"
+    },
+    {
+      "ok": true,
+      "label": "Full agent mode conceals the entire canvas including its tab border"
+    },
+    {
+      "ok": true,
+      "label": "Full agent content expands into a wider reading layout"
+    },
+    {
+      "ok": true,
+      "label": "Right sidebar restores its previous width"
+    },
+    {
+      "ok": true,
+      "label": "Right resize affordance is cursor-only too"
+    },
+    {
+      "ok": true,
+      "label": "Compact-width sidebar dragging retains the chosen width"
+    },
+    {
+      "ok": true,
+      "label": "Narrow overlay drawer resizes without snapping back"
+    },
+    {
+      "ok": true,
+      "label": "Narrow shell has no horizontal overflow"
     }
   ],
   "ops": [
@@ -118,25 +170,84 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T13:11:07.138Z",
+        "mounted_at": "2026-09-15T14:07:14.407Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4329"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4321/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 19,
       "data": {
         "file": "refinement-fresh-canvas-refined.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "b1c8fd14-14a7-4194-ad3d-b4c61e603b23",
+              "0d438c25-66b0-44b7-824c-1fd55f3f3fdd"
+            ],
+            "pinned": [],
+            "active": "0d438c25-66b0-44b7-824c-1fd55f3f3fdd"
+          },
+          "surfaces": {
+            "b1c8fd14-14a7-4194-ad3d-b4c61e603b23": {
+              "id": "b1c8fd14-14a7-4194-ad3d-b4c61e603b23",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "project": "Editor",
+              "title": "00 01-DESIGN.md"
+            },
+            "0d438c25-66b0-44b7-824c-1fd55f3f3fdd": {
+              "id": "0d438c25-66b0-44b7-824c-1fd55f3f3fdd",
+              "kind": "flow",
+              "title": "flow-2026-09-15-1507.html",
+              "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-MBtMIQ:Control/user/flows/flow-2026-09-15-1507.html",
+              "location": {
+                "schema": "central.path-ref/v1",
+                "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-MBtMIQ:Control/user/flows/flow-2026-09-15-1507.html",
+                "root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-MBtMIQ",
+                "path": "Control/user/flows/flow-2026-09-15-1507.html"
+              },
+              "flow": {
+                "flowRef": "5432bdd6-6e6a-476d-a998-a80d65666d39",
+                "path": "Control/user/flows/flow-2026-09-15-1507.html"
+              }
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 279.5,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
+        "file": "refinement-editor-and-chrome-refined.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
-    "refinement-fresh-canvas-refined.png"
+    "refinement-fresh-canvas-refined.png",
+    "refinement-editor-and-chrome-refined.png"
   ]
 }

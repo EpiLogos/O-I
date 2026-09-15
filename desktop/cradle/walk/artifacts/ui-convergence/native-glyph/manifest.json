@@ -1,0 +1,45 @@
+{
+  "native_revision": "47c465d78aeb282f95bba65ecfc0dd0cbc476152",
+  "files": [
+    {
+      "file": "NATIVE_GLYPH_COVERAGE.md",
+      "sha256": "6eb13ac6fcaba4a33a6ebef75a2cb5162153528ef66767085c1aa1976f8c597f",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/docs/NATIVE_GLYPH_COVERAGE.md"
+    },
+    {
+      "file": "glyph-coverage-before-final-regression.json",
+      "sha256": "ec0084dd517b1d8a59c54c00a4cdd79722948a9d72513040cde53854138e84d7",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/glyph-coverage-before-final-regression.json"
+    },
+    {
+      "file": "glyph-coverage-final-regression.json",
+      "sha256": "279cdfa5767ce64c0d643e11c11acc365ca0b8d9a32ab8a06e30f3ef92d6411a",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/glyph-coverage-final-regression.json"
+    },
+    {
+      "file": "glyph-coverage-before.json",
+      "sha256": "1bdc0c5cb0fd54430d883a1bcf14d3c2926abc0dabdf525a3f935da5dcf8b9a2",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/glyph-coverage-before.json"
+    },
+    {
+      "file": "gpu-acceptance.json",
+      "sha256": "489231a8e81cff5d99476183aeef847d262e6fd37e3cc3e507827c77bef79649",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/gpu-acceptance.json"
+    },
+    {
+      "file": "browser-acceptance.json",
+      "sha256": "1883d5f6284aa703bba580594c45e69777ff44dd381c815485787fc58b0660b7",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/browser-acceptance.json"
+    },
+    {
+      "file": "workspace-acceptance.json",
+      "sha256": "c7db3f722aaa6e7ae2503cffd35a61dd0f2e05a5f325ea834339a91a62f42059",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/workspace-acceptance.json"
+    },
+    {
+      "file": "module-acceptance.json",
+      "sha256": "9617a0d40a3cd798df55dbb177c4b1eb20faedd8e311d431902a498f57c68b1e",
+      "source": "/Users/admin/Central/Work/Point-Cloud-Demo/.aikit/tasks/glyph-coverage-oi-compat/field-studies-journeys/evidence-native/module-acceptance.json"
+    }
+  ]
+}

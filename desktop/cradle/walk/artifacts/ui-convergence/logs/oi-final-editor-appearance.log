@@ -1,0 +1,60 @@
+{
+  "check": "real TextEditor appearance",
+  "links": [
+    {
+      "theme": "light",
+      "color": "rgb(22, 22, 20)",
+      "background": "rgb(251, 251, 249)",
+      "contrast": 17.49
+    },
+    {
+      "theme": "light",
+      "color": "rgb(22, 22, 20)",
+      "background": "rgb(251, 251, 249)",
+      "contrast": 17.49
+    },
+    {
+      "theme": "dark",
+      "color": "rgb(238, 238, 232)",
+      "background": "rgb(18, 18, 17)",
+      "contrast": 16.09
+    },
+    {
+      "theme": "dark",
+      "color": "rgb(238, 238, 232)",
+      "background": "rgb(18, 18, 17)",
+      "contrast": 16.09
+    },
+    {
+      "theme": "light",
+      "color": "rgb(22, 22, 20)",
+      "background": "rgb(251, 251, 249)",
+      "contrast": 17.49
+    },
+    {
+      "theme": "light",
+      "color": "rgb(22, 22, 20)",
+      "background": "rgb(251, 251, 249)",
+      "contrast": 17.49
+    }
+  ],
+  "code": [
+    {
+      "theme": "light",
+      "keyword": "rgb(22, 22, 20)",
+      "string": "rgb(22, 22, 20)",
+      "background": "rgb(251, 251, 249)"
+    },
+    {
+      "theme": "dark",
+      "keyword": "rgb(238, 238, 232)",
+      "string": "rgb(233, 233, 228)",
+      "background": "rgb(18, 18, 17)"
+    }
+  ],
+  "forcedColors": {
+    "color": "rgb(0, 0, 0)",
+    "background": "rgb(255, 255, 255)"
+  },
+  "editing": "passed"
+}

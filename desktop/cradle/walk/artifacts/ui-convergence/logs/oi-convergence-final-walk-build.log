@@ -1,0 +1,67 @@
+
+> oi-cradle@0.1.0 prebuild
+> node documents/build-personal.mjs
+
+
+> oi-cradle@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 297 modules transformed.
+rendering chunks...
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/stage/ExpressionStage.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/event.js, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/image.js, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/browser/BrowserSurface.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/terminal/TerminalSurface.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/kernel/bridge.ts, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/stage/ExpressionStage.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/stage/ExpressionStage.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/visuals/ParticleExpression.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/visuals/ParticleExpression.tsx but also statically imported by /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/window.js, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/browser/BrowserSurface.tsx, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/context/useBrowserContext.ts, /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/node_modules/@tauri-apps/api/window.js is dynamically imported by /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/Cradle.tsx but also statically imported by /Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                                           1.39 kB │ gzip:   0.72 kB
+dist/assets/layout.worker-BLEG8XbY.js                     1.88 kB
+dist/assets/BrowserSurface-DFE0KTs_.css                   1.69 kB │ gzip:   0.66 kB
+dist/assets/TextEditor-DiVFpzWm.css                       1.99 kB │ gzip:   0.65 kB
+dist/assets/ExpressionView-CmIAjsAE.css                   3.59 kB │ gzip:   1.07 kB
+dist/assets/FocusedInstrumentComposition-DRrA2r0X.css     4.24 kB │ gzip:   1.21 kB
+dist/assets/MaterialSurface-B0rCyl3y.css                  5.22 kB │ gzip:   1.35 kB
+dist/assets/TerminalSurface-C7LETS46.css                  5.88 kB │ gzip:   2.14 kB
+dist/assets/SystemPanel-BjoooS8O.css                     20.22 kB │ gzip:   3.50 kB
+dist/assets/WorkspaceStudy-BaKGd2AE.css                  20.48 kB │ gzip:   4.36 kB
+dist/assets/seed-mU9b9OOy.css                            21.50 kB │ gzip:   4.84 kB
+dist/assets/FactoryDevelopmentSurface-DHmXcujQ.css       23.17 kB │ gzip:   4.40 kB
+dist/assets/index-BlEsP5Q7.css                          148.23 kB │ gzip:  23.76 kB
+dist/assets/contribution-unavailable-10g4nHrS.js          1.21 kB │ gzip:   0.56 kB
+dist/assets/profile-development-C-3nDXu7.js               1.45 kB │ gzip:   0.63 kB
+dist/assets/recipes-Dbr1NOWi.js                           1.67 kB │ gzip:   0.81 kB
+dist/assets/contribution-connector-fixture-C51tCAnK.js    1.87 kB │ gzip:   0.86 kB
+dist/assets/PageContext-D3jrd6jf.js                       2.17 kB │ gzip:   1.12 kB
+dist/assets/contribution-oi-CD8vvuu0.js                   2.60 kB │ gzip:   0.96 kB
+dist/assets/contribution-ai-kit-D6NjRMvl.js               4.79 kB │ gzip:   1.42 kB
+dist/assets/WalkChannel-BG-jmOnP.js                       8.14 kB │ gzip:   3.10 kB
+dist/assets/BrowserSurface-Atq7rkvw.js                    9.35 kB │ gzip:   3.56 kB
+dist/assets/engineSurface-Bi8gWS5L.js                    10.73 kB │ gzip:   3.68 kB
+dist/assets/fixtureSource-BLWvox_p.js                    15.89 kB │ gzip:   5.08 kB
+dist/assets/FocusedInstrumentComposition-UFdz40mc.js     18.04 kB │ gzip:   6.13 kB
+dist/assets/MaterialSurface-Y4UfyhMM.js                  23.47 kB │ gzip:   8.63 kB
+dist/assets/FactoryDevelopmentSurface-CqLD-Ypo.js        26.24 kB │ gzip:   7.16 kB
+dist/assets/Seed-1bZb7H29.js                             28.40 kB │ gzip:   8.69 kB
+dist/assets/ExploreSurface-C1ApwEy6.js                   30.33 kB │ gzip:   8.89 kB
+dist/assets/WorkspaceStudy-JdsKiu6v.js                   31.47 kB │ gzip:   9.91 kB
+dist/assets/ExpressionView-gLXjOPC6.js                   37.15 kB │ gzip:  10.49 kB
+dist/assets/KnowledgeSurface-D39-pVbW.js                 39.15 kB │ gzip:  13.32 kB
+dist/assets/presentation-Diz9pLLn.js                     41.70 kB │ gzip:  10.92 kB
+dist/assets/SystemPanel-Cz2BwwXu.js                      76.61 kB │ gzip:  20.74 kB
+dist/assets/expressions-engine-Cp5D3Quz.js              211.94 kB │ gzip:  66.74 kB
+dist/assets/TerminalSurface-P4hJWr35.js                 350.32 kB │ gzip:  89.27 kB
+dist/assets/index-quFi50tG.js                           544.19 kB │ gzip: 163.79 kB
+dist/assets/TextEditor-DfN0uno_.js                      679.30 kB │ gzip: 235.60 kB
+dist/assets/three-DVI_j9-M.js                           746.94 kB │ gzip: 190.45 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.09s
