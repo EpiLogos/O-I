@@ -1,0 +1,23 @@
+{
+  "schema": "oi.shared-field.snapshot/v1",
+  "target": {"name": "fixture", "uri": "ws://fixture.invalid:3000", "database": "oi-shared-field-fixture"},
+  "transport_identity": "00ff",
+  "status": {"revision": 1, "healthy": true},
+  "fields": [{"schema": "oi.shared-field/v1", "field_ref": "oi:field:fixture", "kind": "explore", "visibility": "public", "provenance": [{"kind": "fixture", "ref": "fixture", "source_system": "test"}]}],
+  "participants": [],
+  "projections": [
+    {"schema": "oi.projection/v1", "projection_ref": "projection:fixture:world", "projection_revision": 4, "state": "published", "subject": {"kind": "central-world", "ref": "world:fixture:project:X"}, "source": {"system": "central", "ref": "central:source:project:X:wiki.json", "revision": "rev-world-9"}},
+    {"schema": "oi.projection/v1", "projection_ref": "projection:fixture:artifact", "projection_revision": 2, "state": "published", "subject": {"kind": "curated-artifact", "ref": "artifact:fixture:one"}, "source": {"system": "central", "ref": "central:source:project:X:artifact.html", "revision": "rev-artifact-3"}}
+  ],
+  "entries": [
+    {"schema": "oi.explore-entry/v1", "ref": "world:fixture:project:X", "kind": "central-world", "world_ref": "world:fixture:project:X", "label": "X — a fixture world", "revision": "rev-world-9", "aliases": [], "provenance": [], "locators": []},
+    {"schema": "oi.explore-entry/v1", "ref": "world:fixture:project:X/wiki:node:project-root/x", "kind": "wiki-node", "world_ref": "world:fixture:project:X", "label": "X", "revision": "1", "aliases": [], "provenance": [], "locators": []},
+    {"schema": "oi.explore-entry/v1", "ref": "world:fixture:project:X/artifact:fixture:one", "kind": "curated-artifact", "world_ref": "world:fixture:project:X", "label": "Fixture artifact", "revision": "rev-artifact-3", "aliases": [], "provenance": [], "locators": [], "meta": {"projection_ref": "projection:fixture:artifact"}}
+  ],
+  "relations": [
+    {"relation_ref": "world:fixture:project:X#oi.world/wiki-node#world:fixture:project:X/wiki:node:project-root/x", "from": "world:fixture:project:X", "to": "world:fixture:project:X/wiki:node:project-root/x", "relation": "oi.world/wiki-node", "origin": "world", "provenance": []},
+    {"relation_ref": "world:fixture:project:X/wiki:node:project-root/x#node-source#world:fixture:project:X/artifact:fixture:one", "from": "world:fixture:project:X/wiki:node:project-root/x", "to": "world:fixture:project:X/artifact:fixture:one", "relation": "node-source", "origin": "wiki", "provenance": []}
+  ],
+  "contributions": [], "my_authority": [], "my_contribution_receipts": [], "my_watches": [], "my_contacts": [],
+  "counts": {"fields": 1, "participants": 0, "projections": 2, "entries": 3, "relations": 2}
+}
