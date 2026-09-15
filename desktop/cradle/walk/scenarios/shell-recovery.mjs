@@ -28,9 +28,12 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
       check(await page.locator('.pane.group:visible').count()===1,`Narrow canvas exposes one usable focused pane at ${width}`);
       const selector=page.getByRole('combobox',{name:'Focused pane',exact:true});
       const options=await selector.locator('option').evaluateAll(nodes=>nodes.map(node=>node.value));
-      const previous=await docText(page,'.cm-content');
-      await selector.selectOption(options.find(id=>id!==previous));
-      check(await docText(page,'.cm-content')!==previous,`Top strip switches the focused pane at ${width}`);
+      const previous=await selector.inputValue();
+      const next=options.find(id=>id!==previous);
+      const previousDocument=await docText(page,'.pane.group[data-focused="true"] .cm-content');
+      await selector.selectOption(next);
+      await page.waitForFunction(id=>document.querySelector('.pane.group[data-focused="true"]')?.getAttribute('data-group-id')===id,next);
+      check(await selector.inputValue()===next&&await docText(page,'.pane.group[data-focused="true"] .cm-content')!==previousDocument,`Top strip switches the focused pane at ${width}`);
       await selector.selectOption(previous);
 
       await page.getByRole('button',{name:'Toggle left region',exact:true}).click();
