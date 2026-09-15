@@ -25,10 +25,16 @@ await context.addInitScript(() => {
   };
   window.cancelAnimationFrame = id => {window.clock.pending.delete(id);cancel(id);};
   window.gpuCanvases = new Set();
+  // Keep the real contexts reachable: removing a canvas alone must not make
+  // terminal resource disposal appear to pass through garbage collection.
+  window.gpuContexts = new Map();
   const getContext = HTMLCanvasElement.prototype.getContext;
   HTMLCanvasElement.prototype.getContext = function(type,...args) {
     const result = getContext.call(this,type,...args);
-    if(result && (type === 'webgl2' || type === 'webgl' || type === 'experimental-webgl')) gpuCanvases.add(this);
+    if(result && (type === 'webgl2' || type === 'webgl' || type === 'experimental-webgl')) {
+      gpuCanvases.add(this);
+      gpuContexts.set(this,result);
+    }
     return result;
   };
 });
@@ -39,7 +45,8 @@ const observe = () => page.evaluate(async () => {
   return {frames:clock.fired-before,pending:clock.pending.size,stage:previewTest.stage.inspect(),
     engines:document.querySelectorAll('canvas[data-oi-stage="engine"]').length,
     canvases:document.querySelectorAll('canvas').length,
-    gpuCanvases:[...gpuCanvases].filter(canvas => canvas.isConnected).length};
+    gpuCanvases:[...gpuCanvases].filter(canvas => canvas.isConnected).length,
+    unlostContexts:[...gpuContexts.values()].filter(context => !context.isContextLost()).length};
 });
 const idle = () => page.waitForFunction(() => previewTest.stage.inspect().live === false && !previewTest.stage.inspect().scheduled);
 const preview = () => page.waitForFunction(() => document.querySelector('.visuals-preview-stage canvas'));
@@ -49,9 +56,13 @@ const advances = async () => {
 };
 const assertPreview = async () => {
   await preview();
+  // The provider places a canvas before the native engine's first render
+  // allocates its context; wait for actual materialisation, not a time budget.
+  await page.waitForFunction(() => [...gpuContexts].some(([canvas,context]) => canvas.isConnected && !context.isContextLost()),null,{polling:100});
   const state = await observe();
   assert.equal(state.canvases,2,'Visuals reuses the one production canvas beside the shared 2D overlay');
   assert.equal(state.gpuCanvases,1,'Visuals allocates no component-level WebGL renderer');
+  assert.equal(state.unlostContexts,1,'only the current production context remains available across remounts');
   assert.equal(state.engines,1);
   assert.equal(state.stage.presentations.length,1,'the preview is a registered stage presentation');
   return state;
@@ -99,6 +110,7 @@ try {
   assert.equal(state.frames,0,'released settings leave no continuing simulation RAF');
   assert.equal(state.pending,0);
   assert.equal(state.gpuCanvases,1,'the dormant shared engine remains owned by the window');
+  assert.equal(state.unlostContexts,1,'ordinary presentation release keeps the retained production context usable');
   assert.equal(await page.evaluate(() => document.querySelector('canvas[data-oi-stage="engine"]').parentElement === document.body),true,'release restores the canvas to its window home');
 
   // Another real presentation keeps ownership; the settings preview refuses
@@ -125,6 +137,7 @@ try {
   await page.waitForFunction(() => !previewTest.stage.inspect().engine);
   state = await observe();
   assert.equal(state.gpuCanvases,0,'the real Off control removes every connected engine context');
+  assert.equal(state.unlostContexts,0,'Off explicitly releases the actual WebGL context even when instrumentation retains it');
   assert.equal(state.engines,0);
   assert.equal(state.frames,0);
   await page.getByRole('button',{name:'Expression: Off',exact:true}).click();
@@ -154,6 +167,7 @@ try {
   await page.evaluate(() => previewTest.unmount());
   state = await observe();
   assert.equal(state.canvases,0,'StrictMode root unmount releases both window canvases');
+  assert.equal(state.unlostContexts,0,'root unmount releases the actual WebGL context');
   assert.equal(state.pending,0);
   await page.evaluate(() => previewTest.mount());
   await assertPreview();
