@@ -18,6 +18,9 @@
 //! - scope crosses in the compact grammar form (`project:epilogos/o-i`,
 //!   bare `world` for singular kinds) — a CLI form, never a wire form.
 
+// The kernel's error documents carry whole owner failures by design (09 §6, §15):
+// keeping them unboxed is the pass-through tradeoff, made explicit here.
+#![allow(clippy::result_large_err)]
 use crate::configuration::changeset::Receipt;
 use crate::configuration::refs::Scope;
 use crate::configuration::resolution::SecretReference;

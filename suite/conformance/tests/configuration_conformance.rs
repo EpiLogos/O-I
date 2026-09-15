@@ -165,6 +165,7 @@ fn reconcile_setting(
 }
 
 /// Carve one requested+operation pair into the ChangeSet document.
+#[allow(clippy::too_many_arguments)] // one frozen ChangeSet operation has these facts
 fn operation(
     op_id: &str,
     owner_ref: &str,
@@ -1812,7 +1813,7 @@ fn t13_connector_proof() {
     let run_connector = |args: &[&str], stdin: Option<&str>| -> (i32, Value) {
         use std::io::Write as _;
         use std::process::{Command, Stdio};
-        let mut command = Command::new(&connector_bin);
+        let mut command = Command::new(connector_bin);
         command
             .args(args)
             .env("CONNECTOR_FIXTURE_HOME", &connector_home)

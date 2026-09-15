@@ -188,7 +188,7 @@ impl ConfigPlan {
     /// `expires_at_unix_ms` and every `*_unix_ms` field zeroed. sha256 hex
     /// over this body is the idempotency anchor.
     pub fn canonical_digest(&self) -> String {
-        let mut body = serde_json::to_value(self).unwrap_or_else(|_| Value::Null);
+        let mut body = serde_json::to_value(self).unwrap_or(Value::Null);
         zero_plan_body(&mut body);
         let bytes = serde_json::to_vec(&body).unwrap_or_default();
         use sha2::{Digest, Sha256};
@@ -203,9 +203,9 @@ fn zero_plan_body(body: &mut Value) {
             for (key, value) in map.iter_mut() {
                 if key == "plan_id" {
                     *value = Value::String(String::new());
-                } else if key == "expires_at_unix_ms" {
-                    *value = Value::Number(0.into());
                 } else if key.ends_with("_unix_ms") {
+                    // `expires_at_unix_ms` and every other unix-ms stamp zero
+                    // the same way (09 §6 canonical plan body).
                     *value = Value::Number(0.into());
                 } else {
                     zero_plan_body(value);
@@ -241,6 +241,7 @@ pub fn sha256_hex(bytes: &[u8]) -> String {
 /// degradation. Absence of a contribution is data; a surface never invents
 /// settings for an owner that did not answer.
 #[derive(Clone, Debug)]
+#[allow(clippy::large_enum_variant)] // the available arm carries the whole owner contribution by design (09 §15 pass-through)
 pub enum OwnerContribution {
     Available(Contribution),
     Unavailable {

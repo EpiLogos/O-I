@@ -263,8 +263,6 @@ fn doctor_distinguishes_unavailable_owners_and_reconciliation_findings() {
 
 #[test]
 fn doctor_keys_reconciliation_findings_off_the_frozen_truth_table() {
-    use oi_cli::config_surface::{ConfigSurface, ProfileSurface};
-
     let (config, profiles) = fixture_surface();
     // The active profile composes the World's desired state; its entries are
     // judged by the frozen reconciliation vocabulary, never by guesses.
@@ -454,8 +452,6 @@ fn seam_apply_then_replay_is_idempotent_with_the_original_receipt() {
 
 #[test]
 fn seam_diff_and_doctor_report_truthful_reconciliation() {
-    use oi_cli::config_surface::{ConfigSurface, ProfileSurface};
-
     let (config, profiles) = fixture_surface();
     // The active profile composes the World's desired state.
     profiles.set_active(Some("development")).unwrap();

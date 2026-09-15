@@ -807,7 +807,7 @@ fn scope_of(def: &SettingDef, raw_scope: Option<&str>) -> ScopeAddress {
         },
         None => primary_scope(def.allowed),
     };
-    decide_scope(&def, &scope);
+    decide_scope(def, &scope);
     scope
 }
 

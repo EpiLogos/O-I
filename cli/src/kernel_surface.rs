@@ -205,10 +205,8 @@ impl KernelSurface {
                     return Err(refused("expected a JSON object".into()));
                 }
             }
-            ValueKind::List => {
-                if !value.is_array() {
-                    return Err(refused("expected a JSON array".into()));
-                }
+            ValueKind::List if !value.is_array() => {
+                return Err(refused("expected a JSON array".into()));
             }
             _ => {}
         }
@@ -937,13 +935,13 @@ fn read_composition_bytes(path: &Path) -> Result<Option<Vec<u8>>, SurfaceError> 
         #[cfg(target_os = "linux")]
         options.custom_flags(0x20000);
     }
-    let file = options.open(path).map_err(|error| internal(error))?;
-    if !file.metadata().map_err(|error| internal(error))?.is_file() {
+    let file = options.open(path).map_err(internal)?;
+    if !file.metadata().map_err(internal)?.is_file() {
         return Err(internal("composition is not a regular file"));
     }
     file.take(COMPOSITION_MAX_BYTES + 1)
         .read_to_end(&mut bytes)
-        .map_err(|error| internal(error))?;
+        .map_err(internal)?;
     if bytes.len() as u64 > COMPOSITION_MAX_BYTES {
         return Err(internal("composition exceeds 4 MiB"));
     }
@@ -984,7 +982,7 @@ fn active_mark(home: &Path) -> SurfaceResult<Option<String>> {
 fn set_active_mark(home: &Path, profile_ref: Option<&str>) -> SurfaceResult<()> {
     use std::io::Write;
     let path = composition_path(home);
-    std::fs::create_dir_all(home).map_err(|error| internal(error))?;
+    std::fs::create_dir_all(home).map_err(internal)?;
     let lock_path = home.join("composition.lock");
     let mut options = std::fs::OpenOptions::new();
     options.read(true).write(true).create(true);
@@ -1023,10 +1021,10 @@ fn set_active_mark(home: &Path, profile_ref: Option<&str>) -> SurfaceResult<()> 
                 object.remove("active_profile");
             }
         }
-        let bytes = serde_json::to_vec_pretty(&value).map_err(|error| internal(error))?;
+        let bytes = serde_json::to_vec_pretty(&value).map_err(internal)?;
         let nonce = std::time::SystemTime::now()
             .duration_since(std::time::UNIX_EPOCH)
-            .map_err(|error| internal(error))?
+            .map_err(internal)?
             .as_nanos();
         let temporary = home.join(format!(".composition-{}-{nonce}.tmp", std::process::id()));
         let outcome = (|| -> Result<(), SurfaceError> {
@@ -1034,16 +1032,16 @@ fn set_active_mark(home: &Path, profile_ref: Option<&str>) -> SurfaceResult<()> 
                 .write(true)
                 .create_new(true)
                 .open(&temporary)
-                .map_err(|error| internal(error))?;
+                .map_err(internal)?;
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
                 file.set_permissions(std::fs::Permissions::from_mode(0o600))
-                    .map_err(|error| internal(error))?;
+                    .map_err(internal)?;
             }
             file.write_all(&bytes)
                 .and_then(|_| file.sync_all())
-                .map_err(|error| internal(error))?;
+                .map_err(internal)?;
             // Compare-and-publish: the basis must not have moved under the
             // lock (the same protocol composition.rs publishes under).
             if read_composition_bytes(&path)?.as_deref() != basis.as_deref() {
@@ -1051,10 +1049,10 @@ fn set_active_mark(home: &Path, profile_ref: Option<&str>) -> SurfaceResult<()> 
                     "composition conflict: state changed since it was read",
                 ));
             }
-            std::fs::rename(&temporary, &path).map_err(|error| internal(error))?;
+            std::fs::rename(&temporary, &path).map_err(internal)?;
             std::fs::File::open(home)
                 .and_then(|directory| directory.sync_all())
-                .map_err(|error| internal(error))?;
+                .map_err(internal)?;
             Ok(())
         })();
         if outcome.is_err() {

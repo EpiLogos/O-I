@@ -28,6 +28,9 @@
 //!   `product_id`, `section_ref` ↔ `sections[].id`, `setting_key` ↔
 //!   `settings[].key`).
 
+// The kernel's error documents carry whole owner failures by design (09 §6, §15):
+// keeping them unboxed is the pass-through tradeoff, made explicit here.
+#![allow(clippy::result_large_err)]
 use crate::configuration::changeset::{
     derive_changeset_status, ChangeSet, IdempotencyKey, Operation, OperationKind, OperationStatus,
     RequestedChange, Verification, VerificationEntry,
@@ -789,7 +792,7 @@ fn record_receipt(op: &mut Operation, receipt: crate::configuration::changeset::
             op.receipt_ref = receipt
                 .original_receipt_id
                 .clone()
-                .or_else(|| Some(receipt.receipt_id));
+                .or(Some(receipt.receipt_id));
         }
         crate::configuration::changeset::ReceiptOutcome::Failed => {
             op.status = OperationStatus::Failed;
@@ -1237,6 +1240,7 @@ pub fn plan_request(
 /// settle the resulting ChangeSet truthfully and verify by re-read. A
 /// convenience over [`assemble_changeset`] + [`execute_changeset`] for the
 /// one-change case.
+#[allow(clippy::too_many_arguments)] // the frozen per-call facts of one reset (identity, routing, persistence, clock)
 pub fn reset_setting(
     registry: &OwnerRegistry,
     gateway: &OwnerGateway<'_>,

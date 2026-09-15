@@ -9,6 +9,9 @@
 //! seeds discovery only; every setting, scope and operation fact comes from
 //! the owner's own document — nothing is hardcoded.
 
+// The kernel's error documents carry whole owner failures by design (09 §6, §15):
+// keeping them unboxed is the pass-through tradeoff, made explicit here.
+#![allow(clippy::result_large_err)]
 use crate::configuration::contribution::{
     Contribution, ContributionRegistry, DegradationState, RegisteredSetting,
 };

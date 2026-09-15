@@ -107,8 +107,9 @@ fn split_config_flags(
 /// owners plus the C2 profile store — binds both halves through
 /// `oi_cli::kernel_surface`. `OI_CONFIG_SURFACE_FIXTURES` still binds the
 /// fixture-backed in-memory surface the conformance tests drive.
-fn bind_config_surfaces(
-) -> Result<(Rc<dyn ConfigSurface>, Rc<dyn ProfileSurface>), String> {
+type BoundSurfaces = (Rc<dyn ConfigSurface>, Rc<dyn ProfileSurface>);
+
+fn bind_config_surfaces() -> Result<BoundSurfaces, String> {
     if let Some(dir) = env::var_os("OI_CONFIG_SURFACE_FIXTURES").filter(|value| !value.is_empty())
     {
         let surface = Rc::new(
@@ -223,7 +224,7 @@ fn coerce_value(kind: ValueKind, raw: &str) -> SurfaceResult<Value> {
         ValueKind::Number | ValueKind::Integer => raw
             .parse::<f64>()
             .ok()
-            .and_then(|number| serde_json::Number::from_f64(number))
+            .and_then(serde_json::Number::from_f64)
             .map(Value::Number)
             .ok_or_else(|| invalid(format!("`{raw}` is not a number"))),
         ValueKind::Table | ValueKind::List => serde_json::from_str(raw)

@@ -404,10 +404,8 @@ impl FixtureSurface {
                     return Err(refused("expected a JSON object".into()));
                 }
             }
-            ValueKind::List => {
-                if !value.is_array() {
-                    return Err(refused("expected a JSON array".into()));
-                }
+            ValueKind::List if !value.is_array() => {
+                return Err(refused("expected a JSON array".into()));
             }
             _ => {}
         }

@@ -246,8 +246,8 @@ impl OwnerTransport for FixtureTransport {
     fn apply(&self, owner_ref: &str, request: &ApplyRequest) -> Result<Value, TransportError> {
         // The raw plan arrives exactly as the owner minted it (09 §15); the
         // fixture reads it through the typed view like any owner would.
-        let plan = &PlanDocument::parse(request.plan.clone())
-            .map_err(|error| TransportFailure::internal(error))?;
+        let plan =
+            &PlanDocument::parse(request.plan.clone()).map_err(TransportFailure::internal)?;
         // Fixture receipts first: they freeze exactly what these owners
         // answered in the conformance cases.
         if let Some(receipt) = self
