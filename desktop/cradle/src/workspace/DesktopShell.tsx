@@ -1,7 +1,7 @@
 import {useShellGeometry} from "./geometry";
 import {requestResizeExpression} from "../shared/Expression";
-import {SystemPanel} from "./SystemPanel";
-import { useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
+import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
+const SystemPanel=lazy(()=>import("./SystemPanel").then((module)=>({default:module.SystemPanel})));
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
@@ -249,7 +249,7 @@ export function DesktopShell(p: Props) {
             <div className="region-tools"><span>{p.subject.title}</span><button aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
             <nav className="inspector-planes" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
             <div className="inspector-body">
-              {plane === "system" ? <SystemPanel/> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
+              {plane === "system" ? <Suspense fallback={null}><SystemPanel/></Suspense> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>
           </>}</div>
         </>}

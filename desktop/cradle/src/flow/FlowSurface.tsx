@@ -1,4 +1,4 @@
-import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {useEffect,useRef,useState} from "react";
 import {EditorFrame} from "../editor/EditorChrome";
 import {useKernel} from "../kernel/KernelProvider";
