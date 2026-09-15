@@ -1,0 +1,87 @@
+[
+  {
+    "theme": "light",
+    "before": {
+      "body": "rgb(18, 18, 17)",
+      "html": "rgba(0, 0, 0, 0)",
+      "root": "rgba(0, 0, 0, 0)",
+      "appearance": "light",
+      "inverse": "#121211",
+      "opening": "true",
+      "welcome": false,
+      "canvases": 0,
+      "paints": [
+        {
+          "name": "first-paint",
+          "startTime": 28
+        }
+      ]
+    },
+    "after": {
+      "body": "rgb(18, 18, 17)",
+      "welcome": "rgba(0, 0, 0, 0)",
+      "field": "rgb(18, 18, 17)",
+      "fieldReady": "true",
+      "canvases": 1
+    },
+    "entered": {
+      "opening": null,
+      "appearance": "light",
+      "body": "rgb(233, 233, 229)"
+    },
+    "prepaintMatchesField": true
+  },
+  {
+    "theme": "dark",
+    "before": {
+      "body": "rgb(251, 251, 249)",
+      "html": "rgba(0, 0, 0, 0)",
+      "root": "rgba(0, 0, 0, 0)",
+      "appearance": "dark",
+      "inverse": "#fbfbf9",
+      "opening": "true",
+      "welcome": false,
+      "canvases": 0,
+      "paints": [
+        {
+          "name": "first-paint",
+          "startTime": 16
+        }
+      ]
+    },
+    "after": {
+      "body": "rgb(251, 251, 249)",
+      "welcome": "rgba(0, 0, 0, 0)",
+      "field": "rgb(251, 251, 249)",
+      "fieldReady": "true",
+      "canvases": 1
+    },
+    "entered": {
+      "opening": null,
+      "appearance": "dark",
+      "body": "rgb(11, 11, 10)"
+    },
+    "prepaintMatchesField": true
+  },
+  {
+    "disabled": {
+      "canvases": 0,
+      "contexts": [],
+      "opening": null,
+      "body": "rgb(233, 233, 229)",
+      "requests": [
+        "/",
+        "/assets/index-aWaOs4IO.js",
+        "/assets/index-BWOYY9dA.css",
+        "/assets/CradleFrame-Bb8eG_-p.js",
+        "/assets/FlowSurface-DdZSV6e0.js",
+        "/assets/FlowSurface-DfoXrsA3.css",
+        "/assets/GroundChooser-Dy1Kmyl2.js",
+        "/assets/source-BtDflPA9.js",
+        "/assets/navigate-C1ZA0mMq.js",
+        "/assets/CradleFrame-B9qQgNDW.css"
+      ],
+      "heavyRequests": []
+    }
+  }
+]

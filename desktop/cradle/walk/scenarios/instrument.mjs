@@ -69,8 +69,12 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   await page.goto(baseUrl);
   await channel("info");
   // The stage's engine surface is created lazily behind the visuals master
-  // (which starts on); wait for it before hosting the focused medium.
-  await page.locator(".oi-point-cloud-overlay").waitFor({ timeout: 20000 });
+  // and sleeps dormant (hidden) until a presentation claims it; the focused
+  // medium hosted below is what wakes it.
+  await page.locator(".oi-expression-surface").waitFor({ state: "attached", timeout: 20000 });
+  // The workspace frame is requested only after the stage exists, so the
+  // shell hosts a composition portals into may still be loading.
+  await page.locator('[data-region="left"]').waitFor({ timeout: 30000 });
 
   // Honest refusal before anything is registered.
   const absent = await channel("instrument.requestOpen", [CONTROLLED.ref], { soft: true });
@@ -83,13 +87,21 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   await channel("instrument.requestOpen", [CONTROLLED.ref]);
   const bimbaRegion = page.locator('[data-epi-nara-region="bimba"]');
   const instrumentRegion = page.locator('[data-epi-nara-region="instrument"]');
-  await bimbaRegion.waitFor({ timeout: 15000 });
-  await instrumentRegion.waitFor();
-  check(true, "The privileged composition portals into the shell's left and centre hosts");
+  await instrumentRegion.waitFor({ timeout: 15000 });
+  check(true, "The privileged composition portals into the shell's centre host");
   check((await page.evaluate(() => document.body.dataset.epiNaraMode)) === "focused",
     "The focused mode is announced once on the body");
   check((await page.locator('[data-region="right"]').count()) === 1,
     "The canonical right AgentLayer region stays mounted");
+  const liveStage = page.locator('canvas[data-oi-stage="engine"][data-oi-stage-live="true"]');
+  await liveStage.waitFor({ timeout: 15000 });
+  check((await liveStage.count()) === 1,
+    "The hosted composition wakes the one production stage");
+  // The Bimba navigator is the source aperture and rests closed; opening it
+  // is a person's act on the instrument surface.
+  await instrumentRegion.getByRole("button", { name: "Open sources" }).click();
+  await bimbaRegion.waitFor({ timeout: 15000 });
+  check(true, "Opening the source aperture portals the navigator into the left host");
 
   // The retained lease crossed to the source: attached, checkpointed,
   // recovery-observed — the real engine lease, observed by the double.
