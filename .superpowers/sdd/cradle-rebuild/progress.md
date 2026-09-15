@@ -1300,3 +1300,15 @@ Factory material/Handoff Surfaces now retain bounded owner readings with exact i
 Receipt: `desktop/cradle/walk/artifacts/factory-review-continuation-20260915/receipt.md`. It carries exact logs, refs, hashes, screenshots, preservation verification and limits. A transient test scratch quota failure and the temporary-directory dependency of the native resident socket were recovered without replacing the provider.
 
 The native shared Start/admission, scoped Factory execution/Return, artifact body/Surface resolver, Routine catalogue/occurrence controls, correct requested-worktree Git basis and production Epi/Nara registration remain open. Existing Codex continuity is not Factory execution; Pi remains a failed credential-dependent attempt, other harnesses detection-only. Populated review and joined/all-harness/H acceptance are unproved; #292 stays draft. The one existing native NOW record can gain status/preserve refs, but the installed API cannot replace its result text. Read the accepted design and this receipt, then continue the joined walk against lane A's verified producer cut.
+### 2026-09-15 — EX1: shared Expression application contract and native human/Agent operations
+
+PR #310 publishes `docs/contracts/EXPRESSION-APPLICATION-V1.md` before consumer
+implementation. Native kernel operations, permission-bounded local IPC, CLI,
+revision-checked human editing and the existing Stage projection are implemented.
+The Tauri walk proves Agent create → human edit → Agent inspect/edit, conflict
+preservation, owner file CAS, global subject focus and actual authority refusal.
+Kernel floor 39 passed/49 existing owner-gated ignores; EX1 9/9 with real Central;
+engine round-trip 10 assertions; web/native/CLI builds and clippy passed.
+Evidence and exact commands: `desktop/cradle/walk/artifacts/expression-ex1/RECEIPT.md`.
+EX0 runtime/Studio intake, EX2–EX5 adapters and human creative judgement remain
+separately owned. No whole Expression Field completion is claimed.

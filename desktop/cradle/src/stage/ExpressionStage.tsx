@@ -61,6 +61,9 @@ export interface StagePresentationRequest {
   plane: StagePlane;
   /** Authored recipe id (recipes.ts); application code never patches. */
   recipe: string;
+  /** EX1 material projection into this existing stage. */
+  config?: Record<string,unknown>;
+  sceneRef?: string;
   /** Registered Expression Target id; the viewport surface is the window
    * canvas. Element targets are a later surface kind, not a scissor. */
   target?: string;
@@ -72,6 +75,7 @@ export interface StagePresentation {
   readonly plane: StagePlane;
   /** Apply another authored recipe as an overlay — no reseed, no remount. */
   update(recipe: string): void;
+  updateConfig(config: Record<string,unknown>, sceneRef: string, selectedIds: string[]): void;
   /** Play an authored sequence (recipes.ts) against this presentation. */
   play(sequence: string): void;
   release(): void;
@@ -159,7 +163,8 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     }
     const surface = surfaceRef.current;
     if (!surface) return null;
-    surface.present(request.id, request.recipe);
+    if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
+    else surface.present(request.id, request.recipe);
     if (request.paused) surface.setPaused(true);
     presentations.current.set(request.id, { id: request.id, plane: request.plane });
     if (request.plane === "frontstate") setFrontstateCount((count) => count + 1);
@@ -169,6 +174,7 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
       update(recipe: string) {
         surface.update(request.id, recipe);
       },
+      updateConfig(config, sceneRef, selectedIds) { surface.presentConfig(request.id, config, sceneRef, selectedIds); },
       play(sequence: string) {
         surface.play(request.id, sequence);
       },

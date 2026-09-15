@@ -23,10 +23,12 @@
 //! - **Reading core only** (`world.rs`): participating sources from the
 //!   owner's horizon/ground disclosures; no tree, no UI coupling.
 //!
-//! The kernel never writes files and never mints refs: every source ref is
-//! Central's canonical grammar, carried verbatim.
+//! The kernel never writes native source files or mints native subject refs.
+//! Expression-local presentation refs do not acquire native subject identity.
 
 pub mod events;
+pub mod expression;
+pub mod expression_transport;
 pub mod flow;
 pub mod history;
 pub mod knowledge;
@@ -140,6 +142,7 @@ pub struct KernelSnapshot {
 /// state change is recorded exactly once on the ordered log.
 #[derive(Debug)]
 pub struct Kernel {
+    expressions: expression::Application,
     agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
@@ -164,6 +167,7 @@ pub struct Kernel {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    Expression { request: expression::Request },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
     WorldRead,
@@ -341,6 +345,7 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    Expression { data: serde_json::Value },
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
@@ -427,6 +432,7 @@ impl Kernel {
         Self {
             client,
             agency,
+            expressions: expression::Application::default(),
             focus: GlobalFocus::unfocused(),
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
@@ -462,6 +468,26 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
+            KernelOp::Expression { request } => {
+                let focus_ref = match &request {
+                    expression::Request::Edit { expression_ref, changes, .. }
+                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. })) => Some(expression_ref.clone()),
+                    _ => None,
+                };
+                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                let mut receipts = Vec::new();
+                if let Some(change) = changed {
+                    receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor }));
+                }
+                if data["state"] == "ready" {
+                    if let Some(subject) = focus_ref.as_deref().and_then(|r| self.expressions.selected_subject(r)) {
+                        let before = self.focus.clone();
+                        self.focus.focus_subject(subject).map_err(|e| e.to_string())?;
+                        if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() })); }
+                    }
+                }
+                Ok(KernelOpOutcome { receipts, result: KernelOpResult::Expression { data } })
+            }
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
             KernelOp::DevelopmentFieldRead { project, cwd, base_revision, refs } => {
                 let root = world::read_world(&self.client).map_err(|error| error.to_string())?;

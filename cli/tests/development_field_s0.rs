@@ -4,38 +4,24 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use tempfile::TempDir;
 
-const PRODUCTS: [(&str, &str, &str); 6] = [
-    (
-        "central",
-        "ctrl",
-        "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
-    ),
-    (
-        "actuation",
-        "actuation",
-        "67e6b296b85bd3eb1554802fd55a476c474aa566",
-    ),
-    (
-        "ai-kit",
-        "aikit",
-        "856f454778e5a44e8055751bb59ed933caf210ce",
-    ),
-    (
-        "software-factory",
-        "factory",
-        "a335048b0a5b907adc5d09f0dcbda05b98f79a05",
-    ),
-    (
-        "workcell",
-        "workcell",
-        "e4e40a91fe7ed1776e634cad768f1049c39fd34e",
-    ),
-    (
-        "quaternal-logic",
-        "ql",
-        "a83148e93c500d5bebaa5811d9d25953652834cf",
-    ),
-];
+fn products() -> Vec<(String, String, String)> {
+    let catalogue: Value = serde_json::from_str(include_str!("../../surfaces.json")).unwrap();
+    catalogue["surfaces"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .map(|product| {
+            (
+                product["id"].as_str().unwrap().to_owned(),
+                product["native"]["executable"].as_str().unwrap().to_owned(),
+                product["native"]["command_revision"]
+                    .as_str()
+                    .unwrap()
+                    .to_owned(),
+            )
+        })
+        .collect()
+}
 
 fn oi(config: &Path, data: &Path, path: &Path) -> Command {
     let host_path = std::env::var_os("PATH").unwrap_or_default();
@@ -85,9 +71,13 @@ fn write_source_composition(config: &Path, bin: &Path, central_label: &str) {
     fs::create_dir_all(config).unwrap();
     fs::create_dir_all(bin).unwrap();
     let mut modules = serde_json::Map::new();
-    for (id, executable, revision) in PRODUCTS {
-        let label = if id == "central" { central_label } else { id };
-        let path = fake_executable(bin, executable, label);
+    for (id, executable, revision) in products() {
+        let label = if id == "central" {
+            central_label
+        } else {
+            id.as_str()
+        };
+        let path = fake_executable(bin, &executable, label);
         modules.insert(
             id.to_owned(),
             json!({
@@ -184,9 +174,9 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
         second_status_json["active"]["previous_receipt_ref"],
         first_receipt
     );
-    for (id, _, _) in PRODUCTS {
-        let before = first_products[id]["root"].as_str().unwrap();
-        let after = second_status_json["active"]["products"][id]["root"]
+    for (id, _, _) in products() {
+        let before = first_products[&id]["root"].as_str().unwrap();
+        let after = second_status_json["active"]["products"][&id]["root"]
             .as_str()
             .unwrap();
         if id == "central" {
@@ -209,7 +199,7 @@ fn source_suite_activation_is_atomic_incremental_dispatch_authority_and_rollback
     let location_json: Value = serde_json::from_slice(&location.stdout).unwrap();
     assert_eq!(location_json["authority"], "active-suite-receipt");
     assert_eq!(location_json["modality"], "managed-suite");
-    assert_eq!(location_json["revision"], PRODUCTS[0].2);
+    assert_eq!(location_json["revision"], products()[0].2);
     assert_eq!(location_json["revision_standing"], "receipt-exact");
     assert!(location_json["sha256"].as_str().is_some());
     assert!(location_json["executable"]
