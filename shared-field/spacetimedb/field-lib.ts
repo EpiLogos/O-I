@@ -15,6 +15,7 @@ import { fileURLToPath } from 'node:url';
 import { DbConnection } from './module_bindings/index';
 import { createExploreTransportLifecycle } from '../transport-lifecycle.mjs';
 import { createLiveExploreApplication, createSpacetimeExploreSource, rowsFromSpacetimeDb, hostedSnapshotFromRows } from '../spacetimedb.mjs';
+import { contextualContributions } from '../contribution-return.mjs';
 
 (BigInt.prototype as any).toJSON = function () { return this.toString(); };
 
@@ -147,6 +148,7 @@ export function fieldSnapshot(client: Client) {
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
     entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
+    relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
   };
 }
 
@@ -161,13 +163,14 @@ export function readRef(client: Client, ref: string) {
   const relations = snapshot.relations.filter((relation: any) => relation.from === entry.ref || relation.to === entry.ref);
   let neighbourhood: any = null;
   try { neighbourhood = client.live.open(entry.ref, { depth: 1, budget: 24 }); } catch (error: any) { neighbourhood = { error: error?.message ?? String(error) }; }
-  const contributions = snapshot.contributions.filter((row: any) => projections.some((projection: any) => row.contract?.target?.ref === projection.projection_ref) || row.contract?.target?.ref === entry.ref);
+  const contributions = contextualContributions(snapshot.contributions, [entry.ref, ...projections.map((projection: any) => projection.projection_ref)]);
   const field_ref = snapshot.entry_fields[entry.ref] ?? null;
   const relation_errors = snapshot.relation_errors.filter((row: any) => row.field_ref === field_ref || row.from === entry.ref || row.to === entry.ref);
   const my_authority = snapshot.my_authority.filter((row: any) => row.field_ref === field_ref);
+  const participants = snapshot.participants.filter((row: any) => row.field_ref === field_ref);
   const owner_pending_contributions = snapshot.owner_pending_contributions.filter((row: any) => row.field_ref === field_ref);
   const my_watches = snapshot.my_watches.filter((row: any) => row.target_ref === entry.ref);
-  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, relation_errors, contributions, owner_pending_contributions, neighbourhood, my_authority, my_watches, status: snapshot.status };
+  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, relation_errors, contributions, owner_pending_contributions, participants, neighbourhood, my_authority, my_watches, status: snapshot.status };
 }
 
 /** Push hosted reducer arguments (the `hostedPublicationArgs` shape) in

@@ -26,6 +26,7 @@ import {isUnavailable,sharedField,slug,type HostedEntry,type HostedParticipant,t
 import {PresentationBody,type DepthState} from "./PresentationBody";
 import {BeingEncounter} from "./BeingEncounter";
 import {ContributionPanel} from "./ContributionPanel";
+import {ContextContributionPanel} from "./ContextContributionPanel";
 // @ts-ignore -- language-neutral view-state codec, unit-tested in tests/explore-field.test.mjs.
 import {EXPLORE_TRAVEL_KEY,amendVisit,canTravel,currentVisit,decodeExploreTravel,freshExploreTravel,pushVisit,travelBy} from "./travel.mjs";
 // @ts-ignore -- language-neutral field reading, unit-tested in tests/explore-field.test.mjs.
@@ -37,7 +38,7 @@ import "./explore.css";
 type Visit={query:string;selected?:string;depth?:DepthState};
 type Travel={schema:string;visits:Visit[];index:number};
 type Snapshot=SharedFieldSnapshot|SharedFieldUnavailable;
-interface FieldView {state:"available"|"unavailable";detail?:string;target?:{name:string;uri:string;database:string};status?:{healthy?:boolean;transport?:{state?:string}};worlds:{world_ref:string;label:string;root:HostedEntry|null;entries:HostedEntry[]}[];beings:{ref:string;label:string;world_ref:string|null;field_ref:string;identity:{kind:string;ref:string};participant:HostedParticipant}[];fields:HostedField[];relations:{from:string;to:string;relation:string;origin:string}[];counts:{entries:number;worlds:number;beings:number}}
+interface FieldView {state:"available"|"unavailable";detail?:string;target?:{name:string;uri:string;database:string};status?:{healthy?:boolean;transport?:{state?:string}};worlds:{world_ref:string;label:string;root:HostedEntry|null;entries:HostedEntry[]}[];beings:{ref:string;label:string;world_ref:string|null;field_ref:string;identity:{kind:string;ref:string};participant:HostedParticipant}[];fields:HostedField[];relations:{relation_ref?:string;field_ref?:string;from:string;to:string;relation:string;origin:string}[];counts:{entries:number;worlds:number;beings:number}}
 type Hit={kind:"entry"|"being"|"field";ref:string;label:string;summary?:string;subject_kind:string;world_ref:string|null;world_label:string};
 
 export interface PresentationMeta {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number}
@@ -96,7 +97,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
   },[transport]);
   useEffect(()=>refresh(),[refresh,generation]);
   const selected=visit.selected;
-  const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:");
+  const isEntry=!!selected&&!selected.startsWith("participant:")&&!selected.startsWith("human:")&&!selected.startsWith("oi:field:")&&!selected.startsWith("relation:");
   useEffect(()=>{
     if(!selected||!isEntry){setReading(undefined);return;}
     let active=true;setReadBusy(true);setReading(undefined);setWatchError(undefined);
@@ -180,10 +181,12 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
       </div>}
     </>}
     {selected&&isEntry&&(reading?<><PresentationBody reading={reading} relations={view.state==="available"?view.relations:[]} onOpenRef={select} depth={depth} onDepth={setDepth} watch={{available:standing.available,watching:standing.watching,reason:standing.reason,busy:watchBusy,error:watchError,onToggle:()=>void toggleWatch()}} strip={strip}/>{reading.state==="hosted"&&<ContributionPanel key={`${reading.entry.ref}@${(reading.projections.find(projection=>projection.projection_ref===(reading.entry.meta?.projection_ref as string|undefined))??reading.projections[0])?.projection_revision??0}`} transport={transport} reading={reading} onChanged={()=>setGeneration(n=>n+1)}/>}</>:<section className="presentation-body" data-presentation-state="reading">{strip}<Loading label="Reading the projected subject…" scope="inline"/></section>)}
-    {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
+    {selected&&!isEntry&&<section className="presentation-body" data-presentation-state="local">{strip}{selected.startsWith("oi:field:")?<FieldBody field_ref={selected} view={view} snapshot={snapshot} onOpenRef={select}/>:selected.startsWith("relation:")?<RelationBody ref_={selected} view={view}/>:snapshot&&!isUnavailable(snapshot)?<BeingEncounter participantRef={selected} snapshot={snapshot} onOpenRef={select}/>:<p role="status" className="explore-absent">The projected Being is unavailable.</p>}</section>}
+    {selected&&!isEntry&&snapshot&&!isUnavailable(snapshot)&&(()=>{const being=view.state==="available"?view.beings.find(b=>b.ref===selected):undefined;const relation=view.state==="available"?view.relations.find(r=>r.relation_ref===selected):undefined;const field_ref=selected.startsWith("oi:field:")?selected:being?.field_ref??snapshot.relation_fields[selected];return field_ref?<ContextContributionPanel key={selected} transport={transport} snapshot={snapshot} target={{kind:selected.startsWith("oi:field:")?"oi.shared-field":being?"oi.participant":"oi.relation",ref:selected,label:being?.label??relation?.relation??selected,field_ref}} onChanged={()=>setGeneration(n=>n+1)}/>:null;})()}
   </section>;
 }
 
+function RelationBody({ref_,view}:{ref_:string;view:FieldView}) {const relation=view.state==="available"?view.relations.find(row=>row.relation_ref===ref_):undefined;return relation?<article className="world-presentation" data-relation-ref={ref_}><header className="world-presentation__masthead"><div><div className="world-component__eyebrow">Relation</div><h1>{relation.relation}</h1></div><div className="world-presentation__revision">{ref_}</div></header><p><code>{relation.from}</code> → <code>{relation.to}</code></p></article>:<p role="status">The field holds no relation <code>{ref_}</code>.</p>}
 /** A SharedField as an ordinary Surface body: identity, standing, its members, its entries, and the caller's own membership. */
 function FieldBody({field_ref,view,snapshot,onOpenRef}:{field_ref:string;view:FieldView;snapshot?:Snapshot;onOpenRef:(ref:string)=>void}) {
   const field=view.state==="available"?view.fields.find(f=>f.field_ref===field_ref):undefined;
@@ -194,6 +197,7 @@ function FieldBody({field_ref,view,snapshot,onOpenRef}:{field_ref:string;view:Fi
   return <article className="world-presentation world-presentation--field" data-field-ref={field_ref} data-field-visibility={field.visibility} data-membership={mine.length?mine.map(a=>a.role).join(","):"none"}>
     <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">SharedField · {field.kind} · {field.visibility}</div><h1>{field.title??field_ref}</h1></div><div className="world-presentation__revision">{mine.length?`you: ${mine.map(a=>`${a.participant_ref} (${a.role})`).join(", ")}`:"you: no membership"}</div></header>
     <section className="world-region" data-region-role="members"><div className="world-region__label">Participants · {members.length}</div><div className="world-region__components"><div className="world-component__collection">{members.map(p=><button type="button" key={p.participant_ref} onClick={()=>onOpenRef(p.participant_ref)}><strong>{p.presentation?.chosen_name??p.participant_ref}</strong><span>{p.identity.kind} · {p.identity.ref}</span></button>)}</div></div></section>
+    <section className="world-region" data-region-role="relations"><div className="world-region__label">Relations · {view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).length}</div><div className="world-region__components"><div className="world-component__collection">{view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).map(r=><button type="button" key={r.relation_ref} onClick={()=>r.relation_ref&&onOpenRef(r.relation_ref)}><strong>{r.relation}</strong><span>{r.from} → {r.to}</span></button>)}</div></div></section>
     <section className="world-region" data-region-role="entries"><div className="world-region__label">Projected subjects · {entries.length}</div><div className="world-region__components"><div className="world-component__collection">{entries.map(e=><button type="button" key={e.ref} onClick={()=>onOpenRef(e.ref)}><strong>{e.label}</strong><span>{kindLabel(e.kind)}</span></button>)}</div></div></section>
     <p className="explore-muted">Join and Request access are not exposed by this desktop's field client yet; membership shown is the client's own authority reading.</p>
   </article>;

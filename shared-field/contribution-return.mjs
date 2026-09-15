@@ -54,7 +54,7 @@ function contributionContent(kind, input, basis) {
   }
   if (kind === 'thing') return { thing: readingRef(value.thing, 'thing content.thing'), ...(value.representation !== undefined ? { representation: clone(record(value.representation, 'thing content.representation')) } : {}) };
   if (kind === 'expression-revision' || kind === 'expression-scene') {
-    if (!basis.expression_ref || basis.expression_revision === undefined) throw new TypeError(`${kind} requires an Expression ref and revision in its basis`);
+    if (!basis?.expression_ref || basis.expression_revision === undefined) throw new TypeError(`${kind} requires an Expression ref and revision in its basis`);
     if (!Array.isArray(value.changes) || value.changes.length === 0) throw new TypeError(`${kind} content.changes must be a non-empty EX1 Change array`);
     return { summary: text(value.summary, `${kind} content.summary`), changes: value.changes.map((change, index) => clone(record(change, `${kind} content.changes[${index}]`))), method_refs: readingRefs(value.method_refs ?? [], `${kind} content.method_refs`), evidence_refs: readingRefs(value.evidence_refs ?? [], `${kind} content.evidence_refs`) };
   }
@@ -81,7 +81,7 @@ export function createContributionBody(input) {
   const kind = text(input.kind, 'contribution body.kind');
   if (!KINDS.has(kind)) throw new TypeError(`contribution body.kind must be one of ${CONTRIBUTION_BODY_KINDS.join(', ')}`);
   if (!Object.hasOwn(input, 'content')) throw new TypeError('contribution body.content is required');
-  const basis = revisionBasis(input.basis);
+  const basis = input.basis == null ? null : revisionBasis(input.basis);
   const content = contributionContent(kind, input.content, basis);
   const attachments = (input.attachments ?? []).map((item, index) => {
     const ref = record(item, `contribution body.attachments[${index}]`);
@@ -121,10 +121,36 @@ export function contributionBody(contribution) {
   return validateContributionBody(value.representation.payload);
 }
 
+/** Return only the reply forest attached to these exact contextual roots. */
+export function contextualContributions(contributions, rootRefs) {
+  if (!Array.isArray(contributions) || !Array.isArray(rootRefs)) throw new TypeError('contextual contributions and root refs must be arrays');
+  const reachable = new Set(rootRefs.map((value, index) => text(value, `context root[${index}]`)));
+  for (let changed = true; changed;) {
+    changed = false;
+    for (const row of contributions) {
+      const contract = validateContribution(row.contract ?? row);
+      if (!reachable.has(contract.contribution_ref) && reachable.has(contract.target.ref)) {
+        reachable.add(contract.contribution_ref);
+        changed = true;
+      }
+    }
+  }
+  return contributions.filter(row => reachable.has((row.contract ?? row).contribution_ref));
+}
+
+/** Resolve the one human reviewer from admitted participant/authority rows, never projected entry metadata. */
+export function nativeReviewerIdentity({ projection, participants, authority }) {
+  const admitted = authority.filter(row => !row.revoked && row.role === 'admitter' && row.participant_ref === projection?.publisher_participant_ref);
+  const humans = participants.filter(row => row.participant_ref === projection?.publisher_participant_ref && row.identity?.kind === 'human');
+  if (admitted.length !== 1 || humans.length !== 1) return null;
+  return text(humans[0].identity.ref, 'native reviewer identity');
+}
+
 /** Refuse a Return if any owner reading has advanced beyond the contributed basis. */
 export function inspectContributionBasis(contribution, current) {
   const value = validateContribution(contribution);
   const body = contributionBody(value);
+  if (!body.basis) return { contribution_ref: value.contribution_ref, body, current: clone(current), stale: [{ kind: 'source_basis', expected: null, actual: null }], returnable: false };
   record(current, 'current owner revisions');
   const checks = [
     ['source_ref', body.basis.source_ref, current.source_ref],

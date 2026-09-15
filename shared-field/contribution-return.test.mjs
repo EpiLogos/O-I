@@ -1,6 +1,6 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
-import { contributionBody, createAttachedContribution, createContributionBody, inspectContributionBasis, nativeExpressionReturnProposal, nativeReturnSubmission } from './contribution-return.mjs';
+import { contributionBody, contextualContributions, createAttachedContribution, createContributionBody, inspectContributionBasis, nativeExpressionReturnProposal, nativeReturnSubmission, nativeReviewerIdentity } from './contribution-return.mjs';
 
 const basis = { source_ref: 'central:source:project:p:doc', source_revision: 'central@7', projection_ref: 'projection:doc', projection_revision: 3, world_presentation_ref: 'presentation:doc', world_presentation_revision: 2, expression_ref: 'expression:doc', expression_revision: 5 };
 const revisions = { source_ref: basis.source_ref, source_revision: 'central@7', projection_ref: basis.projection_ref, projection_revision: 3, world_presentation_ref: basis.world_presentation_ref, world_presentation_revision: 2, expression_ref: basis.expression_ref, expression_revision: 5 };
@@ -25,6 +25,30 @@ test('Contribution-on-Contribution and typed addressing remain ordinary Contribu
   assert.equal(nested.target.kind, 'oi.contribution');
   assert.equal(nested.relation.kind, 'responds_to');
   assert.equal(nested.addressing.to[0].participant, 'participant:owner');
+});
+
+test('contextual history includes the complete reply subtree and excludes unrelated field contributions', () => {
+  const root=contribution(),child=contribution({contribution_ref:'contribution:second-world:2',target:{kind:'oi.contribution',ref:root.contribution_ref}}),grandchild=contribution({contribution_ref:'contribution:second-world:3',target:{kind:'oi.contribution',ref:child.contribution_ref}}),unrelated=contribution({contribution_ref:'contribution:second-world:other',target:{kind:'central.document',ref:'source:other'}});
+  assert.deepEqual(contextualContributions([unrelated,grandchild,child,root],[basis.source_ref]).map(row=>row.contribution_ref),[grandchild.contribution_ref,child.contribution_ref,root.contribution_ref]);
+});
+
+test('Expression review identity comes from the admitted human publisher, never foreign projected metadata', () => {
+  const projection={publisher_participant_ref:'participant:owner'};
+  const participants=[{participant_ref:'participant:owner',identity:{kind:'human',ref:'human:actual'}},{participant_ref:'participant:foreign',identity:{kind:'human',ref:'human:forged'}}];
+  assert.equal(nativeReviewerIdentity({projection,participants,authority:[{participant_ref:'participant:owner',role:'admitter',revoked:false}]}),'human:actual');
+  assert.equal(nativeReviewerIdentity({projection,participants,authority:[{participant_ref:'participant:foreign',role:'admitter',revoked:false}]}),null);
+});
+
+test('field, Being and relation attachments remain attributable without inventing a Projection basis', () => {
+  for (const target of [{kind:'oi.shared-field',ref:'oi:field:shared'},{kind:'oi.participant',ref:'participant:owner'},{kind:'oi.relation',ref:'relation:shared:supports'}]) {
+    const value=contribution({target,body:{kind:'prose',basis:null,content:`Attached to ${target.kind}`,attachments:[]}});
+    assert.equal(value.target.ref,target.ref);
+    assert.equal(contributionBody(value).basis,null);
+    const inspection=inspectContributionBasis(value,{});
+    assert.equal(inspection.returnable,false);
+    assert.equal(inspection.stale[0].kind,'source_basis');
+    assert.throws(()=>nativeReturnSubmission(value,{}, {document_id:'doc:p'}),error=>error.code==='stale_contribution_basis');
+  }
 });
 
 test('Return builds the real native owner proposal on the exact contributed basis', () => {
