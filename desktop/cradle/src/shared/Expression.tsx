@@ -5,7 +5,12 @@
  * routes all of it into the stage as cues and form expressions. It owns
  * no renderer: the stage owns where expressions live and how they render.
  */
-import {useEffect,useRef,type ReactNode} from "react";
+import {lazy,Suspense,useEffect,useRef,type ReactNode} from "react";
+import {activeBindingId} from "../surface/engine";
+// K9's composition reaches the Nara adapter and the stage recipes (the
+// engine's scene model): it loads with the first focused instrument
+// binding, never at startup.
+const FocusedInstrumentComposition=lazy(()=>import("../instrument/FocusedInstrumentComposition").then((module)=>({default:module.FocusedInstrumentComposition})));
 import {gestureFor,type FormName} from "@epilogos/oi-design-system/expression";
 import {surfaceExpressionChanges} from "../surface/engine";
 import type {LayoutState} from "../surface/types";
@@ -13,7 +18,6 @@ import {useKernel} from "../kernel/KernelProvider";
 import {emitExpressionCue} from "../stage/cues";
 import {registerExpressionTarget} from "../stage/targets";
 import {useExpressionStage} from "../stage/ExpressionStage";
-import {FocusedInstrumentComposition} from "../instrument/FocusedInstrumentComposition";
 
 /** Called by the accepting React handler, not inferred from a bubbling key.
  * The stage will still require changed, settled DOM geometry before expressing. */
@@ -50,7 +54,9 @@ export function ExpressionLayout({layout}:{layout:LayoutState}) {
  // K9 is a privileged composition of existing owners, not another shell or
  // renderer. The component portals only while an instrument binding is the
  // active surface; ordinary expression mode is therefore unchanged.
- return <FocusedInstrumentComposition layout={layout}/>;
+ const active=activeBindingId(layout),binding=active?layout.surfaces[active]:undefined;
+ const instrument=!!binding&&binding.kind==="instrument"&&!!binding.ref;
+ return instrument?<Suspense fallback={null}><FocusedInstrumentComposition layout={layout}/></Suspense>:null;
 }
 
 /** One stage per native or detached window; this provider contributes the

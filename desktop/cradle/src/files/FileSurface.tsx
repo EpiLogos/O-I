@@ -1,13 +1,14 @@
-import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {Loading} from "../shared/Loading";
-import {useEffect,useRef,useState,type ReactNode} from "react";
+import {useEffect,useRef,useState,type ReactNode, lazy, Suspense} from "react";
+// Material rendering (markdown, page expression, media frames) loads with the first non-text file, not at startup.
+const MaterialSurface=lazy(()=>import("../material/MaterialSurface").then((module)=>({default:module.MaterialSurface})));
 import {useKernel} from "../kernel/KernelProvider";
 import type {NativeFileReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/drafts";
 import {readFile,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
 import {detectFormat} from "../material/detect";
-import {MaterialSurface} from "../material/MaterialSurface";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 
 /** All writes/history belong to Central. Local storage retains unsaved typing.
@@ -53,7 +54,7 @@ function lastReading(ref:string|undefined):NativeFileReading|undefined{
 export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceBinding;forceSource?:boolean;leadingTools?:ReactNode}) {
   const format=detectFormat({path:binding.location?.path});
   if(!forceSource&&format!=="text"){
-    return <MaterialSurface binding={binding} format={format}/>;
+    return <Suspense fallback={null}><MaterialSurface binding={binding} format={format}/></Suspense>;
   }
   const {transport}=useKernel();
   const [reading,setReading]=useState<NativeFileReading>();
