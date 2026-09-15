@@ -138,7 +138,18 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
-            Self::ExpressionChanged { expression_ref, revision, actor, activity_ref } => { non_empty("expression_ref", expression_ref)?; non_empty("actor", actor)?; if let Some(activity_ref)=activity_ref { non_empty("activity_ref", activity_ref)?; } if *revision == 0 { Err("Expression revision must be positive".into()) } else { Ok(()) } },
+            Self::ExpressionChanged { expression_ref, revision, actor, activity_ref } => {
+                non_empty("expression_ref", expression_ref)?;
+                non_empty("actor", actor)?;
+                if let Some(activity_ref) = activity_ref {
+                    non_empty("activity_ref", activity_ref)?;
+                }
+                if *revision == 0 {
+                    Err("Expression revision must be positive".into())
+                } else {
+                    Ok(())
+                }
+            },
             Self::WorldChanged { summary } => non_empty("WorldChanged.summary", summary),
             Self::FocusChanged { focus } => {
                 let relation = |name: &str| format!("FocusChanged.focus.{name}");
