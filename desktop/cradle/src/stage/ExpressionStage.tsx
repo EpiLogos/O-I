@@ -178,28 +178,36 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     if (!surface) return null;
     if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
     else surface.present(request.id, request.recipe);
-    if (request.paused) surface.setPaused(true);
-    presentations.current.set(request.id, { id: request.id, plane: request.plane });
+    // Pause belongs to this presentation, not the reused window surface.
+    surface.setPaused(request.paused ?? false);
+    const record = { id: request.id, plane: request.plane };
+    presentations.current.set(request.id, record);
+    const current = () => presentations.current.get(request.id) === record && surfaceRef.current === surface;
+    const requireCurrent = () => {
+      if (!current()) throw new Error("Expression presentation is no longer available.");
+    };
     if (request.plane === "frontstate") setFrontstateCount((count) => count + 1);
     return {
       id: request.id,
       plane: request.plane,
       update(recipe: string) {
+        requireCurrent();
         surface.update(request.id, recipe);
       },
-      updateConfig(config, sceneRef, selectedIds) { surface.presentConfig(request.id, config, sceneRef, selectedIds); },
+      updateConfig(config, sceneRef, selectedIds) { requireCurrent(); surface.presentConfig(request.id, config, sceneRef, selectedIds); },
       setContainer(container) {
-        if (!presentations.current.has(request.id) || surfaceRef.current !== surface) throw new Error("Expression presentation is no longer available.");
+        requireCurrent();
         surface.setContainer(request.id, container);
       },
       play(sequence: string) {
+        requireCurrent();
         surface.play(request.id, sequence);
       },
       release() {
-        if (!presentations.current.has(request.id)) return;
+        if (!current()) return;
         presentations.current.delete(request.id);
         if (request.plane === "frontstate") setFrontstateCount((count) => Math.max(0, count - 1));
-        surfaceRef.current?.release(request.id);
+        surface.release(request.id);
       },
     };
   }, [snapshot.enabled, surfaceError, surface]);

@@ -78,12 +78,15 @@ const IDLE_CONFIG: NativeConfig = { glyph: " ", particleCount: 2048 };
 /** The host's current canvas ground (the desktop theme's paper), read from
  * the design-system token so authored recipes — the mark, the focused
  * medium — take the ink the appearance calls for. The engine derives its
- * ink from the scene background (light ground → ink, dark ground → paper).
+ * ink and recipe palette both follow the host; a coloured engine palette
+ * otherwise overrides the monochrome ink derived from the background.
  * Absent a host token (bare test pages) the recipe's own ground stands. */
-function hostGround(): string | null {
+function hostAppearance(): { background: string; ink: string } | null {
   try {
-    const value = getComputedStyle(document.body).getPropertyValue("--oi-canvas-ground").trim();
-    return /^#[0-9a-fA-F]{6}$/.test(value) ? value : null;
+    const style = getComputedStyle(document.body);
+    const background = style.getPropertyValue("--oi-canvas-ground").trim();
+    const ink = style.getPropertyValue("--oi-foreground").trim();
+    return [background, ink].every(value => /^#[0-9a-fA-F]{6}$/.test(value)) ? { background, ink } : null;
   } catch { return null; }
 }
 const STAGE_IDLE = "stage-idle";
@@ -158,7 +161,7 @@ export class EngineSurface {
       this.observer = new ResizeObserver(() => this.wake());
       this.observer.observe(element);
     }
-    document.addEventListener("visibilitychange", this.wake);
+    document.addEventListener("visibilitychange", this.visibilityChanged);
     this.reduced.addEventListener("change", this.wake);
     // Recipe presentations follow the host appearance: when the theme
     // flips, the same scene is re-grounded (revision bump, no reseed) so
@@ -390,7 +393,7 @@ export class EngineSurface {
     this.sleep();
     this.observer?.disconnect();
     this.observer = null;
-    document.removeEventListener("visibilitychange", this.wake);
+    document.removeEventListener("visibilitychange", this.visibilityChanged);
     this.reduced.removeEventListener("change", this.wake);
     this.themeObserver?.disconnect();
     this.themeObserver = null;
@@ -408,8 +411,15 @@ export class EngineSurface {
   /** Authored recipe material on the host's ground. The unthemed recipe is
    * kept so overlays and re-theming compose on the authored config. */
   private activateRecipe(id: string, recipe: NativeConfig, sceneId?: string) {
-    const ground = hostGround();
-    const themed = ground ? mergePatch(recipe, { backgroundColor: ground, color: { backgroundColor: ground } }) : recipe;
+    const appearance = hostAppearance();
+    const themed = appearance ? mergePatch(recipe, {
+      backgroundColor: appearance.background,
+      color: {
+        backgroundColor: appearance.background,
+        primaryColor: appearance.ink, secondaryColor: appearance.ink, accentColor: appearance.ink,
+        customPaletteColors: [appearance.ink, appearance.ink],
+      },
+    }) : recipe;
     this.active = { id, scene: this.sceneFrom(themed, sceneId), revision: ++this.revision, recipe };
   }
   private retheme() {
@@ -439,6 +449,10 @@ export class EngineSurface {
     if (!this.running(performance.now())) return;
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
+  };
+  private visibilityChanged = () => {
+    if (document.hidden) this.sleep();
+    else this.wake();
   };
   private sleep() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }
   private frame = (now: number) => {
