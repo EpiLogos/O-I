@@ -35,29 +35,14 @@ import {constellation,fieldReading,searchField,watchStanding,watchTargetKind} fr
 import {createWatch} from "../../../../shared-field/watch.mjs";
 import "./explore.css";
 
-type Visit={query:string;selected?:string;depth?:DepthState};
-type Travel={schema:string;visits:Visit[];index:number};
 type Snapshot=SharedFieldSnapshot|SharedFieldUnavailable;
 interface FieldView {state:"available"|"unavailable";detail?:string;target?:{name:string;uri:string;database:string};status?:{healthy?:boolean;transport?:{state?:string}};worlds:{world_ref:string;label:string;root:HostedEntry|null;entries:HostedEntry[]}[];beings:{ref:string;label:string;world_ref:string|null;field_ref:string;identity:{kind:string;ref:string};participant:HostedParticipant}[];fields:HostedField[];relations:{relation_ref?:string;field_ref?:string;from:string;to:string;relation:string;origin:string}[];counts:{entries:number;worlds:number;beings:number}}
 type Hit={kind:"entry"|"being"|"field";ref:string;label:string;summary?:string;subject_kind:string;world_ref:string|null;world_label:string};
 
-export interface PresentationMeta {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number}
 export interface ExploreSurfaceProps {binding:SurfaceBinding;onOpenPresentation?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenExplore?:(select:{ref:string;title?:string})=>Promise<void>}
 
-const TRAVEL_EVENT="oi:explore-navigate";
-function loadTravel():Travel {
-  try{return decodeExploreTravel(JSON.parse(localStorage.getItem(EXPLORE_TRAVEL_KEY)??"null"));}catch{return freshExploreTravel();}
-}
-export function saveTravel(travel:Travel):boolean {
-  try{localStorage.setItem(EXPLORE_TRAVEL_KEY,JSON.stringify(travel));return true;}catch{return false;}
-}
-/** Write a selection into the remembered travel and wake any mounted Explore surface — how the rest of the desktop hands Explore a subject. */
-export function navigateExplore(select:{ref:string;query?:string}) {
-  const travel=loadTravel();
-  const current=currentVisit(travel) as Visit;
-  saveTravel(current.selected===select.ref?travel:pushVisit(travel,{query:select.query??current.query,selected:select.ref}));
-  window.dispatchEvent(new CustomEvent(TRAVEL_EVENT));
-}
+export {navigateExplore,saveTravel,type PresentationMeta} from "./navigate";
+import {loadTravel,saveTravel,TRAVEL_EVENT,type PresentationMeta,type Travel,type Visit} from "./navigate";
 const KIND_LABEL:Record<string,string>={"central-world":"world","wiki-space":"wiki space","wiki-node":"wiki node","curated-artifact":"artifact","central.document":"document",expression:"expression",contribution:"contribution",participant:"being","shared-field":"field"};
 const kindLabel=(kind:string)=>KIND_LABEL[kind]??kind;
 

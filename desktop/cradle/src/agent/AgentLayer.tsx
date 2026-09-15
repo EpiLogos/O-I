@@ -1,12 +1,13 @@
 import {advanceCompletion} from "./expressionReading";
-import {useEffect,useRef,useState, type ReactNode} from "react";
+import {lazy,Suspense,useEffect,useRef,useState, type ReactNode} from "react";
+// The Expression composer reaches the engine projection; it loads with the Composition plane, not with the agent layer.
+const ExpressionView=lazy(()=>import("../expression/ExpressionView").then((module)=>({default:module.ExpressionView})));
 import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";
 import {EncounterList, type EncounterRow} from "../encounter/EncounterList";
 import {ExpressionAnchor} from "../shared/Expression";
 import type {FormName} from "@epilogos/oi-design-system/expression";
 import {EncounterSurface,type EncounterExpressionReading} from "../encounter/EncounterSurface";
-import {ExpressionView} from "../expression/ExpressionView";
 import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
 import {encounter} from "../encounter/client";
 import type {SurfaceBinding} from "../surface/types";
@@ -134,7 +135,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       {binding
         ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} presentation={full ? "full" : "side"} onExpression={setExpression} concealed={plane==="Context"||plane==="Composition"}/>
         : plane!=="Context"&&plane!=="Composition" ? <NoAccompanying project={project} onOpen={choose}/> : null}
-      {plane==="Composition"&&<ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/>}
+      {plane==="Composition"&&<Suspense fallback={null}><ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/></Suspense>}
       {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>
   </section>;

@@ -1,5 +1,5 @@
 import {useEffect,useRef,useState} from "react";
-import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 import {EditorFrame} from "../editor/EditorChrome";
 import type {SurfaceBinding} from "../surface/types";
 import "./flow.css";
