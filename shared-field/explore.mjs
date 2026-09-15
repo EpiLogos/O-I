@@ -82,6 +82,7 @@ function validateRelation(input, index) {
   requireString(input.relation, `relation[${index}].relation`);
   requireString(input.origin, `relation[${index}].origin`);
   return {
+    ...(input.relation_ref !== undefined ? {relation_ref:requireString(input.relation_ref, `relation[${index}].relation_ref`)} : {}),
     from: input.from,
     to: input.to,
     relation: input.relation,

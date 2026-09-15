@@ -48,6 +48,7 @@
       "additionalProperties": false,
       "required": ["from", "to", "relation", "origin", "provenance"],
       "properties": {
+        "relation_ref": {"type": "string", "minLength": 1, "description": "Optional exact semantic relation ref disclosed by its owner; never a transport row ID."},
         "from": {"type": "string", "minLength": 1},
         "to": {"type": "string", "minLength": 1},
         "relation": {"type": "string", "minLength": 1},

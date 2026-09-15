@@ -499,6 +499,35 @@ These units resume the paused #18/#297 hosting line. They are one map, not ticke
 
 **Acceptance:** search → local whole → living Expression → neighbour recenter → source/page → return, with exact relation/source identity and no invented neighbour.
 
+**Implementation and automated evidence (2026-09-15).** The existing Explore
+Surface now reads a bounded hosted Wiki whole as graph, tree, list, page or
+native EX1 Expression. Exact node/source revisions and explicitly disclosed
+relation identities/revisions survive in native subject/relation bindings.
+Pins retain semantic refs, with unavailable targets disabled; source depth,
+back/forward, popout and return use the existing Surface/history. Departing
+while native inspection is pending cancels the subsequent owner edit. The
+inline canvas remains inside its Surface, and unavailable readings retain
+Refresh/travel so the same address can reopen after connection restoration.
+
+The executable [SF2 walk](../desktop/cradle/walk/scenarios/explore-sf2.mjs)
+initializes separate native Central roots/application homes and separate
+publisher/reader transport identities, publishes actual `central.wiki.read`
+and `projectcentral.wiki.read` results, then drives the running Cradle through
+`hosted-acceptance` (`epilogos-oi-shared-field-acceptance` on maincloud).
+Its [receipt](../desktop/cradle/walk/artifacts/explore-sf2.json) and adjacent
+screenshots retain the executed checks. Contract tests cover malformed/stale
+relation readings, unavailable endpoints and strict bounds; native projection
+checks preserve authored layout and independent relation/source revisions.
+
+Replay from `desktop/cradle` with an available native `ctrl` and the configured
+acceptance target: `OI_SHARED_FIELD_TARGET=hosted-acceptance npm run walk -- explore-sf2`.
+Additional gates: `node tests/knowledge-expression.mjs`,
+`node --test tests/explore-field.test.mjs`, `npm run build`, and repository-root
+`node --test shared-field/*.test.mjs shared-field/spacetimedb/field-cli.test.mjs`.
+The projected specimen discloses navigation and source readings; it discloses
+no callable native Actions or QL participation grammar, so neither is invented.
+This is SF2 evidence; the actual-machine SF6 joined walk and EX6 closure remain open.
+
 ### SF3 — Being / Agent / pedagogical encounter
 
 **Runs with O:I #306 EX4 and existing Gateway/AgentSession owners.**
