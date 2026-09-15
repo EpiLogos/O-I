@@ -1,18 +1,18 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "shell-recovery",
-  "generated_at": "2026-09-15T13:11:15.864Z",
+  "generated_at": "2026-09-15T13:44:05.222Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://127.0.0.1:4321",
+    "bridge_url": "http://127.0.0.1:4331",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": false,
-  "error": "locator.selectOption: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('combobox', { name: 'Focused pane', exact: true })\n    - locator resolved to <select aria-label=\"Focused pane\">…</select>\n  - attempting select option action\n    2 × waiting for element to be visible and enabled\n      - did not find some options\n    - retrying select option action\n    - waiting 20ms\n    2 × waiting for element to be visible and enabled\n      - did not find some options\n    - retrying select option action\n      - waiting 100ms\n    59 × waiting for element to be visible and enabled\n       - did not find some options\n     - retrying select option action\n       - waiting 500ms\n\n    at Module.run (/Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/scenarios/shell-recovery.mjs:34:22)\n    at async runScenario (/Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/run.mjs:383:5)\n    at async file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/run.mjs:456:18",
-  "duration_ms": 32751,
+  "passed": true,
+  "error": null,
+  "duration_ms": 4564,
   "checks": [
     {
       "ok": true,
@@ -95,8 +95,68 @@
       "label": "Narrow canvas exposes one usable focused pane at 639"
     },
     {
-      "ok": false,
+      "ok": true,
       "label": "Top strip switches the focused pane at 639"
+    },
+    {
+      "ok": true,
+      "label": "Central is summonable at 639"
+    },
+    {
+      "ok": true,
+      "label": "Overlay returns focus at 639"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard summons Central at 639"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer visible at 390"
+    },
+    {
+      "ok": true,
+      "label": "Global top strip visible at 390"
+    },
+    {
+      "ok": true,
+      "label": "Both region toggles remain at the top at 390"
+    },
+    {
+      "ok": true,
+      "label": "No page overflow at 390"
+    },
+    {
+      "ok": true,
+      "label": "Narrow canvas exposes one usable focused pane at 390"
+    },
+    {
+      "ok": true,
+      "label": "Top strip switches the focused pane at 390"
+    },
+    {
+      "ok": true,
+      "label": "Central is summonable at 390"
+    },
+    {
+      "ok": true,
+      "label": "Overlay returns focus at 390"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard summons Central at 390"
+    },
+    {
+      "ok": true,
+      "label": "Responsive transitions preserve the pane tree"
+    },
+    {
+      "ok": true,
+      "label": "Overlay preserves intended sidebar depth"
+    },
+    {
+      "ok": true,
+      "label": "Point-cloud proposals are not mounted in production"
     }
   ],
   "ops": [
@@ -106,12 +166,12 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T13:11:15.969Z",
+        "mounted_at": "2026-09-15T13:44:05.485Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4331"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4321/"
       }
     },
     {
@@ -120,18 +180,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T13:11:17.113Z",
+        "mounted_at": "2026-09-15T13:44:06.762Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4331"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4321/"
       }
     },
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.5,
+      "duration_ms": 0.4,
       "data": {
         "layout": {
           "subjectPlanes": {},
@@ -146,32 +206,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "4a18b26a-226a-48b1-a652-7995e08f3fb5"
+                  "94f99513-9fca-4625-99a9-fa7c12fd0ba5"
                 ],
                 "pinned": [],
-                "active": "4a18b26a-226a-48b1-a652-7995e08f3fb5"
+                "active": "94f99513-9fca-4625-99a9-fa7c12fd0ba5"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "da50ac9f-c600-4ba4-901d-54fb756269d5"
+                  "cce71d21-c37c-4983-8830-ff508166c23e"
                 ],
                 "pinned": [],
-                "active": "da50ac9f-c600-4ba4-901d-54fb756269d5"
+                "active": "cce71d21-c37c-4983-8830-ff508166c23e"
               }
             ]
           },
           "surfaces": {
-            "4a18b26a-226a-48b1-a652-7995e08f3fb5": {
+            "94f99513-9fca-4625-99a9-fa7c12fd0ba5": {
               "project": "Editor",
-              "id": "4a18b26a-226a-48b1-a652-7995e08f3fb5",
+              "id": "94f99513-9fca-4625-99a9-fa7c12fd0ba5",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "da50ac9f-c600-4ba4-901d-54fb756269d5": {
-              "id": "da50ac9f-c600-4ba4-901d-54fb756269d5",
+            "cce71d21-c37c-4983-8830-ff508166c23e": {
+              "id": "cce71d21-c37c-4983-8830-ff508166c23e",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -190,7 +250,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 58,
       "data": {
         "file": "shell-recovery-1280.png"
       }
@@ -198,7 +258,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 44,
       "data": {
         "file": "shell-recovery-900.png"
       }
@@ -206,9 +266,159 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 70,
       "data": {
         "file": "shell-recovery-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "shell-recovery-639.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 43,
+      "data": {
+        "file": "shell-recovery-390.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp1",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g1",
+                "tabs": [
+                  "94f99513-9fca-4625-99a9-fa7c12fd0ba5"
+                ],
+                "pinned": [],
+                "active": "94f99513-9fca-4625-99a9-fa7c12fd0ba5"
+              },
+              {
+                "type": "group",
+                "id": "g2",
+                "tabs": [
+                  "cce71d21-c37c-4983-8830-ff508166c23e"
+                ],
+                "pinned": [],
+                "active": "cce71d21-c37c-4983-8830-ff508166c23e"
+              }
+            ]
+          },
+          "surfaces": {
+            "94f99513-9fca-4625-99a9-fa7c12fd0ba5": {
+              "project": "Editor",
+              "id": "94f99513-9fca-4625-99a9-fa7c12fd0ba5",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "cce71d21-c37c-4983-8830-ff508166c23e": {
+              "id": "cce71d21-c37c-4983-8830-ff508166c23e",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "project": "Editor",
+              "title": "01 02-ARCHITECTURE.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g2",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp1",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g1",
+                "tabs": [
+                  "94f99513-9fca-4625-99a9-fa7c12fd0ba5"
+                ],
+                "pinned": [],
+                "active": "94f99513-9fca-4625-99a9-fa7c12fd0ba5"
+              },
+              {
+                "type": "group",
+                "id": "g2",
+                "tabs": [
+                  "cce71d21-c37c-4983-8830-ff508166c23e"
+                ],
+                "pinned": [],
+                "active": "cce71d21-c37c-4983-8830-ff508166c23e"
+              }
+            ]
+          },
+          "surfaces": {
+            "94f99513-9fca-4625-99a9-fa7c12fd0ba5": {
+              "project": "Editor",
+              "id": "94f99513-9fca-4625-99a9-fa7c12fd0ba5",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "cce71d21-c37c-4983-8830-ff508166c23e": {
+              "id": "cce71d21-c37c-4983-8830-ff508166c23e",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "project": "Editor",
+              "title": "01 02-ARCHITECTURE.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g2",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 67,
+      "data": {
+        "file": "shell-recovery-system-1280.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 50,
+      "data": {
+        "file": "shell-recovery-system-900.png"
       }
     }
   ],
@@ -216,6 +426,10 @@
   "screenshots": [
     "shell-recovery-1280.png",
     "shell-recovery-900.png",
-    "shell-recovery-760.png"
+    "shell-recovery-760.png",
+    "shell-recovery-639.png",
+    "shell-recovery-390.png",
+    "shell-recovery-system-1280.png",
+    "shell-recovery-system-900.png"
   ]
 }
