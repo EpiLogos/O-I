@@ -1,17 +1,17 @@
 import {setup as sourceSetup} from './editor.mjs';
-import {cpSync,readFileSync} from 'node:fs';
+import {readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 export async function setup(args) {
   const p=await sourceSetup(args);
+  p.call('central.world-relations.save',{scope:'root',record:{schema:'central.world-relations/v1',ref:'editor-walk',revision:'walk-1',sources:[]}});
   const wiki=JSON.parse(readFileSync(join(p.projectRoot,'ProjectCentral/agents/wiki/wiki.json'),'utf8')).objects.find(o=>o.object==='space');
-  cpSync(join(process.env.HOME,'.aikit'),join(p.root,'.aikit-home'),{recursive:true});
   const env={...process.env,...p.env,AIKIT_HOME:join(p.root,'.aikit-home'),OI_AIKIT_BIN:process.env.OI_AIKIT_BIN??'/Users/admin/.cargo/bin/aikit'};
   const bound=JSON.parse(execFileSync(env.OI_AIKIT_BIN,['--json','-C',p.projectRoot,'project','bind','editor-walk','--directory',p.projectRoot,'--no-default-skill-sets'],{encoding:'utf8',env}));
   if(!bound.ok)throw new Error(JSON.stringify(bound));
   const status=JSON.parse(execFileSync(env.OI_AIKIT_BIN,['--json','-C',p.projectRoot,'knowledge','status'],{encoding:'utf8',env}));
   if(!status.ok)throw new Error(JSON.stringify(status));
-  return {...p,wiki,env};
+  return {...p,wiki,env,knowledgeStatus:status};
 }
 export default async function run({page,baseUrl,check,metric,shot,channel,provision:p}) {
   const native=(...args)=>{

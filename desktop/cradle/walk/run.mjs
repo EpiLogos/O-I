@@ -352,7 +352,7 @@ async function runScenario(name, { baseUrl }) {
     bridgeUrl = BRIDGE_URL;
   }
 
-  const browser = await chromium.launch();
+  const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
   // An explicit context: leave/re-enter scenarios open a second page in the
   // SAME context (shared storage = the restored frame), which the implicit
   // browser.newPage() context refuses.
