@@ -20,8 +20,9 @@
  * Scenarios: rest (u0.3) · surfaces (u0.3b) · kernel-cas (u0.4) · all
  */
 
-import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { spawn, execFileSync } from "node:child_process";
+import { mkdirSync, writeFileSync, readFileSync, realpathSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -29,6 +30,25 @@ import { chromium } from "playwright";
 const here = dirname(fileURLToPath(import.meta.url));
 const cradleRoot = resolve(here, "..");
 const artifactsDir = join(here, "artifacts");
+// A borrowed node_modules can redirect a workspace package into another
+// checkout. Prove the engine dependency belongs to this exact worktree before
+// building or recording a native/browser acceptance receipt.
+const repositoryRoot = resolve(cradleRoot, "../..");
+const expectedEngineProvenance = realpathSync(join(repositoryRoot, "packages/oi-design-system/expressions-engine/PROVENANCE.json"));
+const loadedEngineProvenance = realpathSync(createRequire(import.meta.url).resolve("@epilogos/oi-design-system/expressions-engine/PROVENANCE.json"));
+if (loadedEngineProvenance !== expectedEngineProvenance) {
+  throw new Error(`The walk's engine dependency resolves outside its checkout: ${loadedEngineProvenance}. Run npm ci inside this checkout's desktop/cradle; do not borrow another checkout's node_modules.`);
+}
+const engineProvenance = JSON.parse(readFileSync(loadedEngineProvenance, "utf8"));
+const sourceContext = {
+  repository_root: repositoryRoot,
+  repository_head: execFileSync("git", ["rev-parse", "HEAD"], {cwd:repositoryRoot, encoding:"utf8"}).trim(),
+  tracked_changes: execFileSync("git", ["diff", "--name-only", "HEAD"], {cwd:repositoryRoot, encoding:"utf8"}).trim().split("\n").filter(Boolean),
+  engine_provenance_path: loadedEngineProvenance,
+  engine_source: engineProvenance.source,
+  engine_revision: engineProvenance.sha,
+};
+
 const PREVIEW_PORT = Number(process.env.WALK_PREVIEW_PORT ?? 4173);
 if (!Number.isInteger(PREVIEW_PORT) || PREVIEW_PORT < 1024 || PREVIEW_PORT > 65535) throw new Error("WALK_PREVIEW_PORT must be a port from 1024 to 65535");
 const BRIDGE_PORT = Number(process.env.WALK_BRIDGE_PORT ?? 4179);
@@ -198,6 +218,7 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
       bundle: "walk (WALK=1) served by vite preview",
       node: process.version,
       platform: process.platform,
+      source: sourceContext,
     },
     passed: true,
     error: null,
