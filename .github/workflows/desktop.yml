@@ -51,7 +51,7 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
-      - name: Prove Expression projection through the accepted native engine
+      - name: Prove Expression projection through the declared native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
       - name: Prove knowledge projection identity and provenance preservation
@@ -72,6 +72,20 @@ jobs:
       - name: Prove Expression page placement and capture on one WebGL context
         working-directory: desktop/cradle
         run: node tests/expression-stage-placement.mjs
+      - name: Prove shared Expression ownership and sleeping lifecycle
+        working-directory: desktop/cradle
+        run: |
+          node tests/expression-stage-lifecycle.mjs
+          node tests/expression-provider-lifecycle.mjs
+          node tests/visuals-preview-lifecycle.mjs
+      - name: Prove desktop appearance, source syntax and native prepaint policy
+        working-directory: desktop/cradle
+        run: |
+          node tests/desktop-appearance.mjs
+          node tests/text-editor-appearance.mjs
+          node tests/theme-prepaint-csp.mjs
+          npm --prefix ../../packages/oi-design-system run verify
+          npm --prefix ../../packages/oi-design-system run verify:browser
       - name: Retain search browser receipts and screenshots
         if: always()
         uses: actions/upload-artifact@v4
