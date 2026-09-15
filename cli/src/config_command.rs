@@ -165,7 +165,7 @@ fn wire_string<T: serde::Serialize>(value: &T) -> String {
 /// Decide the addressed scope. An explicit scope argument parses through the
 /// frozen registry; an omitted scope is only resolvable when the owner
 /// disclosed exactly one allowed scope kind and it is singular — anything
-/// else is a usage error naming the disclosed scopes, never a guess.
+/// else refuses with the frozen error vocabulary, never a guess.
 fn decide_scope(
     listed: &[ListedSetting],
     setting_ref: &str,
@@ -174,10 +174,24 @@ fn decide_scope(
     if let Some(raw) = scope_argument {
         return parse_scope_argument(raw).map_err(ConfigUsageError::Structured);
     }
+    // The frozen error vocabulary (09 §13) classifies these refusals: an
+    // unknown setting is `unsupported_setting` — the same code the engine's
+    // resolve path answers when a scope argument is present — and an omitted
+    // scope the contribution cannot default is `unsupported_scope` naming the
+    // disclosed scopes. Neither is `invalid_value`: the vocabulary keeps
+    // "no such setting" and "no such scope" distinct from a bad value so
+    // headless callers can react precisely.
     let Some(entry) = find_listed(listed, setting_ref) else {
-        return Err(ConfigUsageError::Usage(format!(
-            "`{setting_ref}` is not in any contribution; `oi config list` shows what is addressable"
-        )));
+        return Err(ConfigUsageError::Structured(
+            SurfaceError::new(
+                ErrorCode::UnsupportedSetting,
+                format!(
+                    "`{setting_ref}` is not in any contribution; `oi config list` shows what is \
+                     addressable"
+                ),
+            )
+            .setting(setting_ref),
+        ));
     };
     let allowed = &entry.setting.allowed_scopes;
     if let [only] = allowed.as_slice() {
@@ -196,15 +210,20 @@ fn decide_scope(
         })
         .collect::<Vec<_>>()
         .join(", ");
-    Err(ConfigUsageError::Usage(format!(
-        "`{setting_ref}` is addressed at an explicit scope; the contribution discloses: {names}"
-    )))
+    Err(ConfigUsageError::Structured(
+        SurfaceError::new(
+            ErrorCode::UnsupportedScope,
+            format!(
+                "`{setting_ref}` is addressed at an explicit scope; the contribution discloses: \
+                 {names}"
+            ),
+        )
+        .setting(setting_ref),
+    ))
 }
 
-/// A command-layer failure: either a usage mistake (exit 2) or a structured
-/// configuration error (exit 1 with the frozen document).
+/// A command-layer failure that already carries its frozen error document.
 enum ConfigUsageError {
-    Usage(String),
     Structured(SurfaceError),
 }
 
@@ -332,11 +351,26 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
         let owners_json: Vec<Value> = owners
             .iter()
             .map(|owner| match owner {
-                OwnerContribution::Available(contribution) => serde_json::json!({
-                    "owner_ref": contribution.owner.owner_ref,
-                    "owner_kind": contribution.owner.owner_kind,
-                    "state": "available",
-                }),
+                OwnerContribution::Available(contribution) => {
+                    // Availability is the owner's own probed disclosure
+                    // (07 §4.7, carried into 09 §2.1) — never a literal.
+                    // An owner that answered but disclosed itself degraded
+                    // or unavailable is listed exactly as it disclosed,
+                    // with its reason; an owner that disclosed no
+                    // availability at all reads `unknown`, never assumed.
+                    let (state, reason) = match &contribution.availability {
+                        Some(availability) => {
+                            (wire_string(&availability.state), availability.reason.clone())
+                        }
+                        None => ("unknown".to_owned(), None),
+                    };
+                    serde_json::json!({
+                        "owner_ref": contribution.owner.owner_ref,
+                        "owner_kind": contribution.owner.owner_kind,
+                        "state": state,
+                        "reason": reason,
+                    })
+                }
                 OwnerContribution::Unavailable { owner_ref, reason, .. } => serde_json::json!({
                     "owner_ref": owner_ref,
                     "state": "unavailable",
@@ -367,8 +401,20 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
     for owner in &owners {
         match owner {
             OwnerContribution::Available(contribution) => {
+                // The owner's own probed availability (07 §4.7), never a
+                // literal; an undisclosed availability reads `unknown`.
+                let (state, reason) = match &contribution.availability {
+                    Some(availability) => {
+                        (wire_string(&availability.state), availability.reason.clone())
+                    }
+                    None => ("unknown".to_owned(), None),
+                };
+                let reason_suffix = reason
+                    .as_deref()
+                    .map(|reason| format!(": {reason}"))
+                    .unwrap_or_default();
                 text.push_str(&format!(
-                    "  {} ({}) — available\n",
+                    "  {} ({}) — {state}{reason_suffix}\n",
                     contribution.owner.owner_ref,
                     wire_string(&contribution.owner.owner_kind)
                 ));
@@ -417,9 +463,6 @@ fn config_show(
     };
     let scope = match decide_scope(&config.list()?, &setting_ref, scope_argument.as_deref()) {
         Ok(scope) => scope,
-        Err(ConfigUsageError::Usage(message)) => {
-            return Err(SurfaceError::new(ErrorCode::InvalidValue, message).setting(&setting_ref))
-        }
         Err(ConfigUsageError::Structured(error)) => return Err(error),
     };
     let resolution = config.resolve(&setting_ref, &scope)?;
@@ -452,9 +495,6 @@ fn config_get(
     let listed = config.list()?;
     let scope = match decide_scope(&listed, &setting_ref, scope_argument.as_deref()) {
         Ok(scope) => scope,
-        Err(ConfigUsageError::Usage(message)) => {
-            return Err(SurfaceError::new(ErrorCode::InvalidValue, message).setting(&setting_ref))
-        }
         Err(ConfigUsageError::Structured(error)) => return Err(error),
     };
     let resolution = config.resolve(&setting_ref, &scope)?;
@@ -561,9 +601,6 @@ fn config_set(
         })?;
     let scope = match decide_scope(&listed, &setting_ref, scope_argument.as_deref()) {
         Ok(scope) => scope,
-        Err(ConfigUsageError::Usage(message)) => {
-            return Err(SurfaceError::new(ErrorCode::InvalidValue, message).setting(&setting_ref))
-        }
         Err(ConfigUsageError::Structured(error)) => return Err(error),
     };
     // Secret-kind settings take the owner-namespace reference as the value
@@ -620,9 +657,6 @@ fn config_reset(
     };
     let scope = match decide_scope(&config.list()?, &setting_ref, scope_argument.as_deref()) {
         Ok(scope) => scope,
-        Err(ConfigUsageError::Usage(message)) => {
-            return Err(SurfaceError::new(ErrorCode::InvalidValue, message).setting(&setting_ref))
-        }
         Err(ConfigUsageError::Structured(error)) => return Err(error),
     };
     let applied = config.reset(&setting_ref, &scope)?;
