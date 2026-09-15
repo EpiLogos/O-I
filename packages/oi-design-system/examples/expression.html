@@ -1,16 +1,1 @@
-<!doctype html>
-<html><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>O:I expression module reference</title>
-<link rel="stylesheet" href="../tokens.css"><link rel="stylesheet" href="../expression.css">
-<style>body{margin:24px;background:var(--oi-surface);color:var(--oi-foreground);font:14px system-ui}main{display:grid;grid-template-columns:repeat(auto-fit,minmax(220px,1fr));gap:20px}article{height:170px;border-bottom:1px solid var(--oi-foreground)}.field{height:130px}nav{display:flex;gap:12px;margin-bottom:20px}button,select{font:inherit}#resize{width:260px;height:100px;resize:horizontal;overflow:auto;border:1px solid var(--oi-foreground)}</style>
-<body class="oi-desktop"><h1>Expression</h1><p>Real module reference. Forms here are visual samples, not product activity.</p>
-<nav><button id="pause">Pause</button><select aria-label="Theme"><option>oi-desktop</option><option>oi-surface-light</option><option>oi-surface-dark</option><option>oi-surface-warm-dark</option><option>oi-surface-contrast</option></select><button id="edge">Resize expression</button></nav><main></main><div id="resize">Resize reference</div>
-<script type="module">
-import {createExpressionOverlay,formNames} from '../expression.mjs';
-const overlay=createExpressionOverlay(document.body),handles=[];
-for(const name of formNames.filter(n=>n!=='waiting')){const article=document.createElement('article');article.innerHTML=`<strong>${name}</strong><div class="field"></div>`;document.querySelector('main').append(article);const field=article.querySelector('.field');handles.push(overlay.express(name,{rect:()=>field.getBoundingClientRect(),hold:true}));}
-const timer=setInterval(()=>handles.forEach(handle=>overlay.update(handle,{})),10000);
-let paused=false;document.querySelector('#pause').onclick=e=>{paused=!paused;overlay.pause(paused);e.target.textContent=paused?'Resume':'Pause';};
-document.querySelector('select').onchange=e=>document.body.className=e.target.value;
-document.querySelector('#edge').onclick=()=>overlay.express('edge',{rect:()=>document.querySelector('#resize').getBoundingClientRect(),dir:[1,0]});
-window.expressionReference={overlay,handles};window.addEventListener('pagehide',()=>{clearInterval(timer);overlay.dispose();});
-</script></html>
+<!doctype html><html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>O:I · Expression ownership</title><link rel="stylesheet" href="../tokens.css"><style>body{margin:var(--oi-space-5);background:var(--oi-surface);color:var(--oi-foreground);font:var(--oi-desktop-type-body) var(--oi-font-sans)}main{max-width:var(--oi-reading-width)}li{margin-block:var(--oi-space-2)}</style></head><body class="oi-desktop"><main><h1>Expression belongs to the native stage</h1><p>The package exports semantic cue names. The desktop projects their target bounds into the existing production field, with foreground and retained-field priority. This page creates no renderer or animation clock.</p><h2>Semantic vocabulary</h2><ul id="vocabulary"></ul><p>Use the actual desktop's Expression or Visuals surface to inspect the production engine. Application activity remains defined by its native owner.</p></main><script type="module">import {formNames} from '../expression.mjs';for(const name of formNames){const item=document.createElement('li');item.textContent=name;document.querySelector('#vocabulary').append(item);}</script></body></html>

@@ -19,6 +19,8 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs" 
     depth: number; grid: boolean; snap: boolean;
   }
   /** The instrument's stage law: the centre and scale every projection uses. */
+  export function defaultCamera(): Camera;
+  export function unproject(x: number, y: number, camera: Camera, width: number, height: number, plane?: Camera["plane"], depth?: number): Vec3;
   export function stageCentre(width: number, height: number): { x: number; y: number };
   export function stageScale(width: number, height: number): number;
 }
@@ -180,4 +182,8 @@ declare module "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs" {
   }
   /** The stage hosts the retained-capable adapter in place of the upstream one. */
   export { RetainedProductionAdapter as ProductionAdapter };
+}
+
+declare module "@epilogos/oi-design-system/expressions-engine/engine/fieldModel.mjs" {
+  export const MAX_FORMATIONS: number;
 }

@@ -224,7 +224,7 @@
   --oi-desktop-hit-target: 28px;
   --oi-desktop-rule: 1px;
   --oi-reading-width: 660px;
-  --oi-dialog-width: 528px;
+  --oi-dialog-width: calc(480px + var(--oi-space-6) + var(--oi-space-6));
   --oi-spatial-min-height: 240px;
   --oi-graph-point-min-radius: 0.45px;
   --oi-graph-edge-width: 0.4px;

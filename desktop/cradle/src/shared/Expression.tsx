@@ -127,8 +127,8 @@ export function ExpressionAnchor({form}:{form:FormName}) {
   };
   const stopTarget=registerExpressionTarget('agent.anchor',geometry);
   const refresh=()=>{
-   if(!geometry())return;
-   if(!stage.update(handle.current,{name:current.current,rect:geometry}))handle.current=stage.express(current.current,{rect:geometry,hold:true});
+   const updated=stage.update(handle.current,{name:current.current,rect:geometry});
+   if(!updated&&geometry())handle.current=stage.express(current.current,{rect:geometry,hold:true});
   };
   refresh();const timer=window.setInterval(refresh,10000);
   const observer=new ResizeObserver(refresh);if(anchor.current)observer.observe(anchor.current);

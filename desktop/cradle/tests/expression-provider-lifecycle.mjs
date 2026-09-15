@@ -39,12 +39,12 @@ try {
   await page.waitForFunction(() => window.providerTest?.stage);
   let state = await observe(page);
   assert.equal(state.engines,0,'StrictMode disabled startup creates no engine canvas');
-  assert.equal(state.frames,0,'the shared overlay does no continuous work without a form');
+  assert.equal(state.frames,0,'disabled creates no scheduler');
   await page.evaluate(() => providerTest.visuals.setEnabled(true));
   await ready(page);
   state = await observe(page);
   assert.equal(state.engines,1,'StrictMode creates exactly one production stage');
-  assert.equal(state.canvases,2,'only the shared 2D overlay and production canvas are present');
+  assert.equal(state.canvases,1,'only the one production canvas is present');
   assert.equal(state.frames,0,'enabled without a presentation remains dormant');
 
   await page.evaluate(() => {
@@ -78,13 +78,13 @@ try {
   for (let cycle=0;cycle<3;cycle++) {
     await page.evaluate(() => providerTest.unmount());
     state = await observe(page);
-    assert.equal(state.canvases,0,'unmount removes both owned canvases');
+    assert.equal(state.canvases,0,'unmount removes the owned native canvas');
     assert.equal(state.pending,0,'unmount leaves no scheduled callback');
     await page.evaluate(() => providerTest.mount());
     await ready(page);
     state = await observe(page);
     assert.equal(state.engines,1,'remount restores one production stage');
-    assert.equal(state.canvases,2,'remount restores one shared overlay');
+    assert.equal(state.canvases,1,'remount restores one native canvas');
   }
   const second = await context.newPage();
   await second.goto(url);
