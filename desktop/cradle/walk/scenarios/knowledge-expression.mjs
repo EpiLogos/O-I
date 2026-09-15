@@ -31,7 +31,11 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const follow=page.getByRole('button',{name:'Following locus',exact:true});await follow.click();check(await page.getByRole('button',{name:'Follow locus',exact:true}).getAttribute('aria-pressed')==='false','Follow can freeze the current native locus');await page.getByRole('button',{name:'Follow locus',exact:true}).click();
   const graphExpress=page.getByRole('button',{name:'Express local whole',exact:true});await graphExpress.click();await page.locator('.knowledge-expression-controls [role="status"]').first().waitFor({timeout:45000});check((await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('knowledge-expression:')),'Pinned SemanticWiki whole presents through the same Expression stage');const bounds=await renderedBounds(page,page.locator('.knowledge-expression-host'));check(bounds.count>100&&bounds.minX>bounds.width*.03&&bounds.maxX<bounds.width*.97&&bounds.minY>bounds.height*.03&&bounds.maxY<bounds.height*.97,'The real projected glyph renders completely inside its artboard',bounds);await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await page.waitForFunction(()=>document.body.dataset.theme==='dark');
   check(await page.locator('.knowledge-expression-host').evaluate(el=>getComputedStyle(el).backgroundColor===getComputedStyle(el.closest('.knowledge-surface')).backgroundColor),'The knowledge Expression artboard inherits the host dark ground');
+  check(bounds.darkInkPixels>100&&bounds.maxContrast>=3,'The projected circle has visible dark ink against the light artboard',bounds);
   await page.waitForTimeout(400); // Let the existing camera/theme transition settle before visual evidence.
+  const darkInk=await renderedBounds(page,page.locator('.knowledge-expression-host'));
+  check(darkInk.lightInkPixels>100&&darkInk.maxContrast>=3,'The projected circle changes to visible light ink against the dark artboard',darkInk);
+  metric('dark_glyph_contrast',darkInk.maxContrast);metric('dark_glyph_visible_pixels',darkInk.lightInkPixels);
   await shot('graph-expression-dark');
   await page.getByRole('button',{name:'Return to knowledge',exact:true}).click();
   await page.setViewportSize({width:639,height:900});

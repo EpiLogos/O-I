@@ -94,10 +94,9 @@ const STAGE_IDLE = "stage-idle";
  * (the idle scene's own transition) before the surface sleeps. */
 const SETTLE_MS = 900;
 
-/** The presentation the surface currently holds. `recipe` is the unthemed
- * authored material of a recipe presentation (absent for document
- * presentations and the idle hand-over). */
-interface ActivePresentation { id: string; scene: StageScene; revision: number; recipe?: NativeConfig }
+/** Unthemed recipe material and explicitly host-themed document material
+ * are retained separately. Native instrument configs have neither override. */
+interface ActivePresentation { id: string; scene: StageScene; revision: number; recipe?: NativeConfig; hostMaterial?: NativeConfig }
 
 export class EngineSurface {
   readonly canvas: HTMLCanvasElement;
@@ -163,8 +162,8 @@ export class EngineSurface {
     }
     document.addEventListener("visibilitychange", this.visibilityChanged);
     this.reduced.addEventListener("change", this.wake);
-    // Recipe presentations follow the host appearance: when the theme
-    // flips, the same scene is re-grounded (revision bump, no reseed) so
+    // Recipes and opted-in document projections follow the host appearance:
+    // when the theme flips, the same scene is re-grounded (revision bump, no reseed) so
     // the ink re-derives — one still frame under reduced motion.
     this.themeObserver = new MutationObserver(() => this.retheme());
     this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ["data-theme", "class"] });
@@ -201,14 +200,15 @@ export class EngineSurface {
     this.wake();
   }
 
-  presentConfig(id: string, config: unknown, sceneRef?: string, selectedIds: string[] = []) {
+  presentConfig(id: string, config: unknown, sceneRef?: string, selectedIds: string[] = [], appearance: "host" | "authored" = "authored") {
     if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     if (this.retainedLeaseOwner) throw new Error("Release the native domain binding before authoring this stage");
     this.live = true;
     this.settleUntil = 0;
     this.markDormant(false);
     this.selectedIds = selectedIds;
-    this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
+    if (appearance === "host") this.activateHostMaterial(id, config as NativeConfig, sceneRef);
+    else this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
     this.wake();
   }
 
@@ -411,21 +411,29 @@ export class EngineSurface {
   /** Authored recipe material on the host's ground. The unthemed recipe is
    * kept so overlays and re-theming compose on the authored config. */
   private activateRecipe(id: string, recipe: NativeConfig, sceneId?: string) {
+    this.active = { id, scene: this.sceneFrom(this.onHostGround(recipe), sceneId), revision: ++this.revision, recipe };
+  }
+  private activateHostMaterial(id: string, hostMaterial: NativeConfig, sceneId?: string) {
+    this.active = { id, scene: this.sceneFrom(this.onHostGround(hostMaterial), sceneId), revision: ++this.revision, hostMaterial };
+  }
+  private onHostGround(material: NativeConfig): NativeConfig {
     const appearance = hostAppearance();
-    const themed = appearance ? mergePatch(recipe, {
+    return appearance ? mergePatch(material, {
       backgroundColor: appearance.background,
       color: {
         backgroundColor: appearance.background,
         primaryColor: appearance.ink, secondaryColor: appearance.ink, accentColor: appearance.ink,
         customPaletteColors: [appearance.ink, appearance.ink],
       },
-    }) : recipe;
-    this.active = { id, scene: this.sceneFrom(themed, sceneId), revision: ++this.revision, recipe };
+    }) : material;
   }
   private retheme() {
     const active = this.active;
-    if (!active?.recipe || !this.live) return;
-    this.activateRecipe(active.id, active.recipe, active.scene.id);
+    if (!active || !this.live) return;
+    if (active.recipe) this.activateRecipe(active.id, active.recipe, active.scene.id);
+    else if (active.hostMaterial) this.activateHostMaterial(active.id, active.hostMaterial, active.scene.id);
+    else return;
+    if (active.hostMaterial && this.paused && !document.hidden) { this.renderFrame(0); return; }
     this.wake();
   }
   private require(id: string): ActivePresentation {
@@ -452,6 +460,7 @@ export class EngineSurface {
   };
   private visibilityChanged = () => {
     if (document.hidden) this.sleep();
+    else if (this.paused && this.live && this.active?.hostMaterial) this.renderFrame(0);
     else this.wake();
   };
   private sleep() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }

@@ -149,7 +149,7 @@ function ExpressionBody({binding,presentationRef,hosting}:RendererProps) {
     if(resolved.state!=="live")return;
     if(!composition){setLiveError("The carried composition is not admissible on this client");return;}
     try{
-      const handle=stage.present({id,plane:"overlay",recipe:"",config:expressionConfig(composition),sceneRef:composition.selection.scene_ref}) as HostablePresentation|null;
+      const handle=stage.present({id,plane:"overlay",recipe:"",config:expressionConfig(composition),appearance:"host",sceneRef:composition.selection.scene_ref}) as HostablePresentation|null;
       if(!handle)throw new Error(stage.error??"The Expression stage is off, occupied by another presentation in this window, or unavailable");
       presentation.current=handle;
       if(typeof handle.setContainer==="function")handle.setContainer(inline.current);
