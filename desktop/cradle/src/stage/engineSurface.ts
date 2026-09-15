@@ -537,6 +537,13 @@ export class EngineSurface {
     if (this.reduced.matches && !this.forceMotion && this.playback) {
       this.playback.elapsed = this.playback.sequence.duration;
       this.applySequenceSteps();
+      // The final step may already be interpolating. A distinct scene
+      // boundary with a zero-delta render tells the native adapter to
+      // resolve that interpolation as a still instead of retaining an
+      // unfinished positive-duration transition with no clock to finish it.
+      if (this.active) this.active = { ...this.active,
+        scene: { ...this.active.scene, id: `${this.active.scene.id}·still`, transition: 0 },
+        revision: ++this.revision };
     }
     this.wake();
   };
