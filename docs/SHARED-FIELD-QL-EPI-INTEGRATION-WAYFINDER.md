@@ -519,6 +519,14 @@ screenshots retain the executed checks. Contract tests cover malformed/stale
 relation readings, unavailable endpoints and strict bounds; native projection
 checks preserve authored layout and independent relation/source revisions.
 
+The final 33-check replay used an isolated installation of this checkout's
+dependencies and Point-Cloud revision `9443f58fa8599f903d6affa61bc6fbed7109f640`.
+It supersedes the earlier local receipt whose shared dependency link could
+resolve into a concurrently edited checkout. The walk runner now refuses
+that cross-checkout resolution before building and records the repository
+head, tracked edits and engine provenance in every receipt. The separate
+engine refresh remains outside this SF2 proof.
+
 Replay from `desktop/cradle` with an available native `ctrl` and the configured
 acceptance target: `OI_SHARED_FIELD_TARGET=hosted-acceptance npm run walk -- explore-sf2`.
 Additional gates: `node tests/knowledge-expression.mjs`,
