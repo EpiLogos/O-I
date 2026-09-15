@@ -9,6 +9,7 @@
 //! to drop a setting.
 pub mod changeset;
 pub mod contribution;
+pub mod kernel;
 pub mod profile;
 pub mod redaction;
 pub mod refs;
@@ -39,6 +40,16 @@ pub use resolution::{
     reconcile, Desired, NativeAxes, NativeAxis, NativeReading, Provenance, Reconciliation,
     ReconciliationInputs, ReconciliationStatus, Resolution, SecretReference, StageState,
     RESOLUTION_SCHEMA,
+};
+// The C1 kernel (#299): registry/discovery, transport, orchestration,
+// verification and O:I-side persistence. Additive to the frozen C0 files.
+pub use kernel::{
+    assemble_changeset, canonical_reading_digest, execute_changeset, idempotency_key_of,
+    mint_changeset_id, plan_request, resolve_setting, resolve_setting_address, reset_setting,
+    ApplyRequest, ChangeKind, ConfigurationStore, DesiredChange, DesiredInput, ErrorDocument,
+    ExecuteReport, KernelError, OwnerGateway, OwnerOpError, OwnerRegistry, OwnerSpec,
+    OwnerTransport, PlanDocument, ProcessTransport, ReconciliationRecord, ResetRequest,
+    SettingRequest, TransportError, TransportFailure, ValidationDocument,
 };
 
 /// The structured error codes every configuration-plane operation may
