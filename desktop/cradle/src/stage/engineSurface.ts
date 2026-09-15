@@ -499,6 +499,17 @@ export class EngineSurface {
     if (active.recipe) this.activateRecipe(active.id, active.recipe, active.scene.id, active.appearance);
     else if (active.hostMaterial) this.activateHostMaterial(active.id, active.hostMaterial, active.scene.id, active.appearance);
     else return;
+    // Reduced motion has no clock to finish a scene transition: resolve the
+    // re-grounded scene as a distinct zero-transition still, or the palette
+    // would freeze mid-interpolation.
+    if (this.reduced.matches && !this.forceMotion) {
+      const reground = this.active;
+      if (reground) this.active = { ...reground,
+        scene: { ...reground.scene, id: `${reground.scene.id}·still`, transition: 0 },
+        revision: ++this.revision };
+      this.renderFrame(0);
+      return;
+    }
     if (active.hostMaterial && this.paused && !document.hidden) { this.renderFrame(0); return; }
     this.wake();
   }
