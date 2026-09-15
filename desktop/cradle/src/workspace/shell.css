@@ -15,9 +15,7 @@
 .shell-focus { min-width: 0; flex: 1; align-self: stretch; display: flex; align-items: center; padding: 0 var(--oi-space-2); }
 .shell-focus span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
 .shell-focus select { min-width: 0; max-width: 100%; text-overflow: ellipsis; font-size: var(--oi-shell-type-ui); }
-.shell-pane-actions { display: flex; align-items: center; gap: var(--oi-space-1); }
 .shell-agent-toggle svg { transform: scaleX(-1); }
-@media (max-width: 760px) { .shell-pane-actions button:not(:last-child) { display: none; } }
 @media (max-width: 639px) {
   .desktop-centre .pane.split { display: contents; }
   .desktop-centre .pane.group:not(.focused), .desktop-centre .split-resizer { display: none !important; }
@@ -138,7 +136,7 @@
  * label, easy to miss right where the person clicked. A left-accent card
  * makes it read as a refusal, not filler copy. */
 .desktop-shell [role="alert"] { padding: 8px 10px; margin: 6px 0; border-left: 2px solid var(--oi-accent); background: var(--oi-wash); border-radius: 4px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
-.desktop-centre .agency-column, .desktop-centre .agency-field { display: none; }
+.desktop-centre .agency-field { display: none; }
 
 /* ---------------------------------------------------------------------------
  * The right region's legacy Context/History/System fallback body — the
@@ -223,7 +221,6 @@
 .canvas-arrangement .workspace-select svg { flex: none; width: 9px; height: 9px; color: var(--oi-muted-2); }
 .canvas-arrangement .workspace-select select { width: auto; max-width: 220px; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); font-weight: 500; color: var(--oi-accent-ink); }
 .canvas-arrangement .arrangement-state { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; }
-.canvas-arrangement .focused-surface-context { min-width: 0; overflow: hidden; white-space: nowrap; text-overflow: ellipsis; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
 /* `.canvas-arrangement > button` forces a fixed icon body — `.w-return` is a
  * direct-child button with text, so it takes its own content box. */
 .canvas-arrangement .w-return { width: auto; height: 22px; min-height: 22px; flex: none; display: inline-flex; align-items: center; gap: 6px; padding: 3px 8px; white-space: nowrap; font-size: var(--oi-shell-type-meta); color: var(--oi-accent-ink); background: var(--oi-wash); border-radius: 5px; }
@@ -238,7 +235,7 @@
   .canvas-arrangement { gap: 5px; padding: 0 6px; }
   .canvas-arrangement .workspace-select { max-width: 40%; }
   .canvas-arrangement .workspace-select select { max-width: 120px; }
-  .canvas-arrangement .arrangement-state, .canvas-arrangement .focused-surface-context, .canvas-arrangement .w-return span { display: none; }
+  .canvas-arrangement .arrangement-state, .canvas-arrangement .w-return span { display: none; }
 }
 @media (pointer: coarse) {
   .workspace-footer-edge:is(:hover, :focus-within), .workspace-footer-edge[data-pinned="true"] { height: 36px; }
@@ -276,7 +273,6 @@
 .desktop-bar > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--oi-muted-2); }
 .desktop-bar > button { color: var(--oi-muted-2); }
 .desktop-bar > button:hover, .desktop-bar > button:focus-visible { color: var(--oi-accent-ink); }
-.desktop-context { flex: 1; color: var(--oi-muted-2); padding-left: var(--oi-space-3); }
 
 /* ---------------------------------------------------------------------------
  * Source / file surface chrome shared bits not already in cradle.css.
@@ -340,7 +336,6 @@
 .system-panel button:hover:not(:disabled) { background: var(--oi-wash); }
 .system-panel .gateway-aperture { border-top: var(--oi-shell-edge) solid var(--oi-hairline); margin-top: 24px; padding-top: 12px; }
 .system-panel .ground-chooser { border-bottom: 0; }
-.system-panel .system-observed { font-size: var(--oi-shell-type-meta); }
 .ctx-menu { max-width: calc(100vw - 8px); max-height: calc(100vh - 8px); overflow-y: auto; }
 .material-surface { position: relative; }
 .system-panel .ground-chooser form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
