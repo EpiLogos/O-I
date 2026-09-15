@@ -1317,3 +1317,60 @@ separately owned. No whole Expression Field completion is claimed.
 ### Factory continuation — current-main integration verified
 
 U implementation `97c8bb9` now incorporates EX1/main `5b328af` through `946d51d`. Independent review kept Factory on the shared Stage and confirmed no production Epi/Nara registration. Post-merge production/native/CLI builds, kernel 32+8 tests, 9 real-Central Expression tests, 10 engine assertions, clippy and 3 window tests passed; conversation/Factory/recovery walks passed 18/18/15. The actual Omarchy app retained its persisted terminal and single composer after Factory return, and its protected socket plus freshly built CLI returned native Expression capabilities. The receipt has exact hashes/readbacks and logs under `main-integration/`. This generic API does not remove the Start/execution/artifact/Routine/Git-basis/instrument joins or the draft/human gate.
+### 2026-09-15 — EX0: latest engine intake into the one Expression body (Point-Cloud-Demo 9443f58)
+
+- ENGINE INTAKE: the vendored expressions engine refreshed from 569a9eb to the
+  accepted current Point-Cloud-Demo master `9443f58` (32 upstream modules): the
+  unified morph drive law extracted to `engine/morphSignal.mjs`; shared
+  image/ASCII source normalization (`engine/sourceSampling.mjs`) with per-entity
+  sampling analyses; linked automation lanes (`clockId`/`syncWith` with
+  frequency-integrated shared clocks) and the `morph` automation waveform;
+  stage400-normalized entity source pools; scene save workflow (`savedScenes`
+  + toolbelt/property-take scene fields validated in `validateJourney`).
+- VENDOR DISCIPLINE REPAIR: the K9 retained-field seam had been hand-patched
+  into the vendored `shell/production.mjs` after #286, so a wholesale re-vendor
+  silently deleted it (found red: instrument 6/7, instrument-host attach
+  timeout). The seam now lives in the O:I-owned
+  `expressions-engine/oi/retained.mjs` (`RetainedProductionAdapter extends
+  ProductionAdapter`) which the vendor script never rewrites; the script
+  records the overlay in PROVENANCE and verify() parse-checks it. engine/ and
+  shell/ are byte-pure upstream transforms again.
+- DEBRIS RETIRED (migration-superseded, zero remaining consumers): the legacy
+  pre-engine renderer runtime `packages/oi-design-system/point-cloud/{host,
+  GPGPUSimulator,GlyphSampler,PointCloudField,shaders}.mjs`, its package
+  export, and its ambient typings. Preserved: `point-cloud/config.mjs` +
+  `presets.mjs` (still the validated schema/patch owner and preset affordance
+  for the visuals preference store) and the authored `oi_logo_mark` saved-state
+  twin; `point-cloud.css` keeps its live consumers.
+- CAPTURE PRESERVED AND PROVEN: the engine's clean-frame capture is now a
+  bounded `EngineSurface.capture()` (honest refusals: no live field, lost
+  context, pending source) surfaced as a real "Capture image" affordance in
+  Settings → Visuals; the visuals walk receives a real PNG download (9193
+  bytes) as evidence.
+- GENERAL EXPRESSION INDEPENDENCE: no QL/Nara dependency on the ordinary
+  Expression path; the K9 lease remains the only QL-facing capability and is
+  narrower than the renderer (unchanged law).
+- WALK (acceptance): rest 16/16 · welcome 9/9 · visuals 11/11 (incl. capture)
+  · instrument 16/16 · instrument-host 12/12 (real WebGL context loss +
+  retained checkpoint restore on the new engine); receipts + screenshots
+  regenerated and committed.
+- GATES: cradle tsc+build; engine round-trip 26 assertions (now also pinning
+  PROVENANCE to the exact intake sha, linked-lane clockId round-trip, morph
+  waveform mapping, `computeMorphDrive` pure law, savedScenes validation);
+  search-overlay 172 checks chromium+webkit; expression-resize integration
+  PASS; kernel 39 passed + clippy clean.
+- PRE-EXISTING, NOT THIS LANE (identical on unmodified main `5b328af`, not
+  CI-gated): leave-reenter scenario setup needs live `ctrl` project actions
+  in this environment; rendering-quality's sandbox + 12 uncaught-rendering-
+  error checks; design-system `verify` CSS-drift checks (raw hex + unresolved
+  vars). One flake (rich-layout reflow) passed on re-run.
+- Files: scripts/vendor-expressions-engine.mjs,
+  packages/oi-design-system/expressions-engine/** (vendor refresh + oi/),
+  packages/oi-design-system/point-cloud/* (debris), packages/oi-design-system/
+  package.json, desktop/cradle/src/stage/{engineSurface.ts,
+  oi-expressions-engine.d.ts}, desktop/cradle/src/shared/oi-point-cloud-types
+  .d.ts, desktop/cradle/src/workspace/settings/VisualsView.tsx,
+  desktop/cradle/tests/expression-engine.mjs, walk/scenarios/visuals.mjs,
+  walk/expression-resize-integration.mjs (stale comment), walk/artifacts/*.
+  Lane aikit/ex0-engine-intake from origin/main 5b328af. EX1's
+  presentConfig/updateConfig seam and authored data preserved untouched.

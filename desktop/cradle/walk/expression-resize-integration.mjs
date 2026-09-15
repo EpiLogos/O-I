@@ -5,9 +5,10 @@ import {fileURLToPath} from 'node:url';
 import {writeFile} from 'node:fs/promises';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const server=await createServer({root,configFile:false,esbuild:{jsx:'automatic'},define:{__CRADLE_WALK__:'false'},server:{host:'127.0.0.1',port:0},logLevel:'error',
- // The stage seam transitively reaches the point-cloud host, which lazy-imports
- // three from the app's own install (the design-system package has none of its
- // own) — the same alias the production vite.config.ts carries.
+ // The stage seam transitively reaches the vendored expressions engine,
+ // which lazy-imports three from the app's own install (the design-system
+ // package has none of its own) — the same alias the production
+ // vite.config.ts carries.
  resolve:{alias:{three:fileURLToPath(new URL('../node_modules/three',import.meta.url))}}});
 await server.listen();
 const browser=await chromium.launch({headless:true}),page=await browser.newPage({viewport:{width:1440,height:900}}),checks=[],errors=[];
