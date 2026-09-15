@@ -1,0 +1,19 @@
+{
+  "atomic_full_basis_adoption": true,
+  "condition_and_vimarsha_same_native_owner": false,
+  "current_sky_snapshot": "sha256:2a88f8a1ee8708b90a62562d6042e5937cc5e2fd5e3ccca100259a9d715715a3",
+  "exact_replay": true,
+  "frames": 31,
+  "full_M1_M2_M3": true,
+  "input_schema": "ql.coupled-event-request/v1",
+  "limits": [
+    "controlled source-linked geometry, not a measured eigensystem",
+    "no Nara reception proof",
+    "no local desktop or acoustic-device claim"
+  ],
+  "native_harmonic_and_pose_to_material": true,
+  "one_continuous_owner": true,
+  "originals_retained": true,
+  "schema": "ql.k8-coupled-acceptance/v1",
+  "stale_and_invalid_refused": true
+}
