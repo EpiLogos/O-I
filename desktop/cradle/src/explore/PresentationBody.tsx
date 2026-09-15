@@ -34,8 +34,8 @@ function RepresentationFallback({projection}:{projection:HostedProjection}) {
 }
 
 export function PresentationBody({reading,relations,onOpenRef,depth,onDepth,watch,strip}:{reading:SharedFieldReading;relations:HostedRelation[];onOpenRef:(ref:string)=>void;depth:DepthState;onDepth:(change:DepthState)=>void;watch?:WatchControl;strip?:ReactNode}) {
-  if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable"><p role="status" className="explore-unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p></section>;
-  if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent"><p role="status" className="explore-absent">The field at {reading.target.uri}/{reading.target.database} holds no entry for <code>{reading.ref}</code>.</p></section>;
+  if(reading.state==="unavailable")return <section className="presentation-body" data-presentation-state="unavailable">{strip}<p role="status" className="explore-unavailable">{reading.owner_operation} is unavailable — {reading.detail}</p></section>;
+  if(reading.state==="absent")return <section className="presentation-body" data-presentation-state="absent">{strip}<p role="status" className="explore-absent">The field at {reading.target.uri}/{reading.target.database} holds no entry for <code>{reading.ref}</code>.</p></section>;
   const projection=primaryProjection(reading) as HostedProjection|null;
   const representation=projection?.representation as {kind:string;payload?:unknown}|undefined;
   const presentation=representation?.kind==="oi.world-presentation/v1"?representation.payload as WorldPresentation:undefined;
