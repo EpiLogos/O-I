@@ -44,8 +44,8 @@ The WebGL test passed: eight stable partitions, seven distinct centre uniforms, 
 
 The running Cradle walk passed registration, native zero-frame attach, resting Bimba closed, Bimba open/close, M1→M4 focus on one host session, host refusal, accepted field advance, and native cursor movement. Screenshot: `instrument-host-instrument-host-focused.png`.
 
-The real-host walk passed 6/6 checks through the built `ql-focused-host`, installed C++ `ql-field-worker`, QL browser adapter, and production stage. It applied only the explicit controlled reception, rendered the seven-centre reading, kept the same retained seed generation through M1→M4 and close/re-entry, and obtained an authoritative native refusal for a foreign event. Receipt: `instrument-native-host.json`; screenshot: `instrument-native-host-instrument-native-nara.png`.
+The real-host walk passed 8/8 checks through the built `ql-focused-host`, installed C++ `ql-field-worker`, QL browser adapter, and production stage. It applied only the explicit controlled reception, rendered the seven-centre reading, kept the same retained seed generation through M1→M4 and close/re-entry, obtained an authoritative native refusal for a foreign event, and restored its acknowledged retained checkpoint after a real WebGL context loss on the same canvas. Receipt: `instrument-native-host.json`; screenshot: `instrument-native-host-instrument-native-nara.png`.
 
-## Open limit
+## Recovery evidence
 
-The separate controlled-host context-loss scenario reaches QL recovery, but Chromium's `restoreContext()` did not emit restoration within 20 seconds after 11 passing checks. The native Tauri walk is owned by the parent lane. The synthetic second renderer patch proves the retained presentation port; it is not claimed as a second native Personal reception.
+The controlled-host scenario now also passes loss and restoration, including checkpoint restoration and final detach, for 15/15 checks. Its former timeout did not reproduce with the installed Playwright Chromium 153 runtime, and no product code repair was required. The synthetic second renderer patch proves the retained presentation port; it is not claimed as a second native Personal reception.

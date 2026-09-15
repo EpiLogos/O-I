@@ -51,6 +51,12 @@ export default async function run({page,baseUrl,check,shot,channel}){
     await channel("instrument.requestOpen",["ql:host:native"]);await region.waitFor();await page.waitForFunction(()=>globalThis.__k9Session.reading.attached===true);
     const reentered=await page.evaluate(()=>globalThis.__k9Session.reading.retained);
     check(after.seeds===reentered.seeds,"Real native Nara re-entry preserves the field seed generation",{after:after.seeds,reentered:reentered.seeds});
+    await page.evaluate(()=>{const canvas=document.querySelector('canvas[data-oi-stage="engine"]');const gl=canvas.getContext("webgl2");globalThis.__nativeLoseExt=gl.getExtension("WEBGL_lose_context");globalThis.__nativeLoseExt.loseContext();});
+    await page.waitForFunction(()=>globalThis.__k9Session.reading.recovering===true,null,{timeout:20000});
+    check(true,"Real native Nara enters retained recovery after WebGL context loss");
+    await page.evaluate(()=>globalThis.__nativeLoseExt.restoreContext());
+    await page.waitForFunction(()=>globalThis.__k9Session.reading.recovering===false&&globalThis.__k9Session.reading.attached===true,null,{timeout:20000});
+    check(true,"Real native Nara restores its acknowledged checkpoint on the same canvas");
     await region.getByRole("button",{name:"Open Epii composition",exact:true}).click();
     await page.getByRole("button",{name:"New Expression",exact:true}).waitFor();
     check((await channel("invoke.kernel_op",[{op:"expression",request:{operation:"list"}}])).data.outcome.data.expressions.length===0,"Summoning Epii alone creates no Expression identity or Agent loop");
