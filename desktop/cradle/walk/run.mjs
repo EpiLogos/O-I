@@ -84,6 +84,7 @@ const SCENARIOS = {
   "receive-recover": {module:"scenarios/receive-recover.mjs",kernel:true,aliases:["6e2"]},
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
+  "contribution-return-sf4": {module:"scenarios/contribution-return-sf4.mjs",kernel:true,aliases:["sf4"]},
   "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
   "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
   "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},

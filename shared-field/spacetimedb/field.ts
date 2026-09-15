@@ -12,10 +12,15 @@
  * Requests:
  *   status                              target binding only; no network
  *   snapshot                            the caller-visible field
+ *   identity                            the caller's transport identity only
+ *   receipt   {contribution_ref}         caller's private Contribution receipt
  *   read      {ref}                     one hosted ref as a Projection reading
  *   publish   {args}                    hosted reducer args (hostedPublicationArgs shape), pushed in order
  *   participant {participant, target_identity, role, contactable}   register a Participant contract and bind an identity
+ *   contribute  {contribution, transport_message_id} submit one attributable difference to quarantine
  *   admit     {ingress_ref, reason, evidence, index, entry?, relation?}  admit a quarantined Contribution under the caller's authority
+ *   reject    {ingress_ref, reason, evidence} reject a quarantined Contribution under the caller's authority
+ *   withdraw  {ingress_ref, reason, evidence} withdraw an admitted Contribution under owner/admission authority
  *   contact   {contact_ref, recipient_participant_ref, decision, response}   respond to a Contact request
  *   watch     {watch}                   put one oi.watch/v1 contract under the caller's own authority
  */
@@ -25,6 +30,7 @@ import { projectionStorageKey } from '../spacetimedb.mjs';
 
 // stdout carries exactly one envelope; the SDK's own console chatter goes to stderr.
 for (const level of ['log', 'info', 'warn', 'debug', 'error'] as const) console[level] = (...parts: unknown[]) => { process.stderr.write(`${parts.map(String).join(' ')}\n`); };
+const { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, waitUntil } = await import('./field-lib');
 
 type Envelope = { ok: true; data: unknown } | { ok: false; error: { kind: 'unbound' | 'unavailable' | 'refused' | 'malformed'; message: string } };
 
@@ -35,8 +41,6 @@ async function readStdin(): Promise<string> {
 }
 
 async function emit(envelope: Envelope): Promise<never> {
-  // stdout is a non-blocking pipe under the TS loader. Wait for the complete
-  // write; immediate exit truncates large snapshots and sync writes hit EAGAIN.
   await new Promise<void>((resolve, reject) => {
     process.stdout.write(`${JSON.stringify(envelope)}\n`, error => error ? reject(error) : resolve());
   });
@@ -54,7 +58,10 @@ if (request.kind === 'status') {
 }
 const target = binding.bound ? binding.target : await emit({ ok: false, error: { kind: 'unbound', message: binding.reason } });
 
-const label = typeof request.token_label === 'string' && /^[a-z0-9-]+$/.test(request.token_label) ? request.token_label : 'owner';
+const configuredLabel = process.env.OI_SHARED_FIELD_TOKEN_LABEL;
+const label = typeof request.token_label === 'string' && /^[a-z0-9-]+$/.test(request.token_label)
+  ? request.token_label
+  : configuredLabel && /^[a-z0-9-]+$/.test(configuredLabel) ? configuredLabel : 'owner';
 let client: Awaited<ReturnType<typeof open>> | undefined;
 try {
   client = await open(target, label);
@@ -66,6 +73,14 @@ try {
   const reducers: any = client!.conn.reducers;
   const db: any = client!.conn.db;
   switch (request.kind) {
+    case 'identity':
+      await emit({ ok: true, data: { schema: 'oi.shared-field.identity/v1', transport_identity: client!.identityHex } });
+    case 'receipt': {
+      if (typeof request.contribution_ref !== 'string' || !request.contribution_ref) await emit({ ok: false, error: { kind: 'malformed', message: 'receipt requires a contribution_ref' } });
+      const receipt = rows(db.myContributionReceipt).find((row: any) => row.contributionRef === request.contribution_ref);
+      if (!receipt) await emit({ ok: false, error: { kind: 'refused', message: `no caller-visible receipt for ${request.contribution_ref}` } });
+      await emit({ ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: receipt.contributionRef, ingress_ref: receipt.ingressRef, field_ref: receipt.fieldRef, state: receipt.state } });
+    }
     case 'snapshot':
       await emit({ ok: true, data: fieldSnapshot(client!) });
     case 'read':
@@ -92,6 +107,14 @@ try {
       await waitUntil(() => rows(db.participant).some((row: any) => row.participantRef === p.participant_ref), 'the Participant in the caller-visible view');
       await emit({ ok: true, data: { schema: 'oi.shared-field.participant-result/v1', participant_ref: p.participant_ref, field_ref: p.field_ref, role: request.role ?? 'contributor', bound_identity: request.target_identity } });
     }
+    case 'contribute': {
+      const { validateContribution } = await import('../social.mjs');
+      const contribution = validateContribution(request.contribution);
+      if (typeof request.transport_message_id !== 'string' || !request.transport_message_id) await emit({ ok: false, error: { kind: 'malformed', message: 'contribute requires `transport_message_id`' } });
+      await reducers.submitContribution({ fieldRef: contribution.field_ref, contributorParticipantRef: contribution.contributor_participant_ref, transportMessageId: request.transport_message_id, contractJson: JSON.stringify(contribution) });
+      const receipt = await waitUntil(() => rows(db.myContributionReceipt).find((row: any) => row.contributionRef === contribution.contribution_ref), `receipt for Contribution ${contribution.contribution_ref}`);
+      await emit({ ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: receipt.contributionRef, ingress_ref: receipt.ingressRef, field_ref: receipt.fieldRef, state: receipt.state } });
+    }
     case 'admit': {
       if (typeof request.ingress_ref !== 'string' || typeof request.reason !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'admit requires `ingress_ref` and `reason`' } });
       await reducers.admitContribution({ ingressRef: request.ingress_ref, admissionParticipantRef: request.admission_participant_ref ?? '', visibility: request.visibility ?? 'public', audienceRefsJson: JSON.stringify(request.audience_refs ?? []), reason: request.reason, evidenceJson: JSON.stringify(request.evidence ?? {}) });
@@ -100,6 +123,19 @@ try {
       if (request.entry) await reducers.putExploreEntry(request.entry);
       if (request.relation) await reducers.putExploreRelation(request.relation);
       await emit({ ok: true, data: { schema: 'oi.shared-field.admission-result/v1', ingress_ref: request.ingress_ref, contribution_ref: admitted.contributionRef, contributor_participant_ref: admitted.contributorParticipantRef, indexed: Boolean(request.index), contract: JSON.parse(admitted.contractJson) } });
+    }
+    case 'reject': {
+      if (typeof request.ingress_ref !== 'string' || typeof request.reason !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'reject requires `ingress_ref` and `reason`' } });
+      await reducers.rejectContribution({ ingressRef: request.ingress_ref, admissionParticipantRef: request.admission_participant_ref ?? '', reason: request.reason, evidenceJson: JSON.stringify(request.evidence ?? {}) });
+      await emit({ ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: request.contribution_ref ?? null, ingress_ref: request.ingress_ref, field_ref: request.field_ref ?? null, state: 'rejected' } });
+    }
+    case 'withdraw': {
+      if (typeof request.ingress_ref !== 'string' || typeof request.reason !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'withdraw requires `ingress_ref` and `reason`' } });
+      await reducers.withdrawContribution({ ingressRef: request.ingress_ref, admissionParticipantRef: request.admission_participant_ref ?? '', reason: request.reason, evidenceJson: JSON.stringify(request.evidence ?? {}) });
+      // The reducer's successful completion is the admission owner's native
+      // receipt. `my_contribution_receipt` is deliberately submitter-only, so
+      // an owner withdrawing another participant's ingress cannot read it.
+      await emit({ ok: true, data: { schema: 'oi.shared-field.contribution-result/v1', contribution_ref: request.contribution_ref ?? null, ingress_ref: request.ingress_ref, field_ref: request.field_ref ?? null, state: 'withdrawn' } });
     }
     case 'watch': {
       const w = request.watch;

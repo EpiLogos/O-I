@@ -56,7 +56,9 @@
 .explore-absent, .explore-unavailable { margin: var(--oi-space-5); color: var(--oi-muted); }
 
 /* One projected subject as the primary body, with depth INSIDE the Surface */
-.presentation-body { flex: 1; min-height: 0; display: flex; flex-direction: column; overflow: hidden; }
+/* A real basis and floor: the body must never collapse to zero when a
+   sibling panel is tall — the panel scrolls instead. */
+.presentation-body { flex: 1 1 55%; min-height: 16rem; display: flex; flex-direction: column; overflow: hidden; }
 .presentation-planes { flex: 1; min-height: 0; display: flex; overflow: hidden; }
 .presentation-main { flex: 1; min-width: 0; overflow: auto; padding: var(--oi-space-4) var(--oi-space-6) var(--oi-space-7); }
 .presentation-depth { flex: 0 0 300px; max-width: 42%; min-height: 0; display: flex; flex-direction: column; overflow: auto; padding: var(--oi-space-3) var(--oi-space-3) var(--oi-space-5); background: var(--oi-sidebar-ground); font-size: var(--oi-shell-type-ui); }
@@ -197,3 +199,20 @@
 .share-host { display: flex; flex-direction: column; gap: var(--oi-space-2); font-size: var(--oi-shell-type-meta); color: var(--oi-muted); }
 .share-host-absent { margin: 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted); }
 .share-agent-reading pre { white-space: pre-wrap; overflow-wrap: anywhere; font-size: var(--oi-shell-type-meta); max-height: 240px; overflow: auto; margin: var(--oi-space-2) 0 0; }
+
+/* Contribution stays attached beneath the projected body as contextual depth. */
+.explore-contributions { flex: 0 1 auto; min-height: 0; overflow: auto; margin: var(--oi-space-3) var(--oi-space-4) var(--oi-space-5); padding: var(--oi-space-3); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-md); background: var(--oi-sidebar-ground); }
+.explore-contributions > header { display:flex; align-items:center; justify-content:space-between; gap:var(--oi-space-3); }
+.explore-contributions button { color:var(--oi-accent-ink); }
+.contribution-composer { display:grid; gap:var(--oi-space-2); margin-top:var(--oi-space-3); }
+.contribution-composer label { display:grid; gap:4px; color:var(--oi-muted-2); font-size:var(--oi-shell-type-meta); }
+.contribution-composer select,.contribution-composer textarea { width:100%; box-sizing:border-box; padding:7px 9px; color:var(--oi-foreground); background:var(--oi-canvas-ground); border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-radius-sm); font:inherit; }
+.contribution-stack { list-style:none; margin:var(--oi-space-3) 0 0; padding:0; display:grid; gap:var(--oi-space-2); }
+.contribution-stack li,.contribution-review { padding:var(--oi-space-3); border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.contribution-stack small { color:var(--oi-muted-2); }
+.contribution-stack p { margin:var(--oi-space-2) 0; white-space:pre-wrap; overflow-wrap:anywhere; }
+.contribution-stack li > div,.contribution-review { display:flex; gap:var(--oi-space-3); align-items:center; flex-wrap:wrap; }
+.contribution-review p { flex:1 1 100%; margin:0; }
+/* Exact proposals are for inspection, not for stretching the Explore
+   layout: cap and scroll them so the presentation body keeps its space. */
+.contribution-review pre,.contribution-stack pre { max-height:16rem; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; margin:var(--oi-space-2) 0 0; flex:1 1 100%; }

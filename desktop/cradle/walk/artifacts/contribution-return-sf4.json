@@ -1,0 +1,150 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "contribution-return-sf4",
+  "generated_at": "2026-09-15T18:05:17.600Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf4-contribution-return",
+      "repository_head": "1ef93233c71dba4d2a7dbc8d3a45823af66df252",
+      "tracked_changes": [],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf4-contribution-return/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "7306b7b8882f54fec931922d46fdbaba9f656212"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 123841,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Owner A and contributor B use independent native Central roots and application homes"
+    },
+    {
+      "ok": true,
+      "label": "World B encounters the disposable Central document at its exact source revision"
+    },
+    {
+      "ok": true,
+      "label": "The new composer submits through the hosted reducer and receives quarantine"
+    },
+    {
+      "ok": true,
+      "label": "World B reads its own authoritative quarantine receipt"
+    },
+    {
+      "ok": true,
+      "label": "Pending ingress is visible only to the owning identity"
+    },
+    {
+      "ok": true,
+      "label": "The owner UI exposes the contributed prose and exact attached basis before deciding"
+    },
+    {
+      "ok": true,
+      "label": "The owner admitted the Contribution through the ordinary owner UI"
+    },
+    {
+      "ok": true,
+      "label": "The admitted Contribution appears in contextual history with its own identity"
+    },
+    {
+      "ok": true,
+      "label": "Owner A brokers a second exact native Return while the contributed basis is current"
+    },
+    {
+      "ok": true,
+      "label": "The owner UI exposes the exact native Expression proposal before review"
+    },
+    {
+      "ok": true,
+      "label": "The UI-generated scene passed through real native EX1 propose/review and changed the Expression revision"
+    },
+    {
+      "ok": true,
+      "label": "The owner UI returned the admitted material to Central's real receiving field"
+    },
+    {
+      "ok": true,
+      "label": "The owner UI discovers and inspects the exact native Return and source basis"
+    },
+    {
+      "ok": true,
+      "label": "The native owner UI completed the exact Return through native review/include"
+    },
+    {
+      "ok": true,
+      "label": "Native inclusion advanced the source revision"
+    },
+    {
+      "ok": true,
+      "label": "The owner UI retains the stale native Return and its proposed source revision for an explicit decision"
+    },
+    {
+      "ok": true,
+      "label": "Refusing a stale native Return remains authoritative and does not mutate the advanced source"
+    },
+    {
+      "ok": true,
+      "label": "After explicit reprojection, World B sees the accepted returned difference and advanced source revision"
+    },
+    {
+      "ok": true,
+      "label": "The native Return path refuses the old Contribution after source and Projection revisions advance"
+    },
+    {
+      "ok": true,
+      "label": "The contributor can withdraw its own admitted Contribution through the ordinary UI"
+    },
+    {
+      "ok": true,
+      "label": "The owner inspects the Contribution-on-Contribution response before refusal"
+    },
+    {
+      "ok": true,
+      "label": "The owner refusal is authoritative and visible to the submitter"
+    },
+    {
+      "ok": true,
+      "label": "World B's real hosted read shows the withdrawal as authoritative at the stable projection ref"
+    },
+    {
+      "ok": true,
+      "label": "The withdrawn world's hosted read excludes the private sentinel"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-15T18:05:17.835Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "contribution-return-sf4-sf4-contribution-return.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "contribution-return-sf4-sf4-contribution-return.png"
+  ]
+}
