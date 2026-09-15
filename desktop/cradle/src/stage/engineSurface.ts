@@ -255,6 +255,13 @@ export class EngineSurface {
 
   release(id: string) {
     if (!this.active || this.active.id !== id) { this.clearTimers(); return; }
+    // Keep the renderer's current allocation while the retained owner is
+    // absent. Re-entry with the same field size can then rebind the existing
+    // GPU textures without a seed-changing resize; this carries no Personal
+    // presentation or owner generation across the release.
+    const retainedParticleCount = this.retainedLeaseOwner === id
+      ? this.adapter.retainedTargetPort().particleCount
+      : undefined;
     this.setContainer(id, null);
     this.clearTimers();
     if (this.retainedLeaseOwner === id) {
@@ -263,7 +270,10 @@ export class EngineSurface {
       this.retainedLeaseIdentity = null;
     }
     this.live = false;
-    this.activate(STAGE_IDLE, this.sceneFrom(IDLE_CONFIG, STAGE_IDLE));
+    const idleConfig = retainedParticleCount === undefined
+      ? IDLE_CONFIG
+      : { ...IDLE_CONFIG, particleCount: retainedParticleCount };
+    this.activate(STAGE_IDLE, this.sceneFrom(idleConfig, STAGE_IDLE));
     this.renderFrame(0);
   }
 

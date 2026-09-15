@@ -50,7 +50,7 @@ function qlHead() {
 
 /** Serve the adapter's exact bytes with their bare imports rewritten to the
  * served module origin. No copy lands in the O:I tree. */
-function adapterRoutes(page) {
+export function adapterRoutes(page) {
   const hashes = {};
   for (const file of ADAPTER_FILES) {
     const raw = adapterSource(file);

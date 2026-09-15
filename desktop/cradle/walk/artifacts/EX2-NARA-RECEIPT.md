@@ -1,7 +1,7 @@
 # EX2 Nara Expression receipt
 
 - O:I branch/head: `aikit/expression-ex2` / updated by this receipt commit.
-- QL producer: `aikit/expression-owner-reference` / `1e0af28`; prerequisite PR 199.
+- QL producer: `aikit/expression-owner-reference` / `fd56b5e`; prerequisite PR 199.
 - Standing: the Personal input is controlled and source-qualified runtime evidence. It is not owner-lived, sensory, material-validation, or clinical evidence.
 
 ## Owner producer and worker
@@ -20,7 +20,7 @@ CARGO_INCREMENTAL=0 cargo run --locked -p ql-mef --example k8_personal -- \
   target/k8-cpp/bin/ql-field-worker target/k8-coupled-v2/input.json target/k8-personal
 ```
 
-The commands passed and emitted `target/k8-personal/focused-snapshot.json` plus `acceptance.json`. Acceptance records seven independent receivers, unchanged native owner, focus M1→M5 on one event/cursor, revoked-consent refusal, stale old Personal reading after world replacement, and explicit re-reception.
+The commands passed and emitted `target/k8-personal/focused-snapshot.json`, `acceptance.json`, and mode-0600 controlled `focused-host-config.json` and `focused-host-reception.json`. Acceptance records seven independent receivers, unchanged native owner, focus M1→M5 on one event/cursor, revoked-consent refusal, stale old Personal reading after world replacement, and explicit re-reception.
 
 ## O:I renderer and browser
 
@@ -33,12 +33,19 @@ WALK_URL=http://127.0.0.1:4282 WALK_BRIDGE_PORT=4182 \
 OI_AIKIT_BIN=/Users/admin/.cargo/bin/aikit \
 K9_QL_REPO=/Users/admin/Central/Work/Quaternal-Logic/.aikit/tasks/expression-owner-reference \
 K9_QL_REF=HEAD SKIP_BUILD=1 node walk/run.mjs instrument-host
+
+WALK_URL=http://127.0.0.1:4282 WALK_BRIDGE_PORT=4182 \
+OI_AIKIT_BIN=/Users/admin/.cargo/bin/aikit \
+K9_QL_REPO=/Users/admin/Central/Work/Quaternal-Logic/.aikit/tasks/expression-owner-reference \
+K9_QL_REF=HEAD pnpm --dir desktop/cradle walk instrument-native-host
 ```
 
 The WebGL test passed: eight stable partitions, seven distinct centre uniforms, unchanged retained targets and seed count, generation/stale refusal, old-lease refusal, and neutral presentation for the actual no-palette owner condition.
 
 The running Cradle walk passed registration, native zero-frame attach, resting Bimba closed, Bimba open/close, M1→M4 focus on one host session, host refusal, accepted field advance, and native cursor movement. Screenshot: `instrument-host-instrument-host-focused.png`.
 
+The real-host walk passed 6/6 checks through the built `ql-focused-host`, installed C++ `ql-field-worker`, QL browser adapter, and production stage. It applied only the explicit controlled reception, rendered the seven-centre reading, kept the same retained seed generation through M1→M4 and close/re-entry, and obtained an authoritative native refusal for a foreign event. Receipt: `instrument-native-host.json`; screenshot: `instrument-native-host-instrument-native-nara.png`.
+
 ## Open limit
 
-Chromium's real `WEBGL_lose_context` loss reached the QL session and set recovery. `restoreContext()` did not emit restoration within 20 seconds, so the walk receipt remains failed after 11 passing checks. The native Tauri walk is owned by the parent lane. The synthetic second renderer patch proves the retained presentation port; it is not claimed as a second native Personal reception.
+The separate controlled-host context-loss scenario reaches QL recovery, but Chromium's `restoreContext()` did not emit restoration within 20 seconds after 11 passing checks. The native Tauri walk is owned by the parent lane. The synthetic second renderer patch proves the retained presentation port; it is not claimed as a second native Personal reception.
