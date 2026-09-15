@@ -55,7 +55,7 @@
       "types": true
     }
   },
-  "standing": "Verified native Factory PR #238 candidate, not yet merged; exact owner source on accepted main fb854ded. Host-owned theme, scoped styles and canonical fixtures; unavailable Actions disabled by their native owner. Verified by 34 component tests, TypeScript, library build and native CI.",
+  "standing": "Verified native Factory PR #238 candidate, not yet merged; exact owner source on accepted main 761b2a62. Host-owned theme, scoped styles and canonical fixtures; unavailable Actions disabled by their native owner. Verified by 34 component tests, TypeScript, library build and native CI.",
   "capture": "Exact Git blobs; update through owner candidate, never edit captured source",
   "captured_files_sha256": {
     "BuildSurface.tsx": "d5785110ab5e9c56980a6210b612a04657b572a8bb486758c12145fcad97d552",
