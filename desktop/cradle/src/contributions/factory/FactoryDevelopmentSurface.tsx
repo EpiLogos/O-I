@@ -1,6 +1,7 @@
 import {useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {buildSnapshot,developmentRead,workcellStatus,type WorkcellStatus} from "./development";
+import "./development.css";
 /** The 6D consumer (queue cell 3 + cell B): Factory's own developmental reads
  * as first-class rows — the project read discloses the journey registry, each
  * journey row expands through the owner's journey read, its runRefs render as
