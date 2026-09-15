@@ -426,6 +426,25 @@
   margin-left: auto;
 }
 
+/* The scrollable middle of a source/file surface: the editor body plus any
+ * open history / conflict disclosure, all above the fixed footer. The
+ * CodeMirror editor (text-editor.css) sizes itself inside `.source-editor-body`. */
+.source-editor-scroll {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  flex-direction: column;
+  overflow: auto;
+}
+
+.source-editor-body {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  overflow: auto;
+  padding: 7px 15px 20px 0;
+}
+
 /* Finding 24: gold is the scarce meta-relation role only — a revision
  * conflict is not a meta-relation, it is the accent's own "needs attention"
  * signal, same as the dirty marker and the tab-active underline. */
