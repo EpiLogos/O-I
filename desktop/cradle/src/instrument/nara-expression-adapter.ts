@@ -86,6 +86,10 @@ export function projectNaraExpression(snapshot:FocusedInstrumentSnapshot):NaraEx
 /** Only the QL-owner validated portable body crosses export. */
 export function exportNaraCues(session:NaraExpressionSession):NaraExpressionPortableCues{
   const cues=session.portable;
+  if(cues.schema!==PORTABLE_SCHEMA||![cues.subject_ref,cues.event_ref,cues.earth_body_locus_ref].every(present)
+    ||!generation(cues.profile_generation)||!generation(cues.personal_reception_generation)
+    ||![cues.centre_locus_refs,cues.source_refs,cues.cue_refs].every(refs=>Array.isArray(refs)&&refs.every(present)))
+    throw new Error("Portable Nara cues must contain only admitted scalar identities and reference lists");
   // Select the admitted portable fields explicitly: additional owner fields
   // must never silently become a Personal export after a contract extension.
   return {schema:PORTABLE_SCHEMA,subject_ref:cues.subject_ref,event_ref:cues.event_ref,

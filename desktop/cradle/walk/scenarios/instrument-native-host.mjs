@@ -2,6 +2,8 @@ import {spawn} from "node:child_process";
 import {createInterface} from "node:readline";
 import {readFileSync} from "node:fs";
 import {adapterRoutes} from "./instrument-host.mjs";
+// Share the actual isolated Central/project bootstrap used by the page walk.
+export {setup} from "./expression-page.mjs";
 
 const ql=process.env.K9_QL_REPO;
 const host=process.env.K9_FOCUSED_HOST??`${ql}/target/debug/ql-focused-host`;
@@ -50,7 +52,6 @@ export default async function run({page,baseUrl,check,shot,channel}){
     const reentered=await page.evaluate(()=>globalThis.__k9Session.reading.retained);
     check(after.seeds===reentered.seeds,"Real native Nara re-entry preserves the field seed generation",{after:after.seeds,reentered:reentered.seeds});
     await region.getByRole("button",{name:"Open Epii composition",exact:true}).click();
-    const composition=page.getByRole("region",{name:"Expression composition"});
     await page.getByRole("button",{name:"New Expression",exact:true}).waitFor();
     check((await channel("invoke.kernel_op",[{op:"expression",request:{operation:"list"}}])).data.outcome.data.expressions.length===0,"Summoning Epii alone creates no Expression identity or Agent loop");
     await page.getByRole("button",{name:"Restore right region",exact:true}).click();
