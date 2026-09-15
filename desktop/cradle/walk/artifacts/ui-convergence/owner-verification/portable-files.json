@@ -1,6 +1,6 @@
 {
   "source_directory": "/tmp/oi-ui-owner-verification-20260915",
-  "total_bytes": 2418058,
+  "total_bytes": 2433685,
   "files": [
     {
       "path": "PORTABLE-RECEIPT.md",
@@ -191,6 +191,36 @@
       "path": "performance-current-1-disabled.png",
       "bytes": 48757,
       "sha256": "07c06e3387cceb4a3851158976e42044a1bd8698de79fdf3b33d3b6be9e55fbd"
+    },
+    {
+      "path": "NATIVE-CSP-RECEIPT.md",
+      "bytes": 2497,
+      "sha256": "9dcb8fe8657583426c4638918f8bec8d9dc672d51c76b123136111fa2ae324be"
+    },
+    {
+      "path": "native-csp-evidence.json",
+      "bytes": 6219,
+      "sha256": "752cc582ed1eb9296067e330923c662c3e4ca34519edfced655a579ff60f50ec"
+    },
+    {
+      "path": "native-cargo-check.log",
+      "bytes": 5906,
+      "sha256": "ead753c6473529c90fc1f6de9e5335911522eb2d653fa10813b848f4e2b21d98"
+    },
+    {
+      "path": "native-cargo-build.log",
+      "bytes": 432,
+      "sha256": "b28af3e2d28ce29d8cdfe90b1602b8a86b369ca2e0d9b3893f95b6db461230b4"
+    },
+    {
+      "path": "csp-before.log",
+      "bytes": 430,
+      "sha256": "1dde4019a8ab0a1c0e088ab8ba1aa19c74b9fbddca8e9c232ba70996fb5185f1"
+    },
+    {
+      "path": "csp-after-built.log",
+      "bytes": 143,
+      "sha256": "b33a408c3ba55b3a89ca87932f1b5f6c536f5cc2924a0ee79136af49f69f0b8a"
     }
   ],
   "excluded": "git archives, builds, executables, node_modules, virtualenvs and temporary source trees (except named producer evidence)."

@@ -1,0 +1,78 @@
+{
+  "schema": "oi.native-csp-build-receipt/v1",
+  "source_head": "f53f193357cfd6839825d28129e597fd07ccf1b8",
+  "worktree": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+  "source_changes": [
+    "desktop/cradle/src-tauri/tauri.conf.json",
+    "desktop/cradle/tests/theme-prepaint-csp.mjs"
+  ],
+  "files": {
+    "desktop/cradle/index.html": "b4440e967754ab514bba9ac20ca1a3237f62fefc65539f401a0ec110b287f150",
+    "desktop/cradle/dist/index.html": "9d1e92f7cad2efb736629815f424149688ef51ea21fee76cdc4fb218a4b26025",
+    "desktop/cradle/src-tauri/tauri.conf.json": "c1ac894de367cc02f6a6565955fd5376fb82f48d357b798c8e7f857f28f9064c",
+    "desktop/cradle/tests/theme-prepaint-csp.mjs": "25e2d237a22d9a8f309c9de34a6d377cc532cbb30c03fdbc1b874f25ec23f323",
+    "desktop/cradle/src-tauri/Cargo.lock": "cf104a84f12e6604642fc12f16ec1325da39b4b9c7d9353ee84d32b157f0a24d"
+  },
+  "inline_script_hash": "'self' 'sha256-rmjO6L3JI1rdZsAyocntAoVq7muok/zVjNIsRLqcVYg='",
+  "native_executable": {
+    "path": "/Users/admin/Central/Work/O-I/desktop/cradle/src-tauri/target/debug/oi-cradle",
+    "sha256": "387441546c1ea758177529f9432d0d2ac5860ce98e62895dcd76bb731f351913",
+    "bytes": 46422008
+  },
+  "native_checks": {
+    "cargo_check": "passed; 40.83s",
+    "cargo_build": "passed; 32.02s; debug profile with tauri/custom-protocol",
+    "frontend": "Parent-produced WALK=1 production bundle embedded; not a plain release bundle"
+  },
+  "browser_regression": {
+    "before": "failed persisted dark under light OS: exact configured policy blocked current inline script",
+    "after": "14 cases passed across source and built index.html; persisted light/dark/system/corrupt/new profile plus tamper refusal"
+  },
+  "native_runtime": "not launched; no native UI/theme/detach acceptance claimed",
+  "tauri_behavior": "Installed tauri-codegen 2.6.3 computes current inline-script hashes for embedded assets and tauri 2.11.5 appends them; a stale explicit hash is a config defect, not sufficient evidence of a packaged production flash.",
+  "suggested_isolated_launch_environment": {
+    "OI_CRADLE_DATA_STORE_ID": "41f1c8abd4b64638ac2617e8574b4538",
+    "OI_EXPRESSION_SOCKET": "/tmp/oi-ui-owner-verification-20260915/native-ui-expression.sock",
+    "OI_CRADLE_NATIVE_WALK": "1"
+  },
+  "frontend_assets": {
+    "contribution-oi-CD8vvuu0.js": "1bb7cb1c9899cbba64cd02fc9788bf34f2e603148ee1d429fb7c7c799a2360ad",
+    "ExpressionView-CmIAjsAE.css": "a55b8e971b33b936b15618d49f247a499269ff1d9c6306b05a5b3a093d9141df",
+    "index-BnCpaFop.css": "4b1b85c8caeb5b588eceb7ed47c7455a4493cfc4fc00fde8d86d270d602daf80",
+    "TerminalSurface-C7LETS46.css": "a6f95b1968a4d79c9a3096dd563d43552e8b4d15a6fa70b07e497c9ff6020b47",
+    "three-DVI_j9-M.js": "f942c5cc81eb1afbce67d664933ac36af28dc4aea2c7409ebc7cc191122354a1",
+    "Seed-BsgoAyOx.js": "ce5bc41ba2dafa4c16ae01d9400ddd3745d8283b19d8f7dcb1d3d2106d744a2b",
+    "FactoryDevelopmentSurface-DH8PpYwZ.js": "4fe88e7051af0a3099f5d918acd9d110b968cad84cb026e1a2b11398b77379c6",
+    "TerminalSurface-B3D5b18T.js": "1231e49054242f02315919e7edb19efd96c0e9db7e3ef304a314156ceed4761b",
+    "seed-mU9b9OOy.css": "143c4c5e4a1d81497aeb320b8b24d59f3be33330d0597ce6186fc1a192fdf228",
+    "engineSurface-BPhLy-2L.js": "7ca02d57277e88654e72c774a7e27fe0ffb479a26b9946d457a7cc1189ce05a6",
+    "WorkspaceStudy-BaKGd2AE.css": "5157db504cba7b7aa0278df452ac88d6a76987a9c40307dd0d5206710c61d44a",
+    "contribution-ai-kit-D6NjRMvl.js": "541afb41ac37b404d718c0a304af1de6a3a66d6404eacacf78efe624506e973c",
+    "presentation-CW2i5SHa.js": "d8bdc012a9b28341126f450ca6ceceed5d8aec4dec644ed1fde1dd7ac3f83afd",
+    "expressions-engine-DneaE1CX.js": "ecbf1d7da824e2e11bbfbcabcf2912f2b6ce750aac01f45c7f4530e7cf3c8454",
+    "contribution-unavailable-10g4nHrS.js": "d4ca219e14a02d796756b1320df8fd6269b550e282cc31e81c5ba0807bee25a4",
+    "TextEditor-CNKdvtc5.js": "91143385907e8b1fc8d12b463e2ebba45a5392b525f051853038f567623ecbe1",
+    "FocusedInstrumentComposition-DRrA2r0X.css": "c854ead6830f0495ae8f72ab0b1f950d6d061ecbc5b69c73285d3ccd5590a934",
+    "contribution-connector-fixture-C51tCAnK.js": "14b50d76b2a1e3d3b74ff43278903cc5239ff57032ac73f595ff04d4ab51aef2",
+    "index-8EifUmbH.js": "07df9214dbd23af8647eb631106e79bba6318a764be3b0f396cd9a80a0402d9e",
+    "PageContext-D3uBglkk.js": "aa0a845a29f8182892a68f1f56e1d50cfb6b29498c8968b5733c2ee9c8de6fd4",
+    "WalkChannel-DLML2sLd.js": "8c9a7c31e1e15d2b824eb4fe8ee75f405a4ad2c059f92f358320484e1b3326dc",
+    "KnowledgeSurface-DAAL4YbQ.js": "f017936ca4c6b85f9196811046bac8244b5179cbb78e17d6dc4027059dded165",
+    "MaterialSurface-B0rCyl3y.css": "a54ec5edba413135676ac84d51af053781bc842deccb2360f866621a1e219ab3",
+    "TextEditor-DiVFpzWm.css": "df2edee15ba35b2f58fe723c9315b2e39ec4a8fda2bffc8c68c170b50dbc22bc",
+    "FocusedInstrumentComposition-Bj1l_gJ_.js": "d364d855c926bdaa2fefeac7d871231ea4d061ee3f6f5a6965d1b1e2babff6e1",
+    "FactoryDevelopmentSurface-DHmXcujQ.css": "309dca9a56a4acdd6ded7245ddd99b4054c78184f44b0b4ba27f3271c49b3552",
+    "SystemPanel-BjoooS8O.css": "933765055cb3d0789d9d694a4820b12e9290694f2ffee45bc87d5c703eb3ec25",
+    "MaterialSurface-QxxBMiWY.js": "bef5447ca1a66e0c964adcbf2a2fb8fc2771151d781132b403a3f24220247622",
+    "ExpressionView-APDTIdFk.js": "da511ecc61b003c3071950f3bf9e892cdb77988b06939c70875c96d065150769",
+    "profile-development-C-3nDXu7.js": "c946d4e08de3e79ee065e96841c19474ef57206c32482c979a562f719336eddf",
+    "WorkspaceStudy-CSLKAB50.js": "83be27f731b906d14cbbfb8e13d7e5b80d97d2ca5de7e3a5e1901b9be5df77b9",
+    "recipes-BpiHWyeO.js": "0d43688763a373f8e5554e76d8369ceac418645adeb8d71de359fd09ed52b1b5",
+    "SystemPanel-BalcGD5m.js": "86168f7e59ff286416e0aed4f0f09097fbbfb74b2bf3cbc9c1ff9ff1dc795fea",
+    "layout.worker-BLEG8XbY.js": "dde3c11d5fc4e1b41b12098fc83f16ecb51c58aa4623b4d05446f707c237cc42",
+    "BrowserSurface-DR1JWpHh.js": "520f864ba79dd21fae9835fdad3a3c0e7a2692a4a3d0f172683166daeea86c97",
+    "BrowserSurface-DFE0KTs_.css": "945b94ebad4f6b787a6113247621f33174d579963743c35e2980ecec2f4cb5ab",
+    "ExploreSurface-C_-ffsRV.js": "f2babc7de15861ca49abee45f4572a6c182c0c697779d39971d9d960436525d6",
+    "fixtureSource-BRn1VXKc.js": "8b77790a45f5637f1c4a2d434055fdf8a2d0eb5245c02fe58364a22e072997c9"
+  }
+}

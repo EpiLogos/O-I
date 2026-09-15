@@ -1,0 +1,6 @@
+   Compiling oi-cradle v0.1.0 (/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/src-tauri)
+   Compiling tauri v2.11.5
+   Compiling oi-cradle-kernel v0.1.0 (/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/desktop/cradle/kernel)
+   Compiling tauri-plugin-fs v2.5.2
+   Compiling tauri-plugin-dialog v2.7.1
+    Finished `dev` profile [unoptimized + debuginfo] target(s) in 32.02s

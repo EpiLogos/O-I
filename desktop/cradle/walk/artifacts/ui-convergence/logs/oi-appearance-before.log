@@ -1,0 +1,20 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: pre-paint theme must match {invalid/dark
+
+'light' !== 'dark'
+
+    at file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-runtime-continuation/desktop/cradle/tests/desktop-appearance.mjs:39:10
+    at runNextTicks (node:internal/process/task_queues:65:5)
+    at process.processImmediate (node:internal/timers:472:9) {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: 'light',
+  expected: 'dark',
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.16.0
