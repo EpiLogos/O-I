@@ -741,3 +741,5 @@
 }
 /* The opening gates interaction without changing the workspace's layout. */
 .oi-workspace-mount { display: contents; }
+/* Match the opening before its JavaScript or native field can paint. */
+body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-ground); }
