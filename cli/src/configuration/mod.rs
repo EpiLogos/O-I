@@ -8,6 +8,7 @@
 //! the contract): unknown members are tolerated on read and never a reason
 //! to drop a setting.
 pub mod changeset;
+pub mod connector;
 pub mod contribution;
 pub mod kernel;
 pub mod profile;
@@ -22,6 +23,10 @@ pub use changeset::{
     derive_changeset_status, Authority, ChangeSet, ChangeSetStatus, IdempotencyKey, Operation,
     OperationError, OperationKind, OperationStatus, Receipt, ReceiptOutcome, RequestedChange,
     Verification, VerificationEntry, CHANGSET_SCHEMA, RECEIPT_SCHEMA,
+};
+pub use connector::{
+    connector_name_of, connector_owner_ref, connector_reread, parse_connector_setting_ref,
+    validate_connector_contribution, CONNECTOR_REF_PREFIX,
 };
 pub use contribution::{
     AllowedScope, Availability, AvailabilityState, Contribution, ContributionRegistry,
