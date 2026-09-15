@@ -153,7 +153,18 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
 
   // The overlay-plane renderer lives for the window's lifetime, as the
   // old expression provider's did — created at mount, not on first use.
-  useEffect(() => { ensureOverlay(); }, [ensureOverlay]);
+  // It is disposed with the provider so a remount (StrictMode, a detached
+  // window's frame) never leaves a second canvas and listener set behind:
+  // the renderer's own one-per-window law would otherwise refuse the
+  // remounted provider's overlay and the window would silently stop
+  // expressing forms.
+  useEffect(() => {
+    ensureOverlay();
+    return () => {
+      overlayRef.current?.dispose();
+      overlayRef.current = null;
+    };
+  }, [ensureOverlay]);
 
   // Presentation lifecycle -------------------------------------------------
 
@@ -359,6 +370,12 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     engine: surface ? surface.capabilities() : null,
     /** Whether the window surface's own clock is held (lease pause law). */
     paused: surfaceRef.current ? surfaceRef.current.isPaused : null,
+    /** The clock law, observable: a live presentation stands / a drawing
+     * frame is scheduled / frames rendered so far. Idle desktop = live
+     * false, scheduled false, frames stable. */
+    live: surfaceRef.current ? surfaceRef.current.isLive : null,
+    scheduled: surfaceRef.current ? surfaceRef.current.isScheduled : null,
+    frames: surfaceRef.current ? surfaceRef.current.frameCount : null,
     targets: expressionTargetIds(),
     cues: cueLog.current,
     overlay: overlayRef.current ? overlayRef.current.inspect() : null,
