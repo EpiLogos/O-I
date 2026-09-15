@@ -106,3 +106,7 @@ Only the manifest digest was reconciled; child matrices, their provenance hashes
 and native routing remain untouched and pass the existing snapshot verifier. The
 CLI's matching revision-inequality assertion now checks its real truth-basis
 disclosure, preserving acceptance of the actual current-main descriptor.
+
+The existing source-suite activation test also contained the old three owner
+revisions. Its registrations now read the checked-in catalogue; the existing
+real activation/CAS/rollback assertions pass without a duplicated release pin.
