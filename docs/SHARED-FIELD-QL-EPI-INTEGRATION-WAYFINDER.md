@@ -519,13 +519,12 @@ screenshots retain the executed checks. Contract tests cover malformed/stale
 relation readings, unavailable endpoints and strict bounds; native projection
 checks preserve authored layout and independent relation/source revisions.
 
-The final 33-check replay used an isolated installation of this checkout's
-dependencies and Point-Cloud revision `9443f58fa8599f903d6affa61bc6fbed7109f640`.
-It supersedes the earlier local receipt whose shared dependency link could
-resolve into a concurrently edited checkout. The walk runner now refuses
-that cross-checkout resolution before building and records the repository
-head, tracked edits and engine provenance in every receipt. The separate
-engine refresh remains outside this SF2 proof.
+The latest 33-check replay used an isolated installation of this checkout's
+dependencies and accepted Point-Cloud revision `7306b7b8882f54fec931922d46fdbaba9f656212`
+(from engine refresh #329). The walk runner refuses a dependency that resolves
+into another checkout before building and records the repository head, tracked
+edits and engine provenance in every receipt. The earlier shared-dependency
+receipt has been superseded by these isolated replays.
 
 A later hosted run exposed one malformed relation taking down every fresh
 reader. The client now excludes only invalid relation rows, reports their
