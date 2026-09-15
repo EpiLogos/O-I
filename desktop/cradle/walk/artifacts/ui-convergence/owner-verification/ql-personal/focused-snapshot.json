@@ -1,0 +1,2404 @@
+{
+  "schema": "ql.focused-instrument/v1",
+  "available": true,
+  "event": {
+    "event_ref": "acceptance:continuous:dated-world",
+    "subject_ref": "controlled:subject/one",
+    "profile_generation": 2,
+    "registry_revision": "259a2f496c5f3a76d31e5c480dc9afdb45ad1282a7034cc28c528c39a71442e4",
+    "m1_revision": "0",
+    "m2_source_ref": "fixture:m2-source",
+    "m2_contract_ref": "ql.m2-engine-request/v1",
+    "m3_source_ref": "controlled:chosen-M3-form",
+    "m3_contract_ref": "ql.m3-state-request/v1"
+  },
+  "live_cursor": {
+    "event_ref": "acceptance:continuous:dated-world",
+    "subject_ref": "controlled:subject/one",
+    "profile_generation": 2,
+    "field_generation": "2",
+    "samples_elapsed": "1024"
+  },
+  "presented_cursor": {
+    "event_ref": "acceptance:continuous:dated-world",
+    "subject_ref": "controlled:subject/one",
+    "profile_generation": 2,
+    "field_generation": "2",
+    "samples_elapsed": "1024"
+  },
+  "temporal": "live",
+  "tracking": "follow",
+  "selection": null,
+  "selection_standing": null,
+  "selected_target": null,
+  "focus": {
+    "focus": "m3",
+    "available": true,
+    "current": true,
+    "source_refs": [
+      "controlled:chosen-M3-form",
+      "ql.m3-state-request/v1"
+    ],
+    "payload": {
+      "clock": {
+        "centre_ref": "#3-5-5/0",
+        "field_ref": "#3-0",
+        "generation": "5",
+        "grid_origins": [
+          3,
+          9,
+          21
+        ],
+        "inscription": {
+          "double_cover_half_degrees": 734,
+          "half_degrees": 14,
+          "turns": "1"
+        },
+        "lensing": {
+          "double_cover_half_degrees": 752,
+          "half_degrees": 32,
+          "turns": "1"
+        },
+        "rate_denominator": 8,
+        "rate_numerators": [
+          "9",
+          "8"
+        ],
+        "rate_remainders": [
+          "7",
+          "0"
+        ]
+      },
+      "derivation": {
+        "context_frame": "CF7",
+        "frequency_bindings": [
+          {
+            "mode_ref": "controlled:mode/0",
+            "octet_index": 0
+          },
+          {
+            "mode_ref": "controlled:mode/1",
+            "octet_index": 1
+          },
+          {
+            "mode_ref": "controlled:mode/2",
+            "octet_index": 2
+          },
+          {
+            "mode_ref": "controlled:mode/3",
+            "octet_index": 3
+          },
+          {
+            "mode_ref": "controlled:mode/4",
+            "octet_index": 4
+          },
+          {
+            "mode_ref": "controlled:mode/5",
+            "octet_index": 5
+          },
+          {
+            "mode_ref": "controlled:mode/6",
+            "octet_index": 6
+          },
+          {
+            "mode_ref": "controlled:mode/7",
+            "octet_index": 7
+          }
+        ],
+        "harmonic_ratio": {
+          "derivation": {
+            "input": {
+              "derivation": {
+                "coordinate": "5b4cad5aa95822ce",
+                "family": 0,
+                "kind": "source-row",
+                "row12": 6,
+                "source_ref": "Idea/Bimba/Map/datasets/(0_1) Vortex Modulae - (0_1) x 12Fold and 8_9fold (mod12 and mod10) Archetypal Number Identities - Sheet1.csv"
+              },
+              "ratio": [
+                2,
+                3
+              ]
+            },
+            "kind": "reciprocal"
+          },
+          "ratio": [
+            3,
+            2
+          ]
+        },
+        "material_standing": "explicit native musical projection onto supplied modes, not measured eigenvalue evidence",
+        "mef_sublens": "mef:sublens:L5'.1@1",
+        "mef_table_index": 67,
+        "musical_mode": "Locrian",
+        "source_generations": "M1 revision, M3 operation generation, QL performance observation, retained Factory Run/attempt identity and M2 composition generation remain distinct",
+        "source_receipts_standing": "host-supplied retained receipts, not authentication by this composer"
+      },
+      "m3": {
+        "aperture": {
+          "division_deg10": 40,
+          "fibonacci_phase60": 59,
+          "index": 2,
+          "reciprocal_division_deg10": 900,
+          "reciprocal_index": 13,
+          "static_lenses": 16,
+          "total_lenses": 18,
+          "void_ring_orientation_deg10": 450
+        },
+        "bases": {
+          "initial": {
+            "contract_ref": "ql.m3-state-request/v1",
+            "identity": {
+              "event_ref": "acceptance:continuous:dated-world",
+              "profile_generation": 2
+            },
+            "source_ref": "controlled:chosen-M3-form"
+          },
+          "m2": {
+            "contract_ref": "ql.m2-engine-request/v1",
+            "identity": {
+              "event_ref": "acceptance:continuous:dated-world",
+              "profile_generation": 2
+            },
+            "source_ref": "fixture:m2-source"
+          },
+          "owner_readings": [],
+          "standing": "original-input-generations-retained-not-new-observations"
+        },
+        "clock": {
+          "backbone": {
+            "id": "dfc8077d52b11a81",
+            "ref": "#3-5-4-5"
+          },
+          "clockwise_id": "9bfcc279633903ba",
+          "completed_double_covers": 0,
+          "degree": {
+            "id": "93624747e6cfdd67",
+            "ref": "#3-5-5/0-359"
+          },
+          "degree360": 359,
+          "degree720": 359,
+          "estimate_standing": "legacy-arithmetic-estimate-not-selected-form-or-source-prototype",
+          "layer": 0,
+          "polar720": 179,
+          "polar_id": "ac2f4dfbf7d6f8da",
+          "source_backbone_prototype": {
+            "codon_address": 21,
+            "codon_id": "5b39a7eecbf84e1c",
+            "hexagram_address": 63,
+            "hexagram_id": "5c0417db351231f6",
+            "id": "dfc8077d52b11a81",
+            "ref": "#3-5-4-5",
+            "source_record": 2763,
+            "standing": "source-recorded-backbone-prototype-not-current-form"
+          },
+          "steps": 359,
+          "tick12": 11,
+          "uniform_hexagram_estimate": 63
+        },
+        "consumers": [
+          "epi.cosmic.123",
+          "epi.personal.450",
+          "epi.deep.m3"
+        ],
+        "discrepancy_authority": "ql.m-ledger/v1: current lifecycle, not frozen source templates",
+        "domain_revision": "32295e685422d7c02d0f30205924559151ea8138f62b46794cb63bda944cc140",
+        "elemental": {
+          "component_order": [
+            "Earth",
+            "Fire",
+            "Water",
+            "Air"
+          ],
+          "counts": [
+            0,
+            1,
+            1,
+            1
+          ],
+          "site_components": [
+            2,
+            1,
+            3
+          ],
+          "standing": "three-site-form-carrier-not-personal-constitution-or-bioquaternion"
+        },
+        "form": {
+          "address": 7,
+          "angles_deg10": [
+            225,
+            -225,
+            -225
+          ],
+          "charges_pp_mm_mp_pm": [
+            22,
+            -10,
+            4,
+            8
+          ],
+          "codon": {
+            "id": "32328b4c1d0e46c9",
+            "ref": "#3-2-1-2-4"
+          },
+          "coin_values": [
+            6,
+            9,
+            7
+          ],
+          "hexagram": {
+            "id": "8931c578fe85ae3e",
+            "ref": "#3-1-0-1"
+          },
+          "hinge": 1,
+          "lawful_field": 472,
+          "matrix_axis": 0,
+          "nucleotides": [
+            0,
+            1,
+            3
+          ],
+          "orientation_seed_wxyz": [
+            -14.849242210388184,
+            16.263456344604492,
+            -2.8284270763397217,
+            -2.8284270763397217
+          ],
+          "orientation_standing": "M3-source-codon-rotation-not-identity-quaternion",
+          "pair_angles_deg10": [
+            225,
+            1575
+          ],
+          "pair_xy": {
+            "id": "3b0419d79ae5ef1d",
+            "ref": "#3-2-1-2"
+          },
+          "pair_yz": {
+            "id": "57d6e31984d15f09",
+            "ref": "#3-2-2-4"
+          },
+          "pose": 6,
+          "pose_ordinal": 56,
+          "state_count": 8,
+          "velocities_deg10": [
+            225,
+            225,
+            0
+          ]
+        },
+        "iching": {
+          "complement_address": 56,
+          "line_change_addresses": [
+            6,
+            5,
+            3,
+            15,
+            23,
+            39
+          ],
+          "nuclear_address": 11,
+          "standing": "native-six-bit-law-not-uncorrected-source-LINE_CHANGE-claims"
+        },
+        "identity": {
+          "event_ref": "acceptance:continuous:dated-world",
+          "profile_generation": 2
+        },
+        "occurrence_unix_ms": 1789479981163,
+        "readiness": {
+          "continuous_cpp": "consumer-required",
+          "discrete": "operative",
+          "experiential": "not-claimed",
+          "personal_identity": "owner-supplied-handles",
+          "source": "retained-qualified-reading"
+        },
+        "receipt_unix_ms": 1789479981163,
+        "registry_revision": "259a2f496c5f3a76d31e5c480dc9afdb45ad1282a7034cc28c528c39a71442e4",
+        "schema": "ql.m3-state/v1",
+        "source_discrepancy_templates": 563,
+        "source_matrix_cells": [
+          {
+            "cell": {
+              "address": 7,
+              "codon_relations": [
+                "ade2a6850a798b33",
+                "9122ffbe57206329"
+              ],
+              "family": 0,
+              "hexagram_ref": "#3-1-0-1",
+              "id": "8256254b0dd285fa",
+              "pair_relations": [
+                "22a48c7bb6d9fc39",
+                "e411a3c53e753628"
+              ],
+              "ref": "#3-3-2-0-11",
+              "resolves_relation": "705a553a4f5eb19b"
+            },
+            "qualified_codon_relations": [
+              {
+                "from_id": "8256254b0dd285fa",
+                "from_ref": "#3-3-2-0-11",
+                "id": "ade2a6850a798b33",
+                "kind": "YIELDS_CODON",
+                "properties": {
+                  "type": "positive"
+                },
+                "record": 6520,
+                "ref": "bimba:relation:21417f682d93dae6b478b8ee",
+                "source_record_index": 1148,
+                "to_id": "b002bd7b6e3a2936",
+                "to_ref": "#3-2-2-1-1"
+              },
+              {
+                "from_id": "8256254b0dd285fa",
+                "from_ref": "#3-3-2-0-11",
+                "id": "9122ffbe57206329",
+                "kind": "YIELDS_CODON",
+                "properties": {
+                  "type": "negative"
+                },
+                "record": 14104,
+                "ref": "bimba:relation:7dd7b22281d84f49bea6f111",
+                "source_record_index": 1149,
+                "to_id": "0357ec7ebe329e9b",
+                "to_ref": "#3-2-2-2-1"
+              }
+            ],
+            "qualified_pair_relations": [
+              {
+                "from_id": "8256254b0dd285fa",
+                "from_ref": "#3-3-2-0-11",
+                "id": "22a48c7bb6d9fc39",
+                "kind": "USES_Pair",
+                "properties": {
+                  "role": "lower"
+                },
+                "record": 4659,
+                "ref": "bimba:relation:0b52d811640fbb93a5565bdc",
+                "source_record_index": 1146,
+                "to_id": "d3c2cf4b0807d4ef",
+                "to_ref": "#3-2-2-2"
+              },
+              {
+                "from_id": "8256254b0dd285fa",
+                "from_ref": "#3-3-2-0-11",
+                "id": "e411a3c53e753628",
+                "kind": "USES_Pair",
+                "properties": {
+                  "role": "upper"
+                },
+                "record": 7229,
+                "ref": "bimba:relation:2a17d92fe390f8d35f36a5dd",
+                "source_record_index": 1147,
+                "to_id": "c5a0d9bd88e80190",
+                "to_ref": "#3-2-1-1"
+              }
+            ]
+          },
+          {
+            "cell": {
+              "address": 7,
+              "codon_relations": [
+                "8b39bc7160075f92",
+                "6baf25a62b0c3eb0"
+              ],
+              "family": 1,
+              "hexagram_ref": "#3-1-0-1",
+              "id": "286b363102243c7a",
+              "pair_relations": [
+                "7e29a95cf53e07fa",
+                "5c3bb77a5650d8e9"
+              ],
+              "ref": "#3-3-2-1-11",
+              "resolves_relation": "f0e113d0e3eadd37"
+            },
+            "qualified_codon_relations": [
+              {
+                "from_id": "286b363102243c7a",
+                "from_ref": "#3-3-2-1-11",
+                "id": "8b39bc7160075f92",
+                "kind": "YIELDS_CODON",
+                "properties": {
+                  "type": "positive"
+                },
+                "record": 20180,
+                "ref": "bimba:relation:c877bd73cc26a24d09518e9a",
+                "source_record_index": 1606,
+                "to_id": "b002bd7b6e3a2936",
+                "to_ref": "#3-2-2-1-1"
+              },
+              {
+                "from_id": "286b363102243c7a",
+                "from_ref": "#3-3-2-1-11",
+                "id": "6baf25a62b0c3eb0",
+                "kind": "YIELDS_CODON",
+                "properties": {
+                  "type": "negative"
+                },
+                "record": 14252,
+                "ref": "bimba:relation:7f8ff90083d72694f914d4c6",
+                "source_record_index": 1607,
+                "to_id": "0357ec7ebe329e9b",
+                "to_ref": "#3-2-2-2-1"
+              }
+            ],
+            "qualified_pair_relations": [
+              {
+                "from_id": "286b363102243c7a",
+                "from_ref": "#3-3-2-1-11",
+                "id": "7e29a95cf53e07fa",
+                "kind": "USES_Pair",
+                "properties": {
+                  "role": "lower"
+                },
+                "record": 5232,
+                "ref": "bimba:relation:115fe3df2db1802e80dcd424",
+                "source_record_index": 1604,
+                "to_id": "d3c2cf4b0807d4ef",
+                "to_ref": "#3-2-2-2"
+              },
+              {
+                "from_id": "286b363102243c7a",
+                "from_ref": "#3-3-2-1-11",
+                "id": "5c3bb77a5650d8e9",
+                "kind": "USES_Pair",
+                "properties": {
+                  "role": "upper"
+                },
+                "record": 22272,
+                "ref": "bimba:relation:e177ffa0cbedc8f652b2a42e",
+                "source_record_index": 1605,
+                "to_id": "c5a0d9bd88e80190",
+                "to_ref": "#3-2-1-1"
+              }
+            ]
+          },
+          {
+            "cell": {
+              "address": 7,
+              "codon_relations": [
+                "6df86667f5d873e9",
+                "b68ad7608c279e18"
+              ],
+              "family": 2,
+              "hexagram_ref": "#3-1-0-1",
+              "id": "5eb22e0039c52c0b",
+              "pair_relations": [
+                "c04e831a1d6a7bb1",
+                "a1b584c83ebd4854"
+              ],
+              "ref": "#3-3-2-2-11",
+              "resolves_relation": "099c556e8a9983e8"
+            },
+            "qualified_codon_relations": [
+              {
+                "from_id": "5eb22e0039c52c0b",
+                "from_ref": "#3-3-2-2-11",
+                "id": "6df86667f5d873e9",
+                "kind": "YIELDS_CODON",
+                "properties": {
+                  "type": "positive"
+                },
+                "record": 18344,
+                "ref": "bimba:relation:b1388e21af3aa59d759e7fd4",
+                "source_record_index": 2109,
+                "to_id": "b002bd7b6e3a2936",
+                "to_ref": "#3-2-2-1-1"
+              },
+              {
+                "from_id": "5eb22e0039c52c0b",
+                "from_ref": "#3-3-2-2-11",
+                "id": "b68ad7608c279e18",
+                "kind": "YIELDS_CODON",
+                "properties": {
+                  "type": "negative"
+                },
+                "record": 9296,
+                "ref": "bimba:relation:42f2184495a2394ddba9cd83",
+                "source_record_index": 2110,
+                "to_id": "0357ec7ebe329e9b",
+                "to_ref": "#3-2-2-2-1"
+              }
+            ],
+            "qualified_pair_relations": [
+              {
+                "from_id": "5eb22e0039c52c0b",
+                "from_ref": "#3-3-2-2-11",
+                "id": "c04e831a1d6a7bb1",
+                "kind": "USES_Pair",
+                "properties": {
+                  "role": "lower"
+                },
+                "record": 15703,
+                "ref": "bimba:relation:91431661c38e2ea397ac246f",
+                "source_record_index": 2107,
+                "to_id": "d3c2cf4b0807d4ef",
+                "to_ref": "#3-2-2-2"
+              },
+              {
+                "from_id": "5eb22e0039c52c0b",
+                "from_ref": "#3-3-2-2-11",
+                "id": "a1b584c83ebd4854",
+                "kind": "USES_Pair",
+                "properties": {
+                  "role": "upper"
+                },
+                "record": 19893,
+                "ref": "bimba:relation:c4b161afdfdb2ed438549ca7",
+                "source_record_index": 2108,
+                "to_id": "c5a0d9bd88e80190",
+                "to_ref": "#3-2-1-1"
+              }
+            ]
+          }
+        ],
+        "source_revision": "daa660cbc1b8c5da83828698665a753852cb0287",
+        "subject_ref": "controlled:subject/one",
+        "tarot": {
+          "card_id": 4,
+          "codons": [
+            7
+          ],
+          "rank": "Five",
+          "standing": "retained-native-exact-cover-with-source-expression-separately-qualified",
+          "suit": "Cups"
+        },
+        "transcription": {
+          "retained_amino_slot": 17,
+          "retained_slot_standing": "retained-internal-table-not-source-translation-equivalence",
+          "rna": false,
+          "sequence": "ATG",
+          "source": {
+            "dna": {
+              "id": "32328b4c1d0e46c9",
+              "parent_id": "3b0419d79ae5ef1d",
+              "properties": {
+                "aminoAcidCode": "Met (Methionine) [START]",
+                "architecturalFunction": "Serves as the universal starting point for protein translation, marking the beginning of genetic expression",
+                "bimbaCoordinate": "#3-2-1-2-4",
+                "binary": "011",
+                "consciousnessStructure": "The consciousness of beginning, the first breath of protein life",
+                "coreNature": "The primary start codon that initiates protein synthesis, the gateway between genetic potential and manifest form",
+                "description": "ATG stands as the universal initiator, the sacred threshold where genetic information transforms into living protein. Like the cosmic AUM, it marks the beginning of manifestation from potential.",
+                "inner_charge_nn": -11,
+                "inner_charge_np": 5,
+                "inner_charge_pn": 7,
+                "inner_charge_pp": 23,
+                "isStartCodon": true,
+                "lastUpdated": "2025-08-09T08:23:41.338000000Z",
+                "name": "Codon_ATG",
+                "operationalEssence": "The ignition key of genetic manifestation",
+                "parentPair": "AT",
+                "position1": "A",
+                "position2": "T",
+                "position3": "G",
+                "primaryDesignation": "Codon ATG - The Universal Initiator",
+                "quality": "Initiation",
+                "sequence": "ATG",
+                "specialFunction": "Translation initiation - the alpha point of protein synthesis",
+                "subsystem": 3,
+                "thirdPosition": "G",
+                "translatesTo": "Methionine"
+              },
+              "record": 1667,
+              "ref": "#3-2-1-2-4",
+              "role": "dna-codon",
+              "source_record_index": 86
+            },
+            "expression": [
+              {
+                "from_id": "8332269160a505c4",
+                "from_ref": "#3-4.0-1-4",
+                "id": "453d9d5d14fe58d2",
+                "kind": "GOVERNS_TAROT_EXPRESSION",
+                "properties": {
+                  "cardType": "numbered",
+                  "symbolicMeaning": "Loss and renewal"
+                },
+                "record": 18724,
+                "ref": "bimba:relation:b61d9e6a1f261fb34da7ddff",
+                "source_record_index": 3017,
+                "to_id": "bd1ff1d1404df023",
+                "to_ref": "#3-4-2-4"
+              },
+              {
+                "from_id": "8332269160a505c4",
+                "from_ref": "#3-4.0-1-4",
+                "id": "1e18652350609fd0",
+                "kind": "POTENTIATES",
+                "properties": {
+                  "archetypalRole": "Pure potential entering manifestation - the biological Big Bang",
+                  "nucleotideBalance": "A(Yin) + T(Yang) + G(Yang) = Yang-dominated inception",
+                  "potentiationType": "Initiatory gateway",
+                  "specialRole": "Start codon - biological zero point"
+                },
+                "record": 13189,
+                "ref": "bimba:relation:723877f7c66d3667a416727d",
+                "source_record_index": 3019,
+                "to_id": "fa5299ea42518024",
+                "to_ref": "#3-4-5/0-0"
+              }
+            ],
+            "phase": {
+              "id": "8332269160a505c4",
+              "parent_id": "8ed34a8c2bea36f0",
+              "properties": {
+                "aminoAcidCode": "Met (Methionine) [START]",
+                "bimbaCoordinate": "#3-4.0-1-4",
+                "chargePattern": "nn:-11 np:5 pn:7 pp:23",
+                "containsT": true,
+                "coreNature": "Loss and renewal cycles (Start codon)",
+                "courtCard": false,
+                "description": "The ATG codon reflection embodies the Five of Cups loss and renewal, serving as genetic start codon with eight rotational states",
+                "family": "A(XX)",
+                "inner_charge_nn": -11,
+                "inner_charge_np": 5,
+                "inner_charge_pn": 7,
+                "inner_charge_pp": 23,
+                "operationalEssence": "Eight-fold rotation through transformative loss",
+                "primaryDesignation": "ATG Codon Reflection - Loss and Renewal",
+                "rnaSequence": "AUG",
+                "sequence": "ATG",
+                "stateCount": 8,
+                "stateType": "full-rotational",
+                "subsystem": 3,
+                "tarotCard": "Five of Cups",
+                "tarotRank": 5
+              },
+              "record": 2593,
+              "ref": "#3-4.0-1-4",
+              "role": "phase-codon",
+              "source_record_index": 549
+            },
+            "rna": {
+              "id": "82606c31415f3872",
+              "parent_id": "3cf5a4bfea97f761",
+              "properties": {
+                "aminoAcid": "Methionine (Start)",
+                "bimbaCoordinate": "#3-3-3-2-4",
+                "description": "AU with guanine - universal start codon consciousness",
+                "lastUpdated": "2025-08-11T13:46:49.551000000Z",
+                "name": "AUG Codon",
+                "parentPair": "AU",
+                "sequence": "AUG",
+                "subsystem": 3,
+                "transcriptionSource": "ATG→AUG"
+              },
+              "record": 2225,
+              "ref": "#3-3-3-2-4",
+              "role": "rna-codon",
+              "source_record_index": 365
+            },
+            "standing": "source-recorded-translation-not-retained-amino-array-equivalence",
+            "translations": [
+              {
+                "from_id": "8332269160a505c4",
+                "from_ref": "#3-4.0-1-4",
+                "id": "1bf27bd953821355",
+                "kind": "TRANSLATES_TO",
+                "properties": {
+                  "codonDegeneracy": 1,
+                  "fullDescription": "Met (Methionine) [START]",
+                  "isStartCodon": true,
+                  "specialFunction": "Initiates protein synthesis",
+                  "translationType": "start"
+                },
+                "record": 4755,
+                "ref": "bimba:relation:0c69eb8701217f07b081ab70",
+                "source_record_index": 3015,
+                "to_id": "ade941b68a147134",
+                "to_ref": "#3-3-4-5"
+              },
+              {
+                "from_id": "8332269160a505c4",
+                "from_ref": "#3-4.0-1-4",
+                "id": "c38e2893ed4c56ae",
+                "kind": "TRANSLATES_TO",
+                "properties": {
+                  "codonDegeneracy": 1,
+                  "fullDescription": "Met (Methionine) [START]",
+                  "isStartCodon": true,
+                  "specialFunction": "Initiates protein synthesis",
+                  "translationType": "start"
+                },
+                "record": 21774,
+                "ref": "bimba:relation:dbc6a9c9d947dd99a77b19e3",
+                "source_record_index": 3016,
+                "to_id": "1ab4813ad469fa48",
+                "to_ref": "#3-3-4-22"
+              }
+            ]
+          }
+        }
+      }
+    },
+    "standing": "M3 focus discloses form/inscription and the existing coupled clock"
+  },
+  "clock": {
+    "presentation": {
+      "view": "assembled"
+    },
+    "owner_clock": {
+      "centre_ref": "#3-5-5/0",
+      "field_ref": "#3-0",
+      "generation": "5",
+      "grid_origins": [
+        3,
+        9,
+        21
+      ],
+      "inscription": {
+        "double_cover_half_degrees": 734,
+        "half_degrees": 14,
+        "turns": "1"
+      },
+      "lensing": {
+        "double_cover_half_degrees": 752,
+        "half_degrees": 32,
+        "turns": "1"
+      },
+      "rate_denominator": 8,
+      "rate_numerators": [
+        "9",
+        "8"
+      ],
+      "rate_remainders": [
+        "7",
+        "0"
+      ]
+    },
+    "field_ref": "#3-0",
+    "centre_ref": "#3-5-5/0",
+    "standing": "assembled/exploded is presentation over the same K8 clock; phase changes remain native domain operations"
+  },
+  "vak_expression": null,
+  "vak_performance": null,
+  "personal_current": true,
+  "nara_expression": {
+    "schema": "ql.nara-expression-session/v1",
+    "subject_ref": "controlled:subject/one",
+    "event_ref": "acceptance:continuous:dated-world",
+    "profile_generation": 2,
+    "personal_reception_generation": 2,
+    "current": true,
+    "centres": [
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:0",
+        "ordinal": 0,
+        "label": "source-centre-0",
+        "source": {
+          "source_ref": "source:installed-k8:centre-0",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:0",
+          "value": 0.7
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:0",
+          "value": 1.2
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:0",
+          "value": 0.4
+        },
+        "resonance": 1.1151102787628486
+      },
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:1",
+        "ordinal": 1,
+        "label": "source-centre-1",
+        "source": {
+          "source_ref": "source:installed-k8:centre-1",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:1",
+          "value": 0.7999999999999999
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:1",
+          "value": 1.25
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:1",
+          "value": 0.43333333333333335
+        },
+        "resonance": 1.3672320236402729
+      },
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:2",
+        "ordinal": 2,
+        "label": "source-centre-2",
+        "source": {
+          "source_ref": "source:installed-k8:centre-2",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:2",
+          "value": 0.8999999999999999
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:2",
+          "value": 1.3
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:2",
+          "value": 0.4666666666666667
+        },
+        "resonance": 1.6551997430758307
+      },
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:3",
+        "ordinal": 3,
+        "label": "source-centre-3",
+        "source": {
+          "source_ref": "source:installed-k8:centre-3",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:3",
+          "value": 1.0
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:3",
+          "value": 1.3499999999999999
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:3",
+          "value": 0.5
+        },
+        "resonance": 1.9798265414639191
+      },
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:4",
+        "ordinal": 4,
+        "label": "source-centre-4",
+        "source": {
+          "source_ref": "source:installed-k8:centre-4",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:4",
+          "value": 1.1
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:4",
+          "value": 1.4
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:4",
+          "value": 0.5333333333333333
+        },
+        "resonance": 2.3414825496357943
+      },
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:5",
+        "ordinal": 5,
+        "label": "source-centre-5",
+        "source": {
+          "source_ref": "source:installed-k8:centre-5",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:5",
+          "value": 1.2
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:5",
+          "value": 1.45
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:5",
+          "value": 0.5666666666666667
+        },
+        "resonance": 2.740138487357743
+      },
+      {
+        "locus_ref": "ql:nara:controlled:subject/one:centre:6",
+        "ordinal": 6,
+        "label": "source-centre-6",
+        "source": {
+          "source_ref": "source:installed-k8:centre-6",
+          "revision": "controlled-installed-v1",
+          "standing_ref": "controlled-installed-K8-Nara-acceptance"
+        },
+        "m1": {
+          "basis_ref": "0",
+          "source_ref": "installed:m1:6",
+          "value": 1.2999999999999998
+        },
+        "m2": {
+          "basis_ref": "fixture:m2-source",
+          "source_ref": "installed:m2:6",
+          "value": 1.5
+        },
+        "m3": {
+          "basis_ref": "controlled:chosen-M3-form",
+          "source_ref": "installed:m3:6",
+          "value": 0.6000000000000001
+        },
+        "resonance": 3.175425209540411
+      }
+    ],
+    "earth_body": {
+      "locus_ref": "ql:nara:controlled:subject/one:earth-body",
+      "source": {
+        "source_ref": "source:installed-k8:earth-body",
+        "revision": "controlled-installed-v1",
+        "standing_ref": "controlled-installed-K8-Nara-acceptance"
+      },
+      "frame_ref": "earth-fixed:installed-k8"
+    },
+    "resonance_stations": {
+      "availability": "unavailable",
+      "station_refs": [],
+      "standing": "the accepted owner does not disclose cymatic station identities; centres are not substituted"
+    },
+    "m1_reading_refs": [
+      "0"
+    ],
+    "m2_reading_refs": [
+      "fixture:m2-source",
+      "ql.m2-engine-request/v1"
+    ],
+    "m3_reading_refs": [
+      "controlled:chosen-M3-form",
+      "ql.m3-state-request/v1"
+    ],
+    "action_refs": [],
+    "m1_presentation": {
+      "carrier": {
+        "clock": {
+          "conjugate_phase": 0,
+          "conjugate_tick12": 1,
+          "cycle": "1",
+          "degree360": 210,
+          "degree720": 570,
+          "hopf_fiber": 1,
+          "phase": 1,
+          "position6": 1,
+          "spanda_stage": 1,
+          "tick12": 7
+        },
+        "coordinates": [
+          "e06a1b000f191c02",
+          "4952c838b0335469",
+          "71b9d3893a156175",
+          "338ebd3cc7a87fa4",
+          "d7ed89c6ca319245",
+          "03c3f935e9e98639"
+        ],
+        "explicate_edges": 4,
+        "genus": 1,
+        "identification_slots": 2,
+        "m2_carrier_count": 72,
+        "opposite_quadrature": [
+          0.8660254037844392,
+          0.49999999999999917
+        ],
+        "quadrature": [
+          -0.8660254037844392,
+          -0.49999999999999917
+        ],
+        "spinor": [
+          0.258819043636322,
+          -0.9659258127212524,
+          0.0,
+          0.0
+        ]
+      },
+      "reflection": {
+        "conjugate_phase": 0,
+        "coordinate": "591122d43eb3505c",
+        "phase": 1,
+        "reflection_ground": "591122d43eb3505c",
+        "source_ground": "cabc32a688ab2b77",
+        "subject": "51ebdd18d663f7db"
+      },
+      "rotor": null
+    },
+    "m2_presentation": {
+      "colour": {
+        "linear_rgba": null,
+        "palette": null,
+        "source_name": "yellow",
+        "standing": "source-name-present-no-palette-conversion"
+      },
+      "m3_form_potential_ref": "ql.m2-engine/v1#/modal/form_potential",
+      "modal": {
+        "carrier_order": [
+          "earth",
+          "fire",
+          "water",
+          "air"
+        ],
+        "coefficient_unit": "exact-integer-kernel-units; max |component|=1000000",
+        "coefficients": [
+          [
+            -3,
+            -2
+          ],
+          [
+            -2,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            3,
+            -1
+          ],
+          [
+            -3,
+            0
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            -3,
+            2
+          ],
+          [
+            -2,
+            -2
+          ],
+          [
+            -1,
+            -1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            -2
+          ],
+          [
+            -3,
+            -1
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            -3,
+            1
+          ],
+          [
+            -2,
+            2
+          ],
+          [
+            -1,
+            -2
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            -3,
+            -2
+          ],
+          [
+            -2,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            3,
+            -1
+          ],
+          [
+            -3,
+            0
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            -3,
+            2
+          ],
+          [
+            -2,
+            -2
+          ],
+          [
+            -1,
+            -1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            -2
+          ],
+          [
+            -3,
+            -1
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            -3,
+            1
+          ],
+          [
+            -2,
+            2
+          ],
+          [
+            -1,
+            -2
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            2
+          ],
+          [
+            -3,
+            -2
+          ],
+          [
+            -2,
+            -1
+          ]
+        ],
+        "contract_ref": "ql.mef.templateure-field/v1",
+        "form_potential": [
+          [
+            -4,
+            -3
+          ],
+          [
+            -2,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            3,
+            -1
+          ],
+          [
+            -3,
+            0
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            -3,
+            2
+          ],
+          [
+            -2,
+            -2
+          ],
+          [
+            4,
+            3
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            3,
+            -2
+          ],
+          [
+            -3,
+            -1
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            -1,
+            -3
+          ],
+          [
+            3,
+            0
+          ],
+          [
+            -3,
+            1
+          ],
+          [
+            -2,
+            2
+          ],
+          [
+            -1,
+            -2
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            -2,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            3,
+            -1
+          ],
+          [
+            -3,
+            0
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            3,
+            1
+          ],
+          [
+            -3,
+            2
+          ],
+          [
+            -2,
+            -2
+          ],
+          [
+            -1,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            3,
+            -2
+          ],
+          [
+            -3,
+            -1
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            -3,
+            1
+          ],
+          [
+            -2,
+            2
+          ],
+          [
+            -1,
+            -2
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            3,
+            2
+          ]
+        ],
+        "power_decimal": "438",
+        "quadrature": [
+          [
+            2,
+            -3
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            0,
+            -3
+          ],
+          [
+            -1,
+            -2
+          ],
+          [
+            -2,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            -1,
+            3
+          ],
+          [
+            -2,
+            -3
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            -2,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            -3
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            -1,
+            -1
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            -1,
+            -3
+          ],
+          [
+            -2,
+            -2
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            -2,
+            3
+          ],
+          [
+            2,
+            -3
+          ],
+          [
+            1,
+            -2
+          ],
+          [
+            0,
+            -1
+          ],
+          [
+            -1,
+            0
+          ],
+          [
+            -2,
+            1
+          ],
+          [
+            2,
+            2
+          ],
+          [
+            1,
+            3
+          ],
+          [
+            0,
+            -3
+          ],
+          [
+            -1,
+            -2
+          ],
+          [
+            -2,
+            -1
+          ],
+          [
+            2,
+            0
+          ],
+          [
+            1,
+            1
+          ],
+          [
+            0,
+            2
+          ],
+          [
+            -1,
+            3
+          ],
+          [
+            -2,
+            -3
+          ],
+          [
+            2,
+            -2
+          ],
+          [
+            1,
+            -1
+          ],
+          [
+            0,
+            0
+          ],
+          [
+            -1,
+            1
+          ],
+          [
+            -2,
+            2
+          ],
+          [
+            2,
+            3
+          ],
+          [
+            1,
+            -3
+          ],
+          [
+            0,
+            -2
+          ],
+          [
+            -1,
+            -1
+          ],
+          [
+            -2,
+            0
+          ],
+          [
+            2,
+            1
+          ],
+          [
+            1,
+            2
+          ],
+          [
+            0,
+            3
+          ],
+          [
+            -1,
+            -3
+          ],
+          [
+            -2,
+            -2
+          ],
+          [
+            2,
+            -1
+          ],
+          [
+            1,
+            0
+          ],
+          [
+            0,
+            1
+          ],
+          [
+            -1,
+            2
+          ],
+          [
+            -2,
+            3
+          ],
+          [
+            2,
+            -3
+          ],
+          [
+            1,
+            -2
+          ]
+        ],
+        "transformation": "I4 tensor T18->16; coherent fold 16->0,17->8; not scalar/legacy-OR DET"
+      },
+      "physical_material": {
+        "geometry_ref": "controlled:signed-square-basis",
+        "material_model_ref": "ql.continuous-linear-mode/v1",
+        "material_parameters": {
+          "unit_length": {
+            "source_ref": "controlled:square-definition",
+            "unit": "m",
+            "value": 1.0
+          }
+        },
+        "material_ref": "controlled:linear-medium",
+        "modes": [
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/0",
+            "carrier_weights": [
+              {
+                "carrier": 0,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 1814.8165283203125,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/0",
+            "nodal_state_ref": "controlled:square-node/0",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/1",
+            "carrier_weights": [
+              {
+                "carrier": 1,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 1860.3033447265625,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/1",
+            "nodal_state_ref": "controlled:square-node/1",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/2",
+            "carrier_weights": [
+              {
+                "carrier": 2,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 2122.867431640625,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/2",
+            "nodal_state_ref": "controlled:square-node/2",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/3",
+            "carrier_weights": [
+              {
+                "carrier": 3,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 2422.48876953125,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/3",
+            "nodal_state_ref": "controlled:square-node/3",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/4",
+            "carrier_weights": [
+              {
+                "carrier": 4,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 1938.6624755859375,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/4",
+            "nodal_state_ref": "controlled:square-node/4",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/5",
+            "carrier_weights": [
+              {
+                "carrier": 5,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 2212.2861328125,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/5",
+            "nodal_state_ref": "controlled:square-node/5",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/6",
+            "carrier_weights": [
+              {
+                "carrier": 6,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 2524.52880859375,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/6",
+            "nodal_state_ref": "controlled:square-node/6",
+            "source_coordinate": "#2-1"
+          },
+          {
+            "amplitude": [
+              0.005,
+              0.002
+            ],
+            "antinodal_state_ref": "controlled:square-antinode/7",
+            "carrier_weights": [
+              {
+                "carrier": 7,
+                "weight": 1.0
+              }
+            ],
+            "damping_per_second": 0.25,
+            "excitation": [
+              0.001,
+              0.0
+            ],
+            "frequency_hz": 2880.842041015625,
+            "material_fibre": "earth",
+            "mode_ref": "controlled:mode/7",
+            "nodal_state_ref": "controlled:square-node/7",
+            "source_coordinate": "#2-1"
+          }
+        ],
+        "provider_ref": "controlled:native-vimarsha-modal-projection",
+        "stamp": {
+          "contract_ref": "ql.m2-engine-request/v1",
+          "identity": {
+            "event_ref": "acceptance:continuous:dated-world",
+            "profile_generation": 2
+          },
+          "source_ref": "fixture:m2-source"
+        }
+      }
+    },
+    "m3_presentation": {
+      "clock": {
+        "backbone": {
+          "id": "dfc8077d52b11a81",
+          "ref": "#3-5-4-5"
+        },
+        "clockwise_id": "9bfcc279633903ba",
+        "completed_double_covers": 0,
+        "degree": {
+          "id": "93624747e6cfdd67",
+          "ref": "#3-5-5/0-359"
+        },
+        "degree360": 359,
+        "degree720": 359,
+        "estimate_standing": "legacy-arithmetic-estimate-not-selected-form-or-source-prototype",
+        "layer": 0,
+        "polar720": 179,
+        "polar_id": "ac2f4dfbf7d6f8da",
+        "source_backbone_prototype": {
+          "codon_address": 21,
+          "codon_id": "5b39a7eecbf84e1c",
+          "hexagram_address": 63,
+          "hexagram_id": "5c0417db351231f6",
+          "id": "dfc8077d52b11a81",
+          "ref": "#3-5-4-5",
+          "source_record": 2763,
+          "standing": "source-recorded-backbone-prototype-not-current-form"
+        },
+        "steps": 359,
+        "tick12": 11,
+        "uniform_hexagram_estimate": 63
+      },
+      "form": {
+        "address": 7,
+        "angles_deg10": [
+          225,
+          -225,
+          -225
+        ],
+        "charges_pp_mm_mp_pm": [
+          22,
+          -10,
+          4,
+          8
+        ],
+        "codon": {
+          "id": "32328b4c1d0e46c9",
+          "ref": "#3-2-1-2-4"
+        },
+        "coin_values": [
+          6,
+          9,
+          7
+        ],
+        "hexagram": {
+          "id": "8931c578fe85ae3e",
+          "ref": "#3-1-0-1"
+        },
+        "hinge": 1,
+        "lawful_field": 472,
+        "matrix_axis": 0,
+        "nucleotides": [
+          0,
+          1,
+          3
+        ],
+        "orientation_seed_wxyz": [
+          -14.849242210388184,
+          16.263456344604492,
+          -2.8284270763397217,
+          -2.8284270763397217
+        ],
+        "orientation_standing": "M3-source-codon-rotation-not-identity-quaternion",
+        "pair_angles_deg10": [
+          225,
+          1575
+        ],
+        "pair_xy": {
+          "id": "3b0419d79ae5ef1d",
+          "ref": "#3-2-1-2"
+        },
+        "pair_yz": {
+          "id": "57d6e31984d15f09",
+          "ref": "#3-2-2-4"
+        },
+        "pose": 6,
+        "pose_ordinal": 56,
+        "state_count": 8,
+        "velocities_deg10": [
+          225,
+          225,
+          0
+        ]
+      },
+      "transcription": {
+        "retained_amino_slot": 17,
+        "retained_slot_standing": "retained-internal-table-not-source-translation-equivalence",
+        "rna": false,
+        "sequence": "ATG",
+        "source": {
+          "dna": {
+            "id": "32328b4c1d0e46c9",
+            "parent_id": "3b0419d79ae5ef1d",
+            "properties": {
+              "aminoAcidCode": "Met (Methionine) [START]",
+              "architecturalFunction": "Serves as the universal starting point for protein translation, marking the beginning of genetic expression",
+              "bimbaCoordinate": "#3-2-1-2-4",
+              "binary": "011",
+              "consciousnessStructure": "The consciousness of beginning, the first breath of protein life",
+              "coreNature": "The primary start codon that initiates protein synthesis, the gateway between genetic potential and manifest form",
+              "description": "ATG stands as the universal initiator, the sacred threshold where genetic information transforms into living protein. Like the cosmic AUM, it marks the beginning of manifestation from potential.",
+              "inner_charge_nn": -11,
+              "inner_charge_np": 5,
+              "inner_charge_pn": 7,
+              "inner_charge_pp": 23,
+              "isStartCodon": true,
+              "lastUpdated": "2025-08-09T08:23:41.338000000Z",
+              "name": "Codon_ATG",
+              "operationalEssence": "The ignition key of genetic manifestation",
+              "parentPair": "AT",
+              "position1": "A",
+              "position2": "T",
+              "position3": "G",
+              "primaryDesignation": "Codon ATG - The Universal Initiator",
+              "quality": "Initiation",
+              "sequence": "ATG",
+              "specialFunction": "Translation initiation - the alpha point of protein synthesis",
+              "subsystem": 3,
+              "thirdPosition": "G",
+              "translatesTo": "Methionine"
+            },
+            "record": 1667,
+            "ref": "#3-2-1-2-4",
+            "role": "dna-codon",
+            "source_record_index": 86
+          },
+          "expression": [
+            {
+              "from_id": "8332269160a505c4",
+              "from_ref": "#3-4.0-1-4",
+              "id": "453d9d5d14fe58d2",
+              "kind": "GOVERNS_TAROT_EXPRESSION",
+              "properties": {
+                "cardType": "numbered",
+                "symbolicMeaning": "Loss and renewal"
+              },
+              "record": 18724,
+              "ref": "bimba:relation:b61d9e6a1f261fb34da7ddff",
+              "source_record_index": 3017,
+              "to_id": "bd1ff1d1404df023",
+              "to_ref": "#3-4-2-4"
+            },
+            {
+              "from_id": "8332269160a505c4",
+              "from_ref": "#3-4.0-1-4",
+              "id": "1e18652350609fd0",
+              "kind": "POTENTIATES",
+              "properties": {
+                "archetypalRole": "Pure potential entering manifestation - the biological Big Bang",
+                "nucleotideBalance": "A(Yin) + T(Yang) + G(Yang) = Yang-dominated inception",
+                "potentiationType": "Initiatory gateway",
+                "specialRole": "Start codon - biological zero point"
+              },
+              "record": 13189,
+              "ref": "bimba:relation:723877f7c66d3667a416727d",
+              "source_record_index": 3019,
+              "to_id": "fa5299ea42518024",
+              "to_ref": "#3-4-5/0-0"
+            }
+          ],
+          "phase": {
+            "id": "8332269160a505c4",
+            "parent_id": "8ed34a8c2bea36f0",
+            "properties": {
+              "aminoAcidCode": "Met (Methionine) [START]",
+              "bimbaCoordinate": "#3-4.0-1-4",
+              "chargePattern": "nn:-11 np:5 pn:7 pp:23",
+              "containsT": true,
+              "coreNature": "Loss and renewal cycles (Start codon)",
+              "courtCard": false,
+              "description": "The ATG codon reflection embodies the Five of Cups loss and renewal, serving as genetic start codon with eight rotational states",
+              "family": "A(XX)",
+              "inner_charge_nn": -11,
+              "inner_charge_np": 5,
+              "inner_charge_pn": 7,
+              "inner_charge_pp": 23,
+              "operationalEssence": "Eight-fold rotation through transformative loss",
+              "primaryDesignation": "ATG Codon Reflection - Loss and Renewal",
+              "rnaSequence": "AUG",
+              "sequence": "ATG",
+              "stateCount": 8,
+              "stateType": "full-rotational",
+              "subsystem": 3,
+              "tarotCard": "Five of Cups",
+              "tarotRank": 5
+            },
+            "record": 2593,
+            "ref": "#3-4.0-1-4",
+            "role": "phase-codon",
+            "source_record_index": 549
+          },
+          "rna": {
+            "id": "82606c31415f3872",
+            "parent_id": "3cf5a4bfea97f761",
+            "properties": {
+              "aminoAcid": "Methionine (Start)",
+              "bimbaCoordinate": "#3-3-3-2-4",
+              "description": "AU with guanine - universal start codon consciousness",
+              "lastUpdated": "2025-08-11T13:46:49.551000000Z",
+              "name": "AUG Codon",
+              "parentPair": "AU",
+              "sequence": "AUG",
+              "subsystem": 3,
+              "transcriptionSource": "ATG→AUG"
+            },
+            "record": 2225,
+            "ref": "#3-3-3-2-4",
+            "role": "rna-codon",
+            "source_record_index": 365
+          },
+          "standing": "source-recorded-translation-not-retained-amino-array-equivalence",
+          "translations": [
+            {
+              "from_id": "8332269160a505c4",
+              "from_ref": "#3-4.0-1-4",
+              "id": "1bf27bd953821355",
+              "kind": "TRANSLATES_TO",
+              "properties": {
+                "codonDegeneracy": 1,
+                "fullDescription": "Met (Methionine) [START]",
+                "isStartCodon": true,
+                "specialFunction": "Initiates protein synthesis",
+                "translationType": "start"
+              },
+              "record": 4755,
+              "ref": "bimba:relation:0c69eb8701217f07b081ab70",
+              "source_record_index": 3015,
+              "to_id": "ade941b68a147134",
+              "to_ref": "#3-3-4-5"
+            },
+            {
+              "from_id": "8332269160a505c4",
+              "from_ref": "#3-4.0-1-4",
+              "id": "c38e2893ed4c56ae",
+              "kind": "TRANSLATES_TO",
+              "properties": {
+                "codonDegeneracy": 1,
+                "fullDescription": "Met (Methionine) [START]",
+                "isStartCodon": true,
+                "specialFunction": "Initiates protein synthesis",
+                "translationType": "start"
+              },
+              "record": 21774,
+              "ref": "bimba:relation:dbc6a9c9d947dd99a77b19e3",
+              "source_record_index": 3016,
+              "to_id": "1ab4813ad469fa48",
+              "to_ref": "#3-3-4-22"
+            }
+          ]
+        }
+      }
+    },
+    "portable": {
+      "schema": "ql.nara-expression-portable-cues/v1",
+      "subject_ref": "controlled:subject/one",
+      "event_ref": "acceptance:continuous:dated-world",
+      "profile_generation": 2,
+      "personal_reception_generation": 2,
+      "centre_locus_refs": [
+        "ql:nara:controlled:subject/one:centre:0",
+        "ql:nara:controlled:subject/one:centre:1",
+        "ql:nara:controlled:subject/one:centre:2",
+        "ql:nara:controlled:subject/one:centre:3",
+        "ql:nara:controlled:subject/one:centre:4",
+        "ql:nara:controlled:subject/one:centre:5",
+        "ql:nara:controlled:subject/one:centre:6"
+      ],
+      "earth_body_locus_ref": "ql:nara:controlled:subject/one:earth-body",
+      "source_refs": [
+        "source:installed-k8:centre-0@controlled-installed-v1",
+        "source:installed-k8:centre-1@controlled-installed-v1",
+        "source:installed-k8:centre-2@controlled-installed-v1",
+        "source:installed-k8:centre-3@controlled-installed-v1",
+        "source:installed-k8:centre-4@controlled-installed-v1",
+        "source:installed-k8:centre-5@controlled-installed-v1",
+        "source:installed-k8:centre-6@controlled-installed-v1",
+        "source:installed-k8:earth-body@controlled-installed-v1"
+      ],
+      "cue_refs": [
+        "ql:nara:focus:m4"
+      ]
+    },
+    "standing": "private session-local K10 presentation reading; portable contains refs and cues only"
+  },
+  "standing": "K9 consumer projection: one K8 field, source-qualified Bimba selection, source-owned Vāk, Nara reception and native-host companions; no renderer/graph/clock/agent ownership"
+}

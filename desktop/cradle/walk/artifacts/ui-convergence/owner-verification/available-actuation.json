@@ -1,0 +1,36 @@
+{
+  "owner_checkout_head": "27492df53e1d4933eacfe791c278785092dd4c56",
+  "fetched_origin_main": "828052ed2247c9ec0ef6b55caa12c7c2c109a253",
+  "binaries": [
+    {
+      "path": "/Users/admin/Central/Work/Actuation/target/release/actuation",
+      "version": "actuation 0.2.0",
+      "sha256": "09c32c3d3fcd8eeffb00c77ce253af4285b088258862cd04a0e19a5aa9bfbe2a",
+      "bytes": 3788608
+    },
+    {
+      "path": "/Users/admin/Central/Work/Actuation/target/debug/actuation",
+      "version": "actuation 0.2.0",
+      "sha256": "f12befafd1e39591f9fba77c975d5a56393d70394ef3a905464086fdc84649fe",
+      "bytes": 18800968
+    },
+    {
+      "path": "/Users/admin/.local/share/oi/installs/actuation/actuation-v0.2.0/actuation",
+      "version": "actuation 0.2.0",
+      "sha256": "b90e67bc1a68d6e229754e8e8da35ec2c663c0b53611a11514e3606a2a587799",
+      "bytes": 3738800
+    }
+  ],
+  "note": "CLI git_revision() resolves git from the caller current directory at invocation time; its returned revision is not embedded binary provenance. No build/configuration changes were made.",
+  "installed_receipt": {
+    "schema": "oi.installed-artifact-receipt/v1",
+    "product": "actuation",
+    "release_tag": "actuation-v0.2.0",
+    "source_revision": "90041d5f81331b636893d772c3288c062ad0e13b",
+    "artifact": "actuation-0.2.0-90041d5f8133-macos-arm64.tar.gz",
+    "sha256": "6de02fd2e656bcdc18f31b6bd2e71af82ef03ae527442358747cd939e714a4ea",
+    "attestation": "verified (gh attestation verify, exit 0)",
+    "installed_at": "2026-09-12T11:58:00Z",
+    "platform": "macos-arm64"
+  }
+}
