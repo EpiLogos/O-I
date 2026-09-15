@@ -165,7 +165,15 @@ for (const entry of readdirSync(pkgRoot)) {
 // data — a validator's colour regex, a fixture's authored palette, an
 // engine scene's ground — and are not consumers of the visual vocabulary;
 // a raw colour there is not a house-language breach.
-const files = collectFiles(cradleSrc).filter((file) => !file.endsWith(".ts") || file.endsWith(".d.ts"));
+// Owner-captured contributions (desktop/cradle/src/contributions/**) are
+// exact Git blobs of another product's UI package, verified at their owner
+// and never edited here; their standalone fallbacks are theirs to carry.
+const files = collectFiles(cradleSrc)
+  .filter((file) => !file.endsWith(".ts") || file.endsWith(".d.ts"))
+  .filter((file) => !relative(cradleSrc, file).startsWith("contributions/"));
+// Comments are not consumer colour: an issue reference such as "#299" in a
+// component comment is not a hex value.
+const stripComments = (text) => text.replace(/\/\*[\s\S]*?\*\//g, "").replace(/(^|[^:"'`])\/\/[^\n]*/g, "$1");
 const cradleDefined = new Set(); // tokens the cradle itself defines (should be none, but resolve honestly)
 const unresolved = [];
 const rawHits = [];
@@ -189,7 +197,7 @@ for (const file of files) {
     }
   }
 
-  for (const m of text.matchAll(colourRe)) {
+  for (const m of stripComments(text).matchAll(colourRe)) {
     rawHits.push(`${rel}: ${m[0]}`);
   }
 }

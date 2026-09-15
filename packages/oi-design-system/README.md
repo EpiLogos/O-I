@@ -106,6 +106,22 @@ import this package — by design: extraction means the vocabulary now
 exists here and is faithful to the site's values; the site migrates
 incrementally with regression evidence, never in the same stroke.
 
+### Desktop grammar (`desktop.css`)
+
+The small shared vocabulary of desktop chrome, extracted 2026-09-15 from the
+patterns the application already repeated: quiet icon actions (`.oi-tool`),
+text actions and groups (`.oi-action`, `.oi-action-primary`,
+`.oi-action-group`), the compact tool row (`.oi-tool-row`), contextual heads
+(`.oi-context-head`), eyebrows (`.oi-eyebrow`), plane navs whose current
+state is `aria-pressed`/`aria-selected` (`.oi-plane-nav`), disclosure
+(`.oi-disclosure`, `.oi-section`), reference material (`.oi-ref`,
+`.oi-ref-row`, `.oi-kv`, `.oi-state`), menus and inputs (`.oi-menu`,
+`.oi-menu-item`, `.oi-input`, `.oi-field`), sidecars (`.oi-sidecar`) and the
+named states (`.oi-empty`, `.oi-refusal` / `[role=alert]`, `.oi-note`). A
+surface keeps its own information architecture and meaning classes and
+composes these for its chrome; no class here claims a capability the owner
+does not offer. Tokens only.
+
 ### Desktop clouds and loading
 
 Import `tokens.css` and `point-cloud.css`; opt into the desktop ground with

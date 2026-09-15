@@ -1,6 +1,7 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "@epilogos/oi-design-system/tokens.css";
+import "@epilogos/oi-design-system/desktop.css";
 import "./rest.css";
 import "./cradle.css";
 import { Cradle } from "./Cradle";
