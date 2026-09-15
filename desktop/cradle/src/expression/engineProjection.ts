@@ -1,4 +1,9 @@
 import type {ExpressionDocument} from "./types";
+import {blankScene} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
+import {nativeExport} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
+// Match the accepted engine's ink-on-paper material when a document has no
+// authored colour vocabulary. Raw engine defaults assume a dark backdrop.
+const material = nativeExport(blankScene()).config;
 /** A projection into the existing native engine, never a parallel scene/clock.
  * Domain values and source bodies have no path into this material vocabulary. */
 export function expressionConfig(document:ExpressionDocument):Record<string,unknown> {
@@ -15,5 +20,8 @@ export function expressionConfig(document:ExpressionDocument):Record<string,unkn
   }
   return {id:ref,name:entity.title,kind:"formation",enabled:true,x:value("x",0),y:value("y",0),z:value("z",0),scale:value("scale",1),share:value("share",1),shape:{kind:"glyph",text:value("glyph","O")},sequence:{advance:"off",links:[]}};
  });
- return {sourceType:"composition",glyph:" ",particleCount:8192,entities,automations};
+ return {sourceType:"composition",glyph:" ",particleCount:8192,entities,automations,
+  color:structuredClone(material.color),colorMode:material.colorMode,
+  material:structuredClone(material.material),particleSize:structuredClone(material.particleSize),style:material.style,dotShape:material.dotShape,
+  backgroundColor:material.backgroundColor,backgroundMode:material.backgroundMode};
 }
