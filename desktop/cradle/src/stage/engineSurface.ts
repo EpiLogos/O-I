@@ -18,7 +18,7 @@
  * keeps the canvas, renderer, physics clock and lifecycle. Context return then
  * restores the acknowledged resident GPU checkpoint instead of reseeding.
  */
-import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/shell/production.mjs";
+import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs";
 import { nativeSnapshotToJourney, type NativeConfig, type StageScene } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import { stageCentre, stageScale } from "@epilogos/oi-design-system/expressions-engine/shell/camera.mjs";
 import type { EngineCommand, EngineFrame } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
@@ -223,6 +223,23 @@ export class EngineSurface {
   command(command: EngineCommand) {
     try { this.adapter.command?.(command); }
     catch (cause) { this.fail(cause); }
+  }
+
+  /** The engine's own capture path, through the host's single field: a clean
+   * re-render of the live presentation into an offscreen canvas at the given
+   * size (the surface's pixel size when omitted). The engine's honesty gates
+   * throw through unchanged — no live field, a lost GPU context, or a source
+   * still decoding refuses instead of fabricating an image. */
+  capture(width?: number, height?: number): HTMLCanvasElement {
+    if (!this.active || !this.live) throw new Error("The engine surface has no live presentation to capture.");
+    const w = Math.max(1, Math.round(width ?? this.canvas.width));
+    const h = Math.max(1, Math.round(height ?? this.canvas.height));
+    try {
+      return this.adapter.withCleanFrame(() => this.adapter.capture(w, h));
+    } catch (cause) {
+      this.fail(cause);
+      throw cause;
+    }
   }
 
   setPaused(paused: boolean) { this.paused = paused; if (!paused) this.wake(); }

@@ -84,6 +84,7 @@ function ExpressionView() {
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
   const [previewPaused, setPreviewPaused] = useState(false);
   const [previewForceMotion, setPreviewForceMotion] = useState(false);
+  const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const configRef = useRef(config); configRef.current = config;
 
   // The preview is an element-bounded engine surface: the owner's own
@@ -302,7 +303,27 @@ function ExpressionView() {
             </button>
             <button onClick={() => surfaceRef.current?.command({ type: "reset-field" })}>Reset field</button>
             <button onClick={() => visuals.resetConfig()}>Restore defaults</button>
+            <button
+              onClick={() => {
+                const surface = surfaceRef.current;
+                if (!surface) return;
+                try {
+                  const canvas = surface.capture();
+                  const url = canvas.toDataURL("image/png");
+                  const anchor = window.document.createElement("a");
+                  anchor.href = url;
+                  anchor.download = "expression-capture.png";
+                  anchor.click();
+                  setCaptureNotice(null);
+                } catch (cause) {
+                  setCaptureNotice(cause instanceof Error ? cause.message : String(cause));
+                }
+              }}
+            >
+              Capture image
+            </button>
           </div>
+          {captureNotice && <p role="alert">{captureNotice}</p>}
 
           <SavedStates states={snapshot.savedStates} />
 

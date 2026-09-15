@@ -1,3 +1,4 @@
+import { resolvedAutomation, automationLeader } from "./automationLinks.mjs";
 import { applyNativeDelta } from "./nativeDelta.mjs";
 import { DEFAULT_CONFIG, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG } from "../engine/PointCloudField.mjs";
 import { DEFAULT_SEQUENCE, DEFAULT_FORCES, DEFAULT_COMPOSITION, DEFAULT_CYMATIC_MEDIUM, makeChakraEntities, MAX_FORMATIONS, MAX_PINS } from "../engine/fieldModel.mjs";
@@ -79,7 +80,7 @@ function toNativeEntity(e) {
     stationIndex: e.station ?? void 0
   };
 }
-const waves = { sine: "sine", triangle: "triangle", square: "square", saw: "saw", steps: "randomStep", smooth: "smoothRandom" };
+const waves = { sine: "sine", triangle: "triangle", square: "square", saw: "saw", steps: "randomStep", smooth: "smoothRandom", morph: "morph" };
 function projectNativeConfig(s) {
   checkNativeLimits(s);
   const original = s.native?.config;
@@ -118,11 +119,13 @@ function projectNativeConfig(s) {
   cfg.cymatics = { ...DEFAULT_CYMATIC_MEDIUM, ...cfg.cymatics, plateGeometry: s.engine.templateGeometry ?? cfg.cymatics.plateGeometry, dimension: s.engine.templateDimension ?? cfg.cymatics.dimension, enabled: s.engine.resonanceEnabled, engine: s.engine.resonatorMode ?? "resonator", followFocus: s.composition.frequencyDriver === "focus", autoSweep: s.engine.autoSweep && s.composition.frequencyDriver === "automation", sweep: { glideS: 8, dwellS: 2, ...cfg.cymatics?.sweep, enabled: s.engine.autoSweep && s.composition.frequencyDriver === "automation", direction: s.engine.sweepDirection } };
   cfg.relational = { ...cfg.relational, enabled: s.engine.relationalEnabled, mode: s.engine.relationalMode };
   cfg.interaction = { ...cfg.interaction, mode: s.engine.pointerMode, placedPoints: [] };
-  cfg.automations = s.automation.map((l) => {
+  cfg.automations = s.automation.map((authored) => {
+    const l = resolvedAutomation(s.automation, authored), leader = automationLeader(s.automation, authored);
     const b = automationTarget(s, l.target);
     if (!b) return l.nativePath ? { ...original?.automations?.find((a) => a.id === l.nativeId), id: l.nativeId ?? l.id, path: l.nativePath, enabled: false, type: l.type === "lfo" ? "lfo" : "oneShot" } : null;
     const factor = l.blend === "multiply" ? 1 : b.factor;
     return {
+      ...l.syncWith || leader.clockId ? { clockId: leader.clockId ?? leader.nativeId ?? leader.id } : {},
       id: l.nativeId ?? l.id,
       path: b.path,
       enabled: l.enabled && (b.path !== "cymatics.frequencyHz" || s.composition.frequencyDriver === "automation"),
@@ -240,7 +243,8 @@ function nativeSnapshotToJourney(raw, index = 0) {
   s.automation = (cfg.automations ?? []).map((l) => {
     const b = NATIVE_BINDINGS.find((b2) => b2.path === l.path), eb = entityTargets(s).find((b2) => b2.path === l.path);
     const factor = l.blend === "multiply" ? 1 : b?.factor ?? eb?.factor ?? 1;
-    return { id: l.id, nativeId: l.id, nativePath: l.path, entityId: eb?.entityId, enabled: l.enabled, target: b ? "field." + b.key : eb?.target ?? stableNativeTarget(s, l.path), type: l.type === "lfo" ? "lfo" : "ramp", wave: l.waveform === "randomStep" ? "steps" : l.waveform === "smoothRandom" ? "smooth" : l.waveform ?? "sine", min: (l.type === "lfo" ? l.min ?? 0 : l.from ?? 0) / factor, max: (l.type === "lfo" ? l.max ?? 1 : l.to ?? 1) / factor, rate: l.rateHz ?? 0.25, phase: l.phase ?? 0, blend: l.blend ?? "replace", duration: l.durationS ?? 2, delay: l.delayS ?? 0, loop: l.loop === "restart" ? "loop" : l.loop === "pingpong" ? "pingpong" : "once", firedAt: l.fireToken ?? null, easing: l.easing ?? "smooth" };
+    const clockLeader = l.clockId ? (cfg.automations ?? []).find((a) => a.id === l.clockId) ?? (cfg.automations ?? []).find((a) => a.clockId === l.clockId) : void 0;
+    return { ...l.clockId ? { clockId: l.clockId } : {}, ...clockLeader && clockLeader.id !== l.id ? { syncWith: clockLeader.id } : {}, id: l.id, nativeId: l.id, nativePath: l.path, entityId: eb?.entityId, enabled: l.enabled, target: b ? "field." + b.key : eb?.target ?? stableNativeTarget(s, l.path), type: l.type === "lfo" ? "lfo" : "ramp", wave: l.waveform === "randomStep" ? "steps" : l.waveform === "smoothRandom" ? "smooth" : l.waveform ?? "sine", min: (l.type === "lfo" ? l.min ?? 0 : l.from ?? 0) / factor, max: (l.type === "lfo" ? l.max ?? 1 : l.to ?? 1) / factor, rate: l.rateHz ?? 0.25, phase: l.phase ?? 0, blend: l.blend ?? "replace", duration: l.durationS ?? 2, delay: l.delayS ?? 0, loop: l.loop === "restart" ? "loop" : l.loop === "pingpong" ? "pingpong" : "once", firedAt: l.fireToken ?? null, easing: l.easing ?? "smooth" };
   });
   if (snapshot.view?.gridMode && !s.view.nativeScaffold) s.view.nativeScaffold = snapshot.view.gridMode;
   j.name = snapshot.name;
