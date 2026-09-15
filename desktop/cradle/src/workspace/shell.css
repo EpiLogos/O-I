@@ -207,7 +207,7 @@
 .workspace-footer-edge:is(:hover, :focus-within) .canvas-arrangement, .workspace-footer-edge[data-pinned="true"] .canvas-arrangement { opacity: 1; pointer-events: auto; }
 /* Row members: quiet icon controls, the workspace selector, the state label. */
 .canvas-arrangement > button { flex: none; display: inline-flex; align-items: center; justify-content: center; width: var(--oi-shell-control); height: 22px; min-height: 22px; padding: 0; color: var(--oi-muted-2); border-radius: 5px; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
-.canvas-arrangement > button:hover, .canvas-arrangement > button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); outline: none; }
+.canvas-arrangement > button:hover, .canvas-arrangement > button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); }
 .canvas-arrangement > button:disabled { opacity: .4; cursor: default; }
 .canvas-arrangement .workspace-select { display: flex; align-items: center; gap: 4px; min-width: 0; flex: 0 1 auto; max-width: 24%; }
 .canvas-arrangement .workspace-select svg { flex: none; width: 9px; height: 9px; color: var(--oi-muted-2); }
