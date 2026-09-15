@@ -138,10 +138,16 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     catch (failure) { setError(message(failure)); }
     finally { opening.current = false; setIsOpening(false); }
   };
-  const openRow = (row: ResolutionRow) => openAddress(graphAddress({
-    ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
-    provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
-  }), row.label);
+  const openRow = (row: ResolutionRow) => {
+    // AIKit resolution rows always carry a local address; a hosted row
+    // (native_owner shared-field) would not, and is not what resolve returns.
+    const address = graphAddress({
+      ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
+      provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
+    });
+    if (!address) { setError(`No local address for ${row.reference}`); return; }
+    return openAddress(address, row.label);
+  };
   const accept = () => {
     if (busy || composition.current || opening.current) return;
     const hit = hits[selected];

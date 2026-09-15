@@ -121,6 +121,11 @@ export type CommissionOutcome =
 
 export type KernelOp =
   | {op:"graph";project?:string;query:string}
+  /** One request to the O:I-owned SharedField client (kernel
+   * `shared_field.rs`): `status` | `snapshot` | `read {ref}` | `publish
+   * {args}` | …, carried verbatim; the hosting target and token are the
+   * client's own environment, never the renderer's. */
+  | {op:"shared_field";request:Record<string,unknown>}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
   | {
@@ -175,6 +180,7 @@ export type KernelOp =
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
+  | {result:"shared_field_reading";data:unknown}
   | {result:"action_dispatched";dispatch:ActionDispatch}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }
   | { result: "instance_commissioned"; outcome: CommissionOutcome }
