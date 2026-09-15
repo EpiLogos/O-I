@@ -1,0 +1,194 @@
+//! Thin transport to the O:I-owned SharedField client (Lane C step 5,
+//! cell S→S0 · aperture mode). The hosted field is an owner read model
+//! the kernel pulls through `shared-field/spacetimedb/field.sh`; the
+//! kernel invents no store, no second index and no identity, and it never
+//! reads the owner transport token — the hosting target and the token live
+//! in the client's own environment (`OI_SHARED_FIELD_TARGET`,
+//! `OI_STATE_HOME`), which the kernel passes through untouched.
+//!
+//! One request on stdin, one envelope on stdout, decoded exactly like
+//! `knowledge.rs::decode_envelope`: `{ok:true,data}` is the owner reading;
+//! `{ok:false,error:{kind,message}}` is the owner's own failure truth, and
+//! the failure kinds the client speaks (`unbound` | `unavailable` |
+//! `refused` | `malformed`) are carried as distinct states. An unbound
+//! target is absence, never an error.
+use serde::{Deserialize, Serialize};
+use serde_json::Value;
+use std::{
+    ffi::OsString,
+    io::Write,
+    path::PathBuf,
+    process::{Command, Stdio},
+};
+
+/// The owner operation name every hosted node, edge and input carries.
+pub const OWNER_OPERATION: &str = "shared-field.projection";
+
+/// Why the SharedField client did not serve — the client's own failure
+/// kinds, verbatim, so the graph assembler and the kernel op can state the
+/// truthful input state without re-parsing strings.
+#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
+#[serde(tag = "kind", rename_all = "snake_case")]
+pub enum CallError {
+    /// No hosting target is bound in the client's environment. Absence.
+    Unbound { message: String },
+    /// The client could not be launched or the hosted field did not
+    /// answer. Absence, not an error.
+    Unavailable { detail: String },
+    /// The owner answered, and the answer was no — owner message verbatim.
+    Refused { message: String },
+    /// The owner answered something the envelope contract cannot parse.
+    Malformed { detail: String },
+}
+
+impl CallError {
+    /// The owner's own words for this failure, for an `Unavailable` input.
+    pub fn detail(&self) -> String {
+        match self {
+            Self::Unbound { message } | Self::Refused { message } => message.clone(),
+            Self::Unavailable { detail } | Self::Malformed { detail } => detail.clone(),
+        }
+    }
+}
+
+/// The client executable: `OI_SHARED_FIELD_CLIENT`, else the repository's
+/// own doorway `<repo>/shared-field/spacetimedb/field.sh` where the
+/// repository root is `OI_REPO_ROOT` or this crate's manifest directory
+/// climbed three levels (`desktop/cradle/kernel` → the O:I repository).
+pub fn client_executable() -> PathBuf {
+    if let Some(explicit) = std::env::var_os("OI_SHARED_FIELD_CLIENT") {
+        return PathBuf::from(explicit);
+    }
+    let repo = std::env::var_os("OI_REPO_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("..")
+                .join("..")
+                .join("..")
+        });
+    repo.join("shared-field").join("spacetimedb").join("field.sh")
+}
+
+/// Send one request to the SharedField client and return the owner `data`.
+pub fn call(request: &Value) -> Result<Value, CallError> {
+    call_with_executable(request, &client_executable().into_os_string())
+}
+
+fn call_with_executable(request: &Value, executable: &OsString) -> Result<Value, CallError> {
+    let mut child = Command::new(executable)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| CallError::Unavailable { detail: format!("SharedField client could not be launched ({}): {e}", executable.to_string_lossy()) })?;
+    {
+        let mut stdin = child.stdin.take().ok_or_else(|| CallError::Unavailable { detail: "SharedField client accepted no request on stdin".into() })?;
+        stdin
+            .write_all(request.to_string().as_bytes())
+            .map_err(|e| CallError::Unavailable { detail: format!("SharedField client refused the request bytes: {e}") })?;
+    }
+    let output = child
+        .wait_with_output()
+        .map_err(|e| CallError::Unavailable { detail: format!("SharedField client did not complete: {e}") })?;
+    decode_envelope(&output)
+}
+
+/// The envelope law shared with the knowledge transport: an empty stdout
+/// on failure is a launch/runtime fault (Unavailable); an unreadable
+/// stdout is Malformed; `ok:false` carries the client's own error kind.
+pub fn decode_envelope(output: &std::process::Output) -> Result<Value, CallError> {
+    if !output.status.success() && output.stdout.iter().all(u8::is_ascii_whitespace) {
+        let detail = String::from_utf8_lossy(&output.stderr).trim().to_owned();
+        return Err(CallError::Unavailable {
+            detail: if detail.is_empty() {
+                format!("SharedField client failed ({})", output.status)
+            } else {
+                format!("SharedField client failed ({}): {detail}", output.status)
+            },
+        });
+    }
+    let envelope: Value = serde_json::from_slice(&output.stdout).map_err(|e| CallError::Malformed {
+        detail: format!("SharedField client returned an unreadable envelope ({e}): {}", String::from_utf8_lossy(&output.stderr).trim()),
+    })?;
+    if envelope["ok"] == true {
+        return envelope.get("data").cloned().ok_or_else(|| CallError::Malformed { detail: "SharedField envelope is missing its reading".into() });
+    }
+    let message = envelope["error"]["message"].as_str().unwrap_or("SharedField client refused this request").to_owned();
+    Err(match envelope["error"]["kind"].as_str() {
+        Some("unbound") => CallError::Unbound { message },
+        Some("unavailable") => CallError::Unavailable { detail: message },
+        Some("malformed") => CallError::Malformed { detail: message },
+        // `refused`, and any kind the contract does not name, is the
+        // owner's answer carried verbatim.
+        _ => CallError::Refused { message },
+    })
+}
+
+/// The kernel-op reading: the owner data verbatim when it served; an
+/// explicit `{state:"unavailable", detail}` reading when the target is
+/// unbound or the field cannot be reached (absence is data, never an
+/// `Err`); the owner's own refusal or a malformed envelope is the error
+/// the caller surfaces in the owner's words.
+pub fn reading(request: &Value) -> Result<Value, String> {
+    match call(request) {
+        Ok(data) => Ok(data),
+        Err(CallError::Unbound { message }) => Ok(serde_json::json!({ "state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": message })),
+        Err(CallError::Unavailable { detail }) => Ok(serde_json::json!({ "state": "unavailable", "owner_operation": OWNER_OPERATION, "detail": detail })),
+        Err(CallError::Refused { message }) => Err(message),
+        Err(CallError::Malformed { detail }) => Err(detail),
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use std::os::unix::process::ExitStatusExt;
+    use std::process::{ExitStatus, Output};
+
+    fn output(code: i32, stdout: &str, stderr: &str) -> Output {
+        Output { status: ExitStatus::from_raw(code << 8), stdout: stdout.as_bytes().to_vec(), stderr: stderr.as_bytes().to_vec() }
+    }
+
+    #[test]
+    fn ok_envelope_yields_the_owner_data_verbatim() {
+        let data = decode_envelope(&output(0, r#"{"ok":true,"data":{"schema":"oi.shared-field.status/v1","bound":false,"reason":"no target"}}"#, "")).unwrap();
+        assert_eq!(data["schema"], "oi.shared-field.status/v1");
+        assert_eq!(data["bound"], false);
+    }
+
+    #[test]
+    fn unbound_envelope_is_absence_not_refusal() {
+        let error = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"unbound","message":"no SharedField target bound: set OI_SHARED_FIELD_TARGET"}}"#, "")).unwrap_err();
+        assert_eq!(error, CallError::Unbound { message: "no SharedField target bound: set OI_SHARED_FIELD_TARGET".into() });
+        assert_eq!(error.detail(), "no SharedField target bound: set OI_SHARED_FIELD_TARGET");
+    }
+
+    #[test]
+    fn every_client_failure_kind_is_carried_distinctly() {
+        let unavailable = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"unavailable","message":"SharedField db at ws://x is unavailable: timeout"}}"#, "")).unwrap_err();
+        assert!(matches!(unavailable, CallError::Unavailable { ref detail } if detail.contains("timeout")));
+        let refused = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"refused","message":"the owner said no"}}"#, "")).unwrap_err();
+        assert_eq!(refused, CallError::Refused { message: "the owner said no".into() });
+        let malformed = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"malformed","message":"read requires a string `ref`"}}"#, "")).unwrap_err();
+        assert_eq!(malformed, CallError::Malformed { detail: "read requires a string `ref`".into() });
+        let unknown_kind = decode_envelope(&output(1, r#"{"ok":false,"error":{"kind":"surprise","message":"carried verbatim"}}"#, "")).unwrap_err();
+        assert_eq!(unknown_kind, CallError::Refused { message: "carried verbatim".into() });
+    }
+
+    #[test]
+    fn empty_stdout_on_failure_is_unavailable_and_unreadable_stdout_is_malformed() {
+        let launch_fault = decode_envelope(&output(127, "", "tsx: not found")).unwrap_err();
+        assert!(matches!(launch_fault, CallError::Unavailable { ref detail } if detail.contains("tsx: not found")));
+        let unreadable = decode_envelope(&output(0, "not json", "")).unwrap_err();
+        assert!(matches!(unreadable, CallError::Malformed { .. }));
+        let missing_data = decode_envelope(&output(0, r#"{"ok":true}"#, "")).unwrap_err();
+        assert!(matches!(missing_data, CallError::Malformed { .. }));
+    }
+
+    #[test]
+    fn a_missing_client_executable_is_absence_not_a_panic() {
+        let error = call_with_executable(&serde_json::json!({"kind":"status"}), &OsString::from("/nonexistent/oi-shared-field-client")).unwrap_err();
+        assert!(matches!(error, CallError::Unavailable { .. }));
+    }
+}
