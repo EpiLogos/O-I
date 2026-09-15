@@ -1,10 +1,10 @@
 {
   "schema": "oi.cradle.expression-native-review/v1",
-  "observed_at": "2026-09-15T03:50:31.407824+00:00",
-  "status": "passed: native refinement and page focus/capture/return",
+  "observed_at": "2026-09-15T04:05:15.589750+00:00",
+  "status": "passed: native refinement, exact page admission and Wiki popout/return",
   "native_binary": "desktop/cradle/src-tauri/target/debug/oi-cradle",
   "kernel_head": "fa12a3f",
-  "frontend_head": "fa12a3f plus verified native page capture and material CSS corrections",
+  "frontend_head": "fd6cfb5e2697afcdef6d8f30be55ab356daa7369",
   "isolated_central": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-expression-page-HbNXKn",
   "webview_store": "f7ffd64860d40e265a83e73b68a45e8c",
   "expression_ref": "expression:2005b406-c948-44bc-ab55-e103cabc4f3c",
@@ -20,7 +20,13 @@
     "Native Things page presents exact Expression r10",
     "Native page focus and Escape return retain expression and page refs",
     "Capture while focused followed by immediate Escape retains the PNG on the same page",
-    "Captured image and live field remain readable in the native dark shell"
+    "Captured image and live field remain readable in the native dark shell",
+    "Exact hosted live admission hides standalone fallback in native WebKit",
+    "Unsaved authored-page edit restores fallback and releases live canvas; owner HTML unchanged",
+    "Native owner reread restores the same Expression r10",
+    "Real native search opens WikiSpace central:wiki:project:expression-native-review at revision 1",
+    "WikiSpace projects into the shared Expression stage and returns to the same knowledge view",
+    "Native Pop out reads the same exact Wiki ref/revision; Re-dock and graph return retain selection/history"
   ],
   "evidence": {
     "initial_proposal": {
@@ -641,11 +647,14 @@
   "screenshots": [
     "expression-native-human-decisions.png",
     "expression-native-focused-page.png",
-    "expression-native-capture-return.png"
+    "expression-native-capture-return.png",
+    "expression-native-page-edit.png",
+    "expression-native-wiki.png",
+    "expression-native-wiki-popout.png"
   ],
   "limits": [
     "Agent proposal attribution is caller supplied; no undisclosed native Activity or personality was invented.",
     "Native source and page were controlled files in an isolated Central ground.",
-    "Hosted portable fallback and live body coherence is under separate repair."
+    "Unrelated hosted Shared Field input was unavailable in this local native environment; local Wiki and Expression remained functional."
   ]
 }
