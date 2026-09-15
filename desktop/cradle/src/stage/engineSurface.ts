@@ -13,7 +13,17 @@
  * Laws carried over from the previous runtime: the surface exists exactly
  * while the expression is enabled (off removes canvas, context and
  * simulation entirely); prefers-reduced-motion renders a still field unless
- * a surface deliberately overrides it. A K9 retained lease is narrower:
+ * a surface deliberately overrides it.
+ *
+ * Clock law (2026-09-15 lifecycle repair): the simulation clock runs only
+ * while a LIVE presentation stands in a visible document. A released
+ * presentation settles its hand-over for one bounded window and then the
+ * surface sleeps — no frame is scheduled, the canvas is marked dormant and
+ * hidden. A hidden document never schedules drawing frames; the
+ * visibilitychange wake resumes a live field. Reduced motion paints one
+ * still frame per change and schedules nothing. `paused` holds the clock
+ * regardless. Every scheduler exit runs through the same `frame` guard, so
+ * a frame already in flight when `release()` lands cannot re-arm the loop. A K9 retained lease is narrower:
  * K8 may own the attraction targets of this same production field while O:I
  * keeps the canvas, renderer, physics clock and lifecycle. Context return then
  * restores the acknowledged resident GPU checkpoint instead of reseeding.
@@ -66,6 +76,9 @@ const ELEMENT_CAMERA_2D: EngineFrame["camera"] = {...CAMERA_2D,zoom:0.6};
 
 const IDLE_CONFIG: NativeConfig = { glyph: " ", particleCount: 2048 };
 const STAGE_IDLE = "stage-idle";
+/** How long a released field keeps its clock to settle the hand-over
+ * (the idle scene's own transition) before the surface sleeps. */
+const SETTLE_MS = 900;
 
 export class EngineSurface {
   readonly canvas: HTMLCanvasElement;
@@ -74,6 +87,8 @@ export class EngineSurface {
   private revision = 0;
   private selectedIds: string[] = [];
   private live = false;
+  private settleUntil = 0;
+  private frames = 0;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private raf = 0;
   private last = 0;
@@ -127,6 +142,8 @@ export class EngineSurface {
       this.observer.observe(element);
     }
     document.addEventListener("visibilitychange", this.wake);
+    this.reduced.addEventListener("change", this.wake);
+    this.markDormant(true);
   }
 
   static forWindow(onError: (message: string) => void): EngineSurface {
@@ -153,14 +170,18 @@ export class EngineSurface {
     // law. Only a different LIVE presentation refuses.
     if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
+    this.settleUntil = 0;
+    this.markDormant(false);
     this.activate(id, this.sceneFrom(stageRecipe(recipe)));
     this.wake();
   }
 
   presentConfig(id: string, config: unknown, sceneRef?: string, selectedIds: string[] = []) {
     if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
-    this.live = true;
     if (this.retainedLeaseOwner) throw new Error("Release the native domain binding before authoring this stage");
+    this.live = true;
+    this.settleUntil = 0;
+    this.markDormant(false);
     this.selectedIds = selectedIds;
     this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
     this.wake();
@@ -283,10 +304,28 @@ export class EngineSurface {
       ? IDLE_CONFIG
       : { ...IDLE_CONFIG, particleCount: retainedParticleCount };
     this.activate(STAGE_IDLE, this.sceneFrom(idleConfig, STAGE_IDLE));
-    this.renderFrame(0);
+    // The hand-over: a released field settles for one bounded window (its
+    // own transition to the idle scene), then the surface sleeps. Under
+    // reduced motion, or while paused, there is nothing to settle — one
+    // still frame and dormancy at once.
+    if (this.paused || (this.reduced.matches && !this.forceMotion)) {
+      this.renderFrame(0);
+      this.settleUntil = 0;
+      this.sleep();
+      this.markDormant(true);
+      return;
+    }
+    this.settleUntil = performance.now() + SETTLE_MS;
+    this.wake();
   }
 
   command(command: EngineCommand) {
+    // A command may arrive before the first frame (a sequence step fired
+    // while the document was hidden, or straight after present()). The
+    // engine materialises on its first render; give it that frame rather
+    // than reporting a fatal engine failure for an impulse with no field
+    // yet. A genuinely failed render still surfaces through renderFrame.
+    if (!this.frames && this.active && !this.renderFrame(0)) return;
     try { this.adapter.command?.(command); }
     catch (cause) { this.fail(cause); }
   }
@@ -312,6 +351,12 @@ export class EngineSurface {
   }
   /** Walk/dev observability: whether the surface's own clock is held. */
   get isPaused() { return this.paused; }
+  /** Whether a live presentation stands (a released field is not live). */
+  get isLive() { return this.live; }
+  /** Whether a drawing frame is currently scheduled. */
+  get isScheduled() { return this.raf !== 0; }
+  /** Frames rendered since creation — the honest activity counter. */
+  get frameCount() { return this.frames; }
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
   telemetry(): unknown { try { return this.adapter.telemetry?.() ?? null; } catch { return null; } }
   capabilities() { return this.adapter.capabilities; }
@@ -322,8 +367,11 @@ export class EngineSurface {
     this.observer?.disconnect();
     this.observer = null;
     document.removeEventListener("visibilitychange", this.wake);
+    this.reduced.removeEventListener("change", this.wake);
     this.detachPointer();
     this.active = null;
+    this.live = false;
+    this.settleUntil = 0;
     this.retainedLeaseOwner = null;
     this.retainedLeaseIdentity = null;
     try { this.adapter.dispose(); } catch { /* already gone with its context */ }
@@ -341,20 +389,41 @@ export class EngineSurface {
     return scene;
   }
   private clearTimers() { for (const timer of this.timers) clearTimeout(timer); this.timers.length = 0; }
+  /** The one admission rule for a drawing frame: a live presentation, or a
+   * released one still inside its settle window. */
+  private running(now: number) { return this.live || now < this.settleUntil; }
+  private markDormant(dormant: boolean) {
+    this.canvas.dataset.oiStageLive = dormant ? "false" : "true";
+  }
   private wake = () => {
-    if (this.paused || this.raf || !this.active || !this.live) return;
+    if (this.paused || this.raf || !this.active || document.hidden) return;
+    if (!this.running(performance.now())) return;
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
   };
   private sleep() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }
   private frame = (now: number) => {
     this.raf = 0;
-    if (!this.active) return;
-    if (document.hidden) { this.last = now; if(!this.paused)this.raf = requestAnimationFrame(this.frame); return; }
-    const animate = !this.paused && (this.forceMotion || !this.reduced.matches);
+    if (!this.active || this.paused) return;
+    // A hidden document draws nothing and schedules nothing; the
+    // visibilitychange wake resumes a live field when it returns.
+    if (document.hidden) { this.last = now; return; }
+    if (!this.running(now)) {
+      // The settle window of a released field has elapsed: one last still
+      // frame of the idle scene, then dormancy.
+      this.settleUntil = 0;
+      this.renderFrame(0);
+      this.markDormant(true);
+      return;
+    }
+    const animate = this.forceMotion || !this.reduced.matches;
     const delta = animate ? Math.min(0.05, Math.max(0.001, (now - this.last) / 1000)) : 0;
     this.last = now;
-    if (this.renderFrame(delta) && this.active && !this.paused) this.raf = requestAnimationFrame(this.frame);
+    if (!this.renderFrame(delta)) return;
+    // Reduced motion is genuinely reduced: one still frame per wake, no
+    // continuous clock. Otherwise the loop continues only while the same
+    // admission rule that started it still holds.
+    if (animate && this.active && !this.paused && this.running(now)) this.raf = requestAnimationFrame(this.frame);
   };
   private renderFrame(delta: number): boolean {
     const element = this.element;
@@ -367,6 +436,7 @@ export class EngineSurface {
     try {
       this.adapter.resize(width, height, window.devicePixelRatio || 1);
       this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: this.element?ELEMENT_CAMERA_2D:CAMERA_2D, pointer: this.pointer, selectedIds: this.selectedIds, scaffold: "off" });
+      this.frames++;
       return true;
     } catch (cause) {
       this.sleep();

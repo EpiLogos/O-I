@@ -18,6 +18,14 @@
   -webkit-user-select: none;
   user-select: none;
 }
+/* A dormant engine surface (no live presentation, settle window elapsed)
+ * keeps its canvas, context and resident field but paints nothing and
+ * schedules nothing: the stage marks it `data-oi-stage-live="false"`. The
+ * next presentation lifts the mark before its first frame. */
+.oi-point-cloud-overlay[data-oi-stage-live="false"],
+.oi-stage-element-surface[data-oi-stage-live="false"] {
+  visibility: hidden;
+}
 
 .oi-point-cloud {
   display: inline-block;
