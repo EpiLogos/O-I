@@ -1,0 +1,40 @@
+serving the cradle at http://127.0.0.1:4321 (external)
+
+=== scenario: surfaces ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Four owner sources open as four unique bindings
+PASS  Last opened source is the single kernel focus
+PASS  Opening an existing ref reuses its binding
+PASS  Keyboard closes the focused source view
+PASS  Keyboard reopens the same source binding
+PASS  Pointer close operates on the requested tab
+PASS  Keyboard splits the active source to the right
+PASS  Keyboard split keeps the DOM caret in the semantically active pane
+PASS  Keyboard focus moves to the neighbouring pane
+PASS  Keyboard moves the active binding into the neighbouring pane
+PASS  Keyboard creates a vertical split
+PASS  Keyboard tiles the four real sources
+PASS  Each tiled source has one editor
+  screenshot: artifacts/surfaces-native-sources-tiled.png
+PASS  Tiling and movement retain dirty source writing
+PASS  Source frame menu discloses its exact operations and existing destination panes
+PASS  Pointer menu pins the requested source
+PASS  Pinned source refuses keyboard close
+PASS  Pinned close is disclosed as disabled
+PASS  Keyboard unpins the same binding
+PASS  Pointer drag moves a source and removes its empty pane
+PASS  Pointer menu splits the same real binding
+PASS  Keyboard menu activation closes the selected view
+PASS  Closed binding reopens without a new source identity
+PASS  Reload restores pane tree, active tabs, pins and weights exactly
+PASS  Reload restores dirty writing through owner validation
+PASS  Browsing another project never replaces open work
+PASS  Browsing preserves the canonical focused source
+PASS  Kernel receipts stay contiguous across frame operations
+  screenshot: artifacts/surfaces-source-frame-menu.png
+  stopped walk-bridge
+  receipt: artifacts/surfaces.json — 28/28 checks, PASS
+
+=== walk summary ===
+PASS  surfaces — 28/28 checks · open_4_tabs_ms=1219

@@ -1,0 +1,8 @@
+START baseline 1
+DONE baseline 1 [{"phase":"disabled-startup"},{"phase":"disabled-idle","cpu":0.21601626869549292,"raf":0,"heap":8316916,"stage":{"paused":null,"presentations":[]},"canvases":1}]
+START current 1
+DONE current 1 [{"phase":"disabled-startup"},{"phase":"disabled-idle","cpu":0.13516187643218672,"raf":0,"heap":6129152,"stage":{"paused":null,"live":null,"scheduled":null,"frames":null,"presentations":[]},"canvases":1}]
+START current 2
+DONE current 2 [{"phase":"disabled-startup"},{"phase":"disabled-idle","cpu":0.29533705687624545,"raf":0,"heap":6163544,"stage":{"paused":null,"live":null,"scheduled":null,"frames":null,"presentations":[]},"canvases":1}]
+START baseline 2
+DONE baseline 2 [{"phase":"disabled-startup"},{"phase":"disabled-idle","cpu":0.34579362333114344,"raf":1,"heap":8342672,"stage":{"paused":null,"presentations":[]},"canvases":1}]
