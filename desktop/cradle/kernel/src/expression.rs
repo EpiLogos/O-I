@@ -118,6 +118,42 @@ pub struct Selection {
     pub scene_ref: String,
     pub entity_ref: Option<String>,
 }
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum RefinementState {
+    Proposed,
+    Accepted,
+    Rejected,
+}
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct RefinementDecision {
+    pub state: RefinementState,
+    pub actor: String,
+    pub reason: String,
+    pub decided_at_revision: u64,
+    #[serde(default)]
+    pub corrections: Vec<Change>,
+}
+/// An attributable, reviewable Agent proposal. It lives in the Expression
+/// document so export/reopen retains the person's accept/reject/correction
+/// decision. `activity_ref` is correlation evidence only, never authority.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
+#[serde(deny_unknown_fields)]
+pub struct Refinement {
+    pub proposal_ref: String,
+    pub basis_revision: u64,
+    pub proposed_by: String,
+    pub activity_ref: Option<String>,
+    pub continues_proposal_ref: Option<String>,
+    pub summary: String,
+    pub changes: Vec<Change>,
+    #[serde(default)]
+    pub method_refs: Vec<ReadingRef>,
+    #[serde(default)]
+    pub evidence_refs: Vec<ReadingRef>,
+    pub decision: Option<RefinementDecision>,
+}
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Document {
@@ -131,6 +167,8 @@ pub struct Document {
     pub selection: Selection,
     pub provenance: Vec<ReadingRef>,
     pub representations: Vec<Representation>,
+    #[serde(default)]
+    pub refinements: Vec<Refinement>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "change", rename_all = "snake_case", deny_unknown_fields)]
@@ -222,6 +260,30 @@ pub enum Request {
         actor: String,
         changes: Vec<Change>,
     },
+    Propose {
+        expression_ref: String,
+        expected_revision: u64,
+        proposal_ref: String,
+        actor: String,
+        activity_ref: Option<String>,
+        continues_proposal_ref: Option<String>,
+        summary: String,
+        changes: Vec<Change>,
+        #[serde(default)]
+        method_refs: Vec<ReadingRef>,
+        #[serde(default)]
+        evidence_refs: Vec<ReadingRef>,
+    },
+    Review {
+        expression_ref: String,
+        expected_revision: u64,
+        proposal_ref: String,
+        actor: String,
+        decision: RefinementState,
+        reason: String,
+        #[serde(default)]
+        corrections: Vec<Change>,
+    },
     Export {
         expression_ref: String,
         expected_revision: u64,
@@ -248,6 +310,7 @@ pub struct Changed {
     pub expression_ref: String,
     pub revision: u64,
     pub actor: String,
+    pub activity_ref: Option<String>,
 }
 #[derive(Debug, Default)]
 pub struct Application {
@@ -258,10 +321,12 @@ pub struct Application {
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","export","save","invoke"],
+        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","invoke"],
         "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","parameter_set","parameter_automate","parameter_manual","representation_bind"],
         "parameters":{"glyph":{"type":"string","max_length":128},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
+        "refinement":{"review_required":true,"decisions":["accepted","rejected"],"activity_ref_authenticates":false,"retained_on_export":true},
+        "pedagogy":{"material":["scenes","source-bearing entities","movement","optional text","methods","evidence"],"chat_only":false},
         "save_owner":"central.files.write", "source_mutation":false, "attribution_is_authentication":false,
         "export_audience":"local_private", "dynamic_checkpoint":false,
         "unsupported":["capture","page_embed","projection_publish","domain_state_write","knowledge_query"],
@@ -442,6 +507,50 @@ impl Document {
             if !representation_refs.insert(&r.representation.r#ref) {
                 return Err("Duplicate representation".into());
             }
+        }
+        if self.refinements.len() > LIMIT {
+            return Err("Refinement budget exceeded".into());
+        }
+        let mut proposal_refs = BTreeSet::new();
+        let mut reviewed_proposal_refs = BTreeSet::new();
+        for proposal in &self.refinements {
+            id(
+                &proposal.proposal_ref,
+                &format!("{}:proposal:", self.expression_ref),
+            )?;
+            text(&proposal.proposed_by)?;
+            text(&proposal.summary)?;
+            if proposal.basis_revision == 0
+                || proposal.basis_revision > self.revision
+                || proposal.changes.is_empty()
+                || proposal.changes.len() > LIMIT
+                || proposal_refs.contains(&proposal.proposal_ref)
+            {
+                return Err("Invalid or duplicate refinement proposal".into());
+            }
+            if let Some(activity_ref) = &proposal.activity_ref {
+                text(activity_ref)?;
+            }
+            readings(&proposal.method_refs)?;
+            readings(&proposal.evidence_refs)?;
+            if let Some(previous) = &proposal.continues_proposal_ref {
+                if !reviewed_proposal_refs.contains(previous) {
+                    return Err("Continuation must name an earlier reviewed proposal".into());
+                }
+            }
+            if let Some(decision) = &proposal.decision {
+                text(&decision.actor)?;
+                text(&decision.reason)?;
+                if decision.state == RefinementState::Proposed
+                    || decision.decided_at_revision == 0
+                    || decision.decided_at_revision > self.revision
+                    || decision.corrections.len() > LIMIT
+                {
+                    return Err("Invalid refinement decision".into());
+                }
+                reviewed_proposal_refs.insert(proposal.proposal_ref.clone());
+            }
+            proposal_refs.insert(proposal.proposal_ref.clone());
         }
         Ok(())
     }
@@ -682,6 +791,7 @@ impl Application {
                     },
                     provenance: vec![],
                     representations: vec![],
+                    refinements: vec![],
                 };
                 return self.open(d, actor);
             }
@@ -749,6 +859,7 @@ impl Application {
                 d.selection.scene_ref = map(&d.selection.scene_ref);
                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
                 d.representations.clear();
+                d.refinements.clear();
                 return self.open(d, actor);
             }
             Request::Edit {
@@ -792,9 +903,175 @@ impl Application {
                         expression_ref: expression_ref.clone(),
                         revision: d.revision,
                         actor,
+                        activity_ref: None,
                     });
                     self.documents.insert(expression_ref.clone(), d);
                 }
+                self.inspect(&expression_ref)?
+            }
+            Request::Propose {
+                expression_ref,
+                expected_revision,
+                proposal_ref,
+                actor,
+                activity_ref,
+                continues_proposal_ref,
+                summary,
+                changes,
+                method_refs,
+                evidence_refs,
+            } => {
+                text(&actor)?;
+                text(&summary)?;
+                if let Some(value) = &activity_ref {
+                    text(value)?;
+                }
+                if let Some(c) = self.conflict(&expression_ref, expected_revision)? {
+                    return Ok((c, None));
+                }
+                if changes.is_empty() || changes.len() > LIMIT {
+                    return Err("Proposal must contain a bounded change set".into());
+                }
+                readings(&method_refs)?;
+                readings(&evidence_refs)?;
+                id(&proposal_ref, &format!("{expression_ref}:proposal:"))?;
+                let before = self.document(&expression_ref)?;
+                if before
+                    .refinements
+                    .iter()
+                    .any(|p| p.proposal_ref == proposal_ref)
+                {
+                    return Err("Proposal already exists".into());
+                }
+                if let Some(previous) = &continues_proposal_ref {
+                    let previous = before
+                        .refinements
+                        .iter()
+                        .find(|p| &p.proposal_ref == previous)
+                        .ok_or("Continuation proposal is absent")?;
+                    if previous.decision.is_none() {
+                        return Err("Continue only after the prior proposal was reviewed".into());
+                    }
+                }
+                // Validate the complete proposed edit against a clone. A proposal
+                // that could not be applied to its stated basis never enters history.
+                let mut candidate = before.clone();
+                for change in changes.clone() {
+                    candidate.change(change)?;
+                }
+                candidate.validate()?;
+                let mut d = before.clone();
+                d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
+                d.refinements.push(Refinement {
+                    proposal_ref: proposal_ref.clone(),
+                    basis_revision: expected_revision,
+                    proposed_by: actor.clone(),
+                    activity_ref: activity_ref.clone(),
+                    continues_proposal_ref,
+                    summary,
+                    changes,
+                    method_refs,
+                    evidence_refs,
+                    decision: None,
+                });
+                d.validate()?;
+                self.documents.insert(expression_ref.clone(), d);
+                changed = Some(Changed {
+                    expression_ref: expression_ref.clone(),
+                    revision: expected_revision + 1,
+                    actor,
+                    activity_ref,
+                });
+                self.inspect(&expression_ref)?
+            }
+            Request::Review {
+                expression_ref,
+                expected_revision,
+                proposal_ref,
+                actor,
+                decision,
+                reason,
+                corrections,
+            } => {
+                text(&actor)?;
+                text(&reason)?;
+                if !matches!(
+                    decision,
+                    RefinementState::Accepted | RefinementState::Rejected
+                ) {
+                    return Err("Review decision must be accepted or rejected".into());
+                }
+                if corrections.len() > LIMIT {
+                    return Err("Correction budget exceeded".into());
+                }
+                if decision == RefinementState::Rejected && !corrections.is_empty() {
+                    return Err("Rejected proposals cannot apply corrections".into());
+                }
+                if let Some(c) = self.conflict(&expression_ref, expected_revision)? {
+                    return Ok((c, None));
+                }
+                let before = self.document(&expression_ref)?;
+                let index = before
+                    .refinements
+                    .iter()
+                    .position(|p| p.proposal_ref == proposal_ref)
+                    .ok_or("Proposal is absent")?;
+                if before.refinements[index].decision.is_some() {
+                    return Err("Proposal was already reviewed".into());
+                }
+                let proposal = before.refinements[index].clone();
+                if decision == RefinementState::Accepted
+                    && expected_revision != proposal.basis_revision + 1
+                {
+                    return Ok((
+                        json!({"state":"proposal_basis_conflict","expression_ref":expression_ref,"proposal_ref":proposal_ref,"proposal_basis_revision":proposal.basis_revision,"current_revision":expected_revision,"detail":"The Expression changed after this proposal; reject it or submit a continuation against the current revision"}),
+                        None,
+                    ));
+                }
+                let mut d = before.clone();
+                if decision == RefinementState::Accepted {
+                    for change in proposal
+                        .changes
+                        .iter()
+                        .cloned()
+                        .chain(corrections.iter().cloned())
+                    {
+                        d.change(change)?;
+                    }
+                }
+                d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
+                if decision == RefinementState::Accepted {
+                    for entity in d.entities.values_mut() {
+                        if before.entities.get(&entity.entity_ref) != Some(entity) {
+                            entity.revision = d.revision;
+                        }
+                    }
+                    for scene in &mut d.scenes {
+                        if before
+                            .scenes
+                            .iter()
+                            .find(|old| old.scene_ref == scene.scene_ref)
+                            != Some(scene)
+                        {
+                            scene.revision = d.revision;
+                        }
+                    }
+                }
+                d.refinements[index].decision = Some(RefinementDecision {
+                    state: decision,
+                    actor: actor.clone(),
+                    reason,
+                    decided_at_revision: d.revision,
+                    corrections,
+                });
+                d.validate()?;
+                self.documents.insert(expression_ref.clone(), d);
+                changed = Some(Changed {
+                    expression_ref: expression_ref.clone(),
+                    revision: expected_revision + 1,
+                    actor,
+                    activity_ref: None,
+                });
                 self.inspect(&expression_ref)?
             }
             Request::Export {
@@ -938,6 +1215,7 @@ impl Application {
             expression_ref: d.expression_ref.clone(),
             revision: d.revision,
             actor,
+            activity_ref: None,
         };
         self.documents.insert(d.expression_ref.clone(), d);
         Ok((self.inspect(&event.expression_ref)?, Some(event)))

@@ -1,4 +1,6 @@
 import type { CSSProperties, ReactNode } from 'react';
+// @ts-ignore -- canonical shared-field contract is language-neutral JS.
+import { resolveExpressionPresentation } from '../../../shared-field/expression-presentation.mjs';
 
 export type PresentationBinding = {
   binding_ref: string;
@@ -37,7 +39,13 @@ type RendererProps = {
   onOpenRef?: (ref: string) => void;
   authoring?: boolean;
   onEditProps?: (bindingRef: string, patch: Record<string, unknown>) => void;
+  expressionCapability?: ExpressionRendererCapability;
+  onFocusExpression?: (request: ExpressionFocusRequest) => void;
+  presentationRef?: string;
 };
+
+export type ExpressionFocusRequest = { expression_ref: string; expression_revision: number; scene_ref?: string; subject_ref?: string; presentation_ref: string; binding_ref: string };
+export type ExpressionRendererCapability = { renderer_ref: string; available: boolean; focus?: boolean; capture?: boolean; render?: (request: ExpressionFocusRequest) => ReactNode };
 
 type Renderer = (props: RendererProps) => ReactNode;
 
@@ -342,6 +350,32 @@ function Link({ binding }: RendererProps) {
   );
 }
 
+function ExpressionBody({ binding, expressionCapability, onFocusExpression, presentationRef }: RendererProps) {
+  let resolved: any;
+  try { resolved = resolveExpressionPresentation(binding, expressionCapability ? {...expressionCapability,available:expressionCapability.available&&typeof expressionCapability.render==='function'} : {}); }
+  catch (error) { return <article className="world-component world-component--fallback" role="alert"><h3>Expression unavailable</h3><p>{String(error)}</p></article>; }
+  const expression = resolved.expression;
+  const request: ExpressionFocusRequest = {expression_ref:expression.expression_ref, expression_revision:expression.expression_revision, ...(expression.scene_ref?{scene_ref:expression.scene_ref}:{}), ...(binding.subject_ref?{subject_ref:binding.subject_ref}:{}), presentation_ref:presentationRef??'', binding_ref:binding.binding_ref};
+  if (resolved.state === 'live' && expressionCapability?.render) {
+    return <section className="world-component world-component--expression" data-expression-ref={expression.expression_ref} data-expression-revision={expression.expression_revision} data-subject-ref={binding.subject_ref}>
+      <div className="world-expression__live">{expressionCapability.render(request)}</div>
+      {resolved.focus_available && onFocusExpression ? <button type="button" onClick={() => onFocusExpression(request)}>Focus Expression</button> : null}
+    </section>;
+  }
+  if (resolved.state === 'fallback') {
+    const fallback = resolved.fallback;
+    const href = safeHref(fallback.href);
+    return <figure className="world-component world-component--expression" data-expression-ref={expression.expression_ref} data-expression-revision={expression.expression_revision} data-expression-state="fallback">
+      {fallback.kind === 'image' && href ? <img src={href} alt={textProp(binding.fallback.title, 'Expression capture')} /> : null}
+      {fallback.kind === 'video' && href ? <video src={href} controls preload="metadata" /> : null}
+      {fallback.kind === 'html' && typeof fallback.html === 'string' ? <iframe title={textProp(binding.fallback.title, 'Frozen Expression')} sandbox="" srcDoc={fallback.html} /> : null}
+      <figcaption>{textProp(binding.fallback.text, `${fallback.kind} representation of ${expression.expression_ref}`)}</figcaption>
+      <code>{fallback.representation.ref} · {fallback.representation.revision}</code>
+    </figure>;
+  }
+  return <article className="world-component world-component--fallback" data-expression-ref={expression.expression_ref} data-expression-state="unavailable"><div className="world-component__eyebrow">Expression unavailable</div><h3>{textProp(binding.fallback.title, expression.expression_ref)}</h3><p>{textProp(binding.fallback.text, resolved.reason)}</p></article>;
+}
+
 export const portablePresentationRenderers: Record<string, Renderer> = {
   'oi.presentation/heading/v1': Heading,
   'oi.presentation/text/v1': Text,
@@ -363,6 +397,7 @@ export const portablePresentationRenderers: Record<string, Renderer> = {
   'oi.presentation/reference-card/v1': ReferenceCard,
   'oi.presentation/run-history/v1': Timeline,
   'oi.presentation/action/v1': Action,
+  'oi.presentation/expression/v1': ExpressionBody,
 };
 
 function Fallback({ binding }: RendererProps) {
@@ -398,6 +433,8 @@ export function WorldPresentationRenderer({
   onMoveBinding,
   onDuplicateBinding,
   onRemoveBinding,
+  expressionCapability,
+  onFocusExpression,
 }: {
   presentation: WorldPresentation;
   onOpenRef?: (ref: string) => void;
@@ -411,6 +448,8 @@ export function WorldPresentationRenderer({
   onMoveBinding?: (bindingRef: string, regionRef: string, index: number) => void;
   onDuplicateBinding?: (bindingRef: string) => void;
   onRemoveBinding?: (bindingRef: string) => void;
+  expressionCapability?: ExpressionRendererCapability;
+  onFocusExpression?: (request: ExpressionFocusRequest) => void;
 }) {
   return (
     <article className={authoring ? 'world-presentation world-presentation--authoring' : 'world-presentation'} data-presentation-ref={presentation.presentation_ref} data-world-ref={presentation.world_ref} style={presentationThemeStyle(presentation)}>
@@ -452,7 +491,7 @@ export function WorldPresentationRenderer({
                       <button type="button" onClick={(event) => { event.stopPropagation(); onRemoveBinding?.(binding.binding_ref); }}>Remove</button>
                     </div>
                   ) : null}
-                  <Renderer binding={binding} onOpenRef={onOpenRef} authoring={authoring} onEditProps={onEditProps} />
+                  <Renderer binding={binding} onOpenRef={onOpenRef} authoring={authoring} onEditProps={onEditProps} expressionCapability={expressionCapability} presentationRef={presentation.presentation_ref} onFocusExpression={onFocusExpression} />
                   {authoring ? <button type="button" className="world-insert world-insert--after" onClick={(event) => { event.stopPropagation(); onInsert?.(region.region_ref, index + 1); }} aria-label={`Insert after ${binding.binding_ref}`}>＋</button> : null}
                 </div>
               );

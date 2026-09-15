@@ -21,6 +21,7 @@
  * scene replacement.
  */
 import { ProductionAdapter } from "../shell/production.mjs";
+import { WORLD_SCALE } from "../shell/nativeParameters.mjs";
 
 export class RetainedProductionAdapter extends ProductionAdapter {
   constructor(canvas) {
@@ -95,6 +96,7 @@ export class RetainedProductionAdapter extends ProductionAdapter {
         original,
         external: false,
         recoveryRequired: false,
+        presentation: null,
         lockedSignature: this.signature,
         port: null
       };
@@ -130,6 +132,51 @@ export class RetainedProductionAdapter extends ProductionAdapter {
       });
     }
     return state.port;
+  }
+
+  /** Atomically updates only the live per-entity presentation uniforms. The
+   * retained target textures, partitions, shapes and clock remain owned by
+   * their existing producers. */
+  updateRetainedPresentation(request) {
+    const state = this.retained;
+    if (!state?.external || !this.engine || this.contextLost || state.recoveryRequired) {
+      throw new Error("A live retained-field binding must own targets before presentation can update.");
+    }
+    if (!request || request.schema !== "oi.retained-presentation/v1" || Object.keys(request).sort().join(",") !== "entities,eventRef,personalGeneration,profileGeneration,schema,subjectRef") throw new Error("Unsupported retained presentation envelope.");
+    const text = (value) => typeof value === "string" && value.length > 0 && !value.includes("\0");
+    const integer = (value) => Number.isSafeInteger(value) && value >= 0;
+    if (!text(request.eventRef) || !text(request.subjectRef) || !integer(request.profileGeneration) || !integer(request.personalGeneration)) {
+      throw new Error("Retained presentation identity and generation must be explicit.");
+    }
+    const existing = this.engine.config?.entities;
+    if (!Array.isArray(existing) || !Array.isArray(request.entities) || request.entities.length !== existing.length) {
+      throw new Error("Retained presentation must cover the existing entity set exactly.");
+    }
+    const previous = state.presentation;
+    if (previous && (request.eventRef !== previous.eventRef || request.subjectRef !== previous.subjectRef || request.profileGeneration !== previous.profileGeneration || request.personalGeneration < previous.personalGeneration)) {
+      throw new Error("Retained presentation is stale or belongs to another owner event.");
+    }
+    const byId = new Map(request.entities.map((entity) => [entity?.id, entity]));
+    if (byId.size !== existing.length || existing.some((entity) => !byId.has(entity.id))) throw new Error("Retained presentation entity order and identity changed.");
+    const next = existing.map((entity, index) => {
+      const patch = request.entities[index];
+      if (!patch || Object.keys(patch).sort().join(",") !== "id,scale,tint,tintWeight,x,y,z" || patch.id !== entity.id || !Number.isFinite(patch.x) || Math.abs(patch.x)>10 || !Number.isFinite(patch.y) || Math.abs(patch.y)>10 || !Number.isFinite(patch.z) || Math.abs(patch.z)>10 || !Number.isFinite(patch.scale) || patch.scale < 0.02 || patch.scale > 4 || !/^#[0-9a-fA-F]{6}$/.test(patch.tint) || !Number.isFinite(patch.tintWeight) || patch.tintWeight < 0 || patch.tintWeight > 1) {
+        throw new Error("Retained presentation contains an invalid or reordered entity patch.");
+      }
+      // The envelope uses the authoring coordinate convention; native entity
+      // coordinates use the engine's established 400-unit stage scale.
+      return { ...entity, x: patch.x * WORLD_SCALE, y: patch.y * WORLD_SCALE, z: patch.z * WORLD_SCALE, scale: patch.scale, tint: patch.tint, tintWeight: patch.tintWeight };
+    });
+    const fingerprint = JSON.stringify({schema:request.schema,eventRef:request.eventRef,subjectRef:request.subjectRef,profileGeneration:request.profileGeneration,personalGeneration:request.personalGeneration,entities:request.entities});
+    if (previous && request.personalGeneration === previous.personalGeneration) {
+      if (fingerprint !== previous.fingerprint) throw new Error("A personal generation cannot be rewritten.");
+      return this.inspect();
+    }
+    // All validation precedes this single engine mutation.
+    this.engine.updateConfig({ entities: next });
+    state.presentation = { eventRef: request.eventRef, subjectRef: request.subjectRef, profileGeneration: request.profileGeneration, personalGeneration: request.personalGeneration, fingerprint };
+    this.dirty = true;
+    return this.inspect();
   }
 
   checkpointRetainedField(binding) {
