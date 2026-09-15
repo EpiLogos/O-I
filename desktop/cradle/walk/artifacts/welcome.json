@@ -1,61 +1,292 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "welcome",
-  "generated_at": "2026-09-15T14:45:13.450Z",
+  "generated_at": "2026-09-15T17:46:05.440Z",
   "environment": {
     "base_url": "http://localhost:4173",
-    "bridge_url": null,
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
-    "platform": "darwin"
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+      "tracked_changes": [
+        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-CONTINUATION-2026-09-15.md",
+        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-RECEIPT-2026-09-15.md",
+        "desktop/cradle/src/contributions/factory/contribution.json",
+        "desktop/cradle/src/stage/engineSurface.ts",
+        "desktop/cradle/src/visuals/store.ts",
+        "desktop/cradle/tests/theme-prepaint-csp.mjs",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
+        "desktop/cradle/walk/artifacts/expression-controls.json",
+        "desktop/cradle/walk/artifacts/instrument-failure.png",
+        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
+        "desktop/cradle/walk/artifacts/instrument-host.json",
+        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
+        "desktop/cradle/walk/artifacts/instrument.json",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
+        "desktop/cradle/walk/artifacts/refinement.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
+        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
+        "desktop/cradle/walk/artifacts/surfaces.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/owner-verification/portable-files.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-dark-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-light.png",
+        "desktop/cradle/walk/artifacts/welcome-failure.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
+        "desktop/cradle/walk/artifacts/welcome.json",
+        "desktop/cradle/walk/scenarios/instrument-host.mjs",
+        "desktop/cradle/walk/scenarios/instrument-native-host.mjs",
+        "desktop/cradle/walk/scenarios/instrument.mjs",
+        "desktop/cradle/walk/scenarios/knowledge-expression.mjs",
+        "desktop/cradle/walk/scenarios/welcome.mjs"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 13361,
+  "duration_ms": 20201,
   "checks": [
     {
       "ok": true,
-      "label": "The welcome frontstate stands between the app and the person on first open"
+      "label": "The welcome frontstate stands on first open"
     },
     {
       "ok": true,
-      "label": "Boot is one continuous frontstate — no second loader stands over it"
+      "label": "Boot uses one continuous frontstate"
     },
     {
       "ok": true,
-      "label": "The frontstate field renders through the one window expression canvas"
+      "label": "The opening uses one production Expression canvas"
     },
     {
       "ok": true,
-      "label": "The enter control is a real labelled control, not a bare scrim"
+      "label": "Entry becomes available after actual field drawing and native boot"
     },
     {
       "ok": true,
-      "label": "The workspace is already composed behind the frontstate"
+      "label": "The workspace is composed beneath the opening field"
     },
     {
       "ok": true,
-      "label": "Escape dissolves the frontstate and hands the app over"
+      "label": "The covered workspace is unavailable to pointer and keyboard interaction"
     },
     {
       "ok": true,
-      "label": "A continuing session in the same window opens straight into the app"
+      "label": "Escape waits for the full rendered enter sequence"
     },
     {
       "ok": true,
-      "label": "Reduced motion enters immediately without the dissolve flight"
+      "label": "Keyboard entry restores focus in the working app"
     },
     {
       "ok": true,
-      "label": "After the dissolve the empty workspace is the app"
+      "label": "The completed opening does not re-trap the same session"
+    },
+    {
+      "ok": true,
+      "label": "Reduced motion paints the final authored still before keyboard entry"
+    },
+    {
+      "ok": true,
+      "label": "Reduced motion releases the opening without continuing a simulation"
+    },
+    {
+      "ok": true,
+      "label": "light app starts on the opposite canonical scene ground",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 70,
+        "maxX": 961,
+        "maxY": 570,
+        "count": 69585,
+        "background": [
+          18,
+          18,
+          17
+        ],
+        "lightInkPixels": 57439,
+        "darkInkPixels": 0,
+        "maxContrast": 12.067601898864037
+      }
+    },
+    {
+      "ok": true,
+      "label": "light opening has readable native O:I mark ink",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 70,
+        "maxX": 961,
+        "maxY": 570,
+        "count": 69585,
+        "background": [
+          18,
+          18,
+          17
+        ],
+        "lightInkPixels": 57439,
+        "darkInkPixels": 0,
+        "maxContrast": 12.067601898864037
+      }
+    },
+    {
+      "ok": true,
+      "label": "The field owns its full ground and the labelled control stays above it"
+    },
+    {
+      "ok": true,
+      "label": "The frontstate and incomplete session remain through the explosion"
+    },
+    {
+      "ok": true,
+      "label": "light entry reaches the application palette on the same field"
+    },
+    {
+      "ok": true,
+      "label": "light entry releases only after the rendered tail",
+      "data": {
+        "name": "welcome.enter",
+        "elapsed": 2666.4999999999995,
+        "duration": 2600,
+        "status": "completed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Rest, explosion and final release retain one canvas/context"
+    },
+    {
+      "ok": true,
+      "label": "The opening preserves the saved app appearance"
+    },
+    {
+      "ok": true,
+      "label": "dark app starts on the opposite canonical scene ground",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 71,
+        "maxX": 961,
+        "maxY": 570,
+        "count": 72199,
+        "background": [
+          251,
+          251,
+          249
+        ],
+        "lightInkPixels": 0,
+        "darkInkPixels": 57159,
+        "maxContrast": 20.02549750095129
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark opening has readable native O:I mark ink",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 71,
+        "maxX": 961,
+        "maxY": 570,
+        "count": 72199,
+        "background": [
+          251,
+          251,
+          249
+        ],
+        "lightInkPixels": 0,
+        "darkInkPixels": 57159,
+        "maxContrast": 20.02549750095129
+      }
+    },
+    {
+      "ok": true,
+      "label": "The field owns its full ground and the labelled control stays above it"
+    },
+    {
+      "ok": true,
+      "label": "The frontstate and incomplete session remain through the explosion"
+    },
+    {
+      "ok": true,
+      "label": "dark entry reaches the application palette on the same field"
+    },
+    {
+      "ok": true,
+      "label": "dark entry releases only after the rendered tail",
+      "data": {
+        "name": "welcome.enter",
+        "elapsed": 2666.0999999999995,
+        "duration": 2600,
+        "status": "completed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Rest, explosion and final release retain one canvas/context"
+    },
+    {
+      "ok": true,
+      "label": "The opening preserves the saved app appearance"
+    },
+    {
+      "ok": true,
+      "label": "No presentation remains live in the settled desktop"
+    },
+    {
+      "ok": true,
+      "label": "The completed opening schedules no simulation frames",
+      "data": {
+        "presentations": 0,
+        "frames": 0,
+        "scheduled": false,
+        "live": false,
+        "dormant": true,
+        "canvases": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "The single production canvas/context stays resident and dormant"
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 185,
+      "duration_ms": 44,
       "data": {
         "file": "welcome-welcome-reduced-motion.png"
       }
@@ -63,33 +294,63 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 505,
+      "duration_ms": 311,
       "data": {
-        "file": "welcome-welcome-frontstate-rest.png"
+        "file": "welcome-welcome-light-rest.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 428,
+      "duration_ms": 448,
       "data": {
-        "file": "welcome-welcome-frontstate-dissolve.png"
+        "file": "welcome-welcome-light-explosion.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 35,
       "data": {
-        "file": "welcome-welcome-frontstate-entered.png"
+        "file": "welcome-welcome-light-entered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 325,
+      "data": {
+        "file": "welcome-welcome-dark-rest.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 302,
+      "data": {
+        "file": "welcome-welcome-dark-explosion.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 15,
+      "data": {
+        "file": "welcome-welcome-dark-entered.png"
       }
     }
   ],
-  "metrics": {},
+  "metrics": {
+    "welcome_light_inverse_ink_pixels": 57439,
+    "welcome_dark_inverse_ink_pixels": 57159
+  },
   "screenshots": [
     "welcome-welcome-reduced-motion.png",
-    "welcome-welcome-frontstate-rest.png",
-    "welcome-welcome-frontstate-dissolve.png",
-    "welcome-welcome-frontstate-entered.png"
+    "welcome-welcome-light-rest.png",
+    "welcome-welcome-light-explosion.png",
+    "welcome-welcome-light-entered.png",
+    "welcome-welcome-dark-rest.png",
+    "welcome-welcome-dark-explosion.png",
+    "welcome-welcome-dark-entered.png"
   ]
 }

@@ -27,6 +27,9 @@ export default async function run({page,baseUrl,check,shot,metric}) {
   check(await page.locator('canvas[data-oi-stage="engine"]').count()===1,'The opening uses one production Expression canvas');
   await page.locator(READY).waitFor({timeout:30000});
   check(await welcome.getAttribute('data-field-ready')==='true'&&(await stage(page)).frames>0,'Entry becomes available after actual field drawing and native boot');
+  // The workspace is requested only after the field's first rendered frame,
+  // so its composition beneath the opening arrives asynchronously.
+  await page.getByRole('region',{name:'Empty workspace',includeHidden:true}).waitFor({state:'attached',timeout:30000});
   check(await page.getByRole('region',{name:'Empty workspace',includeHidden:true}).isVisible(),'The workspace is composed beneath the opening field');
   check(await page.locator('.oi-workspace-mount[inert][aria-hidden="true"]').count()===1,'The covered workspace is unavailable to pointer and keyboard interaction');
 
@@ -76,7 +79,12 @@ export default async function run({page,baseUrl,check,shot,metric}) {
       return state?.playback?.status==='active'&&state.playback.elapsed>=750;
     },null,{timeout:20000});
     check(await welcome.getAttribute('data-phase')==='entering'&&await page.evaluate(()=>sessionStorage.getItem('oi-cradle.welcome.v1')===null),'The frontstate and incomplete session remain through the explosion');
-    const groundDuring=await page.evaluate(()=>getComputedStyle(document.querySelector('canvas[data-oi-stage="engine"]')).backgroundColor);
+    // The scene's native interpolation settles on its own rendered clock,
+    // not on the sequence's elapsed counter, so the palette is waited for,
+    // never sampled at a fixed instant.
+    const groundDuring=await page.waitForFunction(expected=>getComputedStyle(document.querySelector('canvas[data-oi-stage="engine"]')).backgroundColor===expected,
+      theme==='dark'?'rgb(18, 18, 17)':'rgb(251, 251, 249)',{timeout:20000})!==null
+      ?await page.evaluate(()=>getComputedStyle(document.querySelector('canvas[data-oi-stage="engine"]')).backgroundColor):null;
     check(groundDuring===(theme==='dark'?'rgb(18, 18, 17)':'rgb(251, 251, 249)'),`${theme} entry reaches the application palette on the same field`);
     await shot(`welcome-${theme}-explosion`);
     await welcome.waitFor({state:'detached',timeout:30000});
