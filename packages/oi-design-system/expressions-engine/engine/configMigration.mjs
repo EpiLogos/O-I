@@ -35,6 +35,7 @@ function migrateAutomations(raw) {
   if (!Array.isArray(raw)) return [];
   return raw.filter((l) => l && typeof l === "object" && typeof l.path === "string").map((l, i) => ({
     id: typeof l.id === "string" ? l.id : `auto_migrated_${i}_${Date.now().toString(36)}`,
+    ...typeof l.clockId === "string" && l.clockId ? { clockId: l.clockId } : {},
     path: l.path,
     enabled: l.enabled !== false,
     type: l.type === "oneShot" ? "oneShot" : "lfo",

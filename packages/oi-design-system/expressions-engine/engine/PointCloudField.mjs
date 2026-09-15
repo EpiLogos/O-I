@@ -85,48 +85,8 @@ const DEFAULT_TOROIDAL_CONFIG = {
 };
 const TAU = Math.PI * 2;
 const clamp01 = (v) => Math.max(0, Math.min(1, v));
-function computeMorphDrive(tm, theta, phi) {
-  const shape = tm.driveShape ?? "sine";
-  const cycles = theta / TAU;
-  const cycleIndex = Math.floor(cycles);
-  const f = cycles - cycleIndex;
-  let w;
-  const tri = 1 - 4 * Math.abs(f - 0.5);
-  switch (shape) {
-    case "triangle":
-      w = tri;
-      break;
-    case "smooth": {
-      const u = (tri + 1) * 0.5;
-      w = u * u * (3 - 2 * u) * 2 - 1;
-      break;
-    }
-    case "pulse":
-      w = Math.sin(theta) >= 0 ? 1 : -1;
-      break;
-    default:
-      w = Math.sin(theta);
-  }
-  const hold = Math.max(0, Math.min(0.95, tm.holdRatio ?? 0));
-  if (hold > 0) w = Math.max(-1, Math.min(1, w / (1 - hold)));
-  const conj = Math.cos(phi + (tm.fiberPhaseOffset ?? 0));
-  let signal;
-  switch (tm.interference ?? "toroidalOnly") {
-    case "product":
-      signal = w * conj;
-      break;
-    case "sum":
-      signal = (w + conj) * 0.5;
-      break;
-    case "beat":
-      signal = w * (0.5 + 0.5 * conj);
-      break;
-    default:
-      signal = w;
-  }
-  const depth = tm.driveDepth ?? 1;
-  return { progress: clamp01(0.5 + 0.5 * depth * signal), theta, phi, signal, cycleIndex, cycleFraction: f };
-}
+import { computeMorphDrive } from "./morphSignal.mjs";
+import { computeMorphDrive as computeMorphDrive2 } from "./morphSignal.mjs";
 const DEFAULT_CONFIG = {
   glyph: ["O", "I"],
   particleCount: 2e5,
@@ -950,21 +910,34 @@ class PointCloudField {
       }
     }
   }
+  sourceAnalyses = /* @__PURE__ */ new Map();
+  /** Last sampling analysis per entity, for status lines and previews. */
+  getSourceAnalysis(entityId) {
+    const id = entityId ?? this.formations()[0]?.id;
+    return id ? this.sourceAnalyses.get(id) : void 0;
+  }
   loadCustomImage(img, options = {}, entityId) {
     const target = entityId ? this.formations().find((e) => e.id === entityId) : this.formations()[0];
-    if (!target) return;
-    const { candidates } = this.glyphSampler.rasterizeCustomImage(img, options);
+    if (!target) return null;
+    const { candidates, analysis } = this.glyphSampler.rasterizeCustomImage(img, options);
+    if (entityId) this.sourceAnalyses.set(entityId, analysis);
     this.entities.setCustomCandidates(target.id, candidates);
+    return analysis;
   }
   loadAsciiArt(asciiText, options = {}, entityId) {
     const target = entityId ? this.formations().find((e) => e.id === entityId) : this.formations()[0];
-    if (!target) return;
-    const { candidates } = this.glyphSampler.rasterizeAscii(asciiText, options);
+    if (!target) return null;
+    const { candidates, analysis } = this.glyphSampler.rasterizeAscii(asciiText, options);
+    if (entityId) this.sourceAnalyses.set(entityId, analysis);
     this.entities.setCustomCandidates(target.id, candidates);
+    return analysis;
   }
   clearCustomSource(entityId) {
     const id = entityId ?? this.formations()[0]?.id;
-    if (id) this.entities.setCustomCandidates(id, null);
+    if (id) {
+      this.sourceAnalyses.delete(id);
+      this.entities.setCustomCandidates(id, null);
+    }
   }
   setMorphProgress(progress) {
     if (!Number.isFinite(progress)) throw new Error("Invalid morph progress");
@@ -998,7 +971,7 @@ class PointCloudField {
       ...this.automationRt,
       lanes: new Map([...this.automationRt.lanes].map(([id, v]) => [id, { ...v }]))
     };
-    const auto = applyAutomations(base, base.automations, this.simTime, runtime);
+    const auto = applyAutomations(base, base.automations, this.simTime, runtime, computeMorphDrive2(base.toroidalMorph ?? DEFAULT_TOROIDAL_CONFIG, (base.toroidalMorph?.autoOscillate === false ? 0 : this.torPhaseAcc) + (base.toroidalMorph?.toroidalPhase ?? 0), (base.toroidalMorph?.autoOscillate === false ? 0 : this.polPhaseAcc) + (base.toroidalMorph?.poloidalPhase ?? 0)));
     this.config = auto.config;
     this.liveAutomation = auto.live;
     this.evaluatedConfig = auto.config;
@@ -1178,7 +1151,7 @@ class PointCloudField {
     }
     const theta = (manual ? 0 : this.torPhaseAcc) + (tm.toroidalPhase ?? 0);
     const phi = (manual ? 0 : this.polPhaseAcc) + (tm.poloidalPhase ?? 0);
-    const drive = computeMorphDrive(tm, theta, phi);
+    const drive = computeMorphDrive2(tm, theta, phi);
     this.lastDrive = drive;
     this.simulator.setMorphPhases(theta, phi);
     return drive;

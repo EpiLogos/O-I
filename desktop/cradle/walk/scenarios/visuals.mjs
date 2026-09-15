@@ -36,6 +36,16 @@ export default async function run({page,baseUrl,check,shot}) {
   }, { timeout: 5000 });
   check(true,'The baked word reaches the running field');
 
+  // The engine's own capture path through the hosted preview surface: a
+  // real clean-frame render lands as a real PNG download, or the walk is red.
+  const downloadPromise=page.waitForEvent('download',{timeout:15000});
+  await panel.getByRole('button',{name:'Capture image'}).click();
+  const download=await downloadPromise;
+  check(download.suggestedFilename().endsWith('.png'),'Capture produces a PNG download');
+  const {statSync}=await import('node:fs');
+  const capturedBytes=statSync(await download.path()).size;
+  check(capturedBytes>1000,`Capture carries real image bytes (${capturedBytes})`);
+
   await shot('visuals-expression');
 
   // Master off: the renderer goes away entirely. Master on: it returns.

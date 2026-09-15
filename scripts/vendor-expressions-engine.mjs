@@ -13,6 +13,11 @@
  *   src/engine/**                     -> engine/**
  *   field-studies-journeys/src/**     -> shell/**
  *
+ * O:I-owned extensions live under oi/ and are NEVER written by this script:
+ * the retained-field adapter (oi/retained.mjs) is authored in O:I and
+ * subclasses the upstream production adapter, so an engine refresh cannot
+ * silently drop it. engine/ and shell/ remain byte-pure upstream transforms.
+ *
  * Idempotent: same source tree => byte-identical output (PROVENANCE timestamp excepted).
  */
 
@@ -268,6 +273,9 @@ async function vendor(args) {
   const provenance = {
     source: 'EpiLogos/Point-Cloud-Demo',
     sha,
+    oi_overlays: [
+      {path: 'oi/retained.mjs', standing: 'O:I-authored retained-field extension of shell/production.mjs; not upstream, never rewritten by this script'},
+    ],
     vendored_at: new Date().toISOString().replace(/\.\d{3}Z$/, 'Z'),
     entries: ENTRIES.map((srcRel) => ({source: srcRel, output: outputFor(srcRel)})),
     files: Object.fromEntries(Object.entries(filesMap).sort(([a], [b]) => (a < b ? -1 : 1))),
@@ -317,18 +325,52 @@ async function verify() {
     checked++;
   }
   // Output tree must not contain module files outside the provenance manifest.
-  const walkOut = (rel) => {
+  // oi/ is exempt from that rule (O:I-owned overlays are deliberately not in
+  // the upstream manifest) but every module there is still parse-checked and
+  // its relative specifiers resolved.
+  const walkOut = (rel, requireKnown = true) => {
     for (const e of fs.readdirSync(path.join(OUT_ROOT, rel), {withFileTypes: true})) {
       const child = path.posix.join(rel, e.name);
-      if (e.isDirectory()) walkOut(child);
-      else if (e.name.endsWith('.mjs') && !known.has(child)) errors.push(`${child}: on disk but not in PROVENANCE.json`);
+      if (e.isDirectory()) walkOut(child, requireKnown);
+      else if (requireKnown && e.name.endsWith('.mjs') && !known.has(child)) errors.push(`${child}: on disk but not in PROVENANCE.json`);
     }
   };
   if (fs.existsSync(path.join(OUT_ROOT, 'engine'))) walkOut('engine');
   if (fs.existsSync(path.join(OUT_ROOT, 'shell'))) walkOut('shell');
+  if (fs.existsSync(path.join(OUT_ROOT, 'oi'))) walkOut('oi', false);
+  else errors.push('oi/: O:I-owned overlay directory is missing (retained-field seam lost)');
+
+  // O:I-owned overlays: parse-check and resolve relative specifiers the same
+  // way, so an overlay that drifts from the tree fails verify too.
+  const overlays = [];
+  const collectOverlays = (rel) => {
+    for (const e of fs.readdirSync(path.join(OUT_ROOT, rel), {withFileTypes: true})) {
+      const child = path.posix.join(rel, e.name);
+      if (e.isDirectory()) collectOverlays(child);
+      else if (e.name.endsWith('.mjs')) overlays.push(child);
+    }
+  };
+  if (fs.existsSync(path.join(OUT_ROOT, 'oi'))) collectOverlays('oi');
+  const resolvable = new Set([...known, ...overlays]);
+  for (const outRel of overlays) {
+    const code = fs.readFileSync(path.join(OUT_ROOT, outRel), 'utf8');
+    try {
+      await esbuild.transform(code, {loader: 'js', format: 'esm', target: 'esnext'});
+    } catch (err) {
+      errors.push(`${outRel}: parse error: ${String(err && err.errors ? JSON.stringify(err.errors) : err)}`);
+      continue;
+    }
+    for (const spec of extractSpecifiers(code)) {
+      if (!spec.startsWith('.')) continue;
+      if (!spec.endsWith('.mjs')) { errors.push(`${outRel}: relative specifier does not end in .mjs: '${spec}'`); continue; }
+      const target = path.posix.normalize(path.posix.join(path.posix.dirname(outRel), spec));
+      if (!resolvable.has(target)) errors.push(`${outRel}: '${spec}' -> ${target}: not in output tree`);
+    }
+    checked++;
+  }
 
   console.log(`verify: esbuild ${esbuildWhere}`);
-  console.log(`verify: ${checked}/${known.size} modules parse-checked, all relative .mjs specifiers resolved`);
+  console.log(`verify: ${checked}/${known.size} upstream modules + ${overlays.length} O:I overlay parse-checked, all relative .mjs specifiers resolved`);
   if (errors.length) {
     console.error('\nVERIFY FAILURES:');
     for (const e of errors) console.error(`  ${e}`);
