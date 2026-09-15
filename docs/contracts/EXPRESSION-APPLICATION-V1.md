@@ -133,8 +133,11 @@ explicitly. An optional socket path before the JSON selects another app instance
 All structured calls return `{ok,outcome}` or `{ok:false,error}`. Domain refusals
 and revision conflicts are typed inside `outcome.data`, not transport failures.
 
-The initial human entry is **System → Visuals → Compose**. EX0 owns the fuller
-Studio/workspace integration. This bounded material adapter exposes glyph,
+The temporary human proving entry is **System → Visuals → Compose**. It is not
+the finished product placement. The controls belong inside the fullscreen
+Expression experience, including Nara mode, using the existing engine
+Studio/toolbelt/Library UI. EX0 owns that integration and consumes this same
+application contract. This bounded material adapter exposes glyph,
 x/y/z, scale and share on at most ten formations per scene. Numeric LFO automation
 uses the accepted engine's own clock. The engine importer/exporter validates the
 projection and preserves entity IDs and automation targets across reordering.

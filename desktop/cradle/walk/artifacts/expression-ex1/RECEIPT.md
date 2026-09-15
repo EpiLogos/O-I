@@ -110,3 +110,17 @@ disclosure, preserving acceptance of the actual current-main descriptor.
 The existing source-suite activation test also contained the old three owner
 revisions. Its registrations now read the checked-in catalogue; the existing
 real activation/CAS/rollback assertions pass without a duplicated release pin.
+
+## Final return
+
+All seven GitHub PR checks passed on `b13b50c`; the full local CLI suite also
+passed with the isolated catalogue environment (one existing ignored test).
+The final native concurrency walk additionally exercised explicit resolution:
+human glyph at revision 9 survived Agent revision 10; the stale commit refused;
+clicking Apply produced revision 11 with the human glyph and the Agent's y=85
+intact. See [native-resolution.json](native-resolution.json).
+
+The owner clarified that System is only the temporary low-level proving entry.
+Final controls belong in the fullscreen Expression experience, including Nara,
+with the existing engine Studio/toolbelt/Library UI. EX0 integration consumes the
+shared application contract; this EX1 increment does not settle that workspace.
