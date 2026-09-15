@@ -1,6 +1,7 @@
 import {setup} from './knowledge.mjs';
 import {execFileSync} from 'node:child_process';
 export {setup};
+import {renderedBounds} from '../knowledge-projection-geometry.mjs';
 
 export default async function run({page,baseUrl,check,metric,shot,channel,provision:p}){
   const native=(...args)=>JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'/Users/admin/.cargo/bin/aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env}})).data;
@@ -23,8 +24,19 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
   const wikiResults=native('search',p.wiki.title).hits,wikiIndex=wikiResults.findIndex(hit=>hit.resource===p.wiki.ref);check(wikiIndex>=0,'Native SemanticWiki search returns the exact fixture WikiSpace');await overlay.locator('li').nth(wikiIndex).getByRole('button').first().click();
   const subject=page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`);await subject.waitFor({timeout:45000});await subject.focus();await page.keyboard.press('Enter');
   const details=page.getByRole('dialog',{name:`Details: ${p.wiki.title}`});await details.waitFor();check(await subject.getAttribute('aria-pressed')==='true','Keyboard activation selects and recentres the exact native graph subject');const provenance=details.locator('.knowledge-provenance').first();await provenance.locator('summary').click();const disclosed=await provenance.locator('dd').allTextContents();check(disclosed.includes(p.wiki.ref)&&disclosed.includes(String(p.wiki.revision)),'Properties disclose the exact native ref and revision',disclosed);const popout=details.getByRole('button',{name:/Pop out/});check(await popout.isDisabled(),'Browser acceptance truthfully discloses native-only popout availability');
+  const separation=await page.locator('.knowledge-expression-bar').evaluate(el=>{const a=el.getBoundingClientRect(),b=document.querySelector('.knowledge-detail-dialog').getBoundingClientRect();return a.right<=b.left||a.left>=b.right||a.bottom<=b.top||a.top>=b.bottom;});
+  check(separation,'Graph selection controls occupy the free region beside the movable inspector');
+  await shot('graph-context-light');
   const pin=page.getByRole('button',{name:'Pin subject',exact:true});await pin.waitFor();await pin.click();check(await page.getByRole('button',{name:'Unpin subject',exact:true}).getAttribute('aria-pressed')==='true','Pin retains the exact native graph subject');
   const follow=page.getByRole('button',{name:'Following locus',exact:true});await follow.click();check(await page.getByRole('button',{name:'Follow locus',exact:true}).getAttribute('aria-pressed')==='false','Follow can freeze the current native locus');await page.getByRole('button',{name:'Follow locus',exact:true}).click();
-  const graphExpress=page.getByRole('button',{name:'Express local whole',exact:true});await graphExpress.click();await page.locator('.knowledge-expression-controls [role="status"]').first().waitFor({timeout:45000});check((await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('knowledge-expression:')),'Pinned SemanticWiki whole presents through the same Expression stage');await page.getByRole('button',{name:'Return to knowledge',exact:true}).click();
+  const graphExpress=page.getByRole('button',{name:'Express local whole',exact:true});await graphExpress.click();await page.locator('.knowledge-expression-controls [role="status"]').first().waitFor({timeout:45000});check((await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('knowledge-expression:')),'Pinned SemanticWiki whole presents through the same Expression stage');const bounds=await renderedBounds(page,page.locator('.knowledge-expression-host'));check(bounds.count>100&&bounds.minX>bounds.width*.03&&bounds.maxX<bounds.width*.97&&bounds.minY>bounds.height*.03&&bounds.maxY<bounds.height*.97,'The real projected glyph renders completely inside its artboard',bounds);await page.emulateMedia({colorScheme:'dark',reducedMotion:'reduce'});await page.waitForFunction(()=>document.body.dataset.theme==='dark');
+  check(await page.locator('.knowledge-expression-host').evaluate(el=>getComputedStyle(el).backgroundColor===getComputedStyle(el.closest('.knowledge-surface')).backgroundColor),'The knowledge Expression artboard inherits the host dark ground');
+  await page.waitForTimeout(400); // Let the existing camera/theme transition settle before visual evidence.
+  await shot('graph-expression-dark');
+  await page.getByRole('button',{name:'Return to knowledge',exact:true}).click();
+  await page.setViewportSize({width:639,height:900});
+  await page.waitForTimeout(400);
+  await shot('graph-context-narrow');
+  await page.setViewportSize({width:1280,height:820});
   const back=page.getByRole('button',{name:'Back to prior constellation'});check(await back.isEnabled(),'Selecting the graph subject creates a reversible recenter visit');await back.click();const forward=page.getByRole('button',{name:'Forward to next constellation'});check(await forward.isEnabled(),'Back enables forward traversal over the same native graph state');await forward.click();
 }

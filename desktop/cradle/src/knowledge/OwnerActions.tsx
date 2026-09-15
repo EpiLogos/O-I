@@ -31,13 +31,13 @@ export function OwnerActions({node,transport,project,onDispatched}:{node:Pick<Gr
     // not special-case spellings.
     if(record.phase==="settled"&&record.outcome.state==="invoked")onDispatched?.();
   };
-  return <details className="knowledge-actions"><summary>Actions ({node.actions.length})</summary>
+  return <details className="knowledge-actions oi-disclosure"><summary>Actions ({node.actions.length})</summary>
     {node.actions.length>0&&<p>Owner-disclosed Action spellings; each invokes through the kernel dispatch seam verbatim, and the owner answer renders below it.</p>}
     <ul>{node.actions.map((action,index)=>{
       const record=records[action];
       const unsupported=record?.phase==="settled"&&record.outcome.state==="unsupported_action";
       return <li key={`${action}:${index}`}>
-        <button
+        <button className="oi-action oi-ref"
           data-action-ref={action}
           data-subject-ref={node.ref}
           disabled={record?.phase==="dispatching"||unsupported}
