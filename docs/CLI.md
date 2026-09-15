@@ -9,8 +9,8 @@ oi help
 oi install [--personal-ground PATH] [PRODUCT ...]
 oi update
 oi status [--json]
-oi doctor [--json]
-oi verify [--json]
+oi doctor [--all] [--json]
+oi verify [--all] [--json]
 oi manifest [--json]
 oi cleanup --managed
 
@@ -59,7 +59,7 @@ The same front door still routes composition-era commands that current `oi help`
 
 ## Ordinary suite operation
 
-`oi install [--personal-ground PATH] [PRODUCT ...]` is the printed ordinary-install form. `oi update`, `oi doctor [--json]`, `oi verify [--json]`, `oi manifest [--json]` and `oi cleanup --managed` are the rest of that family. Help states that managed artifacts live in the platform O:I application-data root, never in Central `Control/` or `Work/`; developer source checkouts live under the personal ground's `Work/`; and this pre-local suite does not claim physical workstation/provider acceptance. See [`INSTALL.md`](INSTALL.md).
+`oi install [--personal-ground PATH] [PRODUCT ...]` is the printed ordinary-install form. `oi update`, `oi doctor [--all] [--json]`, `oi verify [--all] [--json]`, `oi manifest [--json]` and `oi cleanup --managed` are the rest of that family. Verification asks whether the requested composition is installed and usable: a recorded install mode scopes the run to that mode's products, the installation receipt scopes it to what is installed, and `--all` verifies the whole six-product suite strictly. Help states that managed artifacts live in the platform O:I application-data root, never in Central `Control/` or `Work/`; developer source checkouts live under the personal ground's `Work/`; and this pre-local suite does not claim physical workstation/provider acceptance. See [`INSTALL.md`](INSTALL.md).
 
 ## `oi products`
 
