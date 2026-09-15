@@ -37,6 +37,7 @@ pub mod action;
 pub mod graph;
 pub mod encounter;
 pub mod agency;
+pub mod being;
 pub mod files;
 pub mod composition;
 pub mod system_composition;
@@ -166,6 +167,7 @@ pub struct Kernel {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    BeingEncounter { request: being::Request },
     Expression { request: expression::Request },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
@@ -339,6 +341,7 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    BeingEncounter { data: serde_json::Value },
     Expression { data: serde_json::Value },
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
@@ -569,6 +572,7 @@ impl Kernel {
                 }
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
             }
+            KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),
             KernelOp::AgencyRead { project } => {
                 let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
                 let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;

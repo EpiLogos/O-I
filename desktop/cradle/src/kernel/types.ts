@@ -120,6 +120,7 @@ export type CommissionOutcome =
   | { state: "owner_unavailable"; path: string; detail: string };
 
 export type KernelOp =
+  | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"graph";project?:string;query:string}
   /** One request to the O:I-owned SharedField client (kernel
@@ -180,6 +181,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"shared_field_reading";data:unknown}
