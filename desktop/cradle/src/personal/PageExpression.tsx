@@ -36,7 +36,19 @@ export function PageExpression({page,fileRevision,pageRef,onHostedState}:{page:P
    if(doc.revision!==expression.expression_revision)throw new Error(`Expression revision changed: page has ${expression.expression_revision}, native application has ${doc.revision}`);if(expression.scene_ref&&!doc.scenes.some(scene=>scene.scene_ref===expression.scene_ref))throw new Error("Page Expression scene is unavailable");const projected=expression.scene_ref&&doc.selection.scene_ref!==expression.scene_ref?{...doc,selection:{scene_ref:expression.scene_ref,entity_ref:null}}:doc;verifySubjects(projected,expression.subjects);setLoaded(previous=>previous?.basis===basis&&previous.document.revision===projected.revision?previous:{basis,document:projected});
  }).catch(cause=>{if(live){presentation.current?.release();presentation.current=null;setLoaded(undefined);setStageReady(false);setError(String(cause));}});return()=>{live=false;};
  },[kernel.transport,expression?.expression_ref,expression?.expression_revision,basis,resolved?.state,changedSeq]);
- useEffect(()=>{if(!currentDocument||presentation.current)return;try{const handle=stage.present({id:presentationId,plane:"overlay",recipe:"",config:expressionConfig(currentDocument),appearance:"host",sceneRef:currentDocument.selection.scene_ref});if(!handle)throw new Error(stage.error??"The accepted Expression renderer is unavailable");presentation.current=handle;handle.setContainer(inline.current);setStageReady(true);}catch(cause){setStageReady(false);setError(String(cause));}return()=>{presentation.current?.release();presentation.current=null;setStageReady(false);};},[currentDocument,presentationId,stage]);
+ useEffect(()=>{
+  if(!currentDocument||presentation.current)return;
+  let current=true;
+  try{
+   const handle=stage.present({id:presentationId,plane:"overlay",recipe:"",config:expressionConfig(currentDocument),appearance:"host",sceneRef:currentDocument.selection.scene_ref});
+   // Importing or the opening's foreground claim is temporary. The stage
+   // notifies this consumer when admission becomes available again.
+   if(!handle){setStageReady(false);if(stage.error)setError(stage.error);return;}
+   presentation.current=handle;handle.setContainer(focused?full.current:inline.current);setError("");
+   void handle.ready().then(()=>{if(current)setStageReady(true);}).catch(cause=>{if(current){setStageReady(false);setError(String(cause));}});
+  }catch(cause){setStageReady(false);setError(String(cause));}
+  return()=>{current=false;presentation.current?.release();presentation.current=null;setStageReady(false);};
+ },[currentDocument,presentationId,stage]);
  useLayoutEffect(()=>{try{presentation.current?.setContainer(focused?full.current:inline.current);if(focused)requestAnimationFrame(()=>dialog.current?.querySelector<HTMLButtonElement>("button")?.focus());}catch(cause){presentation.current?.release();presentation.current=null;setStageReady(false);setFocused(false);setError(String(cause));}},[focused]);
  const restore=()=>{setFocused(false);requestAnimationFrame(()=>returnFocus.current?.focus());};
  useEffect(()=>{if(!focused)return;const escape=(event:KeyboardEvent)=>{if(event.key==="Escape"){event.preventDefault();restore();}};window.addEventListener("keydown",escape,true);return()=>window.removeEventListener("keydown",escape,true);},[focused]);
@@ -46,7 +58,7 @@ export function PageExpression({page,fileRevision,pageRef,onHostedState}:{page:P
  const capture=()=>{const generation=++captureGeneration.current,captureBasis=basis;try{const canvas=stage.capture(presentationId);canvas.toBlob(blob=>{if(!blob){setError("Expression capture returned no PNG");return;}if(!mounted.current||generation!==captureGeneration.current||captureBasis!==basis)return;const next=URL.createObjectURL(blob);setCaptureUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return next;});},"image/png");}catch(cause){setError(String(cause));}};
  return <section className="page-expression-host" data-page-ref={pageRef} data-file-revision={fileRevision} data-expression-ref={expression.expression_ref} data-expression-revision={expression.expression_revision} data-subject-ref={binding.subject_ref}>
    <header><div><small>Expression body</small><strong>{expression.expression_ref}</strong></div><span>r{expression.expression_revision}</span></header>
-   {resolved?.state!=="live"?<p role="status">{resolved?.state==="fallback"?`Live renderer not admitted; the page shows its ${resolved.fallback.kind} fallback.`:`Expression unavailable: ${resolved?.reason}`}</p>:error?<p role="alert">{error}</p>:<div ref={inline} className="page-expression-canvas" aria-label="Live Expression"/>}
+   {resolved?.state!=="live"?<p role="status">{resolved?.state==="fallback"?`Live renderer not admitted; the page shows its ${resolved.fallback.kind} fallback.`:`Expression unavailable: ${resolved?.reason}`}</p>:<><div ref={inline} className="page-expression-canvas" aria-label="Live Expression"/>{error&&<p role="alert">{error}</p>}</>}
    <div className="page-expression-actions"><button type="button" disabled={!stageReady||!!error} onClick={focus}>Focus Expression</button><button type="button" disabled={!stageReady||!!error} onClick={capture}>Capture current frame</button></div>
    {captureUrl?<figure><img src={captureUrl} alt="Captured Expression frame"/><figcaption>Page-local PNG fallback from {expression.expression_ref} r{expression.expression_revision}. It is not saved or published.</figcaption></figure>:null}
    {focused?<div ref={dialog} className="page-expression-focus" role="dialog" aria-modal="true" aria-label="Focused Expression"><div ref={full} className="page-expression-focus-canvas"/><footer><span>{expression.expression_ref} · page {pageRef} · file {fileRevision}</span><button type="button" onClick={restore}>Return to page</button><button type="button" onClick={capture}>Capture current frame</button></footer></div>:null}
