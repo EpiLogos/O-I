@@ -11,8 +11,11 @@ try{
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/stage-placement`);
  await page.evaluate(async()=>{
   const {EngineSurface}=await import('/src/stage/engineSurface.ts');
+  const {expressionConfig}=await import('/src/expression/engineProjection.ts');
   window.failures=[];window.stageSurface=EngineSurface.forWindow(error=>window.failures.push(error));
-  window.stageSurface.presentConfig('expression:placement',{glyph:'Field',particleCount:2048},'expression:placement:scene:main');
+  const ref='expression:placement',scene_ref=`${ref}:scene:main`,entity_ref=`${ref}:entity:field`;
+  const config=expressionConfig({selection:{scene_ref},scenes:[{scene_ref,entity_refs:[entity_ref]}],entities:{[entity_ref]:{entity_ref,title:'Field',parameters:{glyph:{value:'Field'}}}}});
+  window.stageSurface.presentConfig(ref,config,scene_ref);
   window.originalCanvas=window.stageSurface.canvas;
   window.originalContext=window.originalCanvas.getContext('webgl2');
  });
@@ -26,9 +29,10 @@ try{
   const moved=await move(id);assert.equal(moved.sameCanvas,true);assert.equal(moved.sameContext,true);assert.equal(moved.count,1);
  }
  // Capture actual GPU material through the engine, not a screenshot or mocked image.
- await page.waitForFunction(()=>{try {return window.stageSurface.capture(320,240).width===320;}catch{return false;}});
- const capture=await page.evaluate(()=>{const canvas=window.stageSurface.capture(320,240);const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;const colours=new Set();for(let i=0;i<pixels.length;i+=4)colours.add(`${pixels[i]},${pixels[i+1]},${pixels[i+2]},${pixels[i+3]}`);return {width:canvas.width,height:canvas.height,colours:colours.size,data:canvas.toDataURL('image/png').length,errors:window.failures};});
+ await page.waitForFunction(()=>{try {return window.stageSurface.telemetry()?.simTime>0.8&&window.stageSurface.capture(320,240).width===320;}catch{return false;}});
+ const capture=await page.evaluate(()=>{const canvas=window.stageSurface.capture(320,240);const pixels=canvas.getContext('2d').getImageData(0,0,canvas.width,canvas.height).data;const colours=new Set();let darkPixels=0;for(let i=0;i<pixels.length;i+=4){colours.add(`${pixels[i]},${pixels[i+1]},${pixels[i+2]},${pixels[i+3]}`);if(pixels[i]<100&&pixels[i+1]<100&&pixels[i+2]<100&&pixels[i+3]>128)darkPixels++;}return {width:canvas.width,height:canvas.height,colours:colours.size,darkPixels,data:canvas.toDataURL('image/png').length,errors:window.failures};});
  assert.equal(capture.width,320);assert.equal(capture.height,240);assert.ok(capture.data>200);assert.ok(capture.colours>1,'capture contains rendered material');assert.deepEqual(capture.errors,[]);
+ assert.ok(capture.darkPixels>20,`Expression material must be visible as ink on the page: ${JSON.stringify(capture)}`);
  const refused=await page.evaluate(()=>{
   const results=[];
   for(const action of [()=>window.stageSurface.setContainer('expression:other',document.getElementById('inline')),()=>window.stageSurface.setContainer('expression:placement',document.createElement('div'))])try{action();results.push(false);}catch{results.push(true);}
