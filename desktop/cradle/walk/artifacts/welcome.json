@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "welcome",
-  "generated_at": "2026-09-15T01:30:04.188Z",
+  "generated_at": "2026-09-15T13:06:10.886Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 9656,
+  "duration_ms": 16275,
   "checks": [
     {
       "ok": true,
@@ -49,13 +49,25 @@
     {
       "ok": true,
       "label": "After the dissolve the empty workspace is the app"
+    },
+    {
+      "ok": true,
+      "label": "No presentation is live in the settled ordinary desktop"
+    },
+    {
+      "ok": true,
+      "label": "The released production field renders no frames and schedules none ({\"presentations\":0,\"frames\":0,\"scheduled\":false,\"live\":false,\"raf\":0,\"dormant\":true,\"canvases\":1})"
+    },
+    {
+      "ok": true,
+      "label": "The one engine canvas stays (context and resident field kept) and is marked dormant"
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 183,
+      "duration_ms": 90,
       "data": {
         "file": "welcome-welcome-reduced-motion.png"
       }
@@ -63,7 +75,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 307,
+      "duration_ms": 1680,
       "data": {
         "file": "welcome-welcome-frontstate-rest.png"
       }
@@ -71,7 +83,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 301,
+      "duration_ms": 507,
       "data": {
         "file": "welcome-welcome-frontstate-dissolve.png"
       }
@@ -79,7 +91,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 33,
       "data": {
         "file": "welcome-welcome-frontstate-entered.png"
       }

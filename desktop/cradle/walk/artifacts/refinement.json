@@ -1,18 +1,18 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "refinement",
-  "generated_at": "2026-09-08T18:08:11.685Z",
+  "generated_at": "2026-09-15T13:11:06.790Z",
   "environment": {
     "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4247",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": true,
-  "error": null,
-  "duration_ms": 9223,
+  "passed": false,
+  "error": "Error: EISDIR: illegal operation on a directory, read\n    at readFileSync (node:fs:441:20)\n    at Module.run (file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/scenarios/refinement.mjs:77:8)\n    at async runScenario (file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/run.mjs:383:5)\n    at async file:///Users/admin/Central/Work/O-I/.agent-worktrees/ui-expression-convergence/desktop/cradle/walk/run.mjs:456:18",
+  "duration_ms": 7816,
   "checks": [
     {
       "ok": true,
@@ -47,7 +47,7 @@
       "label": "Editor search and replace panel is available"
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "Folding the toolbar yields its height to document content"
     },
     {
@@ -63,7 +63,7 @@
       "label": "Only the bottom edge reveals the pane footer"
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "Footer expansion gives up document height instead of overlaying it"
     },
     {
@@ -109,58 +109,6 @@
     {
       "ok": true,
       "label": "Welcome phrase component is integrated"
-    },
-    {
-      "ok": true,
-      "label": "Fresh Flow uses the same editor and saves to its real Central provenance"
-    },
-    {
-      "ok": true,
-      "label": "Tab split creates a second real pane"
-    },
-    {
-      "ok": true,
-      "label": "Per-tab move returns the selected tab and removes its emptied pane"
-    },
-    {
-      "ok": true,
-      "label": "Right sidebar opens with usable width"
-    },
-    {
-      "ok": true,
-      "label": "Right sidebar expands across the central canvas"
-    },
-    {
-      "ok": true,
-      "label": "Global right toggle stays clickable above the full agent view"
-    },
-    {
-      "ok": true,
-      "label": "Full agent mode conceals the entire canvas including its tab border"
-    },
-    {
-      "ok": true,
-      "label": "Full agent content expands into a wider reading layout"
-    },
-    {
-      "ok": true,
-      "label": "Right sidebar restores its previous width"
-    },
-    {
-      "ok": true,
-      "label": "Right resize affordance is cursor-only too"
-    },
-    {
-      "ok": true,
-      "label": "Compact-width sidebar dragging retains the chosen width"
-    },
-    {
-      "ok": true,
-      "label": "Narrow overlay drawer resizes without snapping back"
-    },
-    {
-      "ok": true,
-      "label": "Narrow shell has no horizontal overflow"
     }
   ],
   "ops": [
@@ -170,10 +118,10 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T18:08:11.872Z",
+        "mounted_at": "2026-09-15T13:11:07.138Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4247"
+          "url": "http://127.0.0.1:4179"
         },
         "url": "http://localhost:4173/"
       }
@@ -181,23 +129,14 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 58,
       "data": {
         "file": "refinement-fresh-canvas-refined.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 29,
-      "data": {
-        "file": "refinement-editor-and-chrome-refined.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
-    "refinement-fresh-canvas-refined.png",
-    "refinement-editor-and-chrome-refined.png"
+    "refinement-fresh-canvas-refined.png"
   ]
 }
