@@ -108,3 +108,42 @@ unknown targets, invalid parameter bounds and undisclosed Actions must refuse
 without partial mutation. Drive the same edits in the running desktop and observe
 them through the structured seam. Test an actual owner refusal and actual file
 CAS conflict. Creative/sensory judgement remains human evidence under #65.
+
+## Native entry points and current material floor
+
+On macOS/Linux the desktop serves a mode-0600 Unix socket. Both faces share the
+same kernel mutex and ordered events. By default the socket lives in the app data
+directory (`~/Library/Application Support/org.epilogos.oi.cradle/expression.sock`
+on macOS, `$XDG_DATA_HOME/org.epilogos.oi.cradle/expression.sock` on Linux, falling
+back to `~/.local/share`). `OI_EXPRESSION_SOCKET` selects an explicit endpoint for
+isolated runs. Windows native Agent transport is unavailable in this increment.
+There is no network listener, generic kernel dispatch, code execution or stored
+credential in this endpoint.
+
+```sh
+oi desktop expression capabilities
+oi desktop expression '{"operation":"capabilities"}'
+oi desktop expression '{"operation":"create","expression_ref":"expression:lesson","title":"Lesson","actor":"agent:composer"}'
+oi desktop expression '{"operation":"inspect","expression_ref":"expression:lesson"}'
+```
+
+The first command discloses the implemented contract without claiming a running
+resident. The other commands contact the running app; an absent socket fails
+explicitly. An optional socket path before the JSON selects another app instance.
+All structured calls return `{ok,outcome}` or `{ok:false,error}`. Domain refusals
+and revision conflicts are typed inside `outcome.data`, not transport failures.
+
+The initial human entry is **System → Visuals → Compose**. EX0 owns the fuller
+Studio/workspace integration. This bounded material adapter exposes glyph,
+x/y/z, scale and share on at most ten formations per scene. Numeric LFO automation
+uses the accepted engine's own clock. The engine importer/exporter validates the
+projection and preserves entity IDs and automation targets across reordering.
+Document limits: 64 open Expressions, 64 scenes, 256 entity/relation bindings,
+256 changes per atomic edit, 512 KiB per document. This is deliberately bounded
+application state, not a query/store for an entire knowledge world.
+
+An explicit focus edit also moves the existing global focus to the bound native
+subject (or the Expression when unbound), emitting the existing FocusChanged
+event only when that relation changes. It never invokes an Action. Parameter
+inputs retain uncommitted human text across incoming Agent revisions; a conflict
+requires an explicit choice to use the current value or apply to the new revision.

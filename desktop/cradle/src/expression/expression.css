@@ -1,0 +1,7 @@
+.expression-editor { display:flex; flex-direction:column; gap:12px; max-width:900px; }
+.expression-editor header,.expression-tools,.expression-entities,.expression-editor nav,.expression-parameter { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
+.expression-editor label { display:flex; flex-direction:column; gap:4px; }
+.expression-editor fieldset { display:flex; flex-direction:column; gap:10px; }
+.expression-editor pre { overflow:auto; max-height:320px; white-space:pre-wrap; overflow-wrap:anywhere; }
+.expression-editor input,.expression-editor select { font:inherit; color:inherit; background:var(--oi-surface); border:1px solid var(--oi-border); padding:6px; }
+.expression-editor [aria-pressed="true"] { outline:1px solid currentColor; }

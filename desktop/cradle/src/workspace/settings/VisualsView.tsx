@@ -31,8 +31,9 @@ import {
   type PointCloudPatch,
 } from "@epilogos/oi-design-system/point-cloud/config";
 import "./visuals.css";
+import {ExpressionView as ApplicationExpressionView} from "../../expression/ExpressionView";
 
-type ExpressionSubview = "themes" | "expression";
+type ExpressionSubview = "themes" | "expression" | "compose";
 
 const QUICK_CHARS = ["✦", "✧", "★", "∞", "Ω", "∑", "∫", "⌘", "⌥", "§", "λ", "☯"];
 
@@ -42,11 +43,13 @@ export function VisualsView() {
   return <div className="settings-view">
     <h3>Visuals</h3>
     <nav className="settings-rail visuals-subrail" aria-label="Visuals views">
+      <button aria-pressed={subview === "compose"} onClick={() => setSubview("compose")}>Compose</button>
       <button aria-pressed={subview === "themes"} onClick={() => setSubview("themes")}>Themes</button>
       <button aria-pressed={subview === "expression"} onClick={() => setSubview("expression")}>Expression</button>
     </nav>
     {subview === "themes" && <ThemesView theme={snapshot.theme} />}
     {subview === "expression" && <ExpressionView />}
+    {subview === "compose" && <ApplicationExpressionView />}
   </div>;
 }
 

@@ -1,0 +1,336 @@
+{
+  "standing": "native app and real Central operations observed",
+  "open_file": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "dirty": false,
+        "document": {
+          "entities": {
+            "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772": {
+              "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "EX1"
+                },
+                "scale": {
+                  "automation": {
+                    "max": 1.5,
+                    "min": 0.5,
+                    "rate_hz": 0.2,
+                    "waveform": "sine"
+                  },
+                  "value": 1.0
+                },
+                "x": {
+                  "automation": null,
+                  "value": 120
+                }
+              },
+              "revision": 4,
+              "subject": {
+                "actions": [],
+                "native_owner": "central",
+                "presentation_role": "thing",
+                "readings": [],
+                "sources": [],
+                "subject_ref": "central:wiki:project:O-I"
+              },
+              "title": "Thing 1"
+            }
+          },
+          "expression_ref": "expression:ex1-native-walk",
+          "provenance": [],
+          "relations": {},
+          "representations": [],
+          "revision": 4,
+          "scenes": [
+            {
+              "entity_refs": [
+                "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772"
+              ],
+              "revision": 2,
+              "scene_ref": "expression:ex1-native-walk:scene:main",
+              "title": "Main"
+            }
+          ],
+          "schema": "oi.expression/v1",
+          "selection": {
+            "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+            "scene_ref": "expression:ex1-native-walk:scene:main"
+          },
+          "title": "Native human / Agent composition"
+        },
+        "dynamic_state": "not_restored",
+        "file": {
+          "location": {
+            "path": "Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "ref": "central:path:/Users/admin/Central:Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "root": "/Users/admin/Central",
+            "schema": "central.path-ref/v1"
+          },
+          "revision": "central.content-fnv1a64/v1:1492:08a73765768b51a3"
+        },
+        "saved_revision": 4,
+        "state": "ready"
+      },
+      "receipts": [
+        {
+          "actor": "agent:ex1-final",
+          "event": "expression_changed",
+          "expression_ref": "expression:ex1-native-walk",
+          "revision": 4,
+          "schema": "oi.kernel-event/v1",
+          "seq": 4,
+          "version": 1
+        }
+      ],
+      "result": "expression"
+    }
+  },
+  "edit_and_global_focus": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "dirty": true,
+        "document": {
+          "entities": {
+            "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772": {
+              "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "FINAL"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 1.0
+                },
+                "x": {
+                  "automation": null,
+                  "value": 120
+                }
+              },
+              "revision": 5,
+              "subject": {
+                "actions": [],
+                "native_owner": "central",
+                "presentation_role": "thing",
+                "readings": [],
+                "sources": [],
+                "subject_ref": "central:wiki:project:O-I"
+              },
+              "title": "Thing 1"
+            }
+          },
+          "expression_ref": "expression:ex1-native-walk",
+          "provenance": [],
+          "relations": {},
+          "representations": [],
+          "revision": 5,
+          "scenes": [
+            {
+              "entity_refs": [
+                "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772"
+              ],
+              "revision": 2,
+              "scene_ref": "expression:ex1-native-walk:scene:main",
+              "title": "Main"
+            }
+          ],
+          "schema": "oi.expression/v1",
+          "selection": {
+            "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+            "scene_ref": "expression:ex1-native-walk:scene:main"
+          },
+          "title": "Native human / Agent composition"
+        },
+        "dynamic_state": "not_restored",
+        "file": {
+          "location": {
+            "path": "Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "ref": "central:path:/Users/admin/Central:Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "root": "/Users/admin/Central",
+            "schema": "central.path-ref/v1"
+          },
+          "revision": "central.content-fnv1a64/v1:1492:08a73765768b51a3"
+        },
+        "saved_revision": 4,
+        "state": "ready"
+      },
+      "receipts": [
+        {
+          "actor": "agent:ex1-final",
+          "event": "expression_changed",
+          "expression_ref": "expression:ex1-native-walk",
+          "revision": 5,
+          "schema": "oi.kernel-event/v1",
+          "seq": 5,
+          "version": 1
+        },
+        {
+          "event": "focus_changed",
+          "focus": {
+            "subject": {
+              "kind": "subject",
+              "native_owner": "central",
+              "provenance": {
+                "revision": "5",
+                "source": "expression:ex1-native-walk"
+              },
+              "ref": "central:wiki:project:O-I"
+            }
+          },
+          "schema": "oi.kernel-event/v1",
+          "seq": 6,
+          "version": 1
+        }
+      ],
+      "result": "expression"
+    }
+  },
+  "save": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "data": {
+          "automatic_agent_or_model_invocation": false,
+          "change": {
+            "actor": "agent:ex1-final",
+            "actor_kind": "agent",
+            "agent_session_ref": null,
+            "cursor": 1,
+            "previous_revision": "central.content-fnv1a64/v1:1492:08a73765768b51a3",
+            "restored_from": null,
+            "revision": "central.content-fnv1a64/v1:1377:ebaafb75ea4c27a8"
+          },
+          "changed": true,
+          "location": {
+            "path": "Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "ref": "central:path:/Users/admin/Central:Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "root": "/Users/admin/Central",
+            "schema": "central.path-ref/v1"
+          },
+          "outcome": "written",
+          "previous_revision": "central.content-fnv1a64/v1:1492:08a73765768b51a3",
+          "revision": "central.content-fnv1a64/v1:1377:ebaafb75ea4c27a8",
+          "schema": "central.file-mutation/v1"
+        },
+        "expression_revision": 5,
+        "file": {
+          "location": {
+            "path": "Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "ref": "central:path:/Users/admin/Central:Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "root": "/Users/admin/Central",
+            "schema": "central.path-ref/v1"
+          },
+          "revision": "central.content-fnv1a64/v1:1377:ebaafb75ea4c27a8"
+        },
+        "owner_operation": "central.files.write",
+        "state": "saved"
+      },
+      "result": "expression"
+    }
+  },
+  "stale_file_save": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "current_revision": "central.content-fnv1a64/v1:1377:ebaafb75ea4c27a8",
+        "expected_revision": "central.content-fnv1a64/v1:1492:08a73765768b51a3",
+        "state": "file_revision_conflict"
+      },
+      "result": "expression"
+    }
+  },
+  "inspection_after_save": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "dirty": false,
+        "document": {
+          "entities": {
+            "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772": {
+              "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+              "parameters": {
+                "glyph": {
+                  "automation": null,
+                  "value": "FINAL"
+                },
+                "scale": {
+                  "automation": null,
+                  "value": 1.0
+                },
+                "x": {
+                  "automation": null,
+                  "value": 120
+                }
+              },
+              "revision": 5,
+              "subject": {
+                "actions": [],
+                "native_owner": "central",
+                "presentation_role": "thing",
+                "readings": [],
+                "sources": [],
+                "subject_ref": "central:wiki:project:O-I"
+              },
+              "title": "Thing 1"
+            }
+          },
+          "expression_ref": "expression:ex1-native-walk",
+          "provenance": [],
+          "relations": {},
+          "representations": [],
+          "revision": 5,
+          "scenes": [
+            {
+              "entity_refs": [
+                "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772"
+              ],
+              "revision": 2,
+              "scene_ref": "expression:ex1-native-walk:scene:main",
+              "title": "Main"
+            }
+          ],
+          "schema": "oi.expression/v1",
+          "selection": {
+            "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+            "scene_ref": "expression:ex1-native-walk:scene:main"
+          },
+          "title": "Native human / Agent composition"
+        },
+        "dynamic_state": "not_restored",
+        "file": {
+          "location": {
+            "path": "Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "ref": "central:path:/Users/admin/Central:Work/O-I/.agent-worktrees/expression-ex1/desktop/cradle/walk/artifacts/expression-ex1/native-expression.json",
+            "root": "/Users/admin/Central",
+            "schema": "central.path-ref/v1"
+          },
+          "revision": "central.content-fnv1a64/v1:1377:ebaafb75ea4c27a8"
+        },
+        "saved_revision": 5,
+        "state": "ready"
+      },
+      "result": "expression"
+    }
+  },
+  "owner_refusal": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "action_ref": "central.day.lifecycle",
+        "dispatch": {
+          "message": "missing bounded CENTRAL_NATIVE_TOKEN; declared H/human attribution is not authentication",
+          "owner_operation": "central.day.lifecycle",
+          "state": "owner_refused"
+        },
+        "state": "action_result",
+        "target_ref": "control:root"
+      },
+      "result": "expression"
+    }
+  }
+}

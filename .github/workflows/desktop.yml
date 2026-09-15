@@ -51,6 +51,9 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
+      - name: Prove Expression projection through the accepted native engine
+        working-directory: desktop/cradle
+        run: node tests/expression-engine.mjs
       - name: Install browser engines for search component contracts
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit

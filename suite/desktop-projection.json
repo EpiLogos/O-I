@@ -16,7 +16,7 @@
       "id": "/",
       "name": "Canvas",
       "role": "Pane-local tabs, tiling, further subdivisions and popouts",
-      "ql_projection": "opening into inner 1–4; cardinality is arrangement-dependent"
+      "ql_projection": "opening into inner 1\u20134; cardinality is arrangement-dependent"
     },
     {
       "id": "1",
@@ -192,7 +192,7 @@
     "Complete feature mapping of the remaining cradle programme"
   ],
   "resident_arrangement": {
-    "owner": "M′ application view state",
+    "owner": "M\u2032 application view state",
     "implementation": "desktop/cradle/src-tauri/src/menus.rs",
     "transport": "oi:arrangement-action to resident main window",
     "external_cli_status": "requires resident IPC binding; no second arrangement store",
@@ -208,5 +208,17 @@
       "region.left",
       "region.right"
     ]
+  },
+  "expression_application": {
+    "contract": "docs/contracts/EXPRESSION-APPLICATION-V1.md",
+    "schema": "oi.expression/v1",
+    "native_owner": "O:I application",
+    "capabilities": "oi desktop expression capabilities",
+    "resident_operation": "oi desktop expression [SOCKET] REQUEST_JSON",
+    "kernel_operation": "expression",
+    "human_entry": "System / Visuals / Compose",
+    "authority": "draft-local edits; save and subject Actions retain native owner results",
+    "transport": "same resident kernel over a mode-0600 Unix socket on macOS/Linux; Windows unavailable",
+    "mapping_status": "EX1 implemented; bounded native human/Agent walk recorded; creative judgement remains human"
   }
 }

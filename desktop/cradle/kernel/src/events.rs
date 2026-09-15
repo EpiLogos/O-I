@@ -49,6 +49,7 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 // nature; boxing one arm would change how every emitter constructs it.
 #[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
+    ExpressionChanged { expression_ref: String, revision: u64, actor: String },
     WorldChanged { summary: String },
     /// The one global focus relation moved (02 §7, 03 §B).
     FocusChanged {
@@ -102,7 +103,7 @@ impl KernelEvent {
     /// subject without matching every variant.
     pub fn subject(&self) -> Option<&SemanticRef> {
         match self {
-            Self::WorldChanged { .. } => None,
+            Self::WorldChanged { .. } | Self::ExpressionChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -116,6 +117,7 @@ impl KernelEvent {
     pub fn tag(&self) -> &'static str {
         match self {
             Self::WorldChanged { .. } => "world_changed",
+            Self::ExpressionChanged { .. } => "expression_changed",
             Self::FocusChanged { .. } => "focus_changed",
             Self::SurfaceChanged { .. } => "surface_changed",
             Self::SourceOpened { .. } => "source_opened",
@@ -131,6 +133,7 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
+            Self::ExpressionChanged { expression_ref, revision, actor } => { non_empty("expression_ref", expression_ref)?; non_empty("actor", actor)?; if *revision == 0 { Err("Expression revision must be positive".into()) } else { Ok(()) } },
             Self::WorldChanged { summary } => non_empty("WorldChanged.summary", summary),
             Self::FocusChanged { focus } => {
                 let relation = |name: &str| format!("FocusChanged.focus.{name}");

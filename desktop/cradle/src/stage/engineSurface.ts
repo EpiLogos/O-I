@@ -67,6 +67,7 @@ export class EngineSurface {
   private adapter: ProductionAdapter;
   private active: { id: string; scene: StageScene; revision: number } | null = null;
   private revision = 0;
+  private selectedIds: string[] = [];
   private live = false;
   private timers: ReturnType<typeof setTimeout>[] = [];
   private raf = 0;
@@ -141,10 +142,12 @@ export class EngineSurface {
     this.wake();
   }
 
-  presentConfig(id: string, config: unknown) {
+  presentConfig(id: string, config: unknown, sceneRef?: string, selectedIds: string[] = []) {
     if (this.active && this.active.id !== id && this.active.id !== STAGE_IDLE) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.live = true;
-    this.activate(id, this.sceneFrom(config as NativeConfig));
+    if (this.retainedLeaseOwner) throw new Error("Release the native domain binding before authoring this stage");
+    this.selectedIds = selectedIds;
+    this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
     this.wake();
   }
 
@@ -278,7 +281,7 @@ export class EngineSurface {
     } else { width = window.innerWidth; height = window.innerHeight; }
     try {
       this.adapter.resize(width, height, window.devicePixelRatio || 1);
-      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: CAMERA_2D, pointer: this.pointer, selectedIds: [], scaffold: "off" });
+      this.adapter.render({ scene: this.active!.scene, authoringRevision: this.active!.revision, simTime: 0, delta, params: {}, camera: CAMERA_2D, pointer: this.pointer, selectedIds: this.selectedIds, scaffold: "off" });
       return true;
     } catch (cause) {
       this.sleep();
