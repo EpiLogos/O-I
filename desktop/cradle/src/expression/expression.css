@@ -5,3 +5,6 @@
 .expression-editor pre { overflow:auto; max-height:320px; white-space:pre-wrap; overflow-wrap:anywhere; }
 .expression-editor input,.expression-editor select { font:inherit; color:inherit; background:var(--oi-surface); border:1px solid var(--oi-border); padding:6px; }
 .expression-editor [aria-pressed="true"] { outline:1px solid currentColor; }
+.expression-refinements { margin:14px 0; padding:12px; border:1px solid var(--oi-border); background:var(--oi-surface); }
+.expression-refinements article { display:grid; gap:7px; padding:10px 0; border-top:1px solid var(--oi-border); }
+.expression-refinements article>span,.expression-refinements article>p { font-size:11px; color:var(--oi-muted); margin:0; }
