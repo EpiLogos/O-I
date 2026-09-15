@@ -206,7 +206,9 @@ fn catalogue(owner: &str) -> Vec<SettingDef> {
 fn parse_setting_ref(raw: &str) -> Result<(String, String, String), String> {
     let parts: Vec<&str> = raw.split(':').collect();
     if parts.len() != 3 {
-        return Err(format!("`{raw}` must have exactly three `:`-separated components"));
+        return Err(format!(
+            "`{raw}` must have exactly three `:`-separated components"
+        ));
     }
     let (owner_part, section, key) = (parts[0], parts[1], parts[2]);
     let owner = owner_part.strip_prefix("connector/").unwrap_or(owner_part);
@@ -279,10 +281,18 @@ impl ScopeAddress {
         };
         let kind = scope_kind(kind).ok_or_else(|| format!("unknown_scope_kind:`{kind}`"))?;
         match &reference {
-            None if singular_kind(kind) => Ok(ScopeAddress { kind, scope_ref: None }),
-            None => Err("unsupported_scope:non-singular scope kind requires a scope_ref".to_owned()),
+            None if singular_kind(kind) => Ok(ScopeAddress {
+                kind,
+                scope_ref: None,
+            }),
+            None => {
+                Err("unsupported_scope:non-singular scope kind requires a scope_ref".to_owned())
+            }
             Some(r) if r.is_empty() => Err("unsupported_scope:empty scope_ref".to_owned()),
-            Some(_) => Ok(ScopeAddress { kind, scope_ref: reference }),
+            Some(_) => Ok(ScopeAddress {
+                kind,
+                scope_ref: reference,
+            }),
         }
     }
 }
@@ -382,9 +392,8 @@ struct Sandbox {
 
 impl Sandbox {
     fn open() -> Sandbox {
-        let home = std::env::var("OWNER_STUB_HOME").unwrap_or_else(|_| {
-            usage_fail("OWNER_STUB_HOME must name the sandbox root")
-        });
+        let home = std::env::var("OWNER_STUB_HOME")
+            .unwrap_or_else(|_| usage_fail("OWNER_STUB_HOME must name the sandbox root"));
         let home = PathBuf::from(home);
         std::fs::create_dir_all(home.join("plans")).expect("sandbox plans dir");
         std::fs::create_dir_all(home.join("receipts")).expect("sandbox receipts dir");
@@ -665,8 +674,12 @@ fn disclosure_document(sandbox: &Sandbox) -> Value {
                 })
             };
             let drift = match &declared_value {
-                Some(d) if d != &axis_value => json!({ "state": "diverged", "between": ["declared", "effective"], "remediation_action_ref": null }),
-                _ => json!({ "state": "none", "between": ["declared", "effective"], "remediation_action_ref": null }),
+                Some(d) if d != &axis_value => {
+                    json!({ "state": "diverged", "between": ["declared", "effective"], "remediation_action_ref": null })
+                }
+                _ => {
+                    json!({ "state": "none", "between": ["declared", "effective"], "remediation_action_ref": null })
+                }
             };
             let setting = json!({
                 "key": key,
@@ -812,8 +825,9 @@ fn read_value(argv: &Argv) -> Value {
                 .expect("stdin value");
             buffer
         } else {
-            std::fs::read_to_string(path)
-                .unwrap_or_else(|error| usage_fail(&format!("cannot read --value-file {path}: {error}")))
+            std::fs::read_to_string(path).unwrap_or_else(|error| {
+                usage_fail(&format!("cannot read --value-file {path}: {error}"))
+            })
         };
         return serde_json::from_str(&body)
             .unwrap_or_else(|error| usage_fail(&format!("--value-file is not JSON: {error}")));
@@ -838,12 +852,21 @@ fn validate_value(def: &SettingDef, payload: &Value) -> (Option<Value>, Option<V
             );
         };
         let Some(reference) = secret_reference.get("ref").and_then(|r| r.as_str()) else {
-            return (None, Some(json!({ "reason": "secret_reference must carry a ref" })));
+            return (
+                None,
+                Some(json!({ "reason": "secret_reference must carry a ref" })),
+            );
         };
         if !reference.contains(':') {
-            return (None, Some(json!({ "reason": "secret_reference ref must be a namespaced reference" })));
+            return (
+                None,
+                Some(json!({ "reason": "secret_reference ref must be a namespaced reference" })),
+            );
         }
-        return (Some(json!({ "secret_reference": { "ref": reference } })), None);
+        return (
+            Some(json!({ "secret_reference": { "ref": reference } })),
+            None,
+        );
     }
     if secret_reference.is_some() {
         return (
@@ -853,8 +876,8 @@ fn validate_value(def: &SettingDef, payload: &Value) -> (Option<Value>, Option<V
     }
     match def.kind {
         "enum" => {
-            let ok = payload.is_string()
-                && def.options.iter().any(|o| Some(*o) == payload.as_str());
+            let ok =
+                payload.is_string() && def.options.iter().any(|o| Some(*o) == payload.as_str());
             if ok {
                 (Some(payload.clone()), None)
             } else {
@@ -877,7 +900,10 @@ fn validate_value(def: &SettingDef, payload: &Value) -> (Option<Value>, Option<V
             if payload.is_string() {
                 (Some(payload.clone()), None)
             } else {
-                (None, Some(json!({ "reason": "value must be a path string" })))
+                (
+                    None,
+                    Some(json!({ "reason": "value must be a path string" })),
+                )
             }
         }
         other => (
@@ -955,10 +981,18 @@ fn op_validate(argv: &Argv) -> ! {
     require_json(argv);
     let sandbox = Sandbox::open();
     degraded_check(&sandbox);
-    let setting_ref = argv.value("setting").expect("--setting is required").to_owned();
+    let setting_ref = argv
+        .value("setting")
+        .expect("--setting is required")
+        .to_owned();
     let def = lookup(&sandbox, &setting_ref);
     if !writable(&def) {
-        fail("unsupported_setting", "setting is not writable", Some(&setting_ref), None);
+        fail(
+            "unsupported_setting",
+            "setting is not writable",
+            Some(&setting_ref),
+            None,
+        );
     }
     let payload = read_value(argv);
     let scope = scope_of(&def, argv.value("scope"));
@@ -975,7 +1009,8 @@ fn op_validate(argv: &Argv) -> ! {
             std::process::exit(0)
         }
         (_, entered) => {
-            let reason = entered.unwrap_or_else(|| json!({ "reason": "the owner produced no verdict" }));
+            let reason =
+                entered.unwrap_or_else(|| json!({ "reason": "the owner produced no verdict" }));
             let doc = json!({
                 "schema": ERROR_SCHEMA,
                 "code": "invalid_value",
@@ -1014,10 +1049,18 @@ fn op_plan(argv: &Argv) -> ! {
     require_json(argv);
     let sandbox = Sandbox::open();
     degraded_check(&sandbox);
-    let setting_ref = argv.value("setting").expect("--setting is required").to_owned();
+    let setting_ref = argv
+        .value("setting")
+        .expect("--setting is required")
+        .to_owned();
     let def = lookup(&sandbox, &setting_ref);
     if !writable(&def) {
-        fail("unsupported_setting", "setting is not writable", Some(&setting_ref), None);
+        fail(
+            "unsupported_setting",
+            "setting is not writable",
+            Some(&setting_ref),
+            None,
+        );
     }
     let payload = read_value(argv);
     let scope = scope_of(&def, argv.value("scope"));
@@ -1030,7 +1073,8 @@ fn op_plan(argv: &Argv) -> ! {
             }
         }
         (_, entered) => {
-            let reason = entered.unwrap_or_else(|| json!({ "reason": "the owner produced no verdict" }));
+            let reason =
+                entered.unwrap_or_else(|| json!({ "reason": "the owner produced no verdict" }));
             let doc = json!({
                 "schema": ERROR_SCHEMA,
                 "code": "invalid_value",
@@ -1065,9 +1109,15 @@ fn op_plan(argv: &Argv) -> ! {
     let digest = sha256_hex(&canonical_plan_body(&plan));
     plan["plan_digest"] = json!(digest);
     plan["explain_ref"] = json!(format!("stub:plan:{digest}"));
-    let plan_path = sandbox.home.join("plans").join(format!("{}.json", plan["plan_id"].as_str().unwrap()));
-    std::fs::write(&plan_path, serde_json::to_string_pretty(&plan).expect("plan serialises"))
-        .expect("plan write");
+    let plan_path = sandbox
+        .home
+        .join("plans")
+        .join(format!("{}.json", plan["plan_id"].as_str().unwrap()));
+    std::fs::write(
+        &plan_path,
+        serde_json::to_string_pretty(&plan).expect("plan serialises"),
+    )
+    .expect("plan write");
     println!("{plan}");
     std::process::exit(0)
 }
@@ -1080,13 +1130,16 @@ fn read_plan(argv: &Argv) -> Value {
         .to_owned();
     let body = if path == "-" {
         let mut buffer = String::new();
-        std::io::stdin().read_to_string(&mut buffer).expect("stdin plan");
+        std::io::stdin()
+            .read_to_string(&mut buffer)
+            .expect("stdin plan");
         buffer
     } else {
         std::fs::read_to_string(&path)
             .unwrap_or_else(|error| usage_fail(&format!("cannot read --plan-file {path}: {error}")))
     };
-    serde_json::from_str(&body).unwrap_or_else(|error| usage_fail(&format!("plan is not JSON: {error}")))
+    serde_json::from_str(&body)
+        .unwrap_or_else(|error| usage_fail(&format!("plan is not JSON: {error}")))
 }
 
 fn receipts_matching(
@@ -1145,7 +1198,10 @@ fn op_apply(argv: &Argv) -> ! {
             None,
         );
     }
-    let setting_ref = plan["setting_ref"].as_str().expect("plan names a setting").to_owned();
+    let setting_ref = plan["setting_ref"]
+        .as_str()
+        .expect("plan names a setting")
+        .to_owned();
     let scope_value = &plan["scope"];
     let scope = ScopeAddress {
         kind: scope_kind(scope_value["scope_kind"].as_str().expect("scope kind"))
@@ -1167,7 +1223,12 @@ fn op_apply(argv: &Argv) -> ! {
         );
     }
     if plan["expires_at_unix_ms"].as_u64().unwrap_or(0) < now_ms() {
-        fail("plan_expired", "this plan has expired; plan again", Some(&setting_ref), Some(&scope));
+        fail(
+            "plan_expired",
+            "this plan has expired; plan again",
+            Some(&setting_ref),
+            Some(&scope),
+        );
     }
 
     let changeset_id = argv
@@ -1226,7 +1287,10 @@ fn op_apply(argv: &Argv) -> ! {
 
     let seq = store_history_len(&sandbox) + 1;
     let receipt_id = format!("stub-{}-receipt-{seq}", sandbox.owner);
-    let native_ref = format!("stub:history:{}:{seq}", setting_ref.rsplit(':').next().unwrap_or("setting"));
+    let native_ref = format!(
+        "stub:history:{}:{seq}",
+        setting_ref.rsplit(':').next().unwrap_or("setting")
+    );
     let receipt = json!({
         "schema": RECEIPT_SCHEMA,
         "receipt_id": receipt_id,
@@ -1244,7 +1308,10 @@ fn op_apply(argv: &Argv) -> ! {
         "error": null
     });
     std::fs::write(
-        sandbox.home.join("receipts").join(format!("{receipt_id}.json")),
+        sandbox
+            .home
+            .join("receipts")
+            .join(format!("{receipt_id}.json")),
         serde_json::to_string_pretty(&receipt).expect("receipt serialises"),
     )
     .expect("receipt write");
@@ -1269,7 +1336,10 @@ fn op_reset(argv: &Argv) -> ! {
     require_json(argv);
     let sandbox = Sandbox::open();
     degraded_check(&sandbox);
-    let setting_ref = argv.value("setting").expect("--setting is required").to_owned();
+    let setting_ref = argv
+        .value("setting")
+        .expect("--setting is required")
+        .to_owned();
     let def = lookup(&sandbox, &setting_ref);
     let scope = scope_of(&def, argv.value("scope"));
     let changeset_id = argv
@@ -1315,7 +1385,10 @@ fn op_reset(argv: &Argv) -> ! {
 
     let seq = store_history_len(&sandbox) + 1;
     let receipt_id = format!("stub-{}-receipt-{seq}", sandbox.owner);
-    let native_ref = format!("stub:history:{}:{seq}", setting_ref.rsplit(':').next().unwrap_or("setting"));
+    let native_ref = format!(
+        "stub:history:{}:{seq}",
+        setting_ref.rsplit(':').next().unwrap_or("setting")
+    );
     let receipt = json!({
         "schema": RECEIPT_SCHEMA,
         "receipt_id": receipt_id,
@@ -1333,7 +1406,10 @@ fn op_reset(argv: &Argv) -> ! {
         "error": null
     });
     std::fs::write(
-        sandbox.home.join("receipts").join(format!("{receipt_id}.json")),
+        sandbox
+            .home
+            .join("receipts")
+            .join(format!("{receipt_id}.json")),
         serde_json::to_string_pretty(&receipt).expect("receipt serialises"),
     )
     .expect("receipt write");
@@ -1357,9 +1433,9 @@ fn main() {
         "config-contribution" => op_contribution(),
         "system" => op_system(),
         "config" => {
-            let verb = rest
-                .first()
-                .unwrap_or_else(|| usage_fail("usage: config-owner-stub config <validate|plan|apply|reset> --json ..."));
+            let verb = rest.first().unwrap_or_else(|| {
+                usage_fail("usage: config-owner-stub config <validate|plan|apply|reset> --json ...")
+            });
             let argv = Argv::parse(&rest[1..]);
             match verb.as_str() {
                 "validate" => op_validate(&argv),

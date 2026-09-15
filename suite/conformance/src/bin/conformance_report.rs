@@ -44,7 +44,10 @@ fn main() {
         }
     }
     let Some((_, run)) = latest else {
-        println!("No conformance run found under {}. Run the suite first:", runs.display());
+        println!(
+            "No conformance run found under {}. Run the suite first:",
+            runs.display()
+        );
         println!("  cargo test -p oi-config-conformance --test configuration_conformance");
         std::process::exit(1);
     };
@@ -96,12 +99,7 @@ fn main() {
                 if status != "passed" && status != "partial" {
                     healthy = false;
                 }
-                println!(
-                    "#{:<2} {:<34} {}",
-                    n,
-                    name,
-                    status.to_uppercase()
-                );
+                println!("#{:<2} {:<34} {}", n, name, status.to_uppercase());
                 for verified in verdict["verified"].as_array().unwrap_or(&vec![]) {
                     println!("      verified: {}", verified.as_str().unwrap_or("?"));
                 }
@@ -116,7 +114,10 @@ fn main() {
             }
             None => {
                 healthy = false;
-                println!("#{:<2} {:<34} NOT RUN (no verdict; the test failed or never executed)", n, name);
+                println!(
+                    "#{:<2} {:<34} NOT RUN (no verdict; the test failed or never executed)",
+                    n, name
+                );
             }
         }
     }

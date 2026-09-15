@@ -13,10 +13,11 @@
 //! `config-conformance-report` after the suite for the status table.
 
 use oi_cli::configuration::{
-    derive_changeset_status, parse_scope_compact, parse_setting_ref, reconcile, validate_changeset,
-    validate_profile, validate_resolution, ChangeSet, ChangeSetStatus, Contribution,
-    ContributionRegistry, IdempotencyKey, Receipt, ReceiptOutcome, ReconciliationInputs,
-    ReconciliationStatus, Resolution, Scope, ScopeDecision, ScopeKind, StageState, ValueKind,
+    connector_reread, derive_changeset_status, parse_scope_compact, parse_setting_ref, reconcile,
+    validate_changeset, validate_connector_contribution, validate_profile, validate_resolution,
+    ChangeSet, ChangeSetStatus, Contribution, ContributionRegistry, Desired, IdempotencyKey,
+    Receipt, ReceiptOutcome, ReconciliationInputs, ReconciliationStatus, Resolution, Scope,
+    ScopeDecision, ScopeKind, StageState, ValueKind,
 };
 use oi_config_conformance::{
     artifacts_dir, canonical_plan_digest, fixture, owner_axes, record_verdict, redaction_sweep,
@@ -33,6 +34,7 @@ const SESSION_PROVIDER: &str = "ai-kit:session:session.provider";
 const VERIFY_BEFORE_RUN: &str = "oi:verify:verify.before-run";
 const CREDENTIAL_REF: &str = "ai-kit:providers:credentials.anthropic";
 const CONNECTOR_REF: &str = "connector/factory-actuation:authority:authority.mode";
+const RELATION_SCOPE: &str = "connector-relation:factory-actuation";
 
 // ---------------------------------------------------------------------------
 // Shared helpers
@@ -44,6 +46,31 @@ fn stub(slug: &str, owner: &str, degraded: bool) -> StubOwner {
 
 fn stub_exe_path() -> &'static str {
     STUB_EXE
+}
+
+/// C4's connector fixture owner: a standalone crate (owners are independent
+/// of O:I; the contract is the wire), built once and driven as a subprocess.
+fn connector_fixture_bin() -> &'static std::path::PathBuf {
+    use std::sync::OnceLock;
+    static BIN: OnceLock<std::path::PathBuf> = OnceLock::new();
+    BIN.get_or_init(|| {
+        let crate_dir =
+            PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../configuration/connector-fixture");
+        let status = std::process::Command::new(env!("CARGO"))
+            .args(["build", "--quiet", "--manifest-path"])
+            .arg(crate_dir.join("Cargo.toml"))
+            .status()
+            .expect("spawn cargo to build the fixture connector");
+        assert!(status.success(), "the fixture connector must build");
+        let target = std::env::var_os("CARGO_TARGET_DIR")
+            .map(PathBuf::from)
+            .unwrap_or_else(|| crate_dir.join("target"));
+        ["debug", "release"]
+            .iter()
+            .map(|profile| target.join(profile).join("connector-fixture"))
+            .find(|candidate| candidate.exists())
+            .unwrap_or_else(|| panic!("fixture binary missing under {}", target.display()))
+    })
 }
 
 fn parse_and_register(contribution_value: &Value, registry: &mut ContributionRegistry, name: &str) {
@@ -64,8 +91,16 @@ fn registry_with_stubs(slug: &str) -> (ContributionRegistry, StubOwner, StubOwne
     let ai_kit = stub(slug, "ai-kit", false);
     let oi = stub(slug, "oi", false);
     let mut registry = ContributionRegistry::new();
-    parse_and_register(&ai_kit.contribution().expect_success("contribution"), &mut registry, "stub ai-kit");
-    parse_and_register(&oi.contribution().expect_success("contribution"), &mut registry, "stub oi");
+    parse_and_register(
+        &ai_kit.contribution().expect_success("contribution"),
+        &mut registry,
+        "stub ai-kit",
+    );
+    parse_and_register(
+        &oi.contribution().expect_success("contribution"),
+        &mut registry,
+        "stub oi",
+    );
     parse_and_register(
         &fixture("contribution-connector-fixture")["contribution"],
         &mut registry,
@@ -108,7 +143,11 @@ fn reconcile_setting(
             axes.comparison_value.clone(),
         )
     } else {
-        (desired_ref.cloned(), axes.effective.clone(), axes.declared.clone())
+        (
+            desired_ref.cloned(),
+            axes.effective.clone(),
+            axes.declared.clone(),
+        )
     };
     reconcile(ReconciliationInputs {
         desired: desired_axis.as_ref(),
@@ -175,7 +214,13 @@ fn as_changeset(document: &Value, what: &str) -> ChangeSet {
     changeset
 }
 
-fn plan_and_apply(stub_owner: &StubOwner, setting: &str, scope: &str, value: &str, changeset: &str) -> (Value, Value) {
+fn plan_and_apply(
+    stub_owner: &StubOwner,
+    setting: &str,
+    scope: &str,
+    value: &str,
+    changeset: &str,
+) -> (Value, Value) {
     let plan = stub_owner
         .plan_setting(setting, Some(scope), value)
         .expect_success("plan");
@@ -190,7 +235,12 @@ fn plan_and_apply(stub_owner: &StubOwner, setting: &str, scope: &str, value: &st
 
 /// Re-read the owner and assert the applied change is what the owner now
 /// discloses; returns the reading.
-fn verified_reading(stub_owner: &StubOwner, registry: &ContributionRegistry, setting: &str, desired: Value) -> Value {
+fn verified_reading(
+    stub_owner: &StubOwner,
+    registry: &ContributionRegistry,
+    setting: &str,
+    desired: Value,
+) -> Value {
     let reading = stub_owner.reading();
     let status = reconcile_setting(&reading, registry, setting, Some(desired));
     assert_eq!(
@@ -209,7 +259,15 @@ fn pending(surface: &str, lane: &str, reason: &str) -> PendingLeg {
     }
 }
 
-fn verdict(n: u8, slug: &str, name: &str, status: &str, verified: Vec<&str>, pending_legs: Vec<PendingLeg>, evidence: Vec<String>) {
+fn verdict(
+    n: u8,
+    slug: &str,
+    name: &str,
+    status: &str,
+    verified: Vec<&str>,
+    pending_legs: Vec<PendingLeg>,
+    evidence: Vec<String>,
+) {
     record_verdict(Verdict {
         n,
         slug: slug.to_owned(),
@@ -222,7 +280,11 @@ fn verdict(n: u8, slug: &str, name: &str, status: &str, verified: Vec<&str>, pen
 }
 
 fn c1(reason: &str) -> PendingLeg {
-    pending("O:I configuration kernel (registry/resolver/ChangeSet engine)", "C1", reason)
+    pending(
+        "O:I configuration kernel (registry/resolver/ChangeSet engine)",
+        "C1",
+        reason,
+    )
 }
 fn c2(reason: &str) -> PendingLeg {
     pending("O:I profile persistence/switch engine", "C2", reason)
@@ -245,10 +307,17 @@ fn t01_ordinary_setting_propagation() {
     let dir = artifacts_dir(slug);
 
     // The owner contributes the setting; discovery needs no per-setting code.
-    let contribution_doc = ai_kit.contribution().expect_success("config-contribution --json");
-    let entry = registry.lookup(MODEL_DEFAULT).expect("contributed setting resolves");
+    let contribution_doc = ai_kit
+        .contribution()
+        .expect_success("config-contribution --json");
+    let entry = registry
+        .lookup(MODEL_DEFAULT)
+        .expect("contributed setting resolves");
     assert_eq!(entry.spec.value_schema.kind, ValueKind::Enum);
-    assert!(entry.spec.profileable, "an ordinary setting is profileable where marked");
+    assert!(
+        entry.spec.profileable,
+        "an ordinary setting is profileable where marked"
+    );
     assert_eq!(
         parse_setting_ref(MODEL_DEFAULT).expect("grammar").owner_ref,
         "ai-kit"
@@ -267,15 +336,26 @@ fn t01_ordinary_setting_propagation() {
     assert_eq!(validation["valid"], true);
 
     // Owner-native plan → apply → receipt through the frozen transport.
-    let (plan, receipt) = plan_and_apply(&ai_kit, MODEL_DEFAULT, PROJECT_SCOPE, "sonnet-next", "cs-c7-t01");
-    assert!(plan["plan_id"].as_str().expect("owner-minted plan_id").starts_with("plan-"));
+    let (plan, receipt) = plan_and_apply(
+        &ai_kit,
+        MODEL_DEFAULT,
+        PROJECT_SCOPE,
+        "sonnet-next",
+        "cs-c7-t01",
+    );
+    assert!(plan["plan_id"]
+        .as_str()
+        .expect("owner-minted plan_id")
+        .starts_with("plan-"));
     assert_eq!(
         plan["plan_digest"].as_str().expect("plan digest"),
         canonical_plan_digest(&plan),
         "plan_digest is sha256 over the canonical plan body"
     );
     let receipt_typed: Receipt = serde_json::from_value(receipt.clone()).expect("receipt parses");
-    receipt_typed.validate().expect("receipt obeys the frozen laws");
+    receipt_typed
+        .validate()
+        .expect("receipt obeys the frozen laws");
     assert_eq!(receipt_typed.outcome, ReceiptOutcome::Applied);
 
     // v2 re-read verifies; reconciliation is the frozen pure function.
@@ -284,7 +364,9 @@ fn t01_ordinary_setting_propagation() {
     assert_eq!(axes.effective, Some(json!("sonnet-next")));
 
     // The ChangeSet this flow produced obeys the frozen lifecycle laws.
-    let reading_digest = reading["owner"]["reading_digest"].as_str().expect("reading digest");
+    let reading_digest = reading["owner"]["reading_digest"]
+        .as_str()
+        .expect("reading digest");
     let changeset = json!({
         "schema": "oi.config-changeset/v1",
         "changeset_id": "cs-c7-t01",
@@ -315,11 +397,27 @@ fn t01_ordinary_setting_propagation() {
     );
 
     // Every document of the flow is machine-readable, preserved verbatim.
-    std::fs::write(dir.join("contribution.json"), serde_json::to_vec(&contribution_doc).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("contribution.json"),
+        serde_json::to_vec(&contribution_doc).unwrap(),
+    )
+    .unwrap();
     std::fs::write(dir.join("plan.json"), serde_json::to_vec(&plan).unwrap()).unwrap();
-    std::fs::write(dir.join("receipt.json"), serde_json::to_vec(&receipt).unwrap()).unwrap();
-    std::fs::write(dir.join("reading.json"), serde_json::to_vec(&reading).unwrap()).unwrap();
-    std::fs::write(dir.join("changeset.json"), serde_json::to_vec(&changeset).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("receipt.json"),
+        serde_json::to_vec(&receipt).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("reading.json"),
+        serde_json::to_vec(&reading).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("changeset.json"),
+        serde_json::to_vec(&changeset).unwrap(),
+    )
+    .unwrap();
     redaction_sweep(&dir, &[]).expect("t01 artifacts are redaction-clean");
 
     verdict(
@@ -338,9 +436,16 @@ fn t01_ordinary_setting_propagation() {
             c1("the harness played the registry/router; the kernel must replace it"),
             c5("`oi config list/show/set` must surface the same ref and documents"),
             c6("Desktop generic rendering of the same setting"),
-            pending("Agent/native Action surface", "C1/C5", "headless authorised operation over the kernel"),
+            pending(
+                "Agent/native Action surface",
+                "C1/C5",
+                "headless authorised operation over the kernel",
+            ),
         ],
-        vec![format!("stub owner: {}", stub_exe_path()), format!("artifacts: {}", dir.display())],
+        vec![
+            format!("stub owner: {}", stub_exe_path()),
+            format!("artifacts: {}", dir.display()),
+        ],
     );
 }
 
@@ -355,13 +460,27 @@ fn t02_native_first_edit() {
     let dir = artifacts_dir(slug);
 
     // O:I-routed desired state first: the world starts satisfied.
-    let (_plan, _receipt) = plan_and_apply(&ai_kit, MODEL_DEFAULT, PROJECT_SCOPE, "sonnet-next", "cs-c7-t02a");
+    let (_plan, _receipt) = plan_and_apply(
+        &ai_kit,
+        MODEL_DEFAULT,
+        PROJECT_SCOPE,
+        "sonnet-next",
+        "cs-c7-t02a",
+    );
     let before = ai_kit.reading();
     assert_eq!(
-        reconcile_setting(&before, &registry, MODEL_DEFAULT, Some(json!("sonnet-next"))),
+        reconcile_setting(
+            &before,
+            &registry,
+            MODEL_DEFAULT,
+            Some(json!("sonnet-next"))
+        ),
         ReconciliationStatus::Satisfied
     );
-    let digest_before = before["owner"]["reading_digest"].as_str().expect("digest").to_owned();
+    let digest_before = before["owner"]["reading_digest"]
+        .as_str()
+        .expect("digest")
+        .to_owned();
 
     // The native edit: the owner's own configuration file changes under a
     // native product CLI hand (aikit-style) — no O:I operation exists here.
@@ -373,10 +492,20 @@ fn t02_native_first_edit() {
     // Re-read: the new v2 axes reach reconciliation and the setting is
     // drifted — explicitly, never silently repaired.
     let after = ai_kit.reading();
-    let digest_after = after["owner"]["reading_digest"].as_str().expect("digest").to_owned();
-    assert_ne!(digest_before, digest_after, "a changed world changes the reading digest");
+    let digest_after = after["owner"]["reading_digest"]
+        .as_str()
+        .expect("digest")
+        .to_owned();
+    assert_ne!(
+        digest_before, digest_after,
+        "a changed world changes the reading digest"
+    );
     let axes = owner_axes(&after, MODEL_DEFAULT, false);
-    assert_eq!(axes.effective, Some(json!("opus")), "the owner truth passed through unmodified");
+    assert_eq!(
+        axes.effective,
+        Some(json!("opus")),
+        "the owner truth passed through unmodified"
+    );
     assert_eq!(
         reconcile_setting(&after, &registry, MODEL_DEFAULT, Some(json!("sonnet-next"))),
         ReconciliationStatus::Drifted
@@ -385,12 +514,27 @@ fn t02_native_first_edit() {
     // O:I never rewrote the owner to restore its desired state: no receipt
     // was minted, and the store holds exactly the external edit.
     let receipt_count = std::fs::read_dir(ai_kit.receipts_dir()).unwrap().count();
-    assert_eq!(receipt_count, 1, "the native edit minted no owner operation");
+    assert_eq!(
+        receipt_count, 1,
+        "the native edit minted no owner operation"
+    );
     assert_eq!(ai_kit.read_store()["overrides"][&key], json!("opus"));
 
-    std::fs::write(dir.join("reading-before.json"), serde_json::to_vec(&before).unwrap()).unwrap();
-    std::fs::write(dir.join("reading-after.json"), serde_json::to_vec(&after).unwrap()).unwrap();
-    std::fs::write(dir.join("native-store-after-edit.json"), serde_json::to_vec(&store).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("reading-before.json"),
+        serde_json::to_vec(&before).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("reading-after.json"),
+        serde_json::to_vec(&after).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("native-store-after-edit.json"),
+        serde_json::to_vec(&store).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         2,
@@ -403,7 +547,9 @@ fn t02_native_first_edit() {
             "reconciliation explicit: drifted, no silent rewrite",
             "no owner operation minted by the external edit",
         ],
-        vec![c1("the O:I observer that persists desired state and reports drift is the kernel's")],
+        vec![c1(
+            "the O:I observer that persists desired state and reports drift is the kernel's",
+        )],
         vec![format!("artifacts: {}", dir.display())],
     );
 }
@@ -440,20 +586,37 @@ fn t03_oi_routed_edit() {
     let receipt: Receipt = serde_json::from_value(receipt_value.clone()).expect("receipt parses");
     receipt.validate().expect("receipt obeys the frozen laws");
     assert_eq!(receipt.outcome, ReceiptOutcome::Applied);
-    assert!(receipt.native_ref.as_deref().unwrap_or_default().starts_with("stub:history:"));
+    assert!(receipt
+        .native_ref
+        .as_deref()
+        .unwrap_or_default()
+        .starts_with("stub:history:"));
 
     // The owner performed the change; the v2 re-read verifies it.
     let reading = verified_reading(&ai_kit, &registry, MODEL_DEFAULT, json!("sonnet-next"));
-    let reading_digest = reading["owner"]["reading_digest"].as_str().unwrap().to_owned();
+    let reading_digest = reading["owner"]["reading_digest"]
+        .as_str()
+        .unwrap()
+        .to_owned();
 
     // Idempotent replay under the frozen key: no_op + the original receipt,
     // and the owner did not execute again.
-    let replay_value = ai_kit.apply_plan_stdin(&plan, "cs-c7-t03").expect_success("replay");
+    let replay_value = ai_kit
+        .apply_plan_stdin(&plan, "cs-c7-t03")
+        .expect_success("replay");
     let replay: Receipt = serde_json::from_value(replay_value.clone()).expect("replay parses");
-    replay.validate().expect("replay receipt obeys the frozen laws");
+    replay
+        .validate()
+        .expect("replay receipt obeys the frozen laws");
     assert_eq!(replay.outcome, ReceiptOutcome::NoOp);
-    assert_eq!(replay.original_receipt_id.as_deref(), Some(receipt.receipt_id.as_str()));
-    assert_eq!(IdempotencyKey::from_receipt(&receipt), IdempotencyKey::from_receipt(&replay));
+    assert_eq!(
+        replay.original_receipt_id.as_deref(),
+        Some(receipt.receipt_id.as_str())
+    );
+    assert_eq!(
+        IdempotencyKey::from_receipt(&receipt),
+        IdempotencyKey::from_receipt(&replay)
+    );
     let executed_receipts = std::fs::read_dir(ai_kit.receipts_dir()).unwrap().count();
     assert_eq!(executed_receipts, 1, "the owner executed exactly once");
 
@@ -476,9 +639,21 @@ fn t03_oi_routed_edit() {
     });
     as_changeset(&changeset, "t03 ChangeSet");
 
-    std::fs::write(dir.join("receipt.json"), serde_json::to_vec(&receipt_value).unwrap()).unwrap();
-    std::fs::write(dir.join("replay-receipt.json"), serde_json::to_vec(&replay_value).unwrap()).unwrap();
-    std::fs::write(dir.join("reading.json"), serde_json::to_vec(&reading).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("receipt.json"),
+        serde_json::to_vec(&receipt_value).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("replay-receipt.json"),
+        serde_json::to_vec(&replay_value).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("reading.json"),
+        serde_json::to_vec(&reading).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         3,
@@ -517,7 +692,10 @@ fn t04_profile_switch() {
     validate_profile(&profile, &registry)
         .unwrap_or_else(|error| panic!("the frozen profile violates no contract against stub owners + connector fixture: {error}"));
     assert_eq!(profile.native_profiles.len(), 1);
-    assert_eq!(profile.native_profiles[0].native_profile_ref, "coding", "native profiles travel by reference");
+    assert_eq!(
+        profile.native_profiles[0].native_profile_ref, "coding",
+        "native profiles travel by reference"
+    );
 
     // Profile switch: a deterministic, inspectable ChangeSet — every
     // desired entry becomes one requested change carried by one operation.
@@ -545,8 +723,15 @@ fn t04_profile_switch() {
             // The connector owner has no executable on this base: the
             // operation stays planned, truthfully, until C4 binds.
             operations.push(operation(
-                &op_id, "connector/factory-actuation", &setting_ref, &scope_compact,
-                "apply", None, "planned", None, None,
+                &op_id,
+                "connector/factory-actuation",
+                &setting_ref,
+                &scope_compact,
+                "apply",
+                None,
+                "planned",
+                None,
+                None,
             ));
             continue;
         }
@@ -617,7 +802,11 @@ fn t04_profile_switch() {
         if setting_ref == CONNECTOR_REF {
             continue; // unexecuted: no verification is claimed
         }
-        let owner_reading = if setting_ref.starts_with("oi:") { &oi_reading } else { &ai_reading };
+        let owner_reading = if setting_ref.starts_with("oi:") {
+            &oi_reading
+        } else {
+            &ai_reading
+        };
         let desired = if entry["secret_reference"].is_null() {
             entry["value"].clone()
         } else {
@@ -658,15 +847,27 @@ fn t04_profile_switch() {
         ChangeSetStatus::Planned,
         "the frozen derivation does not overclaim while the connector operation is unexecuted"
     );
-    assert_eq!(changeset.operations.len(), 5, "no compensation operation is invented");
+    assert_eq!(
+        changeset.operations.len(),
+        5,
+        "no compensation operation is invented"
+    );
 
     // The native-profile reference was preserved untouched by planning.
     let profile_after: oi_cli::configuration::Profile =
         serde_json::from_value(profile_case["profile"].clone()).expect("re-parses");
     assert_eq!(profile_after.native_profiles, profile.native_profiles);
 
-    std::fs::write(dir.join("changeset.json"), serde_json::to_vec_pretty(&changeset_value).unwrap()).unwrap();
-    std::fs::write(dir.join("profile.json"), serde_json::to_vec_pretty(&profile_case["profile"]).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("changeset.json"),
+        serde_json::to_vec_pretty(&changeset_value).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("profile.json"),
+        serde_json::to_vec_pretty(&profile_case["profile"]).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         4,
@@ -724,7 +925,10 @@ fn t05_scope_explicitness() {
         let registry_decision = match ScopeKind::from_wire(scope_kind) {
             None => ScopeDecision::UnknownScopeKind,
             Some(kind) => {
-                let scope = Scope { scope_kind: kind, scope_ref: scope_ref.map(str::to_owned) };
+                let scope = Scope {
+                    scope_kind: kind,
+                    scope_ref: scope_ref.map(str::to_owned),
+                };
                 if scope.validate().is_err() {
                     ScopeDecision::UnsupportedScope
                 } else {
@@ -744,7 +948,11 @@ fn t05_scope_explicitness() {
         let owner_wire = if setting_ref == CONNECTOR_REF {
             registry_wire // no owner executable exists yet (C4)
         } else {
-            let owner = if setting_ref.starts_with("oi:") { &oi } else { &ai_kit };
+            let owner = if setting_ref.starts_with("oi:") {
+                &oi
+            } else {
+                &ai_kit
+            };
             let value = values[setting_ref].as_str().unwrap();
             let outcome = owner.validate_setting(setting_ref, Some(&compact), value);
             if outcome.exit == 0 {
@@ -768,7 +976,11 @@ fn t05_scope_explicitness() {
     // The two implementations agreed on every frozen case.
     assert_eq!(results.len(), 9);
 
-    std::fs::write(dir.join("scope-decisions.json"), serde_json::to_vec_pretty(&results).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("scope-decisions.json"),
+        serde_json::to_vec_pretty(&results).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         5,
@@ -807,7 +1019,9 @@ fn t06_secrets_never_materialize() {
         !outcome.stdout.contains(CANARY),
         "the owner echoed credential material back into its error document"
     );
-    assert!(serde_json::to_string(&error_doc).unwrap().contains("secret_reference"));
+    assert!(serde_json::to_string(&error_doc)
+        .unwrap()
+        .contains("secret_reference"));
 
     // Attempt 2: material through plan.
     ai_kit
@@ -820,24 +1034,39 @@ fn t06_secrets_never_materialize() {
         fixture("secret-redaction-cases")["violating_example"]["document"].clone(),
     )
     .expect("violating example parses");
-    let error = validate_profile(&violating, &registry).expect_err("material in a profile must be rejected");
-    assert!(error.contains("redaction"), "rejection names the law: {error}");
+    let error = validate_profile(&violating, &registry)
+        .expect_err("material in a profile must be rejected");
+    assert!(
+        error.contains("redaction"),
+        "rejection names the law: {error}"
+    );
 
     // The honest path: the plane carries a reference; presence is the
     // owner's own fact.
     let plan = ai_kit
-        .plan_setting(CREDENTIAL_REF, Some("world"), "{\"secret_reference\":{\"ref\":\"stub:credentials:anthropic-key\"}}")
+        .plan_setting(
+            CREDENTIAL_REF,
+            Some("world"),
+            "{\"secret_reference\":{\"ref\":\"stub:credentials:anthropic-key\"}}",
+        )
         .expect_success("secret reference plan");
     assert!(
         plan.get("value").is_none(),
         "a plan for a secret-kind setting carries no value"
     );
-    assert_eq!(plan["secret_reference"]["ref"], json!("stub:credentials:anthropic-key"));
+    assert_eq!(
+        plan["secret_reference"]["ref"],
+        json!("stub:credentials:anthropic-key")
+    );
     let plan_path = ai_kit.write_plan_file(&plan);
-    let receipt = ai_kit.apply_plan_file(&plan_path, "cs-c7-t06").expect_success("secret apply");
+    let receipt = ai_kit
+        .apply_plan_file(&plan_path, "cs-c7-t06")
+        .expect_success("secret apply");
 
     let receipt_typed: Receipt = serde_json::from_value(receipt.clone()).expect("receipt parses");
-    receipt_typed.validate().expect("receipt obeys the frozen laws");
+    receipt_typed
+        .validate()
+        .expect("receipt obeys the frozen laws");
     assert_eq!(receipt_typed.outcome, ReceiptOutcome::Applied);
     let reading = ai_kit.reading();
     let axes = owner_axes(&reading, CREDENTIAL_REF, true);
@@ -847,7 +1076,12 @@ fn t06_secrets_never_materialize() {
         "the owner discloses presence plus reference"
     );
     assert_eq!(
-        reconcile_setting(&reading, &registry, CREDENTIAL_REF, Some(json!({ "secret_reference": { "ref": "stub:credentials:anthropic-key" } }))),
+        reconcile_setting(
+            &reading,
+            &registry,
+            CREDENTIAL_REF,
+            Some(json!({ "secret_reference": { "ref": "stub:credentials:anthropic-key" } }))
+        ),
         ReconciliationStatus::Satisfied
     );
 
@@ -871,16 +1105,29 @@ fn t06_secrets_never_materialize() {
                 receipt.validate().expect("clean receipt");
             }
             "oi.config-resolution/v1" => {
-                let resolution: Resolution = serde_json::from_value(document.clone()).expect("parses");
+                let resolution: Resolution =
+                    serde_json::from_value(document.clone()).expect("parses");
                 validate_resolution(&resolution, &registry).expect("clean resolution");
             }
             other => panic!("unknown schema {other}"),
         }
     }
 
-    std::fs::write(dir.join("secret-receipt.json"), serde_json::to_vec(&receipt).unwrap()).unwrap();
-    std::fs::write(dir.join("secret-plan.json"), serde_json::to_vec(&plan).unwrap()).unwrap();
-    std::fs::write(dir.join("secret-reading.json"), serde_json::to_vec(&reading).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("secret-receipt.json"),
+        serde_json::to_vec(&receipt).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("secret-plan.json"),
+        serde_json::to_vec(&plan).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("secret-reading.json"),
+        serde_json::to_vec(&reading).unwrap(),
+    )
+    .unwrap();
     // The owner-side log is part of the artifact surface and must be
     // redaction-safe too.
     std::fs::write(dir.join("owner-history.log"), ai_kit.history()).unwrap();
@@ -919,7 +1166,13 @@ fn t07_partial_multi_owner_apply() {
     let dir = artifacts_dir(slug);
 
     // Owner 1 plans and applies normally.
-    let (plan, receipt) = plan_and_apply(&ai_kit, MODEL_DEFAULT, PROJECT_SCOPE, "sonnet-next", "cs-c7-t07");
+    let (plan, receipt) = plan_and_apply(
+        &ai_kit,
+        MODEL_DEFAULT,
+        PROJECT_SCOPE,
+        "sonnet-next",
+        "cs-c7-t07",
+    );
     assert_eq!(receipt["outcome"], json!("applied"));
 
     // Owner 2 refuses at plan: the error is explicit and frozen-coded.
@@ -970,18 +1223,43 @@ fn t07_partial_multi_owner_apply() {
         derive_changeset_status(&changeset.operations, None),
         ChangeSetStatus::PartiallyApplied
     );
-    assert_eq!(changeset.operations.len(), 2, "no invented rollback: exactly the two requested mutations");
+    assert_eq!(
+        changeset.operations.len(),
+        2,
+        "no invented rollback: exactly the two requested mutations"
+    );
     let failed = &changeset.operations[1];
-    assert_eq!(failed.error.as_ref().expect("failed op carries its error").code, "owner_unavailable");
-    assert!(changeset.operations[0].receipt_ref.is_some(), "the applied operation keeps its receipt");
+    assert_eq!(
+        failed
+            .error
+            .as_ref()
+            .expect("failed op carries its error")
+            .code,
+        "owner_unavailable"
+    );
     assert!(
-        changeset_value["verification"]["reconciliations"].as_array().unwrap().is_empty()
+        changeset.operations[0].receipt_ref.is_some(),
+        "the applied operation keeps its receipt"
+    );
+    assert!(
+        changeset_value["verification"]["reconciliations"]
+            .as_array()
+            .unwrap()
+            .is_empty()
             && changeset_value["verification"]["reading_digest"].is_null(),
         "no verification is claimed for a changeset that did not verify"
     );
 
-    std::fs::write(dir.join("partial-changeset.json"), serde_json::to_vec_pretty(&changeset_value).unwrap()).unwrap();
-    std::fs::write(dir.join("oi-error.json"), serde_json::to_vec(&error_doc).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("partial-changeset.json"),
+        serde_json::to_vec_pretty(&changeset_value).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("oi-error.json"),
+        serde_json::to_vec(&error_doc).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         7,
@@ -1013,18 +1291,30 @@ fn t08_absence_degradation_honesty() {
 
     // The contribution is honest about absence: unavailable, empty
     // sections as proof, obligations named — nothing fabricated.
-    let contribution_doc = absent_owner.contribution().expect_success("unavailable contribution");
+    let contribution_doc = absent_owner
+        .contribution()
+        .expect_success("unavailable contribution");
     let contribution: Contribution =
         serde_json::from_value(contribution_doc.clone()).expect("unavailable contribution parses");
-    contribution.validate().expect("honest absence still obeys the contract");
-    assert_eq!(contribution_doc["availability"]["state"], json!("unavailable"));
+    contribution
+        .validate()
+        .expect("honest absence still obeys the contract");
+    assert_eq!(
+        contribution_doc["availability"]["state"],
+        json!("unavailable")
+    );
     assert_eq!(contribution_doc["sections"], json!([]));
     assert!(
-        contribution_doc["obligations"].as_array().map(|o| !o.is_empty()).unwrap_or(false),
+        contribution_doc["obligations"]
+            .as_array()
+            .map(|o| !o.is_empty())
+            .unwrap_or(false),
         "absence names its obligation"
     );
     assert!(
-        registry.lookup("workcell:placement:placement.policy").is_none(),
+        registry
+            .lookup("workcell:placement:placement.policy")
+            .is_none(),
         "the unavailable fixture owner fabricates no settings (L3)"
     );
 
@@ -1045,7 +1335,11 @@ fn t08_absence_degradation_honesty() {
     }
 
     // A setting no owner contributes is unsupported, never guessed.
-    let unknown = owner_axes(&stub(slug, "ai-kit", false).reading(), "ai-kit:nonexistent:never.provided", false);
+    let unknown = owner_axes(
+        &stub(slug, "ai-kit", false).reading(),
+        "ai-kit:nonexistent:never.provided",
+        false,
+    );
     assert!(unknown.effective.is_none());
     assert_eq!(
         reconcile(ReconciliationInputs {
@@ -1059,8 +1353,16 @@ fn t08_absence_degradation_honesty() {
         ReconciliationStatus::Unsupported
     );
 
-    std::fs::write(dir.join("unavailable-contribution.json"), serde_json::to_vec_pretty(&contribution_doc).unwrap()).unwrap();
-    std::fs::write(dir.join("unavailable-reading.json"), serde_json::to_vec(&reading).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("unavailable-contribution.json"),
+        serde_json::to_vec_pretty(&contribution_doc).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("unavailable-reading.json"),
+        serde_json::to_vec(&reading).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         8,
@@ -1094,7 +1396,13 @@ fn t09_cli_desktop_parity() {
     // One operation, observed through four independent surfaces of the
     // owner boundary: the transport stdout, the persisted receipt, the
     // owner's history log, and the v2 disclosure's materialisation ref.
-    let (plan, receipt) = plan_and_apply(&ai_kit, MODEL_DEFAULT, PROJECT_SCOPE, "sonnet-next", "cs-c7-t09");
+    let (plan, receipt) = plan_and_apply(
+        &ai_kit,
+        MODEL_DEFAULT,
+        PROJECT_SCOPE,
+        "sonnet-next",
+        "cs-c7-t09",
+    );
     let receipt_id = receipt["receipt_id"].as_str().unwrap().to_owned();
 
     let persisted: Value = serde_json::from_str(
@@ -1102,7 +1410,10 @@ fn t09_cli_desktop_parity() {
             .expect("persisted receipt"),
     )
     .unwrap();
-    assert_eq!(persisted, receipt, "transport stdout and the owner's record agree byte-wise");
+    assert_eq!(
+        persisted, receipt,
+        "transport stdout and the owner's record agree byte-wise"
+    );
 
     let history = ai_kit.history();
     assert!(
@@ -1124,7 +1435,11 @@ fn t09_cli_desktop_parity() {
                 .map(|set| set["axes"]["active"]["materialisation_ref"].clone())
         })
         .expect("materialisation ref");
-    assert_eq!(materialisation, json!(receipt_id), "the disclosure names the same operation");
+    assert_eq!(
+        materialisation,
+        json!(receipt_id),
+        "the disclosure names the same operation"
+    );
 
     // The parity contract the surfaces must satisfy once bound: one
     // setting_ref, one desired/native state, one ChangeSet/receipt identity.
@@ -1139,10 +1454,19 @@ fn t09_cli_desktop_parity() {
         "reconciliation": "satisfied"
     });
     assert_eq!(
-        reconcile_setting(&reading, &registry, MODEL_DEFAULT, Some(json!("sonnet-next"))),
+        reconcile_setting(
+            &reading,
+            &registry,
+            MODEL_DEFAULT,
+            Some(json!("sonnet-next"))
+        ),
         ReconciliationStatus::Satisfied
     );
-    std::fs::write(dir.join("parity-matrix.json"), serde_json::to_vec_pretty(&parity_matrix).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("parity-matrix.json"),
+        serde_json::to_vec_pretty(&parity_matrix).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         9,
@@ -1181,7 +1505,9 @@ fn t10_agent_parity() {
         .expect_success("agent plan");
     assert!(plan.is_object());
     let plan_path = ai_kit.write_plan_file(&plan);
-    let receipt = ai_kit.apply_plan_file(&plan_path, "cs-c7-t10").expect_success("agent apply");
+    let receipt = ai_kit
+        .apply_plan_file(&plan_path, "cs-c7-t10")
+        .expect_success("agent apply");
     let reading = ai_kit.reading();
     assert_eq!(
         reconcile_setting(&reading, &registry, SESSION_PROVIDER, Some(json!("herdr"))),
@@ -1200,8 +1526,16 @@ fn t10_agent_parity() {
     });
     assert_eq!(state["profileable"], json!(true));
 
-    std::fs::write(dir.join("agent-state.json"), serde_json::to_vec_pretty(&state).unwrap()).unwrap();
-    std::fs::write(dir.join("agent-receipt.json"), serde_json::to_vec(&receipt).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("agent-state.json"),
+        serde_json::to_vec_pretty(&state).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("agent-receipt.json"),
+        serde_json::to_vec(&receipt).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         10,
@@ -1236,7 +1570,9 @@ fn t11_no_semantic_mirroring() {
     let rejection = ai_kit
         .plan_setting(MODEL_DEFAULT, Some(PROJECT_SCOPE), "\"wizard-model\"")
         .expect_error("owner refuses a value outside its options", "invalid_value");
-    assert!(serde_json::to_string(&rejection).unwrap().contains("owner's options"));
+    assert!(serde_json::to_string(&rejection)
+        .unwrap()
+        .contains("owner's options"));
 
     // (b) Computed defaults are disclosed, never cached: the contribution
     // carries no `default` for a computed-default setting, and the only
@@ -1283,10 +1619,8 @@ fn t11_no_semantic_mirroring() {
         // contribute; a *malformed* ref is named as malformed. Grammar
         // acceptance agrees when the stub does not reject the ref as
         // malformed.
-        let stub_accepts_grammar = !(stub_answer.exit != 0
-            && stub_answer
-                .stdout
-                .contains("malformed setting ref"));
+        let stub_accepts_grammar =
+            !(stub_answer.exit != 0 && stub_answer.stdout.contains("malformed setting ref"));
         assert_eq!(
             oi_cli_accepts, stub_accepts_grammar,
             "grammar disagreement on `{reference}`: oi_cli={oi_cli_accepts} stub={stub_accepts_grammar}"
@@ -1297,11 +1631,22 @@ fn t11_no_semantic_mirroring() {
     // (d) One generic path serves all owner kinds (registry with product,
     // oi and connector settings resolves through one lookup API).
     for reference in [MODEL_DEFAULT, VERIFY_BEFORE_RUN, CONNECTOR_REF] {
-        assert!(registry.lookup(reference).is_some(), "{reference} resolves generically");
+        assert!(
+            registry.lookup(reference).is_some(),
+            "{reference} resolves generically"
+        );
     }
 
-    std::fs::write(dir.join("grammar-agreement.json"), serde_json::to_vec_pretty(&grammar_agreement).unwrap()).unwrap();
-    std::fs::write(dir.join("owner-rejection.json"), serde_json::to_vec(&rejection).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("grammar-agreement.json"),
+        serde_json::to_vec_pretty(&grammar_agreement).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("owner-rejection.json"),
+        serde_json::to_vec(&rejection).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         11,
@@ -1337,7 +1682,9 @@ fn t12_bootstrap_reuse() {
     // An empty world: the sandbox store is empty. The FIRST contact with
     // the owner is the same discovery and the same transport — no separate
     // bootstrap settings language exists.
-    let contribution = ai_kit.contribution().expect_success("first-contact contribution");
+    let contribution = ai_kit
+        .contribution()
+        .expect_success("first-contact contribution");
     assert_eq!(contribution["availability"]["state"], json!("available"));
 
     // The honest empty world: nobody has authored anything, so `declared`
@@ -1357,13 +1704,24 @@ fn t12_bootstrap_reuse() {
     );
 
     // First-run configuration is the ordinary verb set, unmodified.
-    let (_plan, receipt) = plan_and_apply(&ai_kit, MODEL_DEFAULT, PROJECT_SCOPE, "sonnet-current", "cs-c7-t12");
+    let (_plan, receipt) = plan_and_apply(
+        &ai_kit,
+        MODEL_DEFAULT,
+        PROJECT_SCOPE,
+        "sonnet-current",
+        "cs-c7-t12",
+    );
     assert_eq!(receipt["outcome"], json!("applied"));
     let after = ai_kit.reading();
     let axes_after = owner_axes(&after, MODEL_DEFAULT, false);
     assert_eq!(axes_after.declared, Some(json!("sonnet-current")));
     assert_eq!(
-        reconcile_setting(&after, &registry, MODEL_DEFAULT, Some(json!("sonnet-current"))),
+        reconcile_setting(
+            &after,
+            &registry,
+            MODEL_DEFAULT,
+            Some(json!("sonnet-current"))
+        ),
         ReconciliationStatus::Satisfied
     );
 
@@ -1373,10 +1731,21 @@ fn t12_bootstrap_reuse() {
         .expect_success("reset");
     assert_eq!(reset_receipt["operation"], json!("reset"));
     let axes_reset = owner_axes(&ai_kit.reading(), MODEL_DEFAULT, false);
-    assert_eq!(axes_reset.declared, None, "reset returns the world to empty");
+    assert_eq!(
+        axes_reset.declared, None,
+        "reset returns the world to empty"
+    );
 
-    std::fs::write(dir.join("bootstrap-reading.json"), serde_json::to_vec_pretty(&reading).unwrap()).unwrap();
-    std::fs::write(dir.join("bootstrap-reset-receipt.json"), serde_json::to_vec(&reset_receipt).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("bootstrap-reading.json"),
+        serde_json::to_vec_pretty(&reading).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("bootstrap-reset-receipt.json"),
+        serde_json::to_vec(&reset_receipt).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         12,
@@ -1390,7 +1759,11 @@ fn t12_bootstrap_reuse() {
             "reset through the ordinary grammar restores the empty world",
         ],
         vec![
-            pending("O:I bootstrap/adopt", "C1/C2", "install/first-run must reuse the kernel engine — the stub-side world is proven"),
+            pending(
+                "O:I bootstrap/adopt",
+                "C1/C2",
+                "install/first-run must reuse the kernel engine — the stub-side world is proven",
+            ),
             c5("the same verbs must be reachable as `oi config` in an empty world"),
         ],
         vec![format!("artifacts: {}", dir.display())],
@@ -1415,29 +1788,204 @@ fn t13_connector_proof() {
         .lookup(CONNECTOR_REF)
         .expect("connector setting resolves beside product/oi settings");
     assert_eq!(entry.spec.value_schema.kind, ValueKind::Enum);
-    let relation_scope = parse_scope_compact("connector-relation:factory-actuation").expect("relation scope");
+    let relation_scope =
+        parse_scope_compact("connector-relation:factory-actuation").expect("relation scope");
     assert_eq!(
         registry.scope_decision(CONNECTOR_REF, &relation_scope),
         ScopeDecision::Supported
     );
-    let other_relation = parse_scope_compact("connector-relation:some-other-relation").expect("scope");
+    let other_relation =
+        parse_scope_compact("connector-relation:some-other-relation").expect("scope");
     assert_ne!(
         registry.scope_decision(CONNECTOR_REF, &other_relation),
         ScopeDecision::Supported,
         "another relation's scope is not silently accepted"
     );
 
-    // The executable leg: the connector fixture owner (C4's deliverable,
-    // `suite/configuration/connector-fixture/`) does not exist on this
-    // base. The scenario is defined and stays open — never faked.
-    let connector_fixture_dir = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../configuration/connector-fixture");
-    let executable_available = connector_fixture_dir.exists();
-    assert!(
-        !executable_available,
-        "C4's connector fixture executable exists on this base: bind it here (drive config-contribution, plan, apply, receipt, reread) instead of reporting pending"
+    // The executable leg (bound at convergence): C4's connector fixture is a
+    // standalone crate — owners are independent of O:I, the contract is the
+    // wire — built here and driven as a real subprocess through the frozen
+    // C0-5 transport in a sandbox home.
+    let connector_bin = connector_fixture_bin();
+    let connector_home = dir.join("connector-home");
+    std::fs::create_dir_all(&connector_home).unwrap();
+    let run_connector = |args: &[&str], stdin: Option<&str>| -> (i32, Value) {
+        use std::io::Write as _;
+        use std::process::{Command, Stdio};
+        let mut command = Command::new(&connector_bin);
+        command
+            .args(args)
+            .env("CONNECTOR_FIXTURE_HOME", &connector_home)
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
+        if stdin.is_some() {
+            command.stdin(Stdio::piped());
+        }
+        let mut child = command.spawn().expect("connector fixture spawns");
+        if let Some(payload) = stdin {
+            child
+                .stdin
+                .as_mut()
+                .expect("piped stdin")
+                .write_all(payload.as_bytes())
+                .expect("write plan to stdin");
+        }
+        let output = child.wait_with_output().expect("connector fixture runs");
+        let code = output.status.code().unwrap_or(-1);
+        let value: Value = serde_json::from_slice(&output.stdout).unwrap_or_else(|error| {
+            panic!(
+                "connector fixture answered non-JSON on {args:?}: {error}; exit {code}; stdout: {:?}; stderr: {:?}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            )
+        });
+        (code, value)
+    };
+
+    // contribution: the executable serves the frozen fixture document.
+    let (code, served) = run_connector(&["config-contribution", "--json"], None);
+    assert_eq!(code, 0, "config-contribution exits zero");
+    let contribution: Contribution = serde_json::from_value(served)
+        .expect("the served contribution parses into the frozen types");
+    validate_connector_contribution(&contribution)
+        .expect("the served connector contribution satisfies the connector law");
+    assert_eq!(contribution.owner.owner_ref, "connector/factory-actuation");
+
+    // validate: the relation-scoped value is answered natively.
+    let (code, answer) = run_connector(
+        &[
+            "config",
+            "validate",
+            "--json",
+            "--setting",
+            CONNECTOR_REF,
+            "--scope",
+            RELATION_SCOPE,
+            "--value",
+            "\"delegated\"",
+        ],
+        None,
+    );
+    assert_eq!(code, 0, "validate answers success for the enum member");
+    assert_eq!(answer["schema"], "oi.config-validation/v1");
+    assert_eq!(answer["valid"], true);
+
+    // plan → apply → receipt: the owner mints the digest and the receipt, and
+    // applies through its own faculty.
+    let (code, plan) = run_connector(
+        &[
+            "config",
+            "plan",
+            "--json",
+            "--setting",
+            CONNECTOR_REF,
+            "--scope",
+            RELATION_SCOPE,
+            "--value",
+            "\"delegated\"",
+        ],
+        None,
+    );
+    assert_eq!(code, 0, "plan exits zero");
+    assert_eq!(plan["schema"], "oi.config-plan/v1");
+    let digest = plan["plan_digest"]
+        .as_str()
+        .expect("plan_digest")
+        .to_owned();
+    assert_eq!(digest.len(), 64, "the digest is sha256 hex");
+    // The digest is owner-canonical (09 §6): the owner mints it over its own
+    // recipe and verifies it at apply — the apply step below is that proof.
+    // Recipes legitimately differ between owners (zeroed vs removed digest
+    // member); the divergence is recorded for the #299 follow-up, and this
+    // harness never assumes one owner's recipe for another's documents.
+    let plan_bytes = serde_json::to_string(&plan).unwrap();
+    let apply_changeset = "cs-conformance-13-apply";
+    let (code, receipt_value) = run_connector(
+        &[
+            "config",
+            "apply",
+            "--json",
+            "--plan-file",
+            "-",
+            "--changeset",
+            apply_changeset,
+        ],
+        Some(&plan_bytes),
+    );
+    assert_eq!(code, 0, "apply exits zero");
+    let receipt: Receipt = serde_json::from_value(receipt_value.clone())
+        .expect("the owner receipt parses into the frozen type");
+    assert_eq!(receipt.outcome, ReceiptOutcome::Applied);
+    assert!(!receipt.receipt_id.is_empty(), "owner-minted receipt id");
+
+    // idempotent replay: the frozen key returns no_op naming the original.
+    let (code, replay) = run_connector(
+        &[
+            "config",
+            "apply",
+            "--json",
+            "--plan-file",
+            "-",
+            "--changeset",
+            apply_changeset,
+        ],
+        Some(&plan_bytes),
+    );
+    assert_eq!(code, 0, "replay exits zero");
+    assert_eq!(replay["outcome"], "no_op", "the owner never re-executes");
+    assert_eq!(
+        replay["original_receipt_id"], receipt.receipt_id,
+        "the replay names the original receipt"
     );
 
-    std::fs::write(dir.join("connector-contribution.json"), serde_json::to_vec_pretty(&connector_case).unwrap()).unwrap();
+    // reread: per 09 §17 a connector has no v2 axes. With desired intent
+    // held, the frozen truth table answers `unknown` (no native axes were
+    // disclosed) with the receipt as the applied evidence; with no desired
+    // held, nothing is owed and the answer is `satisfied`.
+    let scope = parse_scope_compact(RELATION_SCOPE).expect("relation scope");
+    let desired = Desired {
+        value: Some(serde_json::json!("delegated")),
+        secret_reference: None,
+        source_ref: None,
+        set_at_unix_ms: None,
+    };
+    let resolution = connector_reread(CONNECTOR_REF, scope.clone(), Some(desired), Some(&receipt))
+        .expect("connector reread resolves");
+    assert_eq!(
+        resolution.reconciliation.status,
+        ReconciliationStatus::Unknown,
+        "desired held but no v2 axes exist for a connector"
+    );
+    let nothing_owed = connector_reread(CONNECTOR_REF, scope, None, Some(&receipt))
+        .expect("connector reread resolves");
+    assert_eq!(
+        nothing_owed.reconciliation.status,
+        ReconciliationStatus::Satisfied
+    );
+
+    // reset: the fourth verb restores the relation's native state.
+    let (code, reset_receipt) = run_connector(
+        &[
+            "config",
+            "reset",
+            "--json",
+            "--setting",
+            CONNECTOR_REF,
+            "--scope",
+            RELATION_SCOPE,
+            "--changeset",
+            "cs-conformance-13-reset",
+        ],
+        None,
+    );
+    assert_eq!(code, 0, "reset exits zero");
+    assert_eq!(reset_receipt["outcome"], "applied");
+
+    std::fs::write(
+        dir.join("connector-contribution.json"),
+        serde_json::to_vec_pretty(&connector_case).unwrap(),
+    )
+    .unwrap();
     std::fs::write(
         dir.join("connector-scenario.json"),
         serde_json::to_vec_pretty(&json!({
@@ -1461,16 +2009,17 @@ fn t13_connector_proof() {
         13,
         slug,
         "connector proof",
-        "partial",
+        "passed",
         vec![
             "connector owner representable in the one registry (frozen fixture)",
             "relation scope decided explicitly (accepted for its relation, refused for another)",
+            "connector executable serves its contribution (validated against the frozen types)",
+            "plan mints a digest over its canonical body; apply executes it",
+            "owner-minted receipt; replay under the frozen key returns no_op naming the original",
+            "relation-scoped reread settles unknown per 09 \u{a7}17 with the receipt as evidence",
+            "reset restores the relation state through the same grammar",
         ],
-        vec![pending(
-            "connector fixture owner executable",
-            "C4",
-            "plan/apply/receipt/reread for a relation-scoped setting needs the connector executable; the scenario is fully defined in connector-scenario.json and must be bound, not re-implemented",
-        )],
+        vec![],
         vec![format!("artifacts: {}", dir.display())],
     );
 }
@@ -1490,29 +2039,44 @@ fn t14_versioning_explicit_degradation() {
     let mut injected = ai_kit.contribution().expect_success("contribution");
     injected["oi-future-top-field"] = json!({ "note": "unknown members are tolerated" });
     injected["sections"][0]["settings"][0]["oi-future-setting-field"] = json!(true);
-    let contribution: Contribution =
-        serde_json::from_value(injected.clone()).expect("unknown fields tolerated on read (09 §15)");
-    contribution.validate().expect("unknown fields never invalidate a same-major document");
-    assert!(registry.lookup(MODEL_DEFAULT).is_some(), "settings survive unknown fields");
+    let contribution: Contribution = serde_json::from_value(injected.clone())
+        .expect("unknown fields tolerated on read (09 §15)");
+    contribution
+        .validate()
+        .expect("unknown fields never invalidate a same-major document");
+    assert!(
+        registry.lookup(MODEL_DEFAULT).is_some(),
+        "settings survive unknown fields"
+    );
 
     // An unknown major is an explicit unsupported_schema error — never a
     // silent reinterpretation, never a silent drop.
     let future_owner = stub(slug, "ai-kit", false).with_contract("future-schema");
-    let future_doc = future_owner.contribution().expect_success("future owner still discloses");
-    assert_eq!(future_doc["schema"], json!("oi.configuration-contribution/v2"));
+    let future_doc = future_owner
+        .contribution()
+        .expect_success("future owner still discloses");
+    assert_eq!(
+        future_doc["schema"],
+        json!("oi.configuration-contribution/v2")
+    );
     let future_contribution: Contribution =
         serde_json::from_value(future_doc.clone()).expect("the document itself parses");
     let error = future_contribution
         .validate()
         .expect_err("an unknown major must be an explicit error");
-    assert!(error.contains("unsupported_schema"), "rejection names the law: {error}");
+    assert!(
+        error.contains("unsupported_schema"),
+        "rejection names the law: {error}"
+    );
 
     // An unknown value-schema kind inside an otherwise-v1 document is an
     // explicit rejection (an operability contract: consumers must know they
     // can operate — 09 §2.2), never a degraded rendering of an inoperable
     // setting.
     let unknown_kind_owner = stub(slug, "ai-kit", false).with_contract("unknown-kind");
-    let unknown_doc = unknown_kind_owner.contribution().expect_success("unknown-kind owner discloses");
+    let unknown_doc = unknown_kind_owner
+        .contribution()
+        .expect_success("unknown-kind owner discloses");
     let parse_error = serde_json::from_value::<Contribution>(unknown_doc.clone())
         .expect_err("a v1 document with an unknown value kind must be refused");
     assert!(
@@ -1524,9 +2088,21 @@ fn t14_versioning_explicit_degradation() {
     // writes every owner document byte-for-byte into its artifacts (see the
     // writes throughout), and the mount digest convention is honoured by
     // the owner itself (verified in t02: changed world, changed digest).
-    std::fs::write(dir.join("injected-contribution.json"), serde_json::to_vec_pretty(&injected).unwrap()).unwrap();
-    std::fs::write(dir.join("future-contribution.json"), serde_json::to_vec_pretty(&future_doc).unwrap()).unwrap();
-    std::fs::write(dir.join("unknown-kind-contribution.json"), serde_json::to_vec_pretty(&unknown_doc).unwrap()).unwrap();
+    std::fs::write(
+        dir.join("injected-contribution.json"),
+        serde_json::to_vec_pretty(&injected).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("future-contribution.json"),
+        serde_json::to_vec_pretty(&future_doc).unwrap(),
+    )
+    .unwrap();
+    std::fs::write(
+        dir.join("unknown-kind-contribution.json"),
+        serde_json::to_vec_pretty(&unknown_doc).unwrap(),
+    )
+    .unwrap();
 
     verdict(
         14,
@@ -1539,7 +2115,9 @@ fn t14_versioning_explicit_degradation() {
             "unknown value-schema kind inside v1 refused explicitly",
             "owner documents relayed verbatim; digest convention proven in test 2",
         ],
-        vec![c1("the kernel mount must carry the same explicit-degradation behaviour end-to-end")],
+        vec![c1(
+            "the kernel mount must carry the same explicit-degradation behaviour end-to-end",
+        )],
         vec![format!("artifacts: {}", dir.display())],
     );
 }

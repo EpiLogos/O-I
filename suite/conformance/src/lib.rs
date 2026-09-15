@@ -106,7 +106,11 @@ pub fn record_verdict(verdict: Verdict) {
         verdict.n,
         verdict.name,
         status,
-        if verdict.verified.is_empty() { "none".to_owned() } else { verdict.verified.join(", ") },
+        if verdict.verified.is_empty() {
+            "none".to_owned()
+        } else {
+            verdict.verified.join(", ")
+        },
         if verdict.pending.is_empty() {
             "none".to_owned()
         } else {
@@ -148,15 +152,26 @@ impl Outcome {
             .unwrap_or_else(|error| panic!("owner answered non-JSON ({error}): {}", self.stdout))
     }
     pub fn expect_success(&self, what: &str) -> Value {
-        assert_eq!(self.exit, 0, "{what} must succeed; got exit {}: {}", self.exit, self.stdout);
+        assert_eq!(
+            self.exit, 0,
+            "{what} must succeed; got exit {}: {}",
+            self.exit, self.stdout
+        );
         self.json()
     }
     /// Assert a non-zero exit carrying `oi.config-error/v1` with the frozen
     /// code, and return the error document.
     pub fn expect_error(&self, what: &str, code: &str) -> Value {
-        assert_ne!(self.exit, 0, "{what} must fail; it exited 0: {}", self.stdout);
+        assert_ne!(
+            self.exit, 0,
+            "{what} must fail; it exited 0: {}",
+            self.stdout
+        );
         let doc = self.json();
-        assert_eq!(doc["schema"], "oi.config-error/v1", "{what} must answer oi.config-error/v1");
+        assert_eq!(
+            doc["schema"], "oi.config-error/v1",
+            "{what} must answer oi.config-error/v1"
+        );
         assert_eq!(doc["code"], code, "{what} error code");
         doc
     }
@@ -192,7 +207,14 @@ impl StubOwner {
         [
             ("OWNER_STUB_HOME", self.home.display().to_string()),
             ("OWNER_STUB_OWNER", self.owner.clone()),
-            ("OWNER_STUB_DEGRADED", if self.degraded { "1".to_owned() } else { "0".to_owned() }),
+            (
+                "OWNER_STUB_DEGRADED",
+                if self.degraded {
+                    "1".to_owned()
+                } else {
+                    "0".to_owned()
+                },
+            ),
             ("OWNER_STUB_CONTRACT", self.contract.clone()),
         ]
     }
@@ -240,7 +262,8 @@ impl StubOwner {
 
     /// The owner's own v2 reading (the re-read verification source).
     pub fn reading(&self) -> Value {
-        self.run(&["system", "--json"]).expect_success("system --json")
+        self.run(&["system", "--json"])
+            .expect_success("system --json")
     }
 
     /// `--value` payloads cross as JSON (09 §6). A bare scalar the caller
@@ -274,8 +297,11 @@ impl StubOwner {
 
     pub fn write_plan_file(&self, plan: &Value) -> PathBuf {
         let path = self.home.join("carried-plan.json");
-        std::fs::write(&path, serde_json::to_string_pretty(plan).expect("plan serialises"))
-            .expect("plan file write");
+        std::fs::write(
+            &path,
+            serde_json::to_string_pretty(plan).expect("plan serialises"),
+        )
+        .expect("plan file write");
         path
     }
 
@@ -369,8 +395,7 @@ fn setting_entry<'a>(reading: &'a Value, setting_ref: &str) -> Option<&'a Value>
     reading["sections"]
         .as_array()?
         .iter()
-        .find(|s| s["id"] == section_ref.as_str())?
-        ["settings"]
+        .find(|s| s["id"] == section_ref.as_str())?["settings"]
         .as_array()?
         .iter()
         .find(|s| s["key"] == key.as_str())
@@ -378,7 +403,11 @@ fn setting_entry<'a>(reading: &'a Value, setting_ref: &str) -> Option<&'a Value>
 
 fn split_ref(setting_ref: &str) -> (String, String, String) {
     let parts: Vec<&str> = setting_ref.split(':').collect();
-    assert_eq!(parts.len(), 3, "`{setting_ref}` must be a valid setting ref");
+    assert_eq!(
+        parts.len(),
+        3,
+        "`{setting_ref}` must be a valid setting ref"
+    );
     (
         parts[0].to_owned(),
         parts[1].to_owned(),
@@ -467,7 +496,11 @@ pub fn canonical_plan_digest(plan: &Value) -> String {
     body["expires_at_unix_ms"] = serde_json::json!(0);
     body["explain_ref"] = serde_json::json!("");
     let mut hasher = Sha256::new();
-    hasher.update(serde_json::to_string(&body).expect("canonical body").as_bytes());
+    hasher.update(
+        serde_json::to_string(&body)
+            .expect("canonical body")
+            .as_bytes(),
+    );
     let out = hasher.finalize();
     out.iter().map(|b| format!("{b:02x}")).collect()
 }
@@ -479,11 +512,7 @@ pub fn canonical_plan_digest(plan: &Value) -> String {
 /// Markers that must never appear in any artifact this suite writes. The
 /// canaries are planted by the tests that *attempt* to push material at the
 /// plane; the sweep proves the plane refused every attempt.
-pub const REDACTION_MARKERS: &[&str] = &[
-    "sk-ant-",
-    "C7-SECRET-CANARY",
-    "plaintext-material",
-];
+pub const REDACTION_MARKERS: &[&str] = &["sk-ant-", "C7-SECRET-CANARY", "plaintext-material"];
 
 /// Walk every file under `root` and fail if any redaction marker appears.
 /// Returns the number of artifacts swept.
