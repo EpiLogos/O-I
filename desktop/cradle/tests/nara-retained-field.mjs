@@ -7,7 +7,7 @@ const root=fileURLToPath(new URL('../',import.meta.url));
 const packageRoot=fileURLToPath(new URL('../../../packages/oi-design-system/',import.meta.url));
 if(!process.env.QL_NARA_SNAPSHOT)throw new Error('QL_NARA_SNAPSHOT must name the focused-snapshot.json emitted by the actual k8_personal acceptance example');
 const ownerSnapshot=JSON.parse(readFileSync(process.env.QL_NARA_SNAPSHOT,'utf8'));
-const server=await createServer({root,appType:'custom',resolve:{alias:{'@epilogos/oi-design-system':packageRoot}},server:{host:'127.0.0.1',port:0},logLevel:'error'});
+const server=await createServer({root,appType:'custom',resolve:{alias:{'@epilogos/oi-design-system':packageRoot}},server:{host:'127.0.0.1',port:4389,strictPort:true},logLevel:'error'});
 server.middlewares.use('/nara-retained',(_req,res)=>{res.setHeader('content-type','text/html');res.end('<div id="host" style="width:900px;height:700px"></div><script type="module" src="/tests/nara-retained-page.ts"></script>');});
 server.middlewares.use('/nara-stage',async(_req,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/nara-stage','<body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/expression-provider-page.tsx"></script>'));});
 await server.listen();
