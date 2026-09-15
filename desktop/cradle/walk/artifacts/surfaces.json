@@ -1,18 +1,77 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
-  "generated_at": "2026-09-15T14:07:31.832Z",
+  "generated_at": "2026-09-15T17:47:46.186Z",
   "environment": {
-    "base_url": "http://127.0.0.1:4321",
-    "bridge_url": "http://127.0.0.1:4329",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
-    "platform": "darwin"
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+      "tracked_changes": [
+        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-CONTINUATION-2026-09-15.md",
+        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-RECEIPT-2026-09-15.md",
+        "desktop/cradle/src/contributions/factory/contribution.json",
+        "desktop/cradle/src/stage/engineSurface.ts",
+        "desktop/cradle/src/visuals/store.ts",
+        "desktop/cradle/tests/theme-prepaint-csp.mjs",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
+        "desktop/cradle/walk/artifacts/expression-controls.json",
+        "desktop/cradle/walk/artifacts/instrument-failure.png",
+        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
+        "desktop/cradle/walk/artifacts/instrument-host.json",
+        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
+        "desktop/cradle/walk/artifacts/instrument.json",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
+        "desktop/cradle/walk/artifacts/refinement.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
+        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
+        "desktop/cradle/walk/artifacts/surfaces.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/owner-verification/portable-files.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-dark-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-light.png",
+        "desktop/cradle/walk/artifacts/welcome-failure.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
+        "desktop/cradle/walk/artifacts/welcome.json",
+        "desktop/cradle/walk/scenarios/instrument-host.mjs",
+        "desktop/cradle/walk/scenarios/instrument-native-host.mjs",
+        "desktop/cradle/walk/scenarios/instrument.mjs",
+        "desktop/cradle/walk/scenarios/knowledge-expression.mjs",
+        "desktop/cradle/walk/scenarios/welcome.mjs"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 3694,
+  "duration_ms": 2706,
   "checks": [
     {
       "ok": true,
@@ -131,21 +190,21 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T14:07:31.954Z",
+        "mounted_at": "2026-09-15T17:47:46.268Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4329"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://127.0.0.1:4321/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 16,
+      "duration_ms": 7.1,
       "data": {
         "project": {
           "kind": "project",
@@ -176,7 +235,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 66,
+      "duration_ms": 40,
       "data": {
         "file": "surfaces-native-sources-tiled.png"
       }
@@ -184,7 +243,7 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "root": {
@@ -196,11 +255,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
-                  "16c9962f-8de8-44c0-9bfa-ad758e8b7de1"
+                  "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
+                  "d2622db6-b2d1-4ffe-856f-1bc944bb8b40"
                 ],
                 "pinned": [],
-                "active": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1"
+                "active": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40"
               },
               {
                 "type": "split",
@@ -211,55 +270,55 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                      "a35a507d-7135-451e-bc6e-d3356a726751"
                     ],
                     "pinned": [],
-                    "active": "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                    "active": "a35a507d-7135-451e-bc6e-d3356a726751"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                      "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                     ],
                     "pinned": [],
-                    "active": "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                    "active": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "613bbf51-a2b8-4611-8d21-78b24a7ebecb": {
-              "id": "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
+            "4df2793d-e9fc-42e9-b933-85d6f1d7c378": {
+              "id": "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "project": "Editor",
               "title": "00 01-DESIGN.md"
             },
-            "16c9962f-8de8-44c0-9bfa-ad758e8b7de1": {
-              "id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+            "d2622db6-b2d1-4ffe-856f-1bc944bb8b40": {
+              "id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "a77b46f1-9ac7-4274-ba18-fe68e63749e8": {
-              "id": "a77b46f1-9ac7-4274-ba18-fe68e63749e8",
+            "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94": {
+              "id": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "project": "Editor",
               "title": "02 03-UX-STATES.md"
             },
-            "71f970fb-7a23-40c8-93f8-9600d54bb1e0": {
-              "id": "71f970fb-7a23-40c8-93f8-9600d54bb1e0",
+            "a35a507d-7135-451e-bc6e-d3356a726751": {
+              "id": "a35a507d-7135-451e-bc6e-d3356a726751",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "project": "Editor",
               "title": "03 04-VERIFICATION.md"
             },
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f": {
-              "id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4": {
+              "id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "project": "Editor",
@@ -267,7 +326,7 @@
             }
           },
           "closedStack": [
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f"
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -280,15 +339,15 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T14:07:34.898Z",
+        "mounted_at": "2026-09-15T17:47:48.446Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4329"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://127.0.0.1:4321/"
+        "url": "http://localhost:4173/"
       }
     },
     {
@@ -309,11 +368,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
-                  "16c9962f-8de8-44c0-9bfa-ad758e8b7de1"
+                  "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
+                  "d2622db6-b2d1-4ffe-856f-1bc944bb8b40"
                 ],
                 "pinned": [],
-                "active": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1"
+                "active": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40"
               },
               {
                 "type": "split",
@@ -324,63 +383,63 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                      "a35a507d-7135-451e-bc6e-d3356a726751"
                     ],
                     "pinned": [],
-                    "active": "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                    "active": "a35a507d-7135-451e-bc6e-d3356a726751"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                      "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                     ],
                     "pinned": [],
-                    "active": "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                    "active": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "613bbf51-a2b8-4611-8d21-78b24a7ebecb": {
+            "4df2793d-e9fc-42e9-b933-85d6f1d7c378": {
               "project": "Editor",
-              "id": "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
+              "id": "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "16c9962f-8de8-44c0-9bfa-ad758e8b7de1": {
+            "d2622db6-b2d1-4ffe-856f-1bc944bb8b40": {
               "project": "Editor",
-              "id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+              "id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "a77b46f1-9ac7-4274-ba18-fe68e63749e8": {
+            "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94": {
               "project": "Editor",
-              "id": "a77b46f1-9ac7-4274-ba18-fe68e63749e8",
+              "id": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
             },
-            "71f970fb-7a23-40c8-93f8-9600d54bb1e0": {
+            "a35a507d-7135-451e-bc6e-d3356a726751": {
               "project": "Editor",
-              "id": "71f970fb-7a23-40c8-93f8-9600d54bb1e0",
+              "id": "a35a507d-7135-451e-bc6e-d3356a726751",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "title": "03 04-VERIFICATION.md"
             },
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f": {
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4": {
               "project": "Editor",
-              "id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+              "id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f"
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -393,7 +452,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 192.6,
+      "duration_ms": 118.4,
       "data": {
         "project": {
           "kind": "project",
@@ -439,11 +498,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
-                  "16c9962f-8de8-44c0-9bfa-ad758e8b7de1"
+                  "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
+                  "d2622db6-b2d1-4ffe-856f-1bc944bb8b40"
                 ],
                 "pinned": [],
-                "active": "613bbf51-a2b8-4611-8d21-78b24a7ebecb"
+                "active": "4df2793d-e9fc-42e9-b933-85d6f1d7c378"
               },
               {
                 "type": "split",
@@ -454,63 +513,63 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                      "a35a507d-7135-451e-bc6e-d3356a726751"
                     ],
                     "pinned": [],
-                    "active": "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                    "active": "a35a507d-7135-451e-bc6e-d3356a726751"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                      "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                     ],
                     "pinned": [],
-                    "active": "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                    "active": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "613bbf51-a2b8-4611-8d21-78b24a7ebecb": {
+            "4df2793d-e9fc-42e9-b933-85d6f1d7c378": {
               "project": "Editor",
-              "id": "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
+              "id": "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "16c9962f-8de8-44c0-9bfa-ad758e8b7de1": {
+            "d2622db6-b2d1-4ffe-856f-1bc944bb8b40": {
               "project": "Editor",
-              "id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+              "id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "a77b46f1-9ac7-4274-ba18-fe68e63749e8": {
+            "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94": {
               "project": "Editor",
-              "id": "a77b46f1-9ac7-4274-ba18-fe68e63749e8",
+              "id": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
             },
-            "71f970fb-7a23-40c8-93f8-9600d54bb1e0": {
+            "a35a507d-7135-451e-bc6e-d3356a726751": {
               "project": "Editor",
-              "id": "71f970fb-7a23-40c8-93f8-9600d54bb1e0",
+              "id": "a35a507d-7135-451e-bc6e-d3356a726751",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "title": "03 04-VERIFICATION.md"
             },
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f": {
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4": {
               "project": "Editor",
-              "id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+              "id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f"
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -523,7 +582,7 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "layout": {
           "subjectPlanes": {},
@@ -538,11 +597,11 @@
                 "type": "group",
                 "id": "g4",
                 "tabs": [
-                  "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
-                  "16c9962f-8de8-44c0-9bfa-ad758e8b7de1"
+                  "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
+                  "d2622db6-b2d1-4ffe-856f-1bc944bb8b40"
                 ],
                 "pinned": [],
-                "active": "613bbf51-a2b8-4611-8d21-78b24a7ebecb"
+                "active": "4df2793d-e9fc-42e9-b933-85d6f1d7c378"
               },
               {
                 "type": "split",
@@ -553,63 +612,63 @@
                     "type": "group",
                     "id": "g6",
                     "tabs": [
-                      "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                      "a35a507d-7135-451e-bc6e-d3356a726751"
                     ],
                     "pinned": [],
-                    "active": "71f970fb-7a23-40c8-93f8-9600d54bb1e0"
+                    "active": "a35a507d-7135-451e-bc6e-d3356a726751"
                   },
                   {
                     "type": "group",
                     "id": "g7",
                     "tabs": [
-                      "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                      "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                     ],
                     "pinned": [],
-                    "active": "a77b46f1-9ac7-4274-ba18-fe68e63749e8"
+                    "active": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94"
                   }
                 ]
               }
             ]
           },
           "surfaces": {
-            "613bbf51-a2b8-4611-8d21-78b24a7ebecb": {
+            "4df2793d-e9fc-42e9-b933-85d6f1d7c378": {
               "project": "Editor",
-              "id": "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
+              "id": "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "16c9962f-8de8-44c0-9bfa-ad758e8b7de1": {
+            "d2622db6-b2d1-4ffe-856f-1bc944bb8b40": {
               "project": "Editor",
-              "id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+              "id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "title": "01 02-ARCHITECTURE.md"
             },
-            "a77b46f1-9ac7-4274-ba18-fe68e63749e8": {
+            "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94": {
               "project": "Editor",
-              "id": "a77b46f1-9ac7-4274-ba18-fe68e63749e8",
+              "id": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
               "title": "02 03-UX-STATES.md"
             },
-            "71f970fb-7a23-40c8-93f8-9600d54bb1e0": {
+            "a35a507d-7135-451e-bc6e-d3356a726751": {
               "project": "Editor",
-              "id": "71f970fb-7a23-40c8-93f8-9600d54bb1e0",
+              "id": "a35a507d-7135-451e-bc6e-d3356a726751",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
               "title": "03 04-VERIFICATION.md"
             },
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f": {
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4": {
               "project": "Editor",
-              "id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+              "id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/04%2005-EXECUTION.md",
               "title": "04 05-EXECUTION.md"
             }
           },
           "closedStack": [
-            "37b5a228-5763-49a5-b9a5-a0ae4195bb9f"
+            "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4"
           ],
           "focusedGroupId": "g4",
           "agencyDepth": "panel",
@@ -622,7 +681,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 144.8,
+      "duration_ms": 123.8,
       "data": {
         "project": {
           "kind": "project",
@@ -653,7 +712,7 @@
     {
       "ok": true,
       "op": "read.events",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "receipts": [
           {
@@ -675,7 +734,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 3,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
+            "surface_id": "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -740,7 +799,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 6,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+            "surface_id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -805,7 +864,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 9,
             "summary": "Surface opened: 02 03-UX-STATES.md.",
-            "surface_id": "a77b46f1-9ac7-4274-ba18-fe68e63749e8",
+            "surface_id": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -870,7 +929,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 12,
             "summary": "Surface opened: 03 04-VERIFICATION.md.",
-            "surface_id": "71f970fb-7a23-40c8-93f8-9600d54bb1e0",
+            "surface_id": "a35a507d-7135-451e-bc6e-d3356a726751",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -984,7 +1043,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 17,
             "summary": "Surface opened: 04 05-EXECUTION.md.",
-            "surface_id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+            "surface_id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1049,7 +1108,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 20,
             "summary": "Surface closed: 04 05-EXECUTION.md.",
-            "surface_id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+            "surface_id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1121,7 +1180,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 23,
             "summary": "Surface opened: 04 05-EXECUTION.md.",
-            "surface_id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+            "surface_id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1169,7 +1228,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 25,
             "summary": "Surface closed: 04 05-EXECUTION.md.",
-            "surface_id": "37b5a228-5763-49a5-b9a5-a0ae4195bb9f",
+            "surface_id": "a2f521ef-7476-4edc-b75b-f1cbb19dbeb4",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1337,7 +1396,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 31,
             "summary": "Surface closed: 01 02-ARCHITECTURE.md.",
-            "surface_id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+            "surface_id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1423,7 +1482,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 36,
             "summary": "Surface opened: 00 01-DESIGN.md.",
-            "surface_id": "613bbf51-a2b8-4611-8d21-78b24a7ebecb",
+            "surface_id": "4df2793d-e9fc-42e9-b933-85d6f1d7c378",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1439,7 +1498,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 37,
             "summary": "Surface opened: 01 02-ARCHITECTURE.md.",
-            "surface_id": "16c9962f-8de8-44c0-9bfa-ad758e8b7de1",
+            "surface_id": "d2622db6-b2d1-4ffe-856f-1bc944bb8b40",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1455,7 +1514,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 38,
             "summary": "Surface opened: 03 04-VERIFICATION.md.",
-            "surface_id": "71f970fb-7a23-40c8-93f8-9600d54bb1e0",
+            "surface_id": "a35a507d-7135-451e-bc6e-d3356a726751",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1471,7 +1530,7 @@
             "schema": "oi.kernel-event/v1",
             "seq": 39,
             "summary": "Surface opened: 02 03-UX-STATES.md.",
-            "surface_id": "a77b46f1-9ac7-4274-ba18-fe68e63749e8",
+            "surface_id": "b8ddda3d-07a5-4b9e-acc1-6b2d09b52f94",
             "surface_ref": {
               "kind": "source",
               "native_owner": "central",
@@ -1498,14 +1557,14 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 39,
       "data": {
         "file": "surfaces-source-frame-menu.png"
       }
     }
   ],
   "metrics": {
-    "open_4_tabs_ms": 1226
+    "open_4_tabs_ms": 698
   },
   "screenshots": [
     "surfaces-native-sources-tiled.png",
