@@ -31,8 +31,9 @@ fn main() {
         .nth(1)
         .unwrap_or_else(|| "127.0.0.1:4179".to_owned());
     let listener = TcpListener::bind(&bind).expect("bind the walk bridge");
+    let bound = listener.local_addr().expect("read the bound bridge address");
     let kernel = Arc::new(Mutex::new(Kernel::discover()));
-    println!("oi-cradle walk bridge listening on http://{bind} (topic {KERNEL_EVENT_TOPIC})");
+    println!("oi-cradle walk bridge listening on http://{bound} (topic {KERNEL_EVENT_TOPIC})");
     for stream in listener.incoming() {
         let Ok(stream) = stream else { continue };
         let kernel = Arc::clone(&kernel);

@@ -140,9 +140,14 @@ export function contextualContributions(contributions, rootRefs) {
 
 /** Resolve the one human reviewer from admitted participant/authority rows, never projected entry metadata. */
 export function nativeReviewerIdentity({ projection, participants, authority }) {
-  const admitted = authority.filter(row => !row.revoked && row.role === 'admitter' && row.participant_ref === projection?.publisher_participant_ref);
+  // reading.my_authority is caller-bound: every row is a grant the viewer
+  // holds themselves. Reviewing returns into a projection belongs to whoever
+  // controls its human publisher participant — the owner-publisher through
+  // the contributor grant publication bootstraps, or a delegated admitter —
+  // and nobody else.
+  const grants = authority.filter(row => !row.revoked && row.participant_ref === projection?.publisher_participant_ref);
   const humans = participants.filter(row => row.participant_ref === projection?.publisher_participant_ref && row.identity?.kind === 'human');
-  if (admitted.length !== 1 || humans.length !== 1) return null;
+  if (grants.length !== 1 || humans.length !== 1) return null;
   return text(humans[0].identity.ref, 'native reviewer identity');
 }
 

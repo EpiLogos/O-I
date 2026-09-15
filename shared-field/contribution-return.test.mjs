@@ -36,6 +36,8 @@ test('Expression review identity comes from the admitted human publisher, never 
   const projection={publisher_participant_ref:'participant:owner'};
   const participants=[{participant_ref:'participant:owner',identity:{kind:'human',ref:'human:actual'}},{participant_ref:'participant:foreign',identity:{kind:'human',ref:'human:forged'}}];
   assert.equal(nativeReviewerIdentity({projection,participants,authority:[{participant_ref:'participant:owner',role:'admitter',revoked:false}]}),'human:actual');
+  assert.equal(nativeReviewerIdentity({projection,participants,authority:[{participant_ref:'participant:owner',role:'contributor',revoked:false}]}),'human:actual');
+  assert.equal(nativeReviewerIdentity({projection,participants,authority:[{participant_ref:'participant:owner',role:'contributor',revoked:true}]}),null);
   assert.equal(nativeReviewerIdentity({projection,participants,authority:[{participant_ref:'participant:foreign',role:'admitter',revoked:false}]}),null);
 });
 
