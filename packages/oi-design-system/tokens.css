@@ -266,6 +266,9 @@
   --oi-shell-row-lg: 32px;             /* project row */
   --oi-shell-control: 26px;            /* icon control body */
   --oi-shell-hit: 28px;                /* minimum hit target */
+  --oi-footer-edge: 3px;               /* the collapsed workspace footer's reveal strip */
+  --oi-footer-approach: 6px;           /* pointer approach zone that opens the footer */
+  --oi-footer-height: 24px;            /* the revealed / pinned status row */
   --oi-sidebar-width: 240px;
   --oi-sidebar-min: 200px;
   --oi-sidebar-max: 330px;

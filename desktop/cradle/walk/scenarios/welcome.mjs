@@ -60,4 +60,22 @@ export default async function run({page,baseUrl,check,shot}) {
   await page.locator('.oi-welcome').waitFor({state:'detached',timeout:10000});
   check(await page.getByRole('region',{name:'Empty workspace'}).isVisible(),'After the dissolve the empty workspace is the app');
   await shot('welcome-frontstate-entered');
+
+  // The clock law in the real app (StrictMode, the stage provider, the
+  // welcome release): once the frontstate has gone and no presentation is
+  // live, the production field schedules nothing and its frame count
+  // stops moving — measured over a quiet second, after the bounded settle.
+  await page.waitForFunction(async()=>{const r=await window.__cradle.walk.read.stage();return r.data&&r.data.live===false&&r.data.scheduled===false;},null,{timeout:5000});
+  const idle=await page.evaluate(async()=>{
+    const before=await window.__cradle.walk.read.stage();
+    let raf=0;const original=window.requestAnimationFrame;window.requestAnimationFrame=(cb)=>original((t)=>{raf++;cb(t);});
+    await new Promise((resolve)=>setTimeout(resolve,1000));
+    window.requestAnimationFrame=original;
+    const after=await window.__cradle.walk.read.stage();
+    const canvas=document.querySelector('canvas[data-oi-stage="engine"]');
+    return {presentations:after.data.presentations.length,frames:after.data.frames-before.data.frames,scheduled:after.data.scheduled,live:after.data.live,raf,dormant:canvas?canvas.dataset.oiStageLive==='false':null,canvases:document.querySelectorAll('canvas[data-oi-stage="engine"]').length};
+  });
+  check(idle.presentations===0&&idle.live===false,'No presentation is live in the settled ordinary desktop');
+  check(idle.frames===0&&idle.scheduled===false,`The released production field renders no frames and schedules none (${JSON.stringify(idle)})`);
+  check(idle.dormant===true&&idle.canvases===1,'The one engine canvas stays (context and resident field kept) and is marked dormant');
 }

@@ -257,7 +257,9 @@ export class EngineSurface {
       scene.transition = next ? Math.max(0.05, (next.at - step.at) / 1000) : 0.6;
       this.timers.push(setTimeout(() => {
         if (!this.active || this.active.id !== id) return;
-        this.active = { id, scene, revision: ++this.revision };
+        // The sequence step keeps the presentation's authored recipe so a
+        // theme change mid-flight still re-grounds the same material.
+        this.active = { id, scene, revision: ++this.revision, recipe: this.active.recipe };
         if (step.disperse !== undefined) this.command({ type: "disperse", strength: step.disperse });
         this.wake();
       }, step.at));
