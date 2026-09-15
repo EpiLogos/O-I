@@ -24,7 +24,6 @@ for p in $(
         missing=1
       fi
       continue ;;
-    docs/kernel-rebuild/*) continue ;; # cited as QL-MEF's own doc (skill §Epi domain): another product's tree, not this repo's chain
   esac
   [ -e "$p" ] || { echo "MISSING: $p"; missing=1; }
 done
