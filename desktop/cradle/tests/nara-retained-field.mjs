@@ -40,7 +40,7 @@ try{
   const before=capture();
   const request=(generation,delta=0)=>({...base,personalGeneration:generation,entities:base.entities.map((e,i)=>({...e,x:e.x+(i===0?delta/100:0),scale:e.scale+delta/100}))});
   lease.updatePresentation(base);lease.renderOnce();const first=capture();
-  lease.updatePresentation(request(base.personalGeneration+1,5));lease.renderOnce();const second=capture();
+  lease.pause();lease.updatePresentation(request(base.personalGeneration+1,5));const second=capture();lease.resume();
   let refused=false;try{lease.updatePresentation(request(base.personalGeneration,20));}catch{refused=true;}lease.renderOnce();const afterRefusal=capture();
   surface.release('nara:test');surface.presentConfig('nara:next',naraExpressionConfig(projected.session),'nara:next:scene');const nextLease=surface.retainedLease('nara:next'),nextPort=nextLease.retainedTargetPort();nextPort.setTargetTextures(nextPort.targetA,nextPort.targetB,{x:0,y:0});const newBefore=surface.adapter.engine.inspectState();let oldRefused=false;try{lease.updatePresentation(request(base.personalGeneration+2));}catch{oldRefused=true;}const newAfter=surface.adapter.engine.inspectState();
   surface.dispose();
