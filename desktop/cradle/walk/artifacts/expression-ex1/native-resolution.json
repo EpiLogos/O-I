@@ -1,0 +1,39 @@
+{
+  "standing": "executed-native-macos-tauri-and-cli",
+  "expression_ref": "expression:ex1-native-walk",
+  "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
+  "human_draft": {
+    "base_revision": 9,
+    "glyph": "APPLIED"
+  },
+  "agent_edit": {
+    "revision": 10,
+    "y": 85
+  },
+  "human_stale_commit": {
+    "state": "revision_conflict",
+    "expected_revision": 9,
+    "current_revision": 10
+  },
+  "explicit_human_resolution": {
+    "revision": 11,
+    "parameters": {
+      "glyph": {
+        "automation": null,
+        "value": "APPLIED"
+      },
+      "scale": {
+        "automation": null,
+        "value": 1.0
+      },
+      "x": {
+        "automation": null,
+        "value": 120
+      },
+      "y": {
+        "automation": null,
+        "value": 85
+      }
+    }
+  }
+}

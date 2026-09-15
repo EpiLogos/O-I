@@ -120,6 +120,7 @@ export type CommissionOutcome =
   | { state: "owner_unavailable"; path: string; detail: string };
 
 export type KernelOp =
+  | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"graph";project?:string;query:string}
   | { op: "invoke_action"; project?: string; invocation: ActionInvocation }
   | { op: "flow_changed_since"; project?: string; thought: Record<string, unknown> }
@@ -174,6 +175,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
   | {result:"action_dispatched";dispatch:ActionDispatch}
   | { result: "flow_changed_since"; reading: ChangedSinceReading }

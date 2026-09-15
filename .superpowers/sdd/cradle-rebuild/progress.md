@@ -1179,3 +1179,16 @@ C4 (graph presentation, ONE dedicated worker) dispatches next against a tree car
 - APP REPAIRS: none — no product code regressed; the one product-file change is the DraftSurface doc-comment drift cure (comment only). Floor behavior changes only in the two suites whose failing checks were the named run-proven defects; every other floor check untouched (20-suite floor intact).
 - WALK (acceptance): rest 16/16 · system-settings 7/7 · bootstrap 15/15 · navigator 27/27; receipts + screenshots regenerated and committed (rest cold_start_fcp_ms 164).
 - Files: walk/scenarios/{rest,system-settings}.mjs, src/flow/DraftSurface.tsx (doc-comment only), walk/artifacts/{rest,system-settings,bootstrap,navigator}.json + screenshots regenerated. Branch agent/walk-recontract-rest-system-settings from origin/main 4ebd5ca9; PR #278.
+
+### 2026-09-15 — EX1: shared Expression application contract and native human/Agent operations
+
+PR #310 publishes `docs/contracts/EXPRESSION-APPLICATION-V1.md` before consumer
+implementation. Native kernel operations, permission-bounded local IPC, CLI,
+revision-checked human editing and the existing Stage projection are implemented.
+The Tauri walk proves Agent create → human edit → Agent inspect/edit, conflict
+preservation, owner file CAS, global subject focus and actual authority refusal.
+Kernel floor 39 passed/49 existing owner-gated ignores; EX1 9/9 with real Central;
+engine round-trip 10 assertions; web/native/CLI builds and clippy passed.
+Evidence and exact commands: `desktop/cradle/walk/artifacts/expression-ex1/RECEIPT.md`.
+EX0 runtime/Studio intake, EX2–EX5 adapters and human creative judgement remain
+separately owned. No whole Expression Field completion is claimed.
