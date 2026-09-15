@@ -61,8 +61,10 @@ export interface ProductSectionModel {
 }
 
 /** The four user needs the rail serves (design §1), plus Visuals — the
- * appearance and expression layer owned by the desktop itself. */
-export type SettingsView = "health" | "activity" | "config" | "bootstrap" | "visuals";
+ * appearance and expression layer owned by the desktop itself — and, from
+ * the configuration plane (#299 §11), the generic Configuration and
+ * Profiles projections. */
+export type SettingsView = "health" | "activity" | "config" | "configuration" | "profiles" | "bootstrap" | "visuals";
 
 /** Project-scoped live activity extras (AIKit agency + providers). */
 export interface ActivityExtras {

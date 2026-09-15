@@ -48,6 +48,7 @@ const SCENARIOS = {
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
   system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
   "system-settings": {module:"scenarios/system-settings.mjs",kernel:true,aliases:[]},
+  configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
