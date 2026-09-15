@@ -250,6 +250,17 @@
 }
 
 /* ---------------------------------------------------------------------------
+ * Surface bodies — the pane's one scroll owner beneath its tab strip.
+ */
+
+.surface-body {
+  flex: 1;
+  min-height: 0;
+  overflow: auto;
+  padding: var(--oi-space-3);
+}
+
+/* ---------------------------------------------------------------------------
  * Context menu — the canonical-Actions disclosure UI (D15).
  */
 
