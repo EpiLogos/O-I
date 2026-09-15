@@ -1,0 +1,1 @@
+Native CSP prepaint: 14 browser-enforced cases passed across index.html, dist/index.html; exact inline script allowed, altered script refused.

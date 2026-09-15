@@ -1,0 +1,146 @@
+{
+  "results": [
+    {
+      "name": "Native opening, quiet canvas and seven aligned icon tools",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Panel navigation leaves paused native state and render dimensions unchanged",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "One deliberate click places one force-only attractor, returns to Select, keeps other fields",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Pin projects to its requested position",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Drag changes only intended placement and preserves depth",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Undo restores one whole drag; redo re-applies it",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Pin force controls reach native configuration without reseeding",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Editing lock and keyboard nudge are distinct from simulation motion",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Orbit-view placement respects explicit working-plane depth",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Right-drag camera navigation does not also drive pointer force",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Formation placement is additive with its own allocation and identity",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Typing glyphs cannot trigger global tool shortcuts",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Sequence keyframe is an explicit local offset at the clicked location",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Parameter-started native automation preserves its stored base",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Station tuning uses native frequencies; selection does not retune",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Scene text is authored literally and safely",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Journey configuration export contains the actual authored document",
+      "ok": true,
+      "evidence": {
+        "scenes": 8,
+        "entities": 5
+      }
+    },
+    {
+      "name": "Self-contained living artifact reopens with native engine, editor and all authored state",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "PNG decodes actual visible native marks and leaves GPU state unchanged",
+      "ok": true,
+      "evidence": {
+        "width": 1280,
+        "height": 889,
+        "marked": 3542
+      }
+    },
+    {
+      "name": "Recorded performance plays, decodes multiple frames and preserves fixed output dimensions",
+      "ok": true,
+      "evidence": {
+        "width": 1280,
+        "height": 889,
+        "currentTime": 0.652169,
+        "decodedFrames": 8,
+        "marks": 1343,
+        "bytes": 226324
+      }
+    },
+    {
+      "name": "Browser-save reload and file import restore editable configuration without changing source file",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Preset preview does not replace live work",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Native ASCII source is local to its formation and does not reseed",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Small window retains pause and dismissible motion controls without page overflow",
+      "ok": true,
+      "evidence": null
+    },
+    {
+      "name": "Touch placement creates exactly one selected attractor on the plane",
+      "ok": true,
+      "evidence": null
+    }
+  ],
+  "passed": 25,
+  "browserErrors": [],
+  "environment": "Chromium software WebGL, 2048-particle fixtures; inline local content; explicit in-memory origin storage test double. Video decoded by Chromium."
+}
