@@ -739,3 +739,5 @@
   margin-right: 8px;
   font-size: var(--oi-shell-type-body);
 }
+/* The opening gates interaction without changing the workspace's layout. */
+.oi-workspace-mount { display: contents; }

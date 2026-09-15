@@ -63,7 +63,7 @@ const SCENARIOS = {
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
   recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
-  welcome: { module: "scenarios/welcome.mjs", kernel: false, aliases: [] },
+  welcome: { module: "scenarios/welcome.mjs", kernel: true, aliases: [] },
   instrument: { module: "scenarios/instrument.mjs", kernel: true, aliases: ["k9"] },
   "instrument-host": { module: "scenarios/instrument-host.mjs", kernel: true, aliases: ["k9-host"] },
   "instrument-native-host": { module: "scenarios/instrument-native-host.mjs", kernel: true, aliases: ["k9-native"] },
