@@ -130,7 +130,7 @@ fn owner(controller: &Controller, request: Value) -> Result<Value, String> {
             stdout
                 .lines()
                 .filter_map(|line| serde_json::from_str::<Value>(line).ok())
-                .last()
+                .next_back()
         })
         .ok_or_else(|| {
             format!(
