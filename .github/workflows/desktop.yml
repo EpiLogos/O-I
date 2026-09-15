@@ -75,11 +75,13 @@ jobs:
           node tests/expression-stage-lifecycle.mjs
           node tests/expression-provider-lifecycle.mjs
           node tests/visuals-preview-lifecycle.mjs
+          node tests/welcome-lifecycle.mjs
       - name: Prove desktop appearance, source syntax and native prepaint policy
         working-directory: desktop/cradle
         run: |
           node tests/desktop-appearance.mjs
           node tests/text-editor-appearance.mjs
+          node tests/expression-document-appearance.mjs
           node tests/theme-prepaint-csp.mjs
           npm --prefix ../../packages/oi-design-system run verify
           npm --prefix ../../packages/oi-design-system run verify:browser
