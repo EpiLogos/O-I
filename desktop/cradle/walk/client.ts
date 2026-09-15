@@ -399,6 +399,7 @@ function makeDouble(source: { ref: string; title?: string; snapshot: Record<stri
             pause: (value = true) => { note(double, value ? "paused" : "resumed"); return lease.pause(value); },
             resume: () => { note(double, "resumed"); return lease.resume(); },
             renderOnce: () => { note(double, "render-once"); return lease.renderOnce(); },
+            updatePresentation: (request) => { note(double, "presentation"); return lease.updatePresentation(request); },
           };
           double.lease = observed;
           note(double, "attach");

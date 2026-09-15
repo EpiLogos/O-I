@@ -37,6 +37,7 @@ export interface StageRetainedLease {
   pause(value?: boolean): StageRetainedLease;
   resume(): StageRetainedLease;
   renderOnce(): StageRetainedLease;
+  updatePresentation(request: unknown): unknown;
 }
 
 /** Overlay merge for authored patches: objects merge recursively, arrays
@@ -240,6 +241,7 @@ export class EngineSurface {
       pause(value = true) { surface.setPaused(value); return lease; },
       resume() { surface.setPaused(false); return lease; },
       renderOnce() { surface.renderFrame(0); return lease; },
+      updatePresentation(request) { const receipt=surface.adapter.updateRetainedPresentation(request); surface.wake(); return receipt; },
     };
     return lease;
   }

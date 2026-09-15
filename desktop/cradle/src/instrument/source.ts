@@ -71,6 +71,26 @@ export interface FocusDisclosure {
   standing:string;
 }
 
+export interface QualifiedNaraSource {source_ref:string;revision:string;standing_ref:string}
+export interface NaraWorldContribution {basis_ref:string;source_ref:string;value:number}
+export interface NaraCentreExpressionReading {
+  locus_ref:string;ordinal:number;label:string;source:QualifiedNaraSource;
+  m1:NaraWorldContribution;m2:NaraWorldContribution;m3:NaraWorldContribution;resonance:number;
+}
+export interface NaraEarthBodyExpressionReading {locus_ref:string;source:QualifiedNaraSource;frame_ref:string}
+export interface NaraExpressionPortableCues {
+  schema:"ql.nara-expression-portable-cues/v1";subject_ref:string;event_ref:string;profile_generation:number;
+  personal_reception_generation:number;centre_locus_refs:string[];earth_body_locus_ref:string;source_refs:string[];cue_refs:string[];
+}
+export interface NaraExpressionSession {
+  schema:"ql.nara-expression-session/v1";subject_ref:string;event_ref:string;profile_generation:number;
+  personal_reception_generation:number;current:boolean;centres:NaraCentreExpressionReading[];
+  earth_body:NaraEarthBodyExpressionReading;resonance_stations:{availability:"available"|"unavailable";station_refs:string[];standing:string};
+  m1_reading_refs:string[];m2_reading_refs:string[];m3_reading_refs:string[];action_refs:string[];
+  m1_presentation:unknown;m2_presentation:unknown;m3_presentation:unknown;
+  portable:NaraExpressionPortableCues;standing:string;
+}
+
 export interface FocusedInstrumentSnapshot {
   schema:string;
   available:boolean;
@@ -87,6 +107,7 @@ export interface FocusedInstrumentSnapshot {
   vak_expression?:VakExpressionBinding|null;
   vak_performance?:VakPerformanceSummary|null;
   personal_current:boolean;
+  nara_expression?:NaraExpressionSession|null;
   standing:string;
 }
 
@@ -141,6 +162,7 @@ export interface RetainedExpressionLease {
   pause(value?:boolean):RetainedExpressionLease;
   resume():RetainedExpressionLease;
   renderOnce():RetainedExpressionLease;
+  updatePresentation(request:unknown):unknown;
 }
 
 export interface FocusedInstrumentSource {
