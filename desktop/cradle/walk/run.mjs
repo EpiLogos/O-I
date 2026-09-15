@@ -79,6 +79,7 @@ const SCENARIOS = {
   navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
   editor: { module: "scenarios/editor.mjs", kernel: true, aliases: ["u1.2"] },
   knowledge: { module: "scenarios/knowledge.mjs", kernel: true, aliases: ["u3.1", "u3.4"] },
+  "knowledge-expression": { module: "scenarios/knowledge-expression.mjs", kernel: true, aliases: ["ex3"] },
   history: { module: "scenarios/history.mjs", kernel: true, aliases: ["u1.3"] },
   spatial: { module: "scenarios/spatial.mjs", kernel: true, aliases: ["shell"] },
   companions: { module: "scenarios/companions.mjs", kernel: false, aliases: ["round2"] },
