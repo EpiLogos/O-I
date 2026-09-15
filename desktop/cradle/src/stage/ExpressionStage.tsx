@@ -64,6 +64,9 @@ export interface StagePresentationRequest {
   /** EX1 material projection into this existing stage. */
   config?: Record<string,unknown>;
   sceneRef?: string;
+  /** O:I document projections without authored colours use the host ink and
+   * ground. Native instrument configs preserve their palette by default. */
+  appearance?: "host" | "authored";
   /** Registered Expression Target id; the viewport surface is the window
    * canvas. Element targets are a later surface kind, not a scissor. */
   target?: string;
@@ -184,7 +187,7 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     }
     const surface = surfaceRef.current;
     if (!surface) return null;
-    if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
+    if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef, [], request.appearance);
     else surface.present(request.id, request.recipe);
     // Pause and deliberate motion belong to this presentation, not the
     // reused window surface or whichever view acquires it next.
@@ -204,7 +207,7 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
         requireCurrent();
         surface.update(request.id, recipe);
       },
-      updateConfig(config, sceneRef, selectedIds) { requireCurrent(); surface.presentConfig(request.id, config, sceneRef, selectedIds); },
+      updateConfig(config, sceneRef, selectedIds) { requireCurrent(); surface.presentConfig(request.id, config, sceneRef, selectedIds, request.appearance); },
       setContainer(container) {
         requireCurrent();
         surface.setContainer(request.id, container);
