@@ -447,7 +447,9 @@ mod unix {
     }
 
     /// The "actions" array of objects that follows a JSON key, read as the
-    /// values of one string field of each object.
+    /// values of one string field of each object. The array bound is found
+    /// with bracket-depth scanning so nested arrays inside one action do not
+    /// truncate the window.
     fn json_action_field_values(
         payload: &str,
         array_key: &str,
@@ -455,7 +457,35 @@ mod unix {
     ) -> Option<Vec<String>> {
         let array_start = payload.find(&format!("\"{array_key}\""))?;
         let window = &payload[array_start..];
-        let window_end = window.find(']').unwrap_or(window.len());
+        let open = window.find('[')?;
+        let mut depth = 0usize;
+        let mut in_string = false;
+        let mut escaped = false;
+        let mut window_end = window.len();
+        for (offset, character) in window[open..].char_indices() {
+            if in_string {
+                if escaped {
+                    escaped = false;
+                } else if character == '\\' {
+                    escaped = true;
+                } else if character == '"' {
+                    in_string = false;
+                }
+                continue;
+            }
+            match character {
+                '"' => in_string = true,
+                '[' => depth += 1,
+                ']' => {
+                    depth -= 1;
+                    if depth == 0 {
+                        window_end = open + offset + 1;
+                        break;
+                    }
+                }
+                _ => {}
+            }
+        }
         Some(json_string_field_values(&window[..window_end], field))
     }
 

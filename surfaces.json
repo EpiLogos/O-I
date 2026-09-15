@@ -10,12 +10,14 @@
       "docs_ref": "39efa03ea8607bdd8a79b0e317457c2ccc3ead4c",
       "docs_path": "README.md",
       "skill_paths": [
-        "skills/control-maintenance/SKILL.md",
-        "skills/machine-declaration/SKILL.md",
+        "skills/capability-matrices/SKILL.md",
         "skills/connector-authoring/SKILL.md",
         "skills/connector-hardening/SKILL.md",
-        "skills/projectcentral-ontology/SKILL.md",
-        "skills/documentation-standing/SKILL.md"
+        "skills/control-maintenance/SKILL.md",
+        "skills/docs-methodology/SKILL.md",
+        "skills/documentation-standing/SKILL.md",
+        "skills/machine-declaration/SKILL.md",
+        "skills/projectcentral-ontology/SKILL.md"
       ],
       "native": {
         "kind": "cli",
