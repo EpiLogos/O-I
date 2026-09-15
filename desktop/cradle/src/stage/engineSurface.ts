@@ -246,7 +246,11 @@ export class EngineSurface {
       renderOnce() { surface.renderFrame(0); return lease; },
       updatePresentation(request) {
         if(surface.retainedLeaseOwner!==id||surface.retainedLeaseIdentity!==leaseIdentity)throw new Error("This retained presentation lease is no longer current.");
-        const receipt=surface.adapter.updateRetainedPresentation(request);surface.wake();return receipt;
+        const receipt=surface.adapter.updateRetainedPresentation(request);
+        // A deliberate presentation edit remains visible while an otherwise
+        // healthy field is paused. Ambient wake sources stay held below.
+        if(surface.paused)surface.renderFrame(0);else surface.wake();
+        return receipt;
       },
     };
     Object.defineProperty(lease,"identity",{value:leaseIdentity});
@@ -333,7 +337,7 @@ export class EngineSurface {
   }
   private clearTimers() { for (const timer of this.timers) clearTimeout(timer); this.timers.length = 0; }
   private wake = () => {
-    if (this.raf || !this.active || !this.live) return;
+    if (this.paused || this.raf || !this.active || !this.live) return;
     this.last = performance.now();
     this.raf = requestAnimationFrame(this.frame);
   };
@@ -341,7 +345,7 @@ export class EngineSurface {
   private frame = (now: number) => {
     this.raf = 0;
     if (!this.active) return;
-    if (document.hidden) { this.last = now; this.raf = requestAnimationFrame(this.frame); return; }
+    if (document.hidden) { this.last = now; if(!this.paused)this.raf = requestAnimationFrame(this.frame); return; }
     const animate = !this.paused && (this.forceMotion || !this.reduced.matches);
     const delta = animate ? Math.min(0.05, Math.max(0.001, (now - this.last) / 1000)) : 0;
     this.last = now;
