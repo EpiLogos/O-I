@@ -143,23 +143,31 @@
   }
 }
 
-/* Owner-directed desktop extension, 2026-09-06. Opt-in host theme keeps
- * historical site defaults stable. Point clouds carry accents, not legibility. */
+/* Desktop ground — owner ruling 2026-09-15. The desktop host opts in with
+ * `.oi-desktop`; its canonical appearance is neutral LIGHT (this block) and
+ * neutral DARK (`.oi-desktop[data-theme="dark"]` below). The dated
+ * grey-yellow-green/olive extension of 2026-09-06 is superseded — the
+ * returned application experience (the Expression language: quiet light
+ * ground and ink, controlled contrast, fine hairlines, restrained depth) is
+ * the canonical desktop ground now; see DESKTOP-LANGUAGE.md for the
+ * provenance. Role names are unchanged: every consumer keeps its meaning.
+ * `system` is a preference that resolves into one of these two; it is not
+ * a third appearance. */
 .oi-desktop {
   color-scheme: light;
-  --oi-paper: #eef0e7;
-  --oi-ink: #30372f;
-  --oi-surface: #f5f6f0;
-  --oi-inspector-ground: #e6ebdf;
-  --oi-composer-ground: #fafcf6;
-  --oi-composer-rule: #ccd7c1;
-  --oi-message-ground: #e5e9df;
+  --oi-paper: #f7f7f4;
+  --oi-ink: #161614;
+  --oi-surface: #fbfbf9;
+  --oi-inspector-ground: #f1f1ee;
+  --oi-composer-ground: #ffffff;
+  --oi-composer-rule: #d8d8d3;
+  --oi-message-ground: #f1f1ee;
   --oi-foreground: var(--oi-ink);
-  --oi-muted: #68715f;
-  --oi-rule: #d9ddd1;
-  --oi-focus: #526544;
-  --oi-relation: #78866b;
-  --oi-projection: #7f8b74;
+  --oi-muted: #6a6a66;
+  --oi-rule: #dededa;
+  --oi-focus: #161614;
+  --oi-relation: #8a8a84;
+  --oi-projection: #7c7c77;
   --oi-world-surface: var(--oi-paper);
   --oi-world-foreground: var(--oi-ink);
 }
@@ -212,38 +220,42 @@
   }
 }
 
-/* Shell vocabulary — lead ruling for the FND-01/02 foundation round,
- * 2026-09-08. The three regions float as distinct planes on one shell ground:
- * a lighter sidebar, paper panes in a slightly darker gutter, and the agent
- * layer on its own ground. Hairlines separate; gutters give the thin
- * offsetting margin that lets the sidebar and each pane read as a card.
- * These are additive: every existing role keeps its meaning. */
+/* Shell vocabulary — the three regions float as distinct planes on one
+ * shell ground: a slightly lighter sidebar, paper panes in a slightly
+ * darker gutter, and the agent layer on its own ground. Hairlines
+ * separate; gutters give the thin offsetting margin that lets the sidebar
+ * and each pane read as a card. (FND-01/02 foundation round, 2026-09-08;
+ * re-grounded to the neutral light appearance 2026-09-15 — geometry, type
+ * and motion values unchanged.) Additive: every existing role keeps its
+ * meaning. The accent is ink, not a hue: selection, the send control and
+ * the focus ring are drawn in foreground strength, and colour is reserved
+ * for the scarce meta-relation role. */
 .oi-desktop {
   /* grounds */
-  --oi-shell-ground: #dfe4d6;          /* window ground behind every plane; pane gutter */
-  --oi-sidebar-ground: #f5f6f0;        /* left plane, lighter than paper */
-  --oi-sidebar-ground-glass: rgba(245, 246, 240, 0.92);
-  --oi-canvas-ground: #eef0e7;         /* pane body paper */
-  --oi-pane-bar-ground: #f0f3e9;       /* pane tab bar */
-  --oi-agent-ground: #e6ebdf;          /* right accompanying-agent plane */
-  --oi-wash: #e5e9dd;                  /* current row / hover wash */
-  --oi-wash-strong: #dfe5d5;
-  --oi-hairline: #d3d9c9;              /* card edge */
-  --oi-hairline-soft: #dde3d4;         /* tab separators, inner rules */
-  --oi-accent: #657852;                /* olive: selected underline, send, focus ring */
-  --oi-accent-ink: #47563b;
-  --oi-accent-soft: #8d9c7b;           /* pane focus highlight */
-  --oi-composer-ground: #fafcf6;
-  --oi-composer-rule: #ccd7c1;
-  --oi-message-ground: #e5e9df;
+  --oi-shell-ground: #e9e9e5;          /* window ground behind every plane; pane gutter */
+  --oi-sidebar-ground: #f3f3f0;        /* left plane, lighter than the gutter */
+  --oi-sidebar-ground-glass: rgba(243, 243, 240, 0.92);
+  --oi-canvas-ground: #fbfbf9;         /* pane body paper */
+  --oi-pane-bar-ground: #f5f5f2;       /* pane tab bar */
+  --oi-agent-ground: #f1f1ee;          /* right accompanying-agent plane */
+  --oi-wash: #ecece8;                  /* current row / hover wash */
+  --oi-wash-strong: #e2e2dd;
+  --oi-hairline: #d8d8d3;              /* card edge */
+  --oi-hairline-soft: #e5e5e0;         /* tab separators, inner rules */
+  --oi-accent: #2a2a27;                /* ink accent: selected underline, send, focus ring */
+  --oi-accent-ink: #1c1c1a;
+  --oi-accent-soft: #9a9a94;           /* pane focus highlight */
+  --oi-composer-ground: #ffffff;
+  --oi-composer-rule: #d8d8d3;
+  --oi-message-ground: #f1f1ee;
   --oi-inspector-ground: var(--oi-agent-ground);
   /* Loading roles must re-resolve against the desktop palette: a :root-level
    * var() binds to :root's own surface/ink, not the host theme's. */
   --oi-loading-ground: var(--oi-surface);
   --oi-loading-ink: var(--oi-foreground);
   --oi-accent-ground: var(--oi-surface);
-  --oi-muted-2: #8f9a83;               /* meta labels, eyebrows */
-  --oi-muted-3: #a1ac98;               /* placeholders, tertiary */
+  --oi-muted-2: #8b8b86;               /* meta labels, eyebrows */
+  --oi-muted-3: #adada8;               /* placeholders, tertiary */
   /* geometry */
   --oi-shell-gutter: 4px;              /* the thin offsetting margin between planes */
   --oi-shell-edge: 1px;
@@ -271,10 +283,10 @@
   --oi-shell-type-title: 18px;
   --oi-shell-tracking: 1.2px;
   /* elevation */
-  --oi-shadow-plane: 0 1px 2px rgba(48, 55, 47, 0.05);
-  --oi-shadow-menu: 0 10px 40px rgba(57, 73, 45, 0.14), 0 1px 2px rgba(48, 55, 47, 0.08);
-  --oi-shadow-overlay: 0 20px 70px rgba(48, 55, 47, 0.15);
-  --oi-shadow-drawer: -10px 0 25px rgba(57, 73, 45, 0.07);
+  --oi-shadow-plane: 0 1px 2px rgba(22, 22, 20, 0.05);
+  --oi-shadow-menu: 0 10px 40px rgba(22, 22, 20, 0.12), 0 1px 2px rgba(22, 22, 20, 0.08);
+  --oi-shadow-overlay: 0 20px 70px rgba(22, 22, 20, 0.14);
+  --oi-shadow-drawer: -10px 0 25px rgba(22, 22, 20, 0.07);
   /* motion */
   --oi-motion-plane: 200ms;            /* sidebar/agent width, maximize */
   --oi-motion-ui: 120ms;               /* hover, selection, menu */
@@ -285,41 +297,44 @@
   .oi-desktop { --oi-motion-plane: 0.01ms; --oi-motion-ui: 0.01ms; }
 }
 
-/* Explicit dark appearance, selected by the host setting data-theme="dark"
- * on the oi-desktop body (Visuals → Themes; "system" resolves there).
- * Role names never change between themes (law 11): every shell token above
- * is re-grounded, nothing is left to the light values by accident. */
+/* The canonical DARK appearance — the inverse of the light ground above:
+ * ink becomes the ground, paper the ink, with the same restraint. Selected
+ * by the host setting data-theme="dark" on the oi-desktop body (Visuals →
+ * Themes; "system" resolves there, before first paint). Role names never
+ * change between themes (law 11): every shell token above is re-grounded,
+ * nothing is left to the light values by accident. Gold keeps its one
+ * value in both appearances. */
 .oi-desktop[data-theme="dark"] {
   color-scheme: dark;
-  --oi-paper: #10140f;
-  --oi-ink: #e4e8dc;
-  --oi-surface: #151a12;
-  --oi-inspector-ground: #131810;
-  --oi-composer-ground: #1a2015;
-  --oi-composer-rule: #2c3526;
-  --oi-message-ground: #171c13;
+  --oi-paper: #121211;
+  --oi-ink: #e9e9e4;
+  --oi-surface: #161615;
+  --oi-inspector-ground: #141413;
+  --oi-composer-ground: #1c1c1a;
+  --oi-composer-rule: #34342f;
+  --oi-message-ground: #1a1a18;
   --oi-foreground: var(--oi-ink);
-  --oi-muted: #9aa68e;
-  --oi-rule: #262e21;
-  --oi-focus: #a3b58b;
-  --oi-relation: #7d8a6f;
-  --oi-projection: #8a967c;
+  --oi-muted: #a2a29c;
+  --oi-rule: #2b2b28;
+  --oi-focus: #eeeee8;
+  --oi-relation: #7d7d77;
+  --oi-projection: #8c8c86;
   /* shell vocabulary */
-  --oi-shell-ground: #0b0e09;
-  --oi-sidebar-ground: #141910;
-  --oi-sidebar-ground-glass: rgba(20, 25, 16, 0.92);
-  --oi-canvas-ground: #10140f;
-  --oi-pane-bar-ground: #171c13;
-  --oi-agent-ground: #131810;
-  --oi-wash: #1b2117;
-  --oi-wash-strong: #232b1d;
-  --oi-hairline: #2a3320;
-  --oi-hairline-soft: #232b1a;
-  --oi-accent: #93a97e;
-  --oi-accent-ink: #b8c9a4;
-  --oi-accent-soft: #55654a;
-  --oi-muted-2: #7f8b72;
-  --oi-muted-3: #5d6852;
+  --oi-shell-ground: #0b0b0a;
+  --oi-sidebar-ground: #151514;
+  --oi-sidebar-ground-glass: rgba(21, 21, 20, 0.92);
+  --oi-canvas-ground: #121211;
+  --oi-pane-bar-ground: #181817;
+  --oi-agent-ground: #141413;
+  --oi-wash: #1f1f1d;
+  --oi-wash-strong: #282826;
+  --oi-hairline: #2c2c29;
+  --oi-hairline-soft: #242422;
+  --oi-accent: #dcdcd6;
+  --oi-accent-ink: #f0f0eb;
+  --oi-accent-soft: #55554f;
+  --oi-muted-2: #83837d;
+  --oi-muted-3: #5b5b56;
   --oi-shadow-plane: 0 1px 2px rgba(0, 0, 0, 0.4);
   --oi-shadow-menu: 0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --oi-shadow-overlay: 0 20px 70px rgba(0, 0, 0, 0.55);

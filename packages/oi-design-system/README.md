@@ -2,9 +2,11 @@
 
 The O:I house visual vocabulary, extracted from the live production
 language in `site/src` (issue #25 extraction list; cradle-rebuild wayfinder
-D9 + law 11). The original tokens preserve that extraction. The dated desktop
-extension adds the owner-approved paper/point-cloud language; it is explicitly
-opt-in through `.oi-desktop`. See [DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md).
+D9 + law 11). The original tokens preserve that extraction. The desktop
+extension (`.oi-desktop`, opt-in) carries the owner-approved desktop ground:
+canonical neutral light and dark appearances (owner revision 15 September
+2026, superseding the olive palette of 6 September) plus the point-cloud and
+loading language. See [DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md).
 
 ## The law
 
@@ -106,8 +108,9 @@ incrementally with regression evidence, never in the same stroke.
 
 ### Desktop clouds and loading
 
-Import `tokens.css` and `point-cloud.css`; opt into the desktop palette with
-`.oi-desktop`. `./loading` exports `createLoadingIndicator` and
+Import `tokens.css` and `point-cloud.css`; opt into the desktop ground with
+`.oi-desktop` (light) and `data-theme="dark"` on the same element for the dark
+appearance — `system` resolves to one of the two at the host. `./loading` exports `createLoadingIndicator` and
 `createPointClusters`. Both are DOM primitives; native operation state, focus,
 permissions and lifecycle remain host responsibilities. See
 [DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md) for the visual contract and

@@ -6,6 +6,21 @@
     <title>O-I</title>
   </head>
   <body class="oi-desktop">
+    <script>
+      // Appearance before first paint: the persisted Visuals choice (light /
+      // dark / system) resolves onto the body here, ahead of the module
+      // bundle, so a dark window never flashes the light ground. The React
+      // visuals provider takes over the same attribute once mounted.
+      (function () {
+        try {
+          var raw = localStorage.getItem("oi-cradle.visuals.v1");
+          var theme = raw ? JSON.parse(raw).theme : "system";
+          if (theme !== "light" && theme !== "dark") theme = "system";
+          var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+          if (dark) document.body.setAttribute("data-theme", "dark");
+        } catch (e) {}
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>
