@@ -62,6 +62,7 @@ const SCENARIOS = {
   "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
   "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
   "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
+  "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
   "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},

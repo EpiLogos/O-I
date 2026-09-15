@@ -15,6 +15,7 @@ import {FileSurface} from "../files/FileSurface";
 import {SourceSurface} from "../surface/SourceSurface";
 import {KnowledgeSurface} from "../knowledge/KnowledgeSurface";
 import {SystemPanel} from "./SystemPanel";
+import {ExploreSurface} from "../explore/ExploreSurface";
 import type {SurfaceBinding} from "../surface/types";
 import "./shell.css";
 declare global { interface Window { __OI_DETACHED__?: boolean } }
@@ -62,7 +63,9 @@ export function DetachedFrame() {
           ?record.binding.view?.encounterPlane&&record.binding.view.encounterPlane!=="Conversation"
             ?'.encounter-planes button[aria-pressed="true"]'
             :'.encounter-composer textarea:not(:disabled)'
-          :'.knowledge-graph svg[tabindex], .knowledge-content';
+          :record.binding.kind==="explore"||record.binding.kind==="presentation"
+            ?'.explore-strip input, .explore-strip button:not(:disabled)'
+            :'.knowledge-graph svg[tabindex], .knowledge-content';
       const target=body.querySelector<HTMLElement>(selector);
       if(!target||!target.getClientRects().length||target.closest('[inert], [hidden]'))return;
       if(!target.hasAttribute("tabindex")&&target.matches(".knowledge-content"))target.tabIndex=-1;
@@ -131,7 +134,7 @@ export function DetachedFrame() {
     }finally{if(timer)clearTimeout(timer);cleanup();}
   };
   return <div className="desktop-shell detached-shell"><header className="desktop-bar"><strong className="desktop-brand">O-I</strong><span>{record?.binding.title}</span><button onClick={redock} disabled={redocking}>{redocking?"Re-docking…":"Re-dock"}</button></header>{error&&<p role="alert">{error} {!record&&<button onClick={()=>setLoadAttempt(n=>n+1)} disabled={loading}>Retry opening surface</button>}</p>}
-    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
+    <main ref={bodyRef} className="desktop-centre">{record?.binding.kind==="terminal"?<TerminalSurface binding={record.binding}/>:record?.binding.kind==="flow"?<FlowSurface binding={record.binding}/>:record?.binding.kind==="draft"?<DraftSurface binding={record.binding}/>:record?.binding.kind==="browser"?<BrowserSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="encounter"?<EncounterSurface key={record.binding.id} binding={record.binding} onView={view=>void updateView(view)} presentation="tab"/>:record?.binding.kind==="file"?<FileSurface key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="source"?<SourceSurface binding={record.binding}/>:record?.binding.kind==="system"?<SystemPanel key={record.binding.id} binding={record.binding}/>:record?.binding.kind==="explore"||record?.binding.kind==="presentation"?<ExploreSurface key={record.binding.id} binding={record.binding}/>:record&&<KnowledgeSurface binding={record.binding} onOpen={navigate}/>}</main>
     {searchOpen&&<SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={record?.binding.project} onClose={()=>setSearchOpen(false)} onOpen={navigate}/>}
   </div>;
 }

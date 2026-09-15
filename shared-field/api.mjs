@@ -8,6 +8,7 @@ export * from './state.mjs';
 export * from './explore.mjs';
 export * from './presentation.mjs';
 export * from './expression-presentation.mjs';
+export * from './expression-projection.mjs';
 export * from './presentation-projection.mjs';
 export * from './presentation-authoring.mjs';
 export * from './projection-reading.mjs';

@@ -17,6 +17,7 @@
  *   participant {participant, target_identity, role, contactable}   register a Participant contract and bind an identity
  *   admit     {ingress_ref, reason, evidence, index, entry?, relation?}  admit a quarantined Contribution under the caller's authority
  *   contact   {contact_ref, recipient_participant_ref, decision, response}   respond to a Contact request
+ *   watch     {watch}                   put one oi.watch/v1 contract under the caller's own authority
  */
 import { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, waitUntil } from './field-lib';
 
@@ -86,6 +87,15 @@ try {
       if (request.entry) await reducers.putExploreEntry(request.entry);
       if (request.relation) await reducers.putExploreRelation(request.relation);
       emit({ ok: true, data: { schema: 'oi.shared-field.admission-result/v1', ingress_ref: request.ingress_ref, contribution_ref: admitted.contributionRef, contributor_participant_ref: admitted.contributorParticipantRef, indexed: Boolean(request.index), contract: JSON.parse(admitted.contractJson) } });
+    }
+    case 'watch': {
+      const w = request.watch;
+      if (!w || typeof w.watch_ref !== 'string' || typeof w.field_ref !== 'string' || typeof w.watcher_participant_ref !== 'string' || !w.target || typeof w.target.ref !== 'string') emit({ ok: false, error: { kind: 'malformed', message: 'watch requires an oi.watch/v1 contract (watch_ref, field_ref, watcher_participant_ref, target, state)' } });
+      const { validateWatch } = await import('../watch.mjs');
+      const watch = validateWatch(w);
+      await reducers.putWatch({ watchRef: watch.watch_ref, fieldRef: watch.field_ref, watcherParticipantRef: watch.watcher_participant_ref, targetKind: watch.target.kind, targetRef: watch.target.ref, state: watch.state, contractJson: JSON.stringify(watch) });
+      const row = await waitUntil(() => rows(db.myWatch).find((candidate: any) => candidate.watchRef === watch.watch_ref && candidate.state === watch.state), 'the Watch in the caller-visible view');
+      emit({ ok: true, data: { schema: 'oi.shared-field.watch-result/v1', watch_ref: row.watchRef, field_ref: row.fieldRef, target: { kind: row.targetKind, ref: row.targetRef }, state: row.state, watcher_participant_ref: row.watcherParticipantRef } });
     }
     case 'contact': {
       if (typeof request.contact_ref !== 'string' || typeof request.recipient_participant_ref !== 'string' || typeof request.decision !== 'string') emit({ ok: false, error: { kind: 'malformed', message: 'contact requires `contact_ref`, `recipient_participant_ref`, `decision`' } });

@@ -6,6 +6,7 @@ import {expressionConfig} from "./engineProjection";
 import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult,SubjectBinding} from "./types";
 import type {CentralLocation} from "../kernel/types";
 import {compilePedagogy,type PedagogicalSequence} from "./pedagogy";
+import {ShareProjection} from "../explore/ShareProjection";
 import "./expression.css";
 const ACTOR="human:expression-editor";
 
@@ -27,6 +28,8 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
  const [presenting,setPresenting]=useState(false);const presentation=useRef<StagePresentation|null>(null);const stageHost=useRef<HTMLDivElement|null>(null);
  const mounted=useRef(true);const readGeneration=useRef(0);const selectedRef=useRef<string>();
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;readGeneration.current++;};},[]);
+ // Share / Project remains separate from Save, Export and Present.
+ const [sharing,setSharing]=useState(false);
  const request=useCallback(async(request:ExpressionRequest)=>{
   const reply=await kernelOp(kernel.transport,{op:"expression",request});
   if(reply.error||!reply.outcome||reply.outcome.result!=="expression")throw new Error(reply.error??"Expression application unavailable");
@@ -122,6 +125,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
     <button disabled={pending} onClick={()=>void edit([{change:"scene_create",scene_ref:`${document.expression_ref}:scene:${crypto.randomUUID()}`,title:`Scene ${document.scenes.length+1}`}])}>Add scene</button>
     <button disabled={pending} onClick={()=>void edit([{change:"entity_add",scene_ref:document.selection.scene_ref,entity_ref:`${document.expression_ref}:entity:${crypto.randomUUID()}`,title:`Thing ${Object.keys(document.entities).length+1}`}])}>Add Thing</button>
     <button aria-pressed={presenting} onClick={()=>setPresenting(!presenting)}>{presenting?"Close presentation":"Present on stage"}</button>
+    <button className="expression-share" aria-pressed={sharing} onClick={()=>setSharing(!sharing)} title="Project this Expression for an audience: exact outward preview, omissions, audience, Projection, Open in Explore">{sharing?"Close share":"Share / Project"}</button>
    </div>
    <details className="expression-pedagogy"><summary>Propose structured source-backed pedagogy</summary>
     <p>Enter scenes, exact Expression object refs, disclosed subject bindings, explicit motion intent and duration, and exact Method/evidence readings. Personal-Web and Agent subjects pass through their native-disclosure adapters; an Agent without a disclosed Agent ref is refused.</p>
@@ -148,6 +152,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
     </article>)}
    </section>}
    {document.refinements.some(proposal=>proposal.decision)&&<details className="expression-refinements"><summary>Reviewed proposals and human decisions</summary>{document.refinements.filter(proposal=>proposal.decision).map(proposal=><article key={proposal.proposal_ref}><strong>{proposal.summary}</strong><span>{proposal.decision!.state} by {proposal.decision!.actor} · {proposal.decision!.reason}</span><p>{proposal.decision!.corrections.length} retained correction changes</p></article>)}</details>}
+   {sharing&&<ShareProjection key={`${document.expression_ref}@${document.revision}`} document={document} onClose={()=>setSharing(false)}/>}
    <nav aria-label="Expression scenes">{document.scenes.map(s=><button key={s.scene_ref} aria-pressed={s.scene_ref===document.selection.scene_ref} onClick={()=>void edit([{change:"focus",scene_ref:s.scene_ref,entity_ref:null}])}>{s.title}</button>)}</nav>
    <div className="expression-entities" role="group" aria-label="Expression entities">{document.scenes.find(s=>s.scene_ref===document.selection.scene_ref)?.entity_refs.map(ref=>{const e=document.entities[ref];return <button key={ref} aria-pressed={selected?.entity_ref===ref} onClick={()=>void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:ref}])}>{e.title}{e.subject?` · ${e.subject.presentation_role}`:""}</button>;})}</div>
    {selected&&<fieldset disabled={pending}><legend>{selected.title}</legend>

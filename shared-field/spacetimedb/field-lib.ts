@@ -140,6 +140,10 @@ export function fieldSnapshot(client: Client) {
     my_watches: rows(db.myWatch).map((row: any) => ({ watch_ref: row.watchRef, field_ref: row.fieldRef, target_kind: row.targetKind, target_ref: row.targetRef, state: row.state })),
     my_contacts: rows(db.myContact).map((row: any) => ({ contact_ref: row.contactRef, field_ref: row.fieldRef, initiator_participant_ref: row.initiatorParticipantRef, recipient_participant_ref: row.recipientParticipantRef, state: row.state ?? row.decision ?? null })),
     counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length },
+    // The SharedField each Explore entry is hosted in (the row's fieldRef;
+    // the entry contract itself carries no field) — what a Watch or a
+    // membership reading is scoped to. Keyed by the entry's semantic ref.
+    entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
   };
 }
 
@@ -155,7 +159,10 @@ export function readRef(client: Client, ref: string) {
   let neighbourhood: any = null;
   try { neighbourhood = client.live.open(entry.ref, { depth: 1, budget: 24 }); } catch (error: any) { neighbourhood = { error: error?.message ?? String(error) }; }
   const contributions = snapshot.contributions.filter((row: any) => projections.some((projection: any) => row.contract?.target?.ref === projection.projection_ref) || row.contract?.target?.ref === entry.ref);
-  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, entry, projections, relations, contributions, neighbourhood, status: snapshot.status };
+  const field_ref = snapshot.entry_fields[entry.ref] ?? null;
+  const my_authority = snapshot.my_authority.filter((row: any) => row.field_ref === field_ref);
+  const my_watches = snapshot.my_watches.filter((row: any) => row.target_ref === entry.ref);
+  return { schema: 'oi.shared-field.reading/v1', ref, state: 'hosted', target: snapshot.target, field_ref, entry, projections, relations, contributions, neighbourhood, my_authority, my_watches, status: snapshot.status };
 }
 
 /** Push hosted reducer arguments (the `hostedPublicationArgs` shape) in

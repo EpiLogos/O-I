@@ -2,6 +2,7 @@ import {EncounterSurface} from "../encounter/EncounterSurface";
 import {requestResizeExpression} from "../shared/Expression";
 import {SystemPanel} from "../workspace/SystemPanel";
 import {FactoryDevelopmentSurface} from "../contributions/factory/FactoryDevelopmentSurface";
+import {ExploreSurface,type ExploreSurfaceProps} from "../explore/ExploreSurface";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
  * open (law 12: austere rest governs what is on screen; at zero surfaces
@@ -44,6 +45,9 @@ export interface WorkbenchProps {
   /** Open a real source surface from the index listing (U0.4). */
   openSource: (source: ListedSource) => void;
   openKnowledge: import("../knowledge/NodeDetails").OpenKnowledge;
+  /** SF1: pin a projected subject as its own Surface / hand Explore a subject. */
+  openPresentation?: ExploreSurfaceProps["onOpenPresentation"];
+  openExplore?: ExploreSurfaceProps["onOpenExplore"];
 }
 
 export function Workbench(props: WorkbenchProps) {
@@ -288,7 +292,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
       <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
@@ -299,13 +303,16 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
  * 'source', 'sources'), the clearly-named test card otherwise. */
 function SurfaceBody({
   binding,onView,
-  openSource, openKnowledge,
+  openSource, openKnowledge, openPresentation, openExplore,
 }: {
   binding: import("./types").SurfaceBinding;
   onView:WorkbenchProps["onView"];
   openKnowledge: WorkbenchProps["openKnowledge"];
   openSource: (source: ListedSource) => void;
+  openPresentation?: WorkbenchProps["openPresentation"];
+  openExplore?: WorkbenchProps["openExplore"];
 }) {
+  if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
   if (binding.kind === "flow") return <FlowSurface binding={binding} />;
@@ -345,13 +352,15 @@ interface TabProps {
 /** Tab kind → the study's kind glyph (brief FND-01: encounter chat, knowledge
  * wiki, file/source/sources file, system settings). Unknown kinds fall back
  * to 'file' rather than rendering nothing. */
-const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings"> = {
+const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings" | "field" | "search"> = {
   encounter: "chat",
   knowledge: "wiki",
   file: "file",
   source: "file",
   sources: "file",
   system: "settings",
+  explore: "search",
+  presentation: "field",
 };
 
 function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
@@ -464,7 +473,7 @@ export function ArrangementActions({state, execute, openFrameMenu, nativeWindows
   const props = {state, execute, openFrameMenu, nativeWindows};
   const group = groupsOf(state.root).find(g => g.id === state.focusedGroupId);
   const active = group?.active ? state.surfaces[group.active] : undefined;
-  const detachable = !!active && ["source", "knowledge", "file", "encounter"].includes(active.kind);
+  const detachable = !!active && ["source", "knowledge", "file", "encounter", "explore", "presentation"].includes(active.kind);
   return <>
         <button aria-label="Split active surface right" title="Split right (⌘D)" disabled={!active} onClick={() => props.execute("surface.split-right")}><Glyph name="columns"/></button>
         <button aria-label="Split active surface down" title="Split down (⌘⇧D)" disabled={!active} onClick={() => props.execute("surface.split-down")}><Glyph name="rows"/></button>

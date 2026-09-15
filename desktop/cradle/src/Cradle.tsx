@@ -12,6 +12,7 @@ import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
+import {navigateExplore,type PresentationMeta} from "./explore/ExploreSurface";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
  * localStorage and restored on load (map §5 U0.3b). Zero surfaces =
@@ -432,6 +433,42 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
     setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
+  /** SF1: Explore — the stable global entrance to the open/shared field
+   * (SHARED-FIELD-DESKTOP §1). One Explore Surface per arrangement,
+   * opened/focused like System; workspace-independent view state lives in
+   * its own remembered travel, never in the workspace's project. Opening
+   * it discloses nothing to anyone and starts no AgentSession. */
+  const openExplore = async (select?: {ref:string;title?:string}) => {
+    if(select)navigateExplore({ref:select.ref});
+    const current = stateRef.current;
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="explore");
+    const binding = existing ?? {id:crypto.randomUUID(),kind:"explore",title:"Explore"};
+    if(!kernel.snapshot.surfaces[binding.id]){
+      const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"explore",source_ref:undefined,title:binding.title});
+      if (opened?.result !== "surface_opened") throw new Error("The Explore surface could not be opened");
+    }
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+  /** SF1: one projected subject pinned as its own ordinary Surface, carrying
+   * the exact refs it was opened with; split/full/detach/re-dock are the
+   * frame's own grammar on this binding. */
+  const openPresentation = async (ref:string,title:string,meta:PresentationMeta) => {
+    const current = stateRef.current;
+    const existing = Object.values(current.surfaces).find(b=>b.kind==="presentation"&&b.ref===ref);
+    const binding:SurfaceBinding = existing ? {...existing,title,presentation:meta} : {id:crypto.randomUUID(),kind:"presentation",ref,title,presentation:meta};
+    if(!kernel.snapshot.surfaces[binding.id]){
+      const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"presentation",source_ref:ref,title});
+      if (opened?.result !== "surface_opened") throw new Error("The presentation surface could not be opened");
+    }
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction({...s,surfaces:{...s.surfaces,[binding.id]:binding}},"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+  };
+  const openExploreRef=useRef(openExplore);openExploreRef.current=openExplore;
+  useEffect(()=>{
+    const open=(event:Event)=>{const d=(event as CustomEvent<{ref?:string;title?:string}|undefined>).detail;void openExploreRef.current(d?.ref?{ref:d.ref,title:d.title}:undefined).catch(e=>setWindowError(String(e)));};
+    window.addEventListener("oi:open-explore",open);
+    return()=>window.removeEventListener("oi:open-explore",open);
+  },[]);
+
   /// The Factory development reads surface (queue cell 3): the first 6D
   /// consumer, opened from the navigator like every global surface.
   const openFactoryDevelopment = async () => {
@@ -747,7 +784,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       const tab=Array.from(document.querySelectorAll<HTMLElement>(".tab")).find(el=>el.dataset.surfaceId===redockFocus);
       const pane=tab?.closest(".pane.group");
       const kind=state.surfaces[redockFocus]?.kind;
-      const target=pane?.querySelector<HTMLElement>(kind === "encounter" ? ".encounter textarea" : kind === "source" || kind === "file" || kind === "flow" ? ".cm-content" : "[role=tabpanel] button,[role=tabpanel] [tabindex='0']");
+      const target=pane?.querySelector<HTMLElement>(kind === "encounter" ? ".encounter textarea" : kind === "source" || kind === "file" || kind === "flow" ? ".cm-content" : kind === "explore" || kind === "presentation" ? ".explore-strip input, .explore-strip button:not(:disabled)" : "[role=tabpanel] button,[role=tabpanel] [tabindex='0']");
       if(!target || target.matches(":disabled") || !document.hasFocus())return;
       target.focus();if(document.activeElement===target)setRedockFocus(undefined);
     };
@@ -835,7 +872,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={<AgentLayer project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error}
-        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={()=>void openFactoryDevelopment().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
+        navigator={workspaceSelector => <WorldNavigator onAgent={summonAgent} onSystem={()=>void openSystem().catch(e=>setWindowError(String(e)))} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onFactoryDevelopment={()=>void openFactoryDevelopment().catch(e=>setWindowError(String(e)))} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />}>
       {state.root ? (
         <Workbench
           onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
@@ -847,10 +884,12 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
           openFrameMenu={openFrameMenu}
           openSource={openSource}
           openKnowledge={openKnowledge}
+          openPresentation={openPresentation}
+          openExplore={openExplore}
           nativeWindows={kernel.transport.kind==="tauri"}
         />
       ) : (
-        <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onWiki={(() => {
+        <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
           const reading=kernel.snapshot.navigator;
           const project=reading?.project?.project;
           const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
