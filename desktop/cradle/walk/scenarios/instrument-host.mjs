@@ -78,7 +78,7 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   hashes["_ql_head"] = qlHead();
   await page.goto(baseUrl);
   await channel("info");
-  await page.locator(".oi-point-cloud-overlay").waitFor({ timeout: 20000 });
+  await page.locator(".oi-point-cloud-overlay").waitFor({ state: "attached", timeout: 20000 });
 
   // The adapter and the controlled host are constructed in the page; the
   // session registers through the registry exactly as an external adapter

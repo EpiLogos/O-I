@@ -1,0 +1,130 @@
+{
+  "binary": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+  "binarySha256": "a48c87ecb43244faef73e8c231f70594a738c7469e943cd0c1e7356cfe6dc133",
+  "statePath": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/material/header-continuity.state.json",
+  "stateSha256": "05e3561d39d18447d92d2b95a499746ec5f2881ced5fb79c43fa2ecf58150763",
+  "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+  "run": {
+    "contract": "factory.run-reading/v1",
+    "provenance": {
+      "owner": "factory",
+      "factoryStateRevision": 1,
+      "subjectRevision": 2,
+      "source": "canonical Factory Run/RunMap + Factory Build correlations"
+    },
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "revision": 2,
+    "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+    "owningJourneyRefs": [],
+    "routineInvocationRefs": [],
+    "lifecycle": "seeded",
+    "destination": "verify-corrected-desktop-header-and-continuity",
+    "runMap": {
+      "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+      "topologyRevision": 2,
+      "nodes": {
+        "destination": {
+          "id": "destination",
+          "kind": "destination",
+          "label": "verify-corrected-desktop-header-and-continuity",
+          "state": null,
+          "semanticRef": null
+        },
+        "work-verify-header-continuity": {
+          "id": "work-verify-header-continuity",
+          "kind": "work",
+          "label": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree.",
+          "state": "ready",
+          "semanticRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR"
+        }
+      },
+      "edges": [
+        {
+          "from": "destination",
+          "to": "work-verify-header-continuity",
+          "relation": "branches_to"
+        }
+      ]
+    },
+    "thoughtAvailable": false,
+    "thoughtRefs": [],
+    "agencies": [],
+    "executions": [],
+    "evidence": [],
+    "candidates": [],
+    "humanRequests": [],
+    "actions": [
+      {
+        "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+        "label": "Request more evidence",
+        "subjectKinds": [
+          "candidate"
+        ],
+        "inputContract": "factory.action-projection/v1",
+        "resultContract": "factory.action-projection/v1",
+        "authorityOwner": "factory",
+        "requiredCapabilityRef": "capability/factory/request-evidence",
+        "currentlyApplicable": false,
+        "applicableSubjectRefs": []
+      }
+    ]
+  },
+  "build": {
+    "contract": "factory.build-view/v1",
+    "providerContract": "factory.build-view-provider/v1",
+    "revision": 1,
+    "provenance": {
+      "owner": "factory",
+      "factoryStateRevision": 1,
+      "runRevision": 2,
+      "runMapRevision": 2,
+      "source": "canonical FactoryBuildState + canonical Run/RunMap"
+    },
+    "view": {
+      "project": {
+        "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+        "label": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC"
+      },
+      "run": {
+        "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+        "runMapRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD/map",
+        "label": "verify-corrected-desktop-header-and-continuity",
+        "status": "queued"
+      },
+      "frontier": {
+        "subjectRef": "workflow-unit:6WE8KR1PMA9F4NDBH44FCC63NR",
+        "title": "Verify the corrected desktop header and continuity behaviour in the current O:I worktree.",
+        "mode": "work",
+        "summary": "RunMap frontier: Some(Ready)"
+      },
+      "claims": [],
+      "evidence": [],
+      "candidates": [],
+      "humanRequests": [],
+      "agencies": [],
+      "executions": [],
+      "trajectories": [],
+      "actions": [
+        {
+          "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAP",
+          "label": "Request more evidence",
+          "subjectKinds": [
+            "candidate"
+          ],
+          "requiredCapabilityRef": "capability/factory/request-evidence"
+        }
+      ]
+    }
+  },
+  "tasks": {
+    "contract": "factory.attempt-task-list-reading/v1",
+    "projectRef": "project:01ARZ3NDEKTSV4RRFFQ69G5FCC",
+    "revision": 1,
+    "runRef": "run:01ARZ3NDEKTSV4RRFFQ69G5FCD",
+    "runRevision": 2,
+    "sourceCurrent": true,
+    "taskRefs": [],
+    "topologyRevision": 2,
+    "totalTasks": 0
+  }
+}

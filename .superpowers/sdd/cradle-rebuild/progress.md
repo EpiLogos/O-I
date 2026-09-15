@@ -1374,3 +1374,14 @@ U implementation `97c8bb9` now incorporates EX1/main `5b328af` through `946d51d`
   walk/expression-resize-integration.mjs (stale comment), walk/artifacts/*.
   Lane aikit/ex0-engine-intake from origin/main 5b328af. EX1's
   presentConfig/updateConfig seam and authored data preserved untouched.
+
+
+### 2026-09-15 — Factory updates continue while ordinary work stays open
+
+Continued #289/#292 from d3ba557 on the existing Omarchy branch. U c7cb7fd adds composition-lifetime native Run observation, explicit quiet footer opening, exact cross-state Handoff reuse and compatible revision acknowledgement. Main 1503b14 (EX0/#315 and SharedField wayfinder/#316) is incorporated through e14c955. Background updates preserve central work, the canonical conversation draft, focus/layout and held right-side reviews. A real normal-click failure exposed the footer menu under the right pane; the shared open-menu stacking fix is verified by pointer hit ownership.
+
+Production browser/native-owner checks passed: live updates 24, existing conversation 27, review identity/refusal 17, workspace 18, recovery 15. Current-main production/WALK builds, vendor verification, engine 26 and controlled Stage walks 16/13/12 passed; the latter include real capture and context-loss recovery, not installed Epi/Nara acceptance. Initial renderer-test assumptions and readiness failures remain in the receipt with their final corrections. The native desktop and public SessionSpace operations preserved the same Codex Luna/low session and exact persisted working Surface. No provider/installation was replaced; the authorized Factory state still has zero executions/Candidates/Evidence/Returns.
+
+Receipt: `desktop/cradle/walk/artifacts/factory-live-continuation-20260915/receipt.md`, with exact commands, hashes, native readbacks, initial/final screenshots and byte-for-byte restoration of the 725-file post-main artifact baseline. Three bounded Luna/Terra workers supplied native readiness and independent review; the primary integrated and controlled the desktop.
+
+A's producer heads remain AIKit #311 at 192678b / #312 at aa48626 and Actuation #85 at fdabf5b. The shared Start/formation resolver, installed scoped Factory execution/Return, artifact body/Surface resolution, Routine operations, correct requested-worktree Git basis and real instrument registration still gate the joined campaign. New SharedField #317 at be67af20 supplies no Factory or Epi/Nara runtime contract; QL-MEF #197 at 502e417 is projection documentation only. This is a bounded F2/F4 advance; D/C and limited existing-session P/M do not establish full F0–F6 or H. Keep #292 draft and converge the same native NOW record through publication refs. Next: consume A's verified Start/execution/artifact cut and execute the accepted joined walk.

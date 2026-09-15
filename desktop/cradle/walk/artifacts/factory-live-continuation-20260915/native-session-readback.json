@@ -1,0 +1,295 @@
+{
+  "sessionSpace": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "agent_sessions": {
+          "agent-session/oi-factory-codex-20260914": {
+            "agent_session": "agent-session/oi-factory-codex-20260914",
+            "provenance": [
+              "User commissioned a small demo job for O-I #289 live desktop acceptance on 2026-09-14; no durable Agent or Agency authority implied."
+            ],
+            "purpose": "Factory live walk \u2014 Codex"
+          },
+          "agent-session/oi-factory-demo-20260914": {
+            "agent_session": "agent-session/oi-factory-demo-20260914",
+            "provenance": [
+              "User commissioned a small demo job for O-I #289 live desktop acceptance on 2026-09-14; no durable Agent or Agency authority implied."
+            ],
+            "purpose": "Factory live walk \u2014 demo conversation"
+          }
+        },
+        "definition": {
+          "id": "session-space/oi-factory-demo-20260914",
+          "projects": [
+            "project:o-i"
+          ],
+          "provenance": [
+            "AIKit SessionSpace definition"
+          ],
+          "version": "aikit.session-space/v1"
+        },
+        "label": "Factory live walk",
+        "native_references": {
+          "provider/tmux/current": {
+            "kind": "provider",
+            "provenance": [
+              "Provider reference required before a SessionSpace working Surface can be staged."
+            ],
+            "purpose": "Provider for the bounded Factory demo working Surface",
+            "reference": "provider/tmux/current"
+          }
+        },
+        "project_contexts": {
+          "project:o-i": {
+            "basis": {
+              "catalog_revision": "eaa760ff15ef0feb40883583c34f8d6ccab4c29724e68d648bd3c42b9bb77935",
+              "context_sources": [],
+              "host": "host/localhost",
+              "project_binding": {
+                "constituent": "source:project:project:o-i:root",
+                "legacy_aikit_project_id": null,
+                "legacy_project_spec_id": null,
+                "locator": {
+                  "kind": "local-directory",
+                  "path": "/home/frank/Central/Work/O-I"
+                },
+                "project": "project:o-i",
+                "provider": "provider/projectcentral/filesystem",
+                "source": "source:central:project:o-i:manifest"
+              },
+              "resolver_hash": "e1ab661e96cc773c4264fe9bd35daf7ac50c960b9dbb09aba20f0b8ac5ef80e8",
+              "scopes": [
+                {
+                  "depth": 0,
+                  "kind": "project",
+                  "origin": "/home/frank/Central/Work/O-I/.aikit/profile.toml"
+                }
+              ]
+            },
+            "provenance": [
+              "project:/home/frank/Central/Work/O-I/.aikit/profile.toml",
+              "resolver:e1ab661e96cc773c4264fe9bd35daf7ac50c960b9dbb09aba20f0b8ac5ef80e8",
+              "catalog:eaa760ff15ef0feb40883583c34f8d6ccab4c29724e68d648bd3c42b9bb77935"
+            ],
+            "reference": "context-resolution/082fbca28697f312"
+          }
+        },
+        "revision": 6,
+        "surfaces": {
+          "surface/terminal/factory/shell": {
+            "provenance": [
+              "Bounded real tmux Surface for the existing Factory demo AgentSession."
+            ],
+            "purpose": "O:I #289 Factory live desktop acceptance working Surface",
+            "surface": "surface/terminal/factory/shell"
+          }
+        },
+        "version": "aikit.session-space-application/v1",
+        "working_surfaces": {
+          "working-surface/oi-factory-demo-20260914-shell": {
+            "agent_session": "agent-session/oi-factory-codex-20260914",
+            "binding": "working-surface/oi-factory-demo-20260914-shell",
+            "plan": {
+              "attach": "never",
+              "backend_extensions": {},
+              "capabilities": {
+                "config": {},
+                "disable": [],
+                "enable": [],
+                "profiles": [],
+                "skill-overlays": {},
+                "use": []
+              },
+              "id": "oi-factory-demo-20260914-working",
+              "lifecycle": "persist",
+              "mux": "tmux",
+              "name": "oi-factory-demo-20260914-working",
+              "root": "/home/frank/Central/Work/O-I",
+              "task": null,
+              "views": [
+                {
+                  "focus": "shell",
+                  "id": "factory",
+                  "name": "Factory demo working Surface",
+                  "steps": [
+                    {
+                      "capabilities": {
+                        "config": {},
+                        "disable": [],
+                        "enable": [],
+                        "profiles": [],
+                        "skill-overlays": {},
+                        "use": []
+                      },
+                      "command": [
+                        "sh"
+                      ],
+                      "cwd": "/home/frank/Central/Work/O-I",
+                      "focus": true,
+                      "name": "Factory demo shell",
+                      "pane": "shell",
+                      "restart": "never",
+                      "split": null,
+                      "view": "factory"
+                    }
+                  ]
+                }
+              ],
+              "warnings": []
+            },
+            "plan_key": "factory/shell",
+            "provenance": [
+              "O:I #289 Factory live desktop acceptance demo; bounded tmux working Surface for the existing admitted AgentSession."
+            ],
+            "provider": "provider/tmux/current",
+            "surface": "surface/terminal/factory/shell"
+          }
+        }
+      },
+      "project_ref": "project:o-i",
+      "result": "session_space_reading"
+    }
+  },
+  "bindingUsedAsSurfaceRefusal": {
+    "error": "Expected one exact persisted working Surface, found 0",
+    "ok": false
+  },
+  "working": {
+    "ok": true,
+    "outcome": {
+      "data": {
+        "binding": {
+          "agent_session": "agent-session/oi-factory-codex-20260914",
+          "binding": "working-surface/oi-factory-demo-20260914-shell",
+          "plan": {
+            "attach": "never",
+            "backend_extensions": {},
+            "capabilities": {
+              "config": {},
+              "disable": [],
+              "enable": [],
+              "profiles": [],
+              "skill-overlays": {},
+              "use": []
+            },
+            "id": "oi-factory-demo-20260914-working",
+            "lifecycle": "persist",
+            "mux": "tmux",
+            "name": "oi-factory-demo-20260914-working",
+            "root": "/home/frank/Central/Work/O-I",
+            "task": null,
+            "views": [
+              {
+                "focus": "shell",
+                "id": "factory",
+                "name": "Factory demo working Surface",
+                "steps": [
+                  {
+                    "capabilities": {
+                      "config": {},
+                      "disable": [],
+                      "enable": [],
+                      "profiles": [],
+                      "skill-overlays": {},
+                      "use": []
+                    },
+                    "command": [
+                      "sh"
+                    ],
+                    "cwd": "/home/frank/Central/Work/O-I",
+                    "focus": true,
+                    "name": "Factory demo shell",
+                    "pane": "shell",
+                    "restart": "never",
+                    "split": null,
+                    "view": "factory"
+                  }
+                ]
+              }
+            ],
+            "warnings": []
+          },
+          "plan_key": "factory/shell",
+          "provenance": [
+            "O:I #289 Factory live desktop acceptance demo; bounded tmux working Surface for the existing admitted AgentSession."
+          ],
+          "provider": "provider/tmux/current",
+          "surface": "surface/terminal/factory/shell"
+        },
+        "observation": {
+          "reading": {
+            "agent_session": "agent-session/oi-factory-codex-20260914",
+            "binding": "working-surface/oi-factory-demo-20260914-shell",
+            "live_native_id": "%5",
+            "native_standing": "reobserved-unproven",
+            "plan_id": "oi-factory-demo-20260914-working",
+            "plan_key": "factory/shell",
+            "plan_name": "oi-factory-demo-20260914-working",
+            "provenance": [
+              "persisted SessionSpace binding selected before provider operation",
+              "provider-native ids are re-observed and remain provenance"
+            ],
+            "provider": "provider/tmux/current",
+            "provider_observation": {
+              "bindings": [
+                {
+                  "kind": "session",
+                  "native_id": "oi-factory-demo-20260914-working",
+                  "provenance": [
+                    "tmux session binding"
+                  ]
+                },
+                {
+                  "kind": "view",
+                  "native_id": "Factory demo working Surface",
+                  "provenance": [
+                    "tmux view logical_key=factory"
+                  ]
+                },
+                {
+                  "canonical_ref": "surface/terminal/factory/shell",
+                  "kind": "surface",
+                  "native_id": "%5",
+                  "provenance": [
+                    "explicit tmux surface binding logical_key=factory/shell"
+                  ]
+                }
+              ],
+              "capabilities": {
+                "agent_session_attach_detach": false,
+                "conversation_surface": false,
+                "diff_surface": false,
+                "discover": true,
+                "editor_surface": false,
+                "focus": true,
+                "multi_project": true,
+                "open": true,
+                "preview_surface": false,
+                "reconstruct": true,
+                "select": true,
+                "surface_attach_detach": true,
+                "terminal_surface": true,
+                "test_surface": false
+              },
+              "health": "healthy",
+              "provenance": [
+                "tmux via aikit MuxAdapter; provider-native ids are provenance",
+                "observed over session plan oi-factory-demo-20260914-working"
+              ],
+              "provider": "provider/tmux/current",
+              "provider_version": "3.7c",
+              "schema": "aikit.working-environment-provider/v1"
+            },
+            "schema": "aikit.session-space-working-surface/v1",
+            "space": "session-space/oi-factory-demo-20260914",
+            "surface": "surface/terminal/factory/shell"
+          }
+        },
+        "service_cwd": "/home/frank/Central/Work/O-I"
+      },
+      "project_ref": "project:o-i",
+      "result": "session_space_reading"
+    }
+  }
+}

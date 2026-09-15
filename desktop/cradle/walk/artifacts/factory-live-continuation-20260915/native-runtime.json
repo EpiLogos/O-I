@@ -1,0 +1,13 @@
+{
+  "pid": 1356002,
+  "nativeExecutable": "/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src-tauri/target/debug/oi-cradle",
+  "nativeExecutableSha256": "5e6ba7ef572887df733a02eeed01edd53f1e736876eca6db5965a7b1b6815b84",
+  "factoryOverride": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+  "residentPid": 589249,
+  "residentPresent": true,
+  "session": "agent-session/oi-factory-codex-20260914",
+  "sessionSpace": "session-space/oi-factory-demo-20260914",
+  "binding": "working-surface/oi-factory-demo-20260914-shell",
+  "providerSession": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+  "standing": "Native app with current Vite renderer. Existing session and terminal, not a Factory execution. No prompt or terminal input sent."
+}

@@ -1,0 +1,17 @@
+PASS Both disk-backed native state paths return the selected Factory Run
+PASS Distinct valid Factory state paths do not reuse a handoff Surface
+PASS An unqualified handoff reopen preserves the held review for its exact state and Run
+PASS An explicit different handoff revision does not reuse the held review
+PASS An unqualified material reopen preserves the held review for its exact state and Run
+PASS An explicit different material revision does not reuse the held review
+PASS Actual empty Build cannot become a retained Candidate review
+PASS Kernel bridge serves the public Factory task-list read
+PASS Actual queued Run has no retained handoff task
+PASS Corrupt material snapshot becomes explicit recovery
+PASS Corrupt handoff snapshot becomes explicit recovery
+PASS Oversized recovery notice becomes a bounded recovery notice
+PASS Wrong snapshot kind cannot hydrate a material Surface
+PASS Malformed expected revision blocks automatic reread
+PASS Wrong retained revision blocks automatic reread
+PASS Invalid review snapshot preserves an unrelated draft binding
+PASS Invalid review persists an explicit recovery notice

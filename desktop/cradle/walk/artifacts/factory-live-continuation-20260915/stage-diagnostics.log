@@ -1,0 +1,38 @@
+serving the cradle at http://localhost:4173 (external)
+
+=== scenario: instrument ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  Opening with no registered source refuses, naming the absence
+PASS  The privileged composition portals into the shell's left and centre hosts
+PASS  The focused mode is announced once on the body
+PASS  The canonical right AgentLayer region stays mounted
+PASS  The composition hands the source a retained lease with checkpoint and recovery observation
+PASS  Focus, freeze, clock and Bimba commands reach the registered owner
+PASS  The composition mirrors the owner's temporal state
+PASS  Deregistering the source surfaces an honest alert in the composition
+Re-registration diagnostics {"alerts":[],"source":{"registered":true,"available":true,"commands":[],"lease_events":["port","targets-own","attach","checkpoint","checkpoint-taken","recovery-observed"],"attached":true},"stage":{"paused":false,"presentations":[{"id":"k9:665c91b8-8ac2-4b6f-9d98-199881035325","plane":"ambient"}]}}
+  SCENARIO ERROR: page.waitForFunction: Timeout 5000ms exceeded.
+    at Module.run (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/scenarios/instrument.mjs:122:16)
+    at async runScenario (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:377:5)
+    at async file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:450:18
+  stopped walk-bridge
+  receipt: artifacts/instrument.json — 8/8 checks, FAIL
+
+=== scenario: visuals ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  Visuals splits into Themes and Expression
+PASS  Expression is the initial selected Visuals view
+PASS  The expression layer starts on
+PASS  Enabling Visuals hosts exactly one explicit preview canvas
+  SCENARIO ERROR: page.waitForFunction: Timeout 5000ms exceeded.
+    at Module.run (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/scenarios/visuals.mjs:33:14)
+    at async runScenario (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:377:5)
+    at async file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:450:18
+  stopped walk-bridge
+  receipt: artifacts/visuals.json — 4/4 checks, FAIL
+
+=== walk summary ===
+FAIL  instrument — 8/8 checks
+FAIL  visuals — 4/4 checks

@@ -1,0 +1,37 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "visuals",
+  "generated_at": "2026-09-15T02:32:43.490Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4189",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v26.8.1",
+    "platform": "linux"
+  },
+  "passed": false,
+  "error": "page.waitForFunction: Timeout 5000ms exceeded.\n    at Module.run (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/scenarios/visuals.mjs:33:14)\n    at async runScenario (/home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:377:5)\n    at async file:///home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/walk/run.mjs:450:18",
+  "duration_ms": 92212,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Visuals splits into Themes and Expression"
+    },
+    {
+      "ok": true,
+      "label": "Expression is the initial selected Visuals view"
+    },
+    {
+      "ok": true,
+      "label": "The expression layer starts on"
+    },
+    {
+      "ok": true,
+      "label": "Enabling Visuals hosts exactly one explicit preview canvas"
+    }
+  ],
+  "ops": [],
+  "metrics": {},
+  "screenshots": []
+}

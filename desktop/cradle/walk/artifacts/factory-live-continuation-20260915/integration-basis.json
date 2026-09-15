@@ -1,0 +1,28 @@
+{
+  "sourceHead": "e14c955a0af3b5ed8a7a70d4fb8cb50a4355723e",
+  "uImplementation": "c7cb7fd",
+  "main": "1503b144d031c98634c170d4c1f6ed697370b686",
+  "qlControlledHostSource": "4276b94157058d0b211be20b4ebf5587fcb85a72",
+  "sourceCache": "/home/frank/.cache/oi-factory-289-20260915/ql-k9-source.git",
+  "qlStanding": "Read-only Git-object cache for controlled host conformance; not a registered or installed Epi/Nara runtime.",
+  "nativeOwners": {
+    "AIKit#311": {
+      "head": "192678b96bd1da42c25bdd3747511424c5fdb1de",
+      "state": "open"
+    },
+    "AIKit#312": {
+      "head": "aa48626516261f89d71281e1c61b1e31098e8274",
+      "state": "open"
+    },
+    "Actuation#85": {
+      "head": "fdabf5b62ec8a726212982ac65af6a1b2d2c024a",
+      "state": "open"
+    }
+  },
+  "factoryExecutable": "/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/target/debug/factory",
+  "factoryExecutableSha256": "a48c87ecb43244faef73e8c231f70594a738c7469e943cd0c1e7356cfe6dc133",
+  "nativeAppPid": 1356002,
+  "nativeAppBuiltAt": "946d51de05837eaffe2f6ba6426723871f27b59a",
+  "nativeAppWebContent": "Existing Vite source server, current e14c955 source; no native restart or provider replacement.",
+  "macUse": "Committed Git-object transport and authenticated GitHub publication only; no implementation checkout changes."
+}

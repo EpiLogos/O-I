@@ -1,0 +1,38 @@
+
+> oi-cradle@0.1.0 prebuild
+> node documents/build-personal.mjs
+
+
+> oi-cradle@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 295 modules transformed.
+rendering chunks...
+[plugin:vite:reporter] [plugin vite:reporter]
+(!) /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/kernel/bridge.ts, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/stage/ExpressionStage.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/event.js, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/image.js, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/window.js, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/browser/BrowserSurface.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/terminal/TerminalSurface.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter]
+(!) /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/kernel/bridge.ts, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/stage/ExpressionStage.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/stage/ExpressionStage.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/visuals/ParticleExpression.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/visuals/ParticleExpression.tsx but also statically imported by /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/window.js, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/browser/BrowserSurface.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/context/useBrowserContext.ts, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter]
+(!) /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/@tauri-apps/api/window.js is dynamically imported by /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/Cradle.tsx, /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/workspace/store.ts but also statically imported by /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                              0.41 kB │ gzip:   0.28 kB
+dist/assets/layout.worker-BLEG8XbY.js        1.88 kB
+dist/assets/WorkspaceStudy-DQI19hm7.css     19.13 kB │ gzip:   4.64 kB
+dist/assets/seed-pbLfZuQ0.css               20.63 kB │ gzip:   4.91 kB
+dist/assets/index-BqPbXD0Z.css             242.69 kB │ gzip:  38.75 kB
+dist/assets/WalkChannel-gbS7XFIb.js          8.10 kB │ gzip:   3.10 kB
+dist/assets/engineSurface-Jlvuy93E.js       20.56 kB │ gzip:   6.88 kB
+dist/assets/Seed-BywxaHn5.js                28.33 kB │ gzip:   8.71 kB
+dist/assets/WorkspaceStudy-BEuwcTS4.js      31.41 kB │ gzip:   9.90 kB
+dist/assets/index-CLYRSqke.js            2,763.47 kB │ gzip: 815.82 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 20.62s

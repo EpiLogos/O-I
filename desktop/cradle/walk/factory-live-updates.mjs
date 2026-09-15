@@ -12,7 +12,8 @@ const FACTORY_SHA256="a48c87ecb43244faef73e8c231f70594a738c7469e943cd0c1e7356cfe
 const WORKFLOW_FIXTURE="/home/frank/Central/Work/Factory/.worktrees/codex-developmental-build-read/contracts/factory/fixtures/oi-self-hosting-workflow-mutation.json";
 const CENTRAL_PROJECT_REF="project:o-i";
 const SCRIPT_DIR=dirname(fileURLToPath(import.meta.url));
-const ARTIFACT_DIR=join(SCRIPT_DIR,"artifacts/factory-live-continuation-20260915");
+const conversationMode=process.env.WALK_FACTORY_CONVERSATION==="1";
+const ARTIFACT_DIR=join(SCRIPT_DIR,"artifacts/factory-live-continuation-20260915",conversationMode?"conversation":"");
 const BRIDGE="http://127.0.0.1:4179";
 const WALK_URL=process.env.WALK_URL||"http://localhost:4173";
 const PROJECT_NAME=process.env.WALK_PROJECT||"O-I";
@@ -38,6 +39,7 @@ const makeWorkflowMutation= (state,suffix)=>{
 const runRead=state=>native(["development","run",state.statePath,state.runRef]);
 const attemptRead=state=>native(["attempt","list",state.statePath,state.runRef]);
 const cleanup=()=>{for(const dir of tempDirs)rmSync(dir,{recursive:true,force:true});};
+process.once("exit",cleanup);
 const check=(ok,label)=>{assert.ok(ok,label);checks.push(label);console.log("PASS",label);};
 mkdirSync(ARTIFACT_DIR,{recursive:true});
 
@@ -91,14 +93,24 @@ try {
  check(await runs.getByText("No candidate has been retained for this Run.",{exact:true}).count()===1,"Initial Candidate state is owner-reported empty");
  check(await runs.getByText(/No evidence (has been retained for this Run.|recorded.)/).count()===1,"Initial Evidence state is owner-reported empty");
  await page.getByRole("tab",{name:"Draft",exact:true}).click();
- const draft=page.locator(".cm-content"),draftText="Live Factory workflow metadata leaves ordinary work untouched.";
- await draft.fill(draftText);
+ const ordinaryDraft=page.locator(".cm-content"),draftText="Live Factory workflow metadata leaves ordinary work untouched.";
+ await ordinaryDraft.fill(draftText);
+ if(conversationMode){
+  await page.getByRole("button",{name:process.env.WALK_CONVERSATION_TITLE??"Factory live walk — Codex",exact:true}).click();
+  await page.locator('[data-region="centre"] .encounter-transcript[aria-label="Transcript"]').waitFor({timeout:30000});
+ }
+ const draft=conversationMode?page.locator('[data-region="centre"] .encounter-composer textarea[aria-label="Message"]'):ordinaryDraft;
+ const readWork=()=>conversationMode?draft.inputValue():draft.innerText();
+ if(conversationMode){
+  await draft.fill(draftText);
+  check(await page.locator(".encounter-composer textarea:visible").count()===1,"Existing native conversation has one visible composer");
+ }
  const beforeLayout=JSON.stringify(await readLayout()),beforeBuildReads=countRead("build"),beforeRunReads=countRead("run"),beforeLists=countLists();
  await page.waitForTimeout(5500);
  check(countRead("build")===beforeBuildReads,"Unchanged 5-second index poll does not fetch Build");
  check(countLists()>beforeLists,"Unchanged interval performs a compact native index poll");
  check(countRead("run")===beforeRunReads,"Unchanged 5-second index poll does not fetch Run");
- check(await draft.innerText()===draftText,"Draft remains mounted before arrival");
+ check(await readWork()===draftText,conversationMode?"Conversation remains mounted before arrival":"Draft remains mounted before arrival");
 
  const mutationOutput=execFileSync(FACTORY,["development","mutate",state.statePath,mutationPath,"--json"],{encoding:"utf8"});
  assert.equal(JSON.parse(mutationOutput).status,"applied","browser transition uses a real native workflow receipt");
@@ -107,8 +119,8 @@ try {
  check(nativeAfter.runMap.topologyRevision===initialRun.runMap.topologyRevision+1,"Native RunMap revision advances during browser walk");
  await page.getByLabel("Factory updates",{exact:true}).waitFor({timeout:20000});
  check((await page.getByLabel("Factory updates",{exact:true}).innerText()).includes("Run updated"),"Footer reports Run updated");
- check(await draft.isVisible(),"Draft remains mounted during update");
- check(await draft.innerText()===draftText,"Draft text survives background update");
+ check(await draft.isVisible(),conversationMode?"Conversation remains mounted during update":"Draft remains mounted during update");
+ check(await readWork()===draftText,conversationMode?"Unsent composer text survives background update":"Draft text survives background update");
  check(JSON.stringify(await readLayout())===beforeLayout,"Background update preserves focus and persisted layout");
   await page.screenshot({path:join(ARTIFACT_DIR,"factory-live-updated.png")});
  check(countRead("run")>beforeRunReads,"Changed revision fetches selected Run");
@@ -134,6 +146,13 @@ try {
  check((await runs.locator(".factory-run-map-head").innerText()).includes(Object.keys(nativeAfter.runMap.nodes).length + " nodes"),"Explicit Run refresh renders native workflow topology");
  check(countRead("build")>beforeBuildReads,"Explicit Open Run performs native Build refresh");
  check(await runs.getByText("No candidate has been retained for this Run.",{exact:true}).count()===1,"Explicit refresh preserves actual empty Candidate state");
+ if(conversationMode){
+  await page.getByRole("button",{name:"Conversation",exact:true}).click();
+  await draft.waitFor();
+  check(await readWork()===draftText,"Returning from Run preserves the canonical unsent composer draft");
+  check(await page.locator(".encounter-composer textarea:visible").count()===1,"Returning from Run preserves one composer");
+  await draft.fill("");
+ }
  await page.getByRole("tab",{name:"Draft",exact:true}).click();
  check(await page.locator(".cm-content").innerText()===draftText,"Explicit Run opening preserves ordinary draft text");
 
@@ -141,6 +160,6 @@ try {
  const settledLists=countLists();await page.waitForTimeout(6000);
  check(countLists()===settledLists,"Leaving Factory stops selected-Run polling");
  check(errors.length===0,"No application page errors");
- writeFileSync(join(ARTIFACT_DIR,"factory-live-updates.json"),JSON.stringify({standing:"C: real browser, exact frozen Factory binary, isolated state; no execution/evidence/Return/recognition asserted",binary:FACTORY,binarySha256:FACTORY_SHA256,projectRef:state.projectRef,centralProjectRef:CENTRAL_PROJECT_REF,runRef:state.runRef,journeyRef:state.journeyRef,native:{proofRunBefore,proofRunAfter,proofAttemptBefore,proofAttemptAfter,proofReceipt,initialRun,initialAttempt,nativeAfter},checks,errors,requests:stateRequests()},null,2));
+ writeFileSync(join(ARTIFACT_DIR,"factory-live-updates.json"),JSON.stringify({standing:"C: real browser, exact frozen Factory binary, isolated state; no execution/evidence/Return/recognition asserted",centralWork:conversationMode?"existing native Codex conversation":"ordinary Draft",walkUrl:WALK_URL,workflowInput:WORKFLOW_FIXTURE,binary:FACTORY,binarySha256:FACTORY_SHA256,projectRef:state.projectRef,centralProjectRef:CENTRAL_PROJECT_REF,runRef:state.runRef,journeyRef:state.journeyRef,native:{proofRunBefore,proofRunAfter,proofAttemptBefore,proofAttemptAfter,proofReceipt,initialRun,initialAttempt,nativeAfter},checks,errors,requests:stateRequests()},null,2));
 } catch(error) {console.error((await page.locator("body").innerText()).slice(-5000));throw error;}
 finally {await browser.close();cleanup();}

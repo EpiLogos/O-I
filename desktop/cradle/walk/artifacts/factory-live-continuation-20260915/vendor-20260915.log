@@ -1,0 +1,3 @@
+verify: esbuild /home/frank/Central/Work/O-I/.worktrees/cradle-factory-arrangement/desktop/cradle/node_modules/esbuild
+verify: 33/32 upstream modules + 1 O:I overlay parse-checked, all relative .mjs specifiers resolved
+verify: OK (0 errors)

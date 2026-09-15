@@ -1,0 +1,49 @@
+serving the cradle at http://localhost:4173 (external)
+
+=== scenario: instrument ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  Opening with no registered source refuses, naming the absence
+PASS  The privileged composition portals into the shell's left and centre hosts
+PASS  The focused mode is announced once on the body
+PASS  The canonical right AgentLayer region stays mounted
+PASS  The composition hands the source a retained lease with checkpoint and recovery observation
+PASS  Focus, freeze, clock and Bimba commands reach the registered owner
+PASS  The composition mirrors the owner's temporal state
+PASS  Deregistering the source surfaces an honest alert in the composition
+PASS  Re-registering clears every alert and restores the source with its retained lease
+PASS  An unavailable owner pauses the retained field through the lease
+PASS  A returned owner resumes the retained field
+  screenshot: artifacts/instrument-instrument-focused.png
+PASS  The instrument binding survives relaunch and re-enters privileged mode
+PASS  After relaunch the absent source is named honestly
+PASS  Leaving the binding removes both portals
+PASS  The focused mode announcement is cleared
+PASS  The source observed the lease detach
+  stopped walk-bridge
+  receipt: artifacts/instrument.json — 16/16 checks, PASS
+
+=== scenario: visuals ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4189 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4189 (fresh kernel, seq from 1)
+PASS  Visuals splits into Themes and Expression
+PASS  Expression is the initial selected Visuals view
+PASS  The expression layer starts on
+PASS  Enabling Visuals hosts exactly one explicit preview canvas
+PASS  The baked word reaches the running field
+PASS  Capture produces a PNG download
+PASS  Capture carries real image bytes (9214)
+  screenshot: artifacts/visuals-visuals-expression.png
+PASS  Off removes preview and window renderers — nothing runs hidden
+PASS  The master switch reports the off state
+PASS  On recreates the explicit preview renderer
+PASS  Dark theme resolves onto the oi-desktop body
+PASS  Light theme clears the override
+  screenshot: artifacts/visuals-visuals-panel.png
+PASS  Themes returns to the live Expression view by an explicit click
+  stopped walk-bridge
+  receipt: artifacts/visuals.json — 13/13 checks, PASS
+
+=== walk summary ===
+PASS  instrument — 16/16 checks
+PASS  visuals — 13/13 checks
