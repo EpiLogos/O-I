@@ -14,6 +14,19 @@ const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use
 try{
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/nara-retained`);
  await page.waitForFunction(()=>window.NaraRetainedTest);
+ const portable=await page.evaluate(snapshot=>{
+  const {exportNaraCues,naraCueExpression}=window.NaraRetainedTest;
+  snapshot.nara_expression.portable.future_protected_field={constitution:'must remain session local'};
+  const cues=exportNaraCues(snapshot.nara_expression),document=naraCueExpression(snapshot,'expression:portable-native-cues');
+  snapshot.personal_current=false;let staleRefused=false;try{naraCueExpression(snapshot,'expression:stale');}catch{staleRefused=true;}
+  return {cues,document,staleRefused};
+ },ownerSnapshot);
+ assert.equal(portable.cues.future_protected_field,undefined,'contract extension cannot silently export Personal fields');
+ assert.equal(Object.keys(portable.document.entities).length,8);
+ assert.deepEqual(Object.values(portable.document.entities).map(e=>e.subject.subject_ref),[...portable.cues.centre_locus_refs,portable.cues.earth_body_locus_ref]);
+ assert.equal(portable.document.relations&&Object.keys(portable.document.relations).length,0,'neutral cue layout invents no semantic relations');
+ assert.ok(!JSON.stringify(portable.document).includes('resonance'));
+ assert.equal(portable.staleRefused,true,'stale owner reception cannot be composed');
  const result=await page.evaluate(async(ownerSnapshot)=>{
   const {EngineSurface,naraExpressionConfig,naraRetainedPresentation,projectNaraExpression}=window.NaraRetainedTest;
   const projected=projectNaraExpression(ownerSnapshot),base=naraRetainedPresentation(projected.session);

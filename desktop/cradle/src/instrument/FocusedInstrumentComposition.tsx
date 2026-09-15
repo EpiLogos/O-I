@@ -4,8 +4,11 @@ import {activeBindingId} from "../surface/engine";
 import type {LayoutState,SurfaceBinding} from "../surface/types";
 import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStage";
 import {FOCUSED_INSTRUMENT_RECIPE} from "../stage/recipes";
+import {useKernel} from "../kernel/KernelProvider";
+import {kernelOp} from "../kernel/bridge";
+import {summonExpression} from "../expression/summon";
 import "./instrument.css";
-import {exportNaraCues,naraRetainedPresentation,projectNaraExpression} from "./nara-expression-adapter";
+import {exportNaraCues,naraCueExpression,naraRetainedPresentation,projectNaraExpression} from "./nara-expression-adapter";
 import {
   FOCUSED_INSTRUMENT_CONTRACT,
   focusedInstrumentSource,
@@ -98,6 +101,7 @@ function mediumLabels(snapshot:FocusedInstrumentSnapshot){
 
 function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding:SurfaceBinding;sourcesOpen:boolean;onToggleSources:()=>void}){
   const stage=useExpressionStage();
+  const kernel=useKernel();
   const ref=binding.ref!;const {snapshot,error}=useSource(ref);const [busy,setBusy]=useState(false);const [result,setResult]=useState<FocusedInstrumentCommandResult|null>(null);const [stageError,setStageError]=useState<string|null>(null);const leaseRef=useRef<RetainedExpressionLease|null>(null);const presentationRef=useRef<StagePresentation|null>(null);
   const presentationId=`k9:${binding.id}`;
   // The stage attach follows source presence: a binding restored from a
@@ -152,12 +156,26 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
   const command=(value:FocusedInstrumentCommand)=>void issue(ref,value,setResult,setBusy);
   const active=snapshot?.focus.focus;
   const media=snapshot?mediumLabels(snapshot):[];
+  const composeCues=async()=>{
+    setBusy(true);setStageError(null);
+    try{
+      const source=focusedInstrumentSource(ref);
+      if(!source)throw new Error("The Nara owner is unavailable");
+      // Re-read before export: the displayed reception may have become stale.
+      const current=await source.read(),document=naraCueExpression(current,`expression:${crypto.randomUUID()}`);
+      const reply=await kernelOp(kernel.transport,{op:"expression",request:{operation:"open",document,actor:"human:nara-composition"}});
+      if(reply.error||reply.outcome?.result!=="expression"||reply.outcome.data.state!=="ready")throw new Error(reply.error??"Safe cue composition could not be opened");
+      summonExpression(document.expression_ref);
+    }catch(reason){setStageError(reason instanceof Error?reason.message:String(reason));}
+    finally{setBusy(false);}
+  };
   return <div className="k9-layer" data-epi-nara-region="instrument">
     <div className="k9-identity k9-chip">
       <p className="k9-kicker">Focused instrument</p>
       <h1 className="k9-title">{binding.title}</h1>
       <p className="k9-quiet k9-mono">{snapshot?.event.subject_ref??ref}</p>
       <button className="k9-btn" aria-pressed={sourcesOpen} onClick={onToggleSources}>{sourcesOpen?"Close sources":"Open sources"}</button>
+      <button className="k9-btn" onClick={()=>summonExpression()}>Open Epii composition</button>
     </div>
     <div className="k9-segment k9-chip" role="group" aria-label="Focused determinant">
       {(["m1","m2","m3","m4","m5"] as InstrumentFocus[]).map(focus=>
@@ -188,6 +206,7 @@ function FocusedInstrumentSurface({binding,sourcesOpen,onToggleSources}:{binding
             <button className="k9-btn" onClick={()=>{
               const body=JSON.stringify(exportNaraCues(nara.session!),null,2),url=URL.createObjectURL(new Blob([body],{type:"application/json"})),link=document.createElement("a");link.href=url;link.download="nara-expression-cues.json";link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);
             }}>Export safe cues</button>
+            <button className="k9-btn" disabled={busy} onClick={()=>void composeCues()}>Compose safe cues</button>
             <span className="sr-only" data-nara-source-refs={nara.session.portable.source_refs.join(" ")} data-nara-action-refs={nara.session.action_refs.join(" ")}/>
           </>:<p className="k9-quiet">{nara.reason}</p>}
         </section>

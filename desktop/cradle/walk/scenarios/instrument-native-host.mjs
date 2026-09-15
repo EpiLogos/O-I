@@ -49,5 +49,17 @@ export default async function run({page,baseUrl,check,shot,channel}){
     await channel("instrument.requestOpen",["ql:host:native"]);await region.waitFor();await page.waitForFunction(()=>globalThis.__k9Session.reading.attached===true);
     const reentered=await page.evaluate(()=>globalThis.__k9Session.reading.retained);
     check(after.seeds===reentered.seeds,"Real native Nara re-entry preserves the field seed generation",{after:after.seeds,reentered:reentered.seeds});
+    await region.getByRole("button",{name:"Open Epii composition",exact:true}).click();
+    const composition=page.getByRole("region",{name:"Expression composition"});
+    await page.getByRole("button",{name:"New Expression",exact:true}).waitFor();
+    check((await channel("invoke.kernel_op",[{op:"expression",request:{operation:"list"}}])).data.outcome.data.expressions.length===0,"Summoning Epii alone creates no Expression identity or Agent loop");
+    await page.getByRole("button",{name:"Restore right region",exact:true}).click();
+    await region.getByRole("button",{name:"Compose safe cues",exact:true}).click();
+    const editor=page.locator('.agent-layer .expression-editor');
+    await editor.locator('h4').filter({hasText:"Nara · safe cues"}).waitFor();
+    const composedRef=await editor.getAttribute("data-expression-ref");
+    const composed=(await channel("invoke.kernel_op",[{op:"expression",request:{operation:"inspect",expression_ref:composedRef}}])).data.outcome.data.document;
+    check(Object.keys(composed.entities).length===8&&Object.values(composed.entities).every(entity=>entity.subject.native_owner==="ql")&&!JSON.stringify(composed).includes('resonance'),"Explicit Nara cue composition opens the same native Expression identity in Epii with eight safe source roles",{expression_ref:composedRef,revision:composed.revision});
+    await shot("nara-epii-safe-cues");
   }finally{pipe.child.kill();}
 }

@@ -1,6 +1,7 @@
 import {blankScene,entity} from "@epilogos/oi-design-system/expressions-engine/shell/model.mjs";
 import {nativeExport,type NativeConfig} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 import type {FocusedInstrumentSnapshot,NaraExpressionPortableCues,NaraExpressionSession} from "./source";
+import type {ExpressionDocument} from "../expression/types";
 
 export type NaraExpressionStanding="current"|"stale"|"unavailable";
 export interface NaraExpressionProjection {standing:NaraExpressionStanding;session:NaraExpressionSession|null;config:NativeConfig|null;reason:string}
@@ -84,5 +85,35 @@ export function projectNaraExpression(snapshot:FocusedInstrumentSnapshot):NaraEx
 
 /** Only the QL-owner validated portable body crosses export. */
 export function exportNaraCues(session:NaraExpressionSession):NaraExpressionPortableCues{
-  return structuredClone(session.portable);
+  const cues=session.portable;
+  // Select the admitted portable fields explicitly: additional owner fields
+  // must never silently become a Personal export after a contract extension.
+  return {schema:PORTABLE_SCHEMA,subject_ref:cues.subject_ref,event_ref:cues.event_ref,
+    profile_generation:cues.profile_generation,personal_reception_generation:cues.personal_reception_generation,
+    centre_locus_refs:[...cues.centre_locus_refs],earth_body_locus_ref:cues.earth_body_locus_ref,
+    source_refs:[...cues.source_refs],cue_refs:[...cues.cue_refs]};
+}
+
+/** Explicitly authored portable composition. It refers to the existing loci;
+ * its neutral layout contains no Personal resonance, topology or clock state. */
+export function naraCueExpression(snapshot:FocusedInstrumentSnapshot,expressionRef:string):ExpressionDocument{
+  const projection=projectNaraExpression(snapshot);
+  if(projection.standing!=="current"||!projection.session)throw new Error("Current Nara reception required to compose safe cues");
+  if(!expressionRef.startsWith("expression:"))throw new Error("A native Expression ref is required");
+  const cues=exportNaraCues(projection.session),sceneRef=`${expressionRef}:scene:main`;
+  const loci=[...cues.centre_locus_refs,cues.earth_body_locus_ref];
+  const entities=Object.fromEntries(loci.map((locus,index)=>{
+    const entityRef=`${expressionRef}:entity:${index}`;
+    return [entityRef,{entity_ref:entityRef,revision:1,title:index===7?"EarthBody":`Centre ${index+1}`,
+      subject:{subject_ref:locus,native_owner:"ql",presentation_role:"thing" as const,
+        sources:[],readings:[],actions:[]},
+      parameters:{glyph:{value:index===7?"⊕":String(index+1),automation:null},
+        x:{value:0,automation:null},y:{value:index===7?-376:-264+index*88,automation:null},
+        scale:{value:1,automation:null}}}];
+  }));
+  return {schema:"oi.expression/v1",expression_ref:expressionRef,revision:1,title:"Nara · safe cues",
+    scenes:[{scene_ref:sceneRef,revision:1,title:"Seven centres and EarthBody",entity_refs:Object.keys(entities)}],
+    entities,relations:{},selection:{scene_ref:sceneRef,entity_ref:null},
+    provenance:[...new Set([...cues.source_refs,...cues.cue_refs])].map(ref=>({ref,revision:"unavailable",availability:"unavailable"})),
+    representations:[],refinements:[]};
 }
