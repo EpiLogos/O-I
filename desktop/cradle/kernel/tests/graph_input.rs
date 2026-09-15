@@ -194,13 +194,18 @@ impl Fixture {
     }
 }
 
-fn assert_shared_field_named_deferred(reading: &oi_cradle_kernel::graph::GraphReading) {
+/// The hosted Shared Field input is always named: available when a target
+/// is bound and answering, otherwise an explicit unavailable input carrying
+/// the client's own reason (these fixtures bind no target) — never deferred
+/// once a graph was requested, never fabricated.
+fn assert_shared_field_named(reading: &oi_cradle_kernel::graph::GraphReading) {
     match &reading.inputs.shared_field {
-        GraphInput::Deferred { owner_operation, detail } => {
+        GraphInput::Available { owner_operation, .. } => assert_eq!(owner_operation, SHARED_FIELD_INPUT),
+        GraphInput::Unavailable { owner_operation, detail } => {
             assert_eq!(owner_operation, SHARED_FIELD_INPUT);
             assert!(!detail.is_empty());
         }
-        other => panic!("shared field must stay a named deferred input, got {other:?}"),
+        other => panic!("shared field must be a named available/unavailable input, got {other:?}"),
     }
 }
 
@@ -240,14 +245,14 @@ fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
     assert!(outcome.receipts.is_empty(), "graph read is a pull; it emits nothing");
     assert!(reading.inputs.central_wiki.is_available());
     assert!(reading.inputs.aikit_resolution.is_available());
-    assert_shared_field_named_deferred(&reading);
+    assert_shared_field_named(&reading);
 
     // Counts equal the owner fixture counts, exactly.
     assert_eq!(reading.counts.spaces, owner_spaces, "spaces equal the C1 owner count");
     assert_eq!(reading.counts.wiki_nodes, owner_wiki_nodes, "wiki nodes equal the C1 owner count");
     assert_eq!(reading.counts.knowledge_rows, owner_hits, "rows equal the C2 owner count");
     assert_eq!(reading.counts.edges, owner_edges, "edges equal the C1 owner count");
-    assert_eq!(reading.counts.nodes, owner_spaces + owner_wiki_nodes + owner_hits);
+    assert_eq!(reading.counts.nodes, owner_spaces + owner_wiki_nodes + owner_hits + reading.counts.hosted_rows);
 
     // Every node ref round-trips through its owner read.
     let mut wiki_refs: Vec<&str> = wiki["spaces"].as_array().unwrap().iter()
@@ -268,6 +273,7 @@ fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
                 assert_eq!(node.provenance.source, "projectcentral.wiki.read");
                 assert_eq!(node.actions, vec!["projectcentral.wiki.read"]);
             }
+            "shared-field" => assert_eq!(node.provenance.source, SHARED_FIELD_INPUT),
             "ai-kit" => {
                 assert!(hit_refs.contains(&node.ref_id.as_str()), "{} round-trips through aikit knowledge resolve", node.ref_id);
                 assert_eq!(node.provenance.source, "aikit.knowledge.resolve");
@@ -288,10 +294,10 @@ fn graph_reading_counts_equal_owner_fixture_counts_and_refs_round_trip() {
             r["to_ref"].as_str().unwrap().to_owned(),
         ))
         .collect();
-    assert_eq!(reading.edges.len(), owner_relations.len());
-    for edge in &reading.edges {
+    let wiki_edges: Vec<_> = reading.edges.iter().filter(|edge| edge.provenance.source == "projectcentral.wiki.read").collect();
+    assert_eq!(wiki_edges.len(), owner_relations.len());
+    for edge in wiki_edges {
         assert!(owner_relations.contains(&(edge.relation.clone(), edge.from_ref.clone(), edge.to_ref.clone())));
-        assert_eq!(edge.provenance.source, "projectcentral.wiki.read");
     }
 
     let _ = fs::remove_dir_all(&fixture.root);
@@ -326,15 +332,14 @@ fn absent_wiki_is_an_explicit_unavailable_input_not_an_empty_graph() {
         other => panic!("absent wiki must be an explicit unavailable input, got {other:?}"),
     }
     assert!(reading.inputs.aikit_resolution.is_available(), "the healthy input still contributes");
-    assert_shared_field_named_deferred(&reading);
+    assert_shared_field_named(&reading);
     assert_eq!(reading.counts.spaces, 0);
     assert_eq!(reading.counts.wiki_nodes, 0);
-    assert_eq!(reading.counts.edges, 0);
-    assert!(reading.edges.is_empty(), "no wiki edges are fabricated");
-    assert!(reading.nodes.iter().all(|node| node.native_owner == "ai-kit"),
-        "only the healthy AIKit input contributes nodes");
+    assert!(reading.edges.iter().all(|edge| edge.provenance.source != "projectcentral.wiki.read"), "no wiki edges are fabricated");
+    assert!(reading.nodes.iter().all(|node| node.native_owner != "central"),
+        "the absent Central input contributes no nodes");
     assert!(reading.counts.knowledge_rows > 0);
-    assert_eq!(reading.counts.nodes, reading.counts.knowledge_rows);
+    assert_eq!(reading.counts.nodes, reading.counts.knowledge_rows + reading.counts.hosted_rows);
 
     let _ = fs::remove_dir_all(&fixture.root);
 }
@@ -365,8 +370,9 @@ fn graph_reading_wire_shape_is_stable_and_inputs_are_named() {
     for name in ["central_wiki", "aikit_resolution", "shared_field"] {
         assert!(serialized["inputs"].get(name).is_some(), "input `{name}` is named on the wire");
     }
-    assert_eq!(serialized["inputs"]["shared_field"]["state"], "deferred");
+    assert!(["available", "unavailable"].contains(&serialized["inputs"]["shared_field"]["state"].as_str().unwrap()), "the hosted input is stated once requested");
     assert_eq!(serialized["inputs"]["shared_field"]["owner_operation"], SHARED_FIELD_INPUT);
+    assert!(serialized["counts"].get("hosted_rows").is_some(), "hosted_rows is named on the wire");
     // No persistence/cache surface exists on the reading.
     for forbidden in ["cache", "index", "rank", "persisted", "revision_log"] {
         assert!(serialized.get(forbidden).is_none(), "graph reading carries no `{forbidden}`");

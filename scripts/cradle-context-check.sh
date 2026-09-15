@@ -16,6 +16,7 @@ for p in $(
   case "$p" in
     desktop/cradle*) continue ;; # created by execution (U0.3)
     desktop/ui*)     continue ;; # removed by execution (U0.7) — absence is fine
+    docs/kernel-rebuild/*) continue ;; # cited as QL-MEF's own doc (skill §Epi domain): another product's tree, not this repo's chain
   esac
   [ -e "$p" ] || { echo "MISSING: $p"; missing=1; }
 done
