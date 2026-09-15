@@ -1,18 +1,29 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "expression-page",
-  "generated_at": "2026-09-15T14:46:15.597Z",
+  "generated_at": "2026-09-15T15:28:17.719Z",
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://127.0.0.1:4321",
+    "bridge_url": "http://127.0.0.1:4330",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
-    "platform": "darwin"
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "4032740d6bcb16d09a2d9f253fbde2cca9a20f78",
+      "tracked_changes": [
+        "desktop/cradle/tests/welcome-lifecycle.mjs",
+        "desktop/cradle/tests/welcome-page.tsx"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 10779,
+  "duration_ms": 11956,
   "checks": [
     {
       "ok": true,
@@ -85,6 +96,54 @@
     {
       "ok": true,
       "label": "A newly read exact page revision re-enters the same native Expression identity"
+    },
+    {
+      "ok": true,
+      "label": "Restored page waits for the opening's one healthy production field without allocating an inline renderer"
+    },
+    {
+      "ok": true,
+      "label": "Temporary frontstate ownership keeps the real page host mounted, covered and disabled without a sticky error",
+      "data": {
+        "canvasCount": 1,
+        "inlineCanvas": 0,
+        "alerts": 0,
+        "disabled": true,
+        "covered": true,
+        "liveContext": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "The restored iframe retains its honest fallback until the native page presentation is actually ready"
+    },
+    {
+      "ok": true,
+      "label": "Completing the opening returns the same production canvas and context to the restored page's actual inline body",
+      "data": {
+        "sameCanvas": true,
+        "sameContext": true,
+        "healthy": true,
+        "canvasCount": 1,
+        "inline": true,
+        "fits": true,
+        "alerts": 0,
+        "expressionRef": "expression:page-ada",
+        "expressionRevision": "4",
+        "subjectRef": "central:being:ada"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The restored live page keeps its exact Expression revision and subject without an admission error"
+    },
+    {
+      "ok": true,
+      "label": "The restored page can focus the same field after frontstate release"
+    },
+    {
+      "ok": true,
+      "label": "Leaving restored-page focus returns the same field inline"
     }
   ],
   "ops": [
@@ -94,18 +153,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T14:46:15.737Z",
+        "mounted_at": "2026-09-15T15:28:18.408Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4330"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://127.0.0.1:4321/"
       }
     },
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1.1,
+      "duration_ms": 5.8,
       "seq_range": {
         "from": 2,
         "to": 2
@@ -149,7 +208,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1.4,
+      "duration_ms": 5.2,
       "seq_range": {
         "from": 3,
         "to": 3
@@ -208,7 +267,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1,
+      "duration_ms": 3,
       "seq_range": {
         "from": 4,
         "to": 4
@@ -280,7 +339,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 16,
+      "duration_ms": 3.4,
       "seq_range": {
         "from": 8,
         "to": 8
@@ -324,7 +383,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 57,
+      "duration_ms": 238,
       "data": {
         "file": "expression-page-live-return-capture.png"
       }
@@ -332,7 +391,7 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1.9,
+      "duration_ms": 9,
       "seq_range": {
         "from": 9,
         "to": 9
@@ -408,7 +467,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 82,
       "data": {
         "file": "expression-page-captured-fallback-page.png"
       }
@@ -416,20 +475,29 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 134,
       "data": {
         "file": "expression-page-live-reentry.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 87,
+      "data": {
+        "file": "expression-page-restored-opening-inline.png"
       }
     }
   ],
   "metrics": {
     "capture_width": 1280,
     "capture_height": 785,
-    "capture_distinct_sampled_colours": 51
+    "capture_distinct_sampled_colours": 61
   },
   "screenshots": [
     "expression-page-live-return-capture.png",
     "expression-page-captured-fallback-page.png",
-    "expression-page-live-reentry.png"
+    "expression-page-live-reentry.png",
+    "expression-page-restored-opening-inline.png"
   ]
 }
