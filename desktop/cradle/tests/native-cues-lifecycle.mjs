@@ -5,7 +5,7 @@ import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
 import {renderedBounds} from '../walk/knowledge-projection-geometry.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url));
-const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:4387,strictPort:true},logLevel:'error'});
+const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:4391,strictPort:true},logLevel:'error'});
 server.middlewares.use('/native-cues',async(_,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/native-cues','<body class="oi-desktop"><div id="root"></div><div id="target" style="position:fixed;left:60px;top:80px;width:44px;height:28px"></div><script type="module" src="/tests/expression-provider-page.tsx"></script>'));});
 await server.listen();
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']}),context=await browser.newContext({viewport:{width:1000,height:760}}),page=await context.newPage();
