@@ -1,14 +1,39 @@
-.expression-editor { display:flex; flex-direction:column; gap:12px; max-width:900px; }
-.expression-editor header,.expression-tools,.expression-entities,.expression-editor nav,.expression-parameter { display:flex; align-items:center; gap:8px; flex-wrap:wrap; }
-.expression-editor label { display:flex; flex-direction:column; gap:4px; }
-.expression-editor fieldset { display:flex; flex-direction:column; gap:10px; }
-.expression-editor pre { overflow:auto; max-height:320px; white-space:pre-wrap; overflow-wrap:anywhere; }
-.expression-editor input,.expression-editor select,.expression-editor textarea { font:inherit; color:inherit; background:var(--oi-surface); border:1px solid var(--oi-hairline); padding:6px; }
-.expression-editor [aria-pressed="true"] { outline:1px solid currentColor; }
-.expression-refinements { margin:14px 0; padding:12px; border:1px solid var(--oi-hairline); background:var(--oi-surface); }
-.expression-refinements article { display:grid; gap:7px; padding:10px 0; border-top:1px solid var(--oi-hairline); }
-.expression-refinements article>span,.expression-refinements article>p { font-size:11px; color:var(--oi-muted); margin:0; }
-
-.expression-stage-host { position:relative; min-height:360px; background:var(--oi-white); color:var(--oi-black); border:1px solid var(--oi-hairline); overflow:hidden; isolation:isolate; }
-
-.agent-body > .expression-editor { flex:1; min-height:0; overflow:auto; padding:16px; box-sizing:border-box; }
+/* The Expression composition — the production UI of the field engine. Its
+ * chrome composes the desktop grammar (oi-context-head, oi-plane-nav for
+ * scenes, oi-field/oi-input, oi-action, oi-disclosure, oi-section,
+ * oi-state, oi-note); this file gives the composition its hierarchy: the
+ * artboard is the body, scenes are its planes, the entity row is its
+ * selection, the inspector reads the selected entity, and the deeper
+ * apparatus (binding, pedagogy, proposals, file, disclosure) is summoned
+ * rather than laid out flat. Tokens only. */
+.expression-editor{display:flex;flex-direction:column;gap:12px;max-width:960px;min-width:0}
+.expression-head{padding-inline:0;min-height:52px}
+.expression-head h3{margin:0;font-size:var(--oi-shell-type-heading);font-weight:550}
+.expression-identity{display:flex;align-items:flex-end;gap:10px;flex-wrap:wrap}
+.expression-identity .oi-field{flex:1 1 180px}
+.expression-tools{display:flex;align-items:flex-end;gap:8px;flex-wrap:wrap}
+/* The artboard: the one production field, framed on the canvas ground. */
+.expression-stage-host{position:relative;min-height:360px;background:var(--oi-canvas-ground);color:var(--oi-foreground);border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius);overflow:hidden;isolation:isolate}
+.expression-scenes{padding-inline:0;gap:14px;align-items:center}
+.expression-scenes .expression-add{margin-left:4px;width:22px;height:22px;min-width:22px;min-height:22px;font-size:var(--oi-shell-type-body)}
+.expression-entities{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.expression-entity{display:inline-flex;align-items:center;gap:8px;min-height:26px;padding:3px 10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-radius-pill);background:transparent;color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),border-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.expression-entity:hover{background:var(--oi-wash)}
+.expression-entity[aria-pressed="true"]{border-color:var(--oi-accent);background:var(--oi-wash);box-shadow:inset 0 0 0 1px var(--oi-accent)}
+.expression-entity:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:2px}
+/* The inspector of the selected entity. */
+.expression-inspector{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius);padding:12px 14px 14px;margin:0;display:flex;flex-direction:column;gap:12px;background:var(--oi-surface)}
+.expression-inspector legend{padding:0 6px;font-size:var(--oi-shell-type-body);font-weight:550}
+.expression-inspector legend .oi-state{margin-left:8px}
+.expression-parameters{display:grid;grid-template-columns:repeat(auto-fill,minmax(120px,1fr));gap:10px}
+.expression-parameter{display:contents}
+.expression-parameter>label>span{display:flex;flex-wrap:wrap;gap:6px;align-items:center}
+.expression-binding-fields{display:grid;grid-template-columns:repeat(auto-fill,minmax(180px,1fr));gap:10px;margin:8px 0 10px}
+.expression-subject-actions{display:flex;flex-direction:column;gap:6px}
+.expression-editor pre{overflow:auto;max-height:320px;white-space:pre-wrap;overflow-wrap:anywhere;font-size:var(--oi-shell-type-nav);margin:8px 0 0}
+.expression-editor textarea.oi-input{min-height:120px;font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-nav);resize:vertical}
+.expression-pedagogy p{margin:8px 0}
+.expression-refinements article{display:grid;gap:7px;padding:12px 0;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.expression-refinements article>p{margin:0;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.expression-refinements article>strong{font-size:var(--oi-shell-type-body);font-weight:550}
+.agent-body>.expression-editor{flex:1;min-height:0;overflow:auto;padding:16px;box-sizing:border-box}
