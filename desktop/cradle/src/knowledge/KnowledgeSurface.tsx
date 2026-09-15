@@ -3,7 +3,8 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {KnowledgeReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {knowledge} from "./client";
-import {graphAddress,readGraph,type GraphNode,type GraphReading} from "./graph";
+import {graphAddress,isHostedNode,readGraph,type GraphNode,type GraphReading} from "./graph";
+import {sharedField,type SharedFieldReading} from "./shared-field";
 import {freeGraphRegion,useDetailGeometry} from "./detailGeometry";
 import {accommodate,unaccommodate} from "./camera";
 import {GraphCanvas} from "./GraphCanvas";
@@ -35,6 +36,9 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const {camera}=visit;
   const [detailNode,setDetailNode]=useState<GraphNode>();
   const [reading,setReading]=useState<KnowledgeReading>();
+  // A hosted node (Shared Field) reads through the kernel's shared_field op
+  // as a Projection reading — no local address, no second store.
+  const [hosted,setHosted]=useState<SharedFieldReading>();
   const [model,setModel]=useState<GraphReading>();
   const [error,setError]=useState<string>();
   const [readError,setReadError]=useState<string>();
@@ -75,10 +79,14 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     return()=>{active=false;};
   },[isGraph,binding.project,visit.query,generation,transport]);
   useEffect(()=>{
-    let active=true;setReading(undefined);setReadError(undefined);
+    let active=true;setReading(undefined);setHosted(undefined);setReadError(undefined);
     try {
       const node=detailNode??nodes.find(n=>n.ref===visit.selected);
       if(visit.selected&&!node)return;
+      if(node&&isHostedNode(node)){
+        void sharedField<SharedFieldReading>(transport,{kind:"read",ref:node.ref}).then(r=>{if(active)setHosted(r);}).catch(e=>{if(active)setReadError(String(e));});
+        return()=>{active=false;};
+      }
       const address=node?graphAddress(node):binding.address;
       if(!address)return;
       void knowledge<KnowledgeReading>(transport,binding.project,{action:"read",address}).then(r=>{if(active)setReading(r);}).catch(e=>{if(active)setReadError(String(e));});
@@ -98,7 +106,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
       <GraphCanvas nodes={nodes} positions={positions} model={model} camera={presentation} selected={visit.selected} focused={focused} minZoom={.15} maxZoom={4} onCamera={commitCamera} onOpen={open} onClear={release}/>
       <div className="knowledge-zoom"><button aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.15,c.zoom/1.2)}))}>−</button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}>+</button><button aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}>⤢</button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
       {model&&visit.selected&&nodes.find(node=>node.ref===visit.selected)&&<div className="knowledge-expression-bar"><button aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button><KnowledgeExpression surface={binding.id} project={binding.project} reading={model} locus={nodes.find(node=>node.ref===visit.selected)!} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref)??[])} follow={follow}/></div>}
-      {detailNode&&<NodeDetails node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
+      {detailNode&&<NodeDetails node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}
     {!isGraph&&<article className="knowledge-content" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><span className="oi-point-cloud" aria-hidden="true"/><h1>{binding.title}</h1>{binding.address?.kind==="wiki"&&<button onClick={()=>void onOpen(binding.address!,binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading}/>:<p role="status">Reading content…</p>}</article>}
