@@ -926,6 +926,27 @@ printf '%s\n' "$*" >> {log}
             let executable = dir.join("oi");
             std::fs::write(&executable, script).unwrap();
             std::fs::set_permissions(&executable, std::fs::Permissions::from_mode(0o755)).unwrap();
+            // Linux CI quirk: a file written microseconds ago can still
+            // answer ETXTBSY on exec under parallel load (the close-to-exec
+            // race on the runner's filesystem). Settle the freshly written
+            // stub with one throwaway execution — retrying only on that
+            // busy error — before the test's real invocations. stdin is
+            // null so stubs that read a request see an immediate EOF.
+            for _ in 0..50 {
+                let settled = Command::new(&executable)
+                    .arg("--settle")
+                    .stdin(Stdio::null())
+                    .stdout(Stdio::null())
+                    .stderr(Stdio::null())
+                    .status();
+                match settled {
+                    Ok(_) => break,
+                    Err(error) if error.kind() == std::io::ErrorKind::ExecutableFileBusy => {
+                        std::thread::sleep(std::time::Duration::from_millis(2));
+                    }
+                    Err(error) => panic!("cannot settle the stub: {error}"),
+                }
+            }
             Self { dir, executable }
         }
 
