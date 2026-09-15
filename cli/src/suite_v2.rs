@@ -100,6 +100,7 @@ fn suite_v2_main() -> Option<ExitCode> {
         "help" | "--help" | "-h" => Some(print_suite_v2_help().map(|_| 0)),
         "manifest" => Some(command_suite_manifest(args.get(1..).unwrap_or_default())),
         "install" => Some(command_suite_v2_install(args.get(1..).unwrap_or_default())),
+        "remove" | "uninstall" => Some(command_suite_v2_remove(args.get(1..).unwrap_or_default())),
         "update" => Some(command_suite_v2_update(args.get(1..).unwrap_or_default())),
         "doctor" => Some(command_suite_v2_doctor(args.get(1..).unwrap_or_default())),
         "status" => Some(command_suite_v2_status(args.get(1..).unwrap_or_default())),
@@ -107,7 +108,7 @@ fn suite_v2_main() -> Option<ExitCode> {
             Some(command_suite_v2_cleanup(args.get(1..).unwrap_or_default()))
         }
         "dev" => Some(command_suite_v2_dev(args.get(1..).unwrap_or_default())),
-        "verify" if args.len() == 1 || (args.len() == 2 && args[1] == "--json") => {
+        "verify" if is_doctor_invocation(args.get(1..).unwrap_or_default()) => {
             Some(command_suite_v2_doctor(args.get(1..).unwrap_or_default()))
         }
         _ => None,
@@ -121,6 +122,14 @@ fn suite_v2_main() -> Option<ExitCode> {
     })
 }
 
+/// `oi verify` reaches this doctor when its arguments are a subset of the
+/// doctor's flags; anything else (for example `verify --snapshot …`) stays
+/// on the Suite Snapshot verification path below.
+fn is_doctor_invocation(tail: &[OsString]) -> bool {
+    tail.iter()
+        .all(|argument| matches!(argument.to_str(), Some("--json") | Some("--all")))
+}
+
 fn print_suite_v2_help() -> Result<(), String> {
     let manifest = suite_manifest()?;
     println!("oi — installs, inspects and verifies the suite's recorded product builds");
@@ -128,13 +137,17 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!();
     println!("Ordinary operation:");
     println!("  oi install [--personal-ground PATH] [PRODUCT ...]");
+    println!("  oi remove|uninstall <PRODUCT ...>   remove a recorded managed install from this machine (also 'oi suite remove')");
     println!("  oi update");
     println!("  oi status [--json]");
-    println!("  oi doctor [--json]");
-    println!("  oi verify [--json]");
+    println!("  oi doctor [--all] [--json]");
+    println!("  oi verify [--all] [--json]");
     println!("  oi manifest [--json]");
     println!("  oi cleanup --managed");
     println!();
+    println!("Verification asks whether the requested composition is installed and usable:");
+    println!("a recorded install mode scopes it to that mode's products, the installation");
+    println!("receipt scopes it to what is installed, and --all verifies the whole suite strictly.");
     println!("Developer federation:");
     println!("  oi dev status [--json]");
     println!("  oi dev sync [PRODUCT]");
@@ -578,12 +591,142 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
     Ok(0)
 }
 
+/// The product set one verification run answers for (#268 lock §5: the
+/// operative installation account separates what was requested from what is
+/// installed). `basis` records which statement produced the set:
+/// `requested-mode` — the person's recorded `oi mode set` statement;
+/// `receipt` — the products this machine's installation receipt records;
+/// `all` — the whole six-product suite (explicit `--all`, or the fallback
+/// when nothing narrower can be named).
+struct VerificationScope {
+    basis: &'static str,
+    install_mode: Option<&'static oi_cli::context_frames::InstallMode>,
+    requested: Option<RequestedMode>,
+    selected: std::collections::BTreeSet<String>,
+    detail: String,
+}
+
+impl VerificationScope {
+    /// Plain-language name of the selection, for per-product disclosure.
+    fn selection_description(&self) -> String {
+        match self.install_mode {
+            Some(mode) => format!("install mode {} ({})", mode.frame, mode.name),
+            None => match self.basis {
+                "receipt" => "the installation receipt".to_owned(),
+                _ => "the whole suite".to_owned(),
+            },
+        }
+    }
+}
+
+/// Map one install mode position onto the suite manifest product that holds
+/// it, through the canonical position table the current-world reading uses.
+fn product_id_at_position(manifest: &SuiteManifest, position: u8) -> Option<&str> {
+    let (_, expected, _) = oi_cli::current_world::PRODUCT_POSITIONS
+        .iter()
+        .find(|(index, _, _)| *index == position)?;
+    manifest
+        .products
+        .iter()
+        .find(|product| product.id == *expected)
+        .map(|product| product.id.as_str())
+}
+
+/// Resolve what this verification run is answering for. The requested
+/// composition is the person's own statement, so it scopes the run when it
+/// names a six-product selection; the installation receipt answers
+/// otherwise; `--all` keeps the strict whole-suite question.
+fn resolve_verification_scope(
+    all_products: bool,
+    requested: Option<&RequestedMode>,
+    receipt: &InstalledSuiteReceipt,
+    manifest: &SuiteManifest,
+) -> VerificationScope {
+    let whole_suite = |detail: &str| VerificationScope {
+        basis: "all",
+        install_mode: None,
+        requested: requested.cloned(),
+        selected: manifest.products.iter().map(|p| p.id.clone()).collect(),
+        detail: detail.to_owned(),
+    };
+    if all_products {
+        return whole_suite("every recorded suite product is verified (--all)");
+    }
+    if let Some(requested) = requested {
+        if let Some(mode) = oi_cli::context_frames::install_mode_by_frame(&requested.frame)
+            .filter(|mode| mode.products.is_some())
+        {
+            let selected = mode
+                .products
+                .unwrap_or(&[])
+                .iter()
+                .filter_map(|position| product_id_at_position(manifest, *position))
+                .map(str::to_owned)
+                .collect::<std::collections::BTreeSet<_>>();
+            return VerificationScope {
+                basis: "requested-mode",
+                install_mode: Some(mode),
+                requested: Some(requested.clone()),
+                selected,
+                detail: format!(
+                    "verifying the products of requested install mode {} ({})",
+                    mode.frame, mode.name
+                ),
+            };
+        }
+    }
+    if !receipt.products.is_empty() {
+        let detail = match requested {
+            Some(requested) => format!(
+                "the recorded requested mode {} names no six-product selection; \
+                 verifying the {} products recorded in the installation receipt",
+                requested.frame,
+                receipt.products.len()
+            ),
+            None => format!(
+                "no install mode is requested; verifying the {} products recorded \
+                 in the installation receipt",
+                receipt.products.len()
+            ),
+        };
+        return VerificationScope {
+            basis: "receipt",
+            install_mode: None,
+            requested: requested.cloned(),
+            selected: receipt.products.keys().cloned().collect(),
+            detail,
+        };
+    }
+    whole_suite(
+        "no products are recorded as installed and no requested mode names a \
+         selection; the whole suite is verified strictly",
+    )
+}
+
 fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
-    let json_mode = match args { [] => false, [one] if one == "--json" => true, _ => return Err("usage: oi doctor [--json]".to_owned()) };
+    let mut json_mode = false;
+    let mut all_products = false;
+    for argument in args {
+        match argument.to_str() {
+            Some("--json") => json_mode = true,
+            Some("--all") => all_products = true,
+            _ => return Err("usage: oi doctor [--all] [--json]".to_owned()),
+        }
+    }
     let manifest = suite_manifest()?;
     let data_root = oi_data_root()?;
     let composition = load_composition()?;
     let receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+    // Verification answers "is what was requested installed and usable?",
+    // not "is the entire six-product suite installed?" (#268). A subset
+    // install is a kept promise, not a failure: products outside the
+    // verified selection are disclosed as absent by selection.
+    let scope = resolve_verification_scope(
+        all_products,
+        composition.requested_mode.as_ref(),
+        &receipt,
+        &manifest,
+    );
     // The live surface disclosure is needed twice: per product (to tell a
     // deliberate developer-path install from a genuinely unhealthy one) and
     // as its own check block. Resolved once.
@@ -594,29 +737,53 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         .unwrap_or(false);
     let mut checks = Vec::new();
     let mut ok = true;
+    let mut shortfall: Vec<String> = Vec::new();
     for product in &manifest.products {
-        let managed = match receipt.products.get(&product.id) {
-            None => Err("not installed".to_owned()),
-            Some(installed) if installed.revision != product.revision => Err(format!("revision drift: {}", installed.revision)),
-            Some(installed) => {
-                let asset = selected_asset(product)?;
-                let cached = data_root.join("cache").join(&product.id).join(&product.revision).join(&asset.name);
-                if !Path::new(&installed.root).is_dir() { Err("managed product root missing".to_owned()) }
-                else if !cached.is_file() { Err("recorded build archive missing from managed cache".to_owned()) }
-                else if sha256_file(&cached)? != asset.sha256 { Err("cached build archive checksum mismatch".to_owned()) }
-                else if let Some(exe) = installed.executable.as_deref() {
-                    verify_installed_product(product, Some(Path::new(exe)), composition.personal_ground.as_deref()).map_err(|e| e.to_string())
-                } else { Ok(()) }
+        if scope.selected.contains(&product.id) {
+            let managed = match receipt.products.get(&product.id) {
+                None => Err("not installed".to_owned()),
+                Some(installed) if installed.revision != product.revision => Err(format!("revision drift: {}", installed.revision)),
+                Some(installed) => {
+                    let asset = selected_asset(product)?;
+                    let cached = data_root.join("cache").join(&product.id).join(&product.revision).join(&asset.name);
+                    if !Path::new(&installed.root).is_dir() { Err("managed product root missing".to_owned()) }
+                    else if !cached.is_file() { Err("recorded build archive missing from managed cache".to_owned()) }
+                    else if sha256_file(&cached)? != asset.sha256 { Err("cached build archive checksum mismatch".to_owned()) }
+                    else if let Some(exe) = installed.executable.as_deref() {
+                        verify_installed_product(product, Some(Path::new(exe)), composition.personal_ground.as_deref()).map_err(|e| e.to_string())
+                    } else { Ok(()) }
+                }
+            };
+            // A managed-receipt gap on a machine whose registered source surface
+            // is present and in step is a deliberate developer-path install, not
+            // a health failure: the surface's own drift check still fails this
+            // doctor when what runs is stale. Neither managed nor surface
+            // coverage, or a drifted surface, remains a failing condition.
+            let (product_ok, detail) = doctor_managed_standing(managed.err().as_deref(), surface_in_step(&product.id));
+            if !product_ok {
+                ok = false;
+                shortfall.push(product.public_name.clone());
             }
-        };
-        // A managed-receipt gap on a machine whose registered source surface
-        // is present and in step is a deliberate developer-path install, not
-        // a health failure: the surface's own drift check still fails this
-        // doctor when what runs is stale. Neither managed nor surface
-        // coverage, or a drifted surface, remains a failing condition.
-        let (product_ok, detail) = doctor_managed_standing(managed.err().as_deref(), surface_in_step(&product.id));
-        if !product_ok { ok = false; }
-        checks.push(json!({"product": product.id, "ok": product_ok, "detail": detail}));
+            checks.push(json!({"product": product.id, "ok": product_ok, "detail": detail, "selected": true, "scope_state": "selected"}));
+        } else {
+            // Outside the verified selection: present or absent, never a
+            // failure — the composition lock keeps unselected products out of
+            // the promise, disclosed exactly as they stand.
+            let present =
+                receipt.products.contains_key(&product.id) || surface_in_step(&product.id);
+            let (scope_state, detail) = if present {
+                (
+                    "outside-selection",
+                    "installed outside the selection being verified; disclosed, not verified here".to_owned(),
+                )
+            } else {
+                (
+                    "absent-by-selection",
+                    format!("absent by selection — not part of {}", scope.selection_description()),
+                )
+            };
+            checks.push(json!({"product": product.id, "ok": true, "detail": detail, "selected": false, "scope_state": scope_state}));
+        }
     }
     let catalogue = catalogue_freshness();
     if catalogue.is_err() { ok = false; }
@@ -656,18 +823,47 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         }
         Err(error) => { ok = false; surface_checks.push(json!({"surface": "suite", "ok": false, "detail": error})); }
     }
+    // Reality may not fall short of the request silently: when the requested
+    // mode's own products are not usable, the shortfall names them.
+    let shortfall_message = match (scope.install_mode, shortfall.as_slice()) {
+        (Some(mode), names) if !names.is_empty() => Some(format!(
+            "Requested install mode {} is not fully realised: {} {} not usable.",
+            mode.frame,
+            names.join(", "),
+            if names.len() == 1 { "is" } else { "are" }
+        )),
+        _ => None,
+    };
+    let scope_json = verification_scope_json(&scope, shortfall_message.as_deref(), &manifest);
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.suite-doctor/v1",
             "suite_version": manifest.suite_version,
             "ok": ok,
+            "scope": scope_json,
             "checks": checks,
             "surfaces": surface_checks,
             "physical_gates": manifest.physical_gates,
             "physical_acceptance": false
         })).map_err(|e| e.to_string())?);
     } else {
-        println!("Suite {} verification: {}", manifest.suite_version, if ok { "PASS" } else { "FAIL" });
+        let verdict = if ok { "PASS" } else { "FAIL" };
+        match scope.install_mode {
+            Some(mode) => println!(
+                "Suite {} verification (requested install mode {} — {}): {}",
+                manifest.suite_version, mode.frame, mode.name, verdict
+            ),
+            None if scope.basis == "receipt" => println!(
+                "Suite {} verification (installed selection — {} products): {}",
+                manifest.suite_version,
+                scope.selected.len(),
+                verdict
+            ),
+            None => println!("Suite {} verification: {}", manifest.suite_version, verdict),
+        }
+        if let Some(shortfall) = &shortfall_message {
+            println!("  {shortfall}");
+        }
         for check in checks {
             println!("  {:<18} {}{}", check["product"].as_str().unwrap_or("?"), if check["ok"].as_bool().unwrap_or(false) { "PASS" } else { "FAIL" }, check["detail"].as_str().map(|d| format!(" — {d}")).unwrap_or_default());
         }
@@ -680,6 +876,42 @@ fn command_suite_v2_doctor(args: &[OsString]) -> Result<i32, String> {
         for gate in &manifest.physical_gates { println!("  DEFERRED {} — {}", gate.id, gate.description); }
     }
     Ok(if ok { 0 } else { 3 })
+}
+
+/// The machine-readable account of what this run verified. Additive fields
+/// only: existing doctor fields keep their meaning.
+fn verification_scope_json(
+    scope: &VerificationScope,
+    shortfall_message: Option<&str>,
+    manifest: &SuiteManifest,
+) -> serde_json::Value {
+    // Products are listed in canonical manifest order, not alphabetical.
+    let products: Vec<&String> = manifest
+        .products
+        .iter()
+        .filter(|product| scope.selected.contains(&product.id))
+        .map(|product| &product.id)
+        .collect();
+    let mut value = json!({
+        "basis": scope.basis,
+        "products": products,
+        "detail": scope.detail,
+    });
+    if let Some(mode) = scope.install_mode {
+        value["install_mode"] = json!(mode.frame);
+        value["install_mode_name"] = json!(mode.name);
+    }
+    if let Some(requested) = &scope.requested {
+        value["requested_mode"] = json!({
+            "frame": requested.frame,
+            "set_by": requested.set_by,
+            "set_at_unix_seconds": requested.set_at_unix_seconds,
+        });
+    }
+    if let Some(shortfall) = shortfall_message {
+        value["shortfall"] = json!(shortfall);
+    }
+    value
 }
 
 /// Managed-receipt standing for one product, reconciled against its live
@@ -742,6 +974,467 @@ fn command_suite_v2_cleanup(args: &[OsString]) -> Result<i32, String> {
     println!("Removed O:I-managed artifacts beneath {}.", root.display());
     println!("Central Control/ and Work/ were not cleanup targets.");
     Ok(0)
+}
+
+// ---- Per-product removal: the remove leg of the lifecycle planner ----
+//
+// Removal is a planned, receipt-owned operation, not an ad-hoc deletion. The
+// machine receipt (`receipts/installed-suite.json`) is the one record of what
+// this machine's installer actually created; only resources that record owns —
+// the product-scoped managed subtrees (`products/<id>`, `cache/<id>`), the bin
+// command the receipt names, and the composition registration that points
+// inside the managed root — are removed. Authored ground, pre-existing native
+// installations, developer-path registrations and everything else are retained
+// and named. The run ends in a removal receipt that explains every residual:
+// a clean exit code alone is not evidence.
+
+#[derive(Debug, Clone, Serialize)]
+struct RemovalEntry {
+    kind: &'static str,
+    path: String,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RemovalNote {
+    kind: &'static str,
+    detail: String,
+    #[serde(skip_serializing_if = "Option::is_none")]
+    path: Option<String>,
+}
+
+#[derive(Debug, Clone, Serialize)]
+struct RemovalResidual {
+    path: String,
+    reason: String,
+}
+
+#[derive(Debug, Clone)]
+struct RemovalStep {
+    kind: &'static str,
+    path: Option<PathBuf>,
+}
+
+#[derive(Debug)]
+struct ProductRemovalPlan {
+    id: String,
+    public_name: String,
+    revision: String,
+    steps: Vec<RemovalStep>,
+    retained: Vec<RemovalNote>,
+}
+
+#[derive(Debug, Serialize)]
+struct ProductRemovalOutcome {
+    product: String,
+    public_name: String,
+    revision: String,
+    removed: Vec<RemovalEntry>,
+    already_absent: Vec<RemovalEntry>,
+    retained: Vec<RemovalNote>,
+    residuals: Vec<RemovalResidual>,
+}
+
+/// An entry inside `products/<id>` is owned by the recorded install plan when
+/// it carries the installer's build marker, or when it is an installer staging
+/// directory left behind by an interrupted run.
+fn installer_owned_product_entry(path: &Path) -> bool {
+    let name = path.file_name().and_then(|name| name.to_str()).unwrap_or_default();
+    if name.starts_with('.') && name.ends_with(".tmp") {
+        return true;
+    }
+    path.join(".oi-install.json").is_file()
+}
+
+/// Same managed predicate `oi cleanup --managed` uses: the registration is
+/// this machine's managed install only when what it points at lives inside
+/// the managed root. Anything else is a native or developer-path install
+/// this command must not unregister.
+fn registration_is_managed(registration: &Registration, data_root: &Path) -> bool {
+    let managed_exe = registration.native_executable.as_deref().map(Path::new).map(|p| p.starts_with(data_root)).unwrap_or(false);
+    let managed_root = registration.root.as_deref().map(Path::new).map(|p| p.starts_with(data_root)).unwrap_or(false);
+    managed_exe || managed_root
+}
+
+fn unknown_product_error(manifest: &SuiteManifest, value: &str) -> String {
+    let known = manifest.products.iter().map(|p| p.id.as_str()).collect::<Vec<_>>().join(", ");
+    format!("unknown product '{value}'; this suite records: {known}")
+}
+
+fn removal_plan_for_product(
+    manifest: &SuiteManifest,
+    receipt: &InstalledSuiteReceipt,
+    composition: &Composition,
+    data_root: &Path,
+    id: &str,
+) -> Result<ProductRemovalPlan, String> {
+    let product = manifest.products.iter().find(|p| p.id == id)
+        .ok_or_else(|| unknown_product_error(manifest, id))?;
+    let installed = receipt.products.get(id)
+        .ok_or_else(|| format!("{id} is not installed on this machine; nothing to remove"))?;
+
+    let mut steps = Vec::new();
+    let mut retained = Vec::new();
+    steps.push(RemovalStep { kind: "managed product files", path: Some(data_root.join("products").join(id)) });
+    steps.push(RemovalStep { kind: "downloaded build archives", path: Some(data_root.join("cache").join(id)) });
+
+    if let Some(executable) = installed.executable.as_deref() {
+        let path = Path::new(executable);
+        let managed_bin = data_root.join("bin");
+        if path.starts_with(&managed_bin) {
+            steps.push(RemovalStep { kind: "installed command", path: Some(path.to_path_buf()) });
+            if let Some(name) = path.file_name() {
+                let staged = path.with_file_name(format!(".{}.tmp", name.to_string_lossy()));
+                if staged != path {
+                    steps.push(RemovalStep { kind: "staged command temporary", path: Some(staged) });
+                }
+            }
+        } else {
+            retained.push(RemovalNote {
+                kind: "recorded-command-outside-managed-root",
+                detail: "the receipt records a command outside the managed root; it is not owned by this install and was not removed".to_owned(),
+                path: Some(executable.to_owned()),
+            });
+        }
+    }
+
+    match composition.modules.get(id) {
+        None => retained.push(RemovalNote {
+            kind: "registration-absent",
+            detail: "no composition registration is recorded for this product; nothing to unregister".to_owned(),
+            path: None,
+        }),
+        Some(registration) if registration_is_managed(registration, data_root) => {
+            let location = registration.native_executable.as_deref()
+                .or(registration.root.as_deref())
+                .map(PathBuf::from);
+            steps.push(RemovalStep { kind: "composition registration", path: location });
+        }
+        Some(registration) => {
+            let location = registration.native_executable.as_deref()
+                .or(registration.root.as_deref())
+                .unwrap_or("an unrecorded location");
+            retained.push(RemovalNote {
+                kind: "registration-outside-managed-root",
+                detail: format!("the recorded registration points outside the managed root ({location}); a native or developer-path installation remains registered"),
+                path: None,
+            });
+        }
+    }
+
+    Ok(ProductRemovalPlan {
+        id: product.id.clone(),
+        public_name: product.public_name.clone(),
+        revision: installed.revision.clone(),
+        steps,
+        retained,
+    })
+}
+
+fn removal_entry(kind: &'static str, path: &Path) -> RemovalEntry {
+    RemovalEntry { kind, path: path.display().to_string() }
+}
+
+/// Remove the marker-disciplined product tree: every installer-owned entry
+/// goes, anything without an ownership record stays and is named.
+fn remove_owned_product_tree(step: &RemovalStep, outcome: &mut ProductRemovalOutcome) {
+    let Some(dir) = step.path.as_deref() else { return };
+    if !dir.exists() {
+        outcome.already_absent.push(removal_entry(step.kind, dir));
+        return;
+    }
+    let entries = match fs::read_dir(dir) {
+        Ok(entries) => entries,
+        Err(error) => {
+            outcome.residuals.push(RemovalResidual { path: dir.display().to_string(), reason: format!("cannot inspect managed product files: {error}") });
+            return;
+        }
+    };
+    for item in entries.flatten() {
+        let path = item.path();
+        if installer_owned_product_entry(&path) {
+            let result = if path.is_dir() { fs::remove_dir_all(&path) } else { fs::remove_file(&path) };
+            match result {
+                Ok(()) => outcome.removed.push(removal_entry("managed product files", &path)),
+                Err(error) => outcome.residuals.push(RemovalResidual { path: path.display().to_string(), reason: format!("cannot remove: {error}") }),
+            }
+        } else {
+            outcome.retained.push(RemovalNote {
+                kind: "unowned-entry-left-in-place",
+                detail: "present inside the managed product directory but carrying no installer marker; not owned by the recorded install and left in place".to_owned(),
+                path: Some(path.display().to_string()),
+            });
+        }
+    }
+    let empty = fs::read_dir(dir).map(|mut entries| entries.next().is_none()).unwrap_or(false);
+    if empty {
+        match fs::remove_dir(dir) {
+            Ok(()) => outcome.removed.push(removal_entry("managed product directory", dir)),
+            Err(error) => outcome.residuals.push(RemovalResidual { path: dir.display().to_string(), reason: format!("cannot remove the emptied managed product directory: {error}") }),
+        }
+    }
+}
+
+/// The product-scoped cache subtree is created wholesale by the installer
+/// (downloads and staging temporaries only), so it is owned end to end.
+fn remove_owned_cache_tree(step: &RemovalStep, outcome: &mut ProductRemovalOutcome) {
+    let Some(dir) = step.path.as_deref() else { return };
+    if !dir.exists() {
+        outcome.already_absent.push(removal_entry(step.kind, dir));
+        return;
+    }
+    match fs::remove_dir_all(dir) {
+        Ok(()) => outcome.removed.push(removal_entry(step.kind, dir)),
+        Err(error) => outcome.residuals.push(RemovalResidual { path: dir.display().to_string(), reason: format!("cannot remove: {error}") }),
+    }
+}
+
+fn remove_owned_file(step: &RemovalStep, outcome: &mut ProductRemovalOutcome) {
+    let Some(path) = step.path.as_deref() else { return };
+    if !path.exists() {
+        outcome.already_absent.push(removal_entry(step.kind, path));
+        return;
+    }
+    match fs::remove_file(path) {
+        Ok(()) => outcome.removed.push(removal_entry(step.kind, path)),
+        Err(error) => outcome.residuals.push(RemovalResidual { path: path.display().to_string(), reason: format!("cannot remove: {error}") }),
+    }
+}
+
+fn execute_product_removal(
+    plan: &ProductRemovalPlan,
+    composition: &mut Composition,
+    receipt: &mut InstalledSuiteReceipt,
+) -> ProductRemovalOutcome {
+    let mut outcome = ProductRemovalOutcome {
+        product: plan.id.clone(),
+        public_name: plan.public_name.clone(),
+        revision: plan.revision.clone(),
+        removed: Vec::new(),
+        already_absent: Vec::new(),
+        retained: plan.retained.clone(),
+        residuals: Vec::new(),
+    };
+    for step in &plan.steps {
+        match step.kind {
+            "managed product files" => remove_owned_product_tree(step, &mut outcome),
+            "downloaded build archives" => remove_owned_cache_tree(step, &mut outcome),
+            "installed command" | "staged command temporary" => remove_owned_file(step, &mut outcome),
+            "composition registration" => {
+                composition.modules.remove(&plan.id);
+                let path = step.path.as_ref().map(|p| p.display().to_string()).unwrap_or_default();
+                outcome.removed.push(RemovalEntry { kind: step.kind, path });
+            }
+            other => outcome.residuals.push(RemovalResidual {
+                path: plan.id.clone(),
+                reason: format!("unrecognised removal step '{other}' was not executed"),
+            }),
+        }
+    }
+    if receipt.products.remove(&plan.id).is_none() {
+        outcome.residuals.push(RemovalResidual {
+            path: "receipts/installed-suite.json".to_owned(),
+            reason: "receipt entry vanished during removal".to_owned(),
+        });
+    }
+    outcome
+}
+
+fn removal_receipts_dir(data_root: &Path) -> PathBuf { data_root.join("receipts/removals") }
+
+fn write_removal_receipt(
+    data_root: &Path,
+    manifest: &SuiteManifest,
+    outcomes: &[ProductRemovalOutcome],
+    composition: &Composition,
+) -> Result<PathBuf, String> {
+    let dir = removal_receipts_dir(data_root);
+    fs::create_dir_all(&dir).map_err(|error| format!("cannot create {}: {error}", dir.display()))?;
+    let mut products = BTreeMap::new();
+    for outcome in outcomes {
+        products.insert(outcome.product.clone(), outcome);
+    }
+    let mut document = json!({
+        "schema": "oi.suite-removal/v1",
+        "suite_version": manifest.suite_version,
+        "removed_at_unix_seconds": prelocal_now_ms()? / 1000,
+        "products": products,
+        "disclosure": {
+            "ground_retained": true,
+            "managed_root": data_root.display().to_string(),
+            "note": "only receipt-owned managed resources were removed; authored ground, pre-existing native installations and everything outside the managed root are retained",
+        },
+    });
+    if let Some(requested) = &composition.requested_mode {
+        document["requested_mode"] = json!({
+            "frame": requested.frame,
+            "request_left_unchanged": true,
+            "removal_created_shortfall": !requested_mode_shortfall_products(requested, outcomes).is_empty(),
+        });
+    }
+    let file = dir.join(format!(
+        "{}.{}.json",
+        prelocal_now_ms()?,
+        outcomes.iter().map(|outcome| outcome.product.as_str()).collect::<Vec<_>>().join(".")
+    ));
+    fs::write(&file, serde_json::to_vec_pretty(&document).map_err(|e| e.to_string())?)
+        .map_err(|error| format!("cannot write removal receipt {}: {error}", file.display()))?;
+    Ok(file)
+}
+
+/// The products named by a requested install mode that a removal just took
+/// away — the shortfall the request will now name, in display order.
+fn requested_mode_shortfall_products(requested: &RequestedMode, outcomes: &[ProductRemovalOutcome]) -> Vec<String> {
+    let Some(mode) = oi_cli::context_frames::install_mode_by_frame(&requested.frame) else { return Vec::new() };
+    let Some(products) = mode.products else { return Vec::new() };
+    oi_cli::current_world::PRODUCT_POSITIONS.iter()
+        .filter(|(position, id, _)| {
+            products.contains(position)
+                && outcomes.iter().any(|outcome| outcome.product == *id)
+        })
+        .map(|(_, _, name)| (*name).to_owned())
+        .collect()
+}
+
+fn requested_mode_note_after_removal(composition: &Composition, outcomes: &[ProductRemovalOutcome]) -> Option<String> {
+    let requested = composition.requested_mode.as_ref()?;
+    let names = requested_mode_shortfall_products(requested, outcomes);
+    if names.is_empty() { return None; }
+    Some(format!(
+        "requested install mode {} includes {}, which this machine no longer has installed. The recorded request was left unchanged; oi current-world keeps naming the shortfall until the product is installed again or the request is changed with 'oi mode set' or 'oi mode clear'.",
+        requested.frame,
+        names.join(", "),
+    ))
+}
+
+/// The most recent removal receipt that records `id`, so a repeated removal
+/// can answer with evidence instead of a bare refusal.
+fn latest_removal_receipt_for(data_root: &Path, id: &str) -> Result<Option<PathBuf>, String> {
+    let dir = removal_receipts_dir(data_root);
+    if !dir.is_dir() { return Ok(None); }
+    let mut best: Option<(u128, PathBuf)> = None;
+    let entries = fs::read_dir(&dir).map_err(|error| format!("cannot read {}: {error}", dir.display()))?;
+    for entry in entries.flatten() {
+        let path = entry.path();
+        let Ok(bytes) = fs::read(&path) else { continue };
+        let Ok(value) = serde_json::from_slice::<serde_json::Value>(&bytes) else { continue };
+        if value.get("schema").and_then(|v| v.as_str()) != Some("oi.suite-removal/v1") { continue; }
+        let records_id = value.get("products").and_then(|products| products.as_object())
+            .map(|products| products.contains_key(id))
+            .unwrap_or(false);
+        if !records_id { continue; }
+        let stamp = path.file_stem().and_then(|stem| stem.to_str())
+            .and_then(|stem| stem.split('.').next())
+            .and_then(|stem| stem.parse::<u128>().ok())
+            .unwrap_or(0);
+        if best.as_ref().is_none_or(|(best_stamp, _)| stamp > *best_stamp) {
+            best = Some((stamp, path));
+        }
+    }
+    Ok(best.map(|(_, path)| path))
+}
+
+fn command_suite_v2_remove(args: &[OsString]) -> Result<i32, String> {
+    if args.is_empty() {
+        return Err("usage: oi remove|uninstall <PRODUCT ...> (also reachable as 'oi suite remove <PRODUCT ...>')".to_owned());
+    }
+    let manifest = suite_manifest()?;
+    let data_root = oi_data_root()?;
+    let mut composition = load_composition()?;
+    let mut receipt = load_installed_receipt(&data_root, &manifest.suite_version)?;
+
+    let mut ids: Vec<String> = Vec::new();
+    for arg in args {
+        let value = arg.to_str().ok_or_else(|| "remove arguments must be UTF-8".to_owned())?;
+        if value.starts_with('-') {
+            return Err(format!("unknown remove option '{value}'"));
+        }
+        let product = manifest.products.iter()
+            .find(|p| p.id == value || p.public_name.eq_ignore_ascii_case(value))
+            .ok_or_else(|| unknown_product_error(&manifest, value))?;
+        if !ids.contains(&product.id) {
+            ids.push(product.id.clone());
+        }
+    }
+
+    // Refuse before any mutation when a requested product has no recorded
+    // managed install. The receipt is the authority on what this command owns.
+    for id in &ids {
+        if !receipt.products.contains_key(id) {
+            let previous = latest_removal_receipt_for(&data_root, id)?;
+            return Err(match previous {
+                Some(path) => format!("{id} is not installed on this machine; a previous removal is recorded at {}", path.display()),
+                None => format!("{id} is not installed on this machine; nothing to remove"),
+            });
+        }
+    }
+
+    // Planning mutates nothing: every product is planned before the first
+    // removal executes, so an unplanable product aborts the whole request.
+    let plans: Vec<ProductRemovalPlan> = ids.iter()
+        .map(|id| removal_plan_for_product(&manifest, &receipt, &composition, &data_root, id))
+        .collect::<Result<_, _>>()?;
+
+    println!("Removal plan for the recorded managed install (suite {}):", manifest.suite_version);
+    println!("  Retained everywhere: the personal ground and all authored data (Control/, Work/) are never removal targets.");
+    println!("  Managed root: {}", data_root.display());
+    for plan in &plans {
+        println!("  {} ({} @ {}):", plan.public_name, plan.id, plan.revision);
+        for step in &plan.steps {
+            let location = step.path.as_ref().map(|p| format!("  {}", p.display())).unwrap_or_default();
+            println!("    remove  {}{}", step.kind, location);
+        }
+        for note in &plan.retained {
+            let location = note.path.as_ref().map(|p| format!("  {p}")).unwrap_or_default();
+            println!("    retain  {}{}", note.detail, location);
+        }
+    }
+
+    let mut outcomes = Vec::new();
+    for plan in &plans {
+        outcomes.push(execute_product_removal(plan, &mut composition, &mut receipt));
+    }
+    if outcomes.iter().any(|outcome| outcome.removed.iter().any(|entry| entry.kind == "composition registration")) {
+        save_composition(&composition)?;
+    }
+    save_installed_receipt(&data_root, &receipt)?;
+    let removal_receipt_path = write_removal_receipt(&data_root, &manifest, &outcomes, &composition)?;
+
+    let mut incomplete = false;
+    for outcome in &outcomes {
+        if outcome.residuals.is_empty() {
+            if outcome.removed.is_empty() {
+                println!("Removed {} (nothing was present to remove; recorded as already absent).", outcome.product);
+            } else {
+                let removed = outcome.removed.iter().map(|entry| entry.kind).collect::<Vec<_>>().join(", ");
+                println!("Removed {} ({}).", outcome.product, removed);
+            }
+        } else {
+            incomplete = true;
+            println!("Removal of {} is incomplete:", outcome.product);
+            for residual in &outcome.residuals {
+                println!("  residue at {} — {}", residual.path, residual.reason);
+            }
+        }
+        if !outcome.already_absent.is_empty() {
+            let kinds = outcome.already_absent.iter().map(|entry| entry.kind).collect::<Vec<_>>().join(", ");
+            println!("  already absent (explained — e.g. an interrupted install): {}", kinds);
+        }
+        for note in outcome.retained.iter().filter(|note| note.kind == "unowned-entry-left-in-place") {
+            println!("  retained {} — {}", note.path.as_deref().unwrap_or(""), note.detail);
+        }
+    }
+    println!("Removal receipt: {}", removal_receipt_path.display());
+    if let Some(note) = requested_mode_note_after_removal(&composition, &outcomes) {
+        println!("warning: {note}");
+    }
+    if incomplete {
+        println!("Unexplained residue remains; removal is not complete. Inspect the paths above, then re-run.");
+        Ok(1)
+    } else {
+        println!("Post-state: every owned resource is gone; all retained items are named in the removal receipt.");
+        println!("Next: oi status");
+        Ok(0)
+    }
 }
 
 fn command_suite_v2_dev(args: &[OsString]) -> Result<i32, String> {
@@ -1188,5 +1881,414 @@ mod tests {
             _ => unreachable!(),
         };
         assert_eq!(target, ground.join("Work/Central"));
+    }
+
+    fn empty_receipt() -> InstalledSuiteReceipt {
+        InstalledSuiteReceipt {
+            schema: "oi.installed-suite/v1".to_owned(),
+            suite_version: "test".to_owned(),
+            products: BTreeMap::new(),
+        }
+    }
+
+    // ---- Per-product removal ----
+
+    use tempfile::TempDir;
+
+    fn removal_empty_receipt(manifest: &SuiteManifest) -> InstalledSuiteReceipt {
+        InstalledSuiteReceipt {
+            schema: "oi.installed-suite/v1".to_owned(),
+            suite_version: manifest.suite_version.clone(),
+            products: BTreeMap::new(),
+        }
+    }
+
+    fn receipt_with(ids: &[&str]) -> InstalledSuiteReceipt {
+        let mut receipt = empty_receipt();
+        for id in ids {
+            receipt.products.insert(
+                (*id).to_owned(),
+                InstalledProduct {
+                    revision: "0".to_owned(),
+                    asset: "a".to_owned(),
+                    sha256: "0".repeat(64),
+                    installed_at_ms: 0,
+                    attestation: "a".to_owned(),
+                    attestation_locally_verified: false,
+                    root: "/unused".to_owned(),
+                    executable: None,
+                },
+            );
+        }
+        receipt
+    }
+
+    fn requested_mode(frame: &str) -> RequestedMode {
+        RequestedMode {
+            frame: frame.to_owned(),
+            set_at_unix_seconds: 0,
+            set_by: "oi mode set".to_owned(),
+        }
+    }
+
+    fn selected_ids(scope: &VerificationScope) -> Vec<&str> {
+        let mut ids: Vec<&str> = scope.selected.iter().map(String::as_str).collect();
+        ids.sort_unstable();
+        ids
+    }
+
+    #[test]
+    fn requested_mode_scopes_verification_to_its_products() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        let receipt = empty_receipt();
+        for (frame, expected) in [
+            ("0/1", vec!["actuation", "central"]),
+            ("0/1/2", vec!["actuation", "ai-kit", "central"]),
+            ("0/1/2/3", vec!["actuation", "ai-kit", "central", "software-factory"]),
+            ("4.5/0", vec!["central", "workcell"]),
+            ("5/0", vec!["central", "quaternal-logic"]),
+        ] {
+            let scope =
+                resolve_verification_scope(false, Some(&requested_mode(frame)), &receipt, &manifest);
+            assert_eq!(scope.basis, "requested-mode", "{frame}");
+            assert_eq!(scope.install_mode.map(|mode| mode.frame), Some(frame));
+            assert_eq!(selected_ids(&scope), expected, "{frame}");
+        }
+    }
+
+    #[test]
+    fn verification_falls_back_to_receipt_then_whole_suite() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        // No requested mode, installed subset: the receipt scopes the run.
+        let scope = resolve_verification_scope(
+            false,
+            None,
+            &receipt_with(&["central", "actuation"]),
+            &manifest,
+        );
+        assert_eq!(scope.basis, "receipt");
+        assert_eq!(selected_ids(&scope), vec!["actuation", "central"]);
+
+        // A requested mode that names no six-product selection (Desktop, or a
+        // foreign frame) also falls back to the receipt.
+        for frame in ["00/00", "9/9"] {
+            let scope = resolve_verification_scope(
+                false,
+                Some(&requested_mode(frame)),
+                &receipt_with(&["central"]),
+                &manifest,
+            );
+            assert_eq!(scope.basis, "receipt", "{frame}");
+            assert_eq!(selected_ids(&scope), vec!["central"], "{frame}");
+            assert!(scope.requested.is_some(), "{frame} stays disclosed");
+        }
+
+        // Nothing requested, nothing installed: the strict whole-suite
+        // question stands, as before this change.
+        let scope = resolve_verification_scope(false, None, &empty_receipt(), &manifest);
+        assert_eq!(scope.basis, "all");
+        assert_eq!(selected_ids(&scope).len(), manifest.products.len());
+    }
+
+    #[test]
+    fn explicit_all_overrides_everything_and_keeps_strict_semantics() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        let scope = resolve_verification_scope(
+            true,
+            Some(&requested_mode("0/1")),
+            &receipt_with(&["central"]),
+            &manifest,
+        );
+        assert_eq!(scope.basis, "all");
+        assert_eq!(selected_ids(&scope).len(), manifest.products.len());
+        assert!(scope.install_mode.is_none(), "--all is not a mode");
+    }
+
+    #[test]
+    fn every_install_mode_position_names_a_manifest_product() {
+        let manifest = suite_manifest().expect("embedded manifest is valid");
+        for mode in oi_cli::context_frames::INSTALL_MODES {
+            let Some(positions) = mode.products else { continue };
+            for position in positions {
+                let id = product_id_at_position(&manifest, *position)
+                    .unwrap_or_else(|| panic!("mode {} position {position} names no product", mode.frame));
+                assert!(manifest.products.iter().any(|product| product.id == id));
+            }
+        }
+        // The canonical positions and the manifest order must never drift apart.
+        for (position, id, _) in oi_cli::current_world::PRODUCT_POSITIONS {
+            assert_eq!(
+                product_id_at_position(&manifest, position),
+                Some(id),
+                "position {position} must keep naming {id}"
+            );
+        }
+    }
+
+    /// Fabricate exactly the managed state `install_manifest_product` records
+    /// for one product: a marker-carrying product tree, a cached archive and
+    /// (optionally) the bin command — plus the matching receipt entry.
+    fn removal_fixture(
+        data_root: &Path,
+        id: &str,
+        revision: &str,
+        executable: Option<&str>,
+    ) -> InstalledProduct {
+        let product_root = data_root.join("products").join(id).join(revision);
+        fs::create_dir_all(product_root.join("payload")).unwrap();
+        fs::write(product_root.join(".oi-install.json"), "{}").unwrap();
+        fs::write(product_root.join("payload").join("managed.txt"), "managed").unwrap();
+        let cache_dir = data_root.join("cache").join(id).join(revision);
+        fs::create_dir_all(&cache_dir).unwrap();
+        fs::write(cache_dir.join("archive.tar.gz"), "archive").unwrap();
+        let executable_path = executable.map(|name| {
+            let path = data_root.join("bin").join(name);
+            fs::create_dir_all(path.parent().unwrap()).unwrap();
+            fs::write(&path, "#!/bin/sh\n").unwrap();
+            path.display().to_string()
+        });
+        InstalledProduct {
+            revision: revision.to_owned(),
+            asset: "archive.tar.gz".to_owned(),
+            sha256: "0".repeat(64),
+            installed_at_ms: 0,
+            attestation: "attestation".to_owned(),
+            attestation_locally_verified: false,
+            root: product_root.join("payload").display().to_string(),
+            executable: executable_path,
+        }
+    }
+
+    fn managed_registration(id: &str, executable: Option<&Path>, root: Option<&Path>) -> Registration {
+        Registration {
+            id: id.to_owned(),
+            public_name: id.to_owned(),
+            native_executable: executable.map(|path| path.display().to_string()),
+            alias: None,
+            version: None,
+            docs: "docs".to_owned(),
+            skill: None,
+            root: root.map(|path| path.display().to_string()),
+            modality: oi_cli::modality::InstallModality::FreshGround,
+            install_source: Some("recorded-release-artifact".to_owned()),
+        }
+    }
+
+    fn stub_outcome(product: &str) -> ProductRemovalOutcome {
+        ProductRemovalOutcome {
+            product: product.to_owned(),
+            public_name: product.to_owned(),
+            revision: "revision".to_owned(),
+            removed: vec![RemovalEntry { kind: "managed product files", path: "/managed".to_owned() }],
+            already_absent: Vec::new(),
+            retained: Vec::new(),
+            residuals: Vec::new(),
+        }
+    }
+
+    #[test]
+    fn removal_takes_only_receipt_owned_files_and_leaves_the_rest_intact() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let ground = TempDir::new().unwrap();
+        fs::write(ground.path().join("authored.txt"), "authored").unwrap();
+
+        let mut receipt = removal_empty_receipt(&manifest);
+        receipt.products.insert("central".to_owned(), removal_fixture(data.path(), "central", "central-revision", Some("ctrl")));
+        receipt.products.insert("software-factory".to_owned(), removal_fixture(data.path(), "software-factory", "factory-revision", None));
+        let mut composition = Composition {
+            personal_ground: Some(ground.path().display().to_string()),
+            ..Composition::default()
+        };
+        composition.modules.insert("central".to_owned(), managed_registration("central", Some(&data.path().join("bin/ctrl")), None));
+        composition.modules.insert(
+            "software-factory".to_owned(),
+            managed_registration("software-factory", None, Some(&data.path().join("products/software-factory/factory-revision/payload"))),
+        );
+
+        let plan = removal_plan_for_product(&manifest, &receipt, &composition, data.path(), "software-factory").unwrap();
+        assert!(
+            plan.steps.iter().all(|step| step.kind != "installed command"),
+            "a component product has no recorded command to remove"
+        );
+        let outcome = execute_product_removal(&plan, &mut composition, &mut receipt);
+        assert!(outcome.residuals.is_empty(), "{:?}", outcome.residuals);
+        assert!(outcome.already_absent.is_empty(), "{:?}", outcome.already_absent);
+
+        // Owned: gone. Everything else: exactly where it was.
+        assert!(!data.path().join("products/software-factory").exists());
+        assert!(!data.path().join("cache/software-factory").exists());
+        assert!(data.path().join("products/central").exists());
+        assert!(data.path().join("cache/central").exists());
+        assert!(data.path().join("bin/ctrl").is_file());
+        assert!(ground.path().join("authored.txt").is_file());
+        assert!(composition.modules.contains_key("central"));
+        assert!(!composition.modules.contains_key("software-factory"));
+        assert!(receipt.products.contains_key("central"));
+        assert!(!receipt.products.contains_key("software-factory"));
+
+        let receipt_path = write_removal_receipt(data.path(), &manifest, &[outcome], &composition).unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&fs::read(&receipt_path).unwrap()).unwrap();
+        assert_eq!(value["schema"], "oi.suite-removal/v1");
+        assert!(
+            value["products"]["software-factory"]["removed"].as_array().is_some_and(|entries| !entries.is_empty()),
+            "{}",
+            serde_json::to_string_pretty(&value).unwrap()
+        );
+        assert!(value["requested_mode"].is_null(), "no request recorded, none disclosed");
+    }
+
+    #[test]
+    fn removal_removes_the_recorded_command_and_its_staging_temporary() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let mut receipt = removal_empty_receipt(&manifest);
+        receipt.products.insert("ai-kit".to_owned(), removal_fixture(data.path(), "ai-kit", "aikit-revision", Some("aikit")));
+        fs::write(data.path().join("bin/.aikit.tmp"), "staged").unwrap();
+        let mut composition = Composition::default();
+        composition.modules.insert("ai-kit".to_owned(), managed_registration("ai-kit", Some(&data.path().join("bin/aikit")), None));
+
+        let plan = removal_plan_for_product(&manifest, &receipt, &composition, data.path(), "ai-kit").unwrap();
+        let outcome = execute_product_removal(&plan, &mut composition, &mut receipt);
+        assert!(outcome.residuals.is_empty(), "{:?}", outcome.residuals);
+        assert!(!data.path().join("bin/aikit").exists());
+        assert!(!data.path().join("bin/.aikit.tmp").exists());
+        assert!(outcome.removed.iter().any(|entry| entry.kind == "installed command"));
+        assert!(outcome.removed.iter().any(|entry| entry.kind == "staged command temporary"));
+        assert!(outcome.removed.iter().any(|entry| entry.kind == "composition registration"));
+    }
+
+    #[test]
+    fn a_command_outside_the_managed_root_is_retained_and_named() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let outside = TempDir::new().unwrap();
+        let outside_exe = outside.path().join("elsewhere/aikit");
+        fs::create_dir_all(outside_exe.parent().unwrap()).unwrap();
+        fs::write(&outside_exe, "#!/bin/sh\n").unwrap();
+
+        let mut receipt = removal_empty_receipt(&manifest);
+        let mut product = removal_fixture(data.path(), "ai-kit", "aikit-revision", None);
+        product.executable = Some(outside_exe.display().to_string());
+        receipt.products.insert("ai-kit".to_owned(), product);
+        let mut composition = Composition::default();
+        composition.modules.insert("ai-kit".to_owned(), managed_registration("ai-kit", Some(&outside_exe), None));
+
+        let plan = removal_plan_for_product(&manifest, &receipt, &composition, data.path(), "ai-kit").unwrap();
+        assert!(plan.steps.iter().all(|step| step.kind != "installed command"), "an unowned command is never a removal step");
+        let outcome = execute_product_removal(&plan, &mut composition, &mut receipt);
+        assert!(outcome.residuals.is_empty(), "{:?}", outcome.residuals);
+        assert!(outside_exe.is_file(), "a pre-existing native installation is preserved");
+        assert!(outcome.retained.iter().any(|note| note.kind == "recorded-command-outside-managed-root"));
+    }
+
+    #[test]
+    fn unowned_entries_inside_the_product_tree_are_retained_and_explained() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let mut receipt = removal_empty_receipt(&manifest);
+        receipt.products.insert("software-factory".to_owned(), removal_fixture(data.path(), "software-factory", "factory-revision", None));
+        let stranger = data.path().join("products/software-factory/stranger");
+        fs::create_dir_all(&stranger).unwrap();
+        fs::write(stranger.join("note.txt"), "not ours").unwrap();
+        let composition = Composition::default();
+
+        let plan = removal_plan_for_product(&manifest, &receipt, &composition, data.path(), "software-factory").unwrap();
+        let mut composition = composition;
+        let outcome = execute_product_removal(&plan, &mut composition, &mut receipt);
+        assert!(outcome.residuals.is_empty(), "{:?}", outcome.residuals);
+        assert!(stranger.is_dir(), "an entry without the installer marker is not owned and stays");
+        assert!(!data.path().join("products/software-factory/factory-revision").exists());
+        assert!(outcome.retained.iter().any(|note| note.kind == "unowned-entry-left-in-place"
+            && note.path.as_deref().is_some_and(|path| path.ends_with("stranger"))));
+    }
+
+    #[test]
+    fn an_interrupted_install_removes_to_an_explained_already_absent_state() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        // The receipt was written, but the run died before anything was
+        // promoted into place: the recorded files do not exist.
+        let mut receipt = removal_empty_receipt(&manifest);
+        receipt.products.insert("workcell".to_owned(), InstalledProduct {
+            revision: "workcell-revision".to_owned(),
+            asset: "archive.tar.gz".to_owned(),
+            sha256: "0".repeat(64),
+            installed_at_ms: 0,
+            attestation: "attestation".to_owned(),
+            attestation_locally_verified: false,
+            root: data.path().join("products/workcell/workcell-revision/payload").display().to_string(),
+            executable: Some(data.path().join("bin/workcell").display().to_string()),
+        });
+        let mut composition = Composition::default();
+        composition.modules.insert("workcell".to_owned(), managed_registration("workcell", Some(&data.path().join("bin/workcell")), None));
+
+        let plan = removal_plan_for_product(&manifest, &receipt, &composition, data.path(), "workcell").unwrap();
+        let outcome = execute_product_removal(&plan, &mut composition, &mut receipt);
+        assert!(outcome.residuals.is_empty(), "absence after an interrupted install is not a failure: {:?}", outcome.residuals);
+        let absent_kinds: Vec<_> = outcome.already_absent.iter().map(|entry| entry.kind).collect();
+        assert!(absent_kinds.contains(&"managed product files"));
+        assert!(absent_kinds.contains(&"downloaded build archives"));
+        assert!(absent_kinds.contains(&"installed command"));
+        assert!(!composition.modules.contains_key("workcell"));
+        assert!(!receipt.products.contains_key("workcell"));
+    }
+
+    #[test]
+    fn a_repeated_removal_names_the_previous_removal_receipt() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let composition = Composition::default();
+        let receipt = removal_empty_receipt(&manifest);
+        let recorded = write_removal_receipt(data.path(), &manifest, &[stub_outcome("workcell")], &composition).unwrap();
+
+        let found = latest_removal_receipt_for(data.path(), "workcell").unwrap();
+        assert_eq!(found.as_deref(), Some(recorded.as_path()));
+        assert!(latest_removal_receipt_for(data.path(), "ai-kit").unwrap().is_none());
+
+        let error = removal_plan_for_product(&manifest, &receipt, &composition, data.path(), "workcell").unwrap_err();
+        assert!(error.contains("not installed on this machine"), "{error}");
+    }
+
+    #[test]
+    fn removing_a_requested_mode_product_names_the_shortfall_and_keeps_the_request() {
+        let composition = Composition {
+            requested_mode: Some(RequestedMode {
+                frame: "0/1/2/3".to_owned(),
+                set_at_unix_seconds: 1,
+                set_by: "oi mode set".to_owned(),
+            }),
+            ..Composition::default()
+        };
+
+        let removal = stub_outcome("software-factory");
+        let note = requested_mode_note_after_removal(&composition, &[removal]).expect("a requested-mode product was removed");
+        assert!(note.contains("0/1/2/3"), "{note}");
+        assert!(note.contains("Software Factory"), "{note}");
+        assert!(note.contains("left unchanged"), "{note}");
+
+        // A product outside the requested composition creates no shortfall.
+        let unrelated = stub_outcome("quaternal-logic");
+        assert!(requested_mode_note_after_removal(&composition, &[unrelated]).is_none());
+
+        // The receipt discloses the shortfall honestly and never a rewrite.
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let removal = stub_outcome("software-factory");
+        let path = write_removal_receipt(data.path(), &manifest, &[removal], &composition).unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert_eq!(value["requested_mode"]["frame"], "0/1/2/3");
+        assert_eq!(value["requested_mode"]["request_left_unchanged"], true);
+        assert_eq!(value["requested_mode"]["removal_created_shortfall"], true);
+    }
+
+    #[test]
+    fn composition_without_a_requested_mode_records_no_mode_claim() {
+        let manifest = suite_manifest().unwrap();
+        let data = TempDir::new().unwrap();
+        let composition = Composition::default();
+        let path = write_removal_receipt(data.path(), &manifest, &[stub_outcome("workcell")], &composition).unwrap();
+        let value: serde_json::Value = serde_json::from_slice(&fs::read(&path).unwrap()).unwrap();
+        assert!(value["requested_mode"].is_null());
     }
 }
