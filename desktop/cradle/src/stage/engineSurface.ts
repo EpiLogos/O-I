@@ -81,31 +81,39 @@ export class EngineSurface {
   private detachPointer: () => void = () => {};
   private onError: (message: string) => void;
   private retainedLeaseOwner: string | null = null;
+  private readonly home: HTMLElement;
+  private readonly homeElement: HTMLElement | null;
+  private readonly homeStyle: string;
 
   private constructor(canvas: HTMLCanvasElement, element: HTMLElement | null, onError: (message: string) => void) {
     this.canvas = canvas;
+    this.home = canvas.parentElement!;
+    this.homeElement = element;
+    this.homeStyle = canvas.style.cssText;
     this.element = element;
     this.onError = onError;
     const factory = window.OI_ENGINE_FACTORY;
     this.adapter = factory
       ? (factory(canvas) as ProductionAdapter)
       : new ProductionAdapter(canvas);
-    const pointerTarget = element ?? window;
+    const pointerTarget = window;
     const move = (event: PointerEvent) => {
+      const element = this.element;
       const width = element ? element.clientWidth : window.innerWidth;
       const height = element ? element.clientHeight : window.innerHeight;
       const origin = stageCentre(width, height);
       const scale = (stageScale(width, height) * CAMERA_2D.zoom) / WORLD_SCALE;
       const localX = element ? event.clientX - element.getBoundingClientRect().left : event.clientX;
       const localY = element ? event.clientY - element.getBoundingClientRect().top : event.clientY;
+      if (element && (localX < 0 || localY < 0 || localX > width || localY > height)) { leave(); return; }
       this.pointer = { active: true, world: { x: (localX - origin.x) / scale, y: -(localY - origin.y) / scale, z: 0 } };
     };
     const leave = () => { this.pointer = { active: false, world: this.pointer.world }; };
     pointerTarget.addEventListener("pointermove", move as EventListener, { passive: true });
-    (element ?? document.documentElement).addEventListener("pointerleave", leave);
+    document.documentElement.addEventListener("pointerleave", leave);
     this.detachPointer = () => {
       pointerTarget.removeEventListener("pointermove", move as EventListener);
-      (element ?? document.documentElement).removeEventListener("pointerleave", leave);
+      document.documentElement.removeEventListener("pointerleave", leave);
     };
     if (element) {
       this.observer = new ResizeObserver(() => this.wake());
@@ -148,6 +156,34 @@ export class EngineSurface {
     if (this.retainedLeaseOwner) throw new Error("Release the native domain binding before authoring this stage");
     this.selectedIds = selectedIds;
     this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
+    this.wake();
+  }
+
+  /** Move the same canvas/context/clock between page and focused hosts.
+   * Placement never creates a production adapter or changes the scene. */
+  setContainer(id: string, container: HTMLElement | null) {
+    this.require(id);
+    if (container && (container.ownerDocument !== this.canvas.ownerDocument || !container.isConnected || container === this.canvas || this.canvas.contains(container))) {
+      throw new Error("Expression container must be a connected element in this window.");
+    }
+    if (this.element === (container ?? this.homeElement)) return;
+    this.observer?.disconnect();
+    this.observer = null;
+    this.element = container ?? this.homeElement;
+    this.canvas.style.cssText = this.homeStyle;
+    if (container) {
+      Object.assign(this.canvas.style, { position: "absolute", inset: "0", width: "100%", height: "100%", zIndex: "0", pointerEvents: "none" });
+      container.append(this.canvas);
+      this.observer = new ResizeObserver(() => this.wake());
+      this.observer.observe(container);
+    } else {
+      this.home.append(this.canvas);
+      if (this.homeElement) {
+        this.observer = new ResizeObserver(() => this.wake());
+        this.observer.observe(this.homeElement);
+      }
+    }
+    this.pointer.active = false;
     this.wake();
   }
 
@@ -210,6 +246,7 @@ export class EngineSurface {
 
   release(id: string) {
     if (!this.active || this.active.id !== id) { this.clearTimers(); return; }
+    this.setContainer(id, null);
     this.clearTimers();
     if (this.retainedLeaseOwner === id) {
       this.adapter.releaseRetainedField();
@@ -234,12 +271,9 @@ export class EngineSurface {
     if (!this.active || !this.live) throw new Error("The engine surface has no live presentation to capture.");
     const w = Math.max(1, Math.round(width ?? this.canvas.width));
     const h = Math.max(1, Math.round(height ?? this.canvas.height));
-    try {
-      return this.adapter.withCleanFrame(() => this.adapter.capture(w, h));
-    } catch (cause) {
-      this.fail(cause);
-      throw cause;
-    }
+    // A refused capture (for example a decoding source) is an operation
+    // failure, not permission to destroy the live presentation and its draft.
+    return this.adapter.withCleanFrame(() => this.adapter.capture(w, h));
   }
 
   setPaused(paused: boolean) { this.paused = paused; if (!paused) this.wake(); }
