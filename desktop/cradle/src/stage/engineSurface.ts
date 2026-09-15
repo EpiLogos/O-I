@@ -71,15 +71,32 @@ const CAMERA_2D: EngineFrame["camera"] = {
 };
 
 const IDLE_CONFIG: NativeConfig = { glyph: " ", particleCount: 2048 };
+/** The host's current canvas ground (the desktop theme's paper), read from
+ * the design-system token so authored recipes — the mark, the focused
+ * medium — take the ink the appearance calls for. The engine derives its
+ * ink from the scene background (light ground → ink, dark ground → paper).
+ * Absent a host token (bare test pages) the recipe's own ground stands. */
+function hostGround(): string | null {
+  try {
+    const value = getComputedStyle(document.body).getPropertyValue("--oi-canvas-ground").trim();
+    return /^#[0-9a-fA-F]{6}$/.test(value) ? value : null;
+  } catch { return null; }
+}
 const STAGE_IDLE = "stage-idle";
 /** How long a released field keeps its clock to settle the hand-over
  * (the idle scene's own transition) before the surface sleeps. */
 const SETTLE_MS = 900;
 
+/** The presentation the surface currently holds. `recipe` is the unthemed
+ * authored material of a recipe presentation (absent for document
+ * presentations and the idle hand-over). */
+interface ActivePresentation { id: string; scene: StageScene; revision: number; recipe?: NativeConfig }
+
 export class EngineSurface {
   readonly canvas: HTMLCanvasElement;
   private adapter: ProductionAdapter;
-  private active: { id: string; scene: StageScene; revision: number } | null = null;
+  private active: ActivePresentation | null = null;
+  private themeObserver: MutationObserver | null = null;
   private revision = 0;
   private selectedIds: string[] = [];
   private live = false;
@@ -138,6 +155,11 @@ export class EngineSurface {
     }
     document.addEventListener("visibilitychange", this.wake);
     this.reduced.addEventListener("change", this.wake);
+    // Recipe presentations follow the host appearance: when the theme
+    // flips, the same scene is re-grounded (revision bump, no reseed) so
+    // the ink re-derives — one still frame under reduced motion.
+    this.themeObserver = new MutationObserver(() => this.retheme());
+    this.themeObserver.observe(document.body, { attributes: true, attributeFilter: ["data-theme", "class"] });
     this.markDormant(true);
   }
 
@@ -167,7 +189,7 @@ export class EngineSurface {
     this.live = true;
     this.settleUntil = 0;
     this.markDormant(false);
-    this.activate(id, this.sceneFrom(stageRecipe(recipe)));
+    this.activateRecipe(id, stageRecipe(recipe));
     this.wake();
   }
 
@@ -212,8 +234,8 @@ export class EngineSurface {
 
   update(id: string, recipe: string) {
     const active = this.require(id);
-    const merged = mergePatch(active.scene.native?.config ?? {}, stageRecipe(recipe));
-    this.activate(id, this.sceneFrom(merged, id));
+    const merged = mergePatch(active.recipe ?? active.scene.native?.config ?? {}, stageRecipe(recipe));
+    this.activateRecipe(id, merged, id);
     this.wake();
   }
 
@@ -363,6 +385,8 @@ export class EngineSurface {
     this.observer = null;
     document.removeEventListener("visibilitychange", this.wake);
     this.reduced.removeEventListener("change", this.wake);
+    this.themeObserver?.disconnect();
+    this.themeObserver = null;
     this.detachPointer();
     this.active = null;
     this.live = false;
@@ -374,7 +398,20 @@ export class EngineSurface {
   }
 
   private activate(id: string, scene: StageScene) { this.active = { id, scene, revision: ++this.revision }; }
-  private require(id: string): { id: string; scene: StageScene; revision: number } {
+  /** Authored recipe material on the host's ground. The unthemed recipe is
+   * kept so overlays and re-theming compose on the authored config. */
+  private activateRecipe(id: string, recipe: NativeConfig, sceneId?: string) {
+    const ground = hostGround();
+    const themed = ground ? mergePatch(recipe, { backgroundColor: ground, color: { backgroundColor: ground } }) : recipe;
+    this.active = { id, scene: this.sceneFrom(themed, sceneId), revision: ++this.revision, recipe };
+  }
+  private retheme() {
+    const active = this.active;
+    if (!active?.recipe || !this.live) return;
+    this.activateRecipe(active.id, active.recipe, active.scene.id);
+    this.wake();
+  }
+  private require(id: string): ActivePresentation {
     if (!this.active || this.active.id !== id) throw new Error(`The engine surface is not presenting "${id}".`);
     return this.active;
   }

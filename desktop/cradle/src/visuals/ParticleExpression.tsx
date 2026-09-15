@@ -42,6 +42,12 @@ function applyTheme(theme: VisualsSnapshot["theme"]) {
   else delete document.body.dataset.theme;
 }
 
+// The appearance is applied synchronously at module load as well as by the
+// pre-paint script in index.html: both resolve the same persisted choice,
+// so a window (primary or detached) whose HTML lacks the inline script
+// still lands on the right ground before the first React commit.
+if (typeof document !== "undefined") applyTheme(visuals.get().theme);
+
 export function VisualsProvider({ children }: { children: ReactNode }) {
   const kernel = useKernel();
   const [snapshot, setSnapshot] = useState<VisualsSnapshot>(() => visuals.get());
