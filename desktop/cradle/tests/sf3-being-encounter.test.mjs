@@ -34,6 +34,18 @@ test('invalid or absent projected Activity is never upgraded to attribution',()=
  assert.equal(beingEncounter({state:'unavailable',detail:'host offline'},'participant:x').state,'unavailable');
 });
 
+test('multiple human grants require an explicit reviewer instead of using row order',()=>{
+ const ambiguous=structuredClone(snapshot);
+ ambiguous.participants.push(
+  {participant_ref:'participant:world-b:human',field_ref:'oi:field:lesson',identity:{kind:'human',ref:'human:world-b'},presentation:{chosen_name:'B'}},
+  {participant_ref:'participant:world-c:human',field_ref:'oi:field:lesson',identity:{kind:'human',ref:'human:world-c'},presentation:{chosen_name:'C'}},
+ );
+ ambiguous.my_authority.push({field_ref:'oi:field:lesson',participant_ref:'participant:world-c:human',role:'observer',revoked:false});
+ const being=beingEncounter(ambiguous,'participant:world-a:epii');
+ assert.equal(being.viewer,null);
+ assert.deepEqual(being.reviewers.map(row=>row.identity.ref),['human:world-b','human:world-c']);
+});
+
 test('latest projection lifecycle prevents withdrawn or conflicting Expression resurrection',()=>{
  const withdrawn=structuredClone(snapshot);withdrawn.projections.push({...withdrawn.projections[0],state:'withdrawn',projection_revision:4});
  assert.equal(beingEncounter(withdrawn,'participant:world-a:epii').expressionComposition,null);

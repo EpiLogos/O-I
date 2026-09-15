@@ -20,7 +20,8 @@ export function beingEncounter(snapshot,participantRef) {
     relation:row.relation,origin:row.origin,direction:row.from===participantRef?'out':'in',other:row.from===participantRef?row.to:row.from,
   }));
   const membership=(snapshot.my_authority??[]).filter(row=>row.field_ref===participant.field_ref&&!row.revoked);
-  const viewer=membership.map(row=>(snapshot.participants??[]).find(candidate=>candidate.participant_ref===row.participant_ref)).find(Boolean)??null;
+  const reviewers=membership.map(row=>(snapshot.participants??[]).find(candidate=>candidate.participant_ref===row.participant_ref)).filter(candidate=>candidate?.identity?.kind==='human');
+  const viewer=reviewers.length===1?reviewers[0]:null;
   const related=new Set(relations.map(row=>row.other));
   const projectedExpression=(()=>{
     const latest=new Map();for(const projection of snapshot.projections??[]){const prior=latest.get(projection.projection_ref);if(!prior||Number(projection.projection_revision)>Number(prior.projection_revision))latest.set(projection.projection_ref,projection);}
@@ -35,7 +36,7 @@ export function beingEncounter(snapshot,participantRef) {
     state:'available',participant,identity:participant.identity,label:presentation.chosen_name??participant.participant_ref,
     profile:typeof presentation.summary==='string'?presentation.summary:null,
     presence:typeof presentation.presence==='string'?presentation.presence:null,
-    activity,methods:strings(presentation.method_refs),relations,membership,viewer,address,
+    activity,methods:strings(presentation.method_refs),relations,membership,reviewers,viewer,address,
     agency:participant.identity.kind==='agent'&&participant.agency?participant.agency:null,
     expressionRef:projectedExpression?.composition.expression_ref??null,
     expressionRevision:projectedExpression?.composition.revision??null,
