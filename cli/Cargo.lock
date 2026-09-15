@@ -379,6 +379,16 @@ dependencies = [
 ]
 
 [[package]]
+name = "oi-config-conformance"
+version = "0.1.0"
+dependencies = [
+ "oi-cli",
+ "serde",
+ "serde_json",
+ "sha2",
+]
+
+[[package]]
 name = "oi-cradle-kernel"
 version = "0.1.0"
 dependencies = [

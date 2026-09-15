@@ -1,4 +1,4 @@
-import {useEffect,useRef,useState} from "react";
+import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -11,6 +11,9 @@ import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
 import {useMaterialContext} from "../context/PageContext";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
+// @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
+import {readPage} from "../personal/page.mjs";
+import {PageExpression,type PageExpressionHostedState} from "../personal/PageExpression";
 
 /** One material path segment, percent-encoded whole (mirrors
  * `ctrl/src/files.rs::escape` closely enough for URL transport — the
@@ -100,11 +103,16 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const [generation, setGeneration] = useState(0);
   useEffect(() => { try { localStorage.setItem(viewKey, JSON.stringify({zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,zoom]);
   const [textContent, setTextContent] = useState<string>();
+  const [textRevision, setTextRevision] = useState<string>();
   const [disposition, setDisposition] = useState<Disposition>();
   const [imageDataUrl, setImageDataUrl] = useState<string>();
   const [error, setError] = useState<string>();
   const [pending, setPending] = useState(true);
   const [pdfFailed, setPdfFailed] = useState(false);
+  const htmlFrame = useRef<HTMLIFrameElement>(null);
+  const [htmlFrameLoaded,setHtmlFrameLoaded]=useState(-1);
+  const [hostedExpression,setHostedExpression]=useState<PageExpressionHostedState>();
+  const [pageExpressionInvalidated,setPageExpressionInvalidated]=useState(false);
   const location = binding.location;
 
   useEffect(() => {
@@ -120,7 +128,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     const run = async () => {
       if (format === "html" || format === "markdown") {
         const reading = await readFile(transport, location);
-        if (live) setTextContent(reading.content);
+        if (live) {setTextContent(reading.content);setTextRevision(reading.revision);}
       } else if (format === "unsupported") {
         const reading = await readFileBytes(transport, location);
         if (live) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
@@ -151,6 +159,22 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const resolveAsset = (relative: string) => materialUrl(transport, location, relative) ?? "";
   const baseUrl = materialUrl(transport, location);
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
+  const personalPage=useMemo(()=>{if(format!=="html"||!textContent||!textRevision)return undefined;try{const parsed=readPage(textContent);return parsed.page.expression?parsed:undefined;}catch{return undefined;}},[format,textContent,textRevision]);
+  const receiveHostedState=useCallback((state:PageExpressionHostedState)=>setHostedExpression(state),[]);
+  useEffect(()=>setPageExpressionInvalidated(false),[generation,textRevision]);
+  useEffect(()=>{
+    const frame=htmlFrame.current;
+    if(format!=="html"||!frame||htmlFrameLoaded!==generation||!personalPage||!textRevision||!hostedExpression)return;
+    const expression=personalPage.page.expression,frameGeneration=String(generation);
+    const exact=hostedExpression.pageRef===(binding.ref??binding.id)&&hostedExpression.fileRevision===textRevision&&hostedExpression.documentId===(personalPage.meta.documentId??null)&&hostedExpression.documentRevision===personalPage.meta.revision&&hostedExpression.expressionRef===expression.expression_ref&&hostedExpression.expressionRevision===expression.expression_revision;
+    const sourceExact=frame.dataset.fileRevision===textRevision&&frame.dataset.generation===frameGeneration&&(transport.kind==="tauri"?frame.getAttribute("src")===baseUrl:frame.hasAttribute("srcdoc"));
+    if(!exact||!sourceExact)return;
+    const token=crypto.randomUUID();let disposed=false;
+    const receive=(event:MessageEvent)=>{const value=event.data;if(disposed||event.source!==frame.contentWindow||value?.token!==token||value.generation!==generation||value.page?.document_id!==hostedExpression.documentId||value.page?.revision!==hostedExpression.documentRevision||value.expression?.ref!==hostedExpression.expressionRef||value.expression?.revision!==hostedExpression.expressionRevision)return;if(value.type==="oi:page-expression-host-invalidated"){setPageExpressionInvalidated(true);return;}if(value.type!=="oi:page-expression-host-response")return;if(value.accepted!==true&&hostedExpression.live)setHostedExpression(previous=>previous&&{...previous,live:false});};
+    window.addEventListener("message",receive);
+    frame.contentWindow?.postMessage({type:"oi:page-expression-host",token,generation,live:hostedExpression.live,page:{document_id:hostedExpression.documentId,revision:hostedExpression.documentRevision},expression:{ref:hostedExpression.expressionRef,revision:hostedExpression.expressionRevision}},"*");
+    return()=>{disposed=true;window.removeEventListener("message",receive);};
+  },[format,htmlFrameLoaded,personalPage,textRevision,hostedExpression,generation,binding.ref,binding.id,transport.kind,baseUrl]);
 
   return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
@@ -165,9 +189,10 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
       // §3.3: the export is separate from native Save and overwrites
       // nothing). The frame stays opaque-origin with no bridge authority.
       transport.kind === "tauri"
-        ? <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
-        : <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
+        ? <iframe ref={htmlFrame} onLoad={()=>setHtmlFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
+        : <iframe ref={htmlFrame} onLoad={()=>setHtmlFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
     )}</div></div>}
+    {!error&&!pending&&personalPage&&textRevision&&!pageExpressionInvalidated&&<PageExpression page={personalPage} fileRevision={textRevision} pageRef={binding.ref??binding.id} onHostedState={receiveHostedState}/>}
     {!error && !pending && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
       <iframe data-page-context key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
     </div></div>}

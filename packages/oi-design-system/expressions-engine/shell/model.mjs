@@ -1,3 +1,6 @@
+import { validateAutomationLinks } from "./automationLinks.mjs";
+import { validateWorkspace, defaultWorkspace } from "./workspacePreferences.mjs";
+import { validateTracks } from "./propertyTracks.mjs";
 const DEFAULT_ENGINE_SETTINGS = { paletteSource: "custom", grainProfile: true, backgroundMode: "solid", resonatorMode: "resonator", focusOrder: "listed", dotShape: "circle", fontFamily: "system-ui, -apple-system, sans-serif", fontWeight: 900, resonanceEnabled: true, morphEnabled: false, trajectory: "toroidalHopf", driveShape: "sine", autoOscillate: true, relationalEnabled: false, relationalMode: "orbital", pointerMode: "repel", colorMode: "linearGradient", colorEnabled: true, mediumPlane: "vertical", autoSweep: false, sweepDirection: "ascent" };
 const clone = (v) => JSON.parse(JSON.stringify(v));
 const uid = (prefix = "id") => prefix + "-" + (globalThis.crypto?.randomUUID?.() ?? Math.random().toString(36).slice(2, 12));
@@ -82,6 +85,7 @@ function pin(position) {
 }
 function blankScene(name = "Untitled scene") {
   return {
+    toolbelt: defaultWorkspace().entries,
     engine: { ...DEFAULT_ENGINE_SETTINGS },
     id: uid("scene"),
     name,
@@ -214,7 +218,7 @@ function smallLanguage() {
   return j;
 }
 function blankJourney() {
-  return { schema: "oi.journey", version: 1, id: uid("journey"), name: "Untitled expression", description: "", loop: true, scenes: [blankScene()], updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
+  return { schema: "oi.journey", version: 1, savedScenes: {}, id: uid("journey"), name: "Untitled expression", description: "", loop: true, scenes: [blankScene()], updatedAt: (/* @__PURE__ */ new Date()).toISOString() };
 }
 function validateJourney(value) {
   if (!value || typeof value !== "object") throw new Error("Choose a Field Studies journey JSON file.");
@@ -236,6 +240,9 @@ function validateJourney(value) {
   if (!str(j.name, 160) || !safeId(j.id) || !str(j.description) || typeof j.loop !== "boolean" || !Array.isArray(j.scenes) || !j.scenes.length || j.scenes.length > 64) throw new Error("Journey metadata or scene count is invalid (1\u201364 scenes).");
   const ids = /* @__PURE__ */ new Set();
   for (const s of j.scenes) {
+    if (s.propertyTakeRange && (!Number.isFinite(s.propertyTakeRange.start) || !Number.isFinite(s.propertyTakeRange.end) || s.propertyTakeRange.start < 0 || s.propertyTakeRange.end <= s.propertyTakeRange.start || s.propertyTakeRange.end > 3600)) throw new Error("Invalid property take interval");
+    if (s.toolbelt !== void 0) s.toolbelt = validateWorkspace({ version: 1, appearance: "scene", entries: s.toolbelt }).entries;
+    if (s.propertyTracks !== void 0) s.propertyTracks = validateTracks(s.propertyTracks);
     s.engine = { ...DEFAULT_ENGINE_SETTINGS, ...s.engine };
     if (!safeId(s.id) || ids.has(s.id) || !str(s.name, 160) || !str(s.character) || !finite(s.duration, 1, 3600) || !finite(s.transition, 0, 30)) throw new Error("Invalid or duplicate scene.");
     ids.add(s.id);
@@ -269,8 +276,18 @@ function validateJourney(value) {
     }
     if (!s.composition || !["XY", "XZ", "YZ"].includes(s.composition.plane) || !["parallel", "travelling"].includes(s.composition.focus) || !finite(s.composition.focusDuration, 0.01, 3600) || !["manual", "focus", "automation"].includes(s.composition.frequencyDriver)) throw new Error("Invalid composition.");
     if (!s.morph || !["theta", "product", "sum", "beat"].includes(s.morph.law) || !finite(s.morph.thetaRate, -100, 100) || !finite(s.morph.phiRate, -100, 100) || !finite(s.morph.thetaOffset, -1e3, 1e3) || !finite(s.morph.phiOffset, -1e3, 1e3) || !finite(s.morph.depth, -10, 10) || !finite(s.morph.dwell, 0, 0.99)) throw new Error("Invalid morph clock.");
+    validateAutomationLinks(s.automation);
     for (const a of s.automation) {
-      if (!safeId(a.id) || !str(a.target, 250) || !["lfo", "ramp"].includes(a.type) || !["sine", "triangle", "square", "saw", "steps", "smooth"].includes(a.wave) || !["replace", "add", "multiply"].includes(a.blend) || !["once", "loop", "pingpong"].includes(a.loop) || ![a.min, a.max, a.rate, a.phase, a.duration, a.delay].every((n) => typeof n === "number" && Number.isFinite(n)) || !(a.firedAt === null || typeof a.firedAt === "number" && Number.isFinite(a.firedAt))) throw new Error("Invalid automation lane.");
+      if (!safeId(a.id) || !str(a.target, 250) || !["lfo", "ramp"].includes(a.type) || !["sine", "triangle", "square", "saw", "steps", "smooth", "morph"].includes(a.wave) || !["replace", "add", "multiply"].includes(a.blend) || !["once", "loop", "pingpong"].includes(a.loop) || ![a.min, a.max, a.rate, a.phase, a.duration, a.delay].every((n) => typeof n === "number" && Number.isFinite(n)) || !(a.firedAt === null || typeof a.firedAt === "number" && Number.isFinite(a.firedAt))) throw new Error("Invalid automation lane.");
+    }
+  }
+  if (j.savedScenes !== void 0) {
+    if (!j.savedScenes || typeof j.savedScenes !== "object" || Array.isArray(j.savedScenes)) throw new Error("Invalid saved scenes.");
+    const saved = Object.entries(j.savedScenes);
+    if (saved.length > 64 || saved.some(([id, s]) => !ids.has(id) || !s || s.id !== id)) throw new Error("Saved scene does not match its working scene.");
+    if (saved.length) {
+      const checked = validateJourney({ ...j, savedScenes: void 0, scenes: saved.map(([, s]) => s) });
+      j.savedScenes = Object.fromEntries(checked.scenes.map((s) => [s.id, s]));
     }
   }
   return clone(j);

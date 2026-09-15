@@ -139,3 +139,22 @@ See `spacetimedb/HOSTING.md`. The site's Explore connects to the database named
 by the repository variables `OI_SPACETIMEDB_URI` / `OI_SPACETIMEDB_DATABASE`;
 `hosting.json` names the targets; `deploy.sh` publishes the module; the owner's
 login and the SDK owner token never enter the repository.
+
+## Curated HTML artifacts (Lane C step 4)
+
+`curated-html-projection.mjs` projects one authored artifact — a Flow instance
+(the ratified `ql-doc` carrier under `Control/user/flows/`) or a Central
+document — through the same seam: an explicit
+`oi.curated-artifact-selection/v1` names the entries, the disclosable meta
+(`document_id`, `title`, `created`, `template`, `revision` only), any withheld
+collection the owner deliberately includes (journal/packet/notes/media stay
+home by default) and the audience. The WorldPresentation renders only the
+selection; the hosted edition is **rebuilt** from the Projection (no source
+byte, no embedded carrier state, a script-forbidding CSP) — never the original
+file with something hidden. The artifact is one Explore entry of kind
+`curated-artifact`, related to its Wiki node through `node-source` (origin
+`wiki` when the reading attests it, `projection` when the owner declares it);
+it is not a Wiki page. `scripts/publish-artifact.mjs` is the local step;
+`spacetimedb/field.sh publish` is the push. Admitted replies enter a later
+revision only through the selection's `replies` (a refinement: the source
+revision stays constant).

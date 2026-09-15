@@ -25,10 +25,12 @@ import "./flow/flow.css";
  * the empty-workspace region hosts the existing `GroundChooser` first, with
  * the honest reason line, above the ordinary start-working composition.
  */
-export function Rest({ project, onWrite, onWiki, onSearch }: {
+export function Rest({ project, onWrite, onWiki, onSearch, onExplore }: {
   project?: string;
   onWrite: (project?: string) => Promise<void>;
   onWiki?: () => void; onSearch: () => void; title: string;
+  /** SF1: the stable global entrance to the open/shared field. */
+  onExplore?: () => void;
 }) {
   const { boot } = useKernel();
   const [pending, setPending] = useState(false);
@@ -51,6 +53,7 @@ export function Rest({ project, onWrite, onWiki, onSearch }: {
       <nav aria-label="Start working">
         {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} />Open project wiki</button>}
         <button onClick={onSearch}><Glyph name="search" size={13} />Search <kbd>⌘K</kbd></button>
+        {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} />Explore the open field</button>}
         <button disabled={pending} onClick={() => void write()}><Glyph name="file" size={13} />{pending ? "Opening…" : "Start writing"}</button>
       </nav>
       {failure && <p className="fresh-refusal" role="alert">{failure}</p>}

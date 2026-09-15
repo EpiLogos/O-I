@@ -31,8 +31,9 @@ import {
   type PointCloudPatch,
 } from "@epilogos/oi-design-system/point-cloud/config";
 import "./visuals.css";
+import {ExpressionView as ApplicationExpressionView} from "../../expression/ExpressionView";
 
-type ExpressionSubview = "themes" | "expression";
+type ExpressionSubview = "themes" | "expression" | "compose";
 
 const QUICK_CHARS = ["✦", "✧", "★", "∞", "Ω", "∑", "∫", "⌘", "⌥", "§", "λ", "☯"];
 
@@ -42,11 +43,13 @@ export function VisualsView() {
   return <div className="settings-view">
     <h3>Visuals</h3>
     <nav className="settings-rail visuals-subrail" aria-label="Visuals views">
+      <button aria-pressed={subview === "compose"} onClick={() => setSubview("compose")}>Compose</button>
       <button aria-pressed={subview === "themes"} onClick={() => setSubview("themes")}>Themes</button>
       <button aria-pressed={subview === "expression"} onClick={() => setSubview("expression")}>Expression</button>
     </nav>
     {subview === "themes" && <ThemesView theme={snapshot.theme} />}
     {subview === "expression" && <ExpressionView />}
+    {subview === "compose" && <ApplicationExpressionView />}
   </div>;
 }
 
@@ -81,6 +84,7 @@ function ExpressionView() {
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
   const [previewPaused, setPreviewPaused] = useState(false);
   const [previewForceMotion, setPreviewForceMotion] = useState(false);
+  const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const configRef = useRef(config); configRef.current = config;
 
   // The preview is an element-bounded engine surface: the owner's own
@@ -299,7 +303,27 @@ function ExpressionView() {
             </button>
             <button onClick={() => surfaceRef.current?.command({ type: "reset-field" })}>Reset field</button>
             <button onClick={() => visuals.resetConfig()}>Restore defaults</button>
+            <button
+              onClick={() => {
+                const surface = surfaceRef.current;
+                if (!surface) return;
+                try {
+                  const canvas = surface.capture();
+                  const url = canvas.toDataURL("image/png");
+                  const anchor = window.document.createElement("a");
+                  anchor.href = url;
+                  anchor.download = "expression-capture.png";
+                  anchor.click();
+                  setCaptureNotice(null);
+                } catch (cause) {
+                  setCaptureNotice(cause instanceof Error ? cause.message : String(cause));
+                }
+              }}
+            >
+              Capture image
+            </button>
           </div>
+          {captureNotice && <p role="alert">{captureNotice}</p>}
 
           <SavedStates states={snapshot.savedStates} />
 

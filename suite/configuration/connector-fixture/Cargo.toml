@@ -1,0 +1,25 @@
+[package]
+name = "oi-connector-fixture"
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# A live fixture connector owner for the configuration plane (#299 §19 C4).
+# It stands in for a real owner executable: it conforms to the frozen C0
+# transport (`docs/cradle/09-CONFIGURATION-PLANE.md` §6) over the wire and
+# deliberately shares no code with the O:I CLI — the contract is the wire,
+# not a shared crate.
+
+[[bin]]
+name = "connector-fixture"
+path = "src/main.rs"
+
+[dependencies]
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+sha2 = "0.10"
+
+# Standalone by design: an owner executable is independent of O:I (the
+# contract is the wire), and cargo workspace members must sit below the
+# workspace root, which a crate beside the conformance fixtures cannot.
+[workspace]

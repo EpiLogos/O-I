@@ -132,7 +132,7 @@ fn is_doctor_invocation(tail: &[OsString]) -> bool {
 
 fn print_suite_v2_help() -> Result<(), String> {
     let manifest = suite_manifest()?;
-    println!("{{O:I}} — pre-local six-product artifact operator");
+    println!("oi — installs, inspects and verifies the suite's recorded product builds");
     println!("Build record: {} (recorded {}; {})", manifest.suite_version, manifest.recorded_at, manifest.standing);
     println!();
     println!("Ordinary operation:");
@@ -160,7 +160,7 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!("Managed artifacts live in the platform O:I application-data root, never in Central Control/ or Work/.");
     println!("Developer source checkouts live under the personal ground's Work/ (e.g. Work/Central), never the personal root itself.");
     println!("Source/Cargo installation is a developer path, not the ordinary-user bootstrap.");
-    println!("Physical workstation/provider acceptance is intentionally not claimed by this pre-local suite.");
+    println!("These builds have not passed physical acceptance.");
     Ok(())
 }
 
@@ -221,7 +221,7 @@ fn platform_target() -> Result<&'static str, String> {
     match (env::consts::OS, env::consts::ARCH) {
         ("macos", "aarch64") => Ok("aarch64-apple-darwin"),
         ("linux", "x86_64") => Ok("x86_64-unknown-linux-gnu"),
-        (os, arch) => Err(format!("no recorded pre-local build target for {os}/{arch}")),
+        (os, arch) => Err(format!("no recorded build target for {os}/{arch}")),
     }
 }
 
@@ -232,7 +232,7 @@ fn selected_asset(product: &SuiteProduct) -> Result<&SuiteAsset, String> {
     }
     let target = platform_target()?;
     product.artifact.assets.iter().find(|asset| asset.target == target)
-        .ok_or_else(|| format!("{} has no recorded pre-local build artifact for {target}", product.id))
+        .ok_or_else(|| format!("{} has no recorded build artifact for {target}", product.id))
 }
 
 fn parse_install_request(args: &[OsString], manifest: &SuiteManifest) -> Result<(Option<PathBuf>, Vec<String>), String> {
@@ -298,7 +298,7 @@ fn command_suite_v2_install(args: &[OsString]) -> Result<i32, String> {
         }
     }
 
-    println!("Installed recorded pre-local build set {}.", manifest.suite_version);
+    println!("Installed recorded build set {}.", manifest.suite_version);
     println!("Modality: fresh-ground (recorded-release-artifact bootstrap)");
     println!("Managed root: {}", data_root.display());
     println!("Control/ and Work/ were not used as artifact storage.");
@@ -389,7 +389,7 @@ fn install_manifest_product(
         fs::create_dir_all(parent).map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
         let temp_root = parent.join(format!(".{}-{}.tmp", product.revision, prelocal_now_ms()?));
         fs::create_dir_all(&temp_root).map_err(|error| format!("cannot create {}: {error}", temp_root.display()))?;
-        let tar = resolve_executable("tar").ok_or_else(|| "tar is required to unpack recorded pre-local build artifacts".to_owned())?;
+        let tar = resolve_executable("tar").ok_or_else(|| "tar is required to unpack recorded build artifacts".to_owned())?;
         let status = Command::new(tar).arg("-xzf").arg(&archive).arg("-C").arg(&temp_root).status()
             .map_err(|error| format!("failed to unpack {}: {error}", asset.name))?;
         if !status.success() {
@@ -471,7 +471,7 @@ fn install_manifest_product(
 }
 
 fn download_exact(url: &str, target: &Path) -> Result<(), String> {
-    let curl = resolve_executable("curl").ok_or_else(|| "curl is required for pre-local build-artifact installation".to_owned())?;
+    let curl = resolve_executable("curl").ok_or_else(|| "curl is required for build-artifact installation".to_owned())?;
     let status = Command::new(curl)
         .args(["--fail", "--location", "--retry", "5", "--retry-all-errors", "--silent", "--show-error", "--output"])
         .arg(target).arg(url).status()
@@ -554,7 +554,7 @@ fn command_suite_v2_update(args: &[OsString]) -> Result<i32, String> {
     } else {
         receipt.products.keys().map(OsString::from).collect()
     };
-    println!("Updating only to recorded pre-local build set {} (never arbitrary latest).", manifest.suite_version);
+    println!("Updating to recorded build set {}.", manifest.suite_version);
     command_suite_v2_install(&ids)
 }
 
@@ -578,7 +578,7 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
         })).map_err(|e| e.to_string())?);
         return Ok(0);
     }
-    println!("O:I suite {}", manifest.suite_version);
+    println!("suite {}", manifest.suite_version);
     println!("Managed root: {}", data_root.display());
     for product in &manifest.products {
         match receipt.products.get(&product.id) {
@@ -587,7 +587,7 @@ fn command_suite_v2_status(args: &[OsString]) -> Result<i32, String> {
             None => println!("  {:<18} missing   recorded {}", product.public_name, product.revision),
         }
     }
-    println!("Physical acceptance: NOT RUN (separate gate)");
+    println!("Physical acceptance: not run");
     Ok(0)
 }
 

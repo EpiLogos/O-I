@@ -1,18 +1,18 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "rendering-quality",
-  "generated_at": "2026-09-08T13:36:14.590Z",
+  "generated_at": "2026-09-15T01:29:21.036Z",
   "environment": {
-    "base_url": "http://localhost:1423",
-    "bridge_url": "http://127.0.0.1:4197",
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
     "platform": "darwin"
   },
-  "passed": true,
+  "passed": false,
   "error": null,
-  "duration_ms": 1593,
+  "duration_ms": 1812,
   "checks": [
     {
       "ok": true,
@@ -43,7 +43,7 @@
       "label": "Rendered page has opaque origin and cannot read host document"
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "Sandbox retains only scripts and forms permissions"
     },
     {
@@ -87,29 +87,29 @@
       "label": "Rich authored layout reflows to one column without horizontal overflow"
     },
     {
-      "ok": true,
-      "label": "No uncaught rendering errors (0)"
+      "ok": false,
+      "label": "No uncaught rendering errors (12)"
     }
   ],
   "ops": [
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T13:36:14.762Z",
+        "mounted_at": "2026-09-15T01:29:21.237Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4197"
+          "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:1423/"
+        "url": "http://localhost:4173/"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 28,
       "data": {
         "file": "rendering-quality-rich-wide.png"
       }
@@ -117,7 +117,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 21,
       "data": {
         "file": "rendering-quality-rich-narrow.png"
       }

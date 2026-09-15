@@ -61,6 +61,9 @@ export interface StagePresentationRequest {
   plane: StagePlane;
   /** Authored recipe id (recipes.ts); application code never patches. */
   recipe: string;
+  /** EX1 material projection into this existing stage. */
+  config?: Record<string,unknown>;
+  sceneRef?: string;
   /** Registered Expression Target id; the viewport surface is the window
    * canvas. Element targets are a later surface kind, not a scissor. */
   target?: string;
@@ -72,6 +75,9 @@ export interface StagePresentation {
   readonly plane: StagePlane;
   /** Apply another authored recipe as an overlay — no reseed, no remount. */
   update(recipe: string): void;
+  updateConfig(config: Record<string,unknown>, sceneRef: string, selectedIds: string[]): void;
+  /** Reposition this presentation's existing canvas without a renderer fork. */
+  setContainer(container: HTMLElement | null): void;
   /** Play an authored sequence (recipes.ts) against this presentation. */
   play(sequence: string): void;
   release(): void;
@@ -83,6 +89,8 @@ export interface ExpressionStageApi {
    * already occupies this window's production stage. No renderer or step owner
    * crosses this seam. */
   retainedLease(presentationId: string): StageRetainedLease | null;
+  /** Existing engine capture only; no persistence, representation or publication. */
+  capture(presentationId: string, width?: number, height?: number): HTMLCanvasElement;
   /** Emit a semantic cue onto the bus (relayed cross-window in native). */
   emit(cue: { kind: ExpressionCue["kind"]; target?: string; label?: string; detail?: string }): void;
   /** The semantic form vocabulary (idle/listening/…), rendered on the
@@ -157,7 +165,8 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     }
     const surface = surfaceRef.current;
     if (!surface) return null;
-    surface.present(request.id, request.recipe);
+    if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
+    else surface.present(request.id, request.recipe);
     if (request.paused) surface.setPaused(true);
     presentations.current.set(request.id, { id: request.id, plane: request.plane });
     if (request.plane === "frontstate") setFrontstateCount((count) => count + 1);
@@ -166,6 +175,11 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
       plane: request.plane,
       update(recipe: string) {
         surface.update(request.id, recipe);
+      },
+      updateConfig(config, sceneRef, selectedIds) { surface.presentConfig(request.id, config, sceneRef, selectedIds); },
+      setContainer(container) {
+        if (!presentations.current.has(request.id) || surfaceRef.current !== surface) throw new Error("Expression presentation is no longer available.");
+        surface.setContainer(request.id, container);
       },
       play(sequence: string) {
         surface.play(request.id, sequence);
@@ -185,6 +199,11 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     if (!current) return null;
     return current.retainedLease(presentationId);
   }, [surface]);
+
+  const capture = useCallback((presentationId: string, width?: number, height?: number): HTMLCanvasElement => {
+    if (!presentations.current.has(presentationId) || !surfaceRef.current) throw new Error("Expression presentation is unavailable for capture.");
+    return surfaceRef.current.capture(width, height);
+  }, []);
 
   // The engine surface exists exactly while the expression is enabled —
   // the master switch is absolute: off removes the canvas, the context
@@ -348,13 +367,14 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   const api = useMemo<ExpressionStageApi>(() => ({
     present,
     retainedLease,
+    capture,
     emit,
     express,
     update: updateHandle,
     release: releaseHandle,
     error: surfaceError,
     inspect,
-  }), [present, retainedLease, emit, express, updateHandle, releaseHandle, surfaceError, inspect]);
+  }), [present, retainedLease, capture, emit, express, updateHandle, releaseHandle, surfaceError, inspect]);
 
   return <StageContext.Provider value={api}>{children}</StageContext.Provider>;
 }

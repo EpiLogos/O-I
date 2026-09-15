@@ -23,13 +23,16 @@
 //! - **Reading core only** (`world.rs`): participating sources from the
 //!   owner's horizon/ground disclosures; no tree, no UI coupling.
 //!
-//! The kernel never writes files and never mints refs: every source ref is
-//! Central's canonical grammar, carried verbatim.
+//! The kernel never writes native source files or mints native subject refs.
+//! Expression-local presentation refs do not acquire native subject identity.
 
 pub mod events;
+pub mod expression;
+pub mod expression_transport;
 pub mod flow;
 pub mod history;
 pub mod knowledge;
+pub mod shared_field;
 pub mod action;
 pub mod graph;
 pub mod encounter;
@@ -138,6 +141,7 @@ pub struct KernelSnapshot {
 /// state change is recorded exactly once on the ordered log.
 #[derive(Debug)]
 pub struct Kernel {
+    expressions: expression::Application,
     agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
@@ -162,6 +166,7 @@ pub struct Kernel {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    Expression { request: expression::Request },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
     WorldRead,
@@ -170,11 +175,21 @@ pub enum KernelOp {
     Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
     /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
     /// wiki read model (cell C1) composed with AIKit's owner-side resolution
-    /// rows (cell C2). Adapter only — every node/edge carries its owner ref,
-    /// owner operation and owner provenance verbatim; a failed input degrades
-    /// honestly as an explicit unavailable input; the Shared Field
-    /// projection is a named deferred input. Emits nothing (pull read).
+    /// rows (cell C2) and the hosted Shared Field projection (Lane C step
+    /// 5, the O:I-owned client's snapshot). Adapter only — every node/edge
+    /// carries its owner ref, owner operation and owner provenance
+    /// verbatim; a failed input degrades honestly as an explicit
+    /// unavailable input. Emits nothing (pull read).
     Graph { #[serde(default)] project: Option<String>, #[serde(default)] query: String },
+    /// One request to the O:I-owned SharedField client (`shared_field.rs`,
+    /// cell S→S0 · aperture mode): `status` | `snapshot` | `read {ref}` |
+    /// `publish {args}` | `participant` | `admit` | `contact`, carried
+    /// verbatim to the owner doorway. Pull only — emits nothing. The
+    /// hosting target and transport token are the client's own
+    /// environment; an unbound target or unreachable field returns an
+    /// explicit `{state:"unavailable", detail}` reading as data, never an
+    /// error; the owner's own refusal is returned in the owner's words.
+    SharedField { request: serde_json::Value },
     /// Compose the W3-A AIKit session-lifecycle read with the W3-B
     /// Actuation request-correlation read for ONE permission request
     /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
@@ -324,10 +339,14 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    Expression { data: serde_json::Value },
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
     GraphReading { reading: graph::GraphReading },
+    /// The SharedField client's own reading (`oi.shared-field.*/v1`), or
+    /// the explicit unavailable state — verbatim either way.
+    SharedFieldReading { data: serde_json::Value },
     /// The typed encounter join (`encounter.rs`): both owner views, the
     /// grant-record seam and the failure-taxonomy disposition.
     EncounterJoined {
@@ -400,6 +419,7 @@ impl Kernel {
         Self {
             client,
             agency,
+            expressions: expression::Application::default(),
             focus: GlobalFocus::unfocused(),
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
@@ -435,6 +455,26 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
+            KernelOp::Expression { request } => {
+                let focus_ref = match &request {
+                    expression::Request::Edit { expression_ref, changes, .. }
+                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. })) => Some(expression_ref.clone()),
+                    _ => None,
+                };
+                let (data, changed) = self.expressions.apply(&self.client, request)?;
+                let mut receipts = Vec::new();
+                if let Some(change) = changed {
+                    receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor, activity_ref: change.activity_ref }));
+                }
+                if data["state"] == "ready" {
+                    if let Some(subject) = focus_ref.as_deref().and_then(|r| self.expressions.selected_subject(r)) {
+                        let before = self.focus.clone();
+                        self.focus.focus_subject(subject).map_err(|e| e.to_string())?;
+                        if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() })); }
+                    }
+                }
+                Ok(KernelOpOutcome { receipts, result: KernelOpResult::Expression { data } })
+            }
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
             KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
                 if let Some(project)=&project {
@@ -663,6 +703,13 @@ impl Kernel {
                 };
                 let reading = graph::assemble(&self.client, wiki_action, &wiki_input, &cwd, &query);
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::GraphReading { reading } })
+            }
+            KernelOp::SharedField { request } => {
+                // The kernel passes the request through on the desktop's own
+                // account; the client resolves its target and token from its
+                // own environment. Nothing is recorded, nothing is emitted.
+                let data = shared_field::reading(&request)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SharedFieldReading { data } })
             }
             KernelOp::EncounterJoin { session, request_ref, reply } => {
                 // Central discloses the context anchor, exactly as the

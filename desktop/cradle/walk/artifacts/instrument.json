@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "instrument",
-  "generated_at": "2026-09-14T19:22:50.103Z",
+  "generated_at": "2026-09-15T01:30:27.211Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -12,7 +12,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 12968,
+  "duration_ms": 13002,
   "checks": [
     {
       "ok": true,
@@ -71,7 +71,7 @@
         "paused": true,
         "presentations": [
           {
-            "id": "k9:4db0894e-088c-413d-86f9-b7075b23e7bb",
+            "id": "k9:7ac76485-74ed-4c8c-9011-ff322aa77bd5",
             "plane": "ambient"
           }
         ]
@@ -110,7 +110,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-14T19:22:50.277Z",
+        "mounted_at": "2026-09-15T01:30:27.513Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -121,13 +121,13 @@
     {
       "ok": false,
       "op": "instrument.requestOpen",
-      "duration_ms": 1.3,
+      "duration_ms": 0.9,
       "error": "Error: Focused instrument source ql:controlled-focused is not registered"
     },
     {
       "ok": true,
       "op": "instrument.register",
-      "duration_ms": 0.1,
+      "duration_ms": 0.2,
       "data": {
         "ref": "ql:controlled-focused"
       }
@@ -162,7 +162,7 @@
     {
       "ok": true,
       "op": "instrument.read",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "registered": true,
         "available": true,
@@ -213,7 +213,7 @@
     {
       "ok": true,
       "op": "instrument.register",
-      "duration_ms": 0.2,
+      "duration_ms": 0.1,
       "data": {
         "ref": "ql:controlled-focused"
       }
@@ -221,7 +221,7 @@
     {
       "ok": true,
       "op": "instrument.drive",
-      "duration_ms": 0,
+      "duration_ms": 0.2,
       "data": {
         "available": false
       }
@@ -234,7 +234,7 @@
         "paused": true,
         "presentations": [
           {
-            "id": "k9:4db0894e-088c-413d-86f9-b7075b23e7bb",
+            "id": "k9:7ac76485-74ed-4c8c-9011-ff322aa77bd5",
             "plane": "ambient"
           }
         ]
@@ -256,7 +256,7 @@
         "paused": false,
         "presentations": [
           {
-            "id": "k9:4db0894e-088c-413d-86f9-b7075b23e7bb",
+            "id": "k9:7ac76485-74ed-4c8c-9011-ff322aa77bd5",
             "plane": "ambient"
           }
         ]
@@ -265,7 +265,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 290,
+      "duration_ms": 198,
       "data": {
         "file": "instrument-instrument-focused.png"
       }
@@ -276,7 +276,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-14T19:22:59.085Z",
+        "mounted_at": "2026-09-15T01:30:37.077Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -287,7 +287,7 @@
     {
       "ok": true,
       "op": "instrument.register",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "ref": "ql:controlled-focused"
       }
@@ -295,7 +295,7 @@
     {
       "ok": true,
       "op": "instrument.read",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "registered": true,
         "available": true,

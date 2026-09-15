@@ -106,20 +106,6 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs" 
 
 declare module "@epilogos/oi-design-system/expressions-engine/shell/production.mjs" {
   import type { EngineCommand, EngineFrame, FieldEngineAdapter } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
-  export interface RetainedTargetPort {
-    readonly texWidth: number;
-    readonly texHeight: number;
-    readonly particleCount: number;
-    readonly currentPosTarget: unknown;
-    readonly currentVelTarget: unknown;
-    readonly nextPosTarget: unknown;
-    readonly nextVelTarget: unknown;
-    /** O:I-authored source textures used only as admission material; a retained
-     * binding copies them before taking target ownership. */
-    readonly targetA: unknown;
-    readonly targetB: unknown;
-    setTargetTextures(targetA: unknown, targetB: unknown, centre: unknown): void;
-  }
   /** The production engine adapter: hosted PointCloudField with persistent-ID
    * scene interpolation and honest context-loss. Create one per canvas; the
    * caller owns the clock (render(frame) → advance), projection and document. */
@@ -137,11 +123,57 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/production.m
     command(command: EngineCommand): void;
     inspect(readParticles?: boolean): unknown;
     projectNative(point: { x: number; y: number; z: number }): unknown;
+    /** Clean-frame capture: renders one frame without edit overlays, then
+     * reads back an offscreen canvas at the requested size. Throws honestly
+     * on a lost context, a pending source, or a budget breach. */
+    withCleanFrame<T>(copy: () => T): T;
+    capture(width: number, height: number): HTMLCanvasElement;
+    dispose(): void;
+  }
+}
+
+declare module "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs" {
+  import type { EngineCommand, EngineFrame, FieldEngineAdapter } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
+  /** O:I-authored retained-field extension of the upstream production
+   * adapter (oi/retained.mjs is not vendored; see PROVENANCE.json). */
+  export interface RetainedTargetPort {
+    readonly texWidth: number;
+    readonly texHeight: number;
+    readonly particleCount: number;
+    readonly currentPosTarget: unknown;
+    readonly currentVelTarget: unknown;
+    readonly nextPosTarget: unknown;
+    readonly nextVelTarget: unknown;
+    /** O:I-authored source textures used only as admission material; a retained
+     * binding copies them before taking target ownership. */
+    readonly targetA: unknown;
+    readonly targetB: unknown;
+    setTargetTextures(targetA: unknown, targetB: unknown, centre: unknown): void;
+  }
+  export class RetainedProductionAdapter {
+    constructor(canvas: HTMLCanvasElement);
+    readonly canvas: HTMLCanvasElement;
+    readonly capabilities: {
+      name: string; kind: "production";
+      runtimeCheckpoints: true; exactSeek: boolean;
+    };
+    render(frame: EngineFrame): void;
+    resize(width: number, height: number, pixelRatio: number): void;
+    needsRender(): boolean;
+    telemetry(): unknown;
+    command(command: EngineCommand): void;
+    inspect(readParticles?: boolean): unknown;
+    projectNative(point: { x: number; y: number; z: number }): unknown;
+    withCleanFrame<T>(copy: () => T): T;
+    capture(width: number, height: number): HTMLCanvasElement;
     retainedTargetPort(): RetainedTargetPort;
+    updateRetainedPresentation(request: unknown): unknown;
     checkpointRetainedField(binding: { checkpoint(renderer: unknown): unknown }): unknown;
-    restoreRetainedField(binding: { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint: unknown): ProductionAdapter;
+    restoreRetainedField(binding: { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint: unknown): RetainedProductionAdapter;
     onRetainedRecoveryRequired(listener: (phase: "lost"|"restored") => void): () => void;
     releaseRetainedField(): void;
     dispose(): void;
   }
+  /** The stage hosts the retained-capable adapter in place of the upstream one. */
+  export { RetainedProductionAdapter as ProductionAdapter };
 }

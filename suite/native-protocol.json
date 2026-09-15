@@ -6,9 +6,9 @@
   "products": [
     {"id":"central","revision":"39efa03ea8607bdd8a79b0e317457c2ccc3ead4c","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"actuation","revision":"67e6b296b85bd3eb1554802fd55a476c474aa566","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"ai-kit","revision":"856f454778e5a44e8055751bb59ed933caf210ce","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"ai-kit","revision":"8ef8a4f02ee9e095281d2d03d3e711404ead074a","protocol_min":"1.0","protocol_max":"1.0"},
     {"id":"software-factory","revision":"a335048b0a5b907adc5d09f0dcbda05b98f79a05","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"workcell","revision":"e4e40a91fe7ed1776e634cad768f1049c39fd34e","protocol_min":"1.0","protocol_max":"1.0"},
-    {"id":"quaternal-logic","revision":"a83148e93c500d5bebaa5811d9d25953652834cf","protocol_min":"1.0","protocol_max":"1.0"}
+    {"id":"workcell","revision":"0c3ad1efafdeb254366b7b6122306fe657916a10","protocol_min":"1.0","protocol_max":"1.0"},
+    {"id":"quaternal-logic","revision":"4276b94157058d0b211be20b4ebf5587fcb85a72","protocol_min":"1.0","protocol_max":"1.0"}
   ]
 }
