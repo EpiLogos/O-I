@@ -11,6 +11,7 @@ import {useLayout} from "./useLayout";
 import {NodeDetails,ReadingBody,type OpenKnowledge} from "./NodeDetails";
 import {subjects,neighbourhood,releaseGraph} from "./focus";
 import {useFrameSample} from "./useFrameSample";
+import {KnowledgeExpression} from "./KnowledgeExpression";
 import {Loading} from "../shared/Loading";
 import "./knowledge.css";
 
@@ -39,6 +40,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const [readError,setReadError]=useState<string>();
   const [busy,setBusy]=useState(false);
   const [generation,setGeneration]=useState(0);
+  const [pins,setPins]=useState<string[]>([]);const [follow,setFollow]=useState(true);
   const graph=useRef<HTMLDivElement>(null),content=useRef<HTMLElement>(null);
   useFrameSample(graph);
   const focusContent=useRef(false);
@@ -95,6 +97,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
       <GraphCanvas nodes={nodes} positions={positions} model={model} camera={presentation} selected={visit.selected} focused={focused} minZoom={.15} maxZoom={4} onCamera={commitCamera} onOpen={open} onClear={release}/>
       <div className="knowledge-zoom"><button aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.15,c.zoom/1.2)}))}>−</button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}>+</button><button aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}>⤢</button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
+      {model&&visit.selected&&nodes.find(node=>node.ref===visit.selected)&&<div className="knowledge-expression-bar"><button aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button><KnowledgeExpression surface={binding.id} project={binding.project} reading={model} locus={nodes.find(node=>node.ref===visit.selected)!} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref)??[])} follow={follow}/></div>}
       {detailNode&&<NodeDetails node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}

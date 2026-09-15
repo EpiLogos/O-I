@@ -1,13 +1,19 @@
 import {setup as sourceSetup} from './editor.mjs';
-import {readFileSync} from 'node:fs';
+import {cpSync,readFileSync} from 'node:fs';
 import {execFileSync} from 'node:child_process';
 import {join} from 'node:path';
 export async function setup(args) {
   const p=await sourceSetup(args);
   const wiki=JSON.parse(readFileSync(join(p.projectRoot,'ProjectCentral/agents/wiki/wiki.json'),'utf8')).objects.find(o=>o.object==='space');
-  return {...p,wiki,env:{...p.env,AIKIT_HOME:join(p.root,'.aikit-home')}};
+  cpSync(join(process.env.HOME,'.aikit'),join(p.root,'.aikit-home'),{recursive:true});
+  const env={...process.env,...p.env,AIKIT_HOME:join(p.root,'.aikit-home'),OI_AIKIT_BIN:process.env.OI_AIKIT_BIN??'/Users/admin/.cargo/bin/aikit'};
+  const bound=JSON.parse(execFileSync(env.OI_AIKIT_BIN,['--json','-C',p.projectRoot,'project','bind','editor-walk','--directory',p.projectRoot,'--no-default-skill-sets'],{encoding:'utf8',env}));
+  if(!bound.ok)throw new Error(JSON.stringify(bound));
+  const status=JSON.parse(execFileSync(env.OI_AIKIT_BIN,['--json','-C',p.projectRoot,'knowledge','status'],{encoding:'utf8',env}));
+  if(!status.ok)throw new Error(JSON.stringify(status));
+  return {...p,wiki,env};
 }
-export default async function run({page,baseUrl,check,shot,channel,provision:p}) {
+export default async function run({page,baseUrl,check,metric,shot,channel,provision:p}) {
   const native=(...args)=>{
     const envelope=JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env}}));
     if(!envelope.ok)throw new Error(JSON.stringify(envelope));return envelope.data;
@@ -36,6 +42,8 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await overlay.waitFor();
   check(await overlay.isVisible(),'Leader summons one window-wide native search aperture');
   await overlay.getByRole('searchbox',{name:'Search or resolve'}).fill('editor-walk');
+  await page.waitForTimeout(1200);
+  if(!await overlay.locator('li').count())throw new Error(`Native search returned no selectable rows: ${await overlay.innerText()}`);
   await overlay.locator('li').first().waitFor();
   await page.waitForFunction(()=>document.querySelector('.search-aperture ul')?.getAttribute('aria-busy')==='false');
   const expected=native('search','editor-walk').hits;
@@ -70,6 +78,34 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check((await channel('read.focus')).data.subject.ref===p.wiki.ref,'A real wiki opens as the same canonical subject in a normal tab');
   check((await channel('read.focus')).data.subject.native_owner==='ai-kit','Kernel retains the native knowledge owner');
   check(await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).count()===1,'Graph renders the actual native wiki identity');
+  await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).click();
+  await page.getByRole('button',{name:'Express local whole',exact:true}).waitFor();
+  await page.getByRole('button',{name:'Pin subject',exact:true}).click();
+  check(await page.getByRole('button',{name:'Unpin subject',exact:true}).getAttribute('aria-pressed')==='true','Pinning retains the exact selected owner ref in local presentation state');
+  await page.getByRole('button',{name:'Express local whole',exact:true}).click();
+  const projected=page.locator('.knowledge-expression-controls [role="status"]').first();
+  await projected.waitFor();
+  const projectedText=await projected.innerText();
+  const projectionMatch=projectedText.match(/(\d+) subjects · (\d+) typed relations · Expression r(\d+)/);
+  check(!!projectionMatch,'Real owner local whole becomes a revisioned Expression through the application seam',projectedText);
+  metric('projected_subjects',Number(projectionMatch?.[1]??0));metric('projected_relations',Number(projectionMatch?.[2]??0));metric('expression_revision',Number(projectionMatch?.[3]??0));
+  check((await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('knowledge-expression:')),'The accepted Expression stage presents the projected owner whole');
+  check(await page.getByText('QL grammar unavailable',{exact:true}).isVisible(),'Absent owner QL participation is disclosed instead of inferred from geometry');
+  const relationGap=page.getByText(/Relation identity unavailable for/);
+  if(await relationGap.count())check(await relationGap.isVisible(),'Owner edges without native relation IDs remain explicitly unbound');
+  const action=page.locator('.knowledge-detail .knowledge-actions button').first();
+  if(await action.count()){
+    await action.click();await page.locator('.knowledge-detail [data-dispatch-state]').first().waitFor();
+    check(true,'Selected subject Action returns through the real owner dispatch seam');
+  }
+  await shot('knowledge-expression-local-whole');
+  await page.getByRole('button',{name:'Return to graph',exact:true}).click();
+  check(!(await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('knowledge-expression:')),'Return releases the stage presentation and preserves the graph subject');
+  await page.getByRole('button',{name:/Open in tab/}).click();
+  await page.getByRole('article',{name:'Selected node content'}).waitFor();
+  check(await page.getByRole('article',{name:'Selected node content'}).isVisible(),'The same owner ref opens in its page view after returning from Expression');
+  await page.getByRole('button',{name:/Show in graph/}).click();
+  await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).waitFor();
   check(native('history').length===historyBefore+1,'Successful opening records exactly one AIKit route use');
   const state=(await channel('read.state')).data;
   check(state.buffers[p.sources[0].binding.ref].content===editorText,'Wiki navigation preserves the dirty source buffer');
