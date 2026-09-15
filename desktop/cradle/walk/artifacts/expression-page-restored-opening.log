@@ -1,0 +1,39 @@
+serving the cradle at http://127.0.0.1:4321 (external)
+
+=== scenario: expression-page ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4330 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4330 (fresh kernel, seq from 1)
+PASS  The exact hosted live lease suppresses the iframe's standalone fallback so the page presents one coherent Expression body
+PASS  A mismatched Expression ref cannot alter the hosted frame view
+PASS  The same authored HTML keeps its explicit Expression fallback when opened standalone without a host lease
+PASS  Editing the iframe invalidates the exact hosted lease, restores fallback, and releases the old live presentation
+PASS  Iframe editing does not mutate the owner-backed page source
+PASS  Rereading the exact unchanged owner revision re-admits its live Expression body
+PASS  Beings page embeds the exact native Expression ref
+PASS  Page and native Being keep the same subject ref
+PASS  Focus moves the same renderer canvas without an identity fork
+PASS  An unrelated Expression event keeps the focused canvas, context and presentation mounted
+PASS  Escape returns the same renderer canvas to the same page
+PASS  Renderer identity marker remained stable
+PASS  Existing engine capture returns a rendered nonuniform PNG
+  screenshot: artifacts/expression-page-live-return-capture.png
+PASS  A native Expression advance freezes the page instead of relabelling stale pixels as current
+PASS  Losing the exact live lease restores the authored page's explicit fallback
+PASS  Unavailable live renderer releases the stage and the page uses its explicit capture fallback
+PASS  A page-basis change revokes the prior page-local capture instead of relabelling it
+  screenshot: artifacts/expression-page-captured-fallback-page.png
+PASS  A newly read exact page revision re-enters the same native Expression identity
+  screenshot: artifacts/expression-page-live-reentry.png
+PASS  Restored page waits for the opening's one healthy production field without allocating an inline renderer
+PASS  Temporary frontstate ownership keeps the real page host mounted, covered and disabled without a sticky error
+PASS  The restored iframe retains its honest fallback until the native page presentation is actually ready
+PASS  Completing the opening returns the same production canvas and context to the restored page's actual inline body
+PASS  The restored live page keeps its exact Expression revision and subject without an admission error
+PASS  The restored page can focus the same field after frontstate release
+PASS  Leaving restored-page focus returns the same field inline
+  screenshot: artifacts/expression-page-restored-opening-inline.png
+  stopped walk-bridge
+  receipt: artifacts/expression-page.json — 25/25 checks, PASS
+
+=== walk summary ===
+PASS  expression-page — 25/25 checks · capture_width=1280 capture_height=785 capture_distinct_sampled_colours=61
