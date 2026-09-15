@@ -1421,3 +1421,11 @@ and explicit limits: `desktop/cradle/walk/artifacts/EX2-EX5-INTEGRATION.md`.
 The accepted contract is applied without new identities, stores, clocks, audio
 engines, Agent loops or inferred semantic relations. Sensory/material acceptance
 and undisclosed owner state are not claimed.
+
+### 2026-09-15 — Factory convergence with Explore, Nara and configuration
+
+Draft #292 now incorporates current main `dd0e5d5` through `cf4e21b`, preserving the accepted Factory Run/Build, returned-material, Handoff, Git, NOW, Agent/session and exact working-Surface consumers alongside Explore/WorldPresentation, Nara/Expression and configuration. Direct Omarchy inspection found and repaired a merged-shell regression: Expression composition now opens inside Inspect, so ordinary and promoted conversations retain the accepted Conversation / Activity / Context / Inspect planes and one composer.
+
+Production and native builds, kernel all-target tests, Factory/live-update/conversation/persistence browser walks and a real AT-SPI/compositor walk passed. The running desktop entered the queued Factory Run, promoted the existing conversation, and returned to `working-surface/oi-factory-demo-20260914-shell` with its persisted terminal marker. No prompt or terminal input was sent. All 33 pre-existing modified/untracked artifacts were restored byte-for-byte; new evidence is in `desktop/cradle/walk/artifacts/factory-main-convergence-20260915/receipt.md`.
+
+The Run still has zero executions, Candidates, Evidence and Returns. Shared Start/admission, installed scoped authority → Factory Execution, typed artifact resolution, Routine operations, requested-worktree Git correction and production Epi/Nara registration remain exact owner joins. The current Omarchy QL checkout cannot execute the controlled host walk because its HEAD lacks the adapter path, and O:I has no production registration callsite. D/C and the existing SessionSpace/terminal P/M evidence do not establish all-harness acceptance or human Recognition; #292 stays draft.

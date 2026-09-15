@@ -37,6 +37,8 @@ try {
   let planes=right.getByRole("navigation",{name:"Right region planes",exact:true});
   if(await planes.count()===0) await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
   await planes.waitFor();
+  const planeLabels=await right.locator(".agent-planes > button").allTextContents();
+  check(JSON.stringify(planeLabels)===JSON.stringify(["Conversation","Activity","Context","Inspect"]),"Ordinary right region keeps the accepted four planes");
   for(const plane of ["Activity","Context","Inspect"]){
     await planes.getByRole("button",{name:plane,exact:true}).click();
     check(await right.locator('.encounter-composer textarea:visible').count()===0,`${plane} remains complementary and does not duplicate the composer`);

@@ -22,7 +22,7 @@ import "./agent.css";
  * subject's real read model. No desktop session store, no fake transcript.
  */
 
-export type EncounterPlane = "Conversation" | "Activity" | "Context" | "Inspect" | "Composition";
+export type EncounterPlane = "Conversation" | "Activity" | "Context" | "Inspect";
 export interface AgentAccompanying { ref: string; project: string; space: string }
 export interface AgentSubject {
   ref?: string;
@@ -75,6 +75,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const [error, setError] = useState<string>();
   const [expression,setExpression]=useState<EncounterExpressionReading>({pending:false});
   const [compositionRef,setCompositionRef]=useState<string>();
+  const [compositionOpen,setCompositionOpen]=useState(false);
   const [listening,setListening]=useState(false);
   const [arrived,setArrived]=useState(false);
   const [choosing,setChoosing]=useState(false);
@@ -98,7 +99,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
     setInputArrived(true);const timer=setTimeout(()=>setInputArrived(false),1200);return()=>clearTimeout(timer);
   },[expression.inputRevision]);
   useEffect(()=>{if(plane!=="Conversation")setListening(false);},[plane]);
-  useEffect(()=>{const summon=(event:Event)=>{const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);setPlane("Composition");if(!full)onFull();};window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);},[full,onFull]);
+  useEffect(()=>{const summon=(event:Event)=>{const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);setCompositionOpen(true);setPlane("Inspect");if(!full)onFull();};window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);},[full,onFull]);
   const form:FormName=expression.state==="TurnInFlight"||expression.state==="InterruptRequested"?"searching":arrived?"arrival":listening||inputArrived?"listening":expression.pending||choosing?"presence":"idle";
 
 
@@ -124,10 +125,10 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   } : undefined;
   const complementary=!!complementaryHost;
   const detailPlane: "Activity" | "Context" | "Inspect" = plane==="Context"?"Context":plane==="Inspect"?"Inspect":"Activity";
-  const encounterPlane: "Conversation" | "Activity" | "Inspect" = complementary||plane === "Context"||plane === "Composition" ? "Conversation" : plane;
-  const planeNames:EncounterPlane[]=complementary?["Conversation","Activity","Context","Inspect"]:["Conversation","Activity","Composition","Context","Inspect"];
+  const encounterPlane: "Conversation" | "Activity" | "Inspect" = complementary||plane === "Context"||compositionOpen ? "Conversation" : plane;
+  const planeNames:EncounterPlane[]=["Conversation","Activity","Context","Inspect"];
   const planes=<nav className="agent-planes" aria-label={complementary||region==="right"?"Right region planes":"Encounter planes"}>
-    {planeNames.map(name=><button key={name} aria-pressed={name===(complementary?detailPlane:plane)} title={complementary&&name==="Conversation"?"Return conversation to the right":undefined} onClick={()=>{if(complementary&&name==="Conversation"){setPlane(name);onReturnConversation?.();}else setPlane(name);}}>{name}</button>)}
+    {planeNames.map(name=><button key={name} aria-pressed={name===(complementary?detailPlane:plane)} title={complementary&&name==="Conversation"?"Return conversation to the right":undefined} onClick={()=>{if(complementary&&name==="Conversation"){setPlane(name);onReturnConversation?.();}else {if(name==="Inspect")setCompositionOpen(false);setPlane(name);}}}>{name}</button>)}
     {(region==="right"||complementary)&&<span className="agent-plane-tools"><button className="agent-tool" aria-label={full?"Restore right region":"Full right region"} onClick={onFull}><Glyph name={full?"restore":"expand"}/></button><button className="agent-tool" aria-label="Collapse right region" onClick={onClose}><Glyph name="close"/></button></span>}
   </nav>;
 
@@ -139,9 +140,9 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       {/* The visible head still reads this same encounter while Context is open.
           Keep its one observer mounted; hide only its body, never duplicate it. */}
       {binding
-        ? <EncounterSurface onOpenWorkingSurface={onOpenWorkingSurface} key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} onExpression={setExpression} complementary={complementary&&detailHost?{host:detailHost,plane:detailPlane}:undefined} concealed={!complementary&&(plane==="Context"||plane==="Composition")} presentation={region === "centre" || full ? "full" : "side"}/>
-        : plane!=="Context"&&plane!=="Composition" ? <NoAccompanying project={project} onOpen={choose}/> : null}
-      {!complementary&&plane==="Composition"&&<ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/>}
+        ? <EncounterSurface onOpenWorkingSurface={onOpenWorkingSurface} key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => {setCompositionOpen(false);setPlane(view.encounterPlane ?? "Conversation");}} onExpression={setExpression} complementary={complementary&&detailHost?{host:detailHost,plane:detailPlane}:undefined} concealed={!complementary&&(plane==="Context"||compositionOpen)} presentation={region === "centre" || full ? "full" : "side"}/>
+        : plane!=="Context"&&!compositionOpen ? <NoAccompanying project={project} onOpen={choose}/> : null}
+      {!complementary&&compositionOpen&&<ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/>}
       {!complementary&&plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
     </div>
   </section>;
