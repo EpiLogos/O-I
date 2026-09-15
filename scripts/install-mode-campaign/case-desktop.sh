@@ -3,7 +3,8 @@
 # (`oi desktop install|status|remove`, #311) driven by a real packaged
 # bundle (desktop/cradle/package-bundle.sh, built on the linux x86_64
 # machine). The bundle and its .sha256 sidecar ride into the case at
-# /campaign/bin/desktop-bundle.tar.gz[.sha256] via OI_BIN.
+# /campaign/bin/<canonical oi-cradle-*.tar.gz[.sha256]> via OI_BIN; the
+# installer refuses a renamed bundle, so the case keeps the pipeline name.
 #
 # What this container case can and cannot prove:
 #   - install -> status -> restart -> remove with the ground untouched,
@@ -20,7 +21,9 @@ set -eu
 PHASE="$1"
 EV="${OI_EVIDENCE:?must run inside run-case.sh}"
 GROUND=/root/Central
-BUNDLE=/campaign/bin/desktop-bundle.tar.gz
+# The installer refuses a renamed bundle (BUNDLE.json records the canonical
+# artifact name), so the case keeps the packaging pipeline's filename.
+BUNDLE="$(echo /campaign/bin/oi-cradle-*.tar.gz)"
 
 case "$PHASE" in
 
