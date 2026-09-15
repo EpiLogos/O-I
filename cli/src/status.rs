@@ -76,6 +76,12 @@ pub enum NativeSurfaceState {
     Missing,
     Installed,
     Registered,
+    /// Registered component material (payloads, skills, docs) is present at
+    /// its recorded root, and this install recorded no native command: the
+    /// product ships components rather than an executable for this target.
+    /// Present at the artifact level; the command surface is unavailable
+    /// per-surface, which is not damage. Damage stays `Broken`.
+    InstalledComponent,
     Broken,
 }
 
@@ -459,6 +465,30 @@ where
                         Some(resolved) => {
                             disclosure.state = NativeSurfaceState::Registered;
                             disclosure.resolved = Some(resolved);
+                        }
+                        // No command was recorded as part of this install
+                        // (component install): the recorded material root is
+                        // what the product installed here. Present material
+                        // is an installed component, not a broken one.
+                        None if registration.native_executable.is_none() => {
+                            match registration.root.as_deref() {
+                                Some(root) if root_probe(root) => {
+                                    disclosure.state =
+                                        NativeSurfaceState::InstalledComponent;
+                                    disclosure.resolved = Some(root.to_owned());
+                                    disclosure.detail = Some(format!(
+                                        "installed as component material at {root}; no native {} command is part of this install",
+                                        disclosure.native_entry
+                                    ));
+                                }
+                                _ => {
+                                    disclosure.state = NativeSurfaceState::Broken;
+                                    disclosure.detail = Some(
+                                        "this install recorded no native command and its component material root is missing"
+                                            .into(),
+                                    );
+                                }
+                            }
                         }
                         None => {
                             disclosure.state = NativeSurfaceState::Broken;

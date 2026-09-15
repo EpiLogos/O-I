@@ -155,9 +155,9 @@ jobs:
           contract="$RUNNER_TEMP/omarchy-contract"
           git init -q "$contract"
           git -C "$contract" remote add origin https://github.com/omacom/omarchy.git
-          git -C "$contract" fetch --depth 1 origin d3d23fdddef846ebb98b52122a6ece66211c0daf
+          git -C "$contract" fetch --depth 1 origin 0534987009061cbe2dacdde4ad564092ab698d12
           git -C "$contract" checkout -q --detach FETCH_HEAD
-          test "$(git -C "$contract" rev-parse HEAD)" = "d3d23fdddef846ebb98b52122a6ece66211c0daf"
+          test "$(git -C "$contract" rev-parse HEAD)" = "0534987009061cbe2dacdde4ad564092ab698d12"
           "$contract/bin/omarchy-plugin-validate" "$GITHUB_WORKSPACE/integrations/omarchy/org.epilogos.oi"
           "$contract/bin/omarchy-plugin-validate" "$GITHUB_WORKSPACE/integrations/omarchy/org.epilogos.oi.switcher"
 
@@ -171,7 +171,7 @@ jobs:
           "$OI" host omarchy realise --home "$tmp_home" --json > "$RUNNER_TEMP/omarchy-realise-2.json"
           after="$(sha256sum "$tmp_home/.config/omarchy/shell.json" | cut -d' ' -f1)"
           test "$before" = "$after"
-          grep -q '"contract_revision": "d3d23fdddef846ebb98b52122a6ece66211c0daf"' "$RUNNER_TEMP/omarchy-verify.json"
+          grep -q '"contract_revision": "0534987009061cbe2dacdde4ad564092ab698d12"' "$RUNNER_TEMP/omarchy-verify.json"
           grep -q '"state": "exact"' "$RUNNER_TEMP/omarchy-verify.json"
           ! grep -q 'shell.json.*create' "$RUNNER_TEMP/omarchy-realise.json"
 

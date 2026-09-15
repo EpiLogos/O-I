@@ -127,6 +127,10 @@ impl Client {
                             availability: match native_state {
                                 "missing" => Availability::Missing,
                                 "broken" => Availability::Unavailable,
+                                // "installed_component": component material
+                                // is present on this machine — discovered,
+                                // not unavailable; the missing native command
+                                // stays visible in native_state.
                                 _ => Availability::Discovered,
                             },
                             native_state: native_state.into(),
@@ -212,7 +216,7 @@ fn validate(data: &Value, schemas: &[&str], rows: &str, id: &str) -> Result<(), 
         }
         if !matches!(
             row["state"].as_str(),
-            Some("missing" | "installed" | "registered" | "broken")
+            Some("missing" | "installed" | "registered" | "installed_component" | "broken")
         ) {
             return Err(format!("Unsupported S availability state for {product}"));
         }

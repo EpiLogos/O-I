@@ -1,7 +1,7 @@
 const OMARCHY_HOST_SCHEMA: &str = "oi.omarchy-host/v1";
 const OMARCHY_SOURCE_REPOSITORY: &str = "https://github.com/omacom/omarchy";
-const OMARCHY_STABLE_RELEASE: &str = "v4.0.2";
-const OMARCHY_CONTRACT_REVISION: &str = "d3d23fdddef846ebb98b52122a6ece66211c0daf";
+const OMARCHY_STABLE_RELEASE: &str = "v4.0.3";
+const OMARCHY_CONTRACT_REVISION: &str = "0534987009061cbe2dacdde4ad564092ab698d12";
 const OMARCHY_PLUGIN_ID: &str = "org.epilogos.oi";
 const OMARCHY_SWITCHER_ID: &str = "org.epilogos.oi.switcher";
 
@@ -318,8 +318,8 @@ mod omarchy_host_tests {
 
     #[test]
     fn source_pin_and_native_loader_split_are_explicit() {
-        assert_eq!(OMARCHY_STABLE_RELEASE, "v4.0.2");
-        assert_eq!(OMARCHY_CONTRACT_REVISION, "d3d23fdddef846ebb98b52122a6ece66211c0daf");
+        assert_eq!(OMARCHY_STABLE_RELEASE, "v4.0.3");
+        assert_eq!(OMARCHY_CONTRACT_REVISION, "0534987009061cbe2dacdde4ad564092ab698d12");
         let main: serde_json::Value = serde_json::from_str(OMARCHY_PLUGIN_MANIFEST).unwrap();
         let switcher: serde_json::Value = serde_json::from_str(OMARCHY_SWITCHER_MANIFEST).unwrap();
         assert_eq!(main["id"], OMARCHY_PLUGIN_ID);
