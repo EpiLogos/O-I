@@ -1,0 +1,1524 @@
+{
+  "started": "2026-09-15T14:52:46.269Z",
+  "ended": "2026-09-15T14:53:04.690Z",
+  "software": false,
+  "browserVersion": "152.0.7977.84",
+  "executablePath": "/Applications/Google Chrome.app/Contents/MacOS/Google Chrome",
+  "args": [],
+  "results": [
+    {
+      "mode": "native",
+      "gpu": {
+        "renderer": "WebKit WebGL",
+        "vendor": "WebKit",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+        "unmaskedVendor": "Google Inc. (Apple)"
+      },
+      "parity": {
+        "canvas": {
+          "width": 2560,
+          "height": 1640
+        },
+        "viewport": {
+          "width": 1280,
+          "height": 820
+        },
+        "dpr": 2,
+        "config": {
+          "glyph": [
+            "O",
+            "I"
+          ],
+          "particleCount": 120000,
+          "fontFamily": "system-ui, -apple-system, sans-serif",
+          "fontWeight": 900,
+          "colorMode": "blackOnWhite",
+          "backgroundColor": "#f4f2eb",
+          "backgroundMode": "solid",
+          "backgroundGlowIntensity": 0.45,
+          "style": "stipple",
+          "dotShape": "circle",
+          "particleSize": {
+            "min": 0.16,
+            "max": 1.6
+          },
+          "fluid": {
+            "curlScale": 1.2,
+            "curlSpeed": 0.7,
+            "vortexStrength": 1,
+            "viscosity": 0.94,
+            "returnSpeed": 1.1,
+            "turbulence": 0.22,
+            "dispersion": 0.09,
+            "snapRigidity": 1,
+            "densityTether": 1,
+            "curlDepth": 0.2,
+            "vortexRadius": 160,
+            "gravityX": 0,
+            "gravityY": 0,
+            "gravityZ": 0,
+            "quadraticDrag": 0.2,
+            "thermalJitter": 0,
+            "maxSpeed": 1200,
+            "zConfinement": 1,
+            "timeScale": 1
+          },
+          "interaction": {
+            "radius": 92,
+            "strength": 0.8,
+            "mode": "repel",
+            "velocityInfluence": 1,
+            "falloffPower": 2,
+            "placedPoints": []
+          },
+          "relational": {
+            "enabled": false,
+            "mode": "orbital",
+            "attractorCount": 3,
+            "attractorGravity": 1.6,
+            "orbitSpeed": 0.8,
+            "orbitRadius": 240,
+            "relationalSpin": 1.4,
+            "chaosFactor": 0.2,
+            "wanderSpeed": 0.5,
+            "gravitySoftening": 40,
+            "gravityFalloff": 2,
+            "swirlRadius": 160
+          },
+          "chaining": {
+            "enabled": false,
+            "chain": [
+              "▲",
+              "■",
+              "⬟",
+              "⬢",
+              "⯎",
+              "◉"
+            ],
+            "mode": "loop",
+            "stepHoldDuration": 1,
+            "transitionDuration": 2.2,
+            "easing": "smoothstep",
+            "timingJitter": 0.15,
+            "disperseImpulse": 0.8,
+            "paused": false,
+            "advance": "time"
+          },
+          "color": {
+            "enabled": true,
+            "mode": "linearGradient",
+            "primaryColor": "#252720",
+            "secondaryColor": "#252720",
+            "accentColor": "#252720",
+            "cycleSpeed": 0,
+            "waveFrequency": 1.8,
+            "angle": 45,
+            "fieldCenterOffset": [
+              0,
+              0
+            ],
+            "turbulenceModulation": 0,
+            "speedReactiveIntensity": 0,
+            "densityWeight": 0,
+            "hueShiftSpeed": 0,
+            "contrast": 1,
+            "paletteId": "cyberpunk_neon",
+            "backgroundColor": "#f4f2eb",
+            "backgroundMode": "solid",
+            "backgroundGlowIntensity": 0.45,
+            "customPaletteColors": [
+              "#252720",
+              "#252720"
+            ]
+          },
+          "toroidalMorph": {
+            "enabled": false,
+            "trajectory": "toroidalHopf",
+            "progress": 0.5,
+            "autoOscillate": true,
+            "oscillationSpeed": 0.08,
+            "oscillationAmplitude": 1.2,
+            "fiberPhaseOffset": 0,
+            "toroidalWinding": 3,
+            "poloidalWinding": 2,
+            "chiralCoupling": 0.75,
+            "manifoldRadius": 180,
+            "volumetricDepthScale": 0.12,
+            "poloidalRate": 0.13,
+            "toroidalPhase": 0,
+            "poloidalPhase": 0,
+            "interference": "toroidalOnly",
+            "driveShape": "sine",
+            "holdRatio": 0.3,
+            "driveDepth": 1
+          },
+          "automations": [],
+          "entities": [
+            {
+              "id": "mark-o",
+              "name": "O — opening",
+              "kind": "formation",
+              "enabled": true,
+              "x": -88,
+              "y": 12,
+              "z": 0,
+              "scale": 1,
+              "share": 4,
+              "shape": {
+                "kind": "glyph",
+                "text": "O"
+              },
+              "sequence": {
+                "links": [
+                  {
+                    "id": "mark-o_base",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "O"
+                    }
+                  }
+                ],
+                "advance": "off",
+                "hold": 3,
+                "transition": 1,
+                "easing": "smoothstep",
+                "order": "loop",
+                "jitter": 0,
+                "impulse": 0.6,
+                "phaseOffset": 0,
+                "rateMul": 1
+              },
+              "forces": {
+                "mode": "attract",
+                "strength": 0,
+                "radius": 180,
+                "spin": 0
+              },
+              "tint": "#252720",
+              "tintWeight": 0,
+              "extent": {
+                "width": 572,
+                "height": 652,
+                "rotation": -0.08726646259971647,
+                "normalized": true
+              }
+            },
+            {
+              "id": "mark-i",
+              "name": "I — interval",
+              "kind": "formation",
+              "enabled": true,
+              "x": 264,
+              "y": 6,
+              "z": 0,
+              "scale": 1,
+              "share": 1,
+              "shape": {
+                "kind": "glyph",
+                "text": "I"
+              },
+              "sequence": {
+                "links": [
+                  {
+                    "id": "mark-i_base",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "I"
+                    }
+                  }
+                ],
+                "advance": "off",
+                "hold": 3,
+                "transition": 1,
+                "easing": "smoothstep",
+                "order": "loop",
+                "jitter": 0,
+                "impulse": 0.6,
+                "phaseOffset": 0,
+                "rateMul": 1
+              },
+              "forces": {
+                "mode": "attract",
+                "strength": 0,
+                "radius": 180,
+                "spin": 0
+              },
+              "tint": "#252720",
+              "tintWeight": 0,
+              "extent": {
+                "width": 112.00000000000001,
+                "height": 648,
+                "rotation": 0,
+                "normalized": true
+              }
+            }
+          ],
+          "composition": {
+            "plane": "vertical",
+            "orchestration": {
+              "mode": "parallel",
+              "order": "listed",
+              "dwell": 0,
+              "glide": 4,
+              "followStation": false,
+              "focusTintWeight": 0.35
+            },
+            "entityTintWeight": 1,
+            "layoutName": "free"
+          },
+          "cymatics": {
+            "enabled": true,
+            "engine": "resonator",
+            "plateGeometry": "square",
+            "dimension": "2D",
+            "frequencyHz": 220,
+            "autoSweep": false,
+            "sweepSpeed": 8,
+            "chaosIntensity": 1.4,
+            "nodalAttraction": 2.8,
+            "dampingQFactor": 4.5,
+            "dominance": 0,
+            "followFocus": false,
+            "plateSize": 700,
+            "baseFrequency": 40,
+            "driveStrength": 0.6,
+            "modeCount": 64,
+            "transportGain": 1,
+            "agitation": 0.3,
+            "boundaryStrength": 6,
+            "driveScale": 1,
+            "sweep": {
+              "glideS": 8,
+              "dwellS": 2,
+              "enabled": false,
+              "direction": "ascent"
+            }
+          },
+          "morphProgress": 0,
+          "autoMorph": true,
+          "autoMorphDuration": 4,
+          "positioning": "absolute",
+          "material": {
+            "sizeBias": 1.6,
+            "opacity": 0.92,
+            "roundness": 0.95,
+            "softness": 0.15,
+            "irregularity": 0.35,
+            "elongation": 0.04,
+            "orientation": 0,
+            "contrast": 0.93,
+            "densityScale": 1,
+            "densityPhase": 0.3,
+            "edgeWeight": 0,
+            "halo": 0.13
+          },
+          "paperGrain": 0.035,
+          "sourceType": "composition",
+          "spatialChakra": {
+            "enabled": false,
+            "geometryMode": "yantra",
+            "cymatics": {
+              "plateGeometry": "square",
+              "dimension": "2D",
+              "frequencyHz": 396,
+              "autoSweep": false,
+              "sweepSpeed": 8,
+              "chaosIntensity": 1.4,
+              "nodalAttraction": 2.8,
+              "dampingQFactor": 4.5,
+              "engine": "resonator",
+              "baseFrequency": 40,
+              "driveStrength": 1,
+              "transportGain": 1,
+              "agitation": 0.3,
+              "plateSize": 700,
+              "modeCount": 64,
+              "boundaryStrength": 6,
+              "driveScale": 1,
+              "sweep": {
+                "enabled": false,
+                "glideS": 3.5,
+                "dwellS": 2,
+                "direction": "ascent"
+              }
+            },
+            "playbackMode": "simultaneousBody",
+            "glyphType": "yantra",
+            "nodes": [
+              {
+                "id": "sahasrara",
+                "name": "Sahasrara (Crown)",
+                "sanskrit": "सहस्रार",
+                "seedSyllable": "ॐ",
+                "symbol": "☸",
+                "englishTitle": "Crown / Pure Consciousness",
+                "frequencyHz": 963,
+                "element": "Cosmic Spirit (Akasha)",
+                "x": 0,
+                "y": -270,
+                "scale": 0.16,
+                "color": "#ff77ff",
+                "attractorStrength": 2.2,
+                "active": true
+              },
+              {
+                "id": "ajna",
+                "name": "Ajna (Third Eye)",
+                "sanskrit": "आज्ञा",
+                "seedSyllable": "ॐ",
+                "symbol": "👁",
+                "englishTitle": "Third Eye / Intuition",
+                "frequencyHz": 852,
+                "element": "Light (Prakasha)",
+                "x": 0,
+                "y": -180,
+                "scale": 0.14,
+                "color": "#66a3ff",
+                "attractorStrength": 2,
+                "active": true
+              },
+              {
+                "id": "vishuddha",
+                "name": "Vishuddha (Throat)",
+                "sanskrit": "विशुद्ध",
+                "seedSyllable": "हं",
+                "symbol": "◯",
+                "englishTitle": "Throat / Expression",
+                "frequencyHz": 741,
+                "element": "Ether / Sound (Akasha)",
+                "x": 0,
+                "y": -90,
+                "scale": 0.14,
+                "color": "#00ffff",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "anahata",
+                "name": "Anahata (Heart)",
+                "sanskrit": "अनाहत",
+                "seedSyllable": "यं",
+                "symbol": "✡",
+                "englishTitle": "Heart / Compassion",
+                "frequencyHz": 639,
+                "element": "Air (Vayu)",
+                "x": 0,
+                "y": 0,
+                "scale": 0.15,
+                "color": "#00ff99",
+                "attractorStrength": 2.4,
+                "active": true
+              },
+              {
+                "id": "manipura",
+                "name": "Manipura (Solar Plexus)",
+                "sanskrit": "मणिपूर",
+                "seedSyllable": "रं",
+                "symbol": "▽",
+                "englishTitle": "Solar Plexus / Willpower",
+                "frequencyHz": 528,
+                "element": "Fire (Tejas)",
+                "x": 0,
+                "y": 90,
+                "scale": 0.14,
+                "color": "#ffff00",
+                "attractorStrength": 1.9,
+                "active": true
+              },
+              {
+                "id": "svadhisthana",
+                "name": "Svadhisthana (Sacral)",
+                "sanskrit": "स्वाधिष्ठान",
+                "seedSyllable": "वं",
+                "symbol": "☽",
+                "englishTitle": "Sacral / Fluid Creativity",
+                "frequencyHz": 417,
+                "element": "Water (Apas)",
+                "x": 0,
+                "y": 180,
+                "scale": 0.14,
+                "color": "#ff8800",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "muladhara",
+                "name": "Muladhara (Root)",
+                "sanskrit": "मूलाधार",
+                "seedSyllable": "लं",
+                "symbol": "🪷",
+                "englishTitle": "Root / Grounded Foundation",
+                "frequencyHz": 396,
+                "element": "Earth (Prithvi)",
+                "x": 0,
+                "y": 270,
+                "scale": 0.15,
+                "color": "#ff2255",
+                "attractorStrength": 2.2,
+                "active": true
+              }
+            ],
+            "activeNodeIndex": 6,
+            "transitionDuration": 2.4,
+            "holdDuration": 1.2,
+            "autoCycle": true,
+            "cycleDirection": "ascent",
+            "attractorInfluence": 1.5,
+            "particlePartitionSpread": 1,
+            "plane": "horizontal",
+            "vortexStrength": 1.6
+          }
+        },
+        "camera": {
+          "mode": "2d",
+          "yaw": 0,
+          "pitch": 0,
+          "zoom": 1,
+          "panX": 0,
+          "panY": 0,
+          "plane": "XY",
+          "depth": 0,
+          "grid": false,
+          "snap": false
+        },
+        "ownerCanvasCount": 1
+      },
+      "elapsedMs": 6001.300000190735,
+      "frames": 360,
+      "fps": 59.987002814149996,
+      "frameIntervals": {
+        "count": 359,
+        "mean": 16.66490250776073,
+        "p50": 16.699999809265137,
+        "p95": 17.40000009536743,
+        "max": 17.700000286102295
+      },
+      "renderJs": {
+        "count": 360,
+        "mean": 0.34305556615193683,
+        "p50": 0.3000001907348633,
+        "p95": 0.5999999046325684,
+        "max": 1.200000286102295
+      },
+      "deltas": {
+        "count": 360,
+        "mean": 0.016666111111111163,
+        "p50": 0.01669999999999982,
+        "p95": 0.016700000000000728,
+        "max": 0.016800000000000183
+      },
+      "metrics": {
+        "resize": {
+          "calls": 360,
+          "ms": 1.0999999046325684,
+          "max": 0.10000038146972656
+        },
+        "configuration": {
+          "calls": 360,
+          "ms": 2.5,
+          "max": 0.10000038146972656
+        },
+        "setHostView": {
+          "calls": 360,
+          "ms": 8.000001907348633,
+          "max": 0.20000028610229492
+        },
+        "entities.update": {
+          "calls": 591,
+          "ms": 6.999999523162842,
+          "max": 0.20000028610229492
+        },
+        "renderer.render": {
+          "calls": 1542,
+          "ms": 52.400004386901855,
+          "max": 0.2999997138977051
+        },
+        "simulator.step": {
+          "calls": 591,
+          "ms": 51.10000228881836,
+          "max": 0.40000009536743164
+        },
+        "advance": {
+          "calls": 360,
+          "ms": 103.90000200271606,
+          "max": 1.1000003814697266
+        }
+      },
+      "before": {
+        "simTime": 2.067499999999997,
+        "steps": 196,
+        "seeds": 1,
+        "bakes": 4,
+        "particleCount": 120000,
+        "drive": {
+          "progress": 1,
+          "theta": 1.0392388498075067,
+          "phi": 1.688763130937191,
+          "signal": 1,
+          "cycleIndex": 0,
+          "cycleFraction": 0.1654000000000005
+        },
+        "composition": {
+          "simTime": 2.067499999999997,
+          "focus": null,
+          "sequences": [
+            {
+              "entityId": "mark-o",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            },
+            {
+              "entityId": "mark-i",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            }
+          ],
+          "cymatic": {
+            "enabled": true,
+            "frequencyHz": 220,
+            "coherence": 0.2406039597783229,
+            "dominantM": 2,
+            "dominantN": 2,
+            "nearestStation": 1,
+            "stationProximity": 0,
+            "stations": [
+              {
+                "index": 0,
+                "name": "Muladhara (Root)",
+                "frequencyHz": 80,
+                "m": 1,
+                "n": 1,
+                "color": "#ff2255"
+              },
+              {
+                "index": 1,
+                "name": "Svadhisthana (Sacral)",
+                "frequencyHz": 320,
+                "m": 2,
+                "n": 2,
+                "color": "#ff8800"
+              },
+              {
+                "index": 2,
+                "name": "Manipura (Solar Plexus)",
+                "frequencyHz": 400,
+                "m": 1,
+                "n": 3,
+                "color": "#ffff00"
+              },
+              {
+                "index": 3,
+                "name": "Anahata (Heart)",
+                "frequencyHz": 680,
+                "m": 1,
+                "n": 4,
+                "color": "#00ff99"
+              },
+              {
+                "index": 4,
+                "name": "Vishuddha (Throat)",
+                "frequencyHz": 720,
+                "m": 3,
+                "n": 3,
+                "color": "#00ffff"
+              },
+              {
+                "index": 5,
+                "name": "Ajna (Third Eye)",
+                "frequencyHz": 800,
+                "m": 2,
+                "n": 4,
+                "color": "#66a3ff"
+              },
+              {
+                "index": 6,
+                "name": "Sahasrara (Crown)",
+                "frequencyHz": 1040,
+                "m": 1,
+                "n": 5,
+                "color": "#ff77ff"
+              }
+            ]
+          }
+        },
+        "positions": [],
+        "velocities": []
+      },
+      "after": {
+        "simTime": 8.067300000000026,
+        "steps": 787,
+        "seeds": 1,
+        "bakes": 4,
+        "particleCount": 120000,
+        "drive": {
+          "progress": 0,
+          "theta": 4.055067266288791,
+          "phi": 6.5894843077193235,
+          "signal": -1,
+          "cycleIndex": 0,
+          "cycleFraction": 0.6453840000000002
+        },
+        "composition": {
+          "simTime": 8.067300000000026,
+          "focus": null,
+          "sequences": [
+            {
+              "entityId": "mark-o",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            },
+            {
+              "entityId": "mark-i",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            }
+          ],
+          "cymatic": {
+            "enabled": true,
+            "frequencyHz": 220,
+            "coherence": 0.2406039597783229,
+            "dominantM": 2,
+            "dominantN": 2,
+            "nearestStation": 1,
+            "stationProximity": 0,
+            "stations": [
+              {
+                "index": 0,
+                "name": "Muladhara (Root)",
+                "frequencyHz": 80,
+                "m": 1,
+                "n": 1,
+                "color": "#ff2255"
+              },
+              {
+                "index": 1,
+                "name": "Svadhisthana (Sacral)",
+                "frequencyHz": 320,
+                "m": 2,
+                "n": 2,
+                "color": "#ff8800"
+              },
+              {
+                "index": 2,
+                "name": "Manipura (Solar Plexus)",
+                "frequencyHz": 400,
+                "m": 1,
+                "n": 3,
+                "color": "#ffff00"
+              },
+              {
+                "index": 3,
+                "name": "Anahata (Heart)",
+                "frequencyHz": 680,
+                "m": 1,
+                "n": 4,
+                "color": "#00ff99"
+              },
+              {
+                "index": 4,
+                "name": "Vishuddha (Throat)",
+                "frequencyHz": 720,
+                "m": 3,
+                "n": 3,
+                "color": "#00ffff"
+              },
+              {
+                "index": 5,
+                "name": "Ajna (Third Eye)",
+                "frequencyHz": 800,
+                "m": 2,
+                "n": 4,
+                "color": "#66a3ff"
+              },
+              {
+                "index": 6,
+                "name": "Sahasrara (Crown)",
+                "frequencyHz": 1040,
+                "m": 1,
+                "n": 5,
+                "color": "#ff77ff"
+              }
+            ]
+          }
+        },
+        "positions": [],
+        "velocities": []
+      },
+      "stepDelta": 591,
+      "seedDelta": 0,
+      "bakeDelta": 0,
+      "errors": [],
+      "browserVisibility": "visible",
+      "pageErrors": []
+    },
+    {
+      "mode": "surface-window",
+      "gpu": {
+        "renderer": "WebKit WebGL",
+        "vendor": "WebKit",
+        "unmaskedRenderer": "ANGLE (Apple, ANGLE Metal Renderer: Apple M4, Unspecified Version)",
+        "unmaskedVendor": "Google Inc. (Apple)"
+      },
+      "parity": {
+        "canvas": {
+          "width": 2560,
+          "height": 1640
+        },
+        "viewport": {
+          "width": 1280,
+          "height": 820
+        },
+        "dpr": 2,
+        "config": {
+          "glyph": [
+            "O",
+            "I"
+          ],
+          "particleCount": 120000,
+          "fontFamily": "system-ui, -apple-system, sans-serif",
+          "fontWeight": 900,
+          "colorMode": "blackOnWhite",
+          "backgroundColor": "#f4f2eb",
+          "backgroundMode": "solid",
+          "backgroundGlowIntensity": 0.45,
+          "style": "stipple",
+          "dotShape": "circle",
+          "particleSize": {
+            "min": 0.16,
+            "max": 1.6
+          },
+          "fluid": {
+            "curlScale": 1.2,
+            "curlSpeed": 0.7,
+            "vortexStrength": 1,
+            "viscosity": 0.94,
+            "returnSpeed": 1.1,
+            "turbulence": 0.22,
+            "dispersion": 0.09,
+            "snapRigidity": 1,
+            "densityTether": 1,
+            "curlDepth": 0.2,
+            "vortexRadius": 160,
+            "gravityX": 0,
+            "gravityY": 0,
+            "gravityZ": 0,
+            "quadraticDrag": 0.2,
+            "thermalJitter": 0,
+            "maxSpeed": 1200,
+            "zConfinement": 1,
+            "timeScale": 1
+          },
+          "interaction": {
+            "radius": 92,
+            "strength": 0.8,
+            "mode": "repel",
+            "velocityInfluence": 1,
+            "falloffPower": 2,
+            "placedPoints": []
+          },
+          "relational": {
+            "enabled": false,
+            "mode": "orbital",
+            "attractorCount": 3,
+            "attractorGravity": 1.6,
+            "orbitSpeed": 0.8,
+            "orbitRadius": 240,
+            "relationalSpin": 1.4,
+            "chaosFactor": 0.2,
+            "wanderSpeed": 0.5,
+            "gravitySoftening": 40,
+            "gravityFalloff": 2,
+            "swirlRadius": 160
+          },
+          "chaining": {
+            "enabled": false,
+            "chain": [
+              "▲",
+              "■",
+              "⬟",
+              "⬢",
+              "⯎",
+              "◉"
+            ],
+            "mode": "loop",
+            "stepHoldDuration": 1,
+            "transitionDuration": 2.2,
+            "easing": "smoothstep",
+            "timingJitter": 0.15,
+            "disperseImpulse": 0.8,
+            "paused": false,
+            "advance": "time"
+          },
+          "color": {
+            "enabled": true,
+            "mode": "linearGradient",
+            "primaryColor": "#252720",
+            "secondaryColor": "#252720",
+            "accentColor": "#252720",
+            "cycleSpeed": 0,
+            "waveFrequency": 1.8,
+            "angle": 45,
+            "fieldCenterOffset": [
+              0,
+              0
+            ],
+            "turbulenceModulation": 0,
+            "speedReactiveIntensity": 0,
+            "densityWeight": 0,
+            "hueShiftSpeed": 0,
+            "contrast": 1,
+            "paletteId": "cyberpunk_neon",
+            "backgroundColor": "#f4f2eb",
+            "backgroundMode": "solid",
+            "backgroundGlowIntensity": 0.45,
+            "customPaletteColors": [
+              "#252720",
+              "#252720"
+            ]
+          },
+          "toroidalMorph": {
+            "enabled": false,
+            "trajectory": "toroidalHopf",
+            "progress": 0.5,
+            "autoOscillate": true,
+            "oscillationSpeed": 0.08,
+            "oscillationAmplitude": 1.2,
+            "fiberPhaseOffset": 0,
+            "toroidalWinding": 3,
+            "poloidalWinding": 2,
+            "chiralCoupling": 0.75,
+            "manifoldRadius": 180,
+            "volumetricDepthScale": 0.12,
+            "poloidalRate": 0.13,
+            "toroidalPhase": 0,
+            "poloidalPhase": 0,
+            "interference": "toroidalOnly",
+            "driveShape": "sine",
+            "holdRatio": 0.3,
+            "driveDepth": 1
+          },
+          "automations": [],
+          "entities": [
+            {
+              "id": "mark-o",
+              "name": "O — opening",
+              "kind": "formation",
+              "enabled": true,
+              "x": -88,
+              "y": 12,
+              "z": 0,
+              "scale": 1,
+              "share": 4,
+              "shape": {
+                "kind": "glyph",
+                "text": "O"
+              },
+              "sequence": {
+                "links": [
+                  {
+                    "id": "mark-o_base",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "O"
+                    }
+                  }
+                ],
+                "advance": "off",
+                "hold": 3,
+                "transition": 1,
+                "easing": "smoothstep",
+                "order": "loop",
+                "jitter": 0,
+                "impulse": 0.6,
+                "phaseOffset": 0,
+                "rateMul": 1
+              },
+              "forces": {
+                "mode": "attract",
+                "strength": 0,
+                "radius": 180,
+                "spin": 0
+              },
+              "tint": "#252720",
+              "tintWeight": 0,
+              "extent": {
+                "width": 572,
+                "height": 652,
+                "rotation": -0.08726646259971647,
+                "normalized": true
+              }
+            },
+            {
+              "id": "mark-i",
+              "name": "I — interval",
+              "kind": "formation",
+              "enabled": true,
+              "x": 264,
+              "y": 6,
+              "z": 0,
+              "scale": 1,
+              "share": 1,
+              "shape": {
+                "kind": "glyph",
+                "text": "I"
+              },
+              "sequence": {
+                "links": [
+                  {
+                    "id": "mark-i_base",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "I"
+                    }
+                  }
+                ],
+                "advance": "off",
+                "hold": 3,
+                "transition": 1,
+                "easing": "smoothstep",
+                "order": "loop",
+                "jitter": 0,
+                "impulse": 0.6,
+                "phaseOffset": 0,
+                "rateMul": 1
+              },
+              "forces": {
+                "mode": "attract",
+                "strength": 0,
+                "radius": 180,
+                "spin": 0
+              },
+              "tint": "#252720",
+              "tintWeight": 0,
+              "extent": {
+                "width": 112.00000000000001,
+                "height": 648,
+                "rotation": 0,
+                "normalized": true
+              }
+            }
+          ],
+          "composition": {
+            "plane": "vertical",
+            "orchestration": {
+              "mode": "parallel",
+              "order": "listed",
+              "dwell": 0,
+              "glide": 4,
+              "followStation": false,
+              "focusTintWeight": 0.35
+            },
+            "entityTintWeight": 1,
+            "layoutName": "free"
+          },
+          "cymatics": {
+            "enabled": true,
+            "engine": "resonator",
+            "plateGeometry": "square",
+            "dimension": "2D",
+            "frequencyHz": 220,
+            "autoSweep": false,
+            "sweepSpeed": 8,
+            "chaosIntensity": 1.4,
+            "nodalAttraction": 2.8,
+            "dampingQFactor": 4.5,
+            "dominance": 0,
+            "followFocus": false,
+            "plateSize": 700,
+            "baseFrequency": 40,
+            "driveStrength": 0.6,
+            "modeCount": 64,
+            "transportGain": 1,
+            "agitation": 0.3,
+            "boundaryStrength": 6,
+            "driveScale": 1,
+            "sweep": {
+              "glideS": 8,
+              "dwellS": 2,
+              "enabled": false,
+              "direction": "ascent"
+            }
+          },
+          "morphProgress": 0,
+          "autoMorph": true,
+          "autoMorphDuration": 4,
+          "positioning": "absolute",
+          "material": {
+            "sizeBias": 1.6,
+            "opacity": 0.92,
+            "roundness": 0.95,
+            "softness": 0.15,
+            "irregularity": 0.35,
+            "elongation": 0.04,
+            "orientation": 0,
+            "contrast": 0.93,
+            "densityScale": 1,
+            "densityPhase": 0.3,
+            "edgeWeight": 0,
+            "halo": 0.13
+          },
+          "paperGrain": 0.035,
+          "sourceType": "composition",
+          "spatialChakra": {
+            "enabled": false,
+            "geometryMode": "yantra",
+            "cymatics": {
+              "plateGeometry": "square",
+              "dimension": "2D",
+              "frequencyHz": 396,
+              "autoSweep": false,
+              "sweepSpeed": 8,
+              "chaosIntensity": 1.4,
+              "nodalAttraction": 2.8,
+              "dampingQFactor": 4.5,
+              "engine": "resonator",
+              "baseFrequency": 40,
+              "driveStrength": 1,
+              "transportGain": 1,
+              "agitation": 0.3,
+              "plateSize": 700,
+              "modeCount": 64,
+              "boundaryStrength": 6,
+              "driveScale": 1,
+              "sweep": {
+                "enabled": false,
+                "glideS": 3.5,
+                "dwellS": 2,
+                "direction": "ascent"
+              }
+            },
+            "playbackMode": "simultaneousBody",
+            "glyphType": "yantra",
+            "nodes": [
+              {
+                "id": "sahasrara",
+                "name": "Sahasrara (Crown)",
+                "sanskrit": "सहस्रार",
+                "seedSyllable": "ॐ",
+                "symbol": "☸",
+                "englishTitle": "Crown / Pure Consciousness",
+                "frequencyHz": 963,
+                "element": "Cosmic Spirit (Akasha)",
+                "x": 0,
+                "y": -270,
+                "scale": 0.16,
+                "color": "#ff77ff",
+                "attractorStrength": 2.2,
+                "active": true
+              },
+              {
+                "id": "ajna",
+                "name": "Ajna (Third Eye)",
+                "sanskrit": "आज्ञा",
+                "seedSyllable": "ॐ",
+                "symbol": "👁",
+                "englishTitle": "Third Eye / Intuition",
+                "frequencyHz": 852,
+                "element": "Light (Prakasha)",
+                "x": 0,
+                "y": -180,
+                "scale": 0.14,
+                "color": "#66a3ff",
+                "attractorStrength": 2,
+                "active": true
+              },
+              {
+                "id": "vishuddha",
+                "name": "Vishuddha (Throat)",
+                "sanskrit": "विशुद्ध",
+                "seedSyllable": "हं",
+                "symbol": "◯",
+                "englishTitle": "Throat / Expression",
+                "frequencyHz": 741,
+                "element": "Ether / Sound (Akasha)",
+                "x": 0,
+                "y": -90,
+                "scale": 0.14,
+                "color": "#00ffff",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "anahata",
+                "name": "Anahata (Heart)",
+                "sanskrit": "अनाहत",
+                "seedSyllable": "यं",
+                "symbol": "✡",
+                "englishTitle": "Heart / Compassion",
+                "frequencyHz": 639,
+                "element": "Air (Vayu)",
+                "x": 0,
+                "y": 0,
+                "scale": 0.15,
+                "color": "#00ff99",
+                "attractorStrength": 2.4,
+                "active": true
+              },
+              {
+                "id": "manipura",
+                "name": "Manipura (Solar Plexus)",
+                "sanskrit": "मणिपूर",
+                "seedSyllable": "रं",
+                "symbol": "▽",
+                "englishTitle": "Solar Plexus / Willpower",
+                "frequencyHz": 528,
+                "element": "Fire (Tejas)",
+                "x": 0,
+                "y": 90,
+                "scale": 0.14,
+                "color": "#ffff00",
+                "attractorStrength": 1.9,
+                "active": true
+              },
+              {
+                "id": "svadhisthana",
+                "name": "Svadhisthana (Sacral)",
+                "sanskrit": "स्वाधिष्ठान",
+                "seedSyllable": "वं",
+                "symbol": "☽",
+                "englishTitle": "Sacral / Fluid Creativity",
+                "frequencyHz": 417,
+                "element": "Water (Apas)",
+                "x": 0,
+                "y": 180,
+                "scale": 0.14,
+                "color": "#ff8800",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "muladhara",
+                "name": "Muladhara (Root)",
+                "sanskrit": "मूलाधार",
+                "seedSyllable": "लं",
+                "symbol": "🪷",
+                "englishTitle": "Root / Grounded Foundation",
+                "frequencyHz": 396,
+                "element": "Earth (Prithvi)",
+                "x": 0,
+                "y": 270,
+                "scale": 0.15,
+                "color": "#ff2255",
+                "attractorStrength": 2.2,
+                "active": true
+              }
+            ],
+            "activeNodeIndex": 6,
+            "transitionDuration": 2.4,
+            "holdDuration": 1.2,
+            "autoCycle": true,
+            "cycleDirection": "ascent",
+            "attractorInfluence": 1.5,
+            "particlePartitionSpread": 1,
+            "plane": "horizontal",
+            "vortexStrength": 1.6
+          }
+        },
+        "camera": {
+          "mode": "2d",
+          "yaw": 0,
+          "pitch": 0,
+          "zoom": 1,
+          "panX": 0,
+          "panY": 0,
+          "plane": "XY",
+          "depth": 0,
+          "grid": false,
+          "snap": false
+        },
+        "ownerCanvasCount": 1
+      },
+      "elapsedMs": 6001.900000095367,
+      "frames": 360,
+      "fps": 59.98100601380892,
+      "frameIntervals": {
+        "count": 359,
+        "mean": 16.665459610293503,
+        "p50": 16.699999809265137,
+        "p95": 17.40000009536743,
+        "max": 17.600000381469727
+      },
+      "renderJs": {
+        "count": 360,
+        "mean": 0.37222222222222223,
+        "p50": 0.39999961853027344,
+        "p95": 0.5999999046325684,
+        "max": 1.5
+      },
+      "deltas": {
+        "count": 360,
+        "mean": 0.016666111111111156,
+        "p50": 0.01669999999999982,
+        "p95": 0.016800000000000183,
+        "max": 0.016800000000001092
+      },
+      "metrics": {
+        "resize": {
+          "calls": 360,
+          "ms": 1.099998950958252,
+          "max": 0.09999990463256836
+        },
+        "configuration": {
+          "calls": 360,
+          "ms": 3.299999713897705,
+          "max": 0.10000038146972656
+        },
+        "setHostView": {
+          "calls": 360,
+          "ms": 9.500000953674316,
+          "max": 0.20000028610229492
+        },
+        "entities.update": {
+          "calls": 576,
+          "ms": 8.500001430511475,
+          "max": 0.19999980926513672
+        },
+        "renderer.render": {
+          "calls": 1512,
+          "ms": 58.79999828338623,
+          "max": 0.40000009536743164
+        },
+        "simulator.step": {
+          "calls": 576,
+          "ms": 54.39999532699585,
+          "max": 0.40000009536743164
+        },
+        "advance": {
+          "calls": 360,
+          "ms": 112.60000133514404,
+          "max": 1.299999713897705
+        }
+      },
+      "before": {
+        "simTime": 2.0572999997138974,
+        "steps": 196,
+        "seeds": 1,
+        "bakes": 4,
+        "particleCount": 120000,
+        "drive": {
+          "progress": 1,
+          "theta": 1.0341117704530354,
+          "phi": 1.6804316269861799,
+          "signal": 1,
+          "cycleIndex": 0,
+          "cycleFraction": 0.16458399997711198
+        },
+        "composition": {
+          "simTime": 2.0572999997138974,
+          "focus": null,
+          "sequences": [
+            {
+              "entityId": "mark-o",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            },
+            {
+              "entityId": "mark-i",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            }
+          ],
+          "cymatic": {
+            "enabled": true,
+            "frequencyHz": 220,
+            "coherence": 0.2406039597783229,
+            "dominantM": 2,
+            "dominantN": 2,
+            "nearestStation": 1,
+            "stationProximity": 0,
+            "stations": [
+              {
+                "index": 0,
+                "name": "Muladhara (Root)",
+                "frequencyHz": 80,
+                "m": 1,
+                "n": 1,
+                "color": "#ff2255"
+              },
+              {
+                "index": 1,
+                "name": "Svadhisthana (Sacral)",
+                "frequencyHz": 320,
+                "m": 2,
+                "n": 2,
+                "color": "#ff8800"
+              },
+              {
+                "index": 2,
+                "name": "Manipura (Solar Plexus)",
+                "frequencyHz": 400,
+                "m": 1,
+                "n": 3,
+                "color": "#ffff00"
+              },
+              {
+                "index": 3,
+                "name": "Anahata (Heart)",
+                "frequencyHz": 680,
+                "m": 1,
+                "n": 4,
+                "color": "#00ff99"
+              },
+              {
+                "index": 4,
+                "name": "Vishuddha (Throat)",
+                "frequencyHz": 720,
+                "m": 3,
+                "n": 3,
+                "color": "#00ffff"
+              },
+              {
+                "index": 5,
+                "name": "Ajna (Third Eye)",
+                "frequencyHz": 800,
+                "m": 2,
+                "n": 4,
+                "color": "#66a3ff"
+              },
+              {
+                "index": 6,
+                "name": "Sahasrara (Crown)",
+                "frequencyHz": 1040,
+                "m": 1,
+                "n": 5,
+                "color": "#ff77ff"
+              }
+            ]
+          }
+        },
+        "positions": [],
+        "velocities": []
+      },
+      "after": {
+        "simTime": 8.057099999713925,
+        "steps": 772,
+        "seeds": 1,
+        "bakes": 4,
+        "particleCount": 120000,
+        "drive": {
+          "progress": 0,
+          "theta": 4.049940186934323,
+          "phi": 6.581152803768314,
+          "signal": -1,
+          "cycleIndex": 0,
+          "cycleFraction": 0.6445679999771121
+        },
+        "composition": {
+          "simTime": 8.057099999713925,
+          "focus": null,
+          "sequences": [
+            {
+              "entityId": "mark-o",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            },
+            {
+              "entityId": "mark-i",
+              "linkIndex": 0,
+              "nextIndex": 0,
+              "progress": 0,
+              "phase": "hold",
+              "linkCount": 1
+            }
+          ],
+          "cymatic": {
+            "enabled": true,
+            "frequencyHz": 220,
+            "coherence": 0.2406039597783229,
+            "dominantM": 2,
+            "dominantN": 2,
+            "nearestStation": 1,
+            "stationProximity": 0,
+            "stations": [
+              {
+                "index": 0,
+                "name": "Muladhara (Root)",
+                "frequencyHz": 80,
+                "m": 1,
+                "n": 1,
+                "color": "#ff2255"
+              },
+              {
+                "index": 1,
+                "name": "Svadhisthana (Sacral)",
+                "frequencyHz": 320,
+                "m": 2,
+                "n": 2,
+                "color": "#ff8800"
+              },
+              {
+                "index": 2,
+                "name": "Manipura (Solar Plexus)",
+                "frequencyHz": 400,
+                "m": 1,
+                "n": 3,
+                "color": "#ffff00"
+              },
+              {
+                "index": 3,
+                "name": "Anahata (Heart)",
+                "frequencyHz": 680,
+                "m": 1,
+                "n": 4,
+                "color": "#00ff99"
+              },
+              {
+                "index": 4,
+                "name": "Vishuddha (Throat)",
+                "frequencyHz": 720,
+                "m": 3,
+                "n": 3,
+                "color": "#00ffff"
+              },
+              {
+                "index": 5,
+                "name": "Ajna (Third Eye)",
+                "frequencyHz": 800,
+                "m": 2,
+                "n": 4,
+                "color": "#66a3ff"
+              },
+              {
+                "index": 6,
+                "name": "Sahasrara (Crown)",
+                "frequencyHz": 1040,
+                "m": 1,
+                "n": 5,
+                "color": "#ff77ff"
+              }
+            ]
+          }
+        },
+        "positions": [],
+        "velocities": []
+      },
+      "stepDelta": 576,
+      "seedDelta": 0,
+      "bakeDelta": 0,
+      "errors": [],
+      "browserVisibility": "visible",
+      "pageErrors": []
+    }
+  ]
+}
