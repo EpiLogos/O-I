@@ -1,5 +1,5 @@
 /* Search aperture and owner-dispatch states retain their existing contracts. */
-.search-aperture { width:calc(var(--oi-loading-mark-width) + var(--oi-space-6) + var(--oi-space-6)); max-width:calc(100vw - var(--oi-space-6)); max-height:calc(100vh - calc(var(--oi-space-6) + var(--oi-space-5))); margin:var(--oi-space-7) auto auto; padding:0; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-desktop-gap); background:var(--oi-sidebar-ground); color:var(--oi-accent-ink); box-shadow:var(--oi-shadow-overlay); font:var(--oi-shell-type-ui) var(--oi-font-sans); animation: ctx-menu-in var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.search-aperture { width:var(--oi-dialog-width); max-width:calc(100vw - var(--oi-space-6)); max-height:calc(100vh - calc(var(--oi-space-6) + var(--oi-space-5))); margin:var(--oi-space-7) auto auto; padding:0; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-desktop-gap); background:var(--oi-sidebar-ground); color:var(--oi-accent-ink); box-shadow:var(--oi-shadow-overlay); font:var(--oi-shell-type-ui) var(--oi-font-sans); animation: ctx-menu-in var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .search-aperture::backdrop { background:var(--oi-rule); backdrop-filter:blur(var(--oi-focus-ring-offset)); -webkit-backdrop-filter:blur(var(--oi-focus-ring-offset)); }
 .search-aperture form { display:flex; align-items:center; border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft); padding:var(--oi-desktop-gap-lg) var(--oi-desktop-gap-lg); gap:var(--oi-desktop-gap); }
 .search-aperture input { flex:1; min-width:0; border:0; background:transparent; outline:none; color:inherit; font-size:var(--oi-shell-type-prose); font-family:var(--oi-font-sans); height:auto; }
@@ -49,7 +49,7 @@
  * the specific native knowledge reading. GraphCanvas owns drawing. */
 .knowledge-surface { height:100%; display:flex; flex-direction:column; min-height:0; min-width:0; position:relative; background:var(--oi-canvas-ground); }
 .knowledge-surface > p { padding:var(--oi-desktop-gap-sm) var(--oi-desktop-gap-lg); font-size:var(--oi-shell-type-nav); }
-.knowledge-graph { position:relative; flex:1; min-height:var(--oi-loading-stage-min-height); background-image:radial-gradient(circle, var(--oi-rule) var(--oi-cloud-dot), transparent var(--oi-cloud-dot)); background-size:var(--oi-space-4) var(--oi-space-4); }
+.knowledge-graph { position:relative; flex:1; min-height:var(--oi-spatial-min-height); }
 .knowledge-canvas { position:absolute; inset:0; width:100%; height:100%; outline:none; touch-action:none; cursor:grab; }
 .knowledge-canvas:focus, .knowledge-canvas:focus-visible { outline:none; box-shadow:none; }
 .knowledge-node-accessibility { position:absolute; width:var(--oi-shell-edge); height:var(--oi-shell-edge); overflow:hidden; clip-path:inset(100%); }
@@ -60,7 +60,7 @@
 .knowledge-inputs details[open] { width:100%; }
 .knowledge-inputs summary { cursor:pointer; }
 .knowledge-inputs p { overflow-wrap:anywhere; line-height:var(--oi-space-3); }
-.knowledge-content { box-sizing:border-box; flex:1; min-height:0; overflow:auto; max-width:calc(var(--oi-loading-mark-width) + var(--oi-cloud-field-width)); width:100%; margin-inline:auto; padding:var(--oi-space-6) var(--oi-space-5); font-size:var(--oi-desktop-type-body); }
+.knowledge-content { box-sizing:border-box; flex:1; min-height:0; overflow:auto; max-width:var(--oi-reading-width); width:100%; margin-inline:auto; padding:var(--oi-space-6) var(--oi-space-5); font-size:var(--oi-desktop-type-body); }
 .knowledge-content:empty { display:none; }
 .knowledge-content pre { white-space:pre-wrap; overflow-wrap:anywhere; }
 .knowledge-page-heading h1 { font-size:var(--oi-shell-type-title); font-weight:normal; margin-block:var(--oi-space-4) var(--oi-space-3); }

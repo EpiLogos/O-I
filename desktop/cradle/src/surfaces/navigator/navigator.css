@@ -9,16 +9,7 @@
   background: var(--oi-sidebar-ground); color: var(--oi-foreground);
   border-right: 1px solid var(--oi-hairline);
   font-family: var(--oi-font-sans); font-size: var(--oi-shell-type-nav);
-  /* `--oi-loading-ground`/`--oi-loading-ink` are declared at :root against
-   * the un-themed `--oi-surface`/`--oi-foreground` defaults, so they resolve
-   * to white rather than the desktop palette even under `.oi-desktop` (the
-   * var() inside that :root declaration is captured at the root element,
-   * not re-evaluated per descendant). Re-pointing them here keeps every
-   * `Loading` mounted under this sidebar (FileTree, EncounterList, this
-   * surface's own "Reading Central…") on the sidebar's real ground instead
-   * of a white box. This is a design-system-wide gap outside this file. */
-  --oi-loading-ground: var(--oi-sidebar-ground);
-  --oi-loading-ink: var(--oi-foreground);
+
 }
 aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 .world-navigator header { display: flex; align-items: center; gap: var(--oi-space-2); }
