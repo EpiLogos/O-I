@@ -10,6 +10,7 @@ import {pageExpressionBinding} from "./page-expression.mjs";
 import {resolveExpressionPresentation} from "../../../../shared-field/expression-presentation.mjs";
 
 type PageDocument=Record<string,any>; type Loaded={basis:string;document:ExpressionDocument};
+export type PageExpressionHostedState={pageRef:string;fileRevision:string;documentId:string|null;documentRevision:number;expressionRef:string;expressionRevision:number;live:boolean};
 const signature=(reading:ReadingRef)=>`${reading.ref}\u0000${reading.revision}\u0000${reading.availability}`;
 function verifySubjects(document:ExpressionDocument,declared:any[]){
  const native:SubjectBinding[]=[],scene=document.scenes.find(item=>item.scene_ref===document.selection.scene_ref);
@@ -19,7 +20,7 @@ function verifySubjects(document:ExpressionDocument,declared:any[]){
  for(const subject of native){const ref=subject.subject_ref,page=expected.get(ref);if(page.availability!=="available")throw new Error(`Subject ${ref} is ${page.availability}`);const actual=subject.sources.map(signature).sort(),wanted=(page.sources??[]).map(signature).sort();if(actual.join("\n")!==wanted.join("\n"))throw new Error(`Subject ${ref} source revisions do not match the page`);}
 }
 
-export function PageExpression({page,fileRevision,pageRef}:{page:PageDocument;fileRevision:string;pageRef:string}){
+export function PageExpression({page,fileRevision,pageRef,onHostedState}:{page:PageDocument;fileRevision:string;pageRef:string;onHostedState?:(state:PageExpressionHostedState)=>void}){
  const kernel=useKernel(),stage=useExpressionStage(),binding=useMemo(()=>pageExpressionBinding(page,fileRevision),[page,fileRevision]);
  const expression=binding?.props.expression as any,basis=`${pageRef}\u0000${fileRevision}\u0000${expression?.expression_ref??""}\u0000${expression?.expression_revision??""}`;
  const resolved=useMemo(()=>binding?resolveExpressionPresentation(binding,{renderer_ref:"renderer:oi:expression-stage",available:true,focus:true,capture:true}):null,[binding]);
@@ -28,6 +29,7 @@ export function PageExpression({page,fileRevision,pageRef}:{page:PageDocument;fi
  const inline=useRef<HTMLDivElement>(null),full=useRef<HTMLDivElement>(null),dialog=useRef<HTMLDivElement>(null),presentation=useRef<StagePresentation|null>(null),returnFocus=useRef<HTMLElement|null>(null),captureGeneration=useRef(0),mounted=useRef(true);
  const presentationId=`page-expression:${basis}`,expressionReceipts=kernel.receipts.filter(receipt=>receipt.event==="expression_changed"),changedSeq=expressionReceipts[expressionReceipts.length-1]?.seq;
  useLayoutEffect(()=>{captureGeneration.current++;presentation.current?.release();presentation.current=null;setLoaded(undefined);setStageReady(false);setFocused(false);setCaptureUrl(previous=>{if(previous)URL.revokeObjectURL(previous);return undefined;});},[basis]);
+ useLayoutEffect(()=>{onHostedState?.({pageRef,fileRevision,documentId:page.meta?.documentId??null,documentRevision:page.meta?.revision,expressionRef:expression.expression_ref,expressionRevision:expression.expression_revision,live:stageReady&&!error&&resolved?.state==="live"});},[onHostedState,pageRef,fileRevision,page.meta?.documentId,page.meta?.revision,expression.expression_ref,expression.expression_revision,stageReady,error,resolved?.state]);
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;captureGeneration.current++;presentation.current?.release();};},[]);
  useEffect(()=>{if(!expression||resolved?.state!=="live")return;let live=true;setError("");void kernelOp(kernel.transport,{op:"expression",request:{operation:"inspect",expression_ref:expression.expression_ref}}).then(reply=>{
    if(!live)return;if(reply.error||reply.outcome?.result!=="expression")throw new Error(reply.error??"Expression application unavailable");const doc=reply.outcome.data?.document as ExpressionDocument|undefined;if(!doc)throw new Error("Expression is not open in the native application");
