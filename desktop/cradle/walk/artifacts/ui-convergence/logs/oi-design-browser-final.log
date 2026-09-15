@@ -1,0 +1,19 @@
+
+> @epilogos/oi-design-system@0.1.0 verify:browser
+> node checks/browser.mjs
+
+PASS loading status exposes the real supplied label
+PASS large dense mark uses shared tokens
+PASS general clusters animate independently of logo
+PASS pause stops all mark and cluster motion
+PASS reduced motion disables every cloud animation
+PASS high contrast shows readable fallback
+PASS overlay covers window and disables background
+PASS dismiss restores background and initiating focus
+PASS component validates labels and renders strings safely
+PASS large logo shrinks within narrow reference
+PASS disclosure has a visible keyboard outline (none)
+PASS keyboard opens disclosure (none)
+PASS disclosure has a visible keyboard outline (active)
+PASS keyboard opens disclosure (active)
+14/14 browser checks passed

@@ -1,0 +1,122 @@
+serving the cradle at http://127.0.0.1:4321 (external)
+
+=== scenario: agency-planes ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  With no turns, the Activity plane discloses exactly that — no invented activity
+  screenshot: artifacts/agency-planes-activity-empty-honest.png
+PASS  The provider's consent request is disclosed with its actual tool call before any answer
+  screenshot: artifacts/agency-planes-activity-consent-requested.png
+PASS  The consent request is also activity beside the conversation, not only a composer card
+PASS  Answering the card reaches the provider over the real consent wire and the turn completes
+  screenshot: artifacts/agency-planes-activity-consent-answered.png
+PASS  A dispatched delivery identity is inspectable with its settled owner phase — 6B's named open, closed
+PASS  The Inspect plane names the stable SessionSpace ref the encounter actually lives in
+PASS  The Inspect plane names the provider's actual native session identity
+PASS  Owner operations are shown with the owner's own verdicts and reasons, never the desktop's
+  screenshot: artifacts/agency-planes-activity-inspect-deliveries.png
+PASS  Recorded history is pointed at, not duplicated into the Context plane
+PASS  The participant's operative context is disclosed as un-inspectable on this cut — never inferred from transcript or profile
+PASS  The provider's actual continuation state names the native session the provider really holds
+  screenshot: artifacts/agency-planes-activity-context-facts.png
+PASS  The wait row is the owner's own connection state, not a progress invention
+PASS  The tool call's real payload is the activity row
+PASS  The assistant's conversational reply stays in the Conversation plane — the planes do not duplicate each other
+  screenshot: artifacts/agency-planes-activity-thought-tool-wait.png
+PASS  A requested stop settles as the owner's own stop record, shown verbatim — the owner journals the interruption as an error-named-Cancelled (owner finding, frozen cut)
+  screenshot: artifacts/agency-planes-activity-stopped.png
+PASS  A provider failure is disclosed as a fault, never softened into activity-as-usual
+  screenshot: artifacts/agency-planes-activity-fault.png
+PASS  A faulted resident's seat is disclosed as held, with recovery named as the owner's — no recovery promise the owner cannot keep
+  screenshot: artifacts/agency-planes-activity-fault-held-seat.png
+PASS  The journal's raw events include the human turns on the owner's own cursor
+PASS  The journal names provider events as the owner recorded them
+PASS  Journal rows carry the owner's cursors, not desktop numbering
+  screenshot: artifacts/agency-planes-activity-journal.png
+  stopped walk-bridge
+  receipt: artifacts/agency-planes.json — 20/20 checks, PASS
+
+=== scenario: factory-development ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  At rest nothing reads — no owner payload exists before the explicit act
+PASS  The owner's own refusal renders verbatim (The owner refused the read: Error: {"kind":"owner-refused-or-failed","message":"…)
+PASS  The project read carries the owner's own contract verbatim
+PASS  The owner's project ref renders as the owner names it
+PASS  The project reading discloses the owner's journey registry
+PASS  The workflow-units read carries the owner's contract with its units
+  screenshot: artifacts/factory-development-factory-development-readings.png
+PASS  The journey row renders the owner's frontier verbatim
+PASS  The journey row's identity is the owner's journeyRef
+PASS  The journey read carries the owner's identity and frontier verbatim
+PASS  The journey's runRefs render as run rows, one per owner ref
+PASS  The run read carries the owner's run-reading contract
+PASS  The executions band renders one row per owner execution in owner order
+PASS  The expanded execution detail is the owner's own payload verbatim
+PASS  The owner's telemetry refusal renders verbatim
+PASS  The re-pinned build-view route reaches the owner and discloses its answer verbatim
+  screenshot: artifacts/factory-development-factory-trajectory-rows.png
+PASS  Workcell placement status renders the owner's own reading
+  screenshot: artifacts/factory-development-workcell-status-beside-factory.png
+  stopped walk-bridge
+  receipt: artifacts/factory-development.json — 16/16 checks, PASS
+
+=== scenario: expression-controls ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Selecting the entity in the UI retains its real native identity
+PASS  Enter commits a numeric edit through the real owner operation
+PASS  An empty numeric edit has an accessible explanation
+PASS  Invalid numeric text does not advance the native document
+PASS  Escape restores the current owner value and clears the invalid state
+PASS  A concurrent owner revision preserves the human draft without overwriting the new value
+PASS  Recovery actions sit outside input labels and remain distinct keyboard controls
+PASS  Use current accepts the owner value after a revision conflict
+PASS  Explicit retry commits the preserved draft against the current native revision
+PASS  Selecting an entity discloses its controls before the deeper pedagogical apparatus
+  screenshot: artifacts/expression-controls-expression-light.png
+  screenshot: artifacts/expression-controls-expression-dark.png
+PASS  Expression controls fit their actual container at 1000px
+PASS  Expression controls fit their actual container at 760px
+PASS  Expression controls fit their actual container at 640px
+PASS  Expression controls fit their actual container at 639px
+  screenshot: artifacts/expression-controls-expression-narrow.png
+  stopped walk-bridge
+  receipt: artifacts/expression-controls.json — 14/14 checks, PASS
+
+=== scenario: knowledge-expression ===
+  [walk-bridge] oi-cradle walk bridge listening on http://127.0.0.1:4329 (topic oi:kernel-event)
+  walk bridge up: http://127.0.0.1:4329 (fresh kernel, seq from 1)
+PASS  Isolated owner ground reports the native SemanticWiki provider
+PASS  Installed AIKit returns real owner search hits
+PASS  Search preserves native owner order and labels
+PASS  Native owner search includes an addressable source/page result
+PASS  Search opens the exact native ProjectMap/source ref
+PASS  Native local whole projects through the Expression application
+PASS  Expression is visible in the shared stage
+  screenshot: artifacts/knowledge-expression-knowledge-expression-local-whole.png
+PASS  Return releases Expression back to the same knowledge page
+PASS  Search, page and Expression preserve the unsaved source buffer
+PASS  Native SemanticWiki search returns the exact fixture WikiSpace
+PASS  Keyboard activation selects and recentres the exact native graph subject
+PASS  Properties disclose the exact native ref and revision
+PASS  Browser acceptance truthfully discloses native-only popout availability
+PASS  Graph selection controls occupy the free region beside the movable inspector
+  screenshot: artifacts/knowledge-expression-graph-context-light.png
+PASS  Pin retains the exact native graph subject
+PASS  Follow can freeze the current native locus
+PASS  Pinned SemanticWiki whole presents through the same Expression stage
+PASS  The real projected glyph renders completely inside its artboard
+PASS  The knowledge Expression artboard inherits the host dark ground
+  screenshot: artifacts/knowledge-expression-graph-expression-dark.png
+  screenshot: artifacts/knowledge-expression-graph-context-narrow.png
+PASS  Selecting the graph subject creates a reversible recenter visit
+PASS  Back enables forward traversal over the same native graph state
+  stopped walk-bridge
+  receipt: artifacts/knowledge-expression.json — 21/21 checks, PASS
+
+=== walk summary ===
+PASS  agency-planes — 20/20 checks
+PASS  factory-development — 16/16 checks
+PASS  expression-controls — 14/14 checks · editor_width_at_1000=760 editor_width_at_760=520 editor_width_at_640=440 editor_width_at_639=639
+PASS  knowledge-expression — 21/21 checks · subjects=1 relations=0
