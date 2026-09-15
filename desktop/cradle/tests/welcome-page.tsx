@@ -40,6 +40,7 @@ function Opening() {
   const [entered, setEntered] = useState(false);
   const [composeBody, setComposeBody] = useState(false);
   const restored = new URLSearchParams(location.search).has('restored');
+  const keepWelcome = new URLSearchParams(location.search).has('keep-welcome');
   useLayoutEffect(() => {
     Object.assign(window.welcomeTest, {stage, kernel, setAppReady});
   });
@@ -48,7 +49,7 @@ function Opening() {
       <button type="button">Workspace focus</button>
       {restored && composeBody && <RestoredExpression/>}
     </main>
-    {!entered && <WelcomeField appReady={appReady}
+    {(!entered || keepWelcome) && <WelcomeField appReady={appReady}
       onFieldReady={() => {
         window.welcomeTest.fieldReadyEvents.push(stage.inspect());
         setComposeBody(true);
