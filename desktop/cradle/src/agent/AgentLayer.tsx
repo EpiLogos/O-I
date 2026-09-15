@@ -31,17 +31,21 @@ export interface AgentSubject {
   revision?: string;
 }
 
-const KIND_GLYPH: Record<string, "chat" | "wiki" | "file"> = {
+const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "field" | "search"> = {
   encounter: "chat",
   knowledge: "wiki",
   file: "file",
   source: "file",
   sources: "file",
+  explore: "search",
+  presentation: "field",
 };
 
 const KIND_OWNER: Record<string, string> = {
   encounter: "AIKit",
   knowledge: "AIKit",
+  explore: "Shared Field",
+  presentation: "Shared Field",
 };
 
 export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose}: {
