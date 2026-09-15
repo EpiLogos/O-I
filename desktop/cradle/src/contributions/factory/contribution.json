@@ -1,7 +1,7 @@
 {
   "schema": "oi.native-source-contribution/v1",
   "owner": "software-factory",
-  "candidate": "4419c12f88dd1b48081bcc755bbcc2c3350726aa",
+  "candidate": "fb854dede9876a0ea008afd62422ef9150fe5203",
   "parent": "2fc3590693b68426b63f329eea82b3d4fcb2742a",
   "entry": "factory-ui/src/index.ts",
   "runtime_exports": [
@@ -55,7 +55,7 @@
       "types": true
     }
   },
-  "standing": "source-owned contribution candidate (Factory PR #237, head 4419c12); native semantics inherited unchanged; the host owns the theme (no forced surface class), status hues follow colour scheme, selectors scoped at the owner; not landed on Factory main yet",
+  "standing": "Accepted native Factory main after PR #237; exact owner source, host-owned theme, scoped styles and canonical fixtures. Verified from the accepted main with 32 component tests, TypeScript and library build.",
   "capture": "Exact Git blobs; update through owner candidate, never edit captured source",
   "captured_files_sha256": {
     "BuildSurface.tsx": "03612799bbed5ce3c6a0333bef7cabe56b2df0917ecd2a845344c5f1e76e50f9",
