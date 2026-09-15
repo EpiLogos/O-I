@@ -11,6 +11,9 @@ import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
 import {useMaterialContext} from "../context/PageContext";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
+// @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
+import {readPage} from "../personal/page.mjs";
+import {PageExpression} from "../personal/PageExpression";
 
 /** One material path segment, percent-encoded whole (mirrors
  * `ctrl/src/files.rs::escape` closely enough for URL transport — the
@@ -100,6 +103,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const [generation, setGeneration] = useState(0);
   useEffect(() => { try { localStorage.setItem(viewKey, JSON.stringify({zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,zoom]);
   const [textContent, setTextContent] = useState<string>();
+  const [textRevision, setTextRevision] = useState<string>();
   const [disposition, setDisposition] = useState<Disposition>();
   const [imageDataUrl, setImageDataUrl] = useState<string>();
   const [error, setError] = useState<string>();
@@ -120,7 +124,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     const run = async () => {
       if (format === "html" || format === "markdown") {
         const reading = await readFile(transport, location);
-        if (live) setTextContent(reading.content);
+        if (live) {setTextContent(reading.content);setTextRevision(reading.revision);}
       } else if (format === "unsupported") {
         const reading = await readFileBytes(transport, location);
         if (live) setDisposition({ byte_len: reading.byte_len, mime_hint: reading.mime_hint });
@@ -151,6 +155,8 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const resolveAsset = (relative: string) => materialUrl(transport, location, relative) ?? "";
   const baseUrl = materialUrl(transport, location);
   const imageSrc = transport.kind === "bridge" ? imageDataUrl : baseUrl;
+  let personalPage:Record<string,any>|undefined;
+  if(format==="html"&&textContent&&textRevision){try{const parsed=readPage(textContent);if(parsed.page.expression)personalPage=parsed;}catch{/* Ordinary HTML remains an opaque rendered document. */}}
 
   return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
@@ -168,6 +174,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
         ? <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={suspended ? "about:blank" : baseUrl} />
         : <iframe data-page-context className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={suspended ? undefined : injectBase(textContent ?? "", resolveAsset(""))} />
     )}</div></div>}
+    {!error&&!pending&&personalPage&&textRevision&&<PageExpression page={personalPage} fileRevision={textRevision} pageRef={binding.ref??binding.id}/>}
     {!error && !pending && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
       <iframe data-page-context key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={suspended ? undefined : markdownDocument(textContent ?? "", resolveAsset)} />
     </div></div>}
