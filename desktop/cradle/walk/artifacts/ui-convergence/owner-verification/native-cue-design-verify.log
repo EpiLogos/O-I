@@ -1,0 +1,18 @@
+PASS  tokens.css section non-empty: foundation tokens (9 tokens)
+PASS  tokens.css section non-empty: semantic tokens — surface / text / muted / rule roles (8 tokens)
+PASS  tokens.css section non-empty: relation / focus / projection roles — scarce gold meta-relation (6 tokens)
+PASS  tokens.css section non-empty: spacing / rhythm (22 tokens)
+PASS  tokens.css section non-empty: typography (11 tokens)
+PASS  tokens.css section non-empty: radii (6 tokens)
+PASS  tokens.css section non-empty: z-layers (8 tokens)
+PASS  tokens.css section non-empty: motion (58 tokens)
+PASS  tokens.css section non-empty: focus / keyboard states (24 tokens)
+PASS  no unlisted section markers (none)
+PASS  no duplicate token names within a scope (0)
+PASS  gold stays scarce — only --oi-gold/--oi-meta-relation carry it (found: --oi-gold, --oi-meta-relation)
+PASS  reduced-motion convention present (motion durations collapse to 0.01ms)
+      tokens.css defines 152 unique --oi-* names across 15 blocks
+PASS  cradle var(--oi-*) references all resolve (106 files scanned)
+PASS  cradle raw hex/rgba/hsl colours = 0 (106 files scanned)
+
+verify: all checks pass

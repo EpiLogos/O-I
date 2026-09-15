@@ -1,0 +1,71 @@
+{
+  "sourceHead": "2a4f76ab9b9672b25fa9bcc12573d271e2653a17",
+  "kind": "Actual ExpressionAnchor, providers and DS Canvas2D renderer; controlled idle component state, no claimed native Agent operation.",
+  "activeWhileDisabled": {
+    "elapsedMs": 1200.8000001907349,
+    "windowRaf": 72,
+    "overlayFrames": 27,
+    "enabled": false,
+    "engine": null,
+    "overlay": {
+      "frames": 31,
+      "requests": 1,
+      "peakEmitters": 0,
+      "pointCount": 704,
+      "ink": "color(srgb 0.463451 0.463451 0.455608)",
+      "emitters": 0,
+      "forms": [
+        "idle"
+      ],
+      "scheduled": true,
+      "paused": false,
+      "reduced": false,
+      "entries": 1
+    },
+    "canvases": 1
+  },
+  "unmounted": {
+    "elapsedMs": 500.09999990463257,
+    "windowRaf": 0,
+    "overlayFrames": 0,
+    "enabled": false,
+    "engine": null,
+    "overlay": {
+      "frames": 33,
+      "requests": 1,
+      "peakEmitters": 0,
+      "pointCount": 704,
+      "ink": "color(srgb 0.463451 0.463451 0.455608)",
+      "emitters": 0,
+      "forms": [],
+      "scheduled": false,
+      "paused": false,
+      "reduced": false,
+      "entries": 0
+    },
+    "canvases": 1
+  },
+  "reduced": {
+    "elapsedMs": 501,
+    "windowRaf": 0,
+    "overlayFrames": 0,
+    "enabled": false,
+    "engine": null,
+    "overlay": {
+      "frames": 33,
+      "requests": 3,
+      "peakEmitters": 0,
+      "pointCount": 704,
+      "ink": "color(srgb 0.463451 0.463451 0.455608)",
+      "emitters": 0,
+      "forms": [
+        "idle"
+      ],
+      "scheduled": false,
+      "paused": false,
+      "reduced": true,
+      "entries": 1
+    },
+    "canvases": 1
+  }
+}

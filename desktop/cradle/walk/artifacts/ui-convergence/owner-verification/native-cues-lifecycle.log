@@ -1,0 +1,1 @@
+Native cues: one canvas/context, disabled zero/lost contexts, static zero RAF, real active progress, foreground preemption/restoration, hidden target, reduced motion, stale handles and StrictMode remount passed.
