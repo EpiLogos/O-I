@@ -1593,7 +1593,12 @@ class PointCloudField {
   getCymaticTelemetry() {
     return this.latestResonatorTelemetry;
   }
-  destroy() {
+  /** Recovery/StrictMode may reuse the canvas. Its terminal owner opts into context release. */
+  destroy({ releaseContext = false } = {}) {
+    if (!this.isDestroyed) this.disposeResources();
+    if (releaseContext && !this.renderer.getContext().isContextLost()) this.renderer.forceContextLoss();
+  }
+  disposeResources() {
     this.isDestroyed = true;
     if (this.animFrameId !== null) {
       cancelAnimationFrame(this.animFrameId);

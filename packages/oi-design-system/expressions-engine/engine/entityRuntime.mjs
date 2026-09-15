@@ -153,7 +153,7 @@ class EntityRuntime {
     this.bakeSig.clear();
     return true;
   }
-  writeCandidates(target, start, end, cands, scale, plane, jitterPx, channel, normalized) {
+  writeCandidates(target, start, end, cands, scale, plane, jitterPx, channel) {
     const n = cands.length;
     if (!n) {
       target.fill(0, start * 4, end * 4);
@@ -164,7 +164,7 @@ class EntityRuntime {
       return;
     }
     for (let i = start; i < end; i++) {
-      const c = normalized ? cands[Math.floor((i - start) * 0.6180339887498949 % 1 * n)] : cands[(i - start) % n];
+      const c = cands[Math.floor((i - start) * 0.6180339887498949 % 1 * n)];
       const jx = (Math.random() - 0.5) * jitterPx;
       const jy = (Math.random() - 0.5) * jitterPx;
       this.noiseData[i * 4 + channel] = jx;
@@ -206,8 +206,8 @@ class EntityRuntime {
     };
     const preset = (cands) => cands.norm === "stage400" ? cands : normalize(cands);
     const scale = e.extent && e.extent.normalized !== false ? 1 : BASE_SCALE;
-    this.writeCandidates(this.dataA, p.start, p.end, preset(candA), scale, plane, 2, 0, !!e.extent && e.extent.normalized !== false);
-    this.writeCandidates(this.dataB, p.start, p.end, preset(candB), scale, plane, 2, 2, !!e.extent && e.extent.normalized !== false);
+    this.writeCandidates(this.dataA, p.start, p.end, preset(candA), scale, plane, 2, 0);
+    this.writeCandidates(this.dataB, p.start, p.end, preset(candB), scale, plane, 2, 2);
     if (this.noiseTexture) this.noiseTexture.needsUpdate = true;
     if (this.textureA) this.textureA.needsUpdate = true;
     if (this.textureB) this.textureB.needsUpdate = true;
