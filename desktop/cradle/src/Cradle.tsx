@@ -2,6 +2,8 @@ import {exactFactoryReviewView} from "./contributions/factory/factory-review-sna
 import {presentConversation,returnConversationToSide} from "./surface/conversation-placement";
 import {exactDevelopmentFieldView} from "./surface/development-field-snapshot";
 import {enterComposition,leaveComposition,presentBinding,selectCompositionCollection} from "./surface/composition";
+import {matchesSurfaceRequest} from "./surface/binding-reuse";
+import {FactoryLiveProvider,FactoryUpdates} from "./contributions/factory/FactoryLive";
 import {resolveWorkingSurface,type WorkingSurfaceSelection} from "./encounter/working-surface";
 import {SessionIngress} from "./encounter/SessionIngress";
 import {ExpressionProvider,ExpressionLayout} from "./shared/Expression";
@@ -469,8 +471,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
   };
 
   const openSurfaceBinding = async (requested:SurfaceBinding, region:"centre"|"right"="centre") => {
-    const existing=Object.values(stateRef.current.surfaces).find(surface=>surface.kind===requested.kind&&surface.ref===requested.ref&&surface.project===requested.project
-      &&(requested.kind!=="factory-material"||(surface.view?.factory?.statePath===requested.view?.factory?.statePath&&surface.view?.factory?.runRef===requested.view?.factory?.runRef&&surface.view?.factory?.expectedRevision===requested.view?.factory?.expectedRevision)));
+    const existing=Object.values(stateRef.current.surfaces).find(surface=>matchesSurfaceRequest(surface,requested));
     const binding=existing??requested;
     const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
     if(opened?.result!=="surface_opened")throw new Error("The selected Surface could not be opened");
@@ -919,7 +920,8 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
       {welcomeUp && <WelcomeField onEntered={()=>setWelcomeUp(false)}/>}
       {windowError && <p role="alert">{windowError}</p>}
       {workspace.recovery&&<section className="workspace-recovery" aria-label="Workspace recovery"><p>The saved arrangement could not be restored. Its original data is retained.</p><button disabled={!workspace.recovery.key} onClick={workspace.recoverAvailable}>Recover available workspaces</button><button disabled={!workspace.recovery.key} onClick={workspace.startFresh}>Start a fresh arrangement</button></section>}
-      <DesktopShell companionHost={setCompanionHost} complementary={!!accompanyingBinding&&!state.composition} returnedHost={setReturnedHost} accompanyingTarget={accompanyingTarget} sessionIngress={<>{compositionControls}<SessionIngress project={workspace.current.project} selected={state.accompanying} onOpen={openObservatory}/></>} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <FactoryLiveProvider binding={state.composition?state.surfaces[state.composition.bindingId]:undefined}>
+      <DesktopShell companionHost={setCompanionHost} complementary={!!accompanyingBinding&&!state.composition} returnedHost={setReturnedHost} accompanyingTarget={accompanyingTarget} sessionIngress={<><FactoryUpdates onOpenRun={binding=>openFactoryDevelopment(binding.project!,binding.ref)} onOpenMaterial={(binding,selection)=>openSurfaceBinding({id:crypto.randomUUID(),kind:"factory-material",title:selection.label,project:binding.project,ref:selection.subjectRef,view:{factory:{statePath:binding.view!.factory!.statePath,runRef:binding.view!.factory!.runRef}}},"right")}/>{compositionControls}<SessionIngress project={workspace.current.project} selected={state.accompanying} onOpen={openObservatory}/></>} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={<AgentLayer onOpenWorkingSurface={openWorkingSurface} complementaryHost={accompanyingBinding&&!state.composition?companionHost:undefined} onReturnConversation={()=>accompanyingBinding&&setState(state=>returnConversationToSide(state,accompanyingBinding.id))} region={accompanyingTarget?"centre":"right"} project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))} full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>}
@@ -951,6 +953,7 @@ function CradleFrame({WalkChannel}:{WalkChannel:ComponentType<{layout:LayoutStat
         })()} />
       )}
       </DesktopShell>
+      </FactoryLiveProvider>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
       {searchOpen && <SearchOverlay leader={leader.shift} onLeaderChange={leader.change} shortcutError={leader.error} project={workspace.current.project} onClose={()=>setSearchOpen(false)} onOpen={openKnowledge} />}

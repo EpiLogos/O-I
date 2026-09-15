@@ -2,6 +2,7 @@ import {useCallback, useEffect, useRef, useState} from "react"
 import {useKernel} from "../../kernel/KernelProvider"
 import {listFactoryAttemptTasks} from "./attempt-task"
 import {RunMapReading} from "./RunMapReading"
+import {factoryLiveKey,useFactoryLive} from "./FactoryLive"
 import {BuildSurface} from "./BuildSurface"
 import {developmentRead} from "./development"
 import {FactoryRunList, FactorySelectedRunSummary} from "./run-list"
@@ -26,6 +27,8 @@ function centralProjectLinkReading(value: unknown): value is CentralProjectLinkR
 /** Centre-plane owner reader. It preserves the last compatible read during a failed refresh and never derives refs from labels. */
 export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,onOpenWorkingSurface,onLocator,onOpenHandoff,onOpenMaterial}:{onOpenMaterial:(statePath:string,runRef:string,selection:FactoryMaterialSelection,expectedRevision?:number)=>Promise<void>;onOpenHandoff:(statePath:string,runRef:string)=>Promise<void>;locator?:FactoryLocator;boundProjectRef?:string;project?:string;onOpenWorkingSurface:(selection:import("../../encounter/working-surface").WorkingSurfaceSelection)=>Promise<void>;onLocator:(value:FactoryLocator)=>void}) {
  const kernel=useKernel()
+ const live=useFactoryLive(),liveRef=useRef(live); liveRef.current=live
+ const liveApplied=useRef<string>()
  const [statePath,setStatePath]=useState(locator?.statePath??"")
  const [projectRef,setProjectRef]=useState(locator?.centralProjectRef??boundProjectRef??"")
  const [project,setProject]=useState<ProjectReading>()
@@ -52,22 +55,25 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
   } catch(reason) { if(current(generation)) setHandoff({kind:"unavailable",detail:String(reason)}) }
  },[current,kernel.transport])
 
- const readBuild=useCallback(async(path:string,ref:string,runRef:string,generation:number)=>{
+ const readBuild=useCallback(async(path:string,ref:string,runRef:string,generation:number,observed?:{key:string;revision:string})=>{
   const snapshot=await developmentRead(kernel.transport,path,"build",runRef)
   if(!current(generation)) return
   if(!buildReading(snapshot)||snapshot.view.project.projectRef!==ref||snapshot.view.run.runRef!==runRef) throw new Error("Factory returned a Build view for a different Project or Run")
   setBuild(snapshot)
+  if(observed) liveRef.current.acknowledge(observed.key,observed.revision)
  },[current,kernel.transport])
 
- const readRun=useCallback(async(path:string,ref:string,runRef:string,generation:number)=>{
+ const readRun=useCallback(async(path:string,ref:string,runRef:string,generation:number,centralRef:string)=>{
   if(!current(generation)) return
   setPendingRun(runRef); setHandoff({kind:"idle"}); setError(undefined)
+  const liveAtStart=liveRef.current.observation
+  const observed=liveAtStart?.key===factoryLiveKey(path,runRef,centralRef)?liveAtStart:undefined
   try {
    const reading=await developmentRead(kernel.transport,path,"run",runRef)
    if(!current(generation)) return
    if(!runReading(reading)||reading.runRef!==runRef||reading.projectRef!==ref) throw new Error("Factory returned an incompatible Run reading")
    setSelectedRun(runRef); setSelectedRunReading(reading); setRunReadings(existing=>({...existing,[runRef]:reading}))
-   const [buildOutcome]=await Promise.allSettled([readBuild(path,ref,runRef,generation),readHandoffAvailability(path,runRef,generation)])
+   const [buildOutcome]=await Promise.allSettled([readBuild(path,ref,runRef,generation,observed),readHandoffAvailability(path,runRef,generation)])
    if(buildOutcome.status==="rejected") throw buildOutcome.reason
   } catch(reason) { if(current(generation)) setError(String(reason)) }
   finally { if(current(generation)) setPendingRun(undefined) }
@@ -88,16 +94,17 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
   if(failed) setError("Some Journey detail could not be refreshed: "+String(failed.reason))
  },[current,readJourney])
 
- const readProject=useCallback(async(path:string,ref:string,runRef:string|undefined,generation:number)=>{
+ const readProject=useCallback(async(path:string,ref:string,runRef:string|undefined,generation:number,centralRef:string)=>{
   if(!current(generation)) return
   setBusy(true); setError(undefined)
   try {
    const reading=await developmentRead(kernel.transport,path,"project",ref)
    if(!current(generation)) return
    if(!projectReading(reading)||reading.projectRef!==ref) throw new Error("Factory returned an incompatible Project reading")
+   projectReadingRef.current=reading
    setProject(reading)
    void hydrateJourneys(path,reading,generation)
-   if(runRef) await readRun(path,ref,runRef,generation)
+   if(runRef) await readRun(path,ref,runRef,generation,centralRef)
   } catch(reason) { if(current(generation)) setError(String(reason)) }
   finally { if(current(generation)) setBusy(false) }
  },[current,hydrateJourneys,kernel.transport,readRun])
@@ -108,7 +115,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
    const reading=await developmentRead(kernel.transport,path,"central-project-link-read",centralRef)
    if(!current(generation)) return
    if(!centralProjectLinkReading(reading)||reading.link.centralProjectRef!==centralRef||reading.project.projectRef!==reading.link.factoryProjectRef) throw new Error("Factory returned an incompatible Central Project link reading")
-   await readProject(path,reading.link.factoryProjectRef,runRef,generation)
+   await readProject(path,reading.link.factoryProjectRef,runRef,generation,centralRef)
   } catch(reason) { if(current(generation)) setError(String(reason)) }
   finally { if(current(generation)) setBusy(false) }
  },[current,kernel.transport,readProject])
@@ -125,7 +132,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
    if(path&&ref) void readCentralProject(path,ref,run,generation)
   } else if(path&&ref&&run) {
    const knownProject=projectReadingRef.current
-   if(knownProject) void readRun(path,knownProject.projectRef,run,generation)
+   if(knownProject) void readRun(path,knownProject.projectRef,run,generation,ref)
    else void readCentralProject(path,ref,run,generation)
   }
  },[locatorKey,boundProjectRef,readCentralProject,readRun])
@@ -134,6 +141,14 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
   const generation=++request.current
   if(path&&ref) void readCentralProject(path,ref,run||undefined,generation)
  },[boundProjectRef,locator?.centralProjectRef,locator?.runRef,locator?.statePath,projectRef,readCentralProject,requestedRun,statePath])
+ const liveObservation=live.observation?.key===(locator?.statePath&&locator.runRef?factoryLiveKey(locator.statePath,locator.runRef,locator.centralProjectRef??boundProjectRef):undefined)?live.observation:undefined
+ useEffect(()=>{
+  if(!liveObservation||!project||busy||pendingRun||selectedRun!==locator?.runRef)return
+  const applied=JSON.stringify([liveObservation.key,liveObservation.revision])
+  if(liveApplied.current===applied)return
+  liveApplied.current=applied
+  if(liveObservation.changed) refresh()
+ },[liveObservation?.revision,liveObservation?.changed,project,busy,pendingRun,selectedRun,locator?.runRef,refresh])
  const connect=()=>{ const path=statePath.trim(),ref=projectRef.trim(),run=requestedRun.trim(); if(path&&ref) { onLocator({statePath:path,centralProjectRef:ref,...(run?{runRef:run}: {})}); refresh(path,ref,run) } }
  const selectRun=(runRef:string)=>{ const centralRef=locator?.centralProjectRef??boundProjectRef; if(locator?.statePath&&centralRef) onLocator({statePath:locator.statePath,centralProjectRef:centralRef,runRef}) }
  const sourceControl=<details className="factory-source-picker"><summary aria-label={locator?"Factory source setup":"Connect Factory source"}>{locator?"Setup":"Connect Factory"}</summary><form onSubmit={event=>{event.preventDefault();connect()}}><label>Developmental state path<input value={statePath} onChange={event=>setStatePath(event.target.value)} required spellCheck={false} autoComplete="off"/></label><label>Central Project ref<input value={projectRef} onChange={event=>setProjectRef(event.target.value)} required placeholder="project:…" spellCheck={false} autoComplete="off"/></label><label>Run ref (optional)<input value={requestedRun} onChange={event=>setRequestedRun(event.target.value)} spellCheck={false} autoComplete="off"/></label><button type="submit" disabled={busy}>Read Runs</button></form></details>
@@ -144,6 +159,7 @@ export function FactoryRunsSurface({locator,boundProjectRef,project:projectName,
  const refreshControl=locator?.statePath?<button type="button" onClick={()=>refresh()} disabled={busy}>Refresh</button>:null
  return <section className="factory-runs" aria-label="Factory Runs and Build">
   {!activeBuild&&<header className="factory-runs-heading"><h1>Runs</h1><div className="factory-runs-controls">{sourceControl}{refreshControl}</div></header>}
+  {live.error&&live.binding?.view?.factory?.statePath===locator?.statePath&&live.binding?.view?.factory?.runRef===locator?.runRef&&<p className="factory-owner-refusal" role="status">Live updates unavailable: {live.error}</p>}
   {error&&<p className="factory-owner-refusal" role="alert">Factory read unavailable: {error}{locator?.statePath&&<button type="button" onClick={()=>refresh()}>Retry Factory read</button>}</p>}
   {!locator&&<p className="factory-runs-empty">Choose a Factory source and Project ref.</p>}
   {locator&&!project&&!error&&<p className="factory-runs-empty">Loading Factory Runs…</p>}

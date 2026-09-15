@@ -424,6 +424,8 @@
 .project-work-links button{font-size:var(--oi-shell-type-nav);color:var(--oi-muted-2);text-align:left;white-space:nowrap}
 
 /* W6: current session ingress remains a quiet footer signal, never a top strip. */
+/* An open footer menu must paint and receive clicks above the right drawer. */
+.workspace-footer-edge:has(details[open]){z-index:var(--oi-z-popover)}
 .workspace-footer-edge:has(.session-ingress){height:24px;flex:none}
 .workspace-footer-edge:has(.session-ingress) .canvas-arrangement{opacity:1;transform:none;pointer-events:auto}
 
