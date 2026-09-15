@@ -48,6 +48,10 @@ export default async function run({page,baseUrl,check,shot,channel}){
     check(refused.standing==="refused"&&refused.snapshot.nara_expression.current,"Native Personal owner refuses foreign reception and retains current reading",refused.error);
     await shot("instrument-native-nara");
     await page.getByRole("button",{name:"Close Native Nara owner",exact:true}).click();await region.waitFor({state:"detached"});
+    // The composition unmount and owner detach are asynchronous. Reopening
+    // before observing the detached owner can mistake the old `attached`
+    // value for the new lease and race context loss against lease creation.
+    await page.waitForFunction(()=>globalThis.__k9Session.reading.attached===false,null,{timeout:15000});
     await channel("instrument.requestOpen",["ql:host:native"]);await region.waitFor();await page.waitForFunction(()=>globalThis.__k9Session.reading.attached===true);
     const reentered=await page.evaluate(()=>globalThis.__k9Session.reading.retained);
     check(after.seeds===reentered.seeds,"Real native Nara re-entry preserves the field seed generation",{after:after.seeds,reentered:reentered.seeds});
@@ -55,7 +59,8 @@ export default async function run({page,baseUrl,check,shot,channel}){
     await page.waitForFunction(()=>globalThis.__k9Session.reading.recovering===true,null,{timeout:20000});
     check(true,"Real native Nara enters retained recovery after WebGL context loss");
     await page.evaluate(()=>globalThis.__nativeLoseExt.restoreContext());
-    await page.waitForFunction(()=>globalThis.__k9Session.reading.recovering===false&&globalThis.__k9Session.reading.attached===true,null,{timeout:20000});
+    try{await page.waitForFunction(()=>globalThis.__k9Session.reading.recovering===false&&globalThis.__k9Session.reading.attached===true,null,{timeout:20000});}
+    catch(error){const state=await page.evaluate(()=>({reading:globalThis.__k9Session.reading,canvases:[...document.querySelectorAll('canvas[data-oi-stage="engine"]')].map(canvas=>({connected:canvas.isConnected,lost:canvas.getContext("webgl2")?.isContextLost()}))}));throw new Error(`${error}; recovery state ${JSON.stringify(state)}`);}
     check(true,"Real native Nara restores its acknowledged checkpoint on the same canvas");
     await region.getByRole("button",{name:"Open Epii composition",exact:true}).click();
     await page.getByRole("button",{name:"New Expression",exact:true}).waitFor();

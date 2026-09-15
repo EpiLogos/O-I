@@ -296,7 +296,11 @@ export class EngineSurface {
     return this.adapter.withCleanFrame(() => this.adapter.capture(w, h));
   }
 
-  setPaused(paused: boolean) { this.paused = paused; if (!paused) this.wake(); }
+  setPaused(paused: boolean) {
+    this.paused = paused;
+    if (paused) this.sleep();
+    else this.wake();
+  }
   /** Walk/dev observability: whether the surface's own clock is held. */
   get isPaused() { return this.paused; }
   setForceMotion(force: boolean) { this.forceMotion = force; if (force) this.wake(); }
@@ -341,7 +345,7 @@ export class EngineSurface {
     const animate = !this.paused && (this.forceMotion || !this.reduced.matches);
     const delta = animate ? Math.min(0.05, Math.max(0.001, (now - this.last) / 1000)) : 0;
     this.last = now;
-    if (this.renderFrame(delta) && this.active) this.raf = requestAnimationFrame(this.frame);
+    if (this.renderFrame(delta) && this.active && !this.paused) this.raf = requestAnimationFrame(this.frame);
   };
   private renderFrame(delta: number): boolean {
     const element = this.element;
