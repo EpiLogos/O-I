@@ -684,3 +684,87 @@ fn reset_withdraws_desired_state_and_settles_without_intent() {
         2
     );
 }
+
+/// The listing reports each owner's own probed availability (07 §4.7,
+/// carried into 09 §2.1) — never a hardcoded literal. An owner that answers
+/// the discovery read but discloses itself unavailable is listed exactly as
+/// it disclosed, reason attached, and flips back when the owner recovers.
+#[test]
+fn listing_reports_the_owners_own_disclosed_availability() {
+    let scene = Scene::open();
+    let listed = scene.run_ok(&["config", "list", "--json"]);
+    let owner = listed["owners"]
+        .as_array()
+        .expect("owners array")
+        .iter()
+        .find(|owner| owner["owner_ref"] == "ai-kit")
+        .expect("the answering owner is listed")
+        .clone();
+    assert_eq!(owner["state"], "available");
+    assert!(owner["reason"].is_null());
+
+    // The owner withdraws: the same discovery read now discloses
+    // unavailability with its reason (the frozen unavailable-owner shape of
+    // `contribution-unavailable.json`: zero sections, honest availability).
+    let contribution_path = scene.home.path().join("bin").join("contribution.json");
+    let mut contribution: Value =
+        serde_json::from_str(&std::fs::read_to_string(&contribution_path).expect("contribution"))
+            .expect("contribution parses");
+    contribution["availability"] = json!({"state": "unavailable", "reason": "scene owner withdraws"});
+    contribution["sections"] = json!([]);
+    std::fs::write(&contribution_path, contribution.to_string()).expect("contribution rewritten");
+
+    let listed = scene.run_ok(&["config", "list", "--json"]);
+    let owner = listed["owners"]
+        .as_array()
+        .expect("owners array")
+        .iter()
+        .find(|owner| owner["owner_ref"] == "ai-kit")
+        .expect("the withdrawn owner is still listed — absence is data")
+        .clone();
+    assert_eq!(owner["state"], "unavailable");
+    assert_eq!(owner["reason"], "scene owner withdraws");
+    assert!(
+        listed["settings"]
+            .as_array()
+            .expect("settings array")
+            .iter()
+            .all(|setting| setting["owner_ref"] != "ai-kit"),
+        "a withdrawn owner fabricates no settings"
+    );
+}
+
+/// The frozen error vocabulary holds at the command layer in the no-scope
+/// path too: an unknown setting is `unsupported_setting`, an omitted scope
+/// the contribution cannot default is `unsupported_scope` naming the
+/// disclosed scopes — the same codes the engine answers with when a scope
+/// argument is present (09 §13; headless callers key on the code).
+#[test]
+fn frozen_error_codes_hold_without_a_scope_argument() {
+    let scene = Scene::open();
+
+    // Unknown setting, no scope argument: unsupported_setting.
+    let (code, error, _) = scene.run(&["config", "show", "nope:section:key", "--json"]);
+    assert_eq!(code, 1);
+    assert_eq!(error["error_code"], "unsupported_setting");
+    assert_eq!(error["setting_ref"], "nope:section:key");
+
+    // Known setting whose single allowed scope is non-singular, no scope
+    // argument: unsupported_scope naming the disclosed scope.
+    let (code, error, _) = scene.run(&["config", "show", SETTING_REF, "--json"]);
+    assert_eq!(code, 1);
+    assert_eq!(error["error_code"], "unsupported_scope");
+    assert_eq!(error["setting_ref"], SETTING_REF);
+
+    // With an explicit scope the engine classifies the unknown owner
+    // itself — the same frozen code, from the resolve path.
+    let (code, error, _) = scene.run(&[
+        "config",
+        "get",
+        "nope:section:key",
+        "project:binding-test",
+        "--json",
+    ]);
+    assert_eq!(code, 1);
+    assert_eq!(error["error_code"], "unsupported_setting");
+}
