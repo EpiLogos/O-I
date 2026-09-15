@@ -369,8 +369,9 @@ Profiles live beside composition.json in O:I's own config home, never in Central
   oi profile export <profile> [--json]    the portable document\n\
   oi profile import <path|-> [--json]     store as inspectable desired state; never applies\n\
 \n\
-The C1 kernel binds ConfigSurface and the C2 profile store binds ProfileSurface;\n\
-OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases> binds the fixture-backed\n\
+The real engine binds through kernel_surface.rs — the C1 kernel drives\n\
+discovered owners and the C2 profile store keeps profiles;\n\
+OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases> binds the fixture\n\
 surface used by the conformance tests."
     );
 }

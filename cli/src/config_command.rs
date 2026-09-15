@@ -5,7 +5,8 @@
 /// `--json` form built from the frozen C0 documents; failures are explicit
 /// `oi.config-error/v1` documents on stdout with a non-zero exit.
 ///
-/// Engine binding: the C1 kernel binds the seam when it lands. Until then
+/// Engine binding: the real engine binds through `cli/src/kernel_surface.rs`
+/// (the C1 kernel + the C2 profile store). Until then
 /// `OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases>` binds the
 /// fixture-backed in-memory surface, which is also what the C5 tests drive.
 use oi_cli::config_surface::{
@@ -102,9 +103,10 @@ fn split_config_flags(
     Ok((json, positional))
 }
 
-/// Bind the engine seam. The fixture binding is explicit and temporary: the
-/// C1 kernel (registry/resolver) binds ConfigSurface and the C2 profile
-/// store binds ProfileSurface when they land.
+/// Bind the engine seam. The real engine — the C1 kernel over discovered
+/// owners plus the C2 profile store — binds both halves through
+/// `oi_cli::kernel_surface`. `OI_CONFIG_SURFACE_FIXTURES` still binds the
+/// fixture-backed in-memory surface the conformance tests drive.
 fn bind_config_surfaces(
 ) -> Result<(Rc<dyn ConfigSurface>, Rc<dyn ProfileSurface>), String> {
     if let Some(dir) = env::var_os("OI_CONFIG_SURFACE_FIXTURES").filter(|value| !value.is_empty())
@@ -116,11 +118,10 @@ fn bind_config_surfaces(
         );
         return Ok(surface.into_surfaces());
     }
-    Err("no configuration engine is bound to `oi config` / `oi profile` yet: \
-         the C1 kernel binds ConfigSurface and the C2 profile store binds ProfileSurface; \
-         set OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases> to exercise the \
-         fixture-backed surface"
-        .to_owned())
+    let surface = Rc::new(oi_cli::kernel_surface::KernelSurface::open()?);
+    let config: Rc<dyn ConfigSurface> = surface.clone();
+    let profiles: Rc<dyn ProfileSurface> = surface;
+    Ok((config, profiles))
 }
 
 /// The one structured failure path: the frozen error document on stdout in
@@ -860,9 +861,10 @@ fn print_config_help() {
     println!(
         "O:I configuration plane — one generic surface over the shared registry,\n\
 resolver and owner-native operations; no product-specific command code.\n\
-Engine binding: the C1 kernel binds ConfigSurface and the C2 profile store binds\n\
-ProfileSurface; OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases> binds the\n\
-fixture-backed surface used by the conformance tests.\n\
+Engine binding: the real engine binds through kernel_surface.rs — the C1\n\
+kernel drives discovered owners and the C2 profile store keeps profiles;\n\
+OI_CONFIG_SURFACE_FIXTURES=<suite/configuration/cases> binds the fixture\n\
+surface used by the conformance tests.\n\
 \n\
   oi config list [--json]                     every contributed setting, owners and degradations\n\
   oi config show <setting-ref> [scope] [--json]   the oi.config-resolution/v1 reading\n\

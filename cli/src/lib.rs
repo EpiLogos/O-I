@@ -7,6 +7,7 @@ pub mod dev_world;
 pub mod development_field;
 pub mod fixture_surface;
 pub mod guardian;
+pub mod kernel_surface;
 pub mod modality;
 pub mod native_lifecycle;
 pub mod owner_disclosure;

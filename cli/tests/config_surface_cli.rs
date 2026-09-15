@@ -43,7 +43,7 @@ fn run(args: &[&str]) -> (i32, Value, String) {
 }
 
 #[test]
-fn help_screens_are_wired_and_the_unbound_seam_fails_loudly() {
+fn help_screens_are_wired_and_the_real_engine_binds_without_fixtures() {
     let output = oi().args(["config", "--help"]).output().unwrap();
     assert!(output.status.success());
     let text = String::from_utf8_lossy(&output.stdout);
@@ -55,14 +55,23 @@ fn help_screens_are_wired_and_the_unbound_seam_fails_loudly() {
     let text = String::from_utf8_lossy(&output.stdout);
     assert!(text.contains("oi profile use"), "{text}");
 
-    // Without a bound engine the command refuses explicitly; it never
-    // fabricates a reading.
+    // Without fixtures the REAL engine binds (kernel_surface.rs): discovery
+    // runs over the product positions and reports honestly — owners that do
+    // not answer on this machine are named `unavailable` degradations, and
+    // the listing is still a well-formed reading. It never fabricates
+    // settings for an owner that did not contribute.
     let mut command = oi();
     command.env_remove("OI_CONFIG_SURFACE_FIXTURES");
     let output = command.args(["config", "list", "--json"]).output().unwrap();
-    assert_eq!(output.status.code(), Some(2));
-    let stderr = String::from_utf8_lossy(&output.stderr);
-    assert!(stderr.contains("C1 kernel"), "{stderr}");
+    assert_eq!(output.status.code(), Some(0));
+    let listing: Value = serde_json::from_str(&String::from_utf8_lossy(&output.stdout))
+        .expect("the real engine answers with a JSON listing");
+    assert_eq!(listing["schema"], "oi.config-listing/v1");
+    let owners = listing["owners"].as_array().expect("owners array");
+    assert!(
+        owners.iter().any(|owner| owner["state"] == "unavailable"),
+        "owners that did not answer are named degradations: {owners:?}"
+    );
 }
 
 #[test]
