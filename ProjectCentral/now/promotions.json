@@ -1,4 +1,21 @@
 {
   "schema": "central.project-now.promotions/v1",
-  "entries": []
+  "entries": [
+    {
+      "source": "ProjectCentral/now/agents/sharedfield-live-acceptance-mu1pmtdk-2026-09-14.json",
+      "target": "agent-wiki",
+      "destination": "ProjectCentral/agents/wiki/returns/returns/sharedfield-live-acceptance-mu1pmtdk-2026-09-14.json",
+      "acceptance": "agent-return",
+      "recorded_at_unix_seconds": 1789418601,
+      "source_preserved": true
+    },
+    {
+      "source": "ProjectCentral/now/agents/shared-field-a-second-world-read-2026-09-15.json",
+      "target": "agent-wiki",
+      "destination": "ProjectCentral/agents/wiki/returns/ProjectCentral/agents/wiki/returns/shared-field-world-b-reply-2026-09-15.md",
+      "acceptance": "agent-return",
+      "recorded_at_unix_seconds": 1789436252,
+      "source_preserved": true
+    }
+  ]
 }
