@@ -1,18 +1,24 @@
-/** The welcome frontstate (Visuals → Expression's first application):
- * the app opens behind the O:I mark rendered as a live point cloud; a
- * click dissolves the mark (relational chaos on, orbits up, disperse) and
- * hands the workspace over. Reduced motion skips the flight entirely.
+/** The welcome frontstate — the Global Expression Stage's first
+ * application: the app opens behind the O:I mark presented on the
+ * frontstate plane; the kernel's opening is stated truthfully on the same
+ * continuous field (no second loader), and once `app.ready` lands, a
+ * click plays the authored enter sequence and hands the workspace over.
+ * Reduced motion skips the flight entirely.
  * Runs the real first-open path — the runner only suppresses the
  * frontstate for URLs without ?frontstate. */
+const READY = '.oi-welcome-enter[aria-label="O:I is ready. Open the app."]';
 export default async function run({page,baseUrl,check,shot}) {
   await page.goto(`${baseUrl}?frontstate`);
   const welcome=page.locator('.oi-welcome');
   await welcome.waitFor({timeout:15000});
   check(await welcome.count()===1,'The welcome frontstate stands between the app and the person on first open');
+  check((await page.locator('.oi-boot-overlay').count())===0,'Boot is one continuous frontstate — no second loader stands over it');
   // The host loads lazily (the heavy dependency is imported on first use);
   // give it its moment rather than demanding it synchronously.
   await page.locator('.oi-point-cloud-overlay').waitFor({timeout:20000});
   check(await page.locator('.oi-point-cloud-overlay').count()===1,'The frontstate field renders through the one window expression canvas');
+  // The enter control opens only once the kernel state has settled (`app.ready`).
+  await page.locator(READY).waitFor({timeout:15000});
   const enter=page.locator('.oi-welcome-enter');
   check(await enter.getAttribute('aria-label')==='O:I is ready. Open the app.','The enter control is a real labelled control, not a bare scrim');
   check(await page.getByRole('region',{name:'Empty workspace'}).isVisible(),'The workspace is already composed behind the frontstate');
@@ -33,17 +39,19 @@ export default async function run({page,baseUrl,check,shot}) {
   await page.evaluate(() => sessionStorage.clear());
   await page.reload();
   await page.locator('.oi-welcome').waitFor({timeout:15000});
+  await page.locator(READY).waitFor({timeout:15000});
   await shot('welcome-reduced-motion');
   await page.mouse.click(640,400);
   await page.waitForTimeout(300);
   check((await page.locator('.oi-welcome').count())===0,'Reduced motion enters immediately without the dissolve flight');
   await page.emulateMedia({reducedMotion:'no-preference'});
 
-  // The full visual path: click → dissolve → app. Screenshot evidence at
-  // rest and mid-flight (native visual acceptance still pending).
+  // The full visual path: click → authored dissolve → app. Screenshot
+  // evidence at rest and mid-flight (native visual acceptance still pending).
   await page.evaluate(() => sessionStorage.clear());
   await page.reload();
   await page.locator('.oi-welcome').waitFor({timeout:15000});
+  await page.locator(READY).waitFor({timeout:15000});
   await page.waitForTimeout(1200);
   await shot('welcome-frontstate-rest');
   await page.mouse.click(640,400);

@@ -12,7 +12,10 @@
 import { DEFAULT_CONFIG, MAX_PARTICLE_SIZE_PX } from './config.mjs';
 
 /** The shipped logo state. Also serialized at
- * desktop/cradle/src/visuals/oi-logo-state.json — keep the two in step. */
+ * desktop/cradle/src/visuals/oi-logo-state.json — keep the two in step.
+ * The mark's size cap is its own (1.75px): fine stippled material at
+ * welcome scale; other presets keep the larger range their material calls
+ * for under the sub-3px ink law. */
 export const LOGO_PRESET = Object.freeze({
   id: 'oi_logo_mark',
   name: 'O:I Mark',
@@ -20,8 +23,8 @@ export const LOGO_PRESET = Object.freeze({
   config: Object.freeze({
     glyph: ['O', 'I'],
     particleCount: 120000,
-    particleSize: { min: 0.7, max: 2.4 },
-    colorMode: 'followTheme',
+    particleSize: { min: 0.7, max: 1.75 },
+    colorMode: 'blackOnWhite',
     style: 'stipple',
     dotShape: 'circle',
     fluid: {

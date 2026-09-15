@@ -1,0 +1,60 @@
+{
+  "fixture": "scope-cases",
+  "kind": "scope-cases",
+  "cases": [
+    {
+      "name": "project scope allowed for model.default",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "project", "scope_ref": "epilogos/o-i" },
+      "expect": "ok"
+    },
+    {
+      "name": "session-space scope allowed for model.default",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "session-space", "scope_ref": "space-7" },
+      "expect": "ok"
+    },
+    {
+      "name": "world scope is not allowed for model.default",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "world", "scope_ref": null },
+      "expect": "unsupported_scope"
+    },
+    {
+      "name": "invocation override is not a declared scope for model.default",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "invocation", "scope_ref": "inv-1" },
+      "expect": "unsupported_scope"
+    },
+    {
+      "name": "singular world scope allowed for session.provider",
+      "setting_ref": "ai-kit:session:session.provider",
+      "scope": { "scope_kind": "world", "scope_ref": null },
+      "expect": "ok"
+    },
+    {
+      "name": "singular kind addressing accepts null scope_ref",
+      "setting_ref": "oi:composition:ground-binding",
+      "scope": { "scope_kind": "world", "scope_ref": null },
+      "expect": "ok"
+    },
+    {
+      "name": "non-singular kind requires a scope_ref",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "project", "scope_ref": null },
+      "expect": "unsupported_scope"
+    },
+    {
+      "name": "connector-relation scope accepted for the fixture connector setting",
+      "setting_ref": "connector/factory-actuation:authority:authority.mode",
+      "scope": { "scope_kind": "connector-relation", "scope_ref": "factory-actuation" },
+      "expect": "ok"
+    },
+    {
+      "name": "unknown scope kind is an explicit error, never a fallback",
+      "setting_ref": "ai-kit:resolution:model.default",
+      "scope": { "scope_kind": "cluster", "scope_ref": "west" },
+      "expect": "unknown_scope_kind"
+    }
+  ]
+}

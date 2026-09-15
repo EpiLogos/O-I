@@ -6,6 +6,7 @@ const { spawnSync } = require('node:child_process');
 
 const REPOSITORY = 'EpiLogos/O-I';
 const NATIVE_VERSION = '0.1.0';
+const DEFAULT_RELEASE_TAG = `oi-v${require('../package.json').version}`;
 const MAX_REDIRECTS = 8;
 
 function resolveTarget(platform = process.platform, arch = process.arch) {
@@ -18,12 +19,7 @@ function resolveTarget(platform = process.platform, arch = process.arch) {
 }
 
 function selectedReleaseTag(env = process.env) {
-  const tag = String(env.OI_NPM_RELEASE_TAG || '').trim();
-  if (!tag) {
-    throw new Error(
-      'no O:I GitHub release is selected; set OI_NPM_RELEASE_TAG explicitly when exercising the GitHub Release download channel'
-    );
-  }
+  const tag = String(env.OI_NPM_RELEASE_TAG || '').trim() || DEFAULT_RELEASE_TAG;
   return tag;
 }
 
@@ -131,6 +127,7 @@ function archiveBinaryPath(root, target, nativeVersion = NATIVE_VERSION) {
 }
 
 module.exports = {
+  DEFAULT_RELEASE_TAG,
   NATIVE_VERSION,
   REPOSITORY,
   archiveBinaryPath,

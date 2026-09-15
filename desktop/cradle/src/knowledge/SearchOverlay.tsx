@@ -17,6 +17,16 @@ type ResolutionRow = {
   provenance: string[];
   actions: string[];
 };
+type ResolutionResult={hits?:KnowledgeHit[];rows?:ResolutionRow[];absences?:string[]};
+export function normalizeResolution(value:unknown):{hits:KnowledgeHit[];rows:ResolutionRow[];absences:string[]}{
+  if(!value||typeof value!=="object")throw new Error("Native resolution returned no object");
+  const result=value as ResolutionResult;
+  const hits=result.hits??[],rows=result.rows??[],absences=result.absences??[];
+  if(!Array.isArray(hits)||!Array.isArray(rows)||!Array.isArray(absences))throw new Error("Native resolution returned invalid result arrays");
+  if(hits.some(hit=>!hit||typeof hit.resource!=="string"||typeof hit.label!=="string"||!hit.address||typeof hit.address.value!=="string"))throw new Error("Native resolution returned an invalid hit");
+  if(rows.some(row=>!row||typeof row.reference!=="string"||typeof row.label!=="string"||!Array.isArray(row.actions)||!Array.isArray(row.provenance)))throw new Error("Native resolution returned an invalid legacy row");
+  return {hits,rows,absences};
+}
 type Props = {
   leader: boolean;
   onLeaderChange: (shift: boolean) => void;
@@ -88,7 +98,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     const timer = setTimeout(() => {
       void Promise.allSettled([
         knowledge<{ hits: KnowledgeHit[]; absences: string[] }>(transport, project, { action: "search", query }),
-        knowledge<{ rows: ResolutionRow[]; absences: string[] }>(transport, project, { action: "resolve", query }),
+        knowledge<ResolutionResult>(transport, project, { action: "resolve", query }),
       ]).then(([search, resolution]) => {
         if (epoch.current !== request) return;
         if (search.status === "fulfilled") {
@@ -96,8 +106,8 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
           setAbsences(search.value.absences);
         } else setError(message(search.reason));
         if (resolution.status === "fulfilled") {
-          setRows(resolution.value.rows);
-          setResolutionAbsences(resolution.value.absences);
+          try { const native=normalizeResolution(resolution.value);setHits(current=>[...current,...native.hits]);setRows(native.rows);setResolutionAbsences(native.absences); }
+          catch(failure){setResolutionAbsences([message(failure)]);}
         } else setResolutionAbsences([message(resolution.reason)]);
         setBusy(false);
       });
@@ -138,10 +148,16 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     catch (failure) { setError(message(failure)); }
     finally { opening.current = false; setIsOpening(false); }
   };
-  const openRow = (row: ResolutionRow) => openAddress(graphAddress({
-    ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
-    provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
-  }), row.label);
+  const openRow = (row: ResolutionRow) => {
+    // AIKit resolution rows always carry a local address; a hosted row
+    // (native_owner shared-field) would not, and is not what resolve returns.
+    const address = graphAddress({
+      ref: row.reference, kind: row.kind, label: row.label, native_owner: row.owner,
+      provenance: { source: row.owner, detail: row.provenance }, actions: row.actions,
+    });
+    if (!address) { setError(`No local address for ${row.reference}`); return; }
+    return openAddress(address, row.label);
+  };
   const accept = () => {
     if (busy || composition.current || opening.current) return;
     const hit = hits[selected];

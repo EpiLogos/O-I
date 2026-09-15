@@ -44,7 +44,7 @@ jobs:
       - name: Install through npm against accepted pre-local native artifacts
         shell: bash
         env:
-          OI_NPM_RELEASE_TAG: oi-v0.1.0-prelocal.2
+          OI_NPM_RELEASE_TAG: oi-v0.1.0-prelocal.6
         run: |
           set -euo pipefail
           prefix="$RUNNER_TEMP/oi-npm-prefix"

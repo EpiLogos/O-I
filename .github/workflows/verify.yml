@@ -295,9 +295,11 @@ jobs:
           assert central["modality"] == "fresh-ground"
           assert central["install_source"] == "oi-pinned-source-build"
           current_central = next(item for item in mainline["products"] if item["id"] == "central")["revision"]
-          released_central = next(item for item in release["products"] if item["id"] == "central")["revision"]
           assert central["version"] == current_central
-          assert current_central != released_central
+          # A new historical build may record the same revision as mainline.
+          # Source selection and standing establish authority, not inequality.
+          assert mainline["build_record"]["relation"] == "historical-build-evidence-not-current-main-authority"
+          assert release["standing"] == "historical-unratified-prelocal-build-record"
 
           central_status = next(item for item in status["surfaces"] if item["id"] == "central")
           assert central_status["state"] == "registered"

@@ -44,15 +44,45 @@ The chosen source is recorded on the registration (`install_source`) and disclos
 
 ## Install the `oi` command
 
+### Prerequisites, honestly stated
+
+What each route presupposes on a bare machine:
+
+```text
+bootstrap script    curl (or wget), tar, and a sha256 tool — nothing else
+npm route           npm (Node.js >= 18), already on the machine
+source route        a Rust toolchain (cargo) AND an O-I checkout
+```
+
+No route has zero prerequisites; the bootstrap script is the closest — it installs the prebuilt release binary and needs no Node and no Rust, and `oi install` (the recorded release artifacts, all products) likewise needs no toolchain. But the *First encounter* sequence below needs a Rust toolchain on a bare machine: a personal ground requires current-main Central, `oi install central` builds that Central from source, and an older release-line `ctrl` is intentionally not accepted. The release-line suite also predates the current root NOW/DAY Actions. So: bootstrap + released suite run anywhere; establishing a ground needs cargo.
+
+### Bootstrap script (no Node, no Rust)
+
+From any machine with `curl` and `tar`, download and inspect the script, then run it:
+
+```sh
+curl -fsSL https://raw.githubusercontent.com/EpiLogos/O-I/main/install.sh -o oi-install.sh
+less oi-install.sh          # inspect before running; the script installs a binary onto your PATH
+sh oi-install.sh
+```
+
+It downloads the native archive and SHA-256 sidecar for your platform from the release below, verifies the checksum, and installs `oi` into `~/.local/bin` (override the location with `OI_BIN_DIR`; override the release with `OI_RELEASE_TAG`). Prebuilt targets today are Apple Silicon macOS (`aarch64-apple-darwin`) and x64 Linux (`x86_64-unknown-linux-gnu`); anything else fails explicitly.
+
 ### npm-formatted native distribution
 
 The repository defines `@epi-logos/oi` as the public distribution package for the native Rust CLI. It is a thin installer/launcher over O:I's prebuilt release artifacts, not a JavaScript reimplementation of `oi` and not the `oi.package/v1` extension envelope.
 
-The `oi-v0.1.0-prelocal.4` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
+The `oi-v0.1.0-prelocal.6` release line publishes the npm package tarball beside the native binary archives. Once that release exists, the package can be installed without a repository checkout or Rust toolchain:
 
 ```sh
-npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
+npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.6/epi-logos-oi-0.1.0-prelocal.6.tgz
 oi help
+```
+
+The tarball published at `oi-v0.1.0-prelocal.4` predates the installer's default release tag and its postinstall needs the release named explicitly; from `prelocal.5` onward the package carries the default and the plain command above is sufficient:
+
+```sh
+OI_NPM_RELEASE_TAG=oi-v0.1.0-prelocal.4 npm install -g https://github.com/EpiLogos/O-I/releases/download/oi-v0.1.0-prelocal.4/epi-logos-oi-0.1.0-prelocal.4.tgz
 ```
 
 The short registry form is the intended public entry point:

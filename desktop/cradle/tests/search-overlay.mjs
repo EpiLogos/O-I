@@ -13,7 +13,7 @@ mkdirSync(out, {recursive:true});
 const cases = JSON.parse(readFileSync(resolve(root,'tests/search-queries.json'),'utf8'));
 const receipt = {grade:'D', scope:'production search component + client + HTTP bridge; controlled responses, not native owner/installed/human evidence', checks:[], browsers:[], passed:false};
 const check = (value, name) => { assert.ok(value,name); receipt.checks.push(name); };
-const server = await createServer({root, configFile:false, plugins:[react()], define:{__CRADLE_WALK__:'false'}, server:{host:'127.0.0.1',port:1437,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
+const server = await createServer({root, configFile:false, plugins:[react()], resolve:{alias:{three:resolve(root,'node_modules/three')}}, define:{__CRADLE_WALK__:'false'}, server:{host:'127.0.0.1',port:1437,strictPort:true,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});
 await server.listen();
 try {
   for (const [name, engine] of Object.entries({chromium,webkit})) {

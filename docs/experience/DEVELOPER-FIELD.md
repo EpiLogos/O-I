@@ -14,6 +14,8 @@ Sources: AIKit `docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md` §§1, 9–13, 19, 21�
 
 ## TM — Keep one comprehensible working field across terminal layers
 
+The current implementation/proof detail for these terminal/material stories is [SESSION-GROUNDING.md](SESSION-GROUNDING.md) and its obligation module, under #220. It retains the failed full TM02 run and its bounded live-continuity successes, repairs invalid version/PTY/count assertions, and maps exact provider identity, effective composition, authority, Workcell census and remote continuity to TM/AG/MC/GW/DV/UI stories. Read the source and actual current owner operations before replay; the map is not an execution receipt.
+
 The distinctions are operational, not a mandatory stack. A bare terminal with an existing harness is a valid world. A mux supplies its own windows/panes; **Herdr can additionally supply native agent automation**, and is not reduced to a pure mux. SessionSpace relates supported sessions and surfaces without replacing native IDs. The TUI has Quick/fullscreen/popup and attached inspection; an OS window/compositor is another host relation. A remote Workcell is not another tab. Capabilities differ by actual provider and version.
 
 | ID | Person's starting situation and action | Agent work and determining conditions | Useful completion | Failure, refusal or continuation |

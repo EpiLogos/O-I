@@ -30,7 +30,7 @@ class PersonalWebTests(unittest.TestCase):
             for key, value in old.items():
                 self.assertEqual(now[key], value)
             self.assertEqual(current["inherited_obligations"], before["inherited_obligations"])
-            self.assertEqual(len(current["inherited_obligations"]), 56)
+            self.assertEqual(len([o for o in current["inherited_obligations"] if o["source_module"] == "docs/experience/developer-field.json"]), 56)
 
     def test_new_stories_retain_source_and_no_fabricated_acceptance(self):
         result = em.load_sources(ROOT)

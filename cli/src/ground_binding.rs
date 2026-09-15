@@ -116,6 +116,10 @@ fn composition_save_cas(composition: &Composition) -> Result<(), String> {
         }
         None => { object.remove("requested_mode"); }
     }
+    match &composition.active_profile {
+        Some(profile) => { object.insert("active_profile".into(), json!(profile)); }
+        None => { object.remove("active_profile"); }
+    }
     let bytes = serde_json::to_vec_pretty(&value).map_err(|e| e.to_string())?;
     composition_publish(&path, basis.as_deref(), &bytes)?;
     drop(basis);

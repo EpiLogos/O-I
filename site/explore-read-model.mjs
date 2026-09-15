@@ -4,6 +4,7 @@ import {
 } from '../shared-field/explore-surface.mjs';
 
 export const EXPLORE_BROWSER_SEED_SCHEMA = EXPLORE_SURFACE_SEED_SCHEMA;
+export { createExploreSurfaceModel };
 
 /**
  * Hosted/browser adapter over the same renderer-neutral Explore application

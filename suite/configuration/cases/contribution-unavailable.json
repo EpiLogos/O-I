@@ -1,0 +1,31 @@
+{
+  "fixture": "contribution-unavailable",
+  "kind": "contribution",
+  "contribution": {
+    "schema": "oi.configuration-contribution/v1",
+    "contract_revision": "configuration-plane/contribution.1",
+    "owner": {
+      "owner_ref": "workcell",
+      "owner_kind": "product",
+      "owner_version": "0.0.0",
+      "contribution_command": ["workcell", "config-contribution", "--json"],
+      "disclosed_at_unix_ms": 0,
+      "reading_digest": null,
+      "reading_digest_covers": "07 §4.5 convention"
+    },
+    "about": "The owner could not disclose a contribution on this machine. Absence is data; nothing is fabricated to fill the registry (L3, 07 §4.7).",
+    "sections": [],
+    "operations": {
+      "transport": "cli/v1",
+      "validate": { "availability": "unavailable", "reason": "owner executable not deployed" },
+      "plan": { "availability": "unavailable", "reason": "owner executable not deployed" },
+      "apply": { "availability": "unavailable", "reason": "owner executable not deployed" },
+      "reset": { "availability": "unavailable", "reason": "owner executable not deployed" }
+    },
+    "availability": { "state": "unavailable", "reason": "the deployed build does not answer config-contribution yet" },
+    "degradations": [],
+    "obligations": [
+      "Workcell contributes real placement/material settings through its owner lane (C3E) against the frozen contract."
+    ]
+  }
+}

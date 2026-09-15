@@ -16,9 +16,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import { createPortal } from "react-dom";
-import { createLoadingIndicator } from "@epilogos/oi-design-system/loading";
-import "@epilogos/oi-design-system/point-cloud.css";
+import { emitExpressionCue } from "../stage/cues";
 import {
   detectTransport,
   eventsSince,
@@ -379,9 +377,10 @@ export function KernelProvider(props: { children: ReactNode }) {
     ],
   );
 
-  // BOOT-00: window-scope indicator until the first `KernelOp::State`
-  // settles, then removed immediately (no minimum dwell). Obscured shell
-  // content is `inert`; focus returns to the shell once the overlay lifts.
+  // BOOT-00: the window's interaction law. Obscured shell content is
+  // `inert` until the first `KernelOp::State` settles; focus returns to
+  // the shell once the law lifts. The kernel owns no renderer: the boot
+  // visuals are the stage's frontstate, driven by the cues below.
   useEffect(() => {
     const root = document.getElementById("root");
     if (!root) return;
@@ -395,26 +394,20 @@ export function KernelProvider(props: { children: ReactNode }) {
     return () => root.removeAttribute("inert");
   }, [stateSettled]);
 
-  return <KernelContext.Provider value={api}>
-    {!stateSettled && <BootOverlay detail={boot.detail} />}
-    {props.children}
-  </KernelContext.Provider>;
-}
-
-/** The design-system window-scope loading body (BOOT-00), portalled above
- * the shell so it is never clipped by a local stacking context. The host
- * (here) owns lifecycle, inertness and focus; the component itself does no
- * I/O, timing or minimum display duration — only `update()` on change. */
-function BootOverlay({ detail }: { detail?: string }) {
-  const host = useRef<HTMLDivElement>(null);
-  const indicator = useRef<ReturnType<typeof createLoadingIndicator>>();
+  // Boot is stated, never rendered here: the semantic cues are the whole
+  // kernel→stage boot contract. `app.opening` stands while the first
+  // state read is in flight; `app.ready` fires exactly once, the moment
+  // it settles (success or error), with no minimum dwell.
+  const settledOnce = useRef(false);
   useEffect(() => {
-    const body = createLoadingIndicator({ label: "Opening your world", detail, scope: "window" });
-    indicator.current = body;
-    host.current?.append(body.element);
-    return () => { body.remove(); indicator.current = undefined; };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
-  useEffect(() => { indicator.current?.update({ detail }); }, [detail]);
-  return createPortal(<div className="oi-boot-overlay" ref={host} />, document.body);
+    if (stateSettled) {
+      if (settledOnce.current) return;
+      settledOnce.current = true;
+      emitExpressionCue({ kind: "app.ready" });
+      return;
+    }
+    emitExpressionCue({ kind: "app.opening", label: "Opening your world", detail: boot.detail });
+  }, [stateSettled, boot.detail]);
+
+  return <KernelContext.Provider value={api}>{props.children}</KernelContext.Provider>;
 }

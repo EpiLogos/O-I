@@ -2,16 +2,16 @@
  * the point-cloud mark, nothing else. Entering fades the whole screen out
  * to reveal the workspace beneath.
  *
- * Layering: the welcome rides at the expression canvas's own altitude
- * (z 1) — above the app's boot content, while the canvas itself (a later
- * body child at the same altitude) paints the mark on this ground. The
- * enter control receives clicks (the canvas is pointer-transparent), and
- * floating chrome (menus 80, notices 90) would still win while it stands;
- * none exists at boot. Tokens only. */
+ * Layering: the scrim rides on the stage's frontstate plane
+ * (--oi-z-stage-frontstate). While the frontstate presentation stands,
+ * the stage raises the shared field canvas to the same altitude, where it
+ * is a later body child — so the canvas paints the mark on this ground.
+ * Popovers (80) and consent (above all tokens) would still win while it
+ * stands; none exists at boot. Tokens only. */
 .oi-welcome {
   position: fixed;
   inset: 0;
-  z-index: var(--oi-z-expression);
+  z-index: var(--oi-z-stage-frontstate);
   background: var(--oi-canvas-ground);
   transition: opacity var(--oi-motion-normal) var(--oi-motion-ease);
 }
@@ -47,6 +47,10 @@
 .oi-welcome-hint {
   font-size: var(--oi-shell-type-nav);
   color: var(--oi-muted);
+}
+.oi-welcome-detail {
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-muted-2);
 }
 @media (prefers-reduced-motion: reduce) {
   .oi-welcome {

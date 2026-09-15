@@ -1,0 +1,66 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epilogos.github.io/o-i/schemas/oi.profile-v1.schema.json",
+  "title": "O:I Profile v1",
+  "description": "A sparse O:I composition of desired relations — never a serialised snapshot of native configuration trees. Native product profiles are held by reference; secret-kind entries carry secret_reference and never a value. Frozen by docs/cradle/09-CONFIGURATION-PLANE.md §12–13 (#299 C0-10/C0-11).",
+  "type": "object",
+  "required": ["schema", "profile_ref", "created_at_unix_ms", "revised_at_unix_ms", "native_profiles", "desired"],
+  "properties": {
+    "schema": { "const": "oi.profile/v1" },
+    "profile_ref": { "type": "string", "pattern": "^[a-z0-9][a-z0-9-]*$" },
+    "title": { "type": ["string", "null"] },
+    "description": { "type": ["string", "null"] },
+    "created_at_unix_ms": { "type": "integer", "minimum": 0 },
+    "revised_at_unix_ms": { "type": "integer", "minimum": 0 },
+    "native_profiles": {
+      "description": "references into owners' own profile namespaces, opaque to O:I",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["owner_ref", "native_profile_ref"],
+        "properties": {
+          "owner_ref": { "type": "string", "pattern": "^(connector/)?[a-z0-9][a-z0-9-]*$" },
+          "native_profile_ref": { "type": "string", "minLength": 1 }
+        }
+      }
+    },
+    "desired": {
+      "description": "sparse overrides only; absence means 'no O:I intent'",
+      "type": "array",
+      "items": {
+        "type": "object",
+        "required": ["setting_ref", "scope"],
+        "properties": {
+          "setting_ref": {
+            "type": "string",
+            "pattern": "^(connector/)?[a-z0-9][a-z0-9-]*:[a-z0-9][a-z0-9-]*:[a-z0-9_][a-z0-9_-]*(\\.[a-z0-9_][a-z0-9_-]*)*$"
+          },
+          "scope": {
+            "type": "object",
+            "required": ["scope_kind", "scope_ref"],
+            "properties": {
+              "scope_kind": { "enum": ["world", "ground", "project", "machine", "workcell", "agency", "agent", "session-space", "agent-session", "provider", "connector-relation", "invocation"] },
+              "scope_ref": { "type": ["string", "null"], "minLength": 1 }
+            }
+          },
+          "value": { "description": "MUST be absent when the setting's value_schema.type is secret" },
+          "secret_reference": {
+            "type": ["object", "null"],
+            "required": ["ref"],
+            "properties": {
+              "ref": { "type": "string", "minLength": 1 }
+            }
+          }
+        }
+      }
+    },
+    "provenance": {
+      "type": "object",
+      "properties": {
+        "authored_by": { "enum": ["human", "oi", "imported"] },
+        "notes_ref": { "type": ["string", "null"] },
+        "imported_from_ref": { "type": ["string", "null"] }
+      }
+    }
+  }
+}

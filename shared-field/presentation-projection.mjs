@@ -43,15 +43,29 @@ export function worldPresentationFromProjection(value) {
 }
 
 /**
- * Human/browser editing creates a new Projection revision through the already
- * canonical refinement operation. Source system/revision are preserved exactly;
- * only the public representation and attributable editor provenance change.
+ * Human/agent authoring creates a new Projection revision through the already
+ * canonical refinement operation. Working state may retain the published
+ * WorldPresentation revision while it is edited; ratification advances that
+ * representation revision exactly once. Source system/revision are preserved.
  */
 export function refineWorldPresentationProjection(previous, presentation, input) {
   const prior = validateProjection(previous);
-  const nextPresentation = validateWorldPresentation(presentation);
+  const priorPresentation = worldPresentationFromProjection(prior);
+  let nextPresentation = validateWorldPresentation(presentation);
   if (nextPresentation.world_ref !== prior.subject.ref) {
     throw new TypeError('World presentation world_ref must match Projection subject.ref');
+  }
+  if (nextPresentation.presentation_ref !== priorPresentation.presentation_ref) {
+    throw new TypeError('World presentation presentation_ref must remain stable across refinement');
+  }
+  if (nextPresentation.revision < priorPresentation.revision) {
+    throw new TypeError('World presentation revision cannot move backwards during refinement');
+  }
+  if (nextPresentation.revision === priorPresentation.revision) {
+    nextPresentation = validateWorldPresentation({
+      ...clone(nextPresentation),
+      revision: priorPresentation.revision + 1,
+    });
   }
 
   return refineProjection(prior, {

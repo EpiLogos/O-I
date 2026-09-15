@@ -8,6 +8,8 @@ fn command_desktop(args: &[OsString]) -> Result<i32, String> {
     if values.is_empty() || matches!(values.as_slice(), ["--help"] | ["help"] | ["-h"]) {
         println!(
             "O:I M′ desktop application operations\n\
+  oi desktop expression capabilities\n\
+  oi desktop expression [SOCKET] REQUEST_JSON\n\
   oi desktop capabilities [--json]\n\
   oi desktop files list ROOT_RELATIVE_PATH\n\
   oi desktop files read LOCATION_JSON\n\
@@ -24,6 +26,24 @@ Window, tab and workspace arrangement remain in the running app's native menu."
     ) {
         println!("{}", include_str!("../../suite/desktop-projection.json"));
         return Ok(0);
+    }
+    if matches!(values.as_slice(), ["expression", "capabilities"]) {
+        println!("{}", oi_cradle_kernel::expression::capabilities());
+        return Ok(0);
+    }
+    #[cfg(unix)]
+    if let ["expression", request] = values.as_slice() {
+        let request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
+        let response = oi_cradle_kernel::expression_transport::call(&oi_cradle_kernel::expression_transport::default_socket_path()?, &request)?;
+        println!("{response}");
+        return Ok(if response["ok"] == true { 0 } else { 1 });
+    }
+    #[cfg(unix)]
+    if let ["expression", socket, request] = values.as_slice() {
+        let request = serde_json::from_str(request).map_err(|e| format!("invalid Expression request: {e}"))?;
+        let response = oi_cradle_kernel::expression_transport::call(Path::new(socket), &request)?;
+        println!("{response}");
+        return Ok(if response["ok"] == true { 0 } else { 1 });
     }
     // Select this exact S implementation for calls made by the shared kernel.
     // Native owner overrides and registered contribution selection remain intact.

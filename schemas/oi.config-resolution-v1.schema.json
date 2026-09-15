@@ -1,0 +1,95 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://epilogos.github.io/o-i/schemas/oi.config-resolution-v1.schema.json",
+  "title": "O:I Config Resolution v1",
+  "description": "One setting's desired (O:I composition/profile intent) beside the owner's own declared/effective/active facts, with the derived reconciliation status. Frozen by docs/cradle/09-CONFIGURATION-PLANE.md §7 (#299 C0-6). Desired is never named `declared` and never written into a native reading.",
+  "type": "object",
+  "required": ["schema", "setting_ref", "scope", "reconciliation"],
+  "properties": {
+    "schema": { "const": "oi.config-resolution/v1" },
+    "setting_ref": { "$ref": "#/$defs/settingRef" },
+    "scope": { "$ref": "#/$defs/scope" },
+    "desired": { "$ref": "#/$defs/desired" },
+    "native": { "$ref": "#/$defs/nativeAxes" },
+    "native_reading": {
+      "type": "object",
+      "properties": {
+        "reading_digest": { "type": ["string", "null"] },
+        "observed_at_unix_ms": { "type": ["integer", "null"], "minimum": 0 }
+      }
+    },
+    "reconciliation": { "$ref": "#/$defs/reconciliation" }
+  },
+  "$defs": {
+    "settingRef": {
+      "type": "string",
+      "pattern": "^(connector/)?[a-z0-9][a-z0-9-]*:[a-z0-9][a-z0-9-]*:[a-z0-9_][a-z0-9_-]*(\\.[a-z0-9_][a-z0-9_-]*)*$"
+    },
+    "scope": {
+      "type": "object",
+      "required": ["scope_kind", "scope_ref"],
+      "properties": {
+        "scope_kind": { "$ref": "#/$defs/scopeKind" },
+        "scope_ref": { "type": ["string", "null"], "minLength": 1 }
+      }
+    },
+    "scopeKind": {
+      "enum": ["world", "ground", "project", "machine", "workcell", "agency", "agent", "session-space", "agent-session", "provider", "connector-relation", "invocation"]
+    },
+    "desired": {
+      "type": ["object", "null"],
+      "properties": {
+        "value": {},
+        "secret_reference": { "$ref": "#/$defs/secretReference" },
+        "source_ref": { "description": "profile:<ref> | invocation | oi-setting", "type": "string" },
+        "set_at_unix_ms": { "type": "integer", "minimum": 0 }
+      }
+    },
+    "nativeAxes": {
+      "type": ["object", "null"],
+      "description": "The owner's own v2 axes, passed through unmodified. O:I never recomputes them.",
+      "properties": {
+        "declared": { "$ref": "#/$defs/nativeAxis" },
+        "effective": { "$ref": "#/$defs/nativeAxis" },
+        "active": { "$ref": "#/$defs/nativeAxis" },
+        "staged": { "$ref": "#/$defs/nativeAxis" }
+      }
+    },
+    "nativeAxis": {
+      "type": ["object", "null"],
+      "properties": {
+        "value": {},
+        "provenance": {
+          "type": "object",
+          "properties": {
+            "owner_ref": { "type": "string" },
+            "path": { "description": "a location, never a command (07 §4.6)", "type": "string" },
+            "observed_at_unix_ms": { "type": "integer", "minimum": 0 }
+          }
+        },
+        "materialisation_ref": { "type": ["string", "null"] },
+        "stage_state": { "enum": ["none", "prepared", "previewed", "discardable"] }
+      }
+    },
+    "reconciliation": {
+      "type": "object",
+      "required": ["status"],
+      "properties": {
+        "status": {
+          "enum": ["satisfied", "drifted", "pending", "blocked", "unsupported", "unknown"],
+          "description": "Frozen vocabulary and truth table: 09 §7.1."
+        },
+        "reason": { "type": ["string", "null"] },
+        "detail_ref": { "type": ["string", "null"] }
+      }
+    },
+    "secretReference": {
+      "type": ["object", "null"],
+      "required": ["ref"],
+      "properties": {
+        "ref": { "type": "string", "minLength": 1 },
+        "present": { "description": "observed-only; never stored as desired state", "type": "boolean" }
+      }
+    }
+  }
+}

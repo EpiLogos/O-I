@@ -22,6 +22,12 @@ participation rules refine earlier shorthand without discarding these states.
 
 ---
 
+## Factory and Agency arrangement refinement — adopted 2026-09-14
+
+[FACTORY-AGENCY.md](../experience/FACTORY-AGENCY.md) governs the detailed #289 interaction over these existing state families. Ordinary work keeps Conversation / Activity / Context / Inspect on the right. Factory keeps its selected conversation, Run or working Surface in the centre and actual artifact bodies on the right while moving among related work tabs. Leaving restores the prior arrangement. One conversation is visible once by default; draft, selection and native identities survive relocation/restart.
+
+This is the explicit Factory exception to earlier permanent-accompaniment wording. Agent creation/teams, shared native-resolved session/model/harness choices, effective praxis/context readback, output arrival/revision rules, shared HTML variants, Git basis, footer/Observatory, NOW/Routine and content-first headers are specified in §§1–13. The [fourteen source-mapped obligations](../experience/factory-agency.json) and §14 joined walk bind these experiences into #65/#201 without changing the standing or full domain scope of the Epi L extension.
+
 ## A. Inhabitation states — *does a World exist here?*
 
 Derived from: existing Worlds are legitimate starting points (FP §2);

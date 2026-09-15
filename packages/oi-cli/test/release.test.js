@@ -25,8 +25,9 @@ test('unsupported platforms fail rather than pretending a binary exists', () => 
   assert.throws(() => resolveTarget('win32', 'x64'), /does not yet provide a prebuilt binary/);
 });
 
-test('GitHub release download requires an explicitly selected release tag', () => {
-  assert.throws(() => selectedReleaseTag({}), /no O:I GitHub release is selected/);
+test('GitHub release download defaults to the documented release and honours an explicit override', () => {
+  const pkg = require('../package.json');
+  assert.equal(selectedReleaseTag({}), `oi-v${pkg.version}`);
   assert.equal(
     selectedReleaseTag({ OI_NPM_RELEASE_TAG: 'oi-v0.1.0-prelocal.example' }),
     'oi-v0.1.0-prelocal.example'
