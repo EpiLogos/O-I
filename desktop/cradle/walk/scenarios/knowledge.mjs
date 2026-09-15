@@ -99,7 +99,7 @@ export default async function run({page,baseUrl,check,metric,shot,channel,provis
     check(true,'Selected subject Action returns through the real owner dispatch seam');
   }
   await shot('knowledge-expression-local-whole');
-  await page.getByRole('button',{name:'Return to graph',exact:true}).click();
+  await page.getByRole('button',{name:'Return to knowledge',exact:true}).click();
   check(!(await channel('read.stage')).data.presentations.some(item=>item.id.startsWith('knowledge-expression:')),'Return releases the stage presentation and preserves the graph subject');
   await page.getByRole('button',{name:/Open in tab/}).click();
   await page.getByRole('article',{name:'Selected node content'}).waitFor();
