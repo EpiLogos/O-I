@@ -710,7 +710,8 @@ fn listing_reports_the_owners_own_disclosed_availability() {
     let mut contribution: Value =
         serde_json::from_str(&std::fs::read_to_string(&contribution_path).expect("contribution"))
             .expect("contribution parses");
-    contribution["availability"] = json!({"state": "unavailable", "reason": "scene owner withdraws"});
+    contribution["availability"] =
+        json!({"state": "unavailable", "reason": "scene owner withdraws"});
     contribution["sections"] = json!([]);
     std::fs::write(&contribution_path, contribution.to_string()).expect("contribution rewritten");
 
