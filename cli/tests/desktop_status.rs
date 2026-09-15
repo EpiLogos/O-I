@@ -82,7 +82,10 @@ fn component_install_reads_installed_component_and_damage_stays_broken() {
     .unwrap();
     let actuation = &installed.surfaces[0];
     assert_eq!(actuation.state, NativeSurfaceState::InstalledComponent);
-    assert_eq!(actuation.resolved.as_deref(), Some("/managed/actuation/03e03ac"));
+    assert_eq!(
+        actuation.resolved.as_deref(),
+        Some("/managed/actuation/03e03ac")
+    );
     let detail = actuation.detail.as_deref().unwrap_or_default();
     assert!(
         detail.contains("component material") && detail.contains("no native actuation command"),

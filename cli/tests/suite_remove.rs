@@ -120,11 +120,17 @@ fn remove_one_product_from_a_subset_removes_only_its_managed_files() {
     fs::write(ground.join("Control/authored.md"), "authored").unwrap();
     fabricate_managed_install(home.path(), "central", "central-revision", Some("ctrl"));
     fabricate_managed_install(home.path(), "software-factory", "factory-revision", None);
-    register_managed_composition(home.path(), "central", &home.path().join("oi-data/bin/ctrl"));
+    register_managed_composition(
+        home.path(),
+        "central",
+        &home.path().join("oi-data/bin/ctrl"),
+    );
     register_managed_composition(
         home.path(),
         "software-factory",
-        &home.path().join("oi-data/products/software-factory/factory-revision/payload"),
+        &home
+            .path()
+            .join("oi-data/products/software-factory/factory-revision/payload"),
     );
 
     let removal = output(oi(home.path(), home.path()).args(["remove", "software-factory"]));
@@ -144,11 +150,14 @@ fn remove_one_product_from_a_subset_removes_only_its_managed_files() {
     assert!(data.join("bin/ctrl").is_file());
     assert!(ground.join("Control/authored.md").is_file());
 
-    let receipt: Value = serde_json::from_slice(&fs::read(data.join("receipts/installed-suite.json")).unwrap()).unwrap();
+    let receipt: Value =
+        serde_json::from_slice(&fs::read(data.join("receipts/installed-suite.json")).unwrap())
+            .unwrap();
     assert!(receipt["products"].get("software-factory").is_none());
     assert!(receipt["products"].get("central").is_some());
 
-    let composition: Value = serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
+    let composition: Value =
+        serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap()).unwrap();
     assert!(composition["modules"].get("software-factory").is_none());
     assert!(composition["modules"].get("central").is_some());
 
@@ -169,8 +178,14 @@ fn unknown_and_never_installed_products_refuse_cleanly() {
     let unknown = output(oi(home.path(), home.path()).args(["remove", "no-such-product"]));
     assert_eq!(unknown.status.code(), Some(2));
     let stderr = text(&unknown.stderr);
-    assert!(stderr.contains("unknown product 'no-such-product'"), "{stderr}");
-    assert!(stderr.contains("software-factory"), "the recorded product ids are named: {stderr}");
+    assert!(
+        stderr.contains("unknown product 'no-such-product'"),
+        "{stderr}"
+    );
+    assert!(
+        stderr.contains("software-factory"),
+        "the recorded product ids are named: {stderr}"
+    );
 
     let not_installed = output(oi(home.path(), home.path()).args(["remove", "software-factory"]));
     assert_eq!(not_installed.status.code(), Some(2));
@@ -182,16 +197,30 @@ fn unknown_and_never_installed_products_refuse_cleanly() {
 
     // A refusal mutates nothing.
     assert!(!home.path().join("oi-data/receipts/removals").exists());
-    let receipt: Value =
-        serde_json::from_slice(&fs::read(home.path().join("oi-data/receipts/installed-suite.json")).unwrap()).unwrap();
-    assert!(receipt["products"].get("central").is_some(), "the refused request changed no receipt");
+    let receipt: Value = serde_json::from_slice(
+        &fs::read(home.path().join("oi-data/receipts/installed-suite.json")).unwrap(),
+    )
+    .unwrap();
+    assert!(
+        receipt["products"].get("central").is_some(),
+        "the refused request changed no receipt"
+    );
 }
 
 #[test]
 fn a_repeated_removal_names_the_previous_removal_receipt() {
     let home = TempDir::new().unwrap();
-    fabricate_managed_install(home.path(), "workcell", "workcell-revision", Some("workcell"));
-    register_managed_composition(home.path(), "workcell", &home.path().join("oi-data/bin/workcell"));
+    fabricate_managed_install(
+        home.path(),
+        "workcell",
+        "workcell-revision",
+        Some("workcell"),
+    );
+    register_managed_composition(
+        home.path(),
+        "workcell",
+        &home.path().join("oi-data/bin/workcell"),
+    );
 
     let first = output(oi(home.path(), home.path()).args(["remove", "workcell"]));
     assert!(first.status.success(), "{}", text(&first.stderr));
@@ -210,12 +239,20 @@ fn a_requested_mode_is_disclosed_not_rewritten() {
     register_managed_composition(
         home.path(),
         "software-factory",
-        &home.path().join("oi-data/products/software-factory/factory-revision/payload"),
+        &home
+            .path()
+            .join("oi-data/products/software-factory/factory-revision/payload"),
     );
     let composition_path = home.path().join("composition.json");
-    let mut composition: Value = serde_json::from_slice(&fs::read(&composition_path).unwrap()).unwrap();
-    composition["requested_mode"] = json!({"frame": "0/1/2/3", "set_at_unix_seconds": 1, "set_by": "oi mode set"});
-    fs::write(&composition_path, serde_json::to_vec_pretty(&composition).unwrap()).unwrap();
+    let mut composition: Value =
+        serde_json::from_slice(&fs::read(&composition_path).unwrap()).unwrap();
+    composition["requested_mode"] =
+        json!({"frame": "0/1/2/3", "set_at_unix_seconds": 1, "set_by": "oi mode set"});
+    fs::write(
+        &composition_path,
+        serde_json::to_vec_pretty(&composition).unwrap(),
+    )
+    .unwrap();
 
     // `uninstall` is the alias of the same operation.
     let removal = output(oi(home.path(), home.path()).args(["uninstall", "software-factory"]));
@@ -263,12 +300,18 @@ fn an_interrupted_install_removes_to_an_explained_state() {
 
     let removal = output(oi(home.path(), home.path()).args(["remove", "workcell"]));
     assert!(removal.status.success(), "{}", text(&removal.stderr));
-    assert!(text(&removal.stdout).contains("already absent"), "{}", text(&removal.stdout));
+    assert!(
+        text(&removal.stdout).contains("already absent"),
+        "{}",
+        text(&removal.stdout)
+    );
 
     let recorded = first_removal_receipt(home.path());
     let outcome = &recorded["products"]["workcell"];
     assert!(
-        outcome["already_absent"].as_array().is_some_and(|entries| !entries.is_empty()),
+        outcome["already_absent"]
+            .as_array()
+            .is_some_and(|entries| !entries.is_empty()),
         "{}",
         serde_json::to_string_pretty(&recorded).unwrap()
     );
@@ -282,15 +325,25 @@ fn the_suite_spelling_reaches_the_same_remover_and_the_development_field_keeps_i
     register_managed_composition(
         home.path(),
         "software-factory",
-        &home.path().join("oi-data/products/software-factory/factory-revision/payload"),
+        &home
+            .path()
+            .join("oi-data/products/software-factory/factory-revision/payload"),
     );
 
     // The spelling the acceptance campaign reached for — including the
     // public-name form of the product id.
-    let removal = output(oi(home.path(), home.path()).args(["suite", "remove", "Software Factory"]));
+    let removal =
+        output(oi(home.path(), home.path()).args(["suite", "remove", "Software Factory"]));
     assert!(removal.status.success(), "{}", text(&removal.stderr));
-    assert!(text(&removal.stdout).contains("Removed software-factory"), "{}", text(&removal.stdout));
-    assert!(!home.path().join("oi-data/products/software-factory").exists());
+    assert!(
+        text(&removal.stdout).contains("Removed software-factory"),
+        "{}",
+        text(&removal.stdout)
+    );
+    assert!(!home
+        .path()
+        .join("oi-data/products/software-factory")
+        .exists());
 
     // Truly unknown suite words still refuse with this surface's own message.
     let unknown = output(oi(home.path(), home.path()).args(["suite", "transmogrify"]));
@@ -310,18 +363,47 @@ fn descent_from_the_developmental_core_leaves_the_operational_core_and_the_groun
     fs::write(ground.join("Control/authored.md"), "authored").unwrap();
     // The 0/1/2/3 developmental core, fabricated as managed installs.
     fabricate_managed_install(home.path(), "central", "central-revision", Some("ctrl"));
-    fabricate_managed_install(home.path(), "actuation", "actuation-revision", Some("actuation"));
+    fabricate_managed_install(
+        home.path(),
+        "actuation",
+        "actuation-revision",
+        Some("actuation"),
+    );
     fabricate_managed_install(home.path(), "ai-kit", "aikit-revision", Some("aikit"));
-    fabricate_managed_install(home.path(), "software-factory", "factory-revision", Some("factory"));
-    register_managed_composition(home.path(), "central", &home.path().join("oi-data/bin/ctrl"));
-    register_managed_composition(home.path(), "actuation", &home.path().join("oi-data/bin/actuation"));
-    register_managed_composition(home.path(), "ai-kit", &home.path().join("oi-data/bin/aikit"));
-    register_managed_composition(home.path(), "software-factory", &home.path().join("oi-data/bin/factory"));
+    fabricate_managed_install(
+        home.path(),
+        "software-factory",
+        "factory-revision",
+        Some("factory"),
+    );
+    register_managed_composition(
+        home.path(),
+        "central",
+        &home.path().join("oi-data/bin/ctrl"),
+    );
+    register_managed_composition(
+        home.path(),
+        "actuation",
+        &home.path().join("oi-data/bin/actuation"),
+    );
+    register_managed_composition(
+        home.path(),
+        "ai-kit",
+        &home.path().join("oi-data/bin/aikit"),
+    );
+    register_managed_composition(
+        home.path(),
+        "software-factory",
+        &home.path().join("oi-data/bin/factory"),
+    );
 
     let before = output(oi(home.path(), home.path()).args(["current-world", "--json"]));
     assert!(before.status.success(), "{}", text(&before.stderr));
     let before: Value = serde_json::from_slice(&before.stdout).unwrap();
-    assert_eq!(before["context_frame"]["present_positions"], json!([0, 1, 2, 3]));
+    assert_eq!(
+        before["context_frame"]["present_positions"],
+        json!([0, 1, 2, 3])
+    );
 
     let removal = output(oi(home.path(), home.path()).args(["remove", "software-factory"]));
     assert!(removal.status.success(), "{}", text(&removal.stderr));
@@ -331,7 +413,10 @@ fn descent_from_the_developmental_core_leaves_the_operational_core_and_the_groun
     let world = output(oi(home.path(), home.path()).args(["current-world", "--json"]));
     assert!(world.status.success(), "{}", text(&world.stderr));
     let world: Value = serde_json::from_slice(&world.stdout).unwrap();
-    assert_eq!(world["context_frame"]["present_positions"], json!([0, 1, 2]));
+    assert_eq!(
+        world["context_frame"]["present_positions"],
+        json!([0, 1, 2])
+    );
     assert_eq!(world["context_frame"]["install_mode"], "0/1/2");
     assert_eq!(world["context_frame"]["install_mode_basis"], "effective");
     assert!(ground.join("Control/authored.md").is_file());

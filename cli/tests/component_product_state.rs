@@ -89,7 +89,9 @@ fn sandbox() -> Sandbox {
     let home = TempDir::new().unwrap();
     let path = TempDir::new().unwrap();
     let ctrl = fake_executable(path.path(), "ctrl");
-    let actuation_root = home.path().join("oi-data/products/actuation/03e03ac/payload");
+    let actuation_root = home
+        .path()
+        .join("oi-data/products/actuation/03e03ac/payload");
     fs::create_dir_all(&actuation_root).unwrap();
     write_composition(home.path(), &ctrl, &actuation_root);
     Sandbox {
@@ -146,17 +148,18 @@ mod unix {
 
         // Presence {central, actuation} is the 0/1 install mode, resolved
         // from effective presence — the exact match sees component products.
-        assert_eq!(world["context_frame"]["present_positions"], serde_json::json!([0, 1]));
+        assert_eq!(
+            world["context_frame"]["present_positions"],
+            serde_json::json!([0, 1])
+        );
         assert_eq!(world["context_frame"]["install_mode"], "0/1");
         assert_eq!(world["context_frame"]["install_mode_basis"], "effective");
 
         // The missing command surface is disclosed, not hidden.
         let warnings = warnings(&world);
         assert!(
-            warnings
-                .iter()
-                .any(|warning| warning.contains("Actuation")
-                    && warning.contains("no native 'actuation' command")),
+            warnings.iter().any(|warning| warning.contains("Actuation")
+                && warning.contains("no native 'actuation' command")),
             "the command gap must be named: {warnings:?}"
         );
     }
@@ -164,9 +167,7 @@ mod unix {
     #[test]
     fn requested_mode_with_a_component_product_is_realised_with_the_gap_named() {
         let sandbox = sandbox();
-        let set = output(
-            oi(sandbox.home.path(), sandbox.path.path()).args(["mode", "set", "0/1"]),
-        );
+        let set = output(oi(sandbox.home.path(), sandbox.path.path()).args(["mode", "set", "0/1"]));
         assert!(set.status.success(), "{}", text(&set.stderr));
 
         let world = current_world(sandbox.home.path(), sandbox.path.path());
@@ -201,9 +202,13 @@ mod unix {
             "missing component material is damage and must keep the name: {actuation}"
         );
         assert_eq!(actuation["present"], false);
-        assert_eq!(world["context_frame"]["present_positions"], serde_json::json!([0]));
         assert_eq!(
-            world["context_frame"]["install_mode"], Value::Null,
+            world["context_frame"]["present_positions"],
+            serde_json::json!([0])
+        );
+        assert_eq!(
+            world["context_frame"]["install_mode"],
+            Value::Null,
             "presence {{central}} alone is no install mode"
         );
     }
@@ -211,9 +216,8 @@ mod unix {
     #[test]
     fn status_discloses_the_component_reading_for_the_product_row() {
         let sandbox = sandbox();
-        let status = output(
-            oi(sandbox.home.path(), sandbox.path.path()).args(["status", "--json"]),
-        );
+        let status =
+            output(oi(sandbox.home.path(), sandbox.path.path()).args(["status", "--json"]));
         assert!(status.status.success(), "{}", text(&status.stderr));
         let status: Value = serde_json::from_slice(&status.stdout).unwrap();
         let actuation = status["surfaces"]

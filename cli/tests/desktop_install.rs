@@ -19,7 +19,10 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, Output};
 use tempfile::TempDir;
 
-const FOOTPRINT_PATH: &str = concat!(env!("CARGO_MANIFEST_DIR"), "/../desktop/install-footprint.json");
+const FOOTPRINT_PATH: &str = concat!(
+    env!("CARGO_MANIFEST_DIR"),
+    "/../desktop/install-footprint.json"
+);
 
 fn host_target() -> &'static str {
     match (std::env::consts::OS, std::env::consts::ARCH) {
@@ -112,8 +115,14 @@ fn pack_bundle(data_home: &Path, home: &Path, version: &str) -> (PathBuf, TempDi
         );
         ("app/O-I.app".to_string(), "app-bundle".to_string())
     } else {
-        write_executable(&app_dir.join("oi-cradle.AppImage"), "#!/bin/sh\necho oi-cradle\n");
-        ("app/oi-cradle.AppImage".to_string(), "single-executable".to_string())
+        write_executable(
+            &app_dir.join("oi-cradle.AppImage"),
+            "#!/bin/sh\necho oi-cradle\n",
+        );
+        (
+            "app/oi-cradle.AppImage".to_string(),
+            "single-executable".to_string(),
+        )
     };
     fs::write(app_dir.join("icon.png"), b"png-bytes").unwrap();
     fs::write(bundle_root.join("footprint.json"), test_footprint()).unwrap();
@@ -254,9 +263,7 @@ fn install(sandbox: &Sandbox, archive: &Path, extra: &[&str]) -> Output {
 
 fn expected_executable(sandbox: &Sandbox) -> PathBuf {
     if host_target().ends_with("darwin") {
-        sandbox
-            .home
-            .join("Applications/O-I.app/Contents/MacOS/O-I")
+        sandbox.home.join("Applications/O-I.app/Contents/MacOS/O-I")
     } else {
         sandbox.data_home.join("bin/oi-cradle")
     }
@@ -272,7 +279,10 @@ fn plan_recognizes_before_any_mutation() {
     assert_success(&out);
 
     // Recognition only: no receipt, no managed payload, no registrations.
-    assert!(!sandbox.installed_receipt().exists(), "plan wrote an install receipt");
+    assert!(
+        !sandbox.installed_receipt().exists(),
+        "plan wrote an install receipt"
+    );
     assert!(
         !sandbox.data_home.join("products/desktop").exists(),
         "plan created managed payload state"
@@ -282,8 +292,14 @@ fn plan_recognizes_before_any_mutation() {
         "plan created a desktop registration"
     );
     let stdout = String::from_utf8_lossy(&out.stdout);
-    assert!(stdout.contains("Install plan"), "plan not printed:\n{stdout}");
-    assert!(stdout.contains("0/1/2"), "plan does not disclose the default backing:\n{stdout}");
+    assert!(
+        stdout.contains("Install plan"),
+        "plan not printed:\n{stdout}"
+    );
+    assert!(
+        stdout.contains("0/1/2"),
+        "plan does not disclose the default backing:\n{stdout}"
+    );
     assert!(
         stdout.contains("Never owned by this installer"),
         "plan does not disclose the never-owned boundary:\n{stdout}"
@@ -311,11 +327,19 @@ fn install_writes_receipt_and_owned_resources() {
     // Every owned resource exists on disk.
     for resource in receipt["owned_resources"].as_array().unwrap() {
         let path = PathBuf::from(resource["path"].as_str().unwrap());
-        assert!(path.exists(), "owned resource {} missing after install", path.display());
+        assert!(
+            path.exists(),
+            "owned resource {} missing after install",
+            path.display()
+        );
     }
     // The declared encounter surface exists and is executable.
     let executable = expected_executable(&sandbox);
-    assert!(executable.exists(), "executable {} missing", executable.display());
+    assert!(
+        executable.exists(),
+        "executable {} missing",
+        executable.display()
+    );
     let mode = fs::metadata(&executable).unwrap().permissions().mode();
     assert_eq!(mode & 0o111, 0o111, "executable {mode:o} not executable");
 
@@ -389,18 +413,20 @@ fn install_refuses_foreign_file_without_authorization_then_replaces_and_explains
     assert_eq!(dispositions, vec!["replaced-foreign"]);
 
     // Removal deletes what we replaced and explains the residual honestly.
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "remove", "--json"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "remove", "--json"]));
     assert_success(&out);
-    assert!(!registration.exists(), "replaced registration survived removal");
+    assert!(
+        !registration.exists(),
+        "replaced registration survived removal"
+    );
     let removal: Value =
         serde_json::from_str(&fs::read_to_string(sandbox.removed_receipt()).unwrap()).unwrap();
     let residuals = removal["residuals"].as_array().unwrap();
     assert!(
         residuals.iter().any(|r| {
-            r.as_str().unwrap().contains("pre-existing content was not preserved")
+            r.as_str()
+                .unwrap()
+                .contains("pre-existing content was not preserved")
         }),
         "removal does not explain the replaced-foreign residual:\n{residuals:?}"
     );
@@ -411,10 +437,7 @@ fn status_discloses_installed_state_honestly() {
     let sandbox = sandbox("status");
     let (archive, _stage) = pack_bundle(&sandbox.data_home, &sandbox.home, "0.1.0");
 
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "status", "--json"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "status", "--json"]));
     assert_success(&out);
     let status: Value = serde_json::from_str(&String::from_utf8_lossy(&out.stdout)).unwrap();
     assert_eq!(status["state"], "not-installed");
@@ -422,14 +445,14 @@ fn status_discloses_installed_state_honestly() {
     let out = install(&sandbox, &archive, &[]);
     assert_success(&out);
 
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "status", "--json"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "status", "--json"]));
     assert_success(&out);
     let status: Value = serde_json::from_str(&String::from_utf8_lossy(&out.stdout)).unwrap();
     assert_eq!(status["state"], "installed");
-    assert_eq!(status["receipt"]["bundle"], archive.file_name().unwrap().to_str().unwrap());
+    assert_eq!(
+        status["receipt"]["bundle"],
+        archive.file_name().unwrap().to_str().unwrap()
+    );
     let resources = status["resources"].as_array().unwrap();
     assert!(
         resources.iter().all(|r| r["state"] == "present"),
@@ -439,10 +462,7 @@ fn status_discloses_installed_state_honestly() {
     // Losing a managed resource degrades the state — no pretending.
     let payload = PathBuf::from(status["receipt"]["payload_root"].as_str().unwrap());
     fs::remove_dir_all(&payload).unwrap();
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "status", "--json"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "status", "--json"]));
     assert_success(&out);
     let status: Value = serde_json::from_str(&String::from_utf8_lossy(&out.stdout)).unwrap();
     assert_eq!(status["state"], "degraded");
@@ -465,16 +485,20 @@ fn remove_deletes_only_owned_resources_and_leaves_ground_intact() {
         .collect();
     assert!(!owned.is_empty());
 
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "remove", "--json"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "remove", "--json"]));
     assert_success(&out);
 
     for path in &owned {
-        assert!(!path.exists(), "owned resource {} survived removal", path.display());
+        assert!(
+            !path.exists(),
+            "owned resource {} survived removal",
+            path.display()
+        );
     }
-    assert!(!sandbox.installed_receipt().exists(), "install receipt not retired");
+    assert!(
+        !sandbox.installed_receipt().exists(),
+        "install receipt not retired"
+    );
     sandbox.assert_ground_untouched();
 
     let removal: Value =
@@ -488,32 +512,27 @@ fn remove_deletes_only_owned_resources_and_leaves_ground_intact() {
     );
 
     // Removing again is a clean refusal — nothing is installed.
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "remove"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "remove"]));
     assert_refusal(&out, "no installed Desktop is recorded");
 }
 
 #[test]
 fn remove_of_never_installed_is_a_clean_refusal() {
     let sandbox = sandbox("never-installed");
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "remove"]),
-    );
+    let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "remove"]));
     assert_refusal(&out, "nothing to remove");
-    assert!(!sandbox.removed_receipt().exists(), "refusal wrote a removal receipt");
+    assert!(
+        !sandbox.removed_receipt().exists(),
+        "refusal wrote a removal receipt"
+    );
     assert!(!sandbox.installed_receipt().exists());
 }
 
 #[test]
 fn recorded_route_fails_honestly_until_a_bundle_is_recorded() {
     let sandbox = sandbox("recorded");
-    let out = output(
-        oi(&sandbox.data_home, &sandbox.home)
-            .args(["desktop", "install", "--recorded"]),
-    );
+    let out =
+        output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "install", "--recorded"]));
     assert_refusal(&out, "records no desktop bundle asset");
     assert!(!sandbox.installed_receipt().exists());
 }

@@ -32,11 +32,7 @@ pub const STATUS_SCHEMA: &str = "oi.desktop-status/v1";
 pub const MANAGED_PRODUCT_MARKER_SCHEMA: &str = "oi.managed-product/v1";
 
 const BUNDLE_ROOT_DIR: &str = "oi-desktop-bundle";
-const KNOWN_REGISTRATION_KINDS: [&str; 3] = [
-    "xdg-launcher-entry",
-    "xdg-icon",
-    "macos-app-copy",
-];
+const KNOWN_REGISTRATION_KINDS: [&str; 3] = ["xdg-launcher-entry", "xdg-icon", "macos-app-copy"];
 const GROUND_COMPONENTS: [&str; 3] = ["Control", "Work", ".central"];
 
 // ---------------------------------------------------------------------------
@@ -162,9 +158,15 @@ pub fn load_bundle_manifest(json: &str) -> Result<DesktopBundleManifest, String>
     let manifest: DesktopBundleManifest = serde_json::from_str(json)
         .map_err(|error| format!("invalid desktop bundle manifest: {error}"))?;
     if manifest.schema != BUNDLE_SCHEMA {
-        return Err(format!("unsupported desktop bundle schema {}", manifest.schema));
+        return Err(format!(
+            "unsupported desktop bundle schema {}",
+            manifest.schema
+        ));
     }
-    if !matches!(manifest.app_kind.as_str(), "single-executable" | "app-bundle") {
+    if !matches!(
+        manifest.app_kind.as_str(),
+        "single-executable" | "app-bundle"
+    ) {
         return Err(format!(
             "unsupported desktop bundle app_kind '{}' (expected single-executable or app-bundle)",
             manifest.app_kind
@@ -214,7 +216,10 @@ pub fn stage_bundle(
         .map(|name| name.to_string_lossy().to_string())
         .ok_or_else(|| format!("invalid bundle path {}", bundle_path.display()))?;
     if !bundle_path.is_file() {
-        return Err(format!("desktop bundle artifact {} does not exist", bundle_path.display()));
+        return Err(format!(
+            "desktop bundle artifact {} does not exist",
+            bundle_path.display()
+        ));
     }
     let actual = file_sha256(bundle_path)?;
     let expected = match expected_sha256 {
@@ -234,18 +239,30 @@ pub fn stage_bundle(
         ));
     }
 
-    fs::create_dir_all(work_dir)
-        .map_err(|error| format!("cannot create staging directory {}: {error}", work_dir.display()))?;
+    fs::create_dir_all(work_dir).map_err(|error| {
+        format!(
+            "cannot create staging directory {}: {error}",
+            work_dir.display()
+        )
+    })?;
     let stage_id = format!(".desktop-stage-{}", now_ms());
     let dir = work_dir.join(stage_id);
     fs::create_dir_all(&dir)
         .map_err(|error| format!("cannot create staging directory {}: {error}", dir.display()))?;
     let unpack_result = unpack_bundle(bundle_path, &dir).and_then(|root| {
-        let manifest_json = fs::read_to_string(root.join("BUNDLE.json"))
-            .map_err(|error| format!("bundle {} has no readable BUNDLE.json: {error}", archive_name))?;
+        let manifest_json = fs::read_to_string(root.join("BUNDLE.json")).map_err(|error| {
+            format!(
+                "bundle {} has no readable BUNDLE.json: {error}",
+                archive_name
+            )
+        })?;
         let manifest = load_bundle_manifest(&manifest_json)?;
-        let footprint_json = fs::read_to_string(root.join("footprint.json"))
-            .map_err(|error| format!("bundle {} has no readable footprint.json: {error}", archive_name))?;
+        let footprint_json = fs::read_to_string(root.join("footprint.json")).map_err(|error| {
+            format!(
+                "bundle {} has no readable footprint.json: {error}",
+                archive_name
+            )
+        })?;
         let footprint = load_footprint(&footprint_json)?;
         Ok((manifest, footprint, footprint_json))
     });
@@ -385,7 +402,12 @@ pub fn plan_install(
         .footprint
         .targets
         .get(&staged.manifest.target)
-        .ok_or_else(|| format!("footprint declares no registrations for target {}", staged.manifest.target))?;
+        .ok_or_else(|| {
+            format!(
+                "footprint declares no registrations for target {}",
+                staged.manifest.target
+            )
+        })?;
     let backing = staged
         .footprint
         .backing
@@ -434,7 +456,13 @@ pub fn plan_install(
         state_before: "absent".to_owned(),
     });
 
-    let executable = executable_path(&staged.footprint, target_footprint, &staged.manifest, data_root, home);
+    let executable = executable_path(
+        &staged.footprint,
+        target_footprint,
+        &staged.manifest,
+        data_root,
+        home,
+    );
     let shim_path = data_root.join("bin").join(&staged.footprint.bin_shim);
     if target_footprint.shim {
         if let Err(error) = assert_outside_ground(&shim_path) {
@@ -464,11 +492,14 @@ pub fn plan_install(
                 continue;
             }
             "xdg-launcher-entry" => {
-                let state = launcher_entry_state(&destination, &launcher_entry_content(
-                    &staged.footprint,
-                    &executable_shim_or_exec(target_footprint, &shim_path, executable.clone()),
-                    &icon_registration_path(target_footprint, home),
-                ));
+                let state = launcher_entry_state(
+                    &destination,
+                    &launcher_entry_content(
+                        &staged.footprint,
+                        &executable_shim_or_exec(target_footprint, &shim_path, executable.clone()),
+                        &icon_registration_path(target_footprint, home),
+                    ),
+                );
                 changes.push(PlannedChange {
                     kind: registration.kind.clone(),
                     path: destination.display().to_string(),
@@ -638,10 +669,14 @@ pub fn load_installed_receipt(data_root: &Path) -> Result<Option<InstalledDeskto
     if !path.exists() {
         return Ok(None);
     }
-    let bytes = fs::read(&path)
-        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
-    let receipt: InstalledDesktopReceipt = serde_json::from_slice(&bytes)
-        .map_err(|error| format!("invalid installed-desktop receipt {}: {error}", path.display()))?;
+    let bytes =
+        fs::read(&path).map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    let receipt: InstalledDesktopReceipt = serde_json::from_slice(&bytes).map_err(|error| {
+        format!(
+            "invalid installed-desktop receipt {}: {error}",
+            path.display()
+        )
+    })?;
     if receipt.schema != INSTALLED_RECEIPT_SCHEMA {
         return Err(format!(
             "unsupported installed-desktop receipt schema {}",
@@ -662,14 +697,22 @@ pub fn commit_install(
     replace_foreign: bool,
 ) -> Result<InstalledDesktopReceipt, String> {
     if staged.sha256 != plan.bundle.sha256 {
-        return Err("staged bundle no longer matches the recognized plan; replan before installing".to_owned());
+        return Err(
+            "staged bundle no longer matches the recognized plan; replan before installing"
+                .to_owned(),
+        );
     }
     let data_root = PathBuf::from(&plan.data_root);
     let target_footprint = staged
         .footprint
         .targets
         .get(&staged.manifest.target)
-        .ok_or_else(|| format!("footprint declares no registrations for target {}", staged.manifest.target))?;
+        .ok_or_else(|| {
+            format!(
+                "footprint declares no registrations for target {}",
+                staged.manifest.target
+            )
+        })?;
 
     let foreign: Vec<&PlannedChange> = plan
         .changes
@@ -689,8 +732,12 @@ pub fn commit_install(
 
     // Payload: temp root + managed-product marker, then atomic promote.
     let managed_root = data_root.join(&staged.footprint.managed_root);
-    fs::create_dir_all(&managed_root)
-        .map_err(|error| format!("cannot create managed Desktop root {}: {error}", managed_root.display()))?;
+    fs::create_dir_all(&managed_root).map_err(|error| {
+        format!(
+            "cannot create managed Desktop root {}: {error}",
+            managed_root.display()
+        )
+    })?;
     let payload_root = managed_root.join(&staged.manifest.version);
     if payload_root.exists() {
         return Err(format!(
@@ -917,7 +964,11 @@ pub fn plan_remove(receipt: &InstalledDesktopReceipt) -> RemovePlan {
             PlannedChange {
                 kind: resource.kind.clone(),
                 path: resource.path.clone(),
-                action: if path.exists() { "remove".to_owned() } else { "none".to_owned() },
+                action: if path.exists() {
+                    "remove".to_owned()
+                } else {
+                    "none".to_owned()
+                },
                 state_before: state_name(&path),
             }
         })
@@ -953,10 +1004,7 @@ pub fn commit_remove(
                 .map_err(|error| format!("cannot remove {}: {error}", path.display()))?;
             "removed"
         } else {
-            residuals.push(format!(
-                "{} was already absent at removal",
-                path.display()
-            ));
+            residuals.push(format!("{} was already absent at removal", path.display()));
             "already-absent"
         };
         if resource.disposition == "replaced-foreign" {
@@ -1097,10 +1145,7 @@ pub fn desktop_status(
         })
         .collect();
     let degraded = resources.iter().any(|resource| resource.state == "missing");
-    let backing = receipt
-        .backing
-        .requested
-        .clone();
+    let backing = receipt.backing.requested.clone();
     let backing_label = footprint
         .backing
         .options
@@ -1126,7 +1171,11 @@ pub fn desktop_status(
         .collect();
     DesktopStatus {
         schema: STATUS_SCHEMA.to_owned(),
-        state: if degraded { "degraded".to_owned() } else { "installed".to_owned() },
+        state: if degraded {
+            "degraded".to_owned()
+        } else {
+            "installed".to_owned()
+        },
         receipt: Some(StatusReceipt {
             app_id: receipt.app_id.clone(),
             public_name: receipt.public_name.clone(),
@@ -1182,8 +1231,8 @@ pub fn expand_tilde(path: &str, home: &Path) -> PathBuf {
 }
 
 pub fn file_sha256(path: &Path) -> Result<String, String> {
-    let bytes = fs::read(path)
-        .map_err(|error| format!("cannot read {}: {error}", path.display()))?;
+    let bytes =
+        fs::read(path).map_err(|error| format!("cannot read {}: {error}", path.display()))?;
     Ok(file_sha256_of_bytes(&bytes))
 }
 
@@ -1200,8 +1249,12 @@ fn sidecar_sha256(bundle_path: &Path) -> Result<Option<String>, String> {
     if !sidecar.is_file() {
         return Ok(None);
     }
-    let text = fs::read_to_string(&sidecar)
-        .map_err(|error| format!("cannot read checksum sidecar {}: {error}", sidecar.display()))?;
+    let text = fs::read_to_string(&sidecar).map_err(|error| {
+        format!(
+            "cannot read checksum sidecar {}: {error}",
+            sidecar.display()
+        )
+    })?;
     let token = text
         .split_whitespace()
         .next()
@@ -1346,13 +1399,17 @@ fn copy_dir_inner(source: &Path, destination: &Path) -> Result<(), String> {
             {
                 let link_target = fs::read_link(&from)
                     .map_err(|error| format!("cannot read symlink {}: {error}", from.display()))?;
-                std::os::unix::fs::symlink(link_target, &to)
-                    .map_err(|error| format!("cannot recreate symlink {}: {error}", to.display()))?;
+                std::os::unix::fs::symlink(link_target, &to).map_err(|error| {
+                    format!("cannot recreate symlink {}: {error}", to.display())
+                })?;
             }
             #[cfg(not(unix))]
             {
                 let _ = to;
-                return Err(format!("cannot copy symlink {} on this platform", from.display()));
+                return Err(format!(
+                    "cannot copy symlink {} on this platform",
+                    from.display()
+                ));
             }
         } else if file_type.is_dir() {
             copy_dir_inner(&from, &to)?;
@@ -1400,10 +1457,7 @@ mod tests {
             expand_tilde("~/Applications/O-I.app", home),
             PathBuf::from("/home/person/Applications/O-I.app")
         );
-        assert_eq!(
-            expand_tilde("/opt/oi", home),
-            PathBuf::from("/opt/oi")
-        );
+        assert_eq!(expand_tilde("/opt/oi", home), PathBuf::from("/opt/oi"));
     }
 
     #[test]
