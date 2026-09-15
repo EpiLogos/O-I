@@ -11,9 +11,15 @@
  *    labelled on screen). It drives the UI in dev/story/walk builds
  *    (`__CRADLE_WALK__`), which is where the configuration walk scenario
  *    proves the §21 acceptance.
- *  - the LIVE binding — bound at convergence by the integrator (Gate B).
- *    It is NOT implemented in this lane. What it must implement is
- *    documented on `ConfigPlaneSource` below, op by op.
+ *  - `liveSource.ts` — the LIVE binding: the typed configuration
+ *    `KernelOp`s of `desktop/cradle/kernel/src/configuration.rs`, routed
+ *    through the installed `oi` executable to the SAME engine the
+ *    `oi config` / `oi profile` commands drive (the C1 kernel registry,
+ *    the C2 profile store, the frozen four-verb transport, re-read
+ *    verification, and the O:I-side persistence). Production builds bind
+ *    it in `sourceHost.ts`; where no kernel transport is reachable the
+ *    plane renders its honest absence through
+ *    `createUnboundConfigPlaneSource` instead.
  *
  * THE RECOMMENDED LIVE BINDING — typed `KernelOp` variants on the existing
  * seam (`src/kernel/types.ts` + the Rust mirror in `desktop/cradle/kernel`),
@@ -53,8 +59,7 @@
  *                               state moves.
  *
  * The live source is created by `createLiveConfigPlaneSource(transport)`
- * below — currently the honest unbound stub, so a production build renders
- * the configuration plane's absence instead of pretending.
+ * in `liveSource.ts` and bound for production by `sourceHost.ts`.
  */
 
 import type {

@@ -60,6 +60,9 @@ jobs:
       - name: Prove Explore travel, field search and primary projection readings (SF1)
         working-directory: desktop/cradle
         run: node --test tests/explore-field.test.mjs
+      - name: Prove the live configuration source against the typed kernel seam (#299 C6)
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs
       - name: Install browser engines for search component contracts
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit
