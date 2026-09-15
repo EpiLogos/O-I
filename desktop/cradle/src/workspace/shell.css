@@ -135,7 +135,6 @@
  * `role="alert"` — it was just unstyled plain text that read like any other
  * label, easy to miss right where the person clicked. A left-accent card
  * makes it read as a refusal, not filler copy. */
-.desktop-shell [role="alert"] { padding: 8px 10px; margin: 6px 0; border-left: 2px solid var(--oi-accent); background: var(--oi-wash); border-radius: 4px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
 .desktop-centre .agency-field { display: none; }
 
 /* ---------------------------------------------------------------------------
@@ -144,19 +143,12 @@
  * stays as the honest fallback until that layer lands.
  */
 
-.region-tools { display: flex; align-items: center; gap: 4px; height: var(--oi-shell-bar); padding: 0 10px 0 16px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); flex: none; }
-.region-tools > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); }
-.region-tools button { display: flex; align-items: center; justify-content: center; width: var(--oi-shell-control); height: var(--oi-shell-control); padding: 0; border-radius: 5px; color: var(--oi-muted-2); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
-.region-tools button:hover, .region-tools button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash); outline: none; }
-
-.inspector-planes { display: flex; gap: 20px; height: 38px; padding: 0 18px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); flex: none; }
-.inspector-planes button { flex: none; padding: 0; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); border-radius: 0; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
-.inspector-planes button[aria-pressed="true"] { color: var(--oi-accent-ink); box-shadow: inset 0 -2px var(--oi-accent); }
-.inspector-planes button:hover { color: var(--oi-accent-ink); }
-
-.inspector-body { padding: 25px 20px; overflow: auto; min-height: 0; flex: 1; line-height: 1.6; font-size: var(--oi-shell-type-prose); }
-.inspector-body h2 { font-size: var(--oi-shell-type-title); font-weight: 500; margin: 0 0 18px; }
-.inspector-body p { overflow-wrap: anywhere; }
+/* The tool row, plane nav and sidecar compose the desktop grammar
+ * (.oi-tool-row / .oi-plane-nav / .oi-sidecar); only this plane's own
+ * ground and spacing remain here. */
+.region-tools { background: transparent; padding-left: 16px; }
+.inspector-planes { gap: 20px; padding: 0 18px; }
+.inspector-body { padding: 25px 20px; font-size: var(--oi-shell-type-prose); }
 .inspector-body details { margin-top: var(--oi-space-4); color: var(--oi-muted-2); }
 .inspector-body .source-history { padding: 0; max-height: none; border: 0; }
 
@@ -256,9 +248,8 @@
  * pane/agent chrome (spatial walk: "New workspace" unreachable with the
  * inspector open). Open upward into the canvas, aligned to the menu's right
  * edge — the strip's own z-index (50) carries the popover above panes. */
-.desktop-menu > div { position: absolute; bottom: calc(100% + var(--oi-space-1)); top: auto; left: auto; right: 0; max-width: calc(100vw - 16px); z-index: var(--oi-z-popover); display: grid; min-width: 200px; padding: 7px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 7px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
-.desktop-menu button { width: auto; height: auto; padding: 9px; justify-content: flex-start; text-align: left; border-radius: 5px; font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); }
-.desktop-menu button:hover { background: var(--oi-wash); }
+.desktop-menu > div { position: absolute; bottom: calc(100% + var(--oi-space-1)); top: auto; left: auto; right: 0; max-width: calc(100vw - 16px); }
+.desktop-menu button { width: auto; height: auto; justify-content: flex-start; }
 
 
 /* ---------------------------------------------------------------------------
@@ -286,7 +277,7 @@
 .workspace-recovery { flex: none; padding: 12px 20px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); background: var(--oi-sidebar-ground); font-size: var(--oi-shell-type-prose); }
 .workspace-recovery p { margin: 0 0 8px; }
 .workspace-recovery button { margin-right: 12px; min-height: 28px; }
-.desktop-side .region-tools button, .canvas-arrangement button, .central-heading button { min-width: var(--oi-shell-control); min-height: var(--oi-shell-control); }
+.canvas-arrangement button, .central-heading button { min-width: var(--oi-shell-control); min-height: var(--oi-shell-control); }
 
 .file-history, .file-conflict, .file-recovery { flex: none; max-height: 40%; overflow: auto; padding: 12px 20px; font-size: var(--oi-shell-type-prose); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .file-history > div { display: flex; align-items: center; gap: 8px; margin: 5px 0; }
