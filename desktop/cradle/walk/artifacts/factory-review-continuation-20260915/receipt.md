@@ -1,6 +1,6 @@
 # Factory review and NOW continuation — 2026-09-15
 
-Continues O-I #289 through draft PR #292 from `c05ffeb6c39a901fc3599a39c34a228ae5992979`. Current main `267a688b81d1cc5e71071bad382fa6ee49602e4f` was merged as `d4a3d28c6e2a1350c3f9cb6ce9aa4a1d13789457`. Work stayed in the existing Omarchy checkout; the Mac checkout and owner installations were not changed. Three bounded Luna/Terra workers supplied native-readiness, result-consumer and NOW work/review; the primary integrated, tested and operated the desktop.
+Continues O-I #289 through draft PR #292 from `c05ffeb6c39a901fc3599a39c34a228ae5992979`. Main `267a688b81d1cc5e71071bad382fa6ee49602e4f` was first merged as `d4a3d28c6e2a1350c3f9cb6ce9aa4a1d13789457`. The U increment is `97c8bb9`; newly landed main `5b328af754bfc4ea3762bd0cc44f10771c335909` (#310, EX1) is incorporated by `946d51de05837eaffe2f6ba6426723871f27b59a`. Work stayed in the existing Omarchy checkout; the Mac checkout and owner installations were not changed. Three bounded Luna/Terra workers supplied native-readiness, result-consumer and NOW work/review; the primary integrated, tested and operated the desktop.
 
 Authority: `docs/experience/FACTORY-AGENCY.md`, #289 owner correction `35d2aa0`, #220 lane U allocation, SESSION-GROUNDING §11–14, and the accepted September 14 correction brief, arrangement wayfinder and Ta-Onta amendment. This is an implementation receipt, not another design.
 
@@ -27,7 +27,7 @@ NOW relations now request native `central.now.read` with `with_placement:true` t
 | `cargo test --manifest-path desktop/cradle/src-tauri/Cargo.toml --bin oi-cradle -j2 -- windows::tests` | 3 passed |
 | `cargo build --manifest-path desktop/cradle/src-tauri/Cargo.toml -j2` | passed |
 
-Standalone Factory walks used the real `header-continuity.state.json`, Run `run:01ARZ3NDEKTSV4RRFFQ69G5FCD`, Central Project `project:o-i`, Chromium `/usr/bin/chromium` and bridge port 4179. The frozen Factory executable and installed hashes are in `native-executable-basis.json`; its override was preserved. Logs, JSON readbacks and `source-sha256.json` accompany this receipt.
+Standalone Factory walks used the real `header-continuity.state.json`, Run `run:01ARZ3NDEKTSV4RRFFQ69G5FCD`, Central Project `project:o-i`, Chromium `/usr/bin/chromium` and bridge port 4179. The frozen Factory executable and installed hashes are in `native-executable-basis.json`; its override was preserved. Logs, JSON readbacks and `source-sha256.json` accompany this receipt. Published log copies trim trailing whitespace; the original logs remain in task scratch.
 
 ## Actual desktop observation
 
@@ -37,6 +37,14 @@ The visible dots came from compositor transparency: the scoped opacity rule matc
 
 A Chromium temporary-storage quota failure was resolved by moving this task's scratch/backups to disk. The disk scratch setting was initially also used for a desktop restart; AIKit derives its resident socket from the temporary directory and refused a second resident lock. Restoring the desktop's original environment reconnected the existing process. Test scratch and desktop runtime are now separate. No resident/provider was killed or replaced. All 664 original walk artifact files were restored byte-for-byte after copying new evidence here.
 
+## Verification after current-main integration
+
+After EX1 landed during the campaign, the primary merged it into this branch, retained both the U Stage lifecycle checks and the new scene/selection projection, and obtained an independent Terra review. Factory still presents through the shared Expression Stage. The production code does not register Epi/Nara focused instruments; controlled-host tests cannot establish their parity gate.
+
+On `946d51d`, production web, native Linux and CLI builds passed. Kernel all-target checks passed 32 library plus 8 Expression tests; other owner-gated tests remain ignored. The separate installed-Central Expression run passed all 9 tests; the native engine round trip passed 10 assertions; kernel clippy and all 3 window identity tests passed. Post-merge browser regressions passed 18 conversation, 18 Factory and 15 review-recovery assertions. Exact commands and logs are under [main-integration](./main-integration/).
+
+The rebuilt native app reopened the same workspace and resident Codex session. Factory entry/Conversation/ordinary return preserved one composer and the exact persisted terminal. [Native observation](./native-main-observation.json) records the running binary hash and bounded readback; [the screenshot](./main-native-returned.png) shows the ordinary return. The mode-0600 Expression socket and the freshly built, uninstalled CLI both returned `oi.expression-capabilities/v1` from the running application. See [socket readback](./main-native-expression-capabilities.json) and [public CLI readback](./main-cli-expression-capabilities.json). This confirms the generic application API, not Factory execution or instrument registration.
+
 ## Remaining owner joins and standing
 
 - **Agent Start/formation:** Central lists Profiles/Sets truthfully empty, resolves sets and supports `agent-profile.propose`; the current catalogue does not advertise `agent-profile.express`. AIKit compose and `factory start-work` consume existing native requests, but no published, installed shared resolver from selected Agent/Profile/AgentSet/temporary formation to admitted Direct/Factory SessionSpace is established. AIKit #311/#312 remain lane A work.
@@ -44,7 +52,7 @@ A Chromium temporary-storage quota failure was resolved by moving this task's sc
 - **Material:** the frozen Factory Build/task reads work. No successful public body/location/native-Surface resolver and immutable artifact basis has been established for the opaque artifact refs. Populated Candidate/Evidence/Handoff retention and native repair/evidence/Recognition acceptance remain unproved.
 - **Git:** `aikit.development-field-reading/v1` still reports the primary checkout at `4f0018d`, despite requesting this worktree. Its mismatched patch remains withheld. The separate ordinary Git review walk uses the actual disclosed primary basis. See `requested-worktree-owner-read.json`.
 - **Temporal:** NOW reads work. `central.day.read` has no current DayRef/pointer in the inspected scope; no day was created or rolled over. Routine invocation reads exist; catalogue/occurrence/enable/pause contracts remain missing.
-- **Instruments:** K9 is controlled-host evidence; no production registration caller was found. #310 carries Expression application API work and is not duplicated. The Epi/Nara/Factory parity sequence still awaits runtime registration.
+- **Instruments:** K9 is controlled-host evidence; no production registration caller was found. #310 is now merged; its generic `oi.expression/v1` application API works in the running desktop. It does not register Epi/Nara instruments. The Epi/Nara/Factory parity sequence still awaits runtime registration.
 - **Harnesses:** Codex has current live SessionSpace/provider evidence. Pi's earlier attempt failed for missing credentials; its retained ref is not current admission. Claude, Hermes, Hermes-ACP and Gemini are detection only. No all-harness or Factory admission claim follows from executable detection.
 
 D/C evidence covers implemented consumers and executed checks. P/M evidence is bounded to the existing Omarchy process/session/terminal and presentation return. It does not establish commissioned Factory execution, cross-host continuity or the full §11–14 gate. H remains the owner's act. PR #292 remains draft.

@@ -1,0 +1,20 @@
+{
+  "head": "946d51d",
+  "integrated_main": "5b328af754bfc4ea3762bd0cc44f10771c335909",
+  "sha256": {
+    "cli/src/desktop_command.rs": "741bba9eb622a950c3ee127b2a59eacdbd7f89f468c23e361860ea0b29195ef9",
+    "desktop/cradle/kernel/src/events.rs": "d2aa144234b11068c9bc273ee178293392d43582569e6872a071fbf50209b196",
+    "desktop/cradle/kernel/src/expression.rs": "e671a8dd5a9c601af9d0514fa31e22304127d57c7e643c91d8d3019d1af40686",
+    "desktop/cradle/kernel/src/expression_transport.rs": "0022192c06eed9496c0de96fbb6768dd9d0f8fac82df79e6a13273be3a8435eb",
+    "desktop/cradle/kernel/src/lib.rs": "7b2729f785ba19cfec5f2039982ff1dd76b0bd47a5edaddb493c7a8235ab60ac",
+    "desktop/cradle/src-tauri/src/main.rs": "cafa28f4d9b0cd56c531507735a12c0025f5fcf6cb297be37e92bee24c0d6916",
+    "desktop/cradle/src/expression/ExpressionView.tsx": "fab1129504c98ec00b3b765092875d2b322dbab174eb4aaeef4cd4e8c632b053",
+    "desktop/cradle/src/expression/engineProjection.ts": "8349207f538293f0673247747fad0e4fc8fb8069d2d829c5b2d598c553ba9506",
+    "desktop/cradle/src/expression/expression.css": "af6690598b2bc05d7d547d8b45144a3f3afe268b4df1532fa23a5738d9a412a9",
+    "desktop/cradle/src/expression/types.ts": "5101cd8ffd01f400e619905269497d503f155757a88e6472d7b8603f9b9d8ba4",
+    "desktop/cradle/src/kernel/types.ts": "48918711630eb85feb5b12c281fea351ca2c627a5a1f56a84dcd1ca70d8d6ddb",
+    "desktop/cradle/src/stage/ExpressionStage.tsx": "2b642fdbc15216f5194aff8481518524ede51f393b8f9bec7d02e99a98226649",
+    "desktop/cradle/src/stage/engineSurface.ts": "9ec47c03705551cd31758466617f69789c98a0dda591a30c90bcbc6f93737fde",
+    "desktop/cradle/src/workspace/settings/VisualsView.tsx": "da82b2067d7ed073a01f61180afa0233d16fb9fe8f88015a34c2e26ab1f0e2f8"
+  }
+}

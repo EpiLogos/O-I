@@ -1,0 +1,74 @@
+{
+  "source_head": "946d51d",
+  "integrated_main": "5b328af754bfc4ea3762bd0cc44f10771c335909",
+  "native_pid": 1356002,
+  "native_binary_sha256": "5e6ba7ef572887df733a02eeed01edd53f1e736876eca6db5965a7b1b6815b84",
+  "resident_owner_pid_preserved": 589249,
+  "expression_socket_mode": "0o600",
+  "agent_session": "agent-session/oi-factory-codex-20260914",
+  "session_space": "session-space/oi-factory-demo-20260914",
+  "working_surface": "working-surface/oi-factory-demo-20260914-shell",
+  "provider_session": "01a09ff3-f1fd-7f92-a156-2d85d11a9462",
+  "factory_conversation_composer_count": 1,
+  "new_prompt_count": 0,
+  "new_terminal_input": false,
+  "native_steps": [
+    "Graceful restart restored ordinary workspace and connected conversation",
+    "Entered Factory through Runs / Build",
+    "Opened the same session centrally through Conversation",
+    "Observed one Conversation composer",
+    "Left Factory and visually verified original terminal marker and accompanying transcript"
+  ],
+  "engine": {
+    "native_window": {
+      "inner_position_physical": {
+        "x": 9,
+        "y": 33
+      },
+      "inner_size_physical": {
+        "height": 858,
+        "width": 1422
+      },
+      "scale_factor": 1.0
+    },
+    "report": {
+      "emitters": 0,
+      "engine": {
+        "activePresentationId": null,
+        "animationScheduled": false,
+        "canvas": {
+          "backingHeight": 858,
+          "backingWidth": 1422,
+          "connected": true,
+          "cssHeight": 858,
+          "cssWidth": 1422,
+          "display": "block",
+          "opacity": "1",
+          "position": "fixed",
+          "visibility": "hidden",
+          "zIndex": "1"
+        },
+        "canvasCount": 1,
+        "lastPresentationEvent": "release",
+        "lastPresentationId": "factory-entry:7e8fc37f-1b18-4c73-a4ef-2b2d4e69b966",
+        "lifecycleRevision": 6,
+        "live": false,
+        "mounted": true
+      },
+      "entries": 0,
+      "forms": [],
+      "frames": 0,
+      "ink": "color(srgb 0.512706 0.530275 0.502196)",
+      "paused": false,
+      "peakEmitters": 0,
+      "pointCount": 0,
+      "reduced": false,
+      "requests": 0,
+      "scheduled": false
+    },
+    "schema": "oi.native-expression-observation/v1",
+    "unix_ms": 1789433410961,
+    "webview": "main"
+  },
+  "standing": "Bounded running Omarchy session/presentation evidence; no Factory execution, instrument parity or H acceptance."
+}

@@ -1,0 +1,92 @@
+{
+  "ok": true,
+  "outcome": {
+    "data": {
+      "attribution_is_authentication": false,
+      "automation": {
+        "clock_owner": "accepted Expressions engine",
+        "rate_hz": {
+          "max": 10,
+          "min": 0.001
+        },
+        "type": "lfo",
+        "waveforms": [
+          "sine",
+          "triangle",
+          "square",
+          "saw"
+        ]
+      },
+      "changes": [
+        "scene_create",
+        "scene_reorder",
+        "scene_compose",
+        "entity_add",
+        "entity_remove",
+        "subject_bind",
+        "subject_unbind",
+        "relation_bind",
+        "relation_remove",
+        "focus",
+        "parameter_set",
+        "parameter_automate",
+        "parameter_manual",
+        "representation_bind"
+      ],
+      "contract": "docs/contracts/EXPRESSION-APPLICATION-V1.md",
+      "document_schema": "oi.expression/v1",
+      "dynamic_checkpoint": false,
+      "export_audience": "local_private",
+      "operations": [
+        "capabilities",
+        "list",
+        "inspect",
+        "create",
+        "open",
+        "open_file",
+        "fork",
+        "edit",
+        "export",
+        "save",
+        "invoke"
+      ],
+      "parameters": {
+        "glyph": {
+          "max_length": 128,
+          "type": "string"
+        },
+        "scale": {
+          "max": 4,
+          "min": 0.05
+        },
+        "share": {
+          "max": 1,
+          "min": 0
+        },
+        "x": {
+          "max": 1600,
+          "min": -1600
+        },
+        "y": {
+          "max": 1600,
+          "min": -1600
+        },
+        "z": {
+          "max": 1600,
+          "min": -1600
+        }
+      },
+      "save_owner": "central.files.write",
+      "schema": "oi.expression-capabilities/v1",
+      "source_mutation": false,
+      "unsupported": [
+        "capture",
+        "page_embed",
+        "projection_publish",
+        "domain_state_write",
+        "knowledge_query"
+      ]
+    },
+    "result": "expression"
+  }
+}

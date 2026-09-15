@@ -1312,3 +1312,8 @@ engine round-trip 10 assertions; web/native/CLI builds and clippy passed.
 Evidence and exact commands: `desktop/cradle/walk/artifacts/expression-ex1/RECEIPT.md`.
 EX0 runtime/Studio intake, EX2–EX5 adapters and human creative judgement remain
 separately owned. No whole Expression Field completion is claimed.
+
+
+### Factory continuation — current-main integration verified
+
+U implementation `97c8bb9` now incorporates EX1/main `5b328af` through `946d51d`. Independent review kept Factory on the shared Stage and confirmed no production Epi/Nara registration. Post-merge production/native/CLI builds, kernel 32+8 tests, 9 real-Central Expression tests, 10 engine assertions, clippy and 3 window tests passed; conversation/Factory/recovery walks passed 18/18/15. The actual Omarchy app retained its persisted terminal and single composer after Factory return, and its protected socket plus freshly built CLI returned native Expression capabilities. The receipt has exact hashes/readbacks and logs under `main-integration/`. This generic API does not remove the Start/execution/artifact/Routine/Git-basis/instrument joins or the draft/human gate.
