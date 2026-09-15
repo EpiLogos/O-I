@@ -82,6 +82,7 @@ export class EngineSurface {
   private detachPointer: () => void = () => {};
   private onError: (message: string) => void;
   private retainedLeaseOwner: string | null = null;
+  private retainedLeaseIdentity: symbol | null = null;
   private readonly home: HTMLElement;
   private readonly homeElement: HTMLElement | null;
   private readonly homeStyle: string;
@@ -228,6 +229,8 @@ export class EngineSurface {
       this.retainedLeaseOwner = id;
     }
     const surface = this;
+    const leaseIdentity = Symbol(id);
+    this.retainedLeaseIdentity=leaseIdentity;
     const lease: StageRetainedLease = {
       retainedTargetPort() { return surface.adapter.retainedTargetPort(); },
       checkpointRetainedField(binding) { return surface.adapter.checkpointRetainedField(binding as { checkpoint(renderer: unknown): unknown }); },
@@ -241,8 +244,12 @@ export class EngineSurface {
       pause(value = true) { surface.setPaused(value); return lease; },
       resume() { surface.setPaused(false); return lease; },
       renderOnce() { surface.renderFrame(0); return lease; },
-      updatePresentation(request) { const receipt=surface.adapter.updateRetainedPresentation(request); surface.wake(); return receipt; },
+      updatePresentation(request) {
+        if(surface.retainedLeaseOwner!==id||surface.retainedLeaseIdentity!==leaseIdentity)throw new Error("This retained presentation lease is no longer current.");
+        const receipt=surface.adapter.updateRetainedPresentation(request);surface.wake();return receipt;
+      },
     };
+    Object.defineProperty(lease,"identity",{value:leaseIdentity});
     return lease;
   }
 
@@ -253,6 +260,7 @@ export class EngineSurface {
     if (this.retainedLeaseOwner === id) {
       this.adapter.releaseRetainedField();
       this.retainedLeaseOwner = null;
+      this.retainedLeaseIdentity = null;
     }
     this.live = false;
     this.activate(STAGE_IDLE, this.sceneFrom(IDLE_CONFIG, STAGE_IDLE));
@@ -294,6 +302,7 @@ export class EngineSurface {
     this.detachPointer();
     this.active = null;
     this.retainedLeaseOwner = null;
+    this.retainedLeaseIdentity = null;
     try { this.adapter.dispose(); } catch { /* already gone with its context */ }
     this.canvas.remove();
   }

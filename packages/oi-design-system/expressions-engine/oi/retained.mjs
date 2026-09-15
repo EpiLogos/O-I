@@ -141,7 +141,7 @@ export class RetainedProductionAdapter extends ProductionAdapter {
     if (!state?.external || !this.engine || this.contextLost || state.recoveryRequired) {
       throw new Error("A live retained-field binding must own targets before presentation can update.");
     }
-    if (!request || request.schema !== "oi.retained-presentation/v1") throw new Error("Unsupported retained presentation envelope.");
+    if (!request || request.schema !== "oi.retained-presentation/v1" || Object.keys(request).sort().join(",") !== "entities,eventRef,personalGeneration,profileGeneration,schema,subjectRef") throw new Error("Unsupported retained presentation envelope.");
     const text = (value) => typeof value === "string" && value.length > 0 && !value.includes("\0");
     const integer = (value) => Number.isSafeInteger(value) && value >= 0;
     if (!text(request.eventRef) || !text(request.subjectRef) || !integer(request.profileGeneration) || !integer(request.personalGeneration)) {
@@ -159,12 +159,14 @@ export class RetainedProductionAdapter extends ProductionAdapter {
     if (byId.size !== existing.length || existing.some((entity) => !byId.has(entity.id))) throw new Error("Retained presentation entity order and identity changed.");
     const next = existing.map((entity, index) => {
       const patch = request.entities[index];
-      if (!patch || patch.id !== entity.id || !Number.isFinite(patch.x) || !Number.isFinite(patch.y) || !Number.isFinite(patch.z) || !Number.isFinite(patch.scale) || patch.scale < 0.02 || patch.scale > 4 || !/^#[0-9a-fA-F]{6}$/.test(patch.tint) || !Number.isFinite(patch.tintWeight) || patch.tintWeight < 0 || patch.tintWeight > 1) {
+      if (!patch || Object.keys(patch).sort().join(",") !== "id,scale,tint,tintWeight,x,y,z" || patch.id !== entity.id || !Number.isFinite(patch.x) || Math.abs(patch.x)>10 || !Number.isFinite(patch.y) || Math.abs(patch.y)>10 || !Number.isFinite(patch.z) || Math.abs(patch.z)>10 || !Number.isFinite(patch.scale) || patch.scale < 0.02 || patch.scale > 4 || !/^#[0-9a-fA-F]{6}$/.test(patch.tint) || !Number.isFinite(patch.tintWeight) || patch.tintWeight < 0 || patch.tintWeight > 1) {
         throw new Error("Retained presentation contains an invalid or reordered entity patch.");
       }
-      return { ...entity, x: patch.x, y: patch.y, z: patch.z, scale: patch.scale, tint: patch.tint, tintWeight: patch.tintWeight };
+      // The envelope uses the authoring coordinate convention; native entity
+      // coordinates use the engine's established 400-unit stage scale.
+      return { ...entity, x: patch.x * 400, y: patch.y * 400, z: patch.z * 400, scale: patch.scale, tint: patch.tint, tintWeight: patch.tintWeight };
     });
-    const fingerprint = JSON.stringify(request);
+    const fingerprint = JSON.stringify({schema:request.schema,eventRef:request.eventRef,subjectRef:request.subjectRef,profileGeneration:request.profileGeneration,personalGeneration:request.personalGeneration,entities:request.entities});
     if (previous && request.personalGeneration === previous.personalGeneration) {
       if (fingerprint !== previous.fingerprint) throw new Error("A personal generation cannot be rewritten.");
       return this.inspect();
