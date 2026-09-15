@@ -27,7 +27,7 @@ function Opening() {
   const [welcomeUp, setWelcomeUp] = useState(!detached);
   const startFrame = useCallback(() => startTransition(() => setFrameStarted(true)), []);
   const composed = useCallback(() => setAppReady(true), []);
-  const entered = useCallback(() => { setWelcomeUp(false); startFrame(); }, [startFrame]);
+  const entered = useCallback(() => { document.body.removeAttribute("data-oi-opening"); setWelcomeUp(false); startFrame(); }, [startFrame]);
   useEffect(() => {
     if (welcomeUp || detached) return;
     const target = document.querySelector<HTMLElement>(".pane.focused .cm-content") ?? document.getElementById("root");
