@@ -184,6 +184,25 @@
   --oi-mark-rose: rgba(215, 140, 170, 0.36);
 }
 
+/* Source syntax inhabits the host appearance. Separate semantic roles keep
+ * language distinctions addressable without importing a light-only editor
+ * palette or spending the scarce meta-relation gold on routine source text. */
+:root, .oi-desktop, .oi-surface-light, .oi-surface-dark {
+  --oi-syntax-meta: var(--oi-muted);
+  --oi-syntax-link: var(--oi-focus);
+  --oi-syntax-heading: var(--oi-foreground);
+  --oi-syntax-keyword: var(--oi-focus);
+  --oi-syntax-atom: var(--oi-foreground);
+  --oi-syntax-literal: var(--oi-foreground);
+  --oi-syntax-string: var(--oi-foreground);
+  --oi-syntax-special: var(--oi-focus);
+  --oi-syntax-definition: var(--oi-focus);
+  --oi-syntax-variable: var(--oi-foreground);
+  --oi-syntax-type: var(--oi-focus);
+  --oi-syntax-comment: var(--oi-muted);
+  --oi-syntax-invalid: var(--oi-focus);
+}
+
 :root {
   /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
   --oi-accent-ink: var(--oi-focus);
