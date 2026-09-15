@@ -1,0 +1,185 @@
+{
+  "profile": "STORY-PARTICIPATION-PROFILE.md",
+  "profile_revision": 1,
+  "catalogue": "EXISTING-WORK-STORIES.md",
+  "standing": "user-commissioned-source-grounded-planning",
+  "binding_scope": "family-level candidate dependencies; narrow to exact step requirements before execution",
+  "runtime_support_claimed": false,
+  "executed_story_results": [],
+  "native_matrix_protocol": "ql-capability-matrix/1",
+  "source_policy": "Read the native capability record and its current source revision; do not copy it into a competing catalogue or infer current implementation from this register.",
+  "capability_sources": {
+    "central": {"repository": "EpiLogos/Central", "path": "ProjectCentral/user/capability-matrix.csv"},
+    "actuation": {"repository": "EpiLogos/Actuation", "path": "ProjectCentral/user/capability-matrix.csv"},
+    "aikit": {"repository": "EpiLogos/ai-kit", "path": "ProjectCentral/user/capability-matrix.csv"},
+    "factory": {"repository": "EpiLogos/Factory", "path": "ProjectCentral/user/capability-matrix.csv"},
+    "workcell": {"repository": "EpiLogos/Workcell", "path": "ProjectCentral/user/capability-matrix.csv"},
+    "ql": {"repository": "EpiLogos/QL-MEF", "path": "ProjectCentral/user/capability-matrix.csv", "additional_inventory": "docs/kernel-rebuild/PRE-K8-AGENT-WORLD-LOCK.md and its complete registered matrices"}
+  },
+  "practice_sources": {
+    "oi-suite-operator": {"repository": "EpiLogos/O-I", "path": "skills/suite-operator/SKILL.md", "ref": "oi:skill:suite-operator"},
+    "central-session-strap": {"repository": "EpiLogos/O-I", "path": "skills/central-session-strap/SKILL.md", "note": "Compare shipped source with independently edited local source; do not overwrite local practice."},
+    "aikit-runtime-operation": {"repository": "EpiLogos/ai-kit", "path": "registry/capsules/skill/aikit/runtime-operation/payload/SKILL.md", "ref": "skill/aikit/runtime-operation"},
+    "aikit-verification": {"repository": "EpiLogos/ai-kit", "path": "registry/capsules/skill/aikit/verification/payload/SKILL.md", "ref": "skill/aikit/verification"},
+    "aikit-wiki-inhabitation": {"repository": "EpiLogos/ai-kit", "path": "registry/capsules/skill/aikit/wiki-inhabitation/payload/SKILL.md", "ref": "skill/aikit/wiki-inhabitation", "note": "Verify current description classification rather than assuming METHOD from a body heading."},
+    "factory-bounded-work": {"repository": "EpiLogos/Factory", "path": "skills/factory-bounded-work/SKILL.md", "ref": "skill/factory-native/factory-bounded-work"},
+    "central-capability-matrices": {"repository": "EpiLogos/Central", "path": "skills/capability-matrices/SKILL.md"},
+    "central-local-repertoire": {"source_issue": "https://github.com/EpiLogos/Central/issues/164", "sets": ["central-lifecycle", "central-engineering", "central-skills-system"], "visibility": "resolve and inspect actual authorised local sources", "note": "An issue's reported source and projection are not proof of this session's loaded practice."},
+    "owner-sdk-practices": {"source_issue": "https://github.com/EpiLogos/O-I/issues/65", "section": "D", "resolution": "Discover the current selected native SDK, authoring Skill and conformance operation. No invented common SDK or Skill ID."},
+    "ql-domain-practices": {"repository": "EpiLogos/QL-MEF", "path": "docs/kernel-rebuild/PRE-K8-AGENT-WORLD-LOCK.md", "resolution": "Resolve exact current source-defined practice and full inventory; ordinary no-QL work remains complete independently."}
+  },
+  "families": [
+    {
+      "id": "ux.oi.adoption",
+      "stories": ["ux.oi.install-existing", "ux.oi.install-minimal", "ux.oi.install-fresh", "ux.oi.install-reconcile", "ux.oi.install-harness", "ux.oi.install-depth", "ux.oi.install-reference-host", "ux.oi.install-remove"],
+      "capability_candidates": ["cap.central.root", "cap.central.action-discovery", "cap.central.work-entry", "cap.aikit.discovery", "cap.aikit.adoption", "cap.aikit.projection", "cap.actuation.harness-detection", "cap.workcell.local-world"],
+      "practice_sources": ["oi-suite-operator", "central-session-strap", "central-local-repertoire", "owner-sdk-practices"],
+      "context_required": ["actual chosen installation/composition", "existing native files and ownership", "permitted change and source basis", "first useful task"],
+      "conditions": ["required versus optional products", "actual installation/target support", "preservation and rollback", "current authority"],
+      "unresolved_bindings": ["exact current CF-to-install recipes beyond explicitly sourced combinations", "native O:I capability references for each selected install operation"],
+      "acceptance_refs": ["O-I#65/A", "O-I#173", "O-I#192", "O-I#29", "CAW/P05", "CAW/P17"]
+    },
+    {
+      "id": "ux.oi.quiet-work",
+      "stories": ["ux.oi.quiet-coding", "ux.oi.quiet-writing", "ux.oi.quiet-reentry", "ux.oi.quiet-explain"],
+      "capability_candidates": ["cap.aikit.context-resolution", "cap.aikit.continuity", "cap.aikit.projection", "cap.aikit.explain", "cap.central.control-reading", "cap.actuation.model-usage"],
+      "practice_sources": ["central-session-strap", "aikit-runtime-operation", "aikit-verification", "central-local-repertoire"],
+      "context_required": ["normal existing-tool entry", "governing project task and current instructions", "permitted source selection"],
+      "conditions": ["no O:I UI required", "appropriate actually loaded practice", "scoped direct operation", "no compulsory Factory or Day workflow"],
+      "acceptance_refs": ["O-I#65/B", "O-I#65/C", "O-I#65/F", "CAW/P01", "CAW/P07", "CAW/P08", "CAW/P25"]
+    },
+    {
+      "id": "ux.oi.instructions",
+      "stories": ["ux.oi.instructions-find", "ux.oi.instructions-change", "ux.oi.instructions-inflight", "ux.oi.instructions-private", "ux.oi.instructions-proposal", "ux.oi.instructions-undo"],
+      "capability_candidates": ["cap.central.control-reading", "cap.central.action-discovery", "cap.aikit.source-horizon", "cap.aikit.context-resolution", "cap.aikit.profiles", "cap.aikit.explain", "cap.aikit.projection"],
+      "practice_sources": ["central-local-repertoire", "central-session-strap", "aikit-runtime-operation", "aikit-verification"],
+      "context_required": ["exact original instruction and source standing", "root/child scope", "current versus historical and loaded basis", "private exclusions"],
+      "conditions": ["authored versus proposed source", "effect-time revision and permission", "actual reload support", "conflict-safe restoration"],
+      "acceptance_refs": ["O-I#65/A", "O-I#65/B", "CAW/P04", "CAW/P05", "CAW/P08", "CAW/P20", "CAW/P28", "Central#164"]
+    },
+    {
+      "id": "ux.oi.agents",
+      "stories": ["ux.oi.agent-create", "ux.oi.agent-choose-sources", "ux.oi.agent-choose-practice", "ux.oi.agent-first-use", "ux.oi.agent-change", "ux.oi.agent-carrier-change", "ux.oi.agent-profileless", "ux.oi.agent-stop-retire"],
+      "capability_candidates": ["cap.aikit.composition", "cap.aikit.profiles", "cap.aikit.models", "cap.aikit.context-resolution", "cap.aikit.sessions", "cap.actuation.world-binding", "cap.actuation.determination", "cap.actuation.continuity"],
+      "practice_sources": ["aikit-runtime-operation", "aikit-verification", "central-local-repertoire"],
+      "context_required": ["human intent and proposed choices separately", "existing Agent/World participation", "actual sources and practice", "permitted body/environment"],
+      "conditions": ["creation versus existing identity", "Profile optional where legitimate", "real model/credential/authority conditions", "source and cancellation semantics"],
+      "acceptance_refs": ["O-I#65/B", "O-I#155", "Central#137", "CAW/P07", "CAW/P08", "CAW/P25", "AIKit#211/Journey-B"]
+    },
+    {
+      "id": "ux.oi.conversation",
+      "stories": ["ux.oi.conversation-address", "ux.oi.conversation-group", "ux.oi.conversation-private", "ux.oi.conversation-pending", "ux.oi.conversation-resume"],
+      "capability_candidates": ["cap.aikit.sessions", "cap.aikit.continuity", "cap.actuation.stream", "cap.actuation.activity", "cap.actuation.determination", "cap.workcell.services", "cap.workcell.connectivity"],
+      "practice_sources": ["aikit-runtime-operation", "central-local-repertoire", "aikit-verification"],
+      "context_required": ["actual recipient and context", "private/shared source separation", "pending tool/permission and message cursor", "finite group policy"],
+      "conditions": ["addressing versus authority", "real resident dispatch and reply", "no synthetic speakers", "actual continuation/rehydration"],
+      "acceptance_refs": ["O-I#154", "O-I#155", "CAW/P09", "CAW/P10", "CAW/P11", "CAW/P12", "CAW/P14"]
+    },
+    {
+      "id": "ux.oi.knowledge",
+      "stories": ["ux.oi.knowledge-find", "ux.oi.knowledge-traverse", "ux.oi.knowledge-graph", "ux.oi.knowledge-edit-outside", "ux.oi.knowledge-reconsider", "ux.oi.knowledge-whole-part", "ux.oi.knowledge-formats", "ux.oi.knowledge-rebuild-archive"],
+      "capability_candidates": ["cap.aikit.knowledge-navigation", "cap.aikit.authored-relations", "cap.aikit.living-knowledge", "cap.aikit.reflection", "cap.aikit.wiki-write", "cap.aikit.source-horizon", "cap.aikit.explain", "cap.central.control-reading"],
+      "practice_sources": ["aikit-wiki-inhabitation", "central-local-repertoire", "aikit-verification", "central-capability-matrices"],
+      "context_required": ["actual source/reading revisions", "relation types and basis paths", "permitted corpus", "source-format locators and native authority"],
+      "conditions": ["current versus basis-changed not true versus false", "explicit cognition authorisation", "bounded retrieval", "no duplication for parser convenience"],
+      "acceptance_refs": ["O-I#65/E", "O-I#134", "AIKit#118", "AIKit#211/Journey-F", "CAW/P18", "CAW/P19", "CAW/P20"]
+    },
+    {
+      "id": "ux.oi.praxis",
+      "stories": ["ux.oi.praxis-discover", "ux.oi.praxis-compose", "ux.oi.praxis-release", "ux.oi.praxis-learn", "ux.oi.praxis-retire"],
+      "capability_candidates": ["cap.aikit.methods", "cap.aikit.procedures", "cap.aikit.profiles", "cap.aikit.generation", "cap.aikit.projection", "cap.aikit.familiarity"],
+      "practice_sources": ["central-local-repertoire", "aikit-runtime-operation", "aikit-verification"],
+      "context_required": ["ordinary task trigger and near-miss", "actual description/source", "selected sufficient composition", "trust/target/version and effective scope"],
+      "conditions": ["METHOD description prefix", "membership not grant", "projection/link/load/use separate", "accepted one-time release procedure", "reusable pattern not replay"],
+      "acceptance_refs": ["O-I#65/B", "O-I#65/C", "Central#164", "AIKit#299", "CAW/P01", "CAW/P08", "CAW/P25", "CAW/P28"]
+    },
+    {
+      "id": "ux.oi.formal",
+      "stories": ["ux.oi.formal-inspect", "ux.oi.formal-reason", "ux.oi.formal-performance", "ux.oi.formal-praxis", "ux.oi.formal-full-field"],
+      "capability_candidates": ["cap.ql.context-frames", "cap.ql.kernel-operators", "cap.ql.pairing", "cap.ql.lens-registry", "cap.ql.vak-source", "cap.ql.vak-context", "cap.ql.service-readings", "cap.ql.wiki-refraction", "cap.ql.shape", "cap.aikit.context-resolution", "cap.factory.run-thought"],
+      "practice_sources": ["ql-domain-practices", "aikit-wiki-inhabitation", "aikit-verification", "factory-bounded-work"],
+      "context_required": ["full selected native formal inventory", "exact operation/shape/derivation and target revision", "native language and performance-event definition", "original learning and human response basis"],
+      "conditions": ["no loss of mathematical or musical specificity", "optional selection not partial coverage", "defined runtime versus research efficacy", "all required source-defined branches"],
+      "unresolved_bindings": ["expand current owner matrices beyond coarse product-family IDs; no full-field claim from these starter links"],
+      "acceptance_refs": ["O-I#65/I", "O-I#216", "QL-MEF#94", "QL-MEF#132", "QL-MEF#133", "QL-MEF#134", "AIKit#267", "Factory#217", "CAW/P20"]
+    },
+    {
+      "id": "ux.oi.machines",
+      "stories": ["ux.oi.machine-local", "ux.oi.machine-add", "ux.oi.machine-persistent", "ux.oi.machine-isolate", "ux.oi.machine-model", "ux.oi.machine-move", "ux.oi.machine-release"],
+      "capability_candidates": ["cap.workcell.local-world", "cap.workcell.planning", "cap.workcell.workspace", "cap.workcell.services", "cap.workcell.connectivity", "cap.workcell.credentials", "cap.workcell.exposure", "cap.workcell.collection", "cap.workcell.release", "cap.workcell.reconciliation", "cap.workcell.remote-control", "cap.workcell.model-hosting", "cap.central.machine-declaration", "cap.central.machine-reconciliation", "cap.central.machine-recovery"],
+      "practice_sources": ["oi-suite-operator", "aikit-runtime-operation", "owner-sdk-practices", "aikit-verification"],
+      "context_required": ["actual machine role and observed offers", "permitted files and credential references", "required network/storage/security", "retention and current processes"],
+      "conditions": ["required/preferred/optional distinguished", "control reachability not workload reachability", "observed enforced protection", "no unauthorized public exposure"],
+      "acceptance_refs": ["O-I#65/H", "Workcell#20", "Workcell#22", "Workcell#27", "Workcell#72", "CAW/P14", "CAW/P17", "CAW/P26"]
+    },
+    {
+      "id": "ux.oi.documents",
+      "stories": ["ux.oi.document-day", "ux.oi.document-flow-dialogue", "ux.oi.document-help", "ux.oi.document-include", "ux.oi.document-portable"],
+      "capability_candidates": ["cap.central.action-discovery", "cap.aikit.context-resolution", "cap.aikit.sessions"],
+      "practice_sources": ["central-local-repertoire", "aikit-runtime-operation", "aikit-verification"],
+      "context_required": ["exact supplied source fixtures/keys", "document entry/anchor and revision", "attribution and current human edits", "explicit scoped selection"],
+      "conditions": ["blank fields valid", "native versus portable persistence", "passive interaction no invocation", "reviewed inclusion not truth/recognition"],
+      "unresolved_bindings": ["resolve exact current Central document/receiving capability records under #151/#152; do not invent IDs"],
+      "acceptance_refs": ["O-I#138", "Central#151", "Central#152", "CAW/P02", "CAW/P03", "CAW/P04", "CAW/P16"]
+    },
+    {
+      "id": "ux.oi.development",
+      "stories": ["ux.oi.develop-commission", "ux.oi.develop-candidate", "ux.oi.develop-parallel", "ux.oi.develop-environment", "ux.oi.develop-compare", "ux.oi.develop-recover"],
+      "capability_candidates": ["cap.factory.native-cli", "cap.factory.journey-commission", "cap.factory.bounded-intent", "cap.factory.run-map", "cap.factory.git-development", "cap.factory.build-evidence", "cap.factory.build-reading", "cap.factory.praxis-condition", "cap.factory.owner-return", "cap.aikit.context-resolution", "cap.aikit.sessions", "cap.workcell.workspace"],
+      "practice_sources": ["factory-bounded-work", "aikit-runtime-operation", "aikit-verification", "central-local-repertoire"],
+      "context_required": ["actual human desired difference and evidence condition", "exact Candidate/worktree/source/cwd/test/NOW basis", "participants and bounded authority", "independent evidence lineage"],
+      "conditions": ["true independent forks and complete barriers", "one writer per shared subject", "required environment retained", "reconcile uncertain effects before retry"],
+      "acceptance_refs": ["Factory#195", "Factory#221", "Factory#222", "Factory#143", "Factory#201", "CAW/P13", "CAW/P14", "CAW/P18", "CAW/P23", "CAW/P26", "candidate-worktree-now", "working-environment-continuity", "assisted-commission", "candidate-comparison"]
+    },
+    {
+      "id": "ux.oi.time",
+      "stories": ["ux.oi.time-recurring", "ux.oi.time-crossday", "ux.oi.time-results", "ux.oi.time-archive"],
+      "capability_candidates": ["cap.aikit.routines", "cap.aikit.continuity", "cap.factory.journey-continuity", "cap.factory.owner-return", "cap.workcell.services"],
+      "practice_sources": ["central-local-repertoire", "aikit-runtime-operation", "aikit-verification"],
+      "context_required": ["actual timezone and adopted time policy", "versioned procedure/proof", "current grant", "pending obligations and receiving route"],
+      "conditions": ["trigger not authority", "midnight not completion/model invocation", "duplicate/missed/restarted occurrence", "retention outranks cleanup"],
+      "unresolved_bindings": ["resolve current Central temporal/receiving capability IDs and native time policy before execution"],
+      "acceptance_refs": ["Central#74", "Central#150", "Central#152", "AIKit#276", "Factory#200", "CAW/P06", "CAW/P15", "CAW/P16", "CAW/P19"]
+    },
+    {
+      "id": "ux.oi.maintenance",
+      "stories": ["ux.oi.update-understand", "ux.oi.update-converge", "ux.oi.update-activate", "ux.oi.update-repair", "ux.oi.update-rollback"],
+      "capability_candidates": ["cap.central.machine-reconciliation", "cap.central.machine-recovery", "cap.aikit.projection", "cap.aikit.continuity", "cap.workcell.reconciliation", "cap.factory.git-development"],
+      "practice_sources": ["oi-suite-operator", "central-local-repertoire", "aikit-verification"],
+      "context_required": ["selected exact suite cut", "dirty and active work", "source/build/install/running/practice evidence", "authorised update/rollback boundary"],
+      "conditions": ["final source includes required operations and tests", "actual resident activation", "source and data rollback differ", "one integrator not human dependency relay"],
+      "unresolved_bindings": ["resolve current O:I suite operation capability records from the actual selected source"],
+      "acceptance_refs": ["O-I#65/A", "O-I#97", "O-I#213", "CAW/P05", "CAW/P14", "CAW/P17", "CAW/P28", "developer-upgrade-repair-reentry"]
+    },
+    {
+      "id": "ux.oi.extensions",
+      "stories": ["ux.oi.extension-create", "ux.oi.extension-use", "ux.oi.extension-maintain"],
+      "capability_candidates": ["cap.aikit.discovery", "cap.aikit.adoption", "cap.aikit.procedures", "cap.workcell.provider-extension"],
+      "practice_sources": ["owner-sdk-practices", "oi-suite-operator", "aikit-verification"],
+      "context_required": ["actual unsupported native technology/version", "current public SDK and conformance", "selected registration/activation scope"],
+      "conditions": ["public interfaces only", "registration followed by useful operation", "private state preserved", "upgrade and removal lifecycle"],
+      "unresolved_bindings": ["exact target-owner extension capability and package operation resolved per specimen"],
+      "acceptance_refs": ["O-I#65/D", "O-I#173", "AIKit#114", "Workcell#23"]
+    },
+    {
+      "id": "ux.oi.collaboration",
+      "stories": ["ux.oi.share-select", "ux.oi.share-discuss", "ux.oi.share-withdraw"],
+      "capability_candidates": ["cap.aikit.source-horizon", "cap.aikit.context-resolution", "cap.actuation.determination", "cap.actuation.activity"],
+      "practice_sources": ["aikit-runtime-operation", "aikit-verification", "oi-suite-operator"],
+      "context_required": ["independent human Worlds", "selected material/audience/revision", "distinct private instructions and conversations"],
+      "conditions": ["actual sharing authority", "source ownership preserved", "current revocation", "human EX cannot be simulated"],
+      "unresolved_bindings": ["current SharedField/Explore/A2A capability IDs and external provider contract"],
+      "acceptance_refs": ["O-I#65/G", "O-I#155", "CAW/P10", "CAW/P12"]
+    },
+    {
+      "id": "ux.oi.interface",
+      "stories": ["ux.oi.interface-navigate", "ux.oi.interface-layout", "ux.oi.interface-parity"],
+      "capability_candidates": ["cap.aikit.knowledge-navigation", "cap.aikit.explain", "cap.aikit.sessions", "cap.factory.build-reading", "cap.central.work-entry"],
+      "practice_sources": ["aikit-runtime-operation", "aikit-verification", "oi-suite-operator"],
+      "context_required": ["actual rendered controls", "stable current subject and dirty buffers", "native permitted action", "viewport/input ownership"],
+      "conditions": ["one screen input owner", "keyboard/pointer and narrow behavior", "no internal bypass for UI claim", "same underlying operation not identical pixels"],
+      "unresolved_bindings": ["exact current host layout and surface operation IDs from existing desktop/TUI owners"],
+      "acceptance_refs": ["O-I#65/F", "O-I#190", "AIKit#211", "CAW/P21", "CAW/P22", "CAW/P28"]
+    }
+  ]
+}
