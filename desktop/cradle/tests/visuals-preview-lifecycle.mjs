@@ -4,7 +4,7 @@ import {chromium} from 'playwright';
 import {fileURLToPath} from 'node:url';
 
 const root = fileURLToPath(new URL('../', import.meta.url));
-const server = await createServer({root, appType:'custom', server:{host:'127.0.0.1',port:0}, logLevel:'error'});
+const server = await createServer({root, appType:'custom', server:{host:'127.0.0.1',port:4390,strictPort:true}, logLevel:'error'});
 server.middlewares.use('/visuals-preview', async (_, res) => {
   res.setHeader('content-type','text/html');
   res.end(await server.transformIndexHtml('/visuals-preview','<body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/visuals-preview-page.tsx"></script>'));
