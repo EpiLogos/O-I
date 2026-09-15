@@ -60,7 +60,7 @@ const assertPreview = async () => {
   // allocates its context; wait for actual materialisation, not a time budget.
   await page.waitForFunction(() => [...gpuContexts].some(([canvas,context]) => canvas.isConnected && !context.isContextLost()),null,{polling:100});
   const state = await observe();
-  assert.equal(state.canvases,2,'Visuals reuses the one production canvas beside the shared 2D overlay');
+  assert.equal(state.canvases,1,'Visuals reuses the one production canvas');
   assert.equal(state.gpuCanvases,1,'Visuals allocates no component-level WebGL renderer');
   assert.equal(state.unlostContexts,1,'only the current production context remains available across remounts');
   assert.equal(state.engines,1);
@@ -166,7 +166,7 @@ try {
   }
   await page.evaluate(() => previewTest.unmount());
   state = await observe();
-  assert.equal(state.canvases,0,'StrictMode root unmount releases both window canvases');
+  assert.equal(state.canvases,0,'StrictMode root unmount releases the window canvas');
   assert.equal(state.unlostContexts,0,'root unmount releases the actual WebGL context');
   assert.equal(state.pending,0);
   await page.evaluate(() => previewTest.mount());

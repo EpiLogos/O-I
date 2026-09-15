@@ -122,18 +122,31 @@ surface keeps its own information architecture and meaning classes and
 composes these for its chrome; no class here claims a capability the owner
 does not offer. Tokens only.
 
-### Desktop clouds and loading
+### Native Expression and pending status
 
-Import `tokens.css` and `point-cloud.css`; opt into the desktop ground with
-`.oi-desktop` (light) and `data-theme="dark"` on the same element for the dark
-appearance — `system` resolves to one of the two at the host. `./loading` exports `createLoadingIndicator` and
-`createPointClusters`. Both are DOM primitives; native operation state, focus,
-permissions and lifecycle remain host responsibilities. See
-[DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md) for the visual contract and
-[examples/loading.html](examples/loading.html) for the interactive reference.
+Import `tokens.css`, `desktop.css` and `point-cloud.css`; the latter now owns
+only placement of the shared `.oi-expression-surface` and quiet status text.
+The O:I host owns one native canvas/context/clock per window and borrows it
+for focused surfaces. `./expression` exports semantic names and gesture
+admission only; the former Canvas2D factory and procedural point generator
+are retired. Components use the host Stage's express/update/release handles.
+The actual native field projects cue glyphs and target geometry when no
+foreground presentation or retained-field reservation has priority. Static
+cues draw once. Native formation capacity bounds admission without truncation.
 
-Run `npm run verify:browser` after installing the cradle's Playwright dependency
-and Chromium. It starts an isolated ephemeral HTTP server and tests real package
-DOM/CSS, motion preferences, overlay focus and narrow rendering; no app build or
-backend simulation is involved. `npm run verify` additionally scans cradle token
-usage. Existing study raw colours remain migration debt, not an allowed exception.
+`./loading` retains `createLoadingIndicator({label, detail, scope, active})`
+as a portable accessible DOM status body with `update` and `remove`. Scope and
+active are metadata; the host owns placement and observed operation state.
+There are no masked logos, CSS clusters, animation clocks or alternate loading
+renderers. `createPointClusters`, `.oi-point-cloud`, the loader-mask rules and
+their unused tokens are removed. Branded SVG assets remain identity assets.
+
+Run `npm run verify` for token use and `npm run verify:browser` for actual
+portable status updates, safe text, focus, light/dark, forced colours and narrow
+layout. `node checks/expression-browser.mjs` runs the actual Cradle provider/native
+cue lifecycle test through an isolated Vite server; it creates no reference
+renderer. The Nara retained-field check additionally requires an actual
+`QL_NARA_SNAPSHOT` produced by the native QL example. The examples document
+portable grammar; production Expression is inspected in the real desktop.
+
+See [DESKTOP-LANGUAGE.md](DESKTOP-LANGUAGE.md) for the dated owner revisions.

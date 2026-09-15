@@ -9,6 +9,7 @@ if(!process.env.QL_NARA_SNAPSHOT)throw new Error('QL_NARA_SNAPSHOT must name the
 const ownerSnapshot=JSON.parse(readFileSync(process.env.QL_NARA_SNAPSHOT,'utf8'));
 const server=await createServer({root,appType:'custom',resolve:{alias:{'@epilogos/oi-design-system':packageRoot}},server:{host:'127.0.0.1',port:0},logLevel:'error'});
 server.middlewares.use('/nara-retained',(_req,res)=>{res.setHeader('content-type','text/html');res.end('<div id="host" style="width:900px;height:700px"></div><script type="module" src="/tests/nara-retained-page.ts"></script>');});
+server.middlewares.use('/nara-stage',async(_req,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/nara-stage','<body class="oi-desktop"><div id="root"></div><script type="module" src="/tests/expression-provider-page.tsx"></script>'));});
 await server.listen();
 const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']}),page=await browser.newPage({viewport:{width:900,height:700}});
 try{
@@ -51,4 +52,51 @@ try{
  assert.deepEqual(result.afterRefusal,result.second);
  assert.equal(new Set(result.first.centres.slice(0,7).map(JSON.stringify)).size,7);
  console.log('Nara retained field: actual owner snapshot plus controlled next-generation presentation; 8 stable partitions, 7 distinct GPU loci, no target replacement/reseed, atomic stale refusal.');
+ await page.addInitScript(()=>localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:true,welcomeEnabled:false})));
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/nara-stage`);
+ await page.waitForFunction(()=>window.providerTest?.stage?.inspect().engine);
+ const priority=await page.evaluate(async snapshot=>{
+  const {projectNaraExpression,naraRetainedPresentation}=await import('/src/instrument/nara-expression-adapter.ts');
+  const projection=projectNaraExpression(snapshot),stage=providerTest.stage;
+  const cue=stage.express('searching',{rect:new DOMRect(40,50,44,28),hold:true});
+  const presentation=stage.present({id:'nara:owned',recipe:'oi.mark',config:projection.config,sceneRef:'nara:owned',plane:'ambient'});
+  await presentation.ready();presentation.setPaused(true);
+  const lease=stage.retainedLease(presentation.id),port=lease.retainedTargetPort();
+  port.setTargetTextures(port.targetA,port.targetB,{x:0,y:0});
+  lease.updatePresentation(naraRetainedPresentation(projection.session));lease.renderOnce();
+  const before=lease.inspect(),targets=[port.targetA,port.targetB,port.currentPosTarget,port.currentVelTarget];
+  presentation.release();
+  const released=stage.inspect();
+  stage.update(cue,{name:'listening'});
+  // The real retained lease, not a fixture flag, protects resident buffers
+  // while the foreground is absent. Semantic state continues to update.
+  const reserved=stage.inspect();
+  let releasedInspectionRefused=false;try{lease.inspect();}catch{releasedInspectionRefused=true;}
+  const clocks=()=>({frames:stage.inspect().frames,scheduled:stage.inspect().scheduled});
+  const quietBefore=clocks();
+  for(const method of ['resume','renderOnce'])try{lease[method]();}catch{/* A released lease may refuse rather than silently draw. */}
+  await new Promise(r=>setTimeout(r,350));
+  const quietAfter=clocks();
+  const next=stage.present({id:'nara:owned',recipe:'oi.mark',config:projection.config,sceneRef:'nara:owned',plane:'ambient',paused:true});
+  await next.ready();
+  const nextLease=stage.retainedLease(next.id),nextPort=nextLease.retainedTargetPort();
+  const reentered=nextLease.inspect();
+  const sameTargets=targets.every((t,i)=>t===[nextPort.targetA,nextPort.targetB,nextPort.currentPosTarget,nextPort.currentVelTarget][i]);
+  const currentBefore=clocks();
+  for(const method of ['resume','renderOnce'])try{lease[method]();}catch{/* Superseded lease cannot act on this owner. */}
+  await new Promise(r=>setTimeout(r,350));
+  const currentAfter=clocks();
+  next.release();stage.release(cue);providerTest.unmount();
+  return {before,reentered,released,reserved,quietBefore,quietAfter,currentBefore,currentAfter,sameTargets,releasedInspectionRefused};
+ },ownerSnapshot);
+ assert.equal(priority.released.retainedReservation,true,'actual retained lease reserves the window field after release');
+ assert.equal(priority.reserved.live,false,'queued semantic activity cannot replace a reserved Nara field');
+ assert.equal(priority.reserved.overlay.forms[0],'listening','reservation preserves semantic cue updates');
+ assert.equal(priority.releasedInspectionRefused,true,'released lease cannot inspect another ownership lifetime');
+ assert.equal(priority.before.seeds,priority.reentered.seeds,'Nara reentry preserves resident seeds');
+ assert.equal(priority.sameTargets,true,'Nara reentry preserves actual target texture identity');
+ assert.deepEqual(priority.quietAfter,priority.quietBefore,'released lease calls cannot draw dormant field');
+ assert.deepEqual(priority.currentAfter,priority.currentBefore,'superseded lease cannot wake or draw replacement owner');
+ console.log('Nara stage priority: actual QL retained lease suppresses queued native cues; release/reentry preserves target texture identities and seeds; released/superseded clocks cannot run.');
+
 }finally{await browser.close();await server.close();}
