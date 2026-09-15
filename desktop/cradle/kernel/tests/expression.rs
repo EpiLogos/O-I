@@ -143,6 +143,35 @@ fn automation_requires_explicit_manual_takeover_and_bounded_material() {
 }
 #[test]
 fn unknown_fields_and_undisclosed_actions_fail_closed() {
+    // JSON integers must retain exact identity through the TypeScript face.
+    let mut bounded = Application::default();
+    let mut document = create(&mut bounded)["document"].clone();
+    document["revision"] = json!(9_007_199_254_740_992_u64);
+    let mut fresh = Application::default();
+    assert!(fresh
+        .apply(
+            &CentralClient::discover(),
+            request(json!({
+                "operation":"open", "document":document, "actor":"agent:test"
+            }))
+        )
+        .is_err());
+    document["revision"] = json!(9_007_199_254_740_991_u64);
+    apply(
+        &mut fresh,
+        json!({"operation":"open", "document":document, "actor":"agent:test"}),
+    );
+    assert!(fresh.apply(&CentralClient::discover(), request(json!({
+        "operation":"edit", "expression_ref":"expression:test",
+        "expected_revision":9_007_199_254_740_991_u64, "actor":"agent:test", "changes":[entity()]
+    }))).is_err());
+    assert_eq!(
+        apply(
+            &mut fresh,
+            json!({"operation":"inspect", "expression_ref":"expression:test"})
+        )["document"],
+        document
+    );
     assert!(serde_json::from_value::<Request>(json!({"operation":"create","expression_ref":"expression:a","title":"A","actor":"agent:a","authority":true})).is_err());
     let mut app = Application::default();
     let mut d = create(&mut app)["document"].clone();

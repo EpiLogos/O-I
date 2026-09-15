@@ -83,3 +83,18 @@ AIKit task creation failed on disk capacity and also bases its worktree on the
 calling checkout; the recorded EX1 lane was created explicitly from origin/main.
 Only unused regenerable compiler caches were removed; other source lanes stayed
 untouched. The failed empty AIKit branch is eligible for retirement with EX1.
+
+## CI integration repair
+
+The first full PR run passed desktop/kernel/native-shell checks and exposed
+existing mainline drift from the prelocal.6 cut: three native-protocol revisions
+lagged surfaces.json (AIKit, Workcell, Quaternal Logic), and bootstrap required
+Central's current/historical revisions to differ. The projection now matches its
+source; bootstrap checks source selection and historical standing even when
+revisions coincide. No owner pin, install choice or historical asset was changed.
+
+The real CLI test floor is run with the worktree catalogue explicitly selected
+(`OI_CATALOG=<worktree>/surfaces.json`, isolated `OI_HOME`), because the machine's
+adopted catalogue names a different development cut. Both deterministic suite
+validators pass. EX1 also verifies rejection at JavaScript's integer boundary,
+including an atomic edit refused without changing the last representable draft.
