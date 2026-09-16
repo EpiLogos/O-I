@@ -90,6 +90,7 @@ const SCENARIOS = {
   "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
   "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
   "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},
+  "workspace-continuity": {module:"scenarios/workspace-continuity.mjs",kernel:true,aliases:["ws-continuity"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
   "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},
