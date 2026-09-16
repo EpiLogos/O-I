@@ -10,7 +10,7 @@ import {projectionStorageKey} from "../../../../shared-field/spacetimedb.mjs";
  * token and no store: every reading is the O:I-owned client's own
  * envelope, pulled per call. Absence arrives as an explicit
  * `{state:"unavailable"}` reading, never as a throw. */
-export type SharedFieldRequest=Record<string,unknown>&{kind:"status"|"identity"|"receipt"|"snapshot"|"read"|"publish"|"projection"|"participant"|"contribute"|"admit"|"reject"|"withdraw"|"contact"|"watch"};
+export type SharedFieldRequest=Record<string,unknown>&{kind:"status"|"identity"|"receipt"|"snapshot"|"read"|"publish"|"projection"|"participant"|"contribute"|"admit"|"reject"|"withdraw"|"contact"|"watch"|"enter"|"leave"|"stage"|"stage-open"|"stage-advance"|"stage-close"|"stage-follow"|"stage-unfollow"};
 export type SharedFieldTarget={name:string;uri:string;database:string};
 export type SharedFieldUnavailable={state:"unavailable";owner_operation:string;detail:string};
 export type SharedFieldStatus={schema:"oi.shared-field.status/v1";bound:true;target:SharedFieldTarget}|{schema:"oi.shared-field.status/v1";bound:false;reason:string}|SharedFieldUnavailable;
@@ -38,6 +38,18 @@ export type SharedFieldReading=
  * shown verbatim: the hosted Projection row, the target, and the transport
  * identity — a SpaceTimeDB connection identity, never a human. */
 export interface SharedFieldHostedResult {schema:"oi.shared-field.hosted-result/v1";target:SharedFieldTarget;transport_identity:string;hosted_projection_row:{projectionKey:string;rowId:string;projectionRef:string;projectionRevision:number;sourceRevision:string;state:string;publisherParticipantRef:string};entries:string[];relations:string[];status:unknown}
+/** The field's open Shared Stage row (`oi.shared-stage/v1` contract included): admitted shared presentation state only. */
+export interface HostedStage {stage_ref:string;field_ref:string;revision:number;state:"open"|"closed"|string;presenter_ref:string|null;subject_ref:string;contract:Record<string,unknown>|null;updated_by_participant_ref?:string;updated_at_micros?:string}
+/** One live presence row: a participant currently entered in the field. */
+export interface HostedPresence {field_ref:string;participant_ref:string;state:string;updated_at_micros?:string}
+/** `stage` reading (`oi.shared-field.stage-reading/v1`): the open stage (or none), the caller's own follow row, live presence. */
+export interface SharedFieldStageReading {schema:"oi.shared-field.stage-reading/v1";field_ref:string;stage:HostedStage|null;my_follow:{stage_ref:string;follower_participant_ref:string;followed_at_revision:number;following:boolean}|null;presence:HostedPresence[]}
+/** `stage-open`/`stage-advance`/`stage-close` result (`oi.shared-field.stage-result/v1`). */
+export interface SharedFieldStageResult {schema:"oi.shared-field.stage-result/v1";stage_ref:string;field_ref:string;revision:number;state:string;presenter_ref:string|null;subject_ref:string;contract?:unknown}
+/** `stage-follow`/`stage-unfollow` result (`oi.shared-field.stage-follow-result/v1`). */
+export interface SharedFieldStageFollowResult {schema:"oi.shared-field.stage-follow-result/v1";stage_ref:string;field_ref:string;follower_participant_ref:string;followed_at_revision:number|null;following:boolean}
+/** `enter`/`leave` result (`oi.shared-field.presence-result/v1`). */
+export interface SharedFieldPresenceResult {schema:"oi.shared-field.presence-result/v1";field_ref:string;participant_ref:string;state:string}
 
 export async function sharedField<T=unknown>(transport:KernelTransportStatus,request:SharedFieldRequest):Promise<T> {
   const response=await kernelOp(transport,{op:"shared_field",request});

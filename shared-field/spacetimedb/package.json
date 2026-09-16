@@ -10,6 +10,7 @@
     "acceptance:w11-return": "tsx application-return-live-acceptance.ts",
     "publish:world": "tsx publish-world.ts",
     "acceptance:two-world": "tsx two-world-live-acceptance.ts",
+    "acceptance:shared-stage": "tsx shared-stage-live-acceptance.ts",
     "deploy:hosted": "./deploy.sh hosted",
     "deploy:local": "./deploy.sh local --clear",
     "acceptance:native-action": "node ../scripts/native-action-live-acceptance.mjs",

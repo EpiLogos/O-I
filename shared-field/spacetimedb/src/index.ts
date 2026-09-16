@@ -21,6 +21,10 @@ const CONTRIBUTION_VISIBILITIES = new Set(['public', 'restricted', 'private']);
 const CONTRIBUTION_TRANSPORTS = new Set(['a2a', 'mcp', 'http', 'local-import']);
 const HOSTED_VISIBILITIES = new Set(['public', 'restricted', 'private']);
 const PROJECTION_VISIBILITIES = new Set(['public', 'restricted', 'private']);
+const PRESENCE_STATES = new Set(['entered', 'away']);
+const STAGE_SCHEMA = 'oi.shared-stage/v1';
+const STAGE_MAX_EDITS = 64;
+const STAGE_MAX_BYTES = 16 * 1024;
 
 /*
  * Phase 1 privacy shape:
@@ -276,6 +280,70 @@ const watch = table(
   }
 );
 
+/*
+ * Live presence and the optional Shared Stage:
+ *
+ * explicit enter_field by an authorised caller
+ *      ↓ PRIVATE presence row (cleared on disconnect / leave / revocation)
+ * caller-filtered field_presence View — the live "who is in the field" relation
+ *
+ * deliberate open_shared_stage by a contributor
+ *      ↓ PRIVATE revisioned stage row + explicit follower rows
+ * shared_stage View (open stages of visible fields) + my_stage_follow View
+ *
+ * The stage carries admitted shared presentation state only (refs, revisions,
+ * scene/focus, approved authored edits, causal Activity/Action refs). Local
+ * Workspace tabs/splits/geometry, camera/read position, private drafts,
+ * Search history, Agent transcripts, SessionSpace state, raw Nara/Personal
+ * state and renderer buffers have no columns here and no reducer that could
+ * write them.
+ */
+const fieldPresence = table(
+  { name: 'field_presence_backing', public: false },
+  {
+    presenceKey: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    participantRef: t.string().index('btree'),
+    actorIdentity: t.identity().index('btree'),
+    state: t.string(),
+    enteredAtMicros: t.u64(),
+    updatedAtMicros: t.u64(),
+  }
+);
+
+const sharedStageBacking = table(
+  { name: 'shared_stage_backing', public: false },
+  {
+    stageRef: t.string().primaryKey(),
+    fieldRef: t.string().index('btree'),
+    revision: t.u64(),
+    state: t.string().index('btree'),
+    presenterRef: t.string().index('btree'),
+    subjectRef: t.string(),
+    contractJson: t.string(),
+    openedAtMicros: t.u64(),
+    updatedAtMicros: t.u64(),
+    updatedByParticipantRef: t.string(),
+  }
+);
+
+/* The explicit follower relation. A row exists while the participant is
+ * following; unfollowing removes it and leaves the participant's field
+ * authority, presence and local view untouched. Re-follow rebinds to the
+ * stage's current revision. */
+const stageFollower = table(
+  { public: false },
+  {
+    followKey: t.string().primaryKey(),
+    stageRef: t.string().index('btree'),
+    fieldRef: t.string().index('btree'),
+    followerParticipantRef: t.string().index('btree'),
+    actorIdentity: t.identity().index('btree'),
+    followedAtRevision: t.u64(),
+    followedAtMicros: t.u64(),
+  }
+);
+
 const contact = table(
   { public: false },
   {
@@ -406,6 +474,9 @@ const spacetimedb = schema({
   exploreEntryBacking,
   exploreRelationBacking,
   watch,
+  fieldPresence,
+  sharedStageBacking,
+  stageFollower,
   contact,
   contactPolicy,
   contactRate,
@@ -536,6 +607,79 @@ function requireJsonStringArray(value: string, name: string, maxItems = 32): str
 
 function authorityKey(fieldRef: string, participantRef: string): string {
   return `${fieldRef}|${participantRef}`;
+}
+
+function presenceKey(fieldRef: string, participantRef: string): string {
+  return `${fieldRef}|${participantRef}`;
+}
+
+function followKey(stageRef: string, followerParticipantRef: string): string {
+  return `${stageRef}|${followerParticipantRef}`;
+}
+
+/* The server checks the stage contract's shape, currentness and attribution;
+ * the client composes it through the oi.shared-stage/v1 owner contract. The
+ * stage carries refs/revisions and admitted edits — never source bodies or
+ * local application state. */
+function requireStageContractShape(
+  contract: Record<string, any>,
+  stageRef: string,
+  fieldRef: string,
+  revision: bigint,
+  state: string,
+  presenterRef: string
+): void {
+  requireEqual(contract.schema, STAGE_SCHEMA, 'Shared Stage schema');
+  requireEqual(contract.shared_stage_ref, stageRef, 'Shared Stage stageRef');
+  requireEqual(contract.field_ref, fieldRef, 'Shared Stage fieldRef');
+  requireEqual(BigInt(contract.revision), revision, 'Shared Stage revision');
+  requireEqual(contract.state, state, 'Shared Stage state');
+  requireEqual(contract.presenter_ref, presenterRef, 'Shared Stage presenterRef');
+  requireString(String(contract.subject_ref ?? ''), 'Shared Stage subjectRef', 512);
+  for (const optionalRef of ['scene_ref', 'focus_ref']) {
+    if (contract[optionalRef] !== undefined) requireString(String(contract[optionalRef]), `Shared Stage ${optionalRef}`, 512);
+  }
+  for (const locusName of ['presentation', 'expression']) {
+    const locus = contract[locusName];
+    if (locus === undefined) continue;
+    if (locus === null || typeof locus !== 'object' || Array.isArray(locus)) fail(`Shared Stage ${locusName} must be an object`);
+    requireString(String(locus.ref ?? ''), `Shared Stage ${locusName}.ref`, 512);
+    if (locus.revision !== undefined && !Number.isInteger(locus.revision)) fail(`Shared Stage ${locusName}.revision must be an integer`);
+  }
+  if (contract.causal !== undefined) {
+    const causal = contract.causal;
+    if (causal === null || typeof causal !== 'object' || Array.isArray(causal)) fail('Shared Stage causal must be an object');
+    requireString(String(causal.kind ?? ''), 'Shared Stage causal.kind', 128);
+    requireString(String(causal.ref ?? ''), 'Shared Stage causal.ref', 512);
+  }
+  if (!Array.isArray(contract.edits)) fail('Shared Stage edits must be an array');
+  if (contract.edits.length > STAGE_MAX_EDITS) fail(`Shared Stage edits exceed ${STAGE_MAX_EDITS} entries`);
+  if (!Array.isArray(contract.provenance) || contract.provenance.length === 0) fail('Shared Stage provenance must be a non-empty array');
+}
+
+/* Prior edits are immutable history; advancing may append at most one edit,
+ * attributed to the advancing participant at the new revision. */
+function requireStageEdits(
+  priorEdits: any[],
+  nextEdits: any[],
+  actorParticipantRef: string,
+  nextRevision: bigint,
+  appendAllowed: boolean
+): void {
+  if (JSON.stringify(nextEdits.slice(0, priorEdits.length)) !== JSON.stringify(priorEdits)) {
+    fail('Shared Stage edits are immutable history');
+  }
+  if (nextEdits.length === priorEdits.length) return;
+  if (!appendAllowed) fail('Shared Stage edits cannot change unless the stage advances');
+  if (nextEdits.length !== priorEdits.length + 1) fail('Shared Stage advances append at most one edit');
+  const appended = nextEdits[nextEdits.length - 1];
+  if (appended === null || typeof appended !== 'object' || Array.isArray(appended)) fail('Shared Stage edit must be an object');
+  requireEqual(appended.participant_ref, actorParticipantRef, 'Shared Stage edit participantRef');
+  requireEqual(BigInt(appended.at_revision), nextRevision, 'Shared Stage edit at_revision');
+  const change = appended.change;
+  if (change === null || typeof change !== 'object' || Array.isArray(change) || Object.keys(change).length === 0) {
+    fail('Shared Stage edit change must be a non-empty object');
+  }
 }
 
 function audienceKey(fieldRef: string, participantRef: string): string {
@@ -929,6 +1073,44 @@ export const owner_pending_contribution = spacetimedb.view(
     }
     return pending;
   }
+);
+
+/* Live presence: who is actually in the field right now. Rows exist only
+ * while a caller is connected and entered; disconnect clears them. */
+export const field_presence = spacetimedb.view(
+  { name: 'field_presence', public: true },
+  t.array(fieldPresence.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const field of visibleFieldRows(ctx)) {
+      for (const row of ctx.db.fieldPresence.fieldRef.filter(field.fieldRef)) rows.push(row);
+    }
+    return rows;
+  }
+);
+
+/* The current open Shared Stage of every caller-visible field. A closed
+ * stage leaves this View (its follow relation is gone with it); the stage
+ * contract holds admitted shared presentation state only. */
+export const shared_stage = spacetimedb.view(
+  { name: 'shared_stage', public: true },
+  t.array(sharedStageBacking.rowType),
+  (ctx) => {
+    const rows: any[] = [];
+    for (const field of visibleFieldRows(ctx)) {
+      for (const row of ctx.db.sharedStageBacking.fieldRef.filter(field.fieldRef)) {
+        if (row.state === 'open') rows.push(row);
+      }
+    }
+    return rows;
+  }
+);
+
+/* The caller's own explicit follower relation, and nothing of anyone else's. */
+export const my_stage_follow = spacetimedb.view(
+  { name: 'my_stage_follow', public: true },
+  t.array(stageFollower.rowType),
+  (ctx) => Array.from(ctx.db.stageFollower.actorIdentity.filter(ctx.sender))
 );
 
 function requireParticipantAuthority(ctx: any, fieldRef: string, participantRef: string, roles: string[]): any {
@@ -1462,6 +1644,11 @@ export const revoke_participant_authority = spacetimedb.reducer(
     const existing = ctx.db.fieldAuthority.authorityKey.find(key);
     if (!existing) fail(`No authority grant for Participant ${args.participantRef}`);
     terminateExchangeForParticipant(ctx, args.fieldRef, args.participantRef, 'revoked');
+    const presence = ctx.db.fieldPresence.presenceKey.find(presenceKey(args.fieldRef, args.participantRef));
+    if (presence) ctx.db.fieldPresence.presenceKey.delete(presence.presenceKey);
+    for (const follow of ctx.db.stageFollower.followerParticipantRef.filter(args.participantRef)) {
+      if (follow.fieldRef === args.fieldRef) ctx.db.stageFollower.followKey.delete(follow.followKey);
+    }
     ctx.db.fieldAuthority.authorityKey.delete(key);
     const readKey = audienceKey(args.fieldRef, args.participantRef);
     if (ctx.db.fieldReadGrant.audienceKey.find(readKey)) ctx.db.fieldReadGrant.audienceKey.delete(readKey);
@@ -2257,5 +2444,196 @@ export const set_contact_policy = spacetimedb.reducer(
     if (existing) ctx.db.contactPolicy.policyKey.update(row);
     else ctx.db.contactPolicy.insert(row);
     terminateExchangeBetween(ctx, args.fieldRef, args.blockerParticipantRef, args.blockedParticipantRef);
+  }
+);
+
+/* ---------- Live presence and the optional Shared Stage ---------- */
+
+export const enter_field = spacetimedb.reducer(
+  { fieldRef: t.string(), participantRef: t.string(), state: t.string() },
+  (ctx, args) => {
+    const state = args.state === '' ? 'entered' : args.state;
+    if (!PRESENCE_STATES.has(state)) fail(`Unsupported presence state: ${state}`);
+    requireParticipantInField(ctx, args.participantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.participantRef, ['observer', 'contact', 'contributor']);
+    const now = nowMicros(ctx);
+    const row = {
+      presenceKey: presenceKey(args.fieldRef, args.participantRef),
+      fieldRef: args.fieldRef,
+      participantRef: args.participantRef,
+      actorIdentity: ctx.sender,
+      state,
+      enteredAtMicros: now,
+      updatedAtMicros: now,
+    };
+    const existing = ctx.db.fieldPresence.presenceKey.find(row.presenceKey);
+    if (existing) ctx.db.fieldPresence.presenceKey.update({ ...existing, state, actorIdentity: ctx.sender, updatedAtMicros: now });
+    else ctx.db.fieldPresence.insert(row);
+  }
+);
+
+/* Leaving the field clears live presence and any stage follow, and leaves
+ * membership, authority and the participant's local view untouched. */
+export const leave_field = spacetimedb.reducer(
+  { fieldRef: t.string(), participantRef: t.string() },
+  (ctx, args) => {
+    requireParticipantAuthority(ctx, args.fieldRef, args.participantRef, ['observer', 'contact', 'contributor']);
+    const presence = ctx.db.fieldPresence.presenceKey.find(presenceKey(args.fieldRef, args.participantRef));
+    if (presence) ctx.db.fieldPresence.presenceKey.delete(presence.presenceKey);
+    for (const follow of ctx.db.stageFollower.followerParticipantRef.filter(args.participantRef)) {
+      if (follow.fieldRef === args.fieldRef) ctx.db.stageFollower.followKey.delete(follow.followKey);
+    }
+  }
+);
+
+/* Presence is live state: a dropped connection cannot leave a ghost in the
+ * field. Stage follows persist so a reconnecting participant restores the
+ * current stage without re-following. */
+export const client_disconnected = spacetimedb.clientDisconnected((ctx) => {
+  for (const row of ctx.db.fieldPresence.actorIdentity.filter(ctx.sender)) {
+    ctx.db.fieldPresence.presenceKey.delete(row.presenceKey);
+  }
+});
+
+export const open_shared_stage = spacetimedb.reducer(
+  { fieldRef: t.string(), stageRef: t.string(), presenterParticipantRef: t.string(), subjectRef: t.string(), contractJson: t.string() },
+  (ctx, args) => {
+    requireString(args.stageRef, 'Shared Stage stageRef');
+    requireString(args.subjectRef, 'Shared Stage subjectRef', 512);
+    if (utf8Bytes(args.contractJson) > STAGE_MAX_BYTES) fail(`Shared Stage contract exceeds ${STAGE_MAX_BYTES} byte limit`);
+    const contract = requireJsonObject(args.contractJson, 'Shared Stage contract', STAGE_MAX_BYTES);
+    enforceJsonBounds(contract, 'Shared Stage contract');
+    requireEqual(contract.field_ref, args.fieldRef, 'Shared Stage fieldRef');
+    requireParticipantInField(ctx, args.presenterParticipantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.presenterParticipantRef, ['contributor']);
+    for (const row of ctx.db.sharedStageBacking.fieldRef.filter(args.fieldRef)) {
+      if (row.state === 'open') fail(`SharedField ${args.fieldRef} already has an open Shared Stage: ${row.stageRef}`);
+    }
+    if (ctx.db.sharedStageBacking.stageRef.find(args.stageRef)) fail(`Shared Stage ref already exists: ${args.stageRef}`);
+    requireStageContractShape(contract, args.stageRef, args.fieldRef, 1n, 'open', args.presenterParticipantRef);
+    requireEqual(contract.subject_ref, args.subjectRef, 'Shared Stage subjectRef');
+    requireStageEdits([], contract.edits ?? [], args.presenterParticipantRef, 1n, true);
+    const now = nowMicros(ctx);
+    ctx.db.sharedStageBacking.insert({
+      stageRef: args.stageRef,
+      fieldRef: args.fieldRef,
+      revision: 1n,
+      state: 'open',
+      presenterRef: args.presenterParticipantRef,
+      subjectRef: args.subjectRef,
+      contractJson: args.contractJson,
+      openedAtMicros: now,
+      updatedAtMicros: now,
+      updatedByParticipantRef: args.presenterParticipantRef,
+    });
+  }
+);
+
+/* The revision-checked shared mutation. `expectedRevision` must equal the
+ * stage's current revision, so a stale writer is refused instead of silently
+ * replacing the shared state (no opaque last-writer wins). The advancing
+ * participant becomes the presenter; a change of presenter is explicit. */
+export const advance_shared_stage = spacetimedb.reducer(
+  { fieldRef: t.string(), stageRef: t.string(), actorParticipantRef: t.string(), expectedRevision: t.u64(), contractJson: t.string() },
+  (ctx, args) => {
+    const stage = ctx.db.sharedStageBacking.stageRef.find(args.stageRef);
+    if (!stage || stage.fieldRef !== args.fieldRef) fail(`Unknown Shared Stage ${args.stageRef} in SharedField ${args.fieldRef}`);
+    if (stage.state !== 'open') fail(`Shared Stage ${args.stageRef} is ${stage.state}`);
+    requireParticipantInField(ctx, args.actorParticipantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.actorParticipantRef, ['contributor']);
+    if (stage.revision !== args.expectedRevision) {
+      fail(`Shared Stage moved on: stage is at revision ${stage.revision}, writer expected ${args.expectedRevision}`);
+    }
+    if (utf8Bytes(args.contractJson) > STAGE_MAX_BYTES) fail(`Shared Stage contract exceeds ${STAGE_MAX_BYTES} byte limit`);
+    const contract = requireJsonObject(args.contractJson, 'Shared Stage contract', STAGE_MAX_BYTES);
+    enforceJsonBounds(contract, 'Shared Stage contract');
+    const nextRevision = stage.revision + 1n;
+    requireStageContractShape(contract, args.stageRef, args.fieldRef, nextRevision, 'open', args.actorParticipantRef);
+    const prior = parseStoredJson(stage.contractJson, 'Shared Stage contract');
+    requireStageEdits(prior.edits ?? [], contract.edits ?? [], args.actorParticipantRef, nextRevision, true);
+    if (JSON.stringify(contract.provenance) !== JSON.stringify(prior.provenance)) fail('Shared Stage provenance is immutable');
+    ctx.db.sharedStageBacking.stageRef.update({
+      ...stage,
+      revision: nextRevision,
+      presenterRef: args.actorParticipantRef,
+      subjectRef: String(contract.subject_ref),
+      contractJson: args.contractJson,
+      updatedAtMicros: nowMicros(ctx),
+      updatedByParticipantRef: args.actorParticipantRef,
+    });
+  }
+);
+
+/* Closing stops the stage: the View drops it, follower relations end, and
+ * every participant keeps their own local view and field membership. The
+ * current presenter or the field owner may close. */
+export const close_shared_stage = spacetimedb.reducer(
+  { fieldRef: t.string(), stageRef: t.string(), actorParticipantRef: t.string(), expectedRevision: t.u64(), contractJson: t.string() },
+  (ctx, args) => {
+    const stage = ctx.db.sharedStageBacking.stageRef.find(args.stageRef);
+    if (!stage || stage.fieldRef !== args.fieldRef) fail(`Unknown Shared Stage ${args.stageRef} in SharedField ${args.fieldRef}`);
+    if (stage.state !== 'open') fail(`Shared Stage ${args.stageRef} is already ${stage.state}`);
+    if (args.actorParticipantRef !== stage.presenterRef) requireFieldOwner(ctx, args.fieldRef);
+    requireParticipantInField(ctx, args.actorParticipantRef, args.fieldRef);
+    if (stage.revision !== args.expectedRevision) {
+      fail(`Shared Stage moved on: stage is at revision ${stage.revision}, closer expected ${args.expectedRevision}`);
+    }
+    if (utf8Bytes(args.contractJson) > STAGE_MAX_BYTES) fail(`Shared Stage contract exceeds ${STAGE_MAX_BYTES} byte limit`);
+    const contract = requireJsonObject(args.contractJson, 'Shared Stage contract', STAGE_MAX_BYTES);
+    enforceJsonBounds(contract, 'Shared Stage contract');
+    const nextRevision = stage.revision + 1n;
+    requireStageContractShape(contract, args.stageRef, args.fieldRef, nextRevision, 'closed', stage.presenterRef);
+    const prior = parseStoredJson(stage.contractJson, 'Shared Stage contract');
+    requireStageEdits(prior.edits ?? [], contract.edits ?? [], stage.presenterRef, nextRevision, false);
+    if (JSON.stringify(contract.provenance) !== JSON.stringify(prior.provenance)) fail('Shared Stage provenance is immutable');
+    ctx.db.sharedStageBacking.stageRef.update({
+      ...stage,
+      revision: nextRevision,
+      state: 'closed',
+      contractJson: args.contractJson,
+      updatedAtMicros: nowMicros(ctx),
+      updatedByParticipantRef: args.actorParticipantRef,
+    });
+    for (const follow of ctx.db.stageFollower.stageRef.filter(args.stageRef)) {
+      ctx.db.stageFollower.followKey.delete(follow.followKey);
+    }
+  }
+);
+
+/* Following is an explicit relation the participant establishes for
+ * themselves, bound to the stage's current revision. Re-follow reconciles to
+ * whatever revision the stage has reached. */
+export const follow_shared_stage = spacetimedb.reducer(
+  { fieldRef: t.string(), stageRef: t.string(), followerParticipantRef: t.string() },
+  (ctx, args) => {
+    const stage = ctx.db.sharedStageBacking.stageRef.find(args.stageRef);
+    if (!stage || stage.fieldRef !== args.fieldRef) fail(`Unknown Shared Stage ${args.stageRef} in SharedField ${args.fieldRef}`);
+    if (stage.state !== 'open') fail(`Shared Stage ${args.stageRef} is ${stage.state}; there is no open stage to follow`);
+    requireParticipantInField(ctx, args.followerParticipantRef, args.fieldRef);
+    requireParticipantAuthority(ctx, args.fieldRef, args.followerParticipantRef, ['observer', 'contact', 'contributor']);
+    const now = nowMicros(ctx);
+    const row = {
+      followKey: followKey(args.stageRef, args.followerParticipantRef),
+      stageRef: args.stageRef,
+      fieldRef: args.fieldRef,
+      followerParticipantRef: args.followerParticipantRef,
+      actorIdentity: ctx.sender,
+      followedAtRevision: stage.revision,
+      followedAtMicros: now,
+    };
+    const existing = ctx.db.stageFollower.followKey.find(row.followKey);
+    if (existing) ctx.db.stageFollower.followKey.update(row);
+    else ctx.db.stageFollower.insert(row);
+  }
+);
+
+/* Unfollowing removes only the follow relation: presence, field authority,
+ * membership and the participant's local view stay exactly as they were. */
+export const unfollow_shared_stage = spacetimedb.reducer(
+  { fieldRef: t.string(), stageRef: t.string(), followerParticipantRef: t.string() },
+  (ctx, args) => {
+    requireParticipantAuthority(ctx, args.fieldRef, args.followerParticipantRef, ['observer', 'contact', 'contributor']);
+    const key = followKey(args.stageRef, args.followerParticipantRef);
+    if (ctx.db.stageFollower.followKey.find(key)) ctx.db.stageFollower.followKey.delete(key);
   }
 );

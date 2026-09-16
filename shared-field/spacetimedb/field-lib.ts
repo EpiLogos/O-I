@@ -32,6 +32,9 @@ export const SUBSCRIPTION = [
   'SELECT * FROM owner_pending_contribution',
   'SELECT * FROM my_watch',
   'SELECT * FROM my_contact',
+  'SELECT * FROM shared_stage',
+  'SELECT * FROM my_stage_follow',
+  'SELECT * FROM field_presence',
 ];
 const TIMEOUT_MS = Number(process.env.OI_SHARED_FIELD_TIMEOUT_MS ?? 15_000);
 export const sleep = (ms: number) => new Promise((resolve) => setTimeout(resolve, ms));
@@ -143,12 +146,47 @@ export function fieldSnapshot(client: Client) {
     owner_pending_contributions: rows(db.ownerPendingContribution).map((row: any) => ({ ingress_ref: row.ingressRef, field_ref: row.fieldRef, contribution_ref: row.claimedContributionRef, contributor_participant_ref: row.contributorParticipantRef, received_at_micros: String(row.receivedAtMicros), payload_fingerprint: row.payloadFingerprint, contract: parse(row.contractJson) })),
     my_watches: rows(db.myWatch).map((row: any) => ({ watch_ref: row.watchRef, field_ref: row.fieldRef, target_kind: row.targetKind, target_ref: row.targetRef, state: row.state })),
     my_contacts: rows(db.myContact).map((row: any) => ({ contact_ref: row.contactRef, field_ref: row.fieldRef, initiator_participant_ref: row.initiatorParticipantRef, recipient_participant_ref: row.recipientParticipantRef, state: row.state ?? row.decision ?? null })),
+    stages: rows(db.sharedStage).map(stageReading),
+    my_stage_follows: rows(db.myStageFollow).map((row: any) => ({ stage_ref: row.stageRef, field_ref: row.fieldRef, follower_participant_ref: row.followerParticipantRef, followed_at_revision: Number(row.followedAtRevision) })),
+    presence: rows(db.fieldPresence).map((row: any) => ({ field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state, updated_at_micros: String(row.updatedAtMicros) })),
     counts: { fields: hosted.fields.length, participants: hosted.participants.length, projections: hosted.projections.length, entries: hosted.entries.length, relations: hosted.relations.length },
     // The SharedField each Explore entry is hosted in (the row's fieldRef;
     // the entry contract itself carries no field) — what a Watch or a
     // membership reading is scoped to. Keyed by the entry's semantic ref.
     entry_fields: Object.fromEntries(rows(db.exploreEntry).map((row: any) => [row.semanticRef, row.fieldRef])),
     relation_fields: Object.fromEntries(rows(db.exploreRelation).flatMap((row: any) => { const relation = parse(row.relationJson); return relation?.relation_ref ? [[relation.relation_ref, row.fieldRef]] : []; })),
+  };
+}
+
+/** The open Shared Stage row as the caller reads it: the server facts plus
+ * the `oi.shared-stage/v1` contract it carries. Admitted shared presentation
+ * state only — the row has no field that could hold local view state. */
+export function stageReading(row: any) {
+  return {
+    stage_ref: row.stageRef,
+    field_ref: row.fieldRef,
+    revision: Number(row.revision),
+    state: row.state,
+    presenter_ref: row.presenterRef,
+    subject_ref: row.subjectRef,
+    contract: parse(row.contractJson),
+    updated_by_participant_ref: row.updatedByParticipantRef,
+    updated_at_micros: String(row.updatedAtMicros),
+  };
+}
+
+/** The caller's stage reading for one field: the open stage (or none), the
+ * caller's own follow row, and the live presence of the field. */
+export function stageView(client: Client, fieldRef: string) {
+  const db: any = client.conn.db;
+  const row = rows(db.sharedStage).find((candidate: any) => candidate.fieldRef === fieldRef);
+  const follow = rows(db.myStageFollow).find((candidate: any) => candidate.fieldRef === fieldRef);
+  return {
+    schema: 'oi.shared-field.stage-reading/v1',
+    field_ref: fieldRef,
+    stage: row ? stageReading(row) : null,
+    my_follow: follow ? { stage_ref: follow.stageRef, follower_participant_ref: follow.followerParticipantRef, followed_at_revision: Number(follow.followedAtRevision), following: true } : null,
+    presence: rows(db.fieldPresence).filter((candidate: any) => candidate.fieldRef === fieldRef).map((row: any) => ({ participant_ref: row.participantRef, state: row.state, updated_at_micros: String(row.updatedAtMicros) })),
   };
 }
 
