@@ -76,19 +76,9 @@ install)
     world | python3 /campaign/scripts/world-positions.py >"$EV/world-positions-install.json"
     world >"$EV/world-install.json"
 
-    step "verify: whole-suite verifier, recorded honestly (subset installs fail it)"
-    set +e
-    oi verify >"$EV/verify.log" 2>&1
-    echo "oi verify rc=$?" >>"$EV/verify.log"
-    set -e
-    step "verify output in verify.log (rc 3 on a subset = whole-suite verifier cannot express modes)"
-
-    step "doctor"
-    set +e
-    oi doctor >"$EV/doctor.log" 2>&1
-    echo "oi doctor rc=$?" >>"$EV/doctor.log"
-    set -e
-    step "doctor output in doctor.log"
+    step "verify and doctor are mode/receipt-scoped since #311: unselected products are disclosed, never failures"
+    expect_ok "oi verify (scoped to the install)" oi verify
+    expect_ok "oi doctor (scoped to the install)" oi doctor
 
     step "promised capability journey per product"
     for p in $PRODUCTS; do
@@ -171,12 +161,8 @@ change)
         expect_ok "recovery update" oi update
     fi
 
-    step "doctor after recovery (whole-suite verifier semantics recorded)"
-    set +e
-    oi doctor >"$EV/doctor-after-recovery.log" 2>&1
-    echo "oi doctor rc=$?" >>"$EV/doctor-after-recovery.log"
-    set -e
-    step "doctor output in doctor-after-recovery.log"
+    step "doctor after recovery (scoped)"
+    expect_ok "oi doctor after recovery" oi doctor
     ;;
 
 remove)

@@ -3,7 +3,7 @@
 # 0/1 -> 0/1/2 -> 0/1/2/3, proving at every step:
 #   - no identity drift (remaining product positions byte-identical)
 #   - no world reconstruction (ground digests unchanged)
-# and recording the descending step honestly.
+# and proving the descending step through the production removal verb.
 #
 # Component products (actuation, software-factory, quaternal-logic) ship
 # contract material, not native executables; on linux their positions read
@@ -109,29 +109,17 @@ t3)
     assert_prior_unchanged t2 t3 central actuation ai-kit
     ;;
 t4)
-    step "descending: attempt single-product (software-factory) removal through production paths"
-    set +e
-    oi suite remove software-factory >"$EV/descend-remove.log" 2>&1
-    echo "suite remove rc=$?" >>"$EV/descend-remove.log"
-    oi suite uninstall software-factory >>"$EV/descend-remove.log" 2>&1
-    echo "suite uninstall rc=$?" >>"$EV/descend-remove.log"
-    oi update >>"$EV/descend-remove.log" 2>&1
-    echo "update rc=$?" >>"$EV/descend-remove.log"
-    set -e
-    if grep -q "unknown suite command" "$EV/descend-remove.log"; then
-        {
-            echo "FINDING (gap, verbatim refusals in descend-remove.log):"
-            echo "no production path removes a single product. Descent"
-            echo "0/1/2/3 -> 0/1/2 cannot be expressed as a lifecycle"
-            echo "operation; 'oi suite remove/uninstall' answer 'unknown suite"
-            echo "command'. The composition lock's lifecycle-planner increment"
-            echo "(native-owner remove with receipts) is not implemented."
-        } >"$EV/descend-gap.txt"
-        cat "$EV/descend-gap.txt"
-    else
-        step "a removal path answered; recording world after descent"
-        identity_snapshot t4
-    fi
+    step "descending: remove software-factory through the production removal verb (#311)"
+    expect_ok "oi remove software-factory" oi remove software-factory
+    step "world after descent: developmental core minus factory reads 0/1/2"
+    oi mode set 0/1/2 >/dev/null   # the request follows the removal; the effective match is asserted below
+    assert_requested_mode "0/1/2"
+    assert_position "software-factory" absent
+    assert_position "ai-kit" present
+    assert_position "central" present
+    identity_snapshot t4
+    assert_prior_unchanged t2 t4 central actuation ai-kit
+    step "descent 0/1/2/3 -> 0/1/2 is expressible; ground preserved"
     ;;
 *) echo "unknown step: $STEP" >&2; exit 2 ;;
 esac
