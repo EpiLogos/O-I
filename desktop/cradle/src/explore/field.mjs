@@ -6,9 +6,19 @@
  * the caller's own authority/watch rows arrive from the client verbatim and
  * are only grouped, ranked and laid out for presentation.
  *
+ * Entry search runs through the SAME surface-neutral Explore read model the
+ * web and structured agents consume (`shared-field/explore-surface.mjs`), so
+ * a human result and an agent result carry the same stable refs, eligible
+ * presentation forms and field membership. Participant-Beings and
+ * SharedFields are desktop presentations of the same snapshot rows, ranked
+ * alongside — not a second index over the entries.
+ *
  * Language-neutral so the desktop can unit-test search, grouping, primary
  * projection choice and the constellation layout outside a browser.
  */
+
+import { createExploreSurfaceModelFromHostedSnapshot } from '../../../../shared-field/spacetimedb-explore-surface.mjs';
+import { createExploreApplication } from '../../../../shared-field/explore.mjs';
 
 const normalise = (value) => String(value ?? '').toLowerCase();
 
@@ -47,17 +57,67 @@ function score(query, texts) {
   return best;
 }
 
+// The shared read model is derived once per snapshot; queries reuse it. When
+// presentation resolution cannot be built, the fault is disclosed — search
+// degrades to plain entry addressability instead of failing the field.
+let modelFault = undefined;
+export function searchModelFault() {
+  return modelFault;
+}
+const modelCache = new WeakMap();
+function fieldModel(snapshot) {
+  let model = modelCache.get(snapshot);
+  if (model === undefined) {
+    try {
+      model = createExploreSurfaceModelFromHostedSnapshot(snapshot);
+    } catch (error) {
+      modelFault = String(error instanceof Error ? error.message : error);
+      throw error;
+    }
+    modelCache.set(snapshot, model);
+  }
+  return model;
+}
+
 /** Rank the field's addressable subjects for a query: entries, Beings, fields. An empty query is the field itself. */
 export function searchField(snapshot, query) {
   const reading = fieldReading(snapshot);
   if (reading.state !== 'available') return [];
+  const worldLabel = new Map(reading.worlds.map((world) => [world.world_ref, world.label]));
   const results = [];
-  for (const world of reading.worlds) {
-    const rows = world.root ? [world.root, ...world.entries] : world.entries;
-    for (const entry of rows) {
-      const s = score(query, [entry.label, entry.ref, entry.kind, entry.summary, ...(entry.aliases ?? []), world.label]);
-      if (s > 0) results.push({ kind: 'entry', ref: entry.ref, label: entry.label, summary: entry.summary, subject_kind: entry.kind, world_ref: world.world_ref, world_label: world.label, entry, score: s });
+  // Entries through the shared application/read model: same refs, same
+  // ranking family, same eligible-presentation reveal the web and agents see.
+  let entryRows = [];
+  try {
+    entryRows = fieldModel(snapshot).search(query, { limit: 64 });
+  } catch {
+    // A presentation payload the model refuses degrades to the plain entry
+    // index — addressability is never gated on presentation resolution.
+    try {
+      entryRows = createExploreApplication({
+        entries: Array.isArray(snapshot?.entries) ? snapshot.entries : [],
+        relations: Array.isArray(snapshot?.relations) ? snapshot.relations : [],
+        ...(snapshot?.entry_fields && typeof snapshot.entry_fields === 'object'
+          ? { membership: { entry_fields: snapshot.entry_fields, relation_fields: snapshot.relation_fields ?? {} } }
+          : {}),
+      }).search(query, { limit: 64 });
+    } catch {
+      entryRows = [];
     }
+  }
+  for (const result of entryRows) {
+    results.push({
+      kind: 'entry',
+      ref: result.ref,
+      label: result.label,
+      summary: result.summary,
+      subject_kind: result.kind,
+      world_ref: result.world_ref,
+      world_label: worldLabel.get(result.world_ref) ?? result.world_ref,
+      ...(result.presentations ? { presentations: result.presentations } : {}),
+      ...(result.field_refs ? { field_refs: result.field_refs } : {}),
+      score: result.score,
+    });
   }
   for (const being of reading.beings) {
     const s = score(query, [being.label, being.ref, being.identity?.ref, 'participant', 'being']);

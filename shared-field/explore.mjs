@@ -1,6 +1,7 @@
 export const EXPLORE_ENTRY_SCHEMA = 'oi.explore-entry/v1';
 export const EXPLORE_RELATION_VIEW_SCHEMA = 'oi.explore-relation-view/v1';
 export const EXPLORE_RESULT_SCHEMA = 'oi.explore-result/v1';
+export const EXPLORE_MEMBERSHIP_SCHEMA = 'oi.explore-membership/v1';
 
 function clone(value) {
   return value === undefined ? undefined : JSON.parse(JSON.stringify(value));
@@ -119,9 +120,32 @@ function scoreCandidate(query, entry) {
   return score;
 }
 
+function validateMembership(input) {
+  if (input === undefined || input === null) return undefined;
+  requireRecord(input, 'membership');
+  const map = (value, name) => {
+    requireRecord(value, name);
+    const result = {};
+    for (const [key, field] of Object.entries(value)) {
+      requireString(key, `${name} key`);
+      requireString(field, `${name}[${key}]`);
+      result[key] = field;
+    }
+    return result;
+  };
+  const entry_fields = map(input.entry_fields ?? {}, 'membership.entry_fields');
+  const relation_fields = map(input.relation_fields ?? {}, 'membership.relation_fields');
+  return {
+    schema: EXPLORE_MEMBERSHIP_SCHEMA,
+    entry_fields,
+    relation_fields,
+  };
+}
+
 export function createExploreApplication(seed = {}) {
   const entries = new Map();
   const relationEdges = (seed.relations ?? []).map(validateRelation);
+  const membership = validateMembership(seed.membership);
 
   for (const rawEntry of seed.entries ?? []) {
     const entry = createExploreEntry(rawEntry);
@@ -134,9 +158,40 @@ export function createExploreApplication(seed = {}) {
     if (!entries.has(relation.to)) throw new TypeError(`Unknown relation target: ${relation.to}`);
   }
 
+  // Typed relation adjacency, derived once at index build: ref -> touching
+  // edges, direction preserved. The index is derived and fully rebuildable;
+  // the edges themselves stay the only relation state.
+  const outgoing = new Map();
+  const incoming = new Map();
+  for (const edge of relationEdges) {
+    if (!outgoing.has(edge.from)) outgoing.set(edge.from, []);
+    if (!incoming.has(edge.to)) incoming.set(edge.to, []);
+    outgoing.get(edge.from).push(edge);
+    incoming.get(edge.to).push(edge);
+  }
+
+  // Alias -> ref resolution, derived from the entries' own admitted aliases.
+  // Aliases are discovery aids, never a second identity: resolution returns
+  // the canonical entry.
+  const aliasIndex = new Map();
+  for (const entry of entries.values()) {
+    for (const alias of entry.aliases) {
+      const key = normalize(alias);
+      if (key && !aliasIndex.has(key)) aliasIndex.set(key, entry.ref);
+    }
+  }
+
   function resolve(ref) {
     requireString(ref, 'ref');
     return clone(entries.get(ref));
+  }
+
+  function resolveRefOrAlias(refOrAlias) {
+    requireString(refOrAlias, 'ref');
+    const direct = entries.get(refOrAlias);
+    if (direct) return clone(direct);
+    const alias = aliasIndex.get(normalize(refOrAlias));
+    return alias ? clone(entries.get(alias)) : undefined;
   }
 
   function resolveLocator(locator, options = {}) {
@@ -148,6 +203,12 @@ export function createExploreApplication(seed = {}) {
       if (matched) return clone(entry);
     }
     return undefined;
+  }
+
+  function fieldsFor(ref) {
+    if (!membership) return [];
+    const field = membership.entry_fields[ref];
+    return field ? [field] : [];
   }
 
   function search(query = '', options = {}) {
@@ -170,6 +231,8 @@ export function createExploreApplication(seed = {}) {
         ...(entry.revision ? { revision: entry.revision } : {}),
         provenance: clone(entry.provenance),
         locators: clone(entry.locators),
+        ...(entry.projection_ref ? { projection_ref: entry.projection_ref } : {}),
+        ...(membership && membership.entry_fields[entry.ref] ? { field_refs: [membership.entry_fields[entry.ref]] } : {}),
         score,
       }));
     return results;
@@ -177,7 +240,8 @@ export function createExploreApplication(seed = {}) {
 
   function relationsFor(ref) {
     requireString(ref, 'ref');
-    return relationEdges.filter((edge) => edge.from === ref || edge.to === ref).map(clone);
+    const touching = [...(outgoing.get(ref) ?? []), ...(incoming.get(ref) ?? [])];
+    return touching.map(clone);
   }
 
   function localWhole(focusRef, options = {}) {
@@ -188,16 +252,18 @@ export function createExploreApplication(seed = {}) {
 
     const selected = new Set([focusRef]);
     const selectedEdges = [];
+    const seenEdges = new Set();
     let frontier = [focusRef];
     let truncated = false;
 
     for (let currentDepth = 0; currentDepth < depth && frontier.length; currentDepth += 1) {
       const next = [];
       for (const ref of frontier) {
-        for (const edge of relationEdges) {
-          if (edge.from !== ref && edge.to !== ref) continue;
+        for (const edge of [...(outgoing.get(ref) ?? []), ...(incoming.get(ref) ?? [])]) {
           const neighbour = edge.from === ref ? edge.to : edge.from;
-          if (!selectedEdges.some((existing) => existing.from === edge.from && existing.to === edge.to && existing.relation === edge.relation)) {
+          const edgeKey = `${edge.from}\u0000${edge.to}\u0000${edge.relation}`;
+          if (!seenEdges.has(edgeKey)) {
+            seenEdges.add(edgeKey);
             selectedEdges.push(clone(edge));
           }
           if (!selected.has(neighbour)) {
@@ -237,6 +303,9 @@ export function createExploreApplication(seed = {}) {
   function explain(ref) {
     const resource = resolve(ref);
     if (!resource) return undefined;
+    // The Projection an entry names rides `meta.projection_ref` for
+    // publication-carried entries; surface it as Projection identity either way.
+    const projectionRef = resource.projection_ref ?? resource.meta?.projection_ref;
     return {
       ref: resource.ref,
       kind: resource.kind,
@@ -249,7 +318,7 @@ export function createExploreApplication(seed = {}) {
       },
       provenance: clone(resource.provenance),
       transport_locators: clone(resource.locators),
-      ...(resource.projection_ref ? { projection_ref: resource.projection_ref } : {}),
+      ...(projectionRef ? { projection_ref: projectionRef } : {}),
     };
   }
 
@@ -259,6 +328,7 @@ export function createExploreApplication(seed = {}) {
     return {
       resource,
       relations: localWhole(ref, options),
+      ...(membership && membership.entry_fields[ref] ? { field_refs: [membership.entry_fields[ref]] } : {}),
       actions: ['open', 'inspect', 'traverse'],
     };
   }
@@ -272,12 +342,14 @@ export function createExploreApplication(seed = {}) {
 
   return Object.freeze({
     resolve,
+    resolveRefOrAlias,
     resolveLocator,
     search,
     read: resolve,
     relations: localWhole,
     relationsFor,
     localWhole,
+    fieldsFor,
     sources,
     explain,
     open,

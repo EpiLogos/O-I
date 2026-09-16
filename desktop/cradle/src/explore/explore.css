@@ -50,6 +50,8 @@
 .explore-results strong { font-weight: 500; color: var(--oi-accent-ink); }
 .explore-results small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); white-space: nowrap; }
 .explore-result-summary { grid-column: 2; color: var(--oi-muted); font-size: var(--oi-shell-type-meta); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.explore-result-roles { flex: none; font-size: var(--oi-shell-type-meta); letter-spacing: var(--oi-shell-tracking); text-transform: uppercase; color: var(--oi-accent-ink); }
+.explore-result-presentations { grid-column: 2; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); white-space: nowrap; }
 .explore-muted { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
 .explore-unavailable-field { padding: var(--oi-space-6) var(--oi-space-5); max-width: 62ch; }
 .explore-unavailable-field [role="status"] { margin: 0 0 var(--oi-space-2); color: var(--oi-accent-ink); }

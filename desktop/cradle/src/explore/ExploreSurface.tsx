@@ -38,7 +38,7 @@ import "./explore.css";
 
 type Snapshot=SharedFieldSnapshot|SharedFieldUnavailable;
 interface FieldView {state:"available"|"unavailable";detail?:string;target?:{name:string;uri:string;database:string};status?:{healthy?:boolean;transport?:{state?:string}};worlds:{world_ref:string;label:string;root:HostedEntry|null;entries:HostedEntry[]}[];beings:{ref:string;label:string;world_ref:string|null;field_ref:string;identity:{kind:string;ref:string};participant:HostedParticipant}[];fields:HostedField[];relations:{relation_ref?:string;field_ref?:string;from:string;to:string;relation:string;origin:string}[];counts:{entries:number;worlds:number;beings:number}}
-type Hit={kind:"entry"|"being"|"field";ref:string;label:string;summary?:string;subject_kind:string;world_ref:string|null;world_label:string};
+type Hit={kind:"entry"|"being"|"field";ref:string;label:string;summary?:string;subject_kind:string;world_ref:string|null;world_label:string;presentations?:{roles?:{role:string;presentation_ref:string}[];expressions?:string[];world_presentations?:string[];projections?:string[];field_occurrences?:string[]};field_refs?:string[]};
 
 export interface ExploreSurfaceProps {binding:SurfaceBinding;onOpenPresentation?:(ref:string,title:string,meta:PresentationMeta)=>Promise<void>;onOpenExplore?:(select:{ref:string;title?:string})=>Promise<void>}
 
@@ -161,7 +161,7 @@ export function ExploreSurface({binding,onOpenPresentation,onOpenExplore}:Explor
           </svg>
         </div>
         <ol className="explore-results" aria-label={visit.query?`Results for ${visit.query}`:"The open field"}>
-          {hits.map(hit=><li key={`${hit.kind}:${hit.ref}`} data-explore-ref={hit.ref} data-kind={hit.subject_kind}><button type="button" onClick={()=>select(hit.ref)}><span className="explore-result-kind">{kindLabel(hit.subject_kind)}</span><strong>{hit.label}</strong>{hit.summary&&<span className="explore-result-summary">{hit.summary}</span>}<small>{hit.world_label}</small></button></li>)}
+          {hits.map(hit=><li key={`${hit.kind}:${hit.ref}`} data-explore-ref={hit.ref} data-kind={hit.subject_kind}>{(()=>{const roles=[...new Set(hit.presentations?.roles?.map(role=>role.role)??[])];return <button type="button" onClick={()=>select(hit.ref)}><span className="explore-result-kind">{kindLabel(hit.subject_kind)}</span>{roles.length>0&&<span className="explore-result-roles" data-roles={roles.join(" ")}>{roles.join(" · ")}</span>}<strong>{hit.label}</strong>{hit.summary&&<span className="explore-result-summary">{hit.summary}</span>}{hit.presentations&&hit.presentations.expressions&&hit.presentations.expressions.length>0&&<span className="explore-result-presentations" data-expressions={hit.presentations.expressions.length}>{hit.presentations.expressions.length===1?"1 Expression":`${hit.presentations.expressions.length} Expressions`}</span>}{hit.field_refs&&hit.field_refs.length>0&&<small>{hit.world_label} · {hit.field_refs.length===1?"1 field":`${hit.field_refs.length} fields`}</small>}{!(hit.field_refs&&hit.field_refs.length)&&<small>{hit.world_label}</small>}</button>;})()}</li>)}
           {!hits.length&&<li className="explore-muted">{visit.query?`Nothing in the field matches “${visit.query}”.`:"The field holds no projected subjects yet."}</li>}
         </ol>
       </div>}
