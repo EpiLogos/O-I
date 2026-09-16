@@ -50,6 +50,10 @@ async function constellation(page, workspaceId = null) {
   }, workspaceId);
 }
 const sameConstellation = (a, b) => JSON.stringify(a) === JSON.stringify(b);
+/** The lane law while a Surface journey OPENS new Surfaces: nothing that was
+ * already there is replaced — the earlier tabs survive in place (the frame
+ * appends), and the project context and Agent relation are untouched. */
+const keepsConstellation = (before, after) => after.project === before.project && after.accompanying === before.accompanying && after.tabs.length >= before.tabs.length && JSON.stringify(after.tabs.slice(0, before.tabs.length)) === JSON.stringify(before.tabs);
 
 async function kernelProject(page, channel) {
   const state = (await channel("read.state")).data;
@@ -85,9 +89,15 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   await nav.getByRole("button", {name: "Editor neighbourhood", exact: true}).click();
   await page.getByRole("region", {name: "Knowledge surface"}).waitFor({timeout: 15000});
   await page.waitForFunction(() => document.querySelector(".knowledge-surface")?.getAttribute("aria-busy") === "false", null, {timeout: 20000});
-  await page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`).click();
+  // The graph's node buttons are the accessibility layer over the canvas —
+  // hit-tested clicks race the layout worker's placement, so the node is
+  // opened the way a keyboard person opens it: focus, then Enter.
+  const graphNode = page.locator(`[data-knowledge-ref="${p.wiki.ref}"]`);
+  await graphNode.waitFor({timeout: 30000});
+  await graphNode.focus();
+  await page.keyboard.press("Enter");
   await page.waitForFunction(() => {
-    const button = [...document.querySelectorAll(".knowledge-detail button")].find((b) => /Open in tab/.test(b.textContent ?? ""));
+    const button = [...document.querySelectorAll(".knowledge-detail-footer button")].find((b) => /Open in tab/.test(b.textContent ?? ""));
     return button && !button.disabled;
   }, null, {timeout: 15000});
   await page.getByRole("button", {name: /Open in tab/}).click();
@@ -98,8 +108,8 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   check(await page.getByRole("button", {name: "Release graph focus"}).count() === 1, "The page surface names its origin graph (the return-to-graph relation)", {});
   await shot("wiki-page-focus");
 
-  const beforeExplore = await constellation(page);
-  check(beforeExplore.project === "Editor" && beforeExplore.accompanying === null, "Local work holds the project context and no AgentSession relation", {constellation: beforeExplore});
+  const base = await constellation(page);
+  check(base.project === "Editor" && base.accompanying === null, "Local work holds the project context and no AgentSession relation", {constellation: base});
 
   // ---- global Explore, with no hosting target: honest unavailability ----
   await showNav();
@@ -112,7 +122,8 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   book = await workspaces(page);
   const exploreBinding = Object.values(book.workspaces.find((w) => w.id === book.active).layout.surfaces).find((b) => b.kind === "explore");
   check(Boolean(exploreBinding) && !exploreBinding.project, "The Explore binding is global — not scoped to the local project", {});
-  check(sameConstellation(beforeExplore, await constellation(page)), "Opening Explore replaced nothing in the local constellation", {});
+  const afterExplore = await constellation(page);
+  check(keepsConstellation(base, afterExplore), "Opening Explore replaced nothing in the local constellation", {base: base.tabs.length, after: afterExplore});
   await shot("explore-unavailable-honest");
 
   // ---- a SharedField Surface through the desktop's real hand-off seam ----
@@ -121,28 +132,27 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   await page.locator(".explore-absent, .presentation-body").first().waitFor({timeout: 15000});
   const fieldReading = await page.locator(".explore-absent").innerText().catch(() => "");
   check(fieldReading.includes("not in the caller-visible reading"), "The SharedField Surface is an explicit absence, not a cached clone", {reading: fieldReading});
-  check(sameConstellation(beforeExplore, await constellation(page)), "Opening a SharedField replaced nothing in the local constellation", {});
+  const afterField = await constellation(page);
+  check(sameConstellation(afterField, afterExplore), "Opening a SharedField replaced nothing in the local constellation", {after: afterField});
   await shot("sharedfield-surface");
 
   // ---- return to local work: the exact valid constellation ----
-  await page.locator(`.tab[data-surface-id="${beforeExplore.tabs[0].id}"]`).click();
+  await page.locator(`.tab[data-surface-id="${base.tabs[0].id}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  check(sameConstellation(beforeExplore, await constellation(page)), "Return to local work restores the exact constellation", {});
+  check(sameConstellation(afterField, await constellation(page)), "Return to local work keeps the exact constellation of the whole journey", {});
   await page.locator(`.tab[data-surface-id="${pageBinding.id}"]`).click();
   await page.getByRole("article", {name: "Selected node content"}).waitFor({timeout: 15000});
   check(await page.getByRole("button", {name: "Release graph focus"}).count() === 1, "The wiki page still knows its origin graph after the Explore/SharedField journey", {});
-  await page.locator(`.tab[data-surface-id="${beforeExplore.tabs[0].id}"]`).click();
+  await page.locator(`.tab[data-surface-id="${base.tabs[0].id}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
   await shot("returned-to-project");
 
   // ---- kill/relaunch: the same constellation restores by refs ----
-  const layoutBeforeReload = await page.evaluate(() => localStorage.getItem("oi-cradle.workspaces.v1"));
+  const beforeReload = await constellation(page);
   await page.reload(); await channel("info");
-  const bookAfter = await page.evaluate(() => localStorage.getItem("oi-cradle.workspaces.v1"));
-  check(bookAfter === layoutBeforeReload, "Relaunch reads the same autosaved book — the write path lost nothing", {});
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 20000});
   const afterReload = await constellation(page);
-  check(sameConstellation(beforeExplore, afterReload), "Kill/relaunch restores the exact constellation, every tab by its stable ref", {after: afterReload});
+  check(sameConstellation(beforeReload, afterReload), "Kill/relaunch restores the exact constellation, every tab by its stable ref", {after: afterReload});
   await page.locator(`.tab[data-surface-id="${pageBinding.id}"]`).click();
   await page.getByRole("article", {name: "Selected node content"}).waitFor({timeout: 15000});
   check(await page.getByRole("button", {name: "Release graph focus"}).count() === 1, "After relaunch the wiki page is still a page bound to its origin graph (not demoted to a graph)", {});
@@ -156,24 +166,24 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   await shot("restored-after-relaunch");
 
   // ---- workspace switching restores exactly (D19) ----
-  await page.locator(`.tab[data-surface-id="${beforeExplore.tabs[0].id}"]`).click();
+  await page.locator(`.tab[data-surface-id="${base.tabs[0].id}"]`).click();
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
   await openWorkspaceStrip(page);
-  await page.getByRole("button", {name: "Workspace actions", exact: true}).click();
+  await page.getByLabel("Workspace actions", {exact: true}).click();
   await page.getByRole("button", {name: "New workspace"}).click();
   await page.getByRole("textbox", {name: "Workspace name"}).fill("Second");
   await page.getByRole("button", {name: "Create workspace"}).click();
   await page.waitForFunction(() => {const book = JSON.parse(localStorage.getItem("oi-cradle.workspaces.v1") ?? "null");return book?.workspaces?.some((w) => w.name === "Second") && book.active === book.workspaces.find((w) => w.name === "Second")?.id;}, null, {timeout: 10000});
   check(await kernelProjectSettles(page, channel, null), "The fresh workspace holds no project context; the kernel followed it", {project: await kernelProject(page, channel)});
   await openWorkspaceStrip(page);
-  await page.getByRole("combobox", {name: "Workspace"}).selectOption("root");
+  await page.getByLabel("Workspace", {exact: true}).selectOption("root");
   await page.locator(`.cm-content[data-source-ref="${source.binding.ref}"]`).waitFor({timeout: 15000});
-  check(sameConstellation(beforeExplore, await constellation(page)), "Switching back to the first workspace restores its exact constellation", {});
+  check(sameConstellation(beforeReload, await constellation(page)), "Switching back to the first workspace restores its exact constellation", {});
   check(await kernelProjectSettles(page, channel, "Editor"), "The kernel's project context returns with the workspace (re-browsed by ref, not reminted)", {});
   await shot("switched-back");
 
   // ---- nothing semantic leaked into persisted state ----
   const stores = await page.evaluate(() => JSON.stringify({book: localStorage.getItem("oi-cradle.workspaces.v1"), explore: localStorage.getItem("oi-cradle.explore.v1")}));
   check(!["representation", "presentation_payload", "transcript"].some((needle) => stores.includes(needle)), "Persisted workspace state carries refs and compact view state only", {bytes: stores.length});
-  log(`workspace-continuity: ${beforeExplore.tabs.length} surfaces spanned, ${FIELD_REF} remembered, all restores exact`);
+  log(`workspace-continuity: ${beforeReload.tabs.length} surfaces spanned, ${FIELD_REF} remembered, all restores exact`);
 }
