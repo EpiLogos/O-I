@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "shell-recovery",
-  "generated_at": "2026-09-15T17:47:07.822Z",
+  "generated_at": "2026-09-16T02:11:10.677Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,58 +11,12 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
-      "repository_head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
       "tracked_changes": [
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-CONTINUATION-2026-09-15.md",
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-RECEIPT-2026-09-15.md",
-        "desktop/cradle/src/contributions/factory/contribution.json",
-        "desktop/cradle/src/stage/engineSurface.ts",
-        "desktop/cradle/src/visuals/store.ts",
-        "desktop/cradle/tests/theme-prepaint-csp.mjs",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
-        "desktop/cradle/walk/artifacts/expression-controls.json",
-        "desktop/cradle/walk/artifacts/instrument-failure.png",
-        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
-        "desktop/cradle/walk/artifacts/instrument-host.json",
-        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
-        "desktop/cradle/walk/artifacts/instrument.json",
-        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression.json",
-        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
-        "desktop/cradle/walk/artifacts/refinement.json",
-        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery.json",
-        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
-        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
-        "desktop/cradle/walk/artifacts/surfaces.json",
         "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
         "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/owner-verification/portable-files.json",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-dark-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png",
         "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-dark.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-light.png",
-        "desktop/cradle/walk/artifacts/welcome-failure.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
-        "desktop/cradle/walk/artifacts/welcome.json",
-        "desktop/cradle/walk/scenarios/instrument-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument-native-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument.mjs",
-        "desktop/cradle/walk/scenarios/knowledge-expression.mjs",
-        "desktop/cradle/walk/scenarios/welcome.mjs"
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -71,7 +25,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 3460,
+  "duration_ms": 11502,
   "checks": [
     {
       "ok": true,
@@ -225,7 +179,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T17:47:07.895Z",
+        "mounted_at": "2026-09-16T02:11:10.808Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -239,7 +193,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T17:47:08.934Z",
+        "mounted_at": "2026-09-16T02:11:11.455Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -265,32 +219,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "680e7d1a-ad26-404c-8b9b-375a93ca816f"
+                  "af06bdaf-b23d-475b-9d71-30b13e6476bf"
                 ],
                 "pinned": [],
-                "active": "680e7d1a-ad26-404c-8b9b-375a93ca816f"
+                "active": "af06bdaf-b23d-475b-9d71-30b13e6476bf"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "fbcbea7f-03a7-4f9e-bdad-932ecf80651a"
+                  "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032"
                 ],
                 "pinned": [],
-                "active": "fbcbea7f-03a7-4f9e-bdad-932ecf80651a"
+                "active": "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032"
               }
             ]
           },
           "surfaces": {
-            "680e7d1a-ad26-404c-8b9b-375a93ca816f": {
+            "af06bdaf-b23d-475b-9d71-30b13e6476bf": {
               "project": "Editor",
-              "id": "680e7d1a-ad26-404c-8b9b-375a93ca816f",
+              "id": "af06bdaf-b23d-475b-9d71-30b13e6476bf",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "fbcbea7f-03a7-4f9e-bdad-932ecf80651a": {
-              "id": "fbcbea7f-03a7-4f9e-bdad-932ecf80651a",
+            "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032": {
+              "id": "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -309,7 +263,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 49,
       "data": {
         "file": "shell-recovery-1280.png"
       }
@@ -317,7 +271,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 28,
+      "duration_ms": 45,
       "data": {
         "file": "shell-recovery-900.png"
       }
@@ -325,7 +279,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 32,
       "data": {
         "file": "shell-recovery-760.png"
       }
@@ -333,7 +287,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 22,
       "data": {
         "file": "shell-recovery-639.png"
       }
@@ -341,7 +295,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 20,
       "data": {
         "file": "shell-recovery-390.png"
       }
@@ -364,32 +318,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "680e7d1a-ad26-404c-8b9b-375a93ca816f"
+                  "af06bdaf-b23d-475b-9d71-30b13e6476bf"
                 ],
                 "pinned": [],
-                "active": "680e7d1a-ad26-404c-8b9b-375a93ca816f"
+                "active": "af06bdaf-b23d-475b-9d71-30b13e6476bf"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "fbcbea7f-03a7-4f9e-bdad-932ecf80651a"
+                  "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032"
                 ],
                 "pinned": [],
-                "active": "fbcbea7f-03a7-4f9e-bdad-932ecf80651a"
+                "active": "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032"
               }
             ]
           },
           "surfaces": {
-            "680e7d1a-ad26-404c-8b9b-375a93ca816f": {
+            "af06bdaf-b23d-475b-9d71-30b13e6476bf": {
               "project": "Editor",
-              "id": "680e7d1a-ad26-404c-8b9b-375a93ca816f",
+              "id": "af06bdaf-b23d-475b-9d71-30b13e6476bf",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "fbcbea7f-03a7-4f9e-bdad-932ecf80651a": {
-              "id": "fbcbea7f-03a7-4f9e-bdad-932ecf80651a",
+            "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032": {
+              "id": "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -423,32 +377,32 @@
                 "type": "group",
                 "id": "g1",
                 "tabs": [
-                  "680e7d1a-ad26-404c-8b9b-375a93ca816f"
+                  "af06bdaf-b23d-475b-9d71-30b13e6476bf"
                 ],
                 "pinned": [],
-                "active": "680e7d1a-ad26-404c-8b9b-375a93ca816f"
+                "active": "af06bdaf-b23d-475b-9d71-30b13e6476bf"
               },
               {
                 "type": "group",
                 "id": "g2",
                 "tabs": [
-                  "fbcbea7f-03a7-4f9e-bdad-932ecf80651a"
+                  "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032"
                 ],
                 "pinned": [],
-                "active": "fbcbea7f-03a7-4f9e-bdad-932ecf80651a"
+                "active": "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032"
               }
             ]
           },
           "surfaces": {
-            "680e7d1a-ad26-404c-8b9b-375a93ca816f": {
+            "af06bdaf-b23d-475b-9d71-30b13e6476bf": {
               "project": "Editor",
-              "id": "680e7d1a-ad26-404c-8b9b-375a93ca816f",
+              "id": "af06bdaf-b23d-475b-9d71-30b13e6476bf",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md"
             },
-            "fbcbea7f-03a7-4f9e-bdad-932ecf80651a": {
-              "id": "fbcbea7f-03a7-4f9e-bdad-932ecf80651a",
+            "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032": {
+              "id": "eb48bc9b-d9f6-44c5-8aaa-98e8dbd25032",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
               "project": "Editor",
@@ -467,7 +421,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 43,
       "data": {
         "file": "shell-recovery-system-1280.png"
       }
@@ -475,7 +429,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 38,
       "data": {
         "file": "shell-recovery-system-900.png"
       }

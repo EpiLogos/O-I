@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "instrument",
-  "generated_at": "2026-09-15T17:41:52.976Z",
+  "generated_at": "2026-09-16T02:14:23.007Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,30 +11,13 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
-      "repository_head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
       "tracked_changes": [
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-CONTINUATION-2026-09-15.md",
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-RECEIPT-2026-09-15.md",
-        "desktop/cradle/src/contributions/factory/contribution.json",
-        "desktop/cradle/src/stage/engineSurface.ts",
-        "desktop/cradle/src/visuals/store.ts",
-        "desktop/cradle/tests/theme-prepaint-csp.mjs",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
-        "desktop/cradle/walk/artifacts/expression-controls.json",
-        "desktop/cradle/walk/artifacts/instrument-failure.png",
-        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
-        "desktop/cradle/walk/artifacts/instrument-host.json",
-        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
-        "desktop/cradle/walk/artifacts/instrument.json",
         "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
         "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
         "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
         "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
         "desktop/cradle/walk/artifacts/knowledge-expression.json",
-        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
-        "desktop/cradle/walk/artifacts/refinement.json",
         "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
         "desktop/cradle/walk/artifacts/shell-recovery-390.png",
         "desktop/cradle/walk/artifacts/shell-recovery-639.png",
@@ -43,26 +26,10 @@
         "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
         "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
         "desktop/cradle/walk/artifacts/shell-recovery.json",
-        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
-        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
-        "desktop/cradle/walk/artifacts/surfaces.json",
         "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
         "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/owner-verification/portable-files.json",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-dark-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png",
         "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-dark.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-light.png",
-        "desktop/cradle/walk/artifacts/welcome-failure.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
-        "desktop/cradle/walk/artifacts/welcome.json",
-        "desktop/cradle/walk/scenarios/instrument-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument-native-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument.mjs",
-        "desktop/cradle/walk/scenarios/knowledge-expression.mjs",
-        "desktop/cradle/walk/scenarios/welcome.mjs"
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -71,7 +38,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5943,
+  "duration_ms": 6163,
   "checks": [
     {
       "ok": true,
@@ -138,10 +105,10 @@
         "paused": true,
         "live": true,
         "scheduled": false,
-        "frames": 80,
+        "frames": 82,
         "presentations": [
           {
-            "id": "k9:197659c2-90fe-42c2-88e4-8d701f4a60b2",
+            "id": "k9:6e6b3a7f-07d9-4513-8945-bff94f48a94d",
             "plane": "ambient"
           }
         ],
@@ -181,7 +148,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T17:41:53.048Z",
+        "mounted_at": "2026-09-16T02:14:23.073Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -192,7 +159,7 @@
     {
       "ok": false,
       "op": "instrument.requestOpen",
-      "duration_ms": 0.6,
+      "duration_ms": 0.5,
       "error": "Error: Focused instrument source ql:controlled-focused is not registered"
     },
     {
@@ -206,7 +173,7 @@
     {
       "ok": true,
       "op": "instrument.requestOpen",
-      "duration_ms": 0,
+      "duration_ms": 0.2,
       "data": {
         "requested": true
       }
@@ -214,7 +181,7 @@
     {
       "ok": true,
       "op": "instrument.read",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "registered": true,
         "available": true,
@@ -276,7 +243,7 @@
     {
       "ok": true,
       "op": "instrument.unregister",
-      "duration_ms": 0.2,
+      "duration_ms": 0,
       "data": {
         "registered": false
       }
@@ -284,7 +251,7 @@
     {
       "ok": true,
       "op": "instrument.register",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "ref": "ql:controlled-focused"
       }
@@ -300,15 +267,15 @@
     {
       "ok": true,
       "op": "read.stage",
-      "duration_ms": 0.2,
+      "duration_ms": 0.3,
       "data": {
         "paused": true,
         "live": true,
         "scheduled": false,
-        "frames": 80,
+        "frames": 82,
         "presentations": [
           {
-            "id": "k9:197659c2-90fe-42c2-88e4-8d701f4a60b2",
+            "id": "k9:6e6b3a7f-07d9-4513-8945-bff94f48a94d",
             "plane": "ambient"
           }
         ],
@@ -326,15 +293,15 @@
     {
       "ok": true,
       "op": "read.stage",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "paused": false,
         "live": true,
         "scheduled": true,
-        "frames": 89,
+        "frames": 92,
         "presentations": [
           {
-            "id": "k9:197659c2-90fe-42c2-88e4-8d701f4a60b2",
+            "id": "k9:6e6b3a7f-07d9-4513-8945-bff94f48a94d",
             "plane": "ambient"
           }
         ],
@@ -344,7 +311,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 148,
+      "duration_ms": 157,
       "data": {
         "file": "instrument-instrument-focused.png"
       }
@@ -352,10 +319,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T17:41:57.192Z",
+        "mounted_at": "2026-09-16T02:14:27.238Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -366,7 +333,7 @@
     {
       "ok": true,
       "op": "instrument.register",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "ref": "ql:controlled-focused"
       }

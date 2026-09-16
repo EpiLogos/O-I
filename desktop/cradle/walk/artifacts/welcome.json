@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "welcome",
-  "generated_at": "2026-09-15T17:46:05.440Z",
+  "generated_at": "2026-09-16T02:14:02.944Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,30 +11,13 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
-      "repository_head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
       "tracked_changes": [
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-CONTINUATION-2026-09-15.md",
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-RECEIPT-2026-09-15.md",
-        "desktop/cradle/src/contributions/factory/contribution.json",
-        "desktop/cradle/src/stage/engineSurface.ts",
-        "desktop/cradle/src/visuals/store.ts",
-        "desktop/cradle/tests/theme-prepaint-csp.mjs",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
-        "desktop/cradle/walk/artifacts/expression-controls.json",
-        "desktop/cradle/walk/artifacts/instrument-failure.png",
-        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
-        "desktop/cradle/walk/artifacts/instrument-host.json",
-        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
-        "desktop/cradle/walk/artifacts/instrument.json",
         "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
         "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
         "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
         "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
         "desktop/cradle/walk/artifacts/knowledge-expression.json",
-        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
-        "desktop/cradle/walk/artifacts/refinement.json",
         "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
         "desktop/cradle/walk/artifacts/shell-recovery-390.png",
         "desktop/cradle/walk/artifacts/shell-recovery-639.png",
@@ -43,26 +26,10 @@
         "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
         "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
         "desktop/cradle/walk/artifacts/shell-recovery.json",
-        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
-        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
-        "desktop/cradle/walk/artifacts/surfaces.json",
         "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
         "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/owner-verification/portable-files.json",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-dark-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png",
         "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-dark.png",
-        "desktop/cradle/walk/artifacts/ui-convergence/workspace-system-light.png",
-        "desktop/cradle/walk/artifacts/welcome-failure.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
-        "desktop/cradle/walk/artifacts/welcome.json",
-        "desktop/cradle/walk/scenarios/instrument-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument-native-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument.mjs",
-        "desktop/cradle/walk/scenarios/knowledge-expression.mjs",
-        "desktop/cradle/walk/scenarios/welcome.mjs"
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -71,7 +38,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 20201,
+  "duration_ms": 18910,
   "checks": [
     {
       "ok": true,
@@ -124,16 +91,16 @@
         "width": 1280,
         "height": 574,
         "minX": 293,
-        "minY": 70,
-        "maxX": 961,
+        "minY": 71,
+        "maxX": 962,
         "maxY": 570,
-        "count": 69585,
+        "count": 69535,
         "background": [
           18,
           18,
           17
         ],
-        "lightInkPixels": 57439,
+        "lightInkPixels": 57349,
         "darkInkPixels": 0,
         "maxContrast": 12.067601898864037
       }
@@ -145,16 +112,16 @@
         "width": 1280,
         "height": 574,
         "minX": 293,
-        "minY": 70,
-        "maxX": 961,
+        "minY": 71,
+        "maxX": 962,
         "maxY": 570,
-        "count": 69585,
+        "count": 69535,
         "background": [
           18,
           18,
           17
         ],
-        "lightInkPixels": 57439,
+        "lightInkPixels": 57349,
         "darkInkPixels": 0,
         "maxContrast": 12.067601898864037
       }
@@ -176,7 +143,7 @@
       "label": "light entry releases only after the rendered tail",
       "data": {
         "name": "welcome.enter",
-        "elapsed": 2666.4999999999995,
+        "elapsed": 2649.099999999998,
         "duration": 2600,
         "status": "completed"
       }
@@ -196,17 +163,17 @@
         "width": 1280,
         "height": 574,
         "minX": 293,
-        "minY": 71,
+        "minY": 70,
         "maxX": 961,
         "maxY": 570,
-        "count": 72199,
+        "count": 72129,
         "background": [
           251,
           251,
           249
         ],
         "lightInkPixels": 0,
-        "darkInkPixels": 57159,
+        "darkInkPixels": 56896,
         "maxContrast": 20.02549750095129
       }
     },
@@ -217,17 +184,17 @@
         "width": 1280,
         "height": 574,
         "minX": 293,
-        "minY": 71,
+        "minY": 70,
         "maxX": 961,
         "maxY": 570,
-        "count": 72199,
+        "count": 72129,
         "background": [
           251,
           251,
           249
         ],
         "lightInkPixels": 0,
-        "darkInkPixels": 57159,
+        "darkInkPixels": 56896,
         "maxContrast": 20.02549750095129
       }
     },
@@ -248,7 +215,7 @@
       "label": "dark entry releases only after the rendered tail",
       "data": {
         "name": "welcome.enter",
-        "elapsed": 2666.0999999999995,
+        "elapsed": 2649.1000000000004,
         "duration": 2600,
         "status": "completed"
       }
@@ -286,7 +253,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 51,
       "data": {
         "file": "welcome-welcome-reduced-motion.png"
       }
@@ -294,7 +261,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 311,
+      "duration_ms": 387,
       "data": {
         "file": "welcome-welcome-light-rest.png"
       }
@@ -302,7 +269,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 448,
+      "duration_ms": 276,
       "data": {
         "file": "welcome-welcome-light-explosion.png"
       }
@@ -310,7 +277,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 27,
       "data": {
         "file": "welcome-welcome-light-entered.png"
       }
@@ -318,7 +285,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 325,
+      "duration_ms": 283,
       "data": {
         "file": "welcome-welcome-dark-rest.png"
       }
@@ -326,7 +293,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 302,
+      "duration_ms": 385,
       "data": {
         "file": "welcome-welcome-dark-explosion.png"
       }
@@ -334,15 +301,15 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 15,
+      "duration_ms": 28,
       "data": {
         "file": "welcome-welcome-dark-entered.png"
       }
     }
   ],
   "metrics": {
-    "welcome_light_inverse_ink_pixels": 57439,
-    "welcome_dark_inverse_ink_pixels": 57159
+    "welcome_light_inverse_ink_pixels": 57349,
+    "welcome_dark_inverse_ink_pixels": 56896
   },
   "screenshots": [
     "welcome-welcome-reduced-motion.png",
