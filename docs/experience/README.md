@@ -4,6 +4,8 @@
 
 **One campaign owner: [O:I #65](https://github.com/EpiLogos/O-I/issues/65).** This is its current mainline Wayfinder, not a replacement for native product implementation maps or evidence stores. It gathers the original #97 developer/physical proving, #65 A–I, CAW, terminal/desktop, gateway, knowledge, document, SDK and complete QL obligations.
 
+**Final-phase orientation:** when you need the whole picture before entering a local lane, read [INHABITED-SYSTEM-ORIENTATION.md](INHABITED-SYSTEM-ORIENTATION.md). It indexes the existing UX sources and shows how the parallel harmonise/self-host and Expression/Technē campaigns feed this single C0–C5 channel; it is an orientation layer, not another campaign or source of product meaning.
+
 **The UX map is at the vision level.** The person and agent stories state the intended experience. Capabilities/design explain what enables it; contracts say who owns the operations; plans/tests say what is currently being built or exercised; actual observations and human EX return evidence. A passing test or changed implementation cannot silently redefine the vision. [Document operations](DOCUMENT-OPERATIONS.md) binds these roles to the existing framework and practices without inventing a new document type or mandatory location.
 
 **Standing:** source-grounded elaboration commissioned for publication/refinement, not runtime or human acceptance. The detailed new scenarios remain attributable planning. Existing adopted source retains its standing; QL's separately published UX retains its own H-ratification record. Document counts, source compilation and merge do not supply human adoption or lived proof.
