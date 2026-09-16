@@ -80,6 +80,12 @@ pub fn cli_main() -> ExitCode {
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };
     }
+    if command == Some("update") {
+        return match command_update_flow(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
     if let Some(result) = product_command_route(&args) {
         return match result {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),

@@ -31,6 +31,7 @@ mod composition {
     include!("frontdoor.rs");
     include!("mode_command.rs");
     include!("factory_proving.rs");
+    include!("update_flow.rs");
 }
 
 fn main() -> std::process::ExitCode {

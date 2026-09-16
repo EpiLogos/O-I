@@ -141,7 +141,8 @@ fn print_suite_v2_help() -> Result<(), String> {
     println!("                                establish a personal ground through a compatible Central");
     println!("  oi skills sync                re-project the guardian SkillSet onto the existing ground");
     println!("  oi remove|uninstall <PRODUCT ...>   remove a recorded managed install from this machine (also 'oi suite remove')");
-    println!("  oi update");
+    println!("  oi update [--check|--apply|--rollback] [--json] [PRODUCT ...]");
+    println!("                                managed update from the ground's committed cuts: --check reports only, --apply swaps binaries atomically with receipts, --rollback restores the previous receipt set");
     println!("  oi status [--json]");
     println!("  oi doctor [--all] [--json]");
     println!("  oi verify [--all] [--json]");
