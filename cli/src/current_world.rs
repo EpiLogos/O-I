@@ -85,6 +85,68 @@ pub struct RequestedModeDisclosure {
     pub set_at_unix_seconds: u64,
 }
 
+/// Where one configuration-plane owner stands against the effective
+/// composition (lock §5: requested, installed, effective, active stay
+/// distinct). This is a reading of the world's own facts — the settings
+/// surfaces never re-decide composition; they join an owner ref against the
+/// current-world reading and disclose the result.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+pub enum CompositionStanding {
+    /// The owner holds no product position: `oi` (the doorway, not a product
+    /// position) and connector owners. Always of this world.
+    Unpositioned,
+    /// The product position is present — inside the effective composition.
+    /// Its settings are the owner's own to disclose and operate.
+    InComposition,
+    /// The product position is absent from the effective composition. The
+    /// owner may be disclosed as absent, but nothing of it is addressable:
+    /// no owner that did not contribute has settings to operate, and
+    /// adopting the product is an explicit owner operation that names the
+    /// mode consequence (`oi mode set`, the lifecycle planner).
+    Absent,
+    /// The world reading itself was unavailable; no standing is invented.
+    Unknown,
+}
+
+impl CompositionStanding {
+    /// The wire form carried in settings listings and Desktop mounts.
+    pub fn as_wire(&self) -> &'static str {
+        match self {
+            CompositionStanding::Unpositioned => "unpositioned",
+            CompositionStanding::InComposition => "in_composition",
+            CompositionStanding::Absent => "absent",
+            CompositionStanding::Unknown => "unknown",
+        }
+    }
+}
+
+/// Join one configuration-plane owner ref against the effective composition
+/// (the present positions of a current-world reading). Pure: the law lives
+/// in the world reading, this only reads it. A requested mode that names an
+/// absent product stays a world-level fact — the reading's own shortfall
+/// warnings name the product — so the standing stays one of these four.
+pub fn owner_composition_standing(
+    present_positions: &[u8],
+    owner_ref: &str,
+) -> CompositionStanding {
+    if owner_ref == "oi" || owner_ref.starts_with("connector/") {
+        return CompositionStanding::Unpositioned;
+    }
+    let positioned = PRODUCT_POSITIONS
+        .iter()
+        .find(|(_, product_id, _)| *product_id == owner_ref);
+    let Some((position, _, _)) = positioned else {
+        // An owner outside the canonical positions: no composition fact is
+        // invented for it either way.
+        return CompositionStanding::Unpositioned;
+    };
+    if present_positions.contains(position) {
+        CompositionStanding::InComposition
+    } else {
+        CompositionStanding::Absent
+    }
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 pub struct CurrentMachineRelation {
     pub role: String,
@@ -830,5 +892,66 @@ mod tests {
         assert!(!reading.positions[1].present);
         assert_eq!(reading.positions[1].state, NativeSurfaceState::Broken);
         assert_eq!(mode_of(&reading), None);
+    }
+
+    #[test]
+    fn owner_composition_standing_reads_the_effective_composition() {
+        // The settings × mode interface (lock §5, §7): each owner's standing
+        // is a reading of the world's own present positions — never a second
+        // composition decision, never inferred from a contribution.
+        let present = [0u8, 1, 2]; // mode 0/1/2
+        assert_eq!(
+            owner_composition_standing(&present, "ai-kit"),
+            CompositionStanding::InComposition
+        );
+        assert_eq!(
+            owner_composition_standing(&present, "software-factory"),
+            CompositionStanding::Absent
+        );
+        assert_eq!(
+            owner_composition_standing(&present, "workcell"),
+            CompositionStanding::Absent
+        );
+        // Zero products installed — CF5's own disclosure case: nothing is in
+        // composition, and nothing is invented to change that.
+        for owner in [
+            "central",
+            "actuation",
+            "ai-kit",
+            "software-factory",
+            "workcell",
+            "quaternal-logic",
+        ] {
+            assert_eq!(
+                owner_composition_standing(&[], owner),
+                CompositionStanding::Absent,
+                "{owner}"
+            );
+        }
+    }
+
+    #[test]
+    fn unpositioned_owners_stand_outside_the_product_positions() {
+        // `oi` is the doorway, not a product position (lock §3); connector
+        // owners and any non-canonical owner name carry no position, so no
+        // composition fact is invented for them.
+        for owner in ["oi", "connector/factory-actuation", "someone-else"] {
+            assert_eq!(
+                owner_composition_standing(&[0u8], owner),
+                CompositionStanding::Unpositioned,
+                "{owner}"
+            );
+        }
+    }
+
+    #[test]
+    fn composition_standings_carry_wire_names() {
+        assert_eq!(CompositionStanding::Unpositioned.as_wire(), "unpositioned");
+        assert_eq!(
+            CompositionStanding::InComposition.as_wire(),
+            "in_composition"
+        );
+        assert_eq!(CompositionStanding::Absent.as_wire(), "absent");
+        assert_eq!(CompositionStanding::Unknown.as_wire(), "unknown");
     }
 }

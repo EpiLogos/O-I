@@ -300,6 +300,49 @@ pub struct AppliedChange {
 }
 
 // ---------------------------------------------------------------------------
+// Composition disclosure: the settings × mode interface (lock §5, §7)
+// ---------------------------------------------------------------------------
+
+/// The world a settings surface stands in, carried beside the owners and
+/// settings it lists. Everything here is the current-world reading's own
+/// fact (`oi.current-world/v2`) passed through — the surfaces never
+/// re-decide composition, never infer a mode from a product count, and keep
+/// requested and effective distinct (`install_mode_basis` names which one
+/// is speaking).
+#[derive(Clone, Debug, Default, PartialEq, Eq, Serialize, Deserialize)]
+pub struct CompositionDisclosure {
+    /// The person's recorded mode statement (`oi mode set`), when one
+    /// exists. Never inferred from presence.
+    pub requested_mode: Option<String>,
+    /// The recognised install mode of the reading.
+    pub install_mode: Option<String>,
+    /// How `install_mode` was resolved: `requested` or `effective`.
+    pub install_mode_basis: Option<String>,
+    /// The effective composition: the present product positions.
+    pub present_positions: Vec<u8>,
+    /// The reading's own warnings, verbatim — including the shortfall
+    /// naming when a requested mode is not fully realised (lock §5: the
+    /// request keeps naming the world, degraded).
+    #[serde(default)]
+    pub warnings: Vec<String>,
+    /// When the world reading itself was unavailable: the reason. No
+    /// standings are invented behind this error; consumers treat every
+    /// owner's standing as `unknown`.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
+impl CompositionDisclosure {
+    /// The standing of one owner against this disclosure.
+    pub fn standing_of(&self, owner_ref: &str) -> crate::current_world::CompositionStanding {
+        if self.error.is_some() {
+            return crate::current_world::CompositionStanding::Unknown;
+        }
+        crate::current_world::owner_composition_standing(&self.present_positions, owner_ref)
+    }
+}
+
+// ---------------------------------------------------------------------------
 // Doctor findings (#299 §12)
 // ---------------------------------------------------------------------------
 
@@ -382,6 +425,19 @@ pub trait ConfigSurface {
     /// Owner discovery (09 §4): validated contributions and named
     /// degradations. Never an invented contribution.
     fn discover(&self) -> SurfaceResult<Vec<OwnerContribution>>;
+
+    /// The world this surface stands in (lock §5): the current-world
+    /// reading's own composition facts, with each owner's standing joined
+    /// against them by [`CompositionDisclosure::standing_of`]. Surfaces
+    /// that hold no world reading disclose the honest `error` form.
+    fn composition(&self) -> SurfaceResult<CompositionDisclosure> {
+        Ok(CompositionDisclosure {
+            error: Some(
+                "this configuration surface does not disclose the world composition".to_owned(),
+            ),
+            ..CompositionDisclosure::default()
+        })
+    }
 
     /// Every addressable setting across discovered owners, specs verbatim.
     fn list(&self) -> SurfaceResult<Vec<ListedSetting>>;

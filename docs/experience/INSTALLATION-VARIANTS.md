@@ -34,6 +34,22 @@ These remain branches of AD08/AD09, MC and DV, not a linear upgrade ladder:
 5. **Remove and explain residue.** Preserve pre-existing native programs, personal source and useful artifacts. Revoke only owned access and release only owned resources. A purge of disposable tests needs its own specific authority.
 6. **Historical evidence.** Read an old receipt without relabelling its composition. New readings use the corrected current-world contract; source/time/code changes remain explicit.
 
+## Settings across the six modes (the settings × composition interface)
+
+The unified settings plane — `oi config`, the Desktop Configuration view, the profiles store — renders one world's settings, and every mode sits inside one world. So the mode and the settings are joined by a reading, not by a rule per product. The interface law, stated once:
+
+**The composition facts come from the world, never from the settings.** What is requested (`oi mode set`, never inferred from presence), what is effective (the present positions of `oi.current-world/v2`), which basis is speaking, and the reading's own shortfall warnings are disclosed beside the settings data. The settings surfaces re-decide nothing: no second composition decision, no second settings database, no mode inferred from a contribution or a product count.
+
+**Each owner stands somewhere, and the standing is disclosed.** A product position inside the effective composition renders exactly as its owner discloses — its settings are actionable through the owner's own operations, subject to its own availability probe. A product position outside the effective composition is visible only as disclosure (`absent from the effective composition`): no settings rows, no controls, nothing instantiated behind it. `oi` and connector owners hold no product position and stand inside the world. When the world reading itself is unavailable, every standing reads `unknown` and the reason is named — honest absence, never a guess.
+
+**Absence never hides, and recognition precedes mutation.** An absent product's settings cannot be held, planned, applied or reset from these surfaces — there is nothing to address that no owner contributed, and the view layers gate on the standing so a stray document can never render as an actionable control. Adding the product is an explicit owner operation (`oi mode set`, the lifecycle planner) that names the mode consequence. Reality-exceeds-request and request-names-degraded-world apply verbatim: settings of products present beyond a smaller request stay actionable, and a requested-but-absent product's shortfall stays in the disclosed warnings.
+
+**Transitions are readings, not reconstructions.** Standing is derived per read from the world's own facts, so `0/1 → 0/1/2 → 0/1/2/3` and back, and Desktop add/remove, change the disclosure without touching the world. Desired intent that outlives its owner — a product removed while settings were held — is retained state: it resolves `blocked` with the failed discovery named, in `diff` as in `doctor`; it is never deleted silently and never renamed into a false status.
+
+**Desktop preferences stay separate.** The Desktop app's own preferences are not world constitution; the configuration plane renders only what owners contribute, and the composition disclosure travels with the data (`oi.config-listing/v1` `composition` block; `oi.cradle.config-registry/v1` `composition` + per-mount standings) through the same engine, once.
+
+Mechanism pointers: `cli/src/current_world.rs` (the pure standing join), `cli/src/config_surface.rs` (`CompositionDisclosure`), `cli/src/kernel_surface.rs` (engine binding, retained-desired resolution), `desktop/cradle/kernel/src/configuration.rs` (registry join), `desktop/cradle/src/configuration/composition.ts` (view law), proven by `config_list_discloses_the_world_composition_and_each_owner_standing`, `registry_carries_the_mode_disclosure_and_the_absent_shortfall`, `tests/configuration-composition.test.mjs` and the configuration walk.
+
 ## Preparation and closure
 
 Use `campaign.json`'s `installation_composition` as the planning projection of #268. Record requested/effective/installed composition, native alternatives, surface, environment, authority and actual lifecycle evidence. Never infer them from a CF string or product count.

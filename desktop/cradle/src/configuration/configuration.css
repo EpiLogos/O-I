@@ -63,6 +63,8 @@
 .config-chip.is-availability-available { border-color: var(--oi-accent); }
 .config-chip.is-availability-degraded { border-color: var(--oi-accent-soft); }
 .config-chip.is-availability-unavailable, .config-chip.is-availability-unknown { border-style: dashed; }
+.config-chip.is-standing-absent { border-style: dashed; font-style: italic; }
+.config-chip.is-standing-unknown { border-style: dotted; font-style: italic; }
 .config-chip.is-active { border-color: var(--oi-accent); color: var(--oi-accent-ink); }
 .config-chip.is-unsupported, .config-chip.is-error { border-style: dashed; }
 .config-chip.is-readonly { border-style: dashed; }

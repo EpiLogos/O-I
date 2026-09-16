@@ -349,36 +349,61 @@ fn plain_resolution_line(resolution: &Resolution) -> String {
 // ---------------------------------------------------------------------------
 
 fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCommandOutcome> {
+    use std::fmt::Write as _;
     let (owners, listed) = config_listing_map(config)?;
+    // The composition disclosure (lock §5): the world the listing stands
+    // in, beside each owner's standing against the effective composition.
+    // The standings are a reading of the current-world facts, never a
+    // second composition decision; behind a disclosure error every owner
+    // reads `unknown` and nothing is invented.
+    let composition = config.composition()?;
+    let standing_of = |owner_ref: &str| composition.standing_of(owner_ref);
     if json {
         let owners_json: Vec<Value> = owners
             .iter()
-            .map(|owner| match owner {
-                OwnerContribution::Available(contribution) => {
-                    // Availability is the owner's own probed disclosure
-                    // (07 §4.7, carried into 09 §2.1) — never a literal.
-                    // An owner that answered but disclosed itself degraded
-                    // or unavailable is listed exactly as it disclosed,
-                    // with its reason; an owner that disclosed no
-                    // availability at all reads `unknown`, never assumed.
-                    let (state, reason) = match &contribution.availability {
-                        Some(availability) => {
-                            (wire_string(&availability.state), availability.reason.clone())
-                        }
-                        None => ("unknown".to_owned(), None),
-                    };
-                    serde_json::json!({
-                        "owner_ref": contribution.owner.owner_ref,
-                        "owner_kind": contribution.owner.owner_kind,
-                        "state": state,
-                        "reason": reason,
-                    })
-                }
-                OwnerContribution::Unavailable { owner_ref, reason, .. } => serde_json::json!({
-                    "owner_ref": owner_ref,
-                    "state": "unavailable",
-                    "reason": reason,
-                }),
+            .map(|owner| {
+                let (mut document, owner_ref) = match owner {
+                    OwnerContribution::Available(contribution) => {
+                        // Availability is the owner's own probed disclosure
+                        // (07 §4.7, carried into 09 §2.1) — never a literal.
+                        // An owner that answered but disclosed itself degraded
+                        // or unavailable is listed exactly as it disclosed,
+                        // with its reason; an owner that disclosed no
+                        // availability at all reads `unknown`, never assumed.
+                        let (state, reason) = match &contribution.availability {
+                            Some(availability) => {
+                                (wire_string(&availability.state), availability.reason.clone())
+                            }
+                            None => ("unknown".to_owned(), None),
+                        };
+                        (
+                            serde_json::json!({
+                                "owner_ref": contribution.owner.owner_ref,
+                                "owner_kind": contribution.owner.owner_kind,
+                                "state": state,
+                                "reason": reason,
+                            }),
+                            contribution.owner.owner_ref.clone(),
+                        )
+                    }
+                    OwnerContribution::Unavailable { owner_ref, reason, .. } => (
+                        serde_json::json!({
+                            "owner_ref": owner_ref,
+                            "state": "unavailable",
+                            "reason": reason,
+                        }),
+                        owner_ref.clone(),
+                    ),
+                };
+                let standing = standing_of(&owner_ref);
+                document["composition"] = serde_json::json!({
+                    "standing": standing.as_wire(),
+                    "position": oi_cli::current_world::PRODUCT_POSITIONS
+                        .iter()
+                        .find(|(_, product_id, _)| *product_id == owner_ref)
+                        .map(|(position, _, _)| position),
+                });
+                document
             })
             .collect();
         let settings_json: Vec<Value> = listed
@@ -395,12 +420,45 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
             None,
             Some(serde_json::json!({
                 "schema": "oi.config-listing/v1",
+                "composition": composition,
                 "owners": owners_json,
                 "settings": settings_json,
             })),
         );
     }
     let mut text = String::from("Configuration contributions:\n");
+    {
+        let mode = composition
+            .install_mode
+            .as_deref()
+            .unwrap_or("explicit selection");
+        let basis = composition
+            .install_mode_basis
+            .as_deref()
+            .map(|basis| format!(" ({basis})"))
+            .unwrap_or_default();
+        let requested = composition
+            .requested_mode
+            .as_deref()
+            .map(|requested| format!(" — requested {requested}"))
+            .unwrap_or_default();
+        let positions = composition
+            .present_positions
+            .iter()
+            .map(u8::to_string)
+            .collect::<Vec<_>>()
+            .join(",");
+        let _ = writeln!(
+            text,
+            "Effective composition: mode {mode}{basis}{requested} — present positions [{positions}]"
+        );
+        for warning in &composition.warnings {
+            let _ = writeln!(text, "  warning: {warning}");
+        }
+        if let Some(error) = &composition.error {
+            let _ = writeln!(text, "  composition unavailable: {error}");
+        }
+    }
     for owner in &owners {
         match owner {
             OwnerContribution::Available(contribution) => {
@@ -416,8 +474,15 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
                     .as_deref()
                     .map(|reason| format!(": {reason}"))
                     .unwrap_or_default();
+                let standing = standing_of(&contribution.owner.owner_ref);
+                let standing_suffix = match standing {
+                    oi_cli::current_world::CompositionStanding::Absent => {
+                        " — outside the effective composition; its settings are not addressable here".to_owned()
+                    }
+                    _ => String::new(),
+                };
                 text.push_str(&format!(
-                    "  {} ({}) — {state}{reason_suffix}\n",
+                    "  {} ({}) — {state}{reason_suffix}{standing_suffix}\n",
                     contribution.owner.owner_ref,
                     wire_string(&contribution.owner.owner_kind)
                 ));
@@ -442,7 +507,16 @@ fn config_list(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCo
                 }
             }
             OwnerContribution::Unavailable { owner_ref, reason, .. } => {
-                text.push_str(&format!("  {owner_ref} — unavailable: {reason}\n"));
+                let standing = standing_of(owner_ref);
+                let standing_note = match standing {
+                    oi_cli::current_world::CompositionStanding::Absent => {
+                        " — absent from the effective composition; installing it is an explicit owner operation (`oi mode set` names the mode consequence)".to_owned()
+                    }
+                    _ => String::new(),
+                };
+                text.push_str(&format!(
+                    "  {owner_ref} — unavailable: {reason}{standing_note}\n"
+                ));
             }
         }
     }

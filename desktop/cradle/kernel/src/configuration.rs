@@ -171,10 +171,63 @@ pub struct MountAvailability {
     pub reason: Option<String>,
 }
 
+/// Where one mount's owner stands against the effective composition
+/// (CONTEXT-FRAME-COMPOSITION-LOCK §5, §7). The standing is READ from the
+/// current-world v2 facts the census already carried — the settings surface
+/// never re-decides composition and never infers a mode from a product
+/// count. Absent owners are disclosed; nothing of them is rendered as
+/// actionable, and adopting a product stays an explicit owner operation
+/// that names the mode consequence.
+#[derive(Clone, Copy, Debug, Serialize, Deserialize, PartialEq, Eq)]
+#[serde(rename_all = "snake_case")]
+pub enum MountStanding {
+    /// The product position is present — inside the effective composition.
+    InComposition,
+    /// The product position is absent from the effective composition.
+    Absent,
+    /// `oi` and connector owners hold no product position.
+    Unpositioned,
+    /// The composition fact was not readable (no census row, or a pre-v2
+    /// reading without the `present` field); nothing is invented.
+    Unknown,
+}
+
+/// The composition fact of one mount, beside its availability (a different
+/// axis: availability is the owner's own probe; standing is the world's).
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct MountComposition {
+    pub standing: MountStanding,
+    /// The canonical product position, when the owner has one.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub position: Option<u8>,
+}
+
+/// The registry-level composition disclosure: the current-world v2 facts
+/// verbatim — requested mode, effective mode and its basis, present
+/// positions, and the reading's own warnings (including the shortfall
+/// naming when a requested mode is not fully realised, lock §5).
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct RegistryComposition {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub requested_mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub install_mode: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub install_mode_basis: Option<String>,
+    #[serde(default)]
+    pub present_positions: Vec<u8>,
+    #[serde(default)]
+    pub warnings: Vec<String>,
+    /// When the world reading was unavailable (or predates v2): the reason,
+    /// with no standings invented behind it.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub error: Option<String>,
+}
+
 /// One owner position of the configuration registry: the contribution
-/// document itself is the registration content (09 §4) — there is no
-/// second descriptor format. A mount that failed reads as a named
-/// degradation; `document` is the owner's own bytes, never a composition.
+/// document itself is the registration content (09 §4) — there is no second
+/// descriptor format. A mount that failed reads as a named degradation;
+/// `document` is the owner's own bytes, never a composition.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct ConfigMount {
     pub owner_ref: String,
@@ -182,16 +235,20 @@ pub struct ConfigMount {
     pub availability: MountAvailability,
     pub reading_command: Vec<String>,
     pub error: Option<String>,
+    /// The owner's standing against the effective composition (lock §5).
+    pub composition: MountComposition,
 }
 
 /// The whole registry reading: the seven canonical positions (the
 /// composition layer itself, then the six products), probed, never
-/// asserted (07 §4.7 law carried into 09 §2.1).
+/// asserted (07 §4.7 law carried into 09 §2.1), beside the world
+/// composition they stand in.
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct RegistryReading {
     pub schema: String,
     pub observed_at_unix_ms: u64,
     pub mounts: Vec<ConfigMount>,
+    pub composition: RegistryComposition,
 }
 
 /// One inspectable profile-use entry: what the profile would hold, with
@@ -328,17 +385,28 @@ impl Client {
 
     /// Mount the configuration registry: the `oi` composition position,
     /// then the six products in canonical order, each through the frozen
-    /// one-call discovery relation.
+    /// one-call discovery relation — beside the composition disclosure
+    /// (lock §5) read from the same census: requested mode, effective mode
+    /// and its basis, present positions, and the reading's own warnings.
     pub fn registry_read(&self, cwd: &Path) -> RegistryReading {
         let observed = now_ms();
+        let census = composition::Client::with(self.executable.clone()).read(cwd);
+        let composition_reading = registry_composition(&census);
         let mut mounts = Vec::with_capacity(1 + PRODUCT_IDS.len());
         let oi_args = vec!["config-contribution".to_owned(), "--json".to_owned()];
         let oi_displayed: Vec<String> = std::iter::once(self.executable.display().to_string())
             .chain(oi_args.iter().cloned())
             .collect();
         let oi_outcome = self.invoke(cwd, &oi_args, None);
-        mounts.push(mount("oi", &oi_displayed, oi_outcome));
-        let census = composition::Client::with(self.executable.clone()).read(cwd);
+        mounts.push(mount(
+            "oi",
+            &oi_displayed,
+            oi_outcome,
+            MountComposition {
+                standing: MountStanding::Unpositioned,
+                position: None,
+            },
+        ));
         for (index, product_id) in PRODUCT_IDS.iter().enumerate() {
             let namespace = namespace_for(&census, index, product_id);
             let args = vec![
@@ -350,12 +418,18 @@ impl Client {
                 .chain(args.iter().cloned())
                 .collect();
             let outcome = self.invoke(cwd, &args, None);
-            mounts.push(mount(product_id, &displayed, outcome));
+            mounts.push(mount(
+                product_id,
+                &displayed,
+                outcome,
+                mount_composition(&census, product_id),
+            ));
         }
         RegistryReading {
             schema: "oi.cradle.config-registry/v1".to_owned(),
             observed_at_unix_ms: observed,
             mounts,
+            composition: composition_reading,
         }
     }
 
@@ -855,8 +929,15 @@ impl Client {
 /// Mount one position from an invocation outcome: a conforming
 /// `oi.configuration-contribution/v1` naming the addressed owner mounts
 /// verbatim; everything else is a named degradation. Uniform for every
-/// owner — no per-product branch exists anywhere in this function.
-fn mount(owner_ref: &str, reading_command: &[String], outcome: InvokeOutcome) -> ConfigMount {
+/// owner — no per-product branch exists anywhere in this function. The
+/// owner's composition standing arrives from the census join; this function
+/// never judges it.
+fn mount(
+    owner_ref: &str,
+    reading_command: &[String],
+    outcome: InvokeOutcome,
+    composition_facts: MountComposition,
+) -> ConfigMount {
     match outcome {
         InvokeOutcome::SpawnFailed(error) => ConfigMount {
             owner_ref: owner_ref.to_owned(),
@@ -867,6 +948,7 @@ fn mount(owner_ref: &str, reading_command: &[String], outcome: InvokeOutcome) ->
             },
             reading_command: reading_command.to_vec(),
             error: Some(error),
+            composition: composition_facts,
         },
         InvokeOutcome::Completed {
             exit_code,
@@ -882,6 +964,7 @@ fn mount(owner_ref: &str, reading_command: &[String], outcome: InvokeOutcome) ->
                 },
                 reading_command: reading_command.to_vec(),
                 error: Some(error),
+                composition: composition_facts.clone(),
             };
             if exit_code != 0 {
                 return degraded(
@@ -925,8 +1008,107 @@ fn mount(owner_ref: &str, reading_command: &[String], outcome: InvokeOutcome) ->
                 },
                 reading_command: reading_command.to_vec(),
                 error: None,
+                composition: composition_facts,
             }
         }
+    }
+}
+
+/// The registry-level composition disclosure, read from the census's
+/// current-world document — verbatim facts, never a re-decision. A census
+/// that failed, or an older installed `oi` whose reading predates the v2
+/// context frame, discloses the error honestly; no standings are invented
+/// behind it.
+fn registry_composition(census: &composition::Reading) -> RegistryComposition {
+    let unavailable = |reason: String| RegistryComposition {
+        requested_mode: None,
+        install_mode: None,
+        install_mode_basis: None,
+        present_positions: Vec::new(),
+        warnings: Vec::new(),
+        error: Some(reason),
+    };
+    let Some(data) = census.current_world.data.as_ref() else {
+        return unavailable(
+            census
+                .current_world
+                .error
+                .clone()
+                .unwrap_or_else(|| "the current-world reading was unavailable".to_owned()),
+        );
+    };
+    let Some(context_frame) = data.get("context_frame") else {
+        return unavailable(
+            "the installed oi's current-world reading predates the v2 context frame; \
+             no composition standings are invented from it"
+                .to_owned(),
+        );
+    };
+    RegistryComposition {
+        requested_mode: data
+            .pointer("/requested_mode/mode")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        install_mode: context_frame
+            .get("install_mode")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        install_mode_basis: context_frame
+            .get("install_mode_basis")
+            .and_then(Value::as_str)
+            .map(str::to_owned),
+        present_positions: context_frame
+            .get("present_positions")
+            .and_then(Value::as_array)
+            .map(|rows| rows.iter().filter_map(Value::as_u64).map(|v| v as u8).collect())
+            .unwrap_or_default(),
+        warnings: data
+            .get("warnings")
+            .and_then(Value::as_array)
+            .map(|rows| {
+                rows.iter()
+                    .filter_map(Value::as_str)
+                    .map(str::to_owned)
+                    .collect()
+            })
+            .unwrap_or_default(),
+        error: None,
+    }
+}
+
+/// One product's composition standing, joined against the census's
+/// current-world rows. The `present` field is the v2 reading's own fact; a
+/// row without it (a pre-v2 reading) stands `unknown` — its old semantics
+/// are never reinterpreted here (lock §4).
+fn mount_composition(census: &composition::Reading, product_id: &str) -> MountComposition {
+    let position_of = |product_id: &str| {
+        census
+            .positions
+            .iter()
+            .find(|row| row.product_id == product_id)
+            .and_then(|row| row.current_world.get("position"))
+            .and_then(Value::as_u64)
+            .map(|value| value as u8)
+    };
+    let present = census
+        .positions
+        .iter()
+        .find(|row| row.product_id == product_id)
+        .and_then(|row| row.current_world.get("present"))
+        .and_then(Value::as_bool);
+    match present {
+        Some(present) => MountComposition {
+            standing: if present {
+                MountStanding::InComposition
+            } else {
+                MountStanding::Absent
+            },
+            position: position_of(product_id),
+        },
+        None => MountComposition {
+            standing: MountStanding::Unknown,
+            position: position_of(product_id),
+        },
     }
 }
 
@@ -1088,13 +1270,43 @@ printf '%s\n' "$*" >> {log}
 
     fn census_body() -> &'static str {
         r#"{"schema":"oi.current-world/v2","personal_ground":null,"positions":[
+{"position":0,"product_id":"central","canonical_namespace":"central","state":"missing","present":false,"accepted_revision":""},
+{"position":1,"product_id":"actuation","canonical_namespace":"actuation","state":"missing","present":false,"accepted_revision":""},
+{"position":2,"product_id":"ai-kit","canonical_namespace":"aikit","state":"missing","present":false,"accepted_revision":""},
+{"position":3,"product_id":"software-factory","canonical_namespace":"factory","state":"missing","present":false,"accepted_revision":""},
+{"position":4,"product_id":"workcell","canonical_namespace":"workcell","state":"missing","present":false,"accepted_revision":""},
+{"position":5,"product_id":"quaternal-logic","canonical_namespace":"ql","state":"missing","present":false,"accepted_revision":""}],
+"context_frame":{"containing_frame":"cf5","install_mode":null,"present_positions":[]},"warnings": []}"#
+    }
+
+    /// A v2 census for the `0/1` mode: Central and Actuation present, the
+    /// requested mode `0/1/2` not fully realised — the reading's own
+    /// shortfall warning names AIKit (lock §5: the request keeps naming the
+    /// world, degraded).
+    fn census_body_mode_01_requesting_012() -> String {
+        r#"{"schema":"oi.current-world/v2","personal_ground":null,"positions":[
+{"position":0,"product_id":"central","canonical_namespace":"central","state":"registered","present":true,"accepted_revision":"r"},
+{"position":1,"product_id":"actuation","canonical_namespace":"actuation","state":"registered","present":true,"accepted_revision":"r"},
+{"position":2,"product_id":"ai-kit","canonical_namespace":"aikit","state":"missing","present":false,"accepted_revision":""},
+{"position":3,"product_id":"software-factory","canonical_namespace":"factory","state":"missing","present":false,"accepted_revision":""},
+{"position":4,"product_id":"workcell","canonical_namespace":"workcell","state":"missing","present":false,"accepted_revision":""},
+{"position":5,"product_id":"quaternal-logic","canonical_namespace":"ql","state":"missing","present":false,"accepted_revision":""}],
+"context_frame":{"containing_frame":"cf5","install_mode":"0/1/2","install_mode_basis":"requested","present_positions":[0,1]},
+"requested_mode":{"mode":"0/1/2","set_by":"oi mode set","set_at_unix_seconds":0},
+"warnings":["Requested install mode 0/1/2 is not fully realised: AIKit is not usable in the effective composition."]}"#.to_owned()
+    }
+
+    /// A pre-v2 census: rows without `present` and no context frame. Its
+    /// recorded meanings are never reinterpreted (lock §4); standings stay
+    /// unknown and the composition disclosure names the gap.
+    fn census_body_prev2() -> &'static str {
+        r#"{"schema":"oi.current-world/v1","personal_ground":null,"positions":[
 {"position":0,"product_id":"central","canonical_namespace":"central","state":"missing","accepted_revision":""},
 {"position":1,"product_id":"actuation","canonical_namespace":"actuation","state":"missing","accepted_revision":""},
 {"position":2,"product_id":"ai-kit","canonical_namespace":"aikit","state":"missing","accepted_revision":""},
 {"position":3,"product_id":"software-factory","canonical_namespace":"factory","state":"missing","accepted_revision":""},
 {"position":4,"product_id":"workcell","canonical_namespace":"workcell","state":"missing","accepted_revision":""},
-{"position":5,"product_id":"quaternal-logic","canonical_namespace":"ql","state":"missing","accepted_revision":""}],
-"context_frame":{"containing_frame":"cf5","install_mode":null,"present_positions":[]},"warnings": []}"#
+{"position":5,"product_id":"quaternal-logic","canonical_namespace":"ql","state":"missing","accepted_revision":""}]}"#
     }
 
     fn contribution(owner_ref: &str) -> String {
@@ -1159,6 +1371,108 @@ esac
             assert_eq!(mount.availability.state, Availability::Degraded);
             assert!(mount.document.is_none());
             assert!(mount.error.is_some());
+        }
+
+        // The composition standing is the census's own fact per position:
+        // with nothing present, every product stands absent, and `oi` —
+        // the doorway, not a product position — is unpositioned.
+        assert_eq!(
+            reading.composition,
+            RegistryComposition {
+                requested_mode: None,
+                install_mode: None,
+                install_mode_basis: None,
+                present_positions: vec![],
+                warnings: vec![],
+                error: None,
+            }
+        );
+        assert_eq!(reading.mounts[0].composition.standing, MountStanding::Unpositioned);
+        for mount in &reading.mounts[1..] {
+            assert_eq!(
+                mount.composition.standing,
+                MountStanding::Absent,
+                "{}",
+                mount.owner_ref
+            );
+            assert!(mount.composition.position.is_some());
+        }
+    }
+
+    #[test]
+    fn registry_carries_the_mode_disclosure_and_the_absent_shortfall() {
+        // Requested 0/1/2 with only Central + Actuation present: the
+        // settings surface discloses the requested mode, the shortfall
+        // warning (verbatim from the reading), and per-owner standings —
+        // present products in composition, the requested-but-absent AIKit
+        // disclosed as absent, never rendered as its mode's own.
+        let scene = Scene::with_answers(&format!(
+            r#"#!/bin/sh
+case "$*" in
+  "current-world --json") echo '{census}' ;;
+  "central config-contribution --json") echo '{central}' ;;
+  "actuation config-contribution --json") echo '{actuation}' ;;
+  *) echo "not registered" >&2; exit 2 ;;
+esac
+"#,
+            census = census_body_mode_01_requesting_012(),
+            central = contribution("central"),
+            actuation = contribution("actuation"),
+        ));
+        let reading = scene.client().registry_read(&scene.dir);
+        assert_eq!(reading.composition.requested_mode.as_deref(), Some("0/1/2"));
+        assert_eq!(reading.composition.install_mode.as_deref(), Some("0/1/2"));
+        assert_eq!(
+            reading.composition.install_mode_basis.as_deref(),
+            Some("requested")
+        );
+        assert_eq!(reading.composition.present_positions, vec![0, 1]);
+        assert!(
+            reading.composition.warnings.iter().any(|warning| {
+                warning.contains("0/1/2") && warning.contains("AIKit")
+            }),
+            "{:?}",
+            reading.composition.warnings
+        );
+        let standing_of = |owner: &str| {
+            reading
+                .mounts
+                .iter()
+                .find(|mount| mount.owner_ref == owner)
+                .map(|mount| mount.composition.standing)
+                .unwrap()
+        };
+        assert_eq!(standing_of("oi"), MountStanding::Unpositioned);
+        assert_eq!(standing_of("central"), MountStanding::InComposition);
+        assert_eq!(standing_of("actuation"), MountStanding::InComposition);
+        assert_eq!(standing_of("ai-kit"), MountStanding::Absent);
+        assert_eq!(standing_of("workcell"), MountStanding::Absent);
+    }
+
+    #[test]
+    fn a_prev2_reading_is_disclosed_not_reinterpreted() {
+        // A census that predates the v2 context frame keeps its recorded
+        // meanings (lock §4): the composition disclosure names the gap, and
+        // no product is judged in or out of a composition it never stated.
+        let scene = Scene::with_answers(&format!(
+            r#"#!/bin/sh
+case "$*" in
+  "current-world --json") echo '{census}' ;;
+  *) echo "not registered" >&2; exit 2 ;;
+esac
+"#,
+            census = census_body_prev2(),
+        ));
+        let reading = scene.client().registry_read(&scene.dir);
+        assert!(reading.composition.error.is_some(), "{:?}", reading.composition);
+        assert!(reading.composition.requested_mode.is_none());
+        for mount in &reading.mounts[1..] {
+            assert_eq!(
+                mount.composition.standing,
+                MountStanding::Unknown,
+                "{}",
+                mount.owner_ref
+            );
         }
     }
 

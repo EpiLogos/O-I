@@ -44,6 +44,23 @@ export default async function run({page,baseUrl,check,shot}) {
   check((await workcell.getAttribute('data-availability'))==='unavailable','The unavailable owner renders its disclosed availability');
   check((await workcell.locator('[data-config-empty-owner]').count())===1,'The unavailable owner renders its honest absence — no fabricated settings, no fake controls');
 
+  // --- Settings across the modes (composition lock §5, §7) -----------------
+  // The fixture world stands in the 0/1/2 operational core: AIKit in
+  // composition, Workcell absent by selection. The mode is disclosed once,
+  // and the absent owner renders as disclosure only — no settings, no
+  // controls — because recognising a product is an explicit owner
+  // operation, never a silent control.
+  check(/mode 0\/1\/2/.test(await panel.locator('[data-config-composition]').textContent()),
+    'The registry discloses the effective composition beside the data');
+  check((await panel.locator('[data-owner="workcell"]').getAttribute('data-standing'))==='absent',
+    'The absent owner carries its composition standing');
+  check((await panel.locator('[data-owner="workcell"] [data-config-absent-owner]').count())===1,
+    'The absent owner renders its disclosed absence — visible only as disclosure');
+  check((await panel.locator('[data-owner="workcell"] [data-setting-ref]').count())===0,
+    'No setting of an out-of-composition owner renders as an actionable row');
+  check((await panel.locator('[data-owner="ai-kit"]').getAttribute('data-standing'))==='in_composition',
+    'The present owner carries its in-composition standing');
+
   // Generic controls per value-schema kind — no product branch rendered any
   // of these.
   check((await panel.locator('[data-config-control="boolean"]').count())>=1,'boolean → switch');
