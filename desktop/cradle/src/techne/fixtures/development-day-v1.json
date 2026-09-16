@@ -1,0 +1,148 @@
+{
+  "contract": "ql.techne/v1",
+  "reading_ref": "ql.techne:reading:fixture:development-day@1",
+  "snapshot": {
+    "revision": "central.content-fnv1a64/v1:18989:0060ea66790892a7",
+    "basis_ref": "central:source:control:root:Control/user/day/2026-09-15/day.md"
+  },
+  "subject": {
+    "subject_ref": "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6",
+    "native_owner": "central/now",
+    "native_revision": null,
+    "readings": [
+      {"ref": "central:now-reading:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6"}
+    ],
+    "kind": "now-clearing",
+    "standing": "current-development-state"
+  },
+  "whole": {
+    "whole_ref": "central:day:control:root:2026-09-15",
+    "member_refs": [
+      "central:source:control:root:Control/user/day/2026-09-15/day.md",
+      "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6",
+      "factory:run:01JBD3Z4X7Q9M2A6K4P8T3W5NQ",
+      "factory:run:01JBD5QK3XW8N7C2R9T4V6H1M0"
+    ],
+    "relations": [
+      {
+        "relation": "opened-under",
+        "from_ref": "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6",
+        "to_ref": "central:day:control:root:2026-09-15",
+        "origin": "observed",
+        "origin_ref": "central:source:control:root:Control/user/day/2026-09-15/day.md"
+      },
+      {
+        "relation": "returns-into",
+        "from_ref": "factory:run:01JBD3Z4X7Q9M2A6K4P8T3W5NQ",
+        "to_ref": "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6",
+        "origin": "recorded",
+        "origin_ref": "factory:run:01JBD3Z4X7Q9M2A6K4P8T3W5NQ/thought-field"
+      }
+    ],
+    "focus_refs": []
+  },
+  "temporal": [
+    {
+      "kind": "day",
+      "day_ref": "central:day:control:root:2026-09-15",
+      "timezone_policy_ref": "central:source:control:root:Control/user/civil-time-policy.json",
+      "instant": "2026-09-15T00:00:00+01:00",
+      "precision": "day"
+    },
+    {
+      "kind": "occurrence",
+      "instant": "2026-09-15T14:59:00+01:00",
+      "precision": "minute",
+      "session_ref": "zcode-session-2026-09-16-l5-techne-execution",
+      "source_ref": "central:source:control:root:Work/Factory/ProjectCentral/now/tmp/factory-ui-action-availability/verification.md",
+      "uncertainty": "author-declared recorded_at on the ProjectCentral handoff"
+    },
+    {
+      "kind": "receipt",
+      "instant": "2026-09-15T15:04:00+01:00",
+      "precision": "minute",
+      "session_ref": "zcode-session-2026-09-16-l5-techne-execution",
+      "source_ref": "central:source:control:root:.central/source-change-horizon.json",
+      "uncertainty": "reconciler-declared observed_at on the source-change horizon"
+    },
+    {
+      "kind": "now",
+      "now_ref": "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6"
+    },
+    {
+      "kind": "run",
+      "run_ref": "factory:run:01JBD3Z4X7Q9M2A6K4P8T3W5NQ",
+      "interval": {"from": "2026-09-15T09:10:00+01:00", "to": "2026-09-15T16:40:00+01:00"},
+      "uncertainty": "Factory orders by revision, not wall-clock; bounds are the handoff-declared activity window"
+    }
+  ],
+  "provenance": [
+    {
+      "source_ref": "central:source:control:root:Control/user/civil-time-policy.json",
+      "source_revision": "central.content-fnv1a64/v1:741:0ef7b5aaedd35e27",
+      "native_owner": "central",
+      "selector": {"unit": "text_span", "start": 0, "end": 741, "anchor_ref": null},
+      "standing": "architecture-contract",
+      "evidence_refs": []
+    },
+    {
+      "source_ref": "central:source:control:root:Control/user/day/2026-09-15/day.md",
+      "source_revision": "central.content-fnv1a64/v1:0:cbf29ce484222325",
+      "native_owner": "central",
+      "selector": null,
+      "standing": "current-development-state",
+      "evidence_refs": []
+    }
+  ],
+  "actions": [
+    {
+      "action_ref": "central.day.read",
+      "native_owner": "central/ctrl",
+      "authority": "registered-read-action",
+      "summary": "Read a DAY record.",
+      "expected_effects": ["none — read only"],
+      "input_schema_ref": null
+    },
+    {
+      "action_ref": "central.now.read",
+      "native_owner": "central/ctrl",
+      "authority": "registered-read-action",
+      "summary": "Read a NOW clearing with placement.",
+      "expected_effects": ["none — read only"],
+      "input_schema_ref": null
+    },
+    {
+      "action_ref": "central.temporal.source-history",
+      "native_owner": "central/ctrl",
+      "authority": "registered-read-action",
+      "summary": "Read per-source change history.",
+      "expected_effects": ["none — read only"],
+      "input_schema_ref": null
+    },
+    {
+      "action_ref": "projectcentral.change.horizon",
+      "native_owner": "central/ctrl",
+      "authority": "registered-read-action",
+      "summary": "Stream source changes since a cursor.",
+      "expected_effects": ["none — read only"],
+      "input_schema_ref": null
+    }
+  ],
+  "disclosure": {
+    "instruments": [
+      {"instrument": "canvas", "available": true},
+      {"instrument": "timeline", "available": true},
+      {"instrument": "place", "available": false, "reason": "no disclosed spatial reading"},
+      {"instrument": "story", "available": false, "reason": "no Expression scenes bound to this subject"},
+      {"instrument": "palace", "available": false, "reason": "no Expression composition available for this subject"},
+      {"instrument": "expressions", "available": false, "reason": "no Expression is bound to this subject"},
+      {"instrument": "m1234", "available": false, "reason": "no warranted lens binding"}
+    ],
+    "degraded": [
+      {"instrument": "timeline", "reason": "Factory runs carry no wall-clock time; run lanes render from handoff-declared windows"}
+    ],
+    "suggestions": [
+      {"instrument": "timeline", "reason": "day, now, session and run continuity are all disclosed"}
+    ]
+  }
+}

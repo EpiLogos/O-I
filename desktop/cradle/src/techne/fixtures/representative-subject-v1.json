@@ -1,0 +1,168 @@
+{
+  "contract": "ql.techne/v1",
+  "reading_ref": "ql.techne:reading:fixture:representative-subject@1",
+  "snapshot": {
+    "revision": null,
+    "basis_ref": "central:source:control:root:Control/agents/wiki/wiki.json"
+  },
+  "subject": {
+    "subject_ref": "aikit:wiki:central:wiki:project:quaternal-logic#l5-techne-instrument-constellation",
+    "native_owner": "aikit/semantic-wiki",
+    "native_revision": "7",
+    "readings": [
+      {"ref": "aikit:knowledge-reading:wiki:l5-techne-instrument-constellation", "revision": "7"}
+    ],
+    "kind": "wiki-node",
+    "standing": "agent-maintained"
+  },
+  "whole": {
+    "whole_ref": "aikit:wiki:central:wiki:project:quaternal-logic#l5-techne-instrument-constellation",
+    "member_refs": [
+      "aikit:wiki:central:wiki:project:quaternal-logic#instrument-canvas",
+      "aikit:wiki:central:wiki:project:quaternal-logic#instrument-timeline",
+      "aikit:wiki:central:wiki:project:quaternal-logic#instrument-place",
+      "aikit:wiki:central:wiki:project:quaternal-logic#instrument-story",
+      "aikit:wiki:central:wiki:project:quaternal-logic#instrument-palace",
+      "aikit:wiki:central:wiki:project:quaternal-logic#instrument-expressions"
+    ],
+    "relations": [
+      {
+        "relation": "specialises",
+        "from_ref": "aikit:wiki:central:wiki:project:quaternal-logic#instrument-canvas",
+        "to_ref": "aikit:wiki:central:wiki:project:quaternal-logic#l5-techne-instrument-constellation",
+        "origin": "authored",
+        "origin_ref": null
+      },
+      {
+        "relation": "ql-derived",
+        "from_ref": "aikit:wiki:central:wiki:project:quaternal-logic#l5-techne-instrument-constellation",
+        "to_ref": "ql:structural:2.0.0:field:A:1:D3",
+        "origin": "ql-derived",
+        "origin_ref": "ql-mef:provider:registry-disclosure"
+      }
+    ],
+    "focus_refs": ["aikit:wiki:central:wiki:project:quaternal-logic#instrument-expressions"]
+  },
+  "ql": {
+    "address": "ql:structural:2.0.0:field:A:1:D3",
+    "shape_ref": "ql:shape:1.0.0:6x6:direct-conjugate",
+    "constellation_ref": "aikit:wiki-constellation:l5-techne-instrument-constellation",
+    "lens_ref": "mef:lens:L5@1",
+    "context_frame_ref": "mef:context-frame:CF4",
+    "refraction_summary": "L5 office projection resolves the constellation under the Techne office; members carry the articulated L5-0..L5-5 stack.",
+    "harmonic_reading": null,
+    "geometric_reading": null,
+    "vak_source_ref": "ql:vak:composition:l5-para-vak",
+    "derivation_refs": ["ql:fixture:techne-representative-derivation"],
+    "warrant": {
+      "result_class": "deterministic",
+      "evidence_refs": ["ql:fixture:techne-representative-evidence"],
+      "provenance_ref": "ql-mef:provider:registry-disclosure"
+    }
+  },
+  "temporal": [
+    {
+      "kind": "occurrence",
+      "instant": "2026-09-16T09:30:00+01:00",
+      "precision": "minute",
+      "timezone_policy_ref": "central:source:control:root:Control/user/civil-time-policy.json",
+      "source_ref": "central:source:control:root:Control/user/day/2026-09-15/day.md"
+    },
+    {
+      "kind": "receipt",
+      "instant": "2026-09-16T11:05:00+01:00",
+      "precision": "minute",
+      "source_ref": "central:source:control:root:.central/source-change-horizon.json"
+    },
+    {
+      "kind": "day",
+      "day_ref": "central:day:control:root:2026-09-15",
+      "timezone_policy_ref": "central:source:control:root:Control/user/civil-time-policy.json"
+    },
+    {
+      "kind": "now",
+      "now_ref": "central:now:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6"
+    }
+  ],
+  "spatial": [
+    {
+      "place_ref": "place:fixture:royal-observatory-greenwich",
+      "identity": {
+        "names": [
+          {"name": "Royal Observatory, Greenwich", "valid_from": "1675", "valid_to": null}
+        ]
+      },
+      "geometry": {"type": "point", "coordinates": [0.0015, 51.4769]},
+      "precision": "approximate",
+      "hierarchy": [
+        {"place_ref": "place:fixture:greenwich", "relation": "within", "valid_from": "1675", "valid_to": null},
+        {"place_ref": "place:fixture:london", "relation": "within", "valid_from": "1675", "valid_to": null}
+      ],
+      "valid_from": "1675",
+      "valid_to": null,
+      "observer_frame": null,
+      "source_ref": "aikit:source:fixture:place-gazetteer"
+    }
+  ],
+  "provenance": [
+    {
+      "source_ref": "central:source:control:root:Control/user/civil-time-policy.json",
+      "source_revision": "central.content-fnv1a64/v1:741:0ef7b5aaedd35e27",
+      "native_owner": "central",
+      "selector": {"unit": "text_span", "start": 0, "end": 741, "anchor_ref": null},
+      "standing": "architecture-contract",
+      "evidence_refs": ["central:source:control:root:Control/user/civil-time-policy.json"]
+    }
+  ],
+  "expressions": [
+    {
+      "expression_ref": "oi:expression:l5-techne-constellation",
+      "revision": "3",
+      "scene_ref": "oi:expression:l5-techne-constellation/scene/opening",
+      "composition_ref": null,
+      "profile_ref": "oi:expression-profile:l5-techne"
+    }
+  ],
+  "actions": [
+    {
+      "action_ref": "central.day.read",
+      "native_owner": "central/ctrl",
+      "authority": "registered-read-action",
+      "summary": "Read the owning civil day record.",
+      "expected_effects": ["none — read only"],
+      "input_schema_ref": null
+    },
+    {
+      "action_ref": "oi.expression.open",
+      "native_owner": "oi/desktop",
+      "authority": "owner-disclosed",
+      "summary": "Open the bound Expression in the Cradle over the same subject refs.",
+      "expected_effects": ["an Expression surface opens; no native mutation by itself"],
+      "input_schema_ref": null
+    },
+    {
+      "action_ref": "aikit.wiki.stage",
+      "native_owner": "aikit/wiki",
+      "authority": "governed-write",
+      "summary": "Stage a wiki change for review.",
+      "expected_effects": ["staged proposal only; no direct mutation of authored ground"],
+      "input_schema_ref": null
+    }
+  ],
+  "disclosure": {
+    "instruments": [
+      {"instrument": "canvas", "available": true},
+      {"instrument": "timeline", "available": true},
+      {"instrument": "place", "available": true},
+      {"instrument": "story", "available": true},
+      {"instrument": "palace", "available": true},
+      {"instrument": "expressions", "available": true},
+      {"instrument": "m1234", "available": true}
+    ],
+    "degraded": [],
+    "suggestions": [
+      {"instrument": "timeline", "reason": "temporal facets present — occurrence, receipt, day and now relations"},
+      {"instrument": "expressions", "reason": "an Expression with scenes is bound to this subject"}
+    ]
+  }
+}

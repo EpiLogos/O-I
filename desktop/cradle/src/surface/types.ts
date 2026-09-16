@@ -57,6 +57,12 @@ export interface SurfaceBinding {
    * Expression refs it was opened with — presentation state naming semantic
    * addresses, never a cloned remote payload. `ref` is the hosted entry ref. */
   presentation?: {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number};
+  /** L5 Technē (T0): kind 'techne' presents one instrument of the
+   * constellation over the DisclosureSession's subject. `ref` is the session
+   * subject (the kernel focus subject, so the agent layer co-references);
+   * the payload names the instrument and selection — disclosure state, never
+   * view/camera/layout state. */
+  techne?: {instrument:import("../techne/contract").TechneInstrument;subjectRef:string;selectionRef:string};
 }
 
 /** A tab group: one tab strip + the surface it presents. */

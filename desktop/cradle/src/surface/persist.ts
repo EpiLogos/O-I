@@ -28,7 +28,7 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   // surface id, and dropping the binding would orphan it. `instrument` is a
   // presentation binding to an externally owned QL source; the source itself
   // is never serialised into desktop state.
-  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "instrument" && o.kind !== "explore" && o.kind !== "presentation") return null;
+  if (o.kind !== "source" && o.kind !== "sources" && o.kind !== "knowledge" && o.kind !== "file" && o.kind !== "encounter" && o.kind !== "system" && o.kind !== "browser" && o.kind !== "terminal" && o.kind !== "flow" && o.kind !== "draft" && o.kind !== "blank" && o.kind !== "instrument" && o.kind !== "explore" && o.kind !== "presentation" && o.kind !== "techne") return null;
   if (o.ref !== undefined && typeof o.ref !== "string") return null;
   if (o.kind === "instrument" && (typeof o.ref !== "string" || !o.ref.trim())) return null;
   if (o.project !== undefined && typeof o.project !== "string") return null;
@@ -50,9 +50,16 @@ function validBinding(raw: unknown): SurfaceBinding | null {
   const presentationRaw=o.presentation as Record<string,unknown>|undefined;
   if(o.kind==="presentation" && (typeof o.ref!=="string" || !o.ref.trim() || !presentationRaw || typeof presentationRaw!=="object" || typeof presentationRaw.world_ref!=="string"))return null;
   const presentation=o.kind==="presentation"&&presentationRaw?{world_ref:presentationRaw.world_ref as string,...(typeof presentationRaw.field_ref==="string"?{field_ref:presentationRaw.field_ref}:{}),...(typeof presentationRaw.projection_ref==="string"?{projection_ref:presentationRaw.projection_ref}:{}),...(Number.isInteger(presentationRaw.projection_revision)?{projection_revision:presentationRaw.projection_revision as number}:{}),...(typeof presentationRaw.presentation_ref==="string"?{presentation_ref:presentationRaw.presentation_ref}:{}),...(Number.isInteger(presentationRaw.presentation_revision)?{presentation_revision:presentationRaw.presentation_revision as number}:{}),...(typeof presentationRaw.expression_ref==="string"?{expression_ref:presentationRaw.expression_ref}:{}),...(Number.isInteger(presentationRaw.expression_revision)?{expression_revision:presentationRaw.expression_revision as number}:{})}:undefined;
+  // L5 Technē (T0): a techne binding names its instrument, subject and
+  // selection; the payload's subject must be the binding's ref (the kernel
+  // focus subject). A payload missing any part discloses nothing and is
+  // dropped rather than guessed at.
+  const techneRaw=o.techne as Record<string,unknown>|undefined;
+  if(o.kind==="techne" && (!techneRaw || typeof techneRaw!=="object" || typeof techneRaw.instrument!=="string" || typeof techneRaw.subjectRef!=="string" || techneRaw.subjectRef!==o.ref || typeof techneRaw.selectionRef!=="string" || !techneRaw.selectionRef.trim()))return null;
+  const techne=o.kind==="techne"&&techneRaw?{instrument:techneRaw.instrument as import("../techne/contract").TechneInstrument,subjectRef:techneRaw.subjectRef as string,selectionRef:techneRaw.selectionRef as string}:undefined;
   const view=o.view as SurfaceBinding["view"];
   const encounterPlane=view?.encounterPlane;
-  return { presentation, terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
+  return { presentation, techne, terminal:o.kind==="terminal"?{cwd:typeof (o.terminal as {cwd?:unknown})?.cwd==="string"?(o.terminal as {cwd:string}).cwd:undefined}:undefined, flow:o.kind==="flow"?flow:undefined, browser:o.kind==="browser"?{url:typeof (o.browser as {url?:unknown})?.url==="string"?(o.browser as {url:string}).url:""}:undefined, view:encounterPlane&&["Conversation","Activity","Context","Inspect"].includes(encounterPlane)?{encounterPlane}:undefined, encounter, location, address, project: o.project as string | undefined, id: o.id, kind: o.kind, ref: o.ref as string | undefined, title: o.title };
 }
 
 function validPane(raw: unknown, surfaces: Record<SurfaceId, SurfaceBinding>): Pane | null {

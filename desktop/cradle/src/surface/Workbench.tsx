@@ -23,6 +23,7 @@ import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
 import { KnowledgeSurface } from "../knowledge/KnowledgeSurface";
 import { FileSurface } from "../files/FileSurface";
+import { TechneSurfaceHost } from "../techne/TechneSurfaceHost";
 import { SourceSurface } from "./SourceSurface";
 import { SourcesIndex } from "./SourcesIndex";
 import { BrowserSurface } from "../browser/BrowserSurface";
@@ -332,6 +333,8 @@ function SurfaceBody({
   // The instrument binding has no body renderer of its own: the privileged
   // Epi/Nara composition portals into this body and owns it completely.
   if (binding.kind === "instrument") return null;
+  // L5 Technē (T0): the DisclosureSession seam's host body.
+  if (binding.kind === "techne") return <TechneSurfaceHost key={binding.id} binding={binding} />;
   return <p className="source-note">This surface is unavailable.</p>;
 }
 
@@ -361,6 +364,7 @@ const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings" | "field"
   system: "settings",
   explore: "search",
   presentation: "field",
+  techne: "field",
 };
 
 function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
