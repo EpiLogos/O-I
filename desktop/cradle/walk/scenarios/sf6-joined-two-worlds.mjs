@@ -223,6 +223,27 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  check(encounter.state==="available"&&encounter.agency,"[11] The projected Being discloses its agency in the joined field");
  const standing=invocationStanding(encounter,null);
  check(standing?.available===false&&typeof standing.reason==="string","[11] Without the exact native owner binding, summoning stays refused — membership is never enough",{reason:standing?.reason});
+ // Step 11 (full grade, when electricity is provisioned): a real model
+ // invoked through the owner UI against the projected Being; the human
+ // rejects on the record and the native Expression is read back unchanged.
+ if(process.env.OI_SF6_AGENT_INVOKE==="1"&&process.env.OI_SHARED_AGENT_CONTROLLER){
+  await ownerPage(page,p,async owner=>{
+   const ownerExplore=await openWorld(owner,p.worldA,p.run);
+   const beingNode=ownerExplore.locator(`.explore-node--being[data-explore-ref="${p.participantB}"]`).first();
+   for(let attempt=0;attempt<8&&await beingNode.count()===0;attempt++){await ownerExplore.getByRole("button",{name:"Refresh the field"}).click().catch(()=>{});await owner.waitForTimeout(2500);}
+   await beingNode.waitFor({timeout:60000});
+   await beingNode.focus();await beingNode.press("Enter");
+   const being=ownerExplore.locator(".being-encounter");await being.waitFor({timeout:30000});
+   await being.getByRole("textbox",{name:/Request for/}).fill(`Return JSON only with schema oi.expression-refinement/v1, expression_ref ${p.expressionRef}, expected_revision 1, a nonempty summary, exactly one changes item {"change":"entity_add","scene_ref":"${p.expressionRef}:scene:main","entity_ref":"${p.expressionRef}:entity:model","title":"Model perspective"}, empty method_refs and empty evidence_refs because this native Expression discloses no source reading.`);
+   await being.getByRole("button",{name:"Invoke Agent"}).click();
+   const reject=being.getByRole("button",{name:/Reject Agent refinement/});await reject.waitFor({timeout:240000});
+   const reviewed=await being.locator(".being-review").innerText();
+   check(reviewed.includes("entity_add"),"[11] The real model returned a concrete refinement through native delivery");
+   await reject.click();
+  });
+  const afterInvoke=await bridgeOp(p.ownerBridge.url,"expression",{operation:"inspect",expression_ref:p.expressionRef});
+  check(afterInvoke.document?.refinements?.some(item=>item.decision?.state==="rejected")&&afterInvoke.document?.revision===1,"[11] The rejected refinement is on the native record and the Expression revision is unchanged");
+ }
  // Steps 12-15: the ordinary shared act and the native owner return.
  const panel=explore.getByRole("complementary",{name:"Contributions"});await panel.getByRole("button",{name:"Contribute"}).click();
  const returned="The second world returns a joined difference through the ordinary composer.";await panel.getByLabel("Contributed material").fill(returned);await panel.getByRole("button",{name:"Submit Contribution"}).click();
