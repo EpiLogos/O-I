@@ -1,0 +1,309 @@
+/* The Story instrument (T5) — the .oi-techne visual system through the
+   shared --oi-* tokens only (hosts theme; this surface consumes). */
+
+.techne-story {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  height: 100%;
+  overflow: auto;
+}
+
+.techne-story-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-story-reading {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.techne-story-transport {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  margin-left: auto;
+}
+
+.techne-story-stand {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-story-button {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-accent-ink);
+  background: transparent;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-3);
+  cursor: pointer;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-story-button:hover:not(:disabled) {
+  border-color: var(--oi-accent);
+}
+
+.techne-story-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.techne-story-button:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-story-expression {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-story-expression-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-story-expression-head code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-story-rev {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+}
+
+.techne-story-beats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: story-beat;
+}
+
+.techne-story-beat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-surface);
+}
+
+.techne-story-beat[data-current] {
+  border-color: var(--oi-accent);
+}
+
+.techne-story-beat-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+}
+
+.techne-story-index {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-story-title {
+  font-size: var(--oi-type-sm);
+  font-weight: 500;
+}
+
+.techne-story-move {
+  margin-left: auto;
+  display: flex;
+  gap: var(--oi-space-1);
+}
+
+.techne-story-move button,
+.techne-story-pace button {
+  font-size: var(--oi-type-sm);
+  line-height: 1;
+  color: var(--oi-foreground);
+  background: transparent;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: calc(var(--oi-space-1) * 0.5) var(--oi-space-2);
+  cursor: pointer;
+}
+
+.techne-story-move button:hover:not(:disabled),
+.techne-story-pace button:hover:not(:disabled) {
+  background: var(--oi-canvas-ground);
+}
+
+.techne-story-move button:disabled,
+.techne-story-pace button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.techne-story-move button:focus-visible,
+.techne-story-pace button:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-story-ids {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-story-ids code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-story-chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-story-chip {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+}
+
+.techne-story-chip > span {
+  color: var(--oi-muted-2);
+}
+
+.techne-story-chip code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-story-sources {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-story-sources summary {
+  cursor: pointer;
+}
+
+.techne-story-sources summary:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-story-sources ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin: var(--oi-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-story-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-story-source code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-story-selector {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-story-pace {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-story-pace output {
+  font-family: var(--oi-font-mono);
+  min-width: 2.5ch;
+  text-align: center;
+}
+
+.techne-story-expression-foot {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-story-propose {
+  border-color: var(--oi-accent);
+}
+
+.techne-story-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-story-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-type-sm);
+}
+
+.techne-story-receipt p,
+.techne-story-receipt ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-story-receipt code {
+  font-family: var(--oi-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.techne-story-receipt[data-routed="true"] {
+  border-color: var(--oi-accent);
+}
+
+.techne-story-cross {
+  display: flex;
+  gap: var(--oi-space-3);
+  align-items: baseline;
+}
