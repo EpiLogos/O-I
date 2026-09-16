@@ -1,0 +1,158 @@
+/*
+ * Timeline instrument styles (L5 Technē T3) — scoped to .techne-timeline,
+ * tokens only (var(--oi-*)); the shared techne chrome classes
+ * (.techne-open, .techne-absent, .techne-instruments) are reused, never
+ * edited. Lane-file styles follow the cradle Techne chrome: wash hover,
+ * accent focus, hairline rules.
+ */
+
+.techne-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.techne-timeline-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-timeline-reading {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.techne-timeline-frame {
+  flex: 1;
+  min-height: 12rem;
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  overflow: auto;
+  resize: both;
+}
+
+.techne-timeline-frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 640px;
+}
+
+.techne-timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-timeline-zoom-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-timeline-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+/* SVG marks. Fill/stroke are presentation attributes here so item kind
+ * colours stay data-driven; selection and focus ride attributes + CSS. */
+
+.techne-timeline .tl-lane-track {
+  fill: transparent;
+  stroke: var(--oi-hairline-soft);
+}
+
+.techne-timeline .tl-lane-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--oi-foreground);
+}
+
+.techne-timeline .tl-lane-ref {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  fill: var(--oi-muted);
+}
+
+.techne-timeline .tl-axis-line {
+  stroke: var(--oi-hairline);
+}
+
+.techne-timeline .tl-tick-line {
+  stroke: var(--oi-rule);
+}
+
+.techne-timeline .tl-tick-label {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  fill: var(--oi-muted);
+}
+
+.techne-timeline-item {
+  cursor: pointer;
+}
+
+.techne-timeline-item:focus {
+  outline: none;
+}
+
+.techne-timeline-item:focus-visible .tl-shape {
+  stroke: var(--oi-focus);
+  stroke-width: 2px;
+}
+
+.techne-timeline-item[data-selected="true"] .tl-shape {
+  stroke: var(--oi-accent) !important;
+  stroke-width: 2.5px;
+}
+
+.techne-timeline .tl-shape {
+  transition: fill var(--oi-motion-ui) var(--oi-motion-ease-out), stroke var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-timeline-item:hover .tl-shape {
+  stroke: var(--oi-accent);
+}
+
+.techne-timeline .tl-band-label {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  fill: var(--oi-foreground);
+  pointer-events: none;
+}
+
+.techne-timeline .tl-count-pill {
+  fill: var(--oi-canvas-ground);
+  stroke: var(--oi-rule);
+}
+
+.techne-timeline .tl-count-label {
+  font-size: 9px;
+  fill: var(--oi-foreground);
+  pointer-events: none;
+}
+
+.techne-timeline .tl-unpositioned {
+  fill: transparent;
+  stroke: var(--oi-muted);
+  stroke-dasharray: 3 2;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techne-timeline .tl-shape { transition: none; }
+}
