@@ -1,0 +1,202 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "sf6-joined-two-worlds",
+  "generated_at": "2026-09-16T03:16:28.859Z",
+  "environment": {
+    "base_url": "http://localhost:4303",
+    "bridge_url": "http://127.0.0.1:4309",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf6-joined-acceptance",
+      "repository_head": "6f4f34bb8d3425f4aada4205a0068be8bb8343ca",
+      "tracked_changes": [
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf6-joined-acceptance/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "7306b7b8882f54fec931922d46fdbaba9f656212"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 86288,
+  "checks": [
+    {
+      "ok": true,
+      "label": "[2machines|worlds] Owner A and the second world are independently grounded"
+    },
+    {
+      "ok": true,
+      "label": "[6] The joined field is hosted on the second-machine acceptance service",
+      "data": {
+        "target": "frank-acceptance",
+        "uri": "ws://100.92.62.101:3000"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[6] The hosted Projection row carries the exact projection and source revision"
+    },
+    {
+      "ok": true,
+      "label": "[7] The second world encounters the subject at its exact source revision"
+    },
+    {
+      "ok": true,
+      "label": "[8] The second world enters the live Expression or its explicit safe fallback",
+      "data": {
+        "state": "unavailable"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[9] The knowledge encounter is a bounded local whole",
+      "data": {
+        "nodes": 2,
+        "edges": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "[17b] The Bimba/QL object is an ordinary hosted subject in the joined field",
+      "data": {
+        "ref": "world:sf6:mu3j3xxh:a/wiki:node:sf6-mu3j3xxh:ql",
+        "state": "hosted"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[17b] The Bimba/QL object encounters as a bounded whole carrying its own source lineage",
+      "data": {
+        "nodes": 2,
+        "focus": "world:sf6:mu3j3xxh:a/wiki:node:sf6-mu3j3xxh:ql"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[10] The second world watches the subject under explicit participant authority"
+    },
+    {
+      "ok": true,
+      "label": "[11] The projected Being discloses its agency in the joined field"
+    },
+    {
+      "ok": true,
+      "label": "[11] Without the exact native owner binding, summoning stays refused — membership is never enough",
+      "data": {
+        "reason": "No native session-owner authority reading is available."
+      }
+    },
+    {
+      "ok": true,
+      "label": "[12] The contribution quarantines on the second machine's field"
+    },
+    {
+      "ok": true,
+      "label": "[12] The submitter's quarantine receipt is authoritative"
+    },
+    {
+      "ok": true,
+      "label": "[13] The owner admitted the Contribution in the ordinary UI"
+    },
+    {
+      "ok": true,
+      "label": "[13] The owner UI returned the admitted material to the real native receiving field"
+    },
+    {
+      "ok": true,
+      "label": "[14] The native owner included the returned difference at the exact revision"
+    },
+    {
+      "ok": true,
+      "label": "[14] Distinct new source revision after inclusion"
+    },
+    {
+      "ok": true,
+      "label": "[15] The second world observes the returned difference after reprojection"
+    },
+    {
+      "ok": true,
+      "label": "[16] Source, Projection and Expression refs survive reconnect and restart unchanged"
+    },
+    {
+      "ok": true,
+      "label": "[16] Contribution identity survives transport churn"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The consented Nara target is admitted on the second world's own transport identity"
+    },
+    {
+      "ok": true,
+      "label": "The admitted reading carries the safe QL/Epii cues"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes bioquaternion"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes resonance"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes journal"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes activity body"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes particle"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes GPU"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The Nara reading excludes Agent context"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The safe Nara Expression is hosted in the joined field under explicit consent"
+    },
+    {
+      "ok": true,
+      "label": "[17a] The withdrawn Nara presence reads as withdrawn at its stable ref"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-16T03:16:29.318Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4309"
+        },
+        "url": "http://localhost:4303/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 143,
+      "data": {
+        "file": "sf6-joined-two-worlds-sf6-joined-two-worlds.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "sf6-joined-two-worlds-sf6-joined-two-worlds.png"
+  ]
+}
