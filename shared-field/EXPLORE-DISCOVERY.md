@@ -65,6 +65,23 @@ through its existing SemanticWiki knowledge operations
 and `aikit search` resolve byte-identical semantic refs and record familiarity
 on them — History returns through the same refs.
 
+**Carrier placement.** A World announces its discovery to agents by placing an
+export JSON under its agent register: `ProjectCentral/agents/explore/*.json`
+at the root register, or `Work/<Name>/ProjectCentral/agents/explore/*.json`
+for a project. AIKit scans exactly those registers (plus, in a standalone
+placement, any discovery export in its indexed horizon) and compiles each
+export into ordinary wiki objects: entries become nodes carrying the
+conventional `aliases` extension, exported relations stay edges with the
+relation name verbatim, SharedField membership and presentation bindings are
+typed edges (`oi.explore/field-member`, `oi.presentation/subject` with
+role/availability), and provenance points at the export carrier. Exporting is
+a deliberate disclosure act — nothing is indexed unless a World put it there.
+Ref closure is enforced exactly as the Explore application enforces it (a
+relation whose endpoint is not an exported entry is refused and disclosed),
+an exported ref never overrides curated local wiki material carrying the same
+ref, and the compilation is derived: deleting the export and recompiling
+rebuilds the same objects.
+
 ## What this contract does not do
 
 - It does not create a second search system, graph store or discovery
