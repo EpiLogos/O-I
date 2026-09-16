@@ -27,8 +27,8 @@ import type {
   ProfileDocument,
   ScopeAddress,
   SettingSpec,
-} from "./contracts";
-import { compactScope } from "./contracts";
+} from "./contracts.ts";
+import { compactScope } from "./contracts.ts";
 import type {
   ChangeRequest,
   ConfigPlaneSource,
