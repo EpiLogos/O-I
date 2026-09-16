@@ -474,3 +474,58 @@ fn seam_diff_and_doctor_report_truthful_reconciliation() {
         ReconciliationStatus::Satisfied
     );
 }
+
+#[test]
+fn profile_edit_and_receipts_flow_through_the_fixture_surface() {
+    // The seeded fixture profile, edited in one invocation: the same
+    // operation set crosses, the previous entry is named, and the stored
+    // document carries the edit.
+    let (code, edited, stdout) = run(&[
+        "profile",
+        "edit",
+        "development",
+        "--set",
+        "ai-kit:resolution:model.default",
+        "opus",
+        "project:epilogos/o-i",
+        "--json",
+    ]);
+    assert_eq!(code, 0, "{stdout}");
+    assert_eq!(edited["schema"], "oi.profile-edit/v1");
+    assert_eq!(edited["profile"]["profile_ref"], "development");
+    assert_eq!(edited["applied"][0]["action"], "entry_updated");
+    assert_eq!(edited["applied"][0]["previous"]["value"], "sonnet-next");
+    assert_eq!(edited["applied"][0]["next"]["value"], "opus");
+
+    // An edit never applies: the fixture owner's native fact is unchanged,
+    // and the (inactive) profile entry is not desired state.
+    let (code, got, _) = run(&[
+        "config",
+        "get",
+        "ai-kit:resolution:model.default",
+        "project:epilogos/o-i",
+        "--json",
+    ]);
+    assert_eq!(code, 0);
+    assert_ne!(
+        got["source"], "desired",
+        "an edit is not a hold and not an apply: {got}"
+    );
+
+    // The receipts listing reads this session's records — in a fresh
+    // fixture invocation, honestly empty (named absence).
+    let (code, receipts, _) = run(&["config", "receipts", "--json"]);
+    assert_eq!(code, 0);
+    assert_eq!(receipts["schema"], "oi.config-receipts/v1");
+    assert_eq!(receipts["receipts"].as_array().expect("receipts").len(), 0);
+
+    // A usage refusal is the structured error document: an edit carries at
+    // least one operation.
+    let (code, error, _) = run(&["profile", "edit", "development", "--json"]);
+    assert_eq!(code, 1);
+    assert_eq!(error["schema"], "oi.config-error/v1");
+    assert!(error["message"]
+        .as_str()
+        .expect("message")
+        .contains("at least one operation"));
+}

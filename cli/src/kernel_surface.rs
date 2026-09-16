@@ -38,7 +38,8 @@
 use crate::config_surface::{
     classify_reconciliation, AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface,
     DoctorClassification, DoctorFinding, ListedSetting, OwnerContribution, PlanChange,
-    ProfileActivation, ProfileSummary, ProfileSurface, SurfaceError, SurfaceResult,
+    ProfileActivation, ProfileEditApplied, ProfileEditOp, ProfileEditOutcome, ProfileSummary,
+    ProfileSurface, ReceiptSummary, SurfaceError, SurfaceResult,
 };
 use crate::configuration::kernel::{
     assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
@@ -871,6 +872,40 @@ impl ConfigSurface for KernelSurface {
     fn discard_desired(&self, setting_ref: &str, scope: &Scope) -> SurfaceResult<bool> {
         self.discard(setting_ref, scope)
     }
+
+    fn receipts(&self) -> SurfaceResult<Vec<ReceiptSummary>> {
+        let mut receipts = self.store.list_receipts().map_err(internal)?;
+        // Oldest first, then identity — a stable, readable order; the
+        // timestamps live inside the recorded refs themselves.
+        receipts.sort_by(|left, right| {
+            (
+                left.applied_at_unix_ms,
+                left.changeset_id.as_str(),
+                left.owner_ref.as_str(),
+                left.receipt_id.as_str(),
+            )
+                .cmp(&(
+                    right.applied_at_unix_ms,
+                    right.changeset_id.as_str(),
+                    right.owner_ref.as_str(),
+                    right.receipt_id.as_str(),
+                ))
+        });
+        Ok(receipts
+            .into_iter()
+            .map(|receipt| ReceiptSummary {
+                receipt_id: receipt.receipt_id,
+                owner_ref: receipt.owner_ref,
+                changeset_id: receipt.changeset_id,
+                setting_ref: receipt.setting_ref,
+                scope: receipt.scope,
+                operation: receipt.operation,
+                outcome: receipt.outcome,
+                applied_at_unix_ms: receipt.applied_at_unix_ms,
+                native_ref: receipt.native_ref,
+            })
+            .collect())
+    }
 }
 
 impl ProfileSurface for KernelSurface {
@@ -1010,6 +1045,165 @@ impl ProfileSurface for KernelSurface {
         )
         .map_err(Self::store_error)?;
         self.load(&profile.profile_ref)
+    }
+
+    fn edit(
+        &self,
+        profile_ref: &str,
+        operations: &[ProfileEditOp],
+    ) -> SurfaceResult<ProfileEditOutcome> {
+        if operations.is_empty() {
+            return Err(SurfaceError::new(
+                ErrorCode::InvalidValue,
+                "a profile edit carries at least one operation",
+            ));
+        }
+        // The checked load enforces the structural laws and the redaction
+        // law before anything is edited (09 §12/§14). The active mark is
+        // not touched: editing desired state is not using it.
+        let mut profile = self.load(profile_ref)?;
+        let mut applied = Vec::new();
+        for operation in operations {
+            match operation {
+                ProfileEditOp::SetEntry {
+                    setting_ref,
+                    scope,
+                    value,
+                    secret_reference,
+                } => {
+                    // The same normalisation as any change request: explicit
+                    // addressing, the secret law, the disclosed shape checks.
+                    let desired = self.normalize(&ChangeRequest {
+                        setting_ref: setting_ref.clone(),
+                        scope: scope.clone(),
+                        value: value.clone(),
+                        secret_reference: secret_reference.clone(),
+                    })?;
+                    let entry = DesiredEntry {
+                        setting_ref: desired.setting_ref,
+                        scope: desired.scope,
+                        value: desired.value,
+                        secret_reference: desired.secret_reference.map(|reference| {
+                            SecretReferenceValue {
+                                ref_: reference.ref_,
+                            }
+                        }),
+                    };
+                    let position = profile.desired.iter().position(|held| {
+                        held.setting_ref == entry.setting_ref && held.scope == entry.scope
+                    });
+                    match position {
+                        Some(index) => {
+                            let previous = profile.desired.remove(index);
+                            applied.push(ProfileEditApplied {
+                                action: "entry_updated".to_owned(),
+                                setting_ref: Some(entry.setting_ref.clone()),
+                                scope: Some(entry.scope.clone()),
+                                next: Some(entry.clone()),
+                                previous: Some(previous),
+                            });
+                        }
+                        None => {
+                            applied.push(ProfileEditApplied {
+                                action: "entry_added".to_owned(),
+                                setting_ref: Some(entry.setting_ref.clone()),
+                                scope: Some(entry.scope.clone()),
+                                next: Some(entry.clone()),
+                                previous: None,
+                            });
+                        }
+                    }
+                    profile.desired.push(entry);
+                }
+                ProfileEditOp::RemoveEntry { setting_ref, scope } => {
+                    let position = match scope {
+                        Some(scope) => profile.desired.iter().position(|held| {
+                            held.setting_ref == *setting_ref && held.scope == *scope
+                        }),
+                        None => {
+                            let matches: Vec<usize> = profile
+                                .desired
+                                .iter()
+                                .enumerate()
+                                .filter(|(_, held)| held.setting_ref == *setting_ref)
+                                .map(|(index, _)| index)
+                                .collect();
+                            match matches.as_slice() {
+                                [] => None,
+                                [only] => Some(*only),
+                                _ => {
+                                    let scopes = matches
+                                        .iter()
+                                        .map(|index| profile.desired[*index].scope.compact())
+                                        .collect::<Vec<_>>()
+                                        .join(", ");
+                                    return Err(SurfaceError::new(
+                                        ErrorCode::InvalidValue,
+                                        format!(
+                                            "`{setting_ref}` is held at several scopes \
+                                             ({scopes}); name the scope to remove"
+                                        ),
+                                    )
+                                    .setting(setting_ref));
+                                }
+                            }
+                        }
+                    };
+                    match position {
+                        Some(index) => {
+                            let previous = profile.desired.remove(index);
+                            applied.push(ProfileEditApplied {
+                                action: "entry_removed".to_owned(),
+                                setting_ref: Some(previous.setting_ref.clone()),
+                                scope: Some(previous.scope.clone()),
+                                next: None,
+                                previous: Some(previous),
+                            });
+                        }
+                        None => {
+                            applied.push(ProfileEditApplied {
+                                action: "entry_absent".to_owned(),
+                                setting_ref: Some(setting_ref.clone()),
+                                scope: scope.clone(),
+                                next: None,
+                                previous: None,
+                            });
+                        }
+                    }
+                }
+                ProfileEditOp::SetTitle(title) => {
+                    profile.title = title.clone();
+                    applied.push(ProfileEditApplied {
+                        action: "title_set".to_owned(),
+                        setting_ref: None,
+                        scope: None,
+                        next: None,
+                        previous: None,
+                    });
+                }
+                ProfileEditOp::SetDescription(description) => {
+                    profile.description = description.clone();
+                    applied.push(ProfileEditApplied {
+                        action: "description_set".to_owned(),
+                        setting_ref: None,
+                        scope: None,
+                        next: None,
+                        previous: None,
+                    });
+                }
+            }
+        }
+        // The edited document is re-validated and stored through the same
+        // path as creation: structural laws, redaction law, atomic 0600
+        // publish (09 §12).
+        profile.revised_at_unix_ms = now_unix_ms();
+        profile
+            .validate()
+            .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+        self.profiles
+            .save_checked(&profile, self.registry.settings())
+            .map_err(Self::store_error)?;
+        Ok(ProfileEditOutcome { profile, applied })
     }
 }
 

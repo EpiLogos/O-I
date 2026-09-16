@@ -515,6 +515,13 @@ schema   oi.config-receipt/v1
   must not re-plan. Enforcement is owner-side (C3 lanes prove it); the
   contract and fixtures are frozen here
   (`changeset-idempotent-replay.json`).
+- **Receipts listing (engine surface, additive).** `oi config receipts`
+  (and the Desktop's receipt browsing through the same engine) lists the
+  O:I-side receipt references with their identity — receipt id, owner,
+  changeset id, setting, scope, operation, outcome, timestamp, `native_ref`.
+  It is a listing/reading of the recorded refs and never a second store: the
+  owner's own history remains the record of record. A changeset with no
+  recorded receipts reads as empty — named absence, never invented content.
 
 ## 10. External native edits
 
@@ -610,6 +617,14 @@ Frozen laws:
 - **File safety.** Regular files only (no symlinks), 0600, size-capped, and
   written through atomic publish with the same discipline as
   `composition.json`. (C2 implements; the law is frozen here.)
+- **In-place edit (engine surface, additive).** `oi profile edit <profile>`
+  mutates a stored profile's desired entries through an explicit,
+  reviewable operation set (add/update/remove entries; title/description).
+  Edit is a persistence-path mutation only: every operation passes the same
+  laws as creation (addressing, secret law §13/§14, structural validation)
+  and the same file safety as above; the active mark is untouched and no
+  owner is planned, applied or reset by an edit. The report names exactly
+  what changed.
 
 ## 13. C0-11 — Native product-profile reference semantics
 

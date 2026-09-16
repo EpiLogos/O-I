@@ -154,6 +154,15 @@ export interface ProfileUsePlanWire {
   entries: { setting_ref: string; scope: ConfigScopeWire; target: unknown; current: unknown }[];
   native_profiles: { owner_ref: string; native_profile_ref: string }[];
 }
+/** One explicit profile edit operation as it crosses to the engine's own
+ * `oi profile edit` verb (09 §12, additive). The engine judges every
+ * operation through its own laws; a secret-kind set carries the reference
+ * and never material. */
+export type ProfileEditOpWire =
+  | { action: "set"; setting_ref: string; scope: ConfigScopeWire; value?: unknown; secret_reference?: ConfigSecretReferenceWire | null }
+  | { action: "remove"; setting_ref: string; scope?: ConfigScopeWire | null }
+  | { action: "set_title"; title: string | null }
+  | { action: "set_description"; description: string | null };
 
 export type KernelOp =
   | {op:"being_encounter";request:Record<string,unknown>}
@@ -192,6 +201,8 @@ export type KernelOp =
   | { op: "profile_use_plan"; profile_ref: string }
   | { op: "profile_use_apply"; profile_ref: string }
   | { op: "profile_create"; profile_ref: string; title?: string }
+  | { op: "profile_edit"; profile_ref: string; operations: ProfileEditOpWire[] }
+  | { op: "config_receipts" }
   | { op: "files_list"; path: string }
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
@@ -256,6 +267,8 @@ export type KernelOpResult =
   | { result: "profile_use_planning"; plan: ProfileUsePlanWire }
   | { result: "profile_used"; activation: unknown }
   | { result: "profile_created"; profile: ProfileDocumentWire }
+  | { result: "profile_edited"; document: unknown }
+  | { result: "config_receipts"; document: unknown }
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result:"receiving_reading";data:unknown }

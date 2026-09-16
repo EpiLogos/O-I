@@ -12,8 +12,9 @@
 
 use crate::config_surface::{
     sha256_hex, AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface, DoctorClassification,
-    DoctorFinding, ListedSetting, OwnerContribution, PlanChange, ProfileActivation, ProfileSummary,
-    ProfileSurface, SurfaceError, SurfaceResult, CONFIG_PLAN_SCHEMA,
+    DoctorFinding, ListedSetting, OwnerContribution, PlanChange, ProfileActivation,
+    ProfileEditApplied, ProfileEditOp, ProfileEditOutcome, ProfileSummary, ProfileSurface,
+    ReceiptSummary, SurfaceError, SurfaceResult, CONFIG_PLAN_SCHEMA,
 };
 use crate::configuration::{
     derive_changeset_status, parse_setting_ref, reconcile, validate_changeset, validate_profile,
@@ -58,6 +59,10 @@ pub struct FixtureSurface {
     active_profile: RefCell<Option<String>>,
     /// canonical idempotency key -> original receipt id (09 §9).
     executed: RefCell<BTreeMap<String, String>>,
+    /// The receipts this session's applies and resets minted — the fixture
+    /// surface's honest receipts listing (in memory only; the real engine
+    /// reads the recorded refs from the O:I store).
+    recorded_receipts: RefCell<Vec<Receipt>>,
     plan_counter: Cell<u64>,
     receipt_counter: Cell<u64>,
     /// Deterministic fixture clock (unix ms); 0 keeps tests reproducible.
@@ -115,6 +120,7 @@ impl FixtureSurface {
             profiles: RefCell::new(BTreeMap::new()),
             active_profile: RefCell::new(None),
             executed: RefCell::new(BTreeMap::new()),
+            recorded_receipts: RefCell::new(Vec::new()),
             plan_counter: Cell::new(0),
             receipt_counter: Cell::new(0),
             now_ms: Cell::new(0),
@@ -286,6 +292,25 @@ impl FixtureSurface {
             .setting(&request.setting_ref)
             .scope(&request.scope));
         }
+        Ok((spec.clone(), self.normalize_value_law(&spec, request)?))
+    }
+
+    /// Normalise a desired entry for profile editing: the same addressing,
+    /// secret law and shape checks as any change request, without the
+    /// apply-time writability gate — a profile holds desired intent, and
+    /// writability stays the owner's apply-time decision.
+    fn normalize_desired_entry(&self, request: &ChangeRequest) -> SurfaceResult<RequestedChange> {
+        let spec = self.resolve_spec(&request.setting_ref)?;
+        self.check_scope(&request.setting_ref, &request.scope)?;
+        self.normalize_value_law(&spec, request)
+    }
+
+    /// The shared secret law and shape checks of both normalisations.
+    fn normalize_value_law(
+        &self,
+        spec: &SettingSpec,
+        request: &ChangeRequest,
+    ) -> SurfaceResult<RequestedChange> {
         let mut value = request.value.clone();
         let mut secret_reference = request.secret_reference.clone();
         match spec.value_schema.kind {
@@ -330,23 +355,20 @@ impl FixtureSurface {
                     .setting(&request.setting_ref)
                     .scope(&request.scope));
                 }
-                self.check_value_shape(&spec, value.as_ref().unwrap())?;
+                self.check_value_shape(spec, value.as_ref().unwrap())?;
             }
         }
-        Ok((
-            spec,
-            RequestedChange {
-                setting_ref: request.setting_ref.clone(),
-                scope: request.scope.clone(),
-                value,
-                // The wire form carries the reference without presence:
-                // presence is observed-only and never stored (09 §14).
-                secret_reference: secret_reference.map(|reference| SecretReference {
-                    ref_: reference.ref_,
-                    present: None,
-                }),
-            },
-        ))
+        Ok(RequestedChange {
+            setting_ref: request.setting_ref.clone(),
+            scope: request.scope.clone(),
+            value,
+            // The wire form carries the reference without presence:
+            // presence is observed-only and never stored (09 §14).
+            secret_reference: secret_reference.map(|reference| SecretReference {
+                ref_: reference.ref_,
+                present: None,
+            }),
+        })
     }
 
     /// The disclosed `value_schema` is a validation hint; the owner's native
@@ -889,6 +911,7 @@ impl ConfigSurface for FixtureSurface {
                 error: None,
             });
             applied_setting_scopes.push((normalized.setting_ref.clone(), normalized.scope.clone()));
+            self.recorded_receipts.borrow_mut().push(receipt.clone());
             receipts.push(receipt);
         }
         // Re-read verification (09 §9): reconcile every applied setting and
@@ -1034,6 +1057,7 @@ impl ConfigSurface for FixtureSurface {
         };
         validate_changeset(&changeset, &self.registry)
             .map_err(|error| SurfaceError::new(ErrorCode::Internal, error))?;
+        self.recorded_receipts.borrow_mut().push(receipt.clone());
         Ok(AppliedChange {
             changeset,
             receipts: vec![receipt],
@@ -1150,6 +1174,27 @@ impl ConfigSurface for FixtureSurface {
             }
         }
         Ok(findings)
+    }
+
+    fn receipts(&self) -> SurfaceResult<Vec<ReceiptSummary>> {
+        // The fixture's session-applied receipts, in mint order — in memory
+        // only. The real engine reads the recorded refs from the O:I store.
+        Ok(self
+            .recorded_receipts
+            .borrow()
+            .iter()
+            .map(|receipt| ReceiptSummary {
+                receipt_id: receipt.receipt_id.clone(),
+                owner_ref: receipt.owner_ref.clone(),
+                changeset_id: receipt.changeset_id.clone(),
+                setting_ref: receipt.setting_ref.clone(),
+                scope: receipt.scope.clone(),
+                operation: receipt.operation,
+                outcome: receipt.outcome,
+                applied_at_unix_ms: receipt.applied_at_unix_ms,
+                native_ref: receipt.native_ref.clone(),
+            })
+            .collect())
     }
 }
 
@@ -1281,6 +1326,160 @@ impl ProfileSurface for FixtureSurface {
             .insert(imported.profile_ref.clone(), imported.clone());
         Ok(imported)
     }
+
+    fn edit(
+        &self,
+        profile_ref: &str,
+        operations: &[ProfileEditOp],
+    ) -> SurfaceResult<ProfileEditOutcome> {
+        if operations.is_empty() {
+            return Err(SurfaceError::new(
+                ErrorCode::InvalidValue,
+                "a profile edit carries at least one operation",
+            ));
+        }
+        let mut profile = self.load(profile_ref)?;
+        let mut applied = Vec::new();
+        for operation in operations {
+            match operation {
+                ProfileEditOp::SetEntry {
+                    setting_ref,
+                    scope,
+                    value,
+                    secret_reference,
+                } => {
+                    // The same laws as any change request: explicit
+                    // addressing, the secret law, the disclosed shape
+                    // checks (writability stays an apply-time decision,
+                    // exactly as in the engine).
+                    let normalized = self.normalize_desired_entry(&ChangeRequest {
+                        setting_ref: setting_ref.clone(),
+                        scope: scope.clone(),
+                        value: value.clone(),
+                        secret_reference: secret_reference.clone(),
+                    })?;
+                    let entry = DesiredEntry {
+                        setting_ref: normalized.setting_ref,
+                        scope: normalized.scope,
+                        value: normalized.value,
+                        secret_reference: normalized.secret_reference.map(|reference| {
+                            crate::configuration::SecretReferenceValue {
+                                ref_: reference.ref_,
+                            }
+                        }),
+                    };
+                    let position = profile.desired.iter().position(|held| {
+                        held.setting_ref == entry.setting_ref && held.scope == entry.scope
+                    });
+                    match position {
+                        Some(index) => {
+                            let previous = profile.desired.remove(index);
+                            applied.push(ProfileEditApplied {
+                                action: "entry_updated".to_owned(),
+                                setting_ref: Some(entry.setting_ref.clone()),
+                                scope: Some(entry.scope.clone()),
+                                next: Some(entry.clone()),
+                                previous: Some(previous),
+                            });
+                        }
+                        None => {
+                            applied.push(ProfileEditApplied {
+                                action: "entry_added".to_owned(),
+                                setting_ref: Some(entry.setting_ref.clone()),
+                                scope: Some(entry.scope.clone()),
+                                next: Some(entry.clone()),
+                                previous: None,
+                            });
+                        }
+                    }
+                    profile.desired.push(entry);
+                }
+                ProfileEditOp::RemoveEntry { setting_ref, scope } => {
+                    let position = match scope {
+                        Some(scope) => profile.desired.iter().position(|held| {
+                            held.setting_ref == *setting_ref && held.scope == *scope
+                        }),
+                        None => {
+                            let matches: Vec<usize> = profile
+                                .desired
+                                .iter()
+                                .enumerate()
+                                .filter(|(_, held)| held.setting_ref == *setting_ref)
+                                .map(|(index, _)| index)
+                                .collect();
+                            match matches.as_slice() {
+                                [] => None,
+                                [only] => Some(*only),
+                                _ => {
+                                    let scopes = matches
+                                        .iter()
+                                        .map(|index| profile.desired[*index].scope.compact())
+                                        .collect::<Vec<_>>()
+                                        .join(", ");
+                                    return Err(SurfaceError::new(
+                                        ErrorCode::InvalidValue,
+                                        format!(
+                                            "`{setting_ref}` is held at several scopes \
+                                             ({scopes}); name the scope to remove"
+                                        ),
+                                    )
+                                    .setting(setting_ref));
+                                }
+                            }
+                        }
+                    };
+                    match position {
+                        Some(index) => {
+                            let previous = profile.desired.remove(index);
+                            applied.push(ProfileEditApplied {
+                                action: "entry_removed".to_owned(),
+                                setting_ref: Some(previous.setting_ref.clone()),
+                                scope: Some(previous.scope.clone()),
+                                next: None,
+                                previous: Some(previous),
+                            });
+                        }
+                        None => {
+                            applied.push(ProfileEditApplied {
+                                action: "entry_absent".to_owned(),
+                                setting_ref: Some(setting_ref.clone()),
+                                scope: scope.clone(),
+                                next: None,
+                                previous: None,
+                            });
+                        }
+                    }
+                }
+                ProfileEditOp::SetTitle(title) => {
+                    profile.title = title.clone();
+                    applied.push(ProfileEditApplied {
+                        action: "title_set".to_owned(),
+                        setting_ref: None,
+                        scope: None,
+                        next: None,
+                        previous: None,
+                    });
+                }
+                ProfileEditOp::SetDescription(description) => {
+                    profile.description = description.clone();
+                    applied.push(ProfileEditApplied {
+                        action: "description_set".to_owned(),
+                        setting_ref: None,
+                        scope: None,
+                        next: None,
+                        previous: None,
+                    });
+                }
+            }
+        }
+        profile.revised_at_unix_ms = self.now_ms.get();
+        validate_profile(&profile, &self.registry)
+            .map_err(|error| SurfaceError::new(ErrorCode::InvalidValue, error))?;
+        self.profiles
+            .borrow_mut()
+            .insert(profile.profile_ref.clone(), profile.clone());
+        Ok(ProfileEditOutcome { profile, applied })
+    }
 }
 
 #[cfg(test)]
@@ -1338,5 +1537,112 @@ mod tests {
             .expect_err("an undiscosed option is rejected");
         assert_eq!(error.code, ErrorCode::InvalidValue);
         assert!(error.message.contains("authoritative"));
+    }
+
+    #[test]
+    fn profile_edit_applies_the_operation_set_and_names_what_changed() {
+        let surface = surface();
+        let scope = crate::configuration::parse_scope_compact("project:epilogos/o-i").unwrap();
+        let outcome = surface
+            .edit(
+                "development",
+                &[
+                    ProfileEditOp::SetEntry {
+                        setting_ref: "ai-kit:resolution:model.default".into(),
+                        scope: scope.clone(),
+                        value: Some(Value::String("opus".into())),
+                        secret_reference: None,
+                    },
+                    ProfileEditOp::RemoveEntry {
+                        setting_ref: "ai-kit:session:session.provider".into(),
+                        scope: None,
+                    },
+                    ProfileEditOp::SetTitle(Some("Edited".into())),
+                ],
+            )
+            .expect("the edit applies");
+        let actions: Vec<&str> = outcome
+            .applied
+            .iter()
+            .map(|applied| applied.action.as_str())
+            .collect();
+        assert_eq!(actions, ["entry_updated", "entry_removed", "title_set"]);
+        assert_eq!(
+            outcome.applied[0]
+                .previous
+                .as_ref()
+                .expect("previous")
+                .value,
+            Some(Value::String("sonnet-next".into()))
+        );
+        assert_eq!(outcome.profile.desired.len(), 4);
+        assert_eq!(outcome.profile.title.as_deref(), Some("Edited"));
+        // The edited document is what the seam answers afterwards.
+        let loaded = surface.load("development").expect("loaded");
+        assert_eq!(loaded.desired.len(), 4);
+        assert!(loaded
+            .desired
+            .iter()
+            .all(|entry| entry.setting_ref != "ai-kit:session:session.provider"));
+
+        // The same setting held at two scopes makes a scope-less removal
+        // ambiguous: refused, naming the scopes, storing nothing.
+        surface
+            .edit(
+                "development",
+                &[ProfileEditOp::SetEntry {
+                    setting_ref: "ai-kit:resolution:model.default".into(),
+                    scope: crate::configuration::parse_scope_compact("project:other").unwrap(),
+                    value: Some(Value::String("opus".into())),
+                    secret_reference: None,
+                }],
+            )
+            .expect("the second scope entry stores");
+        let error = surface
+            .edit(
+                "development",
+                &[ProfileEditOp::RemoveEntry {
+                    setting_ref: "ai-kit:resolution:model.default".into(),
+                    scope: None,
+                }],
+            )
+            .expect_err("an ambiguous removal is refused");
+        assert_eq!(error.code, ErrorCode::InvalidValue);
+        assert!(error.message.contains("several scopes"), "{error}");
+        assert_eq!(
+            surface.load("development").expect("loaded").desired.len(),
+            5,
+            "a refused edit stores nothing"
+        );
+
+        // An empty operation set is refused too.
+        let error = surface
+            .edit("development", &[])
+            .expect_err("an empty edit is refused");
+        assert_eq!(error.code, ErrorCode::InvalidValue);
+    }
+
+    #[test]
+    fn receipts_listing_reads_this_session_s_recorded_refs() {
+        let surface = surface();
+        assert!(
+            surface.receipts().expect("receipts").is_empty(),
+            "an absent history reads as empty, never invented"
+        );
+        let request = ChangeRequest {
+            setting_ref: "ai-kit:resolution:model.default".into(),
+            scope: crate::configuration::parse_scope_compact("project:epilogos/o-i").unwrap(),
+            value: Some(Value::String("opus".into())),
+            secret_reference: None,
+        };
+        let applied = surface
+            .apply("cs-fixture-receipts", std::slice::from_ref(&request), None)
+            .expect("apply");
+        assert_eq!(applied.receipts.len(), 1);
+        let listed = surface.receipts().expect("receipts");
+        assert_eq!(listed.len(), 1);
+        assert_eq!(listed[0].receipt_id, applied.receipts[0].receipt_id);
+        assert_eq!(listed[0].changeset_id, "cs-fixture-receipts");
+        assert_eq!(listed[0].outcome, ReceiptOutcome::Applied);
     }
 }

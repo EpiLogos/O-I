@@ -16,13 +16,15 @@
 //! Rust types here state the same wire shapes (no frozen file is edited).
 //! The small reading envelopes the CLI emits (`oi.config-listing/v1`,
 //! `oi.config-get/v1`, `oi.config-diff/v1`, `oi.config-doctor/v1`,
-//! `oi.config-plan-set/v1`, `oi.config-apply/v1`, `oi.profile-listing/v1`,
-//! `oi.profile-activation/v1`) are C5-local headless reading forms built
-//! entirely from frozen vocabularies and frozen document types.
+//! `oi.config-plan-set/v1`, `oi.config-apply/v1`, `oi.config-discard/v1`,
+//! `oi.config-receipts/v1`, `oi.profile-listing/v1`,
+//! `oi.profile-activation/v1`, `oi.profile-edit/v1`) are C5-local headless
+//! reading forms built entirely from frozen vocabularies and frozen
+//! document types.
 
 use crate::configuration::{
-    ChangeSet, Contribution, DesiredEntry, Effect, EffectKind, ErrorCode, Profile, Receipt,
-    ReconciliationStatus, Resolution, Scope, SettingSpec, ValueKind,
+    ChangeSet, Contribution, DesiredEntry, Effect, EffectKind, ErrorCode, OperationKind, Profile,
+    Receipt, ReceiptOutcome, ReconciliationStatus, Resolution, Scope, SettingSpec, ValueKind,
 };
 use serde::{Deserialize, Serialize};
 use serde_json::Value;
@@ -450,6 +452,41 @@ pub trait ConfigSurface {
             "this configuration surface keeps no desired state; discarding is an engine capability",
         ))
     }
+
+    /// The recorded receipt references (09 §9): one row per O:I-side receipt
+    /// ref, identity intact. This is a listing/reading of what the engine
+    /// recorded — never a second store; the owner's own history (`native_ref`)
+    /// remains the record of record. A changeset with no recorded receipts
+    /// lists as empty: named absence, never invented content. Surfaces that
+    /// keep no receipt records refuse.
+    fn receipts(&self) -> SurfaceResult<Vec<ReceiptSummary>> {
+        Err(SurfaceError::new(
+            ErrorCode::Internal,
+            "this configuration surface keeps no receipt records; receipts listing is an engine capability",
+        ))
+    }
+}
+
+// ---------------------------------------------------------------------------
+// The recorded receipt listing (09 §9)
+// ---------------------------------------------------------------------------
+
+/// One recorded receipt reference, as the receipts listing reads it: the
+/// identity fields of `oi.config-receipt/v1` exactly as the engine recorded
+/// them. This is a reading of recorded refs, never a mirror of owner state —
+/// the owner's own history stays the record of record (`native_ref`, 09 §9).
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ReceiptSummary {
+    pub receipt_id: String,
+    pub owner_ref: String,
+    pub changeset_id: String,
+    pub setting_ref: String,
+    pub scope: Scope,
+    pub operation: OperationKind,
+    pub outcome: ReceiptOutcome,
+    pub applied_at_unix_ms: u64,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_ref: Option<String>,
 }
 
 // ---------------------------------------------------------------------------
@@ -477,6 +514,62 @@ pub struct ProfileActivation {
     pub active_profile: Option<String>,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     pub previous: Option<String>,
+}
+
+/// One explicit, reviewable `oi profile edit` operation. Editing is a
+/// persistence-path mutation of the sparse desired document through the
+/// store's own laws — never an owner apply (09 §12).
+#[derive(Clone, Debug, PartialEq)]
+pub enum ProfileEditOp {
+    /// Add or update one desired entry; the entry identity is
+    /// `(setting_ref, scope)` and a set replaces the entry held for it.
+    /// The same laws as any change request apply: explicit addressing, the
+    /// secret law (secret-kind carries the reference and never a value),
+    /// and the disclosed shape checks.
+    SetEntry {
+        setting_ref: String,
+        scope: Scope,
+        value: Option<Value>,
+        secret_reference: Option<crate::configuration::SecretReferenceValue>,
+    },
+    /// Remove one desired entry. With no scope: the one entry held for the
+    /// setting — refused as ambiguous when several exist, named-absent when
+    /// none does.
+    RemoveEntry {
+        setting_ref: String,
+        scope: Option<Scope>,
+    },
+    /// Set (or clear with `None`) the profile title.
+    SetTitle(Option<String>),
+    /// Set (or clear with `None`) the profile description.
+    SetDescription(Option<String>),
+}
+
+/// What one edit operation changed, named per operation. `next` carries the
+/// entry as an add/set left it; `previous` carries the entry as a
+/// replacement or removal found it — a secret-kind entry carries its
+/// reference only, never material.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ProfileEditApplied {
+    /// `entry_added` | `entry_updated` | `entry_removed` | `entry_absent` |
+    /// `title_set` | `description_set`.
+    pub action: String,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub setting_ref: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub scope: Option<Scope>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub next: Option<DesiredEntry>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub previous: Option<DesiredEntry>,
+}
+
+/// The outcome of one `oi profile edit`: the stored document beside the
+/// per-operation record of what changed. Nothing was applied to any owner.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct ProfileEditOutcome {
+    pub profile: Profile,
+    pub applied: Vec<ProfileEditApplied>,
 }
 
 /// The profile store seam. The C2 store binds it with a thin adapter.
@@ -514,6 +607,23 @@ pub trait ProfileSurface {
     /// Store an imported profile as inspectable desired state. Never
     /// applies anything; validates the document and its secret law first.
     fn import(&self, profile: &Profile, source_ref: Option<&str>) -> SurfaceResult<Profile>;
+
+    /// Edit a stored profile in place through an explicit, reviewable
+    /// operation set (09 §12: a persistence-path mutation of the sparse
+    /// desired document — never an owner apply, the active mark untouched).
+    /// Every operation is validated through the same laws as creation; the
+    /// document is stored atomically under the store's own file law.
+    /// Surfaces without an edit capability refuse.
+    fn edit(
+        &self,
+        _profile_ref: &str,
+        _operations: &[ProfileEditOp],
+    ) -> SurfaceResult<ProfileEditOutcome> {
+        Err(SurfaceError::new(
+            ErrorCode::Internal,
+            "this profile surface does not support in-place edits; editing is an engine capability",
+        ))
+    }
 }
 
 // ---------------------------------------------------------------------------

@@ -221,6 +221,42 @@ pub struct UsePlan {
     pub native_profiles: Vec<Value>,
 }
 
+/// One explicit profile edit operation as it crosses to the engine's own
+/// `oi profile edit` verb (09 §12, additive): the engine validates every
+/// operation through its own laws — addressing, the secret law, the
+/// disclosed shapes — and stores through its own atomic file law; this seam
+/// copies none of that.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+#[serde(tag = "action", rename_all = "snake_case")]
+pub enum ProfileEditOp {
+    /// Add or update one desired entry (identity: setting + scope).
+    Set {
+        setting_ref: String,
+        scope: ConfigScope,
+        #[serde(default)]
+        value: Option<Value>,
+        #[serde(default)]
+        secret_reference: Option<SecretReferenceInput>,
+    },
+    /// Remove one desired entry; no scope names the one entry held for the
+    /// setting and refuses ambiguously when several exist.
+    Remove {
+        setting_ref: String,
+        #[serde(default)]
+        scope: Option<ConfigScope>,
+    },
+    /// Set (or clear with `None`) the profile title.
+    SetTitle {
+        #[serde(default)]
+        title: Option<String>,
+    },
+    /// Set (or clear with `None`) the profile description.
+    SetDescription {
+        #[serde(default)]
+        description: Option<String>,
+    },
+}
+
 // ---------------------------------------------------------------------------
 // the client
 // ---------------------------------------------------------------------------
@@ -644,6 +680,87 @@ impl Client {
             args.push(title.to_owned());
         }
         args.push("--json".to_owned());
+        self.expect_document(cwd, &args, None)
+    }
+
+    /// Edit a stored profile in place through the engine's own edit verb:
+    /// `oi profile edit <ref> ... --json`. Every operation is judged by the
+    /// engine's own laws; the edited document and the per-operation record
+    /// come back verbatim inside the `oi.profile-edit/v1` envelope. A
+    /// secret-kind set carries the reference string — material never does.
+    pub fn profile_edit(
+        &self,
+        cwd: &Path,
+        profile_ref: &str,
+        operations: &[ProfileEditOp],
+    ) -> Result<Value, String> {
+        if operations.is_empty() {
+            return Err("internal: a profile edit carries at least one operation".to_owned());
+        }
+        let mut args = vec![
+            "profile".to_owned(),
+            "edit".to_owned(),
+            profile_ref.to_owned(),
+        ];
+        for operation in operations {
+            match operation {
+                ProfileEditOp::Set {
+                    setting_ref,
+                    scope,
+                    value,
+                    secret_reference,
+                } => {
+                    args.push("--set".to_owned());
+                    args.push(setting_ref.clone());
+                    match (value, secret_reference) {
+                        (Some(value), _) => {
+                            args.push(serde_json::to_string(value).unwrap_or_default())
+                        }
+                        (None, Some(secret)) => args.push(secret.ref_.clone()),
+                        (None, None) => {
+                            return Err(format!(
+                                "internal: the edit op for `{setting_ref}` carries a value or a secret reference"
+                            ))
+                        }
+                    }
+                    args.push(scope.compact());
+                }
+                ProfileEditOp::Remove { setting_ref, scope } => {
+                    args.push("--remove".to_owned());
+                    args.push(setting_ref.clone());
+                    if let Some(scope) = scope {
+                        args.push(scope.compact());
+                    }
+                }
+                ProfileEditOp::SetTitle { title } => match title {
+                    Some(title) => {
+                        args.push("--title".to_owned());
+                        args.push(title.clone());
+                    }
+                    None => args.push("--clear-title".to_owned()),
+                },
+                ProfileEditOp::SetDescription { description } => match description {
+                    Some(description) => {
+                        args.push("--description".to_owned());
+                        args.push(description.clone());
+                    }
+                    None => args.push("--clear-description".to_owned()),
+                },
+            }
+        }
+        args.push("--json".to_owned());
+        self.expect_document(cwd, &args, None)
+    }
+
+    /// The recorded receipt references (09 §9): `oi config receipts --json`,
+    /// verbatim. A listing of recorded refs only — the owner's own history
+    /// stays the record of record; an absent history is an empty list.
+    pub fn config_receipts(&self, cwd: &Path) -> Result<Value, String> {
+        let args = vec![
+            "config".to_owned(),
+            "receipts".to_owned(),
+            "--json".to_owned(),
+        ];
         self.expect_document(cwd, &args, None)
     }
 
@@ -1391,6 +1508,138 @@ esac
             .profile_create(&scene.dir, "staging", Some("Staging"))
             .expect("created");
         assert_eq!(created["profile_ref"], "staging");
+    }
+
+    #[test]
+    fn profile_edit_marshals_the_explicit_operation_set() {
+        let scene = Scene::with_answers(
+            r#"#!/bin/sh
+case "$*" in
+  "profile edit dev --set ai-kit:resolution:model.default "\"sonnet-next\"" project:p --remove ai-kit:resolution:skill-set --json")
+    echo '{"schema":"oi.profile-edit/v1","profile":{"schema":"oi.profile/v1","profile_ref":"dev"},"applied":[{"action":"entry_updated","setting_ref":"ai-kit:resolution:model.default","scope":{"scope_kind":"project","scope_ref":"p"},"next":{"value":"sonnet-next"},"previous":{"value":"sonnet-current"}}]}' ;;
+  "profile edit dev --set ai-kit:providers:credentials.anthropic aikit:credentials:held world --json")
+    echo '{"schema":"oi.profile-edit/v1","profile":{"profile_ref":"dev"},"applied":[]}' ;;
+  "profile edit dev --remove ai-kit:resolution:model.default project:p --json")
+    echo '{"schema":"oi.profile-edit/v1","profile":{"profile_ref":"dev"},"applied":[]}' ;;
+  "profile edit dev --title Staging --clear-description --json")
+    echo '{"schema":"oi.profile-edit/v1","profile":{"profile_ref":"dev"},"applied":[]}' ;;
+  *) echo "unexpected: $*" >&2; exit 3 ;;
+esac
+"#,
+        );
+        let client = scene.client();
+        let project = ConfigScope {
+            scope_kind: "project".into(),
+            scope_ref: Some("p".into()),
+        };
+        let world = ConfigScope {
+            scope_kind: "world".into(),
+            scope_ref: None,
+        };
+
+        let edited = client
+            .profile_edit(
+                &scene.dir,
+                "dev",
+                &[
+                    ProfileEditOp::Set {
+                        setting_ref: "ai-kit:resolution:model.default".into(),
+                        scope: project.clone(),
+                        value: Some(json!("sonnet-next")),
+                        secret_reference: None,
+                    },
+                    ProfileEditOp::Remove {
+                        setting_ref: "ai-kit:resolution:skill-set".into(),
+                        scope: None,
+                    },
+                ],
+            )
+            .expect("the edit answered");
+        assert_eq!(
+            edited["schema"], "oi.profile-edit/v1",
+            "the engine's own envelope crosses verbatim"
+        );
+        assert_eq!(edited["applied"][0]["action"], "entry_updated");
+        assert_eq!(edited["applied"][0]["previous"]["value"], "sonnet-current");
+
+        // A secret-kind set crosses as the reference string only.
+        client
+            .profile_edit(
+                &scene.dir,
+                "dev",
+                &[ProfileEditOp::Set {
+                    setting_ref: "ai-kit:providers:credentials.anthropic".into(),
+                    scope: world,
+                    value: None,
+                    secret_reference: Some(SecretReferenceInput {
+                        ref_: "aikit:credentials:held".into(),
+                    }),
+                }],
+            )
+            .expect("the secret edit answered");
+
+        // Removal with an explicit scope, then title set/clear.
+        client
+            .profile_edit(
+                &scene.dir,
+                "dev",
+                &[ProfileEditOp::Remove {
+                    setting_ref: "ai-kit:resolution:model.default".into(),
+                    scope: Some(project),
+                }],
+            )
+            .expect("the scoped remove answered");
+        client
+            .profile_edit(
+                &scene.dir,
+                "dev",
+                &[
+                    ProfileEditOp::SetTitle {
+                        title: Some("Staging".into()),
+                    },
+                    ProfileEditOp::SetDescription { description: None },
+                ],
+            )
+            .expect("the title edit answered");
+
+        let calls = scene.argv_calls();
+        // The whole operation set crosses in ONE edit invocation.
+        assert!(calls.iter().any(|call| {
+            call == r#"profile edit dev --set ai-kit:resolution:model.default "sonnet-next" project:p --remove ai-kit:resolution:skill-set --json"#
+        }));
+        assert!(calls.iter().any(|call| {
+            call == "profile edit dev --set ai-kit:providers:credentials.anthropic aikit:credentials:held world --json"
+        }));
+        // Removal with an explicit scope crosses as its own invocation.
+        assert!(calls.iter().any(|call| {
+            call == "profile edit dev --remove ai-kit:resolution:model.default project:p --json"
+        }));
+        assert!(calls.iter().any(|call| {
+            call == "profile edit dev --title Staging --clear-description --json"
+        }));
+
+        // An empty operation set is refused kernel-side, before any spawn.
+        assert!(client.profile_edit(&scene.dir, "dev", &[]).is_err());
+    }
+
+    #[test]
+    fn config_receipts_lists_the_recorded_refs_verbatim() {
+        let scene = Scene::with_answers(
+            r#"#!/bin/sh
+case "$*" in
+  "config receipts --json")
+    echo '{"schema":"oi.config-receipts/v1","receipts":[{"receipt_id":"aikit-receipt-1","owner_ref":"ai-kit","changeset_id":"cs-cradle-1","setting_ref":"ai-kit:resolution:model.default","scope":{"scope_kind":"project","scope_ref":"p"},"operation":"apply","outcome":"applied","applied_at_unix_ms":42,"native_ref":"aikit:history:1"}]}' ;;
+  *) echo "unexpected: $*" >&2; exit 3 ;;
+esac
+"#,
+        );
+        let document = scene
+            .client()
+            .config_receipts(&scene.dir)
+            .expect("the listing answered");
+        assert_eq!(document["schema"], "oi.config-receipts/v1");
+        assert_eq!(document["receipts"][0]["receipt_id"], "aikit-receipt-1");
+        assert_eq!(document["receipts"][0]["native_ref"], "aikit:history:1");
     }
 
     #[test]
