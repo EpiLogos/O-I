@@ -261,21 +261,19 @@ fn command_desktop_install(args: &[&str]) -> Result<i32, String> {
     Ok(0)
 }
 
-/// The recorded-asset route: select a desktop-bundle asset from the suite
-/// manifest for this machine's target and fetch it with the same
-/// download-and-verify trust path as recorded product artifacts. Until a
-/// real bundle is built on a linux host and recorded, this fails honestly.
+/// The recorded-asset route: resolve the desktop-bundle asset recorded in
+/// the suite manifest's `desktop_bundle` section for this machine's target
+/// and fetch it with the same download-and-verify trust path as recorded
+/// product artifacts. The Desktop is not a suite product; its record lives
+/// beside the products, not among them. Until a real bundle is built on a
+/// linux host and recorded, this fails honestly.
 fn recorded_desktop_bundle(data_root: &Path, host_target: &str) -> Result<PathBuf, String> {
     let manifest = suite_manifest()?;
-    let product = manifest
-        .products
-        .iter()
-        .find(|product| product.artifact.kind == "desktop-bundle")
-        .ok_or_else(|| {
-            "the suite manifest records no desktop bundle asset yet; the first bundle must be built on a linux host (see .github/workflows/desktop-bundle.yml) and recorded in the manifest before --recorded can select it"
-                .to_owned()
-        })?;
-    let asset = product
+    let desktop = manifest.desktop_bundle.as_ref().ok_or_else(|| {
+        "the suite manifest records no desktop bundle asset yet; the first bundle must be built on a linux host (see .github/workflows/desktop-bundle.yml) and recorded in the manifest's desktop_bundle section before --recorded can select it"
+            .to_owned()
+    })?;
+    let asset = desktop
         .artifact
         .assets
         .iter()
@@ -296,8 +294,8 @@ fn recorded_desktop_bundle(data_root: &Path, host_target: &str) -> Result<PathBu
         let temp = cache_dir.join(format!(".{}.download", asset.name));
         let url = format!(
             "{}/releases/download/{}/{}",
-            product.repository.trim_end_matches('/'),
-            product.historical_tag,
+            desktop.repository.trim_end_matches('/'),
+            desktop.historical_tag,
             asset.name
         );
         download_exact(&url, &temp)?;
@@ -311,6 +309,12 @@ fn recorded_desktop_bundle(data_root: &Path, host_target: &str) -> Result<PathBu
         }
         fs::rename(&temp, &archive)
             .map_err(|error| format!("cannot promote cached bundle: {error}"))?;
+        // The checksum sidecar the staging pass re-verifies against
+        // (sha256sum text format), written only after the recorded digest
+        // verified the downloaded bytes.
+        let sidecar = PathBuf::from(format!("{}.sha256", archive.display()));
+        fs::write(&sidecar, format!("{}  {}\n", asset.sha256, asset.name))
+            .map_err(|error| format!("cannot write bundle checksum sidecar: {error}"))?;
     }
     Ok(archive)
 }

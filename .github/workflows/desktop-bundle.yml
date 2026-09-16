@@ -22,8 +22,56 @@ jobs:
   bundle-linux:
     runs-on: ubuntu-latest
     timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
     steps:
       - uses: actions/checkout@v4
+
+      # The tauri CLI pins AppImage tooling inside its own bundle
+      # (tauri-bundler downloads these exact cache paths and skips the
+      # download when a file already exists). Its pinned 2024 linuxdeploy
+      # ships a strip that cannot parse DT_RELR sections of current
+      # toolchain libraries, and its linuxdeploy-plugin-gtk.sh copies the
+      # versioned gdk-pixbuf loader directory unconditionally, which
+      # gdk-pixbuf >= 2.44 no longer ships. Refreshing the cache with the
+      # current linuxdeploy continuous build and guarding the copy is the
+      # workaround proven on the omarchy machine on 2026-09-15
+      # (campaign-evidence/2026-09-15-landing-campaign, row N1). The
+      # digest is logged, not asserted: the pin stays at the continuous
+      # channel, and a digest assertion would break on any upstream
+      # re-release.
+      - name: Refresh the pinned AppImage tooling in the tauri cache
+        run: |
+          set -euo pipefail
+          tools="${HOME}/.cache/tauri"
+          mkdir -p "${tools}"
+          curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
+            --output "${tools}/linuxdeploy-x86_64.AppImage" \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x "${tools}/linuxdeploy-x86_64.AppImage"
+          sha256sum "${tools}/linuxdeploy-x86_64.AppImage"
+          curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
+            --output "${tools}/linuxdeploy-plugin-gtk.sh" \
+            https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path.home() / ".cache/tauri/linuxdeploy-plugin-gtk.sh"
+          text = p.read_text()
+          needle = 'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"'
+          guard = ('if [ -d "$gdk_pixbuf_binarydir" ]; then '
+                   'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"; '
+                   'else echo "no versioned gdk-pixbuf dir (loaders built-in, '
+                   'gdk-pixbuf >= 2.44): skipping copy"; fi')
+          assert needle in text, (
+            "linuxdeploy-plugin-gtk.sh no longer matches the known "
+            "gdk-pixbuf copy line; re-check the guard before bundling"
+          )
+          p.write_text(text.replace(needle, guard))
+          print("guarded the gdk-pixbuf loader-dir copy in linuxdeploy-plugin-gtk.sh")
+          PY
+          chmod +x "${tools}/linuxdeploy-plugin-gtk.sh"
 
       - name: Install Tauri linux system packages
         run: |
@@ -71,6 +119,11 @@ jobs:
               assert pathlib.Path(str(archive) + ".sha256").read_text().startswith(digest)
               print(f"verified {asset['name']} sha256={digest}")
           PY
+
+      - name: Attest the bundle archive (the same build-provenance route every release artifact carries)
+        uses: actions/attest@v4
+        with:
+          subject-path: desktop/cradle/dist/*.tar.gz
 
       - name: Retain the bundle artifact, checksum sidecar and asset record
         uses: actions/upload-artifact@v4

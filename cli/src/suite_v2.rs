@@ -9,6 +9,32 @@ struct SuiteManifest {
     products: Vec<SuiteProduct>,
     #[serde(default)]
     physical_gates: Vec<SuiteGate>,
+    /// The recorded Desktop bundle asset. The Desktop is not a seventh
+    /// suite product: the six-product suite law (PRODUCT_POSITIONS, the
+    /// install modes, the verify scope) stays untouched. This section is
+    /// the recorded-asset record that `oi desktop install --recorded`
+    /// resolves, with the same asset shape and trust pattern as the
+    /// products above.
+    #[serde(default)]
+    desktop_bundle: Option<SuiteDesktopBundle>,
+}
+
+#[derive(Debug, Clone, Deserialize)]
+// The id, checkout and recorded_at fields are disclosure data: the
+// record is disclosed through `oi manifest` as raw JSON rather than
+// consumed field by field.
+#[allow(dead_code)]
+struct SuiteDesktopBundle {
+    id: String,
+    public_name: String,
+    repository: String,
+    checkout: String,
+    /// The source revision the released bundle was built from.
+    revision: String,
+    historical_tag: String,
+    artifact: SuiteArtifact,
+    #[serde(default)]
+    recorded_at: String,
 }
 
 #[derive(Debug, Clone, Deserialize)]
@@ -190,6 +216,22 @@ fn suite_manifest() -> Result<SuiteManifest, String> {
         for asset in &product.artifact.assets {
             if asset.sha256.len() != 64 || !asset.sha256.chars().all(|c| c.is_ascii_hexdigit()) {
                 return Err(format!("suite product {} has invalid SHA-256 for {}", product.id, asset.name));
+            }
+        }
+    }
+    if let Some(desktop) = &manifest.desktop_bundle {
+        if desktop.revision.len() != 40 || !desktop.revision.chars().all(|c| c.is_ascii_hexdigit()) {
+            return Err(format!(
+                "desktop bundle record {} has non-immutable revision {}",
+                desktop.id, desktop.revision
+            ));
+        }
+        for asset in &desktop.artifact.assets {
+            if asset.sha256.len() != 64 || !asset.sha256.chars().all(|c| c.is_ascii_hexdigit()) {
+                return Err(format!(
+                    "desktop bundle record {} has invalid SHA-256 for {}",
+                    desktop.id, asset.name
+                ));
             }
         }
     }

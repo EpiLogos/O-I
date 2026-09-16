@@ -527,11 +527,113 @@ fn remove_of_never_installed_is_a_clean_refusal() {
     assert!(!sandbox.installed_receipt().exists());
 }
 
+/// A curl stub: whatever bytes it writes land on the download target the
+/// recorded route passes as its ninth argument, so a test controls exactly
+/// what the "release" serves without touching the network.
+fn stub_curl(path: &Path, body: &str) {
+    write_executable(path, body);
+}
+
+/// The recorded asset is linux-only; on other hosts the recorded route
+/// refuses honestly at target selection. Returns true when this host can
+/// exercise the download-level behaviour (CI's ubuntu runner does).
+fn recorded_route_reaches_the_download_on_this_host() -> bool {
+    host_target() == "x86_64-unknown-linux-gnu"
+}
+
+fn recorded_route_with_curl_stub(sandbox: &Sandbox, stub_body: &str) -> Output {
+    let stub_bin = sandbox.home.join(".stub-bin");
+    fs::create_dir_all(&stub_bin).unwrap();
+    stub_curl(&stub_bin.join("curl"), stub_body);
+    let mut command = oi(&sandbox.data_home, &sandbox.home);
+    command.env(
+        "PATH",
+        std::env::join_paths(
+            std::iter::once(stub_bin)
+                .chain(std::env::split_paths(&std::env::var_os("PATH").unwrap())),
+        )
+        .unwrap(),
+    );
+    output(command.args(["desktop", "install", "--recorded"]))
+}
+
+/// On a host the recorded asset does not target, the honest refusal is the
+/// target-selection one and no download-level behaviour can be reached.
+fn assert_target_selection_refusal(output: &Output) {
+    assert_refusal(
+        output,
+        &format!(
+            "the recorded desktop bundle has no asset for {}",
+            host_target()
+        ),
+    );
+}
+
+const PINNED_RELEASE_TAG: &str = "oi-desktop-v0.1.0-prelocal.1";
+
 #[test]
-fn recorded_route_fails_honestly_until_a_bundle_is_recorded() {
-    let sandbox = sandbox("recorded");
-    let out =
-        output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "install", "--recorded"]));
-    assert_refusal(&out, "records no desktop bundle asset");
+fn recorded_route_resolves_the_pinned_release_and_refuses_when_it_is_unreachable() {
+    // The suite manifest records the desktop bundle, so the route gets all
+    // the way to the pinned release download; with curl refusing, the
+    // refusal must name that release and mutate nothing. (The older
+    // honestly-unrecorded refusal — "records no desktop bundle asset" —
+    // belongs to manifests without a desktop_bundle section and cannot be
+    // reached against the manifest embedded in this binary.)
+    let sandbox = sandbox("recorded-unreachable");
+    let out = recorded_route_with_curl_stub(&sandbox, "#!/bin/sh\nexit 3\n");
+    if !recorded_route_reaches_the_download_on_this_host() {
+        assert_target_selection_refusal(&out);
+        assert!(!sandbox.installed_receipt().exists());
+        return;
+    }
+    assert_refusal(&out, "artifact download failed");
+    let combined = format!(
+        "{}{}",
+        String::from_utf8_lossy(&out.stdout),
+        String::from_utf8_lossy(&out.stderr)
+    );
+    assert!(
+        combined.contains(PINNED_RELEASE_TAG),
+        "the refusal should name the pinned release, got:\n{combined}"
+    );
     assert!(!sandbox.installed_receipt().exists());
+    assert!(
+        !sandbox.data_home.join("cache/desktop").exists()
+            || sandbox
+                .data_home
+                .join("cache/desktop")
+                .read_dir()
+                .map(|mut entries| entries.next().is_none())
+                .unwrap_or(true),
+        "nothing may be cached when the download fails"
+    );
+}
+
+#[test]
+fn recorded_route_refuses_bytes_that_do_not_match_the_recorded_digest() {
+    // The stub "release" serves bytes that differ from the recorded
+    // digest; the route must refuse them before anything is promoted.
+    let sandbox = sandbox("recorded-wrong-bytes");
+    let out = recorded_route_with_curl_stub(
+        &sandbox,
+        "#!/bin/sh\nprintf 'not the released bundle' > \"$9\"\n",
+    );
+    if !recorded_route_reaches_the_download_on_this_host() {
+        assert_target_selection_refusal(&out);
+        assert!(!sandbox.installed_receipt().exists());
+        return;
+    }
+    assert_refusal(&out, "checksum mismatch");
+    assert!(!sandbox.installed_receipt().exists());
+    let promoted = sandbox.data_home.join("cache/desktop");
+    assert!(
+        !promoted.exists()
+            || promoted
+                .read_dir()
+                .map(|entries| entries
+                    .filter_map(Result::ok)
+                    .all(|entry| entry.file_name().to_string_lossy().starts_with('.')))
+                .unwrap_or(true),
+        "refused bytes must not be promoted into the cache"
+    );
 }

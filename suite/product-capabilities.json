@@ -3,7 +3,7 @@
   "scope": "Native S0-S5 product capability catalogue for oi composition; desktop M-prime acceptance is a separate projection.",
   "derived_from": {
     "suite_manifest": "suite/manifest.json",
-    "suite_manifest_sha256": "9fbaa2f74e74434700d9555681f1c37ede9d220e0cf9659fbb4f89e21329f1d1",
+    "suite_manifest_sha256": "1fbbb88e01aa48adfe372231ea1f978a1c63f81440be268f3d971dbfa87a77b0",
     "surfaces": "surfaces.json",
     "surfaces_sha256": "00003a83a8a06abdb40207344b74b9f1b43e229e70ee3febcec5e549ba619958"
   },
