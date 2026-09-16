@@ -436,6 +436,11 @@ fn apply_entry(
                 "{id}-{}-{}-{}",
                 short_rev(&desired.revision), prelocal_now_ms()?, std::process::id(),
             ));
+            // The export contract (rolling_dev) creates one level; the
+            // per-run gate directory and the updates layout above it are
+            // this flow's to establish.
+            fs::create_dir_all(&gate_root)
+                .map_err(|error| format!("{id}: cannot create gate directory {}: {error}", gate_root.display()))?;
             let exported = gate_root.join("source");
             export_rolling_source(&entry.checkout, &desired.revision, &exported)
                 .map_err(|error| format!("{id}: cannot export committed cut: {error}"))?;
