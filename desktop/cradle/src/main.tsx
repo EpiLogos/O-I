@@ -1,9 +1,14 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import "@epilogos/oi-design-system/tokens.css";
+import "@epilogos/oi-design-system/techne.css";
 import "./rest.css";
 import "./cradle.css";
 import { Cradle } from "./Cradle";
+import { registerTechneInstruments } from "./techne/bootstrap";
+
+// One composition root mounts the constellation's instrument surfaces; capability stays with each reading's disclosure.
+registerTechneInstruments();
 const Study = React.lazy(() => ['chat', 'tiled'].includes(new URLSearchParams(location.search).get('study') || '') ? import('./study/WorkspaceStudy') : import('./study/Seed'));
 
 ReactDOM.createRoot(document.getElementById("root") as HTMLElement).render(

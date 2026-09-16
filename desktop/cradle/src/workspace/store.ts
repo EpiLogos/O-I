@@ -4,6 +4,7 @@ import { activateSurface, groupsOf, openBinding, redockBinding } from "../surfac
 import { decodeLayout } from "../surface/persist";
 import { freshLayout, type LayoutState } from "../surface/types";
 import {focusedInstrumentBinding,focusedInstrumentSource,subscribeFocusedInstrumentOpen} from "../instrument/source";
+import {subscribeTechneOpen,techneSurfaceBinding} from "../techne/open";
 
 export type ProjectMode = "chats" | "files" | "wiki";
 export interface ProjectNavigation { expanded: boolean; scroll: number; directories?: string[]; mode?: ProjectMode; locationPath?: string }
@@ -103,6 +104,21 @@ export function useWorkspaces() {
     });
   // setLayout is a presentation setter over the current workspace; this
   // subscription intentionally lives for the lifetime of this hook instance.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }),[]);
+  useEffect(()=>subscribeTechneOpen(request=>{
+    const binding=techneSurfaceBinding(request.session,request.title);
+    setLayout(state=>{
+      const existing=Object.values(state.surfaces).find(surface=>surface.kind==="techne"&&surface.ref===request.session.subject_ref);
+      const opened=existing
+        ? groupsOf(state.root).some(group=>group.tabs.includes(existing.id))
+          ? activateSurface(state,existing.id)
+          : openBinding({...state,closedStack:state.closedStack.filter(id=>id!==existing.id)},existing)
+        : openBinding(state,binding);
+      // The DisclosureSession surface composes the shell like any other;
+      // the accompanying encounter stays whatever the shell already holds.
+      return {...opened,agencyDepth:"panel",rightDepth:"panel"};
+    });
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }),[]);
   const setWritingMode = (writingMode: boolean) => update(w => ({ ...w, writingMode }));
