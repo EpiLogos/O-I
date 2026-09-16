@@ -265,6 +265,16 @@ oi <namespace> config-contribution --json         # through the oi dispatcher
   but C0 does not build the registry. The kernel lane (C1) owns the registry;
   the contract here is that registration content is the contribution
   document itself, so no lane needs a second descriptor format.
+- Discovery and installed-executable resolution are deliberately two
+  relations (C0-3 disposition, returned by the post-Gate-A fan-out):
+  discovery enumerates owners from their contribution documents — the mount
+  is the registration — while the `oi` dispatcher resolves a namespace to
+  the executable the suite actually deployed. The registry does not consult
+  the dispatcher's installed-executable table. An installed-but-unregistered
+  product therefore degrades honestly as unavailable on the configuration
+  plane (no invented contribution), and a registered-but-unreadable owner
+  degrades by name on read; `oi current-world` remains the material
+  presence census.
 
 ## 5. C0-4 — Scope address representation
 
@@ -335,9 +345,14 @@ parsers exist.
 - `validate` → `oi.config-validation/v1`; `plan` → `oi.config-plan/v1`
   (owner-minted `plan_id`, `plan_digest`, expected effect, explain ref);
   `apply`/`reset` → `oi.config-receipt/v1`.
-- `plan_digest` is the sha256 hex over the canonical plan body (the plan
-  document with `plan_id`, `expires_at_unix_ms` and all `*_unix_ms` fields
-  zeroed) — the idempotency anchor (§10).
+- `plan_digest` is the idempotency anchor (§10) and is **owner-canonical**
+  (C0-5 disposition, returned by the post-Gate-A fan-out): the owner mints
+  it over the plan body by its own single function, and consumers treat it
+  as an opaque identity — proven by replay under the same changeset
+  (`no_op` + `original_receipt_id`), never by independent re-derivation of
+  a foreign owner's digest. Owner-internal recipes may differ (excluding
+  the volatile fields from the hashed body, or zeroing them); both are
+  conforming for exactly that reason.
 - Values cross as JSON; `--value-file -` reads stdin so no argv
   size/quoting limits exist. Secrets cross only as secret references (§11);
   an owner that needs material credentials mutates them owner-natively
@@ -602,6 +617,14 @@ Frozen laws:
   compares, displays, plans and routes it; it never interprets its internals.
 - Switching O:I profiles passes native-profile references to the owner's
   plan/apply as references; the owner resolves them natively.
+- **Activation is an ordinary ChangeSet** (C0-11 disposition, returned by
+  the post-Gate-A fan-out). A `native_profiles[]` reference becomes
+  operative only through the owner's own native operations: the owner
+  contributes a writable setting whose value carries the native profile
+  selection, so a profile switch plans a normal ChangeSet over that setting
+  — plan/apply/receipt/re-read like any other change. The explicit
+  `oi profile use` mark (§12) moves no native state; no side channel
+  exists, and none may be invented.
 - A profile holding both a `native_profiles` entry and sparse overrides for
   the same owner is normal and ordered by §12's resolution order.
 - The owner's disclosure (`system --json`) remains the only evidence of what
@@ -698,7 +721,13 @@ truthfulness, unknown-field tolerance, and read/operability plane separation.
   never appear in a contribution document.
 - The owner set is shared: `product_id`s are the seven mount positions; a
   connector owner appears only in the configuration plane until/unless the
-  disclosure plane grows one (out of scope here).
+  disclosure plane grows one (out of scope here). For a connector owner
+  this is the standing case — a known boundary, not a gap
+  (C0-15 disposition, returned by the post-Gate-A fan-out): reconciliation
+  stays `unknown` (§7.1) with the owner receipt referenced as the
+  reconciliation's `detail_ref`, which is the proof an applied connector
+  change really happened, until a connector disclosure mount supplies
+  native axes.
 
 ## 18. C0-16 — The architecture amendment
 
