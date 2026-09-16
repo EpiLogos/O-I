@@ -39,14 +39,8 @@ pub const PRODUCT_IDS: [&str; 6] = [
 /// reading is unavailable and cannot supply `canonical_namespace`. This is the
 /// single discovery convention, not a per-product branch: one aligned table,
 /// exactly like the existing `composition::PRODUCTS` array.
-const FALLBACK_NAMESPACES: [&str; 6] = [
-    "central",
-    "actuation",
-    "aikit",
-    "factory",
-    "workcell",
-    "ql",
-];
+const FALLBACK_NAMESPACES: [&str; 6] =
+    ["central", "actuation", "aikit", "factory", "workcell", "ql"];
 
 /// The one fixed Wave-5 reading verb every owner ships (07 §5).
 const SYSTEM_VERB: [&str; 2] = ["system", "--json"];
@@ -134,6 +128,26 @@ enum Mount {
     },
 }
 
+/// The canonical namespace of one product position, read from the census's
+/// owner row with the one fallback table. Shared with the configuration
+/// registry (`configuration.rs`, 09 §4) so every mount — System and
+/// configuration alike — resolves owners through the SAME discovery; there
+/// is no second registry.
+pub fn namespace_for(census: &composition::Reading, index: usize, product_id: &str) -> String {
+    census
+        .positions
+        .iter()
+        .find(|p| p.product_id == product_id)
+        .and_then(|p| {
+            p.current_world
+                .get("canonical_namespace")
+                .and_then(Value::as_str)
+                .filter(|s| !s.is_empty())
+                .map(str::to_owned)
+        })
+        .unwrap_or_else(|| FALLBACK_NAMESPACES[index].to_owned())
+}
+
 impl Client {
     pub fn discover() -> Self {
         Self::with(
@@ -160,20 +174,10 @@ impl Client {
         let mut owners = Vec::with_capacity(7);
         owners.push(self.oi_owner(&census, observed));
         for (index, product_id) in PRODUCT_IDS.iter().enumerate() {
-            let namespace = census
-                .positions
-                .iter()
-                .find(|p| p.product_id == *product_id)
-                .and_then(|p| {
-                    p.current_world
-                        .get("canonical_namespace")
-                        .and_then(Value::as_str)
-                        .filter(|s| !s.is_empty())
-                        .map(str::to_owned)
-                })
-                .unwrap_or_else(|| FALLBACK_NAMESPACES[index].to_owned());
-            let reading_command: Vec<String> =
-                std::iter::once(namespace).chain(SYSTEM_VERB.iter().map(|s| s.to_string())).collect();
+            let namespace = namespace_for(&census, index, product_id);
+            let reading_command: Vec<String> = std::iter::once(namespace)
+                .chain(SYSTEM_VERB.iter().map(|s| s.to_string()))
+                .collect();
             let outcome = self.invoke(cwd, &reading_command);
             owners.push(mount_owner(product_id, &reading_command, outcome, observed));
         }
@@ -238,7 +242,11 @@ impl Client {
             product_id: "oi".to_owned(),
             availability,
             reason,
-            reading_command: vec!["oi".to_owned(), "system-composition".to_owned(), "--json".to_owned()],
+            reading_command: vec![
+                "oi".to_owned(),
+                "system-composition".to_owned(),
+                "--json".to_owned(),
+            ],
             descriptor: Some(descriptor),
             error,
             provenance: Provenance {
@@ -351,7 +359,10 @@ fn compose_oi_descriptor(census: &composition::Reading, observed: u64) -> Value 
     let personal_ground = cw
         .and_then(|v| v["personal_ground"].as_str())
         .map(str::to_owned);
-    let positions = cw.and_then(|v| v["positions"].as_array()).cloned().unwrap_or_default();
+    let positions = cw
+        .and_then(|v| v["positions"].as_array())
+        .cloned()
+        .unwrap_or_default();
     let warnings = cw
         .and_then(|v| v["warnings"].as_array())
         .cloned()
@@ -618,12 +629,20 @@ mod tests {
         let mount = mount_owner(
             "ai-kit",
             &["aikit".into(), "system".into(), "--json".into()],
-            completed(0, r#"{"schema":1,"ok":true,"data":{"schema":"oi.product-settings-disclosure/v2"}}"#, ""),
+            completed(
+                0,
+                r#"{"schema":1,"ok":true,"data":{"schema":"oi.product-settings-disclosure/v2"}}"#,
+                "",
+            ),
             1,
         );
         assert_eq!(mount.availability, Availability::Degraded);
         assert_eq!(mount.descriptor, None);
-        assert!(mount.error.as_deref().unwrap().contains("not oi.product-settings-disclosure/v2"));
+        assert!(mount
+            .error
+            .as_deref()
+            .unwrap()
+            .contains("not oi.product-settings-disclosure/v2"));
     }
 
     #[test]
@@ -759,11 +778,16 @@ esac
         assert_eq!(oi.product_id, "oi");
         assert_eq!(oi.availability, Availability::Unavailable);
         assert!(
-            oi.reason.as_deref().is_some_and(|r| r.contains("could not be read")),
+            oi.reason
+                .as_deref()
+                .is_some_and(|r| r.contains("could not be read")),
             "reason must name the failed census, got {:?}",
             oi.reason
         );
-        assert!(oi.error.is_some(), "the census error must be carried, not swallowed");
+        assert!(
+            oi.error.is_some(),
+            "the census error must be carried, not swallowed"
+        );
         std::fs::remove_dir_all(&dir).ok();
     }
 

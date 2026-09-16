@@ -5,12 +5,14 @@
  *   fixture-backed world of `fixtureSource.ts`, clearly labelled on
  *   screen. This is where the configuration walk scenario proves the §21
  *   acceptance against the frozen fixtures.
- * - production: unbound. The live KernelOp binding (documented in
- *   `source.ts`) is the integrator's convergence work; until it lands the
- *   configuration plane renders its absence honestly — never a fake
- *   control, never fixture data dressed as the machine's truth.
+ * - production: the LIVE binding (`liveSource.ts`) — the typed
+ *   configuration `KernelOp`s routed to the same engine `oi config` /
+ *   `oi profile` drive. Where no kernel transport exists at all (a plain
+ *   browser, no Tauri host, no walk bridge) the plane renders its absence
+ *   honestly instead — never a fake control, never fixture data dressed
+ *   as the machine's truth.
  *
- * Both gates use the same statement form as the Cradle walk gate
+ * The walk gate uses the same statement form as the Cradle walk gate
  * (`src/Cradle.tsx`): in a plain production build `__CRADLE_WALK__` bakes
  * to `false`, the dev branch is dead-code eliminated, and the
  * fixture-world chunk (the only holder of the fixture-world strings) is
@@ -18,6 +20,7 @@
  */
 import type {ConfigPlaneSource} from "./source";
 import {createUnboundConfigPlaneSource} from "./source";
+import {detectTransport, kernelOp} from "../kernel/bridge";
 
 declare const __CRADLE_WALK__: boolean;
 
@@ -28,9 +31,16 @@ export function configPlaneSource(): Promise<ConfigPlaneSource> {
     if (__CRADLE_WALK__) {
       cached = import("./fixtureSource").then((module) => module.createFixtureConfigPlaneSource());
     } else {
-      cached = Promise.resolve(createUnboundConfigPlaneSource(
-        "the live configuration-plane binding (KernelOp → oi kernel) lands at #299 Gate B convergence",
-      ));
+      const transport = detectTransport();
+      if (transport.kind === "unavailable") {
+        cached = Promise.resolve(createUnboundConfigPlaneSource(
+          `no kernel transport is reachable (${transport.reason}); the configuration plane needs the Tauri host`,
+        ));
+      } else {
+        cached = import("./liveSource").then((module) =>
+          module.createLiveConfigPlaneSource((op) => kernelOp(transport, op)),
+        );
+      }
     }
   }
   return cached;

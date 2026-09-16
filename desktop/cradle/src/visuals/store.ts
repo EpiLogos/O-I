@@ -254,8 +254,12 @@ class VisualsStore {
     return CONTROL_SCHEMA;
   }
 
+  /** Completes an already-scheduled write at page teardown. It must never
+   * fabricate one: an unconditional persist would clobber a preference
+   * saved behind this store's back (pre-paint repairs, other windows)
+   * with this instance's older in-memory snapshot. */
   flush() {
-    this.persistNow();
+    if (this.writeTimer) this.persistNow();
   }
 }
 

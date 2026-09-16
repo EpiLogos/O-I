@@ -5,11 +5,27 @@ import type {KernelTransportStatus} from "../kernel/types";
 export type ReceivingRequest =
   | {kind:"list";after?:number;limit?:number}
   | {kind:"read";return_ref:string}
+  | {kind:"submit";producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}
   | {kind:"document";source_ref:string;document_id:string}
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}
   | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision:string}
   | {kind:"recover";return_ref:string;expected_return_revision:string}
   | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:string};
+export type ReceivingWireRequest=
+ | {List:{after?:number;limit?:number}}|{Read:{return_ref:string}}|{Submit:{producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}}
+ | {Document:{source_ref:string;document_id:string}}|{Review:{return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}}|{Include:{return_ref:string;expected_return_revision:string;expected_source_revision:string}}
+ | {Recover:{return_ref:string;expected_return_revision:string}}|{MutateField:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:string}};
+export function receivingWire(request:ReceivingRequest):ReceivingWireRequest{switch(request.kind){
+ case"list":return {List:{after:request.after,limit:request.limit}};
+ case"read":return {Read:{return_ref:request.return_ref}};
+ case"submit":return {Submit:{producer_key:request.producer_key,source_ref:request.source_ref,document_id:request.document_id,expected_source_revision:request.expected_source_revision,occurred_at_unix_seconds:request.occurred_at_unix_seconds,task_ref:request.task_ref,proposal:request.proposal}};
+ case"document":return {Document:{source_ref:request.source_ref,document_id:request.document_id}};
+ case"review":return {Review:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision,disposition:request.disposition,expected_source_revision:request.expected_source_revision}};
+ case"include":return {Include:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision,expected_source_revision:request.expected_source_revision}};
+ case"recover":return {Recover:{return_ref:request.return_ref,expected_return_revision:request.expected_return_revision}};
+ case"mutate-field":return {MutateField:{source_ref:request.source_ref,document_id:request.document_id,expected_revision:request.expected_revision,request_id:request.request_id,field_id:request.field_id,value:request.value}};
+ }}
+
 export interface ContributionAuthor {principal_ref:string;actor_kind:string}
 export interface ReturnRow {return_ref:string;revision:string;sequence:number;status:"pending"|"needs-review"|"accepted"|"rejected"|"including"|"uncertain"|"included"|string;source_ref:string;document_id:string;author:ContributionAuthor;occurred_at_unix_seconds?:number|null;received_at_unix_seconds:number;now_ref?:string|null;day_ref?:string|null;task_ref?:string|null;run_ref?:string|null;session_ref?:string|null}
 export interface ReturnReview {reviewer_ref:string;authority_ref:string;authority_revision:string;disposition:string;source_revision:string;reviewed_at_unix_seconds:number}
@@ -18,7 +34,9 @@ export interface ReceivingPage {schema:"central.receiving-page/v1";returns:Retur
 export interface ReturnReading {schema:"central.receiving-reading/v1";return_ref:string;revision:string;record:ReturnRecord;included:boolean;source_changed_by_arrival_or_review:boolean;automatic_agent_or_model_invocation:boolean;document_result?:unknown}
 export interface DocumentReading {schema:"central.document-reading/v1";source:{ref:string;path:string};revision:{revision:string;byte_len?:number};document_id:string;document:{document_id:string;kind:string;title?:string;lifecycle?:string;contributions:{id:string;html:string;author_ref:string;actor_kind:string;display_role:string;entry_id?:string|null;field_id?:string|null;locked?:boolean;human_touched?:boolean;removed?:boolean;reviewed_by?:string|null}[]};unreviewed_external_revision:boolean;source_authority:string;automatic_agent_or_model_invocation:boolean}
 export async function receiving<T>(transport:KernelTransportStatus,project:string|null,request:ReceivingRequest):Promise<T> {
-  const result=await kernelOp(transport,{op:"receiving",project,request});
+  // Rust's native owner request is an externally tagged enum. Keep the
+  // renderer API readable, then encode exactly one owner variant here.
+  const result=await kernelOp(transport,{op:"receiving",project,request:receivingWire(request)});
   if(result.error || result.outcome?.result!=="receiving_reading")throw new Error(result.error??"Central receiving is unavailable");
   return result.outcome.data as T;
 }

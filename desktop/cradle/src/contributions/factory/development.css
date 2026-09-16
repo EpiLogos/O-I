@@ -1,0 +1,23 @@
+/* The Factory development surface's own rules. Chrome composes the desktop
+ * grammar (oi-context-head, oi-field/oi-input, oi-action-group/oi-action,
+ * oi-ref-row/oi-ref/oi-state, oi-kv, oi-disclosure, oi-note); this file
+ * keeps the surface's layout and the host container the owner's own Build
+ * surface (captured factory-ui) inhabits. Tokens only. */
+.factory-development{padding:0 22px 18px;display:flex;flex-direction:column;gap:14px;overflow:auto}
+.factory-development-header{margin:0 -22px;padding:0 22px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.factory-development-header h2{margin:0;font-size:var(--oi-shell-type-body);font-weight:550}
+.factory-development-form{display:flex;flex-direction:column;gap:8px}
+.factory-development-reading h3,.factory-development-status h3,.factory-development-journeys h3,.factory-development-build h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.factory-development-reading pre,.factory-execution pre{margin:0;padding:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:var(--oi-shell-type-nav);overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
+.factory-development-build label{margin-bottom:6px}
+.factory-journey,.factory-run{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
+.factory-run{margin:6px 0 0 14px}
+.factory-journey .oi-disclosure,.factory-run .oi-disclosure,.factory-execution .oi-disclosure{border-top:0;padding:4px 0}
+.factory-executions{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
+.factory-execution pre{margin-top:4px;max-height:260px}
+.factory-telemetry{margin-top:6px}
+.factory-telemetry p{margin:6px 0 0;font-size:var(--oi-shell-type-nav);overflow-wrap:anywhere}
+/* The owner's Build surface inside the host: the host gives it the pane
+ * ground and a hairline frame, nothing else; the owner styles its body.
+ * The native body disables Actions when no dispatcher is supplied. */
+.factory-build-host{display:flex;flex-direction:column;gap:10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:10px;background:var(--oi-canvas-ground)}

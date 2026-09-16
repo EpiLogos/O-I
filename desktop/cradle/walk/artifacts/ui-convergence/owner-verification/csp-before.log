@@ -1,0 +1,18 @@
+node:internal/modules/run_main:107
+    triggerUncaughtException(
+    ^
+
+AssertionError [ERR_ASSERTION]: index.html: persisted dark overrides light system
+
+false !== true
+
+    at file:///private/tmp/oi-ui-owner-verification-20260915/csp-check/tests/theme-prepaint-csp.mjs:57:16 {
+  generatedMessage: false,
+  code: 'ERR_ASSERTION',
+  actual: false,
+  expected: true,
+  operator: 'strictEqual',
+  diff: 'simple'
+}
+
+Node.js v24.16.0

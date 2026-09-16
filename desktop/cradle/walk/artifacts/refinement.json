@@ -1,18 +1,54 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "refinement",
-  "generated_at": "2026-09-08T18:08:11.685Z",
+  "generated_at": "2026-09-16T02:14:46.443Z",
   "environment": {
     "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4247",
+    "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
-    "platform": "darwin"
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
+        "desktop/cradle/walk/artifacts/instrument-host.json",
+        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
+        "desktop/cradle/walk/artifacts/instrument.json",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-explosion.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-rest.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-explosion.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-rest.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
+        "desktop/cradle/walk/artifacts/welcome.json"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 9223,
+  "duration_ms": 11745,
   "checks": [
     {
       "ok": true,
@@ -112,7 +148,7 @@
     },
     {
       "ok": true,
-      "label": "Fresh Flow uses the same editor and saves to its real Central provenance"
+      "label": "Fresh Flow appends both exact entries to its real Central document"
     },
     {
       "ok": true,
@@ -170,10 +206,10 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-08T18:08:11.872Z",
+        "mounted_at": "2026-09-16T02:14:46.524Z",
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4247"
+          "url": "http://127.0.0.1:4179"
         },
         "url": "http://localhost:4173/"
       }
@@ -181,15 +217,65 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 22,
       "data": {
         "file": "refinement-fresh-canvas-refined.png"
       }
     },
     {
       "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "root": {
+            "type": "group",
+            "id": "g1",
+            "tabs": [
+              "b13ce723-fe3f-4e0f-9e98-4d008b9935e6",
+              "228f9814-f35c-4c06-beed-c2fc77b3dada"
+            ],
+            "pinned": [],
+            "active": "228f9814-f35c-4c06-beed-c2fc77b3dada"
+          },
+          "surfaces": {
+            "b13ce723-fe3f-4e0f-9e98-4d008b9935e6": {
+              "id": "b13ce723-fe3f-4e0f-9e98-4d008b9935e6",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "project": "Editor",
+              "title": "00 01-DESIGN.md"
+            },
+            "228f9814-f35c-4c06-beed-c2fc77b3dada": {
+              "id": "228f9814-f35c-4c06-beed-c2fc77b3dada",
+              "kind": "flow",
+              "title": "flow-2026-09-16-0314.html",
+              "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RgzR1o:Control/user/flows/flow-2026-09-16-0314.html",
+              "location": {
+                "schema": "central.path-ref/v1",
+                "ref": "central:path:/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RgzR1o:Control/user/flows/flow-2026-09-16-0314.html",
+                "root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-RgzR1o",
+                "path": "Control/user/flows/flow-2026-09-16-0314.html"
+              },
+              "flow": {
+                "flowRef": "fd9bb4f2-4962-4460-b410-5a7a0c1b9db5",
+                "path": "Control/user/flows/flow-2026-09-16-0314.html"
+              }
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g1",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 279.5,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 33,
       "data": {
         "file": "refinement-editor-and-chrome-refined.png"
       }

@@ -1,0 +1,30 @@
+{
+  "schema": "ql.k8-continuous-acceptance/v1",
+  "worker_sha256": "ce04712469fc07eda27619f669efaba0d81fc27de0d6286b61e504eb6d386ee3",
+  "m2_sha256": "6936ec8d75b5d15db2513495e07d7b3e44da4e47fe5edf567921c4ea67748a70",
+  "provider_snapshot": "sha256:2a88f8a1ee8708b90a62562d6042e5937cc5e2fd5e3ccca100259a9d715715a3",
+  "basis_sha256": "23c24d665c369dd95b804c4c5cd29c63c8dd8198d4ecafaa477ed43ba88a1477",
+  "actual_native_frequencies": [
+    250.5343,
+    285.8948,
+    326.24606,
+    372.2925,
+    269.84872,
+    307.93524,
+    351.39734,
+    397.6984
+  ],
+  "commands": 42,
+  "exact_replay": true,
+  "independent_subjects": true,
+  "stable_sample_ids": 256,
+  "stale_and_invalid_atomic": true,
+  "continued_during_mute": true,
+  "independent_axes": true,
+  "geometry_standing": "controlled supplied square functions, not a measured plate eigenbasis",
+  "limits": [
+    "no Nara reception proof",
+    "no physical correspondence proof",
+    "GPU acceptance is a separate actual-renderer test"
+  ]
+}

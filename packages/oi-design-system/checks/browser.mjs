@@ -16,26 +16,37 @@ try{
  browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:1280,height:1000}});
  await page.goto(`http://127.0.0.1:${server.address().port}/examples/loading.html`);
  await page.getByRole('status').waitFor();
- check('loading status exposes the real supplied label',await page.getByRole('status').innerText().then(t=>t.includes('Opening Central')));
- check('large dense mark uses shared tokens',await page.locator('.oi-loading-mark').evaluate(e=>e.getBoundingClientRect().width===480&&getComputedStyle(e).backgroundSize==='2px 2px'));
- check('general clusters animate independently of logo',await page.locator('.oi-point-clusters').evaluate(e=>e.children.length===3&&[...e.children].every(c=>c.getAnimations().length===1)));
- await page.getByRole('button',{name:'Pause motion'}).click();
- check('pause stops all mark and cluster motion',await page.locator('#stage').evaluate(e=>e.getAnimations({subtree:true}).length===0)&&await page.locator('.oi-point-clusters').evaluate(e=>e.getAnimations({subtree:true}).length===0));
- await page.getByRole('button',{name:'Resume motion'}).click();
- await page.emulateMedia({reducedMotion:'reduce'});
- check('reduced motion disables every cloud animation',await page.evaluate(()=>document.getAnimations().length===0));
- await page.emulateMedia({reducedMotion:'no-preference',forcedColors:'active'});
- check('high contrast shows readable fallback',await page.locator('.oi-loading-fallback').isVisible()&&!(await page.locator('.oi-loading-mark').isVisible()));
- await page.emulateMedia({forcedColors:'none'});
- await page.getByRole('button',{name:'Preview window overlay'}).click();
- check('overlay covers window and disables background',await page.locator('#overlay').evaluate(e=>e.getBoundingClientRect().width===innerWidth&&document.querySelector('#reference').inert));
- await page.keyboard.press('Escape');
- check('dismiss restores background and initiating focus',await page.locator('#show').evaluate(e=>document.activeElement===e&&!document.querySelector('#reference').inert&&!document.querySelector('#overlay')));
+ check('status exposes the supplied truthful reference label',await page.getByRole('status').innerText().then(t=>t.includes('Pending status reference')));
+ check('portable status allocates no renderer, masks or animation',await page.evaluate(()=>!document.querySelector('canvas,svg,.oi-loading-mark,.oi-point-clusters')&&document.getAnimations().length===0));
+ for(const theme of ['light','dark']) {
+  await page.selectOption('select',theme);
+  const colors=await page.getByRole('status').evaluate(e=>({foreground:getComputedStyle(e).color,host:getComputedStyle(document.body).color}));
+  check(`${theme}: status inherits the host ink`,colors.foreground===colors.host);
+ }
+ await page.getByRole('button',{name:'Update reference label'}).click();
+ check('real update changes accessible status text',await page.getByRole('status').innerText().then(t=>t.includes('Updated reference text')));
+ await page.emulateMedia({reducedMotion:'reduce',forcedColors:'active'});
+ check('forced colors and reduced motion retain readable text with no animation',await page.getByRole('status').isVisible()&&await page.evaluate(()=>document.getAnimations().length===0));
+ await page.emulateMedia({reducedMotion:'no-preference',forcedColors:'none'});
  check('component validates labels and renders strings safely',await page.evaluate(async()=>{const {createLoadingIndicator}=await import('/loading.mjs');let rejected=false;try{createLoadingIndicator({label:' '})}catch{rejected=true}const c=createLoadingIndicator({label:'<img src=x onerror=alert(1)>'});document.body.append(c.element);const safe=!c.element.querySelector('img')&&c.element.textContent.includes('<img');c.update({label:'Ready',active:false,detail:''});const updated=c.element.dataset.active==='false'&&c.element.querySelector('.oi-loading-detail').hidden;c.remove();return rejected&&safe&&updated&&!c.element.isConnected;}));
- await page.reload(); await page.getByRole('status').waitFor();
- await page.evaluate(()=>new Promise(r=>requestAnimationFrame(()=>requestAnimationFrame(r))));
- await page.screenshot({path:'/tmp/oi-point-cloud-desktop.png',fullPage:true});
+ await page.getByRole('button',{name:'Remove reference status'}).click();
+ check('host removal ends status without taking focus',await page.getByRole('status').count()===0&&await page.locator('#remove').evaluate(e=>document.activeElement===e));
+ await page.reload();await page.getByRole('status').waitFor();
  await page.setViewportSize({width:320,height:740});
- check('large logo shrinks within narrow reference',await page.locator('.oi-loading-mark').evaluate(e=>e.getBoundingClientRect().left>=0&&e.getBoundingClientRect().right<=innerWidth));
+ check('status fits a constrained viewport',await page.getByRole('status').evaluate(e=>e.getBoundingClientRect().left>=0&&e.getBoundingClientRect().right<=innerWidth));
+ await page.addStyleTag({url:`http://127.0.0.1:${server.address().port}/desktop.css`});
+ await page.evaluate(()=>{
+  const disclosure=document.createElement('details');disclosure.className='oi-disclosure';
+  disclosure.innerHTML='<summary>Source details</summary><p>Selected source provenance</p>';
+  document.body.prepend(disclosure);
+ });
+ for(const forcedColors of ['none','active']) {
+  await page.emulateMedia({forcedColors});
+  await page.locator('.oi-disclosure > summary').focus();
+  check(`disclosure has a visible keyboard outline (${forcedColors})`,await page.locator('.oi-disclosure > summary').evaluate(el=>{const s=getComputedStyle(el);return el.matches(':focus-visible')&&s.outlineStyle!=='none'&&parseFloat(s.outlineWidth)>0;}));
+  await page.keyboard.press('Enter');
+  check(`keyboard opens disclosure (${forcedColors})`,await page.locator('.oi-disclosure').evaluate(el=>el.open));
+  await page.keyboard.press('Enter');
+ }
  console.log(`${count}/${count} browser checks passed`);
 }finally{await browser?.close();await new Promise(r=>server.close(r));}

@@ -1,4 +1,4 @@
-import {TextEditor,EditorCommands,type EditorHandle} from "../editor/TextEditor";
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 /**
  * The source editor surface (U0.4, kind 'source') — the minimal editor the
  * kernel seam re-proof walks: a real file opened from the horizon

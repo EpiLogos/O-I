@@ -84,6 +84,18 @@ export interface WalkEventsData {
   since_seq?: number;
 }
 
+/** The stage's clock law as data: a live presentation stands, a drawing
+ * frame is scheduled, frames rendered so far. An idle desktop reads
+ * live=false, scheduled=false and a frame count that stops moving. */
+export interface WalkStageData {
+  paused: boolean | null;
+  live: boolean | null;
+  scheduled: boolean | null;
+  playback: {name: string; elapsed: number; duration: number; status: "active" | "completed" | "cancelled"} | null;
+  frames: number | null;
+  presentations: Array<{ id: string; plane: string }>;
+}
+
 export interface WalkTimingData {
   /** First contentful paint, ms from navigation start (null = not observed). */
   fcp_ms: number | null;
@@ -151,7 +163,7 @@ export interface CradleWalkChannel {
     layout(): Promise<WalkReceipt<{ layout: LayoutState | null }>>;
     /** The Global Expression Stage's bounded inspection: presentations,
      * engine capabilities, and whether the window surface's clock is held. */
-    stage(): Promise<WalkReceipt<{ paused: boolean | null; presentations: Array<{ id: string; plane: string }> }>>;
+    stage(): Promise<WalkReceipt<WalkStageData>>;
   };
   capture: {
     /** In-page timing measurements (cold-start FCP lives here). */
@@ -570,10 +582,10 @@ export function createWalkChannel(
       layout: () =>
         timed("read.layout", async () => ({ data: { layout: structuredClone(readLayout()) } })),
       stage: () =>
-        timed<{ paused: boolean | null; presentations: Array<{ id: string; plane: string }> }>("read.stage", async () => {
+        timed<WalkStageData>("read.stage", async () => {
           if (!stage) return { error: "the expression stage is not bound to this channel" };
-          const inspect = stage.inspect() as { paused?: boolean | null; presentations?: Array<{ id: string; plane: string }> };
-          return { data: { paused: inspect.paused ?? null, presentations: inspect.presentations ?? [] } };
+          const inspect = stage.inspect() as Partial<WalkStageData>;
+          return { data: { paused: inspect.paused ?? null, live: inspect.live ?? null, scheduled: inspect.scheduled ?? null, frames: inspect.frames ?? null, presentations: inspect.presentations ?? [], playback: inspect.playback ?? null } };
         }),
     },
     capture: {

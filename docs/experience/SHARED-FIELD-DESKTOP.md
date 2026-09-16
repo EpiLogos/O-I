@@ -1,6 +1,6 @@
 # SharedField Desktop — Explore, encounter and participation
 
-**Standing:** owner-approved synthesis of the existing SharedField/Explore, Self/Other, Personal Web, Expression Field and desktop interaction laws, 15 September 2026. This is the explicit desktop UX contract for O:I #18 and the SF0–SF6 bridge in `docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md`.
+**Standing:** owner-approved synthesis of the existing SharedField/Explore, Self/Other, Personal Web, Expression Field and desktop interaction laws, updated 16 September 2026. This is the explicit desktop UX contract for O:I #18 and the SF0–SF6 bridge in `docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md`.
 
 **Upstream design authority:**
 
@@ -9,10 +9,11 @@
 - `shared-field/ACCOUNT-PROJECTION.md` and `shared-field/WORLD-PRESENTATION.md` — projected world/page composition and human/Agent parity;
 - `docs/cradle/PERSONAL-WEB.md` — Work/Personal, Beings/Things, page↔Wiki↔graph continuity;
 - `docs/cradle/EXPRESSION-FIELD.md`, `docs/experience/EXPRESSION-FIELD.md`, `docs/contracts/EXPRESSION-APPLICATION-V1.md` — living Expression body and structured human/Agent operations;
+- `docs/SHARED-FIELD-STATE-DISCOVERY.md` — Workspace/Project continuity, AIKit Search/Reveal, Projection staging and optional SpaceTimeDB Shared Stage;
 - O:I #155 / current desktop interaction law — one Surface/window grammar, auxiliary contextual depth, participant/addressing and Activity/Attention;
 - `docs/SHARED-FIELD-QL-EPI-INTEGRATION-WAYFINDER.md` — hosting, Projection, Expression and two-world execution.
 
-This document gives SharedField a concrete place in the desktop. It creates no new semantic owner, shell, graph store or social-feed ontology.
+This document gives SharedField a concrete place in the desktop. It creates no new semantic owner, shell, graph store, workspace store or social-feed ontology.
 
 ---
 
@@ -44,13 +45,16 @@ The desktop must expose a first-class **Explore** destination in the global navi
 
 Opening Explore:
 
-- leaves current local Work/Personal state intact;
+- leaves current local Work/Personal/Project Workspace state intact;
 - opens/focuses the existing Explore Surface in the canvas;
 - restores its last query, selected world/field, navigation history and camera/constellation state where valid;
+- preserves the Workspace's bound AgentSession/SessionSpace refs without starting or replacing either;
 - does not automatically disclose the current local selection to any remote participant or Agent;
 - does not start a new AgentSession.
 
 Returning to local work restores the prior local arrangement without closing watched fields, active authorised shared sessions or background subscriptions.
+
+**Workspace state follows the person's work; Shared Stage state follows the encounter; canonical subject state stays with its native owner.**
 
 ---
 
@@ -65,7 +69,22 @@ projected worlds / Beings / Things / Agents / fields
              related through admitted relations
 ```
 
-Search is the primary ingress. The existing command/search grammar resolves addressable Human roots, Agents, Projects, Wiki subjects, Projections, Expressions, SharedFields and Contributions through shared application/read models.
+Search is the primary ingress. The existing AIKit Search/Resolve grammar resolves addressable Human roots, Agents, Projects, Wiki subjects, Projections, Expressions, WorldPresentations, SharedFields and Contributions through shared application/read models.
+
+Search may reveal several related presentation forms without collapsing them:
+
+```text
+native subject / ResourceRef
+    ├─ Being or Thing presentation role
+    ├─ eligible Expression(s)
+    ├─ WorldPresentation / page
+    ├─ projected occurrence
+    └─ SharedField occurrence where one exists
+```
+
+The result keeps subject, presentation, Projection and live occurrence distinct. Search is a resolution/revelation layer, not another store.
+
+Workspace/project/current-subject context may seed local scope and ranking. Opening Explore globally does not mutate the chosen local Project, and local focus is not automatically disclosed to another World or Agent.
 
 The default presentation may use a bounded constellation/field reading with sparse O:I relation language. Expression-based presentation may enrich an eligible result or local whole, but the desktop does not require every search result to instantiate a particle renderer.
 
@@ -150,6 +169,7 @@ current primary WorldPresentation or Expression
 participant presence
 Contribution relations
 Watch / membership / authority state
+optional Shared Stage state
 ```
 
 ### Field strip
@@ -161,6 +181,7 @@ A minimal field strip may disclose:
 - Watch state;
 - Join / Leave / Request access where meaningful;
 - small participant/presence indicators;
+- Follow / Unfollow presenter only when a Shared Stage actually exists;
 - contextual overflow for field-level Actions.
 
 Do not repeat large title/description/status blocks above the actual shared material.
@@ -276,6 +297,8 @@ Linked private material does not become public by association.
 
 After successful publication the person can remain in local work or choose **Open in Explore** to encounter the public/shared representation as another Surface reading.
 
+The publication preview is local Projection staging. It is not a live Shared Stage and it does not change the current Workspace until the person actually opens/focuses another Surface.
+
 ---
 
 ## 8. Knowledge travel inside Explore
@@ -298,7 +321,9 @@ Spatial travel uses real relation data. Distant constellations may provide orien
 
 The current Expression/point-cloud language may make the field alive where it carries the actual projection. Decorative geometry never manufactures neighbours or relation standing.
 
-LIST / TREE / GRAPH / page / Expression are readings over the same selected projected state.
+LIST / TREE / GRAPH / page / Expression are readings over the same selected projected state and stable selection.
+
+Interconnected HTML/WorldPresentation pages are navigable because their admitted subject/component bindings and typed relations feed the same Explore index/read model. The desktop never has to scrape arbitrary page DOM to infer the world.
 
 ---
 
@@ -321,6 +346,8 @@ Entering a NOW keeps the SharedField's visual language and pane system. It does 
 The working surface foregrounds the actual shared material/Expression/Flow. Participant and Activity depth is summoned as needed.
 
 Closing a temporary NOW presents an explicit retain/return step for selected outputs. Retention uses owner operations and keeps origin/intention/NOW lineage. Failure to retain is recoverable before destructive closure.
+
+A Shared NOW may use a Shared Stage for its current presentation locus, but the two are not identical: NOW is Central's temporal/intention relation; Shared Stage is the optional synchronised presentation relation.
 
 ---
 
@@ -357,23 +384,45 @@ Inside SharedField this means:
 
 The SharedField desktop must expose the same semantic state to human and Agent Surfaces. No Agent workflow may depend on scraping the rendered Explore page.
 
+The Workspace may remember refs to the person's AgentSession and AIKit SessionSpace. Neither becomes Workspace state internally, and neither is copied to SharedField merely because its ref is bound locally.
+
 ---
 
-## 12. View state and lifecycle
+## 12. Workspace, view state and lifecycle
 
-SharedField uses the normal O:I Surface/window lifecycle.
+SharedField uses the normal O:I Workspace + Surface/window lifecycle.
 
-Persist compact view state such as:
+The Workspace is the host-level continuity relation across Work, Personal, Explore, pages, Expressions and SharedFields. It is not a Project, SessionSpace, AgentSession or semantic source.
 
+Persist compact local state such as:
+
+- Workspace ref/name and current root/project context;
+- focused subject / Surface;
+- open tabs/splits/detached Surface refs;
+- selected Expression/page/scene and local focus;
 - active Explore destination;
-- current query;
+- current Search query and selected ResourceRef;
 - selected world/field/Projection;
-- navigation history;
-- bounded graph camera;
-- open contextual depths;
+- navigation/History routes;
+- bounded graph/local-whole camera and filters;
+- open contextual depths/apertures;
+- refs to bound AgentSession / SessionSpace;
+- dirty working-presentation/draft standing where the owner contract permits it;
 - joined/watched refs as ordinary application relations.
 
-Do not persist cloned remote payloads, Agent transcripts or graph stores as desktop semantic state.
+Do not persist cloned remote payloads, Agent transcripts, private remote source or graph stores as desktop semantic state.
+
+### Project continuity across every Surface
+
+A person may open Explore or a SharedField while Project A remains their local project context. Reading World B does not silently change Project A. If they deliberately import/relate/return a remote contribution into Project A, the native Project owner Action establishes that new relation.
+
+Work/Personal/Explore switching restores the appropriate Surface constellation and selection while the stable local Project context remains intelligible. Tabs for the same Project share project context. A detached window is still part of the same Workspace constellation.
+
+### Kill/relaunch
+
+Autosave must survive ordinary process loss/relaunch. On restore, semantic state is reconciled by stable refs/revisions; stale or unavailable remote objects degrade explicitly rather than being replaced by cached clones.
+
+Workspace restoration and SharedField reconnection are independent operations. A restored Workspace can show a temporarily unavailable shared Surface while SpaceTimeDB reconnects.
 
 Hidden/offscreen rich renderers pause/release unnecessary GPU/media/subscriptions according to their host contract. Closing a view does not leave the SharedField, unwatch it or stop an Agent unless an explicit Action says so.
 
@@ -381,20 +430,59 @@ Detached windows retain the same Surface/subject identity and re-dock through th
 
 ---
 
-## 13. SF0–SF6 desktop ownership
+## 13. Shared Stage — optional synchronised presentation
 
-The desktop experience develops with the hosted work rather than being postponed.
+A SharedField may expose an explicit **Shared Stage** when participants deliberately want to inhabit the same changing presentation locus.
+
+The stage can synchronise application-level state such as:
+
+```text
+current projected subject
+WorldPresentation / Expression revision
+current scene
+shared focus / selected Being or Thing
+presenter / follower relation
+approved authored presentation edits
+causal Activity / Action refs
+```
+
+It does **not** synchronise by default:
+
+- local tabs/splits/window layout;
+- local camera or reading position;
+- private drafts;
+- local Search history;
+- Agent transcripts/context;
+- SessionSpace/Harness state;
+- raw Nara/private source state;
+- GPU/particle/audio buffers.
+
+### Presenter / follower UX
+
+When a participant begins an admitted stage, another participant may choose **Follow**. Follow means their shared material locus tracks the stage revision. It does not surrender their whole Workspace.
+
+They can **Unfollow** at any time and continue from a local view without leaving the SharedField. Re-follow reconciles to the current stage revision.
+
+A stage edit that creates a new Expression revision uses the Expression CAS/owner operation. A Return to source uses the source owner operation. Shared Stage itself is never source authority.
+
+Presence, stage updates and reconnect are suitable SpaceTimeDB live state. Renderer simulation buffers are not.
+
+---
+
+## 14. SF0–SF6 desktop ownership
+
+The desktop experience develops with the hosted work rather than being postponed. All units consume `SHARED-FIELD-STATE-DISCOVERY.md`; state continuity is not deferred to SF6.
 
 ### SF0 — hosted floor
 
-Must establish real second-world connectivity and expose honest service/offline/reconnect state to the desktop. No rich Explore implementation is required to prove the service.
+Must establish real second-world connectivity and expose honest service/offline/reconnect state to the desktop. Lock the Workspace/Project/Projection/SharedStage/material-state distinctions and minimal revisioned Shared Stage schema. No rich Explore implementation is required to prove the service.
 
 ### SF1 — first real desktop place
 
 SF1 owns the first complete desktop embodiment needed for the Projection carrier:
 
 1. add the stable global **Explore** destination to the desktop navigation;
-2. mount/restore one Explore workspace through existing Surface mechanics;
+2. mount/restore Explore and SharedField Surfaces through the existing Workspace mechanics;
 3. search/open a real projected WorldPresentation from the hosted/read-model path;
 4. render an admitted live Expression or its explicit fallback;
 5. preserve exact World/Projection/Presentation/Expression refs across open, full, split, detach and return;
@@ -402,47 +490,52 @@ SF1 owns the first complete desktop embodiment needed for the Projection carrier
 7. keep the personal Agent independent and summonable;
 8. implement local **Share / Project** preview for one ordinary Expression/Thing with real audience filtering and **Open in Explore**;
 9. show Watch/Join/availability state where the backing contracts already support it;
-10. persist/restore Explore query/selection/history/view state.
+10. persist/restore Explore query/selection/history/view state;
+11. return to the prior Work/Personal/Project constellation exactly where valid;
+12. kill/relaunch and reconcile the same Workspace by stable refs/revisions.
 
 SF1 acceptance is a running desktop walk, not carrier tests alone.
 
 ### SF2 — living knowledge encounter
 
-Deepens Explore with bounded Wiki/M0/knowledge constellation projection, spatial travel, recenter/back/pin/follow and source/Actions over the exact projected local whole.
+Deepens Explore with AIKit Search/Resolve over projected subjects and their eligible Beings/Things/Expressions/WorldPresentations, bounded Wiki/M0/knowledge constellation projection, spatial travel, recenter/back/pin/follow and source/Actions over the exact projected local whole.
 
 ### SF3 — Agent / Being encounter
 
-Adds rich projected Beings, participants, presence, typed addressing and permitted Agent/Epii interaction through the existing Gateway/session ecology.
+Adds rich projected Beings, participants, presence, typed addressing and permitted Agent/Epii interaction through the existing Gateway/session ecology while preserving Workspace-bound personal AgentSession/SessionSpace refs.
 
 ### SF4 — Contribution / Return
 
-Adds the attached contribution composer, contribution stacks, Contribution-on-Contribution and exact native Return/proposal flows.
+Adds the attached contribution composer, contribution stacks, Contribution-on-Contribution and exact native Return/proposal flows. Shared Stage presentation edits remain causally distinct from Return/source mutation.
 
 ### SF5 — protected Nara / M′ encounter
 
-Adds safe Nara/Epi expressions, explicit shared-presence consent and the rich local/shared instrument path without publishing protected personal state.
+Adds safe Nara/Epi expressions, explicit shared-presence consent and the rich local/shared instrument path without publishing protected personal state. Shared Stage may synchronise admitted presentation refs only.
 
 ### SF6 — two-world lived cut
 
-Runs the complete experience across the real two-machine/two-world topology with human visual/interaction acceptance.
+Runs the complete experience across the real two-machine/two-world topology with human visual/interaction acceptance, independent local Workspaces and an optional presenter/follower Shared Stage.
 
 ---
 
-## 14. SF1 acceptance walk
+## 15. SF1 acceptance walk
 
 SF1 cannot close until this works in the running desktop against the real carrier/service available at that point:
 
 ```text
-local desktop
+Project A / Expression E open in local Work Workspace
 → open global Explore
-→ search/open an addressable projected Thing/world
+→ Search resolves an addressable projected Thing/world
+→ result reveals eligible Expression / WorldPresentation without collapsing identity
 → WorldPresentation becomes the main canvas body
 → live Expression renders, or explicit safe fallback renders
 → summon relations/source depth and dismiss it
 → summon personal Agent without replacing the shared subject
 → full/split/detach/re-dock the presentation
 → return to Explore field with selection/history intact
-→ return to prior Work/Personal workspace intact
+→ return to prior Project A / Work/Personal Workspace intact
+→ kill/relaunch
+→ same valid Workspace constellation restores by refs/revisions
 
 local Thing / ordinary Expression
 → Share / Project
@@ -458,14 +551,37 @@ Also prove:
 - offline/unavailable SharedField state is honest and does not erase local work;
 - private sentinel data is absent from outward payload and fallback;
 - opening a projected Agent does not replace the person's AgentSession;
-- no new sidebar, graph store, chat store or desktop SharedField database exists;
-- human and structured Agent readings identify the same projected subject and revisions.
+- SessionSpace does not become Workspace/SharedField state;
+- no new sidebar, graph store, chat store, workspace store or desktop SharedField database exists;
+- human and structured Agent readings identify the same projected subject and revisions;
+- projected HTML navigation is driven by structured refs/relations rather than DOM scraping.
 
 Human judgement must confirm that Explore feels like entering another world/field rather than opening a platform administration dashboard.
 
 ---
 
-## 15. Visual character
+## 16. Shared Stage acceptance walk
+
+```text
+World A projects Expression E / WorldPresentation W
+→ World B discovers it with Explore Search
+→ both enter SharedField F
+→ Presence becomes live
+→ A opens Shared Stage over projected E
+→ B explicitly chooses Follow
+→ A changes admitted scene / shared focus
+→ B receives the new stage revision
+→ B chooses Unfollow and keeps a local reading
+→ B contributes a refinement
+→ owner accepts through the native Expression/source Action
+→ optional reprojection advances the outward representation
+```
+
+Prove that A's local tabs/camera/private drafts/Agent context and Nara internals never appear in B merely because B followed the stage.
+
+---
+
+## 17. Visual character
 
 SharedField inherits O:I's current visual language and the Self/Other direction:
 
@@ -485,4 +601,4 @@ The intended feeling is **travel, encounter and making together**: another perso
 
 ## Closure
 
-The SharedField desktop is real when the person can leave local Work/Personal, enter Explore, discover another projected world, inhabit its page/Expression/knowledge relations, watch or join a SharedField, contribute under real authority, involve Agents without losing subject continuity, return accepted differences through native owners, and move back into their local world without any of those presentation transitions reminting the underlying people, worlds, subjects or sessions.
+The SharedField desktop is real when the person can preserve their local Workspace and Project constellation; leave Work/Personal for Explore; use Search to discover native subjects and their relevant Beings, Things, Expressions and WorldPresentations; enter another projected world; inhabit its page/Expression/knowledge relations; watch or join a SharedField; optionally follow a shared presentation without surrendering local state; contribute under real authority; involve Agents without losing subject/session continuity; return accepted differences through native owners; and move back into the local world without those presentation transitions reminting the underlying people, worlds, subjects or sessions.

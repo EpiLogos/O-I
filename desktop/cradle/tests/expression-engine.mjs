@@ -3,7 +3,7 @@ import {readFileSync} from 'node:fs';
 import {createServer} from 'vite';
 const ENGINE_ROOT='../../packages/oi-design-system/expressions-engine';
 const ENGINE_FILE='../'+ENGINE_ROOT;
-const INTAKE_SHA='7306b7b8882f54fec931922d46fdbaba9f656212';
+const INTAKE_SHA='91db8428fc9dfba06cd258ec5a58e7dd9eef5313';
 const server=await createServer({server:{middlewareMode:true},appType:'custom'});
 let assertions=0;
 try {

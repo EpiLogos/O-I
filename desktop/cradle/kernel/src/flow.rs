@@ -68,6 +68,17 @@ impl std::error::Error for OwnerCallError {}
 pub enum ReceivingRequest {
     List { #[serde(default)] after: Option<u64>, #[serde(default)] limit: Option<u64> },
     Read { return_ref: String },
+    /// An attributable external difference enters through Central's native
+    /// proposal doorway. Central owns validation, authority and CAS arrival.
+    Submit {
+        producer_key: String,
+        source_ref: String,
+        document_id: String,
+        expected_source_revision: String,
+        occurred_at_unix_seconds: u64,
+        #[serde(default)] task_ref: Option<String>,
+        proposal: Value,
+    },
     /// The document's current native basis (the exact source revision the
     /// human would accept) — `central.document.read`.
     Document { source_ref: String, document_id: String },
@@ -278,6 +289,16 @@ impl CentralClient {
             ReceivingRequest::Read { return_ref } => {
                 input.insert("return_ref".to_owned(), json!(return_ref));
                 "central.receiving.read"
+            }
+            ReceivingRequest::Submit { producer_key, source_ref, document_id, expected_source_revision, occurred_at_unix_seconds, task_ref, proposal } => {
+                input.insert("producer_key".to_owned(), json!(producer_key));
+                input.insert("source_ref".to_owned(), json!(source_ref));
+                input.insert("document_id".to_owned(), json!(document_id));
+                input.insert("expected_source_revision".to_owned(), json!(expected_source_revision));
+                input.insert("occurred_at_unix_seconds".to_owned(), json!(occurred_at_unix_seconds));
+                if let Some(task_ref) = task_ref { input.insert("task_ref".to_owned(), json!(task_ref)); }
+                input.insert("proposal".to_owned(), proposal.clone());
+                "central.receiving.submit"
             }
             ReceivingRequest::Document { source_ref, document_id } => {
                 input.insert("source_ref".to_owned(), json!(source_ref));
@@ -888,5 +909,23 @@ mod tests {
         assert_eq!(wire["expected"], "central.content-fnv1a64/v1:2389:e");
         assert_eq!(wire["current"], "central.content-fnv1a64/v1:2404:c");
         assert!(failure.to_string().contains("both sides preserved"));
+    }
+
+    #[test]
+    fn receiving_wire_keeps_every_native_variant_externally_tagged() {
+        let values = [
+            serde_json::json!({"List":{"after":0,"limit":10}}),
+            serde_json::json!({"Read":{"return_ref":"return:1"}}),
+            serde_json::json!({"Submit":{"producer_key":"p","source_ref":"source:1","document_id":"doc:1","expected_source_revision":"r1","occurred_at_unix_seconds":1,"proposal":{}}}),
+            serde_json::json!({"Document":{"source_ref":"source:1","document_id":"doc:1"}}),
+            serde_json::json!({"Review":{"return_ref":"return:1","expected_return_revision":"r1","disposition":"rejected"}}),
+            serde_json::json!({"Include":{"return_ref":"return:1","expected_return_revision":"r1","expected_source_revision":"s1"}}),
+            serde_json::json!({"Recover":{"return_ref":"return:1","expected_return_revision":"r1"}}),
+            serde_json::json!({"MutateField":{"source_ref":"source:1","document_id":"doc:1","expected_revision":"r1","request_id":"request:1","field_id":"field:1","value":"value"}}),
+        ];
+        for value in values {
+            serde_json::from_value::<ReceivingRequest>(value).expect("desktop wire must deserialize as the native owner request");
+        }
+        assert!(serde_json::from_value::<ReceivingRequest>(serde_json::json!({"kind":"document","source_ref":"source:1","document_id":"doc:1"})).is_err());
     }
 }

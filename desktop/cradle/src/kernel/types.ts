@@ -119,6 +119,42 @@ export type CommissionOutcome =
   | { state: "owner_refused"; path: string; message: string }
   | { state: "owner_unavailable"; path: string; detail: string };
 
+// ---------------------------------------------------------------------------
+// Configuration-plane wire shapes (#299 C6 live leg). These alias the C0
+// contract types — one definition, never a parallel copy.
+// ---------------------------------------------------------------------------
+
+export type ConfigurationMountState = import("../configuration/source").ContributionMount;
+export type ConfigResolutionWire = import("../configuration/contracts").ConfigResolution;
+export type PlanDocumentWire = import("../configuration/contracts").PlanDocument;
+export type ConfigErrorWire = import("../configuration/contracts").ConfigErrorDocument;
+export type ChangeSetDocumentWire = import("../configuration/contracts").ChangeSetDocument;
+export type ReceiptDocumentWire = import("../configuration/contracts").ReceiptDocument;
+export type ProfileDocumentWire = import("../configuration/contracts").ProfileDocument;
+
+/** One scope address on the configuration seam (09 §5), carried verbatim
+ * to the engine — the kernel judges no scope kinds. */
+export interface ConfigScopeWire { scope_kind: string; scope_ref?: string | null }
+/** The reference half of a secret-kind request (09 §14): the reference
+ * crosses; material never does. */
+export interface ConfigSecretReferenceWire { ref: string }
+/** One desired request as it crosses to hold/plan/apply. */
+export interface ConfigRequestWire {
+  setting_ref: string;
+  scope: ConfigScopeWire;
+  value?: unknown;
+  secret_reference?: ConfigSecretReferenceWire | null;
+}
+/** One (setting, scope) resolution request. */
+export interface ConfigPairWire { setting_ref: string; scope: ConfigScopeWire }
+/** The inspectable profile-use plan (09 §12): targets beside currents;
+ * the renderer enriches entries with contribution settings generically. */
+export interface ProfileUsePlanWire {
+  profile_ref: string;
+  entries: { setting_ref: string; scope: ConfigScopeWire; target: unknown; current: unknown }[];
+  native_profiles: { owner_ref: string; native_profile_ref: string }[];
+}
+
 export type KernelOp =
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
@@ -140,6 +176,22 @@ export type KernelOp =
   | {op:"ground";request:import("../workspace/GroundChooser").GroundRequest}
   | {op:"composition_read";owners?:boolean}
   | {op:"system_composition_read"}
+  // The configuration-plane binding (#299 C6 live leg): every operation
+  // routes through the installed `oi` executable — the same engine
+  // `oi config` / `oi profile` drive — so the Desktop keeps no parallel
+  // product semantics. Documents cross verbatim; refused states come back
+  // as named data.
+  | { op: "config_registry_read" }
+  | { op: "config_resolutions_read"; pairs: ConfigPairWire[] }
+  | { op: "config_desired_hold"; request: ConfigRequestWire }
+  | { op: "config_desired_discard"; setting_ref: string; scope: ConfigScopeWire }
+  | { op: "config_plan"; requests: ConfigRequestWire[] }
+  | { op: "config_apply"; requests: ConfigRequestWire[] }
+  | { op: "profile_list" }
+  | { op: "profile_read"; profile_ref: string }
+  | { op: "profile_use_plan"; profile_ref: string }
+  | { op: "profile_use_apply"; profile_ref: string }
+  | { op: "profile_create"; profile_ref: string; title?: string }
   | { op: "files_list"; path: string }
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
@@ -147,7 +199,7 @@ export type KernelOp =
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   | {op:"encounter_task_read";project:string;agent_session:string}
-  | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingRequest}
+  | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
   | {op:"factory_build_snapshot";project?:string;state_path:string;project_ref:string;run_ref:string}
@@ -191,6 +243,19 @@ export type KernelOpResult =
   | {result:"ground_reading";reading:Record<string,unknown>}
   | {result:"composition_reading";reading:import("../workspace/SystemPanel").CompositionReading}
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
+  // Configuration-plane results: contract documents verbatim, degraded
+  // states as named data (see `configuration.rs` in the kernel crate).
+  | { result: "config_registry_reading"; reading: { schema: string; observed_at_unix_ms: number; mounts: ConfigurationMountState[] } }
+  | { result: "config_resolutions"; resolutions: ConfigResolutionWire[] }
+  | { result: "config_desired_held"; entry: unknown }
+  | { result: "config_desired_discarded"; document: unknown }
+  | { result: "config_planned"; plans: PlanDocumentWire[]; errors: ConfigErrorWire[] }
+  | { result: "config_applied"; changeset: ChangeSetDocumentWire; owner_receipts: ReceiptDocumentWire[] }
+  | { result: "profile_listing"; active_profile_ref: string | null; profiles: ProfileDocumentWire[]; degraded?: { profile_ref: string; reason: string }[] }
+  | { result: "profile_reading"; profile: unknown }
+  | { result: "profile_use_planning"; plan: ProfileUsePlanWire }
+  | { result: "profile_used"; activation: unknown }
+  | { result: "profile_created"; profile: ProfileDocumentWire }
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result:"receiving_reading";data:unknown }

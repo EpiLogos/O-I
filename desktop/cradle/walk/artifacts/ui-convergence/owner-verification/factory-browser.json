@@ -1,0 +1,129 @@
+{
+  "factory": "fb854dede9876a0ea008afd62422ef9150fe5203",
+  "oi": "be172a10",
+  "readings": [
+    {
+      "theme": "light",
+      "depth": "semantic",
+      "scheme": "light",
+      "hostScheme": "light",
+      "surface": "rgb(251, 251, 249)",
+      "text": "rgb(22, 22, 20)",
+      "rootClass": "fb-build-surface factory-build",
+      "sentinel": {
+        "font": "serif",
+        "color": "rgb(80, 40, 20)",
+        "background": "rgb(240, 230, 220)"
+      },
+      "headings": [
+        "Choose the execution optic that preserves meaning and evidence",
+        "Candidates",
+        "Claims / Evidence",
+        "Human requests"
+      ]
+    },
+    {
+      "theme": "light",
+      "depth": "live",
+      "scheme": "light",
+      "hostScheme": "light",
+      "surface": "rgb(251, 251, 249)",
+      "text": "rgb(22, 22, 20)",
+      "rootClass": "fb-build-surface factory-build",
+      "sentinel": {
+        "font": "serif",
+        "color": "rgb(80, 40, 20)",
+        "background": "rgb(240, 230, 220)"
+      },
+      "headings": [
+        "Live working world",
+        "Mahāmāyā · implementation agency",
+        "Factory root-world agency"
+      ]
+    },
+    {
+      "theme": "light",
+      "depth": "trajectory",
+      "scheme": "light",
+      "hostScheme": "light",
+      "surface": "rgb(251, 251, 249)",
+      "text": "rgb(22, 22, 20)",
+      "rootClass": "fb-build-surface factory-build",
+      "sentinel": {
+        "font": "serif",
+        "color": "rgb(80, 40, 20)",
+        "background": "rgb(240, 230, 220)"
+      },
+      "headings": [
+        "Trajectory"
+      ]
+    },
+    {
+      "theme": "dark",
+      "depth": "semantic",
+      "scheme": "dark",
+      "hostScheme": "dark",
+      "surface": "rgb(22, 22, 21)",
+      "text": "rgb(233, 233, 228)",
+      "rootClass": "fb-build-surface factory-build",
+      "sentinel": {
+        "font": "serif",
+        "color": "rgb(80, 40, 20)",
+        "background": "rgb(240, 230, 220)"
+      },
+      "headings": [
+        "Choose the execution optic that preserves meaning and evidence",
+        "Candidates",
+        "Claims / Evidence",
+        "Human requests"
+      ]
+    },
+    {
+      "theme": "dark",
+      "depth": "live",
+      "scheme": "dark",
+      "hostScheme": "dark",
+      "surface": "rgb(22, 22, 21)",
+      "text": "rgb(233, 233, 228)",
+      "rootClass": "fb-build-surface factory-build",
+      "sentinel": {
+        "font": "serif",
+        "color": "rgb(80, 40, 20)",
+        "background": "rgb(240, 230, 220)"
+      },
+      "headings": [
+        "Live working world",
+        "Mahāmāyā · implementation agency",
+        "Factory root-world agency"
+      ]
+    },
+    {
+      "theme": "dark",
+      "depth": "trajectory",
+      "scheme": "dark",
+      "hostScheme": "dark",
+      "surface": "rgb(22, 22, 21)",
+      "text": "rgb(233, 233, 228)",
+      "rootClass": "fb-build-surface factory-build",
+      "sentinel": {
+        "font": "serif",
+        "color": "rgb(80, 40, 20)",
+        "background": "rgb(240, 230, 220)"
+      },
+      "headings": [
+        "Trajectory"
+      ]
+    }
+  ],
+  "actions": [
+    {
+      "actionRef": "action:01ARZ3NDEKTSV4RRFFQ69G5FAN",
+      "subjectRef": "candidate:01ARZ3NDEKTSV4RRFFQ69G5FAC"
+    }
+  ],
+  "narrow": {
+    "viewport": 639,
+    "documentWidth": 639,
+    "bodyWidth": 639
+  }
+}

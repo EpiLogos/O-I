@@ -306,6 +306,22 @@ sys.exit(9)
                     "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
                     "native_ref": "aikit:model.default",
                 }],
+            }, {
+                "id": "providers",
+                "title": "Providers",
+                "settings": [{
+                    "setting_ref": "ai-kit:providers:credentials.anthropic",
+                    "section_ref": "providers",
+                    "title": "Anthropic credential reference",
+                    "value_schema": { "type": "secret" },
+                    "allowed_scopes": [{ "scope_kind": "world", "scope_ref": null }],
+                    "writable": true,
+                    "profileable": true,
+                    "sensitive": true,
+                    "effect": { "kind": "provider-reconnect-required", "summary": null, "ref": null },
+                    "operations": { "validate": true, "plan": true, "apply": true, "reset": true },
+                    "native_ref": "aikit:credentials:anthropic-key",
+                }],
             }],
             "operations": { "transport": "cli/v1" },
             "availability": { "state": "available", "reason": null },
@@ -768,4 +784,154 @@ fn frozen_error_codes_hold_without_a_scope_argument() {
     ]);
     assert_eq!(code, 1);
     assert_eq!(error["error_code"], "unsupported_setting");
+}
+
+// ---------------------------------------------------------------------------
+// Held desired intent: hold drifts without touching the owner; discard
+// withdraws; an executed ChangeSet retires the hold
+// ---------------------------------------------------------------------------
+
+#[test]
+fn hold_records_intent_without_touching_the_owner_and_discard_withdraws_it() {
+    let scene = Scene::open();
+
+    // Before any hold: no desired, the owner's own native axis only.
+    let before = scene.run_ok(&["config", "show", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(before["desired"], Value::Null);
+    assert_eq!(before["native"]["effective"]["value"], "sonnet-current");
+    assert_eq!(before["reconciliation"]["status"], "satisfied");
+
+    // Hold desired intent: the same addressing/secret law as `set`, and
+    // nothing native moves (09 §7 — desired is O:I's own axis).
+    let held = scene.run_ok(&[
+        "config",
+        "hold",
+        SETTING_REF,
+        "sonnet-next",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    assert_eq!(held["setting_ref"], SETTING_REF);
+    assert_eq!(held["value"], "sonnet-next");
+
+    // The resolution reads drifted: desired carried beside the owner's own
+    // untouched native fact.
+    let show = scene.run_ok(&["config", "show", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(show["desired"]["value"], "sonnet-next");
+    assert_eq!(show["native"]["effective"]["value"], "sonnet-current");
+    assert_eq!(show["reconciliation"]["status"], "drifted");
+
+    // The owner's native state stayed at its baseline through `get`.
+    let got = scene.run_ok(&["config", "get", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(got["source"], "desired", "the hold speaks first: {got}");
+
+    // The hold persists in the O:I configuration store, beside the fold.
+    let desired_dir = scene.configuration_dir().join("desired");
+    let stored: Vec<_> = std::fs::read_dir(&desired_dir)
+        .expect("desired records directory exists")
+        .collect();
+    assert_eq!(stored.len(), 1, "one held record on disk");
+
+    // A second hold of the same subject replaces the first.
+    scene.run_ok(&["config", "hold", SETTING_REF, "opus", SCOPE_ARG, "--json"]);
+    let show = scene.run_ok(&["config", "show", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(show["desired"]["value"], "opus");
+    let stored: Vec<_> = std::fs::read_dir(&desired_dir)
+        .expect("desired records directory")
+        .collect();
+    assert_eq!(stored.len(), 1, "the replacement kept one record");
+
+    // Discard withdraws the intent; the owner was never touched.
+    let discarded = scene.run_ok(&["config", "discard", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(discarded["schema"], "oi.config-discard/v1");
+    assert_eq!(discarded["removed"], true);
+    let show = scene.run_ok(&["config", "show", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(show["desired"], Value::Null);
+    assert_eq!(show["reconciliation"]["status"], "satisfied");
+
+    // Discarding again observes the absence.
+    let discarded = scene.run_ok(&["config", "discard", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(discarded["removed"], false);
+}
+
+#[test]
+fn executed_changeset_retires_the_hold_and_secret_holds_carry_references_only() {
+    let scene = Scene::open();
+
+    // A secret-kind hold carries the owner-namespace reference — never
+    // material, never a `value` (09 §14).
+    let held = scene.run_ok(&[
+        "config",
+        "hold",
+        "ai-kit:providers:credentials.anthropic",
+        "aikit:credentials:held-ref",
+        "world",
+        "--json",
+    ]);
+    assert!(
+        held.get("value").is_none(),
+        "a secret hold carries no value: {held}"
+    );
+    assert_eq!(
+        held["secret_reference"]["ref"],
+        "aikit:credentials:held-ref"
+    );
+
+    // A value hold at the project scope, then applied: the executed
+    // ChangeSet settles the subject, and the hold retires — exactly one
+    // O:I record speaks for it (the fold, not the overlay).
+    scene.run_ok(&[
+        "config",
+        "hold",
+        SETTING_REF,
+        "sonnet-next",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    let request = scene.run_ok(&[
+        "config",
+        "set",
+        SETTING_REF,
+        "sonnet-next",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    let request_path = write_request(&scene, "hold-apply.json", &request);
+    let applied = scene.run_ok(&[
+        "config",
+        "apply",
+        "--request-file",
+        &request_path,
+        "--changeset",
+        "cs-hold-apply-1",
+        "--json",
+    ]);
+    assert_eq!(applied["schema"], "oi.config-apply/v1");
+    assert_eq!(applied["changeset"]["status"], "verified");
+
+    // The desired state still reads (now from the ChangeSet fold), and the
+    // overlay record is gone.
+    let show = scene.run_ok(&["config", "show", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(show["desired"]["value"], "sonnet-next");
+    assert_eq!(show["reconciliation"]["status"], "satisfied");
+    let desired_dir = scene.configuration_dir().join("desired");
+    let remaining: Vec<_> = std::fs::read_dir(&desired_dir)
+        .expect("desired records directory")
+        .collect();
+    assert_eq!(remaining.len(), 1, "only the secret hold remains");
+
+    // The secret hold survives the unrelated apply and still reads as a
+    // reference beside the owner's presence fact.
+    let secret_show = scene.run_ok(&[
+        "config",
+        "show",
+        "ai-kit:providers:credentials.anthropic",
+        "world",
+        "--json",
+    ]);
+    assert_eq!(
+        secret_show["desired"]["secret_reference"]["ref"],
+        "aikit:credentials:held-ref"
+    );
+    assert!(secret_show["desired"].get("value").is_none());
 }

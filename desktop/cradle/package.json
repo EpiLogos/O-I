@@ -10,7 +10,8 @@
     "walk": "node walk/run.mjs",
     "predev": "node documents/build-personal.mjs",
     "prebuild": "node documents/build-personal.mjs",
-    "test:personal-web": "node documents/build-personal.mjs && node --test tests/personal-web.test.mjs && node tests/personal-web-browser.mjs"
+    "test:personal-web": "node documents/build-personal.mjs && node --test tests/personal-web.test.mjs && node tests/personal-web-browser.mjs",
+    "test:configuration-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",
@@ -21,10 +22,12 @@
     "@codemirror/lang-markdown": "^6.5.2",
     "@codemirror/lang-python": "^6.2.1",
     "@codemirror/lang-xml": "^6.1.0",
+    "@codemirror/language": "6.12.4",
     "@codemirror/search": "^6.7.2",
     "@codemirror/state": "^6.7.4",
     "@codemirror/view": "^6.43.11",
     "@epilogos/oi-design-system": "file:../../packages/oi-design-system",
+    "@lezer/highlight": "1.2.3",
     "@tauri-apps/api": "2.11.1",
     "@xterm/addon-fit": "^0.11.0",
     "@xterm/addon-serialize": "^0.14.0",

@@ -1,0 +1,83 @@
+/** Real React stage, native glyph formations and WebGL. No substitute renderer. */
+import assert from 'node:assert/strict';
+import {createServer} from 'vite';
+import {chromium} from 'playwright';
+import {fileURLToPath} from 'node:url';
+import {renderedBounds} from '../walk/knowledge-projection-geometry.mjs';
+const root=fileURLToPath(new URL('../',import.meta.url));
+const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:4391,strictPort:true},logLevel:'error'});
+server.middlewares.use('/native-cues',async(_,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/native-cues','<body class="oi-desktop"><div id="root"></div><div id="target" style="position:fixed;left:60px;top:80px;width:44px;height:28px"></div><script type="module" src="/tests/expression-provider-page.tsx"></script>'));});
+await server.listen();
+const browser=await chromium.launch({headless:true,args:['--use-gl=angle','--use-angle=swiftshader','--enable-webgl']}),context=await browser.newContext({viewport:{width:1000,height:760}}),page=await context.newPage();
+const errors=[];page.on('pageerror',e=>errors.push(e.message));
+await context.addInitScript(()=>{
+ localStorage.setItem('oi-cradle.visuals.v1',JSON.stringify({enabled:false,welcomeEnabled:false}));
+ window.glContexts=new Map();const get=HTMLCanvasElement.prototype.getContext;
+ HTMLCanvasElement.prototype.getContext=function(kind,...args){const result=get.call(this,kind,...args);if(result&&['webgl','webgl2'].includes(kind))glContexts.set(this,result);return result;};
+ window.clock={fired:0};const raf=requestAnimationFrame.bind(window);window.requestAnimationFrame=cb=>raf(t=>{clock.fired++;cb(t);});
+});
+const idle=async(label)=>{
+ const result=await page.evaluate(async()=>{const before=clock.fired,frames=providerTest.stage.inspect().frames;await new Promise(r=>setTimeout(r,400));return {raf:clock.fired-before,frames:providerTest.stage.inspect().frames-frames,stage:providerTest.stage.inspect()};});
+ assert.equal(result.raf,0,label+' has zero continuous RAF');assert.equal(result.frames,0,label+' has zero simulation/render steps');return result;
+};
+try {
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/native-cues`);
+ await page.waitForFunction(()=>window.providerTest?.stage);
+ assert.equal(await page.locator('canvas').count(),0,'disabled has no legacy or native canvas');
+ assert.equal(await page.evaluate(()=>providerTest.stage.express('idle',{rect:document.querySelector('#target').getBoundingClientRect(),hold:true})),null);
+ await page.evaluate(()=>providerTest.visuals.setEnabled(true));await page.waitForFunction(()=>providerTest.stage.inspect().engine);
+ await idle('enabled with no cue');
+ await page.evaluate(()=>{window.cue=providerTest.stage.express('idle',{rect:()=>{const t=document.querySelector('#target');return t?.getClientRects().length?t.getBoundingClientRect():null;},hold:true});});
+ await page.waitForFunction(()=>providerTest.stage.inspect().overlay?.pointCount===4096);
+ let state=await idle('resting native glyph');assert.equal(state.stage.live,true);assert.equal(state.stage.paused,true);
+ if(process.env.OI_CUE_EVIDENCE)await page.screenshot({path:process.env.OI_CUE_EVIDENCE});
+ const pixels=await renderedBounds(page,page);
+ assert.ok(pixels.count>0&&pixels.minX>=60&&pixels.maxX<=104&&pixels.minY>=80&&pixels.maxY<=108,'actual native glyph pixels occupy the supplied target bounds');
+ await page.evaluate(()=>{Object.assign(document.querySelector('#target').style,{left:'200px',top:'200px'});providerTest.stage.update(cue,{});});
+ const moved=await renderedBounds(page,page);
+ assert.ok(moved.count>0&&moved.minX>=200&&moved.maxX<=244&&moved.minY>=200&&moved.maxY<=228,'real native glyph moves to the updated viewport bounds');
+ assert.equal(await page.locator('canvas').count(),1,'resting cue uses the sole production field');
+ assert.equal(await page.evaluate(()=>[...glContexts.values()].filter(c=>!c.isContextLost()).length),1);
+ const style=await page.locator('canvas').evaluate(c=>({pointer:getComputedStyle(c).pointerEvents,background:getComputedStyle(c).backgroundColor,x:c.getBoundingClientRect().x,y:c.getBoundingClientRect().y}));
+ assert.deepEqual(style,{pointer:'none',background:'rgba(0, 0, 0, 0)',x:0,y:0});
+ await page.evaluate(()=>providerTest.stage.update(cue,{}));await idle('unchanged semantic lease renewal');
+ await page.evaluate(()=>providerTest.stage.update(cue,{name:'searching'}));
+ let frames=await page.evaluate(()=>providerTest.stage.inspect().frames);await page.waitForFunction(before=>providerTest.stage.inspect().frames>=before+2,frames,{polling:100,timeout:15000});
+ assert.equal(await page.locator('canvas').count(),1,'active cue does not add a renderer');
+ await page.evaluate(async()=>{window.foreground=providerTest.stage.present({id:'focused',recipe:'oi.mark',plane:'frontstate'});await foreground.ready();foreground.setPaused(true);});
+ const config=await page.evaluate(()=>JSON.stringify(foreground.telemetry().config));
+ await page.evaluate(()=>providerTest.stage.update(cue,{name:'listening'}));
+ assert.equal(await page.evaluate(()=>JSON.stringify(foreground.telemetry().config)),config,'background cue update cannot mutate focused material');
+ assert.equal(await page.evaluate(()=>providerTest.stage.inspect().overlay.forms[0]),'listening','preempted cue retains its semantic handle');
+ await idle('paused foreground with queued cue');
+ await page.evaluate(()=>foreground.release());
+ frames=await page.evaluate(()=>providerTest.stage.inspect().frames);await page.waitForFunction(before=>providerTest.stage.inspect().frames>=before+2,frames,{polling:100,timeout:15000});
+ assert.equal(await page.evaluate(()=>providerTest.stage.inspect().overlay.pointCount),4096,'cue restored to the same native canvas after foreground release');
+ await page.evaluate(()=>providerTest.stage.update(cue,{name:'idle'}));await idle('restored static cue');
+ await page.evaluate(()=>{document.querySelector('#target').style.display='none';providerTest.stage.update(cue,{});});await idle('concealed target');
+ assert.equal(await page.evaluate(()=>providerTest.stage.inspect().live),false);
+ await page.evaluate(()=>{document.querySelector('#target').style.display='';providerTest.stage.update(cue,{});});await idle('revealed static target');
+ await page.emulateMedia({reducedMotion:'reduce'});
+ assert.equal(await page.evaluate(()=>providerTest.stage.express('edge',{rect:document.querySelector('#target').getBoundingClientRect()})),null,'reduced motion refuses gestures');
+ await page.evaluate(()=>providerTest.stage.update(cue,{name:'searching'}));
+ await page.waitForFunction(()=>!providerTest.stage.inspect().scheduled);await idle('reduced active cue after its single paint');
+ await page.evaluate(()=>providerTest.stage.release(cue));await idle('released cue');
+ const capacity=await page.evaluate(()=>{
+  const handles=Array.from({length:10},()=>providerTest.stage.express('idle',{rect:new DOMRect(60,80,44,28),hold:true}));
+  const refused=providerTest.stage.express('idle',{rect:new DOMRect(60,80,44,28),hold:true});
+  const count=providerTest.stage.inspect().overlay.entries;
+  handles.forEach(handle=>providerTest.stage.release(handle));
+  return {handles,refused,count};
+ });
+ assert.equal(capacity.handles.filter(handle=>handle!==null).length,10);assert.equal(capacity.count,10);assert.equal(capacity.refused,null,'native formation capacity refuses overflow without truncating admitted cues');
+
+ await page.evaluate(()=>providerTest.visuals.setEnabled(false));await page.waitForFunction(()=>document.querySelectorAll('canvas').length===0);
+ await page.waitForFunction(()=>[...glContexts.values()].every(c=>c.isContextLost()),null,{polling:100});
+ await page.evaluate(()=>providerTest.visuals.setEnabled(true));await page.waitForFunction(()=>providerTest.stage.inspect().engine);
+ assert.equal(await page.evaluate(()=>providerTest.stage.update(cue,{name:'idle'})),false,'disposed generation handle cannot mutate reenabled field');
+ await page.evaluate(()=>providerTest.unmount());assert.equal(await page.locator('canvas').count(),0);
+ await page.evaluate(()=>providerTest.mount());await page.waitForFunction(()=>providerTest.stage.inspect().engine);await idle('StrictMode remount');
+ assert.equal(await page.locator('canvas').count(),1);
+ assert.deepEqual(errors,[]);
+ console.log('Native cues: one canvas/context, disabled zero/lost contexts, static zero RAF, real active progress, foreground preemption/restoration, hidden target, reduced motion, stale handles and StrictMode remount passed.');
+} finally {await browser.close();await server.close();}

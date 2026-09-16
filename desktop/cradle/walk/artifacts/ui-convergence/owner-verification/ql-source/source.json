@@ -1,0 +1,7 @@
+{
+  "repo": "/Users/admin/Central/Work/Quaternal-Logic",
+  "sha": "3a3d7dbcf6a898ce88a9093f858b8f254fff3cfe",
+  "script": "scripts/test-k8-continuous.py",
+  "sha256": "503b317193c064272af78e89f3e81904f7fd15ea40a2bee24f602ad0f0db2bb3",
+  "note": "Unmodified owner script; adjacent providers/fixtures/examples symlink to native source/build. Its output resolves under this isolated tree."
+}

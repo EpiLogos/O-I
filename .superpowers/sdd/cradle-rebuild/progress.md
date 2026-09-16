@@ -1282,3 +1282,16 @@ and explicit limits: `desktop/cradle/walk/artifacts/EX2-EX5-INTEGRATION.md`.
 The accepted contract is applied without new identities, stores, clocks, audio
 engines, Agent loops or inferred semantic relations. Sensory/material acceptance
 and undisclosed owner state are not claimed.
+
+### 2026-09-15 — Parallel UI continuation: Expression and knowledge components
+
+The commissioned `agent/ui-components-continuation` lane from `be172a109`
+restores Expression inspector input grammar and keyboard/revision-conflict
+recovery; migrates knowledge controls, provenance and inspector chrome onto the
+shared desktop grammar; removes dead SVG-era CSS; and bounds new knowledge
+Expression layouts while preserving existing authored parameters. Real native
+kernel/browser walks: Expression controls 14/14, knowledge 21/21. Native
+projection-preservation assertions and sampler/camera containment pass;
+TypeScript and production build pass. Exact commands, visual evidence and
+limits are in `desktop/cradle/walk/artifacts/UI-COMPONENTS-CONTINUATION-2026-09-15.md`.
+Parent integration owns final mainline convergence and #65 retains human acceptance.

@@ -20,9 +20,32 @@ run-case.sh           snapshot the rootfs, run case phases in systemd-nspawn,
 lib.sh                container entry point: isolation, step/expect helpers
 check-closure.sh      absence prover: composition, filesystem, PATH, services
 case-mode.sh          one full lifecycle for a mode (0/1, 0/1/2, 0/1/2/3, 5/0, 4.5/0)
-case-transitions.sh   the up/down adoption ladder with identity-drift checks
+case-transitions.sh   the up AND down adoption ladder with identity-drift checks
+case-all-products.sh  whole recorded build set: strict verify, scoped removal
+case-desktop.sh       Desktop bundle lifecycle (install/status/remove) over a
+                      real packaged bundle; the GUI-launch leg is recorded as
+                      out of reach, never faked
 world-*.py            canonical extractors from `oi current-world --json`
 ```
+
+## Landing-state semantics exercised since the 2026-09-15 re-run (#311)
+
+- `oi verify`/`oi doctor` are MODE-SCOPED: a subset install passes, scoped to
+  the requested mode, with unselected products disclosed as
+  `absent-by-selection`/`outside-selection` — never failed. The strict
+  whole-suite question stays on `--all` and must still refuse a subset;
+  cases assert both sides.
+- `oi remove <PRODUCT>` is the remove leg of the lifecycle planner:
+  receipt-owned, per-product, with a removal receipt that explains every
+  residual. Descent 0/1/2/3 → 0/1/2 → 0/1 is now asserted in
+  case-transitions.sh (t4/t5); case-mode.sh removes one product per case
+  before `oi cleanup --managed`.
+- Component products (actuation, software-factory, quaternal-logic) read
+  `installed_component`/present when their material is installed — the
+  old `broken` reading is asserted against.
+- `oi desktop install|status|remove` consumes a real packaged bundle
+  (`desktop/cradle/package-bundle.sh`, linux x86_64). The bundle rides into
+  the case via OI_BIN as `desktop-bundle.tar.gz[.sha256]`.
 
 ## The environment ladder
 

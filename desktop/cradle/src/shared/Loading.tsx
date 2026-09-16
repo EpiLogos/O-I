@@ -1,25 +1,14 @@
-import {useEffect,useRef} from "react";
-import {createLoadingIndicator,createPointClusters} from "@epilogos/oi-design-system/loading";
+import {useEffect} from "react";
 import "@epilogos/oi-design-system/point-cloud.css";
 import {emitExpressionCue} from "../stage/cues";
-/** Only mount while the named native operation is actually pending.
- * The identity mark belongs to full-window bootstrap, not every pane.
- * Pending is also stated as a semantic cue (`surface.loading` /
- * `surface.ready`): the DOM keeps the meaningful status text, and a
- * published Expression may answer the cue at the stage. */
+/** Mount only while the named native operation is pending. Its status remains
+ * meaningful without a renderer; a published native scene may address the cue. */
 export function Loading({label,detail,scope="inline"}:{label:string;detail?:string;scope?:"inline"|"surface"|"window"}) {
- const host=useRef<HTMLDivElement>(null);
+ if(!label.trim())throw new TypeError("A truthful loading label is required");
  useEffect(()=>{
- emitExpressionCue({kind:"surface.loading",label,detail});
- const body=createLoadingIndicator({label,detail,scope});
- const clusters=scope!=="window"?createPointClusters({active:false}):undefined;
- if(clusters){body.element.querySelector('.oi-loading-mark')?.replaceWith(clusters.element);body.element.querySelector('.oi-loading-fallback')?.remove();}
- host.current?.append(body.element);
- let visible=false;
- const update=()=>{const active=!document.hidden&&visible;body.update({active});clusters?.setActive(active);};
- const observer=new IntersectionObserver(entries=>{visible=entries.some(entry=>entry.isIntersecting);update();});
- observer.observe(body.element);
- document.addEventListener("visibilitychange",update);
- return()=>{observer.disconnect();document.removeEventListener("visibilitychange",update);body.remove();emitExpressionCue({kind:"surface.ready",label});};},[label,detail,scope]);
- return <div ref={host}/>;
+  emitExpressionCue({kind:"surface.loading",label,detail});
+ },[label,detail]);
+ return <div className="oi-loading" data-scope={scope} role="status" aria-live="polite" aria-atomic="true">
+  <p className="oi-loading-label">{label}</p>{detail&&<p className="oi-loading-detail">{detail}</p>}
+ </div>;
 }

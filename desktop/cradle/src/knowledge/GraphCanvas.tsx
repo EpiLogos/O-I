@@ -18,8 +18,8 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
     const value=(name:string)=>style.getPropertyValue(name).trim();
     const num=(name:string)=>{const raw=value(name);if(raw.endsWith('ms'))return parseFloat(raw);if(raw.endsWith('s'))return parseFloat(raw)*1000;const measure=document.createElement('span');measure.style.cssText=`position:absolute;visibility:hidden;pointer-events:none;width:${raw};height:0`;el.parentElement!.append(measure);const pixels=measure.getBoundingClientRect().width;measure.remove();return pixels||parseFloat(raw)||1;};
     let ink=value('--oi-foreground'),muted=value('--oi-muted'),edge=value('--oi-relation'),accent=value('--oi-focus'),ground=value('--oi-canvas-ground');
-    const core=num('--oi-desktop-gap-xs'),spaceCore=num('--oi-desktop-gap-sm'),hit=num('--oi-desktop-gap'),halo=num('--oi-space-3'),line=num('--oi-cloud-edge');
-    const font=num('--oi-shell-type-ui'),fontFamily=value('--oi-font-sans'),dot=num('--oi-cloud-dot');
+    const core=num('--oi-desktop-gap-xs'),spaceCore=num('--oi-desktop-gap-sm'),hit=num('--oi-desktop-gap'),halo=num('--oi-space-3'),line=num('--oi-graph-edge-width');
+    const font=num('--oi-shell-type-ui'),fontFamily=value('--oi-font-sans'),dot=num('--oi-graph-point-min-radius');
     const duration=reduced.matches?0:num('--oi-motion-normal');
     let screen:{node:GraphNode;p:Point;x:number;y:number;r:number}[]=[],lookup=new Map<string,{x:number;y:number}>();
     const drawTimes:number[]=[];

@@ -148,6 +148,7 @@ export function ConfigurationView() {
       </div>
     </header>
     {source.kind === "fixture" && <p className="config-source-label" data-config-source="fixture">{source.label} — simulated state for development; not this machine's truth</p>}
+    {source.kind === "live" && <p className="config-source-label" data-config-source="live">{source.label}</p>}
     {error && <p role="alert" className="config-error">{error}</p>}
     {mounts.length === 0 && (
       <p className="config-empty" data-config-empty-registry>No owner contributes configuration in this World yet. An empty World is the same system at its beginning — install the suite, or bind owners, and their contributions appear here unchanged.</p>

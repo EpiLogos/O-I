@@ -12,7 +12,7 @@
  * Planes:
  *   ambient     — the resting altitude (--oi-z-expression): ink on the
  *                 content planes, never above dialogs or menus.
- *   overlay     — the forms renderer's own canvas over ordinary chrome
+ *   overlay     — semantic native cues over ordinary chrome
  *                 (--oi-z-stage-overlay), still under popovers.
  *   frontstate  — the opening/welcome ground (--oi-z-stage-frontstate).
  *                 While a frontstate presentation stands, the engine
@@ -35,12 +35,7 @@ import {
   useState,
   type ReactNode,
 } from "react";
-import {
-  createExpressionOverlay,
-  type ExpressionOverlay,
-  type ExpressionOptions,
-  type FormName,
-} from "@epilogos/oi-design-system/expression";
+import type {ExpressionOptions, FormName} from "@epilogos/oi-design-system/expression";
 import "@epilogos/oi-design-system/expression.css";
 import { useVisuals } from "../visuals/ParticleExpression";
 import { useKernel } from "../kernel/KernelProvider";
@@ -52,6 +47,7 @@ import {
 } from "./cues";
 import { expressionTargetIds, resolveExpressionTarget } from "./targets";
 import type { EngineSurface, StageRetainedLease } from "./engineSurface";
+import type {NativeCues} from "./nativeCues";
 
 export type StagePlane = "ambient" | "overlay" | "frontstate";
 
@@ -64,10 +60,18 @@ export interface StagePresentationRequest {
   /** EX1 material projection into this existing stage. */
   config?: Record<string,unknown>;
   sceneRef?: string;
+  /** O:I document projections without authored colours use the host ink and
+   * ground. Native instrument configs preserve their palette by default. */
+  appearance?: "host" | "inverse-host" | "authored";
+  /** A full presentation paints its evaluated scene ground. Semantic cues
+   * share the production field over existing chrome with a transparent ground. */
+  backdrop?: "scene" | "transparent";
   /** Registered Expression Target id; the viewport surface is the window
    * canvas. Element targets are a later surface kind, not a scissor. */
   target?: string;
   paused?: boolean;
+  /** Deliberate, presentation-scoped reduced-motion override. */
+  forceMotion?: boolean;
 }
 
 export interface StagePresentation {
@@ -78,8 +82,16 @@ export interface StagePresentation {
   updateConfig(config: Record<string,unknown>, sceneRef: string, selectedIds: string[]): void;
   /** Reposition this presentation's existing canvas without a renderer fork. */
   setContainer(container: HTMLElement | null): void;
-  /** Play an authored sequence (recipes.ts) against this presentation. */
-  play(sequence: string): void;
+  /** Resolves only once this presentation has actually rendered. */
+  ready(): Promise<void>;
+  /** Completion comes from the engine's rendered tail, never a UI timer. */
+  play(sequence: string): Promise<{status: "completed" | "cancelled"}>;
+  /** Native instrument controls operate on this presentation's existing field. */
+  command(command: Parameters<EngineSurface["command"]>[0]): void;
+  setPaused(paused: boolean): void;
+  setForceMotion(force: boolean): void;
+  capture(width?: number, height?: number): HTMLCanvasElement;
+  telemetry(): unknown;
   release(): void;
 }
 
@@ -103,7 +115,7 @@ export interface ExpressionStageApi {
    * its lease and therefore does not destroy this stage. */
   error: string | null;
   /** Bounded dev/walk diagnostics: presentations, recent cues, engine
-   * capabilities, and the forms renderer's own counters. */
+   * capabilities, and the native cue controller's bounded counters. */
   inspect(): Record<string, unknown>;
 }
 
@@ -126,78 +138,98 @@ interface PresentationRecord {
 export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   const { snapshot } = useVisuals();
   const kernel = useKernel();
-  // The overlay-plane renderer is a window-lifetime singleton created at
-  // mount (one per window is the renderer's own law); the ref is the source
-  // of truth so the creating call can already serve requests.
-  const overlayRef = useRef<ExpressionOverlay | null>(null);
-  const [, markOverlayReady] = useState(0);
+  const cuesRef = useRef<NativeCues | null>(null);
+  const cueSerial = useRef(0);
+  // A successful native retained lease reserves the existing resident field
+  // across release/re-entry. Only a deliberate new foreground presentation or
+  // window disable can replace that reservation; small cues never reseed it.
+  const retainedReservation = useRef(false);
   const [surface, setSurface] = useState<EngineSurface | null>(null);
   const surfaceRef = useRef<EngineSurface | null>(null);
   const [surfaceError, setSurfaceError] = useState<string | null>(null);
   const [frontstateCount, setFrontstateCount] = useState(0);
+  // Deferred restored surfaces retry once the opening releases. Admission
+  // does not change API identity: it must not restart its own owner effect.
+  const [availabilityEpoch, setAvailabilityEpoch] = useState(0);
   const presentations = useRef(new Map<string, PresentationRecord>());
   const cueLog = useRef<ExpressionCue[]>([]);
-
-  const ensureOverlay = useCallback((): ExpressionOverlay | null => {
-    if (overlayRef.current) return overlayRef.current;
-    try {
-      overlayRef.current = createExpressionOverlay(document.body);
-    } catch {
-      // A second overlay in this window is refused by the renderer's own
-      // law; a Canvas-2D-less window simply declines to express.
-      return null;
-    }
-    markOverlayReady((version) => version + 1);
-    return overlayRef.current;
-  }, []);
-
-  // The overlay-plane renderer lives for the window's lifetime, as the
-  // old expression provider's did — created at mount, not on first use.
-  useEffect(() => { ensureOverlay(); }, [ensureOverlay]);
 
   // Presentation lifecycle -------------------------------------------------
 
   const present = useCallback((request: StagePresentationRequest): StagePresentation | null => {
     if (!snapshot.enabled || surfaceError) return null;
     if (presentations.current.has(request.id)) return null;
+    if (request.plane !== "frontstate" && [...presentations.current.values()].some(record => record.plane === "frontstate")) return null;
     if (request.target && request.target !== "viewport") {
       throw new Error(`Element-target presentations are not engine window surfaces: ${request.target}`);
     }
     const surface = surfaceRef.current;
     if (!surface) return null;
-    if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef);
-    else surface.present(request.id, request.recipe);
-    if (request.paused) surface.setPaused(true);
-    presentations.current.set(request.id, { id: request.id, plane: request.plane });
+    cuesRef.current?.suspend();
+    try {
+      if (request.config) surface.presentConfig(request.id, request.config, request.sceneRef, [], request.appearance);
+      else surface.present(request.id, request.recipe, request.appearance);
+    } catch(error) {cuesRef.current?.refresh();throw error;}
+    retainedReservation.current=false;
+    surface.setBackdrop(request.backdrop ?? "scene");
+    // Pause and deliberate motion belong to this presentation, not the
+    // reused window surface or whichever view acquires it next.
+    surface.setForceMotion(request.forceMotion ?? false);
+    surface.setPaused(request.paused ?? false);
+    const record = { id: request.id, plane: request.plane };
+    presentations.current.set(request.id, record);
+    const current = () => presentations.current.get(request.id) === record && surfaceRef.current === surface;
+    const requireCurrent = () => {
+      if (!current()) throw new Error("Expression presentation is no longer available.");
+    };
     if (request.plane === "frontstate") setFrontstateCount((count) => count + 1);
     return {
       id: request.id,
       plane: request.plane,
       update(recipe: string) {
+        requireCurrent();
         surface.update(request.id, recipe);
       },
-      updateConfig(config, sceneRef, selectedIds) { surface.presentConfig(request.id, config, sceneRef, selectedIds); },
+      updateConfig(config, sceneRef, selectedIds) { requireCurrent(); surface.presentConfig(request.id, config, sceneRef, selectedIds, request.appearance); },
       setContainer(container) {
-        if (!presentations.current.has(request.id) || surfaceRef.current !== surface) throw new Error("Expression presentation is no longer available.");
+        requireCurrent();
         surface.setContainer(request.id, container);
       },
-      play(sequence: string) {
-        surface.play(request.id, sequence);
+      async ready() {
+        requireCurrent();
+        await surface.whenReady(request.id);
+        requireCurrent();
       },
+      play(sequence: string) {
+        requireCurrent();
+        return surface.play(request.id, sequence);
+      },
+      command(command) { requireCurrent(); surface.command(command); },
+      setPaused(paused) { requireCurrent(); surface.setPaused(paused); },
+      setForceMotion(force) { requireCurrent(); surface.setForceMotion(force); },
+      capture(width, height) { requireCurrent(); return surface.capture(width, height); },
+      telemetry() { requireCurrent(); return surface.telemetry(); },
       release() {
-        if (!presentations.current.has(request.id)) return;
+        if (!current()) return;
         presentations.current.delete(request.id);
-        if (request.plane === "frontstate") setFrontstateCount((count) => Math.max(0, count - 1));
-        surfaceRef.current?.release(request.id);
+        if (request.plane === "frontstate") {
+          setFrontstateCount((count) => Math.max(0, count - 1));
+          setAvailabilityEpoch(epoch => epoch + 1);
+        }
+        surface.release(request.id);
+        surface.setForceMotion(false);
+        cuesRef.current?.refresh();
       },
     };
-  }, [snapshot.enabled, surfaceError, surface]);
+  }, [snapshot.enabled, surfaceError, surface, availabilityEpoch]);
 
   const retainedLease = useCallback((presentationId: string): StageRetainedLease | null => {
     if (!presentations.current.has(presentationId)) return null;
     const current = surfaceRef.current;
     if (!current) return null;
-    return current.retainedLease(presentationId);
+    const lease=current.retainedLease(presentationId);
+    if(lease)retainedReservation.current=true;
+    return lease;
   }, [surface]);
 
   const capture = useCallback((presentationId: string, width?: number, height?: number): HTMLCanvasElement => {
@@ -213,39 +245,47 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   // with an explicit reseed.
   useEffect(() => {
     if (!snapshot.enabled) {
+      cuesRef.current?.dispose();cuesRef.current=null;
       surfaceRef.current?.dispose();
       surfaceRef.current = null;
       setSurface(null);
       setSurfaceError(null);
       presentations.current.clear();
+      retainedReservation.current=false;
       setFrontstateCount(0);
       return;
     }
     if (surfaceRef.current) return;
     let cancelled = false;
     let created: EngineSurface | null = null;
-    void import("./engineSurface").then(({ EngineSurface: Surface }) => {
+    void Promise.all([import("./engineSurface"),import("./nativeCues")]).then(([{EngineSurface:Surface},{NativeCues}]) => {
       if (cancelled || surfaceRef.current) return;
-      created = Surface.forWindow((message) => {
+      const fail=(message:string) => {
         setSurfaceError(message);
+        cuesRef.current?.dispose();cuesRef.current=null;
         surfaceRef.current?.dispose();
         surfaceRef.current = null;
         setSurface(null);
         presentations.current.clear();
+        retainedReservation.current=false;
         setFrontstateCount(0);
-      });
+      };
+      created = Surface.forWindow(fail);
       surfaceRef.current = created;
+      cuesRef.current=new NativeCues(created,()=>++cueSerial.current,()=>presentations.current.size>0||retainedReservation.current,fail);
       setSurface(created);
     }).catch((cause: unknown) => {
       setSurfaceError(cause instanceof Error ? cause.message : String(cause));
     });
     return () => {
       cancelled = true;
+      cuesRef.current?.dispose();cuesRef.current=null;
       created?.dispose();
       if (created && surfaceRef.current === created) {
         surfaceRef.current = null;
         setSurface(null);
         presentations.current.clear();
+        retainedReservation.current=false;
         setFrontstateCount(0);
       }
     };
@@ -257,6 +297,7 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   useEffect(() => {
     if (!surface) return;
     surface.canvas.style.zIndex = frontstateCount > 0 ? "var(--oi-z-stage-frontstate)" : "";
+    if (!frontstateCount) cuesRef.current?.refresh();
     return () => { surface.canvas.style.zIndex = ""; };
   }, [surface, frontstateCount]);
 
@@ -313,8 +354,16 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
       send = () => {
         if (inFlight) { queued = true; return; }
         inFlight = true;
-        const renderer = overlayRef.current;
-        void invoke("expression_walk_observation", { report: renderer ? renderer.inspect() : null })
+        const renderer = cuesRef.current, field = surfaceRef.current;
+        const cues = renderer?.inspect();
+        const telemetry = field?.telemetry() as {config?: {particleCount?: number}} | null;
+        // This native receiver observes the window field, including a full
+        // opening or foreground presentation. Cue-only scheduling would
+        // incorrectly report an active foreground as an idle renderer.
+        const report = cues && field ? { ...cues, frames: field.frameCount,
+          pointCount: telemetry?.config?.particleCount ?? 0,
+          scheduled: field.isScheduled, paused: field.isPaused } : null;
+        void invoke("expression_walk_observation", { report })
           .catch(() => {})
           .finally(() => { inFlight = false; if (queued) { queued = false; send(); } });
       };
@@ -335,15 +384,15 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   // Forms (overlay plane) --------------------------------------------------
 
   const express = useCallback((name: string, options: ExpressionOptions & { target?: string }): number | null => {
-    const renderer = ensureOverlay();
-    if (!renderer) return null;
+    const renderer = cuesRef.current;
+    if (!snapshot.enabled || !renderer) return null;
     const { target, ...rest } = options;
     if (target && !rest.rect) rest.rect = () => resolveExpressionTarget(target);
     return renderer.express(name, rest);
-  }, [ensureOverlay]);
+  }, [snapshot.enabled, surface]);
 
   const updateHandle = useCallback((handle: number | null, options: Partial<ExpressionOptions> & { name?: FormName; target?: string }): boolean => {
-    const renderer = overlayRef.current;
+    const renderer = cuesRef.current;
     if (!renderer) return false;
     const { target, ...rest } = options;
     if (target && !rest.rect) rest.rect = () => resolveExpressionTarget(target);
@@ -351,7 +400,7 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
   }, []);
 
   const releaseHandle = useCallback((handle: number | null) => {
-    overlayRef.current?.release(handle);
+    cuesRef.current?.release(handle);
   }, []);
 
   const inspect = useCallback(() => ({
@@ -359,9 +408,17 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     engine: surface ? surface.capabilities() : null,
     /** Whether the window surface's own clock is held (lease pause law). */
     paused: surfaceRef.current ? surfaceRef.current.isPaused : null,
+    /** The clock law, observable: a live presentation stands / a drawing
+     * frame is scheduled / frames rendered so far. Idle desktop = live
+     * false, scheduled false, frames stable. */
+    live: surfaceRef.current ? surfaceRef.current.isLive : null,
+    scheduled: surfaceRef.current ? surfaceRef.current.isScheduled : null,
+    frames: surfaceRef.current ? surfaceRef.current.frameCount : null,
+    playback: surfaceRef.current?.inspectPlayback() ?? null,
     targets: expressionTargetIds(),
     cues: cueLog.current,
-    overlay: overlayRef.current ? overlayRef.current.inspect() : null,
+    overlay: cuesRef.current?.inspect() ?? null,
+    retainedReservation:retainedReservation.current,
   }), [surface]);
 
   const api = useMemo<ExpressionStageApi>(() => ({

@@ -1,9 +1,10 @@
 # SharedField × QL/Epi × Expression Field Integration Wayfinder
 
-**Status:** active cross-programme bridge, updated 2026-09-15  
+**Status:** active cross-programme bridge, updated 2026-09-16  
 **Purpose:** connect the existing owners into one executable local→shared experience; this is **not** a new product programme or semantic owner.  
 **Native owners:** O:I #18 SharedField/Explore; O:I #306 Expression Field; O:I #289 desktop/Factory/Agency integration; O:I #65 physical/two-world acceptance; QL-MEF #135 whole kernel/lived acceptance; completed QL-MEF #94/#132/#133/#134 returned producer floor; Central/AIKit/Actuation/Factory/Workcell remain authoritative for their native resources and operations.  
-**Current implementation floor:** O:I Expression Field vision/UX/Wayfinder landed through #305; WorldPresentation admits Expression through #307; the revisioned human/Agent Expression application contract `oi.expression/v1` landed through EX1/#310. EX0 owns current Point-Cloud engine intake. QL-MEF #197 is the corresponding M0–M5/Nara projection contract and does not reopen the accepted kernel waves.
+**Current implementation floor:** O:I Expression Field vision/UX/Wayfinder landed through #305; WorldPresentation admits Expression through #307; the revisioned human/Agent Expression application contract `oi.expression/v1` landed through EX1/#310. EX0 owns current Point-Cloud engine intake. QL-MEF #197 is the corresponding M0–M5/Nara projection contract and does not reopen the accepted kernel waves.  
+**State/discovery authority:** [`SHARED-FIELD-STATE-DISCOVERY.md`](./SHARED-FIELD-STATE-DISCOVERY.md) binds the existing Cradle Workspace, AIKit Search/Resolve, Projection staging and SpaceTimeDB live-state laws into this SF0–SF6 execution map. Its governing distinction is: **Workspace state follows the person's work; Shared Stage state follows the encounter; canonical subject state stays with its native owner.**
 
 This document is the SharedField execution bridge for the new Expression Field ontology. O:I #306 **EX6** is carried through the SF0–SF6 units below rather than through a second SharedField plan.
 
@@ -109,6 +110,7 @@ Projection != public unless audience policy admits it
 SharedField != Wiki
 SharedField != Expression store
 SpaceTimeDB != SharedField ontology
+Workspace != Project != SessionSpace != Shared Stage
 renderer pixels != shared semantic state
 selection != Action
 Agent animation != Agent Activity
@@ -170,7 +172,10 @@ SharedField work resumes against real application contracts rather than waiting 
 7. service restart, reconnect, network loss, backup/restore and relocation through Workcell/host ownership;
 8. authorised Agent participation through the existing Gateway/session ecology;
 9. protected Nara/Epi representations using the returned K10 disclosure distinctions;
-10. independent-world/two-machine acceptance under O:I #65.
+10. independent-world/two-machine acceptance under O:I #65;
+11. Workspace/Project continuity across local/Explore/SharedField Surfaces without copying canonical state;
+12. AIKit Search/Resolve discovery of relevant Beings, Things, Expressions and WorldPresentations over the same stable refs;
+13. optional revisioned Shared Stage state in SpaceTimeDB for deliberately synchronised shared presentation, never ambient local UI/runtime state.
 
 There is no remaining K10 sequencing gate.
 
@@ -291,6 +296,31 @@ The query/data provider changes while the grammar remains reusable. A stable arr
 
 Derived coordinate Expressions and authored pedagogical Expressions retain their exact source/input revisions separately.
 
+### 4.3 Search / Resolve reveals presentation, it does not own it
+
+AIKit Search/Resolve is the discovery relation for both the local world and projected/open field. Search may resolve a native subject and then reveal its eligible Being/Thing, Expression, WorldPresentation and SharedField occurrences without minting a synthetic aggregate identity.
+
+```text
+query + current project/root/world context
+        ↓
+AIKit Search / Resolve
+        ↓
+native ResourceRefs + routes + typed relations
+        ↓ presentation resolution
+Being / Thing roles
+Expression(s) / WorldPresentation(s)
+        ↓
+local O:I reveal / bounded local whole
+        ↓ if projected
+Explore index
+        ↓
+another World discovers the same semantic refs
+```
+
+Search remains broad/fuzzy/low-latency at its base. Embeddings, graph analytics and deeper providers may enrich it, but addressability and bounded navigation do not depend on them. Workspace/current focus can seed local scope without becoming automatic disclosure to another World or Agent.
+
+Projected HTML becomes observable/navigable through its **structured bindings and typed relations**, not through DOM scraping. The Explore index is rebuildable derived read state over admitted semantic refs, aliases/text, relation adjacency and Projection/SharedField membership.
+
 ---
 
 ## 5. Expression and WorldPresentation carrier law
@@ -323,27 +353,47 @@ Full portable private export is not an audience-filtered Projection.
 
 ---
 
-## 6. Shared runtime law — synchronise meaning, not particles
+## 6. Shared runtime and state law — synchronise meaning, not particles
 
 A live shared Expression does **not** require SpaceTimeDB to replicate the particle field or renderer internals.
 
-Shared state is application/semantic state such as:
+The state topology is explicitly layered:
+
+```text
+1 canonical World / Project state       native owners
+2 local O:I Workspace/application state host autosave + Surface constellation
+3 AIKit Search/Knowledge read state      derived resolution/local-whole state
+4 Projection staging                     local outward preview/policy
+5 SharedField live / Shared Stage state  explicit shared encounter state in SpaceTimeDB
+6 material/runtime state                 Workcell/STDB/renderer/index/cache
+```
+
+The binding state contract is [`SHARED-FIELD-STATE-DISCOVERY.md`](./SHARED-FIELD-STATE-DISCOVERY.md). It extends the Cradle's freeform autosaved Workspace law across every O:I Surface while retaining the existing AIKit distinction `SessionSpace != Project != Workspace != AgentSession != Surface`.
+
+### 6.1 Workspace continuity
+
+A Workspace may remember project/root context, focused subject/Surface, tabs/splits, selected Expression/page, graph/Search state, summoned apertures and refs to bound AgentSession/SessionSpace. Kill/relaunch and Workspace switching restore the valid constellation by stable refs/revisions.
+
+Entering Explore or another SharedField does **not** erase or mutate the selected local Project. Returning restores the prior Work/Personal/Project constellation. Remote reading and local project context are independent facts until an explicit Action relates them.
+
+### 6.2 SharedField live state
+
+Ordinary shared application state includes:
 
 ```text
 Expression ref + revision
-scene / entity refs
+scene / entity refs where semantically meaningful
 safe subject bindings
 WorldPresentation / Projection refs
-current meaningful focus where deliberately shared
-participant presence
-watch / encounter state
-accepted presentation edits
+participant / Presence
+Watch / Encounter / membership
 Contribution refs
 native event / source refs
-approved Action outcomes
+approved Activity / Action outcomes
+availability / currentness
 ```
 
-Renderer-local state remains local unless an explicit portable contract exists:
+Renderer-local state remains local unless an explicit portable/shared contract exists:
 
 ```text
 particle positions / velocities
@@ -351,12 +401,31 @@ GPU buffers
 private resonator envelopes
 private Nara scalar/body state
 unpublished Agent context
-local camera/UI preference unless deliberately authored
+local tabs / splits / drafts / camera / UI preference
 ```
 
-Each admitted client renders the Expression locally from the shared application state and available native/projected readings. When the renderer is unavailable, WorldPresentation supplies its declared capture/fallback.
+Each admitted client renders the Expression locally from shared application state and available native/projected readings. When the renderer is unavailable, WorldPresentation supplies its declared capture/fallback.
 
-This prevents SpaceTimeDB from becoming a simulation engine and preserves the one native runtime owner for M1/M2/M3/Nara/audio state.
+### 6.3 Optional Shared Stage
+
+A SharedField may explicitly opt into a revisioned **Shared Stage**: a synchronised collaborative presentation locus over material already admitted to that field.
+
+```text
+shared_stage_ref + revision
+field_ref
+current projected subject_ref
+current WorldPresentation / Expression ref + revision
+current scene / shared focus where meaningful
+presenter_ref? + explicit follower relations
+approved authored presentation edits
+causal Activity / Action refs
+```
+
+Following a presenter is explicit. A participant may unfollow and retain a local view without leaving the SharedField. Local camera/layout stays local unless deliberately staged. Shared Stage operations alter only admitted shared presentation state; source/Wiki/Personal mutation still routes through native owner Actions.
+
+Reconnect restores current shared-stage state but does not import another participant's Workspace state. Revision/currentness rules prevent opaque last-writer state replacement.
+
+This prevents SpaceTimeDB from becoming a simulation engine, desktop-state bucket or source owner and preserves the one native runtime owner for M1/M2/M3/Nara/audio state.
 
 ---
 
@@ -459,7 +528,7 @@ Test service relocation without changing semantic world/object identity.
 
 ## 10. SharedField execution units — resume map
 
-These units resume the paused #18/#297 hosting line. They are one map, not ticket sprawl. Any native defect returns to its actual owner.
+These units resume the paused #18/#297 hosting line. They are one map, not ticket sprawl. Any native defect returns to its actual owner. **Every unit consumes the state/discovery contract in `SHARED-FIELD-STATE-DISCOVERY.md`; state ownership is not deferred to SF6.**
 
 ### SF0 — persistent hosted SharedField floor
 
@@ -469,9 +538,10 @@ These units resume the paused #18/#297 hosting line. They are one map, not ticke
 - bind existing SharedField module, admission/exchange/security and subscription paths;
 - establish service identity/configuration/persistence, restart/reconnect, backup/restore and relocation receipts;
 - establish independent second-world identity/credentials and browser/desktop connectivity;
-- preserve semantic refs independently of SpaceTimeDB row IDs/host locator.
+- preserve semantic refs independently of SpaceTimeDB row IDs/host locator;
+- lock the six state layers and the minimal revisioned Shared Stage schema; prove Shared Stage ≠ Workspace ≠ source.
 
-**Acceptance:** real second machine, real subscription/update/restart/reconnect; service loss does not erase local canonical world.
+**Acceptance:** real second machine, real subscription/update/restart/reconnect; service loss does not erase local canonical world or local Workspace state.
 
 ### SF1 — WorldPresentation / Expression Projection carrier
 
@@ -482,9 +552,10 @@ These units resume the paused #18/#297 hosting line. They are one map, not ticke
 - apply audience filtering before serialization;
 - resolve live renderer availability per client;
 - provide explicit image/video/frozen HTML fallback;
-- prevent local private export from being relabelled as public Projection.
+- prevent local private export from being relabelled as public Projection;
+- mount Explore/SharedField through existing Workspace/Surface state and restore the prior Project/Work/Personal constellation after return.
 
-**Acceptance:** one ordinary non-Nara Expression projects from local World → hosted representation → second world, retaining exact source/Expression/Projection revision distinctions and no private sentinel leakage.
+**Acceptance:** one ordinary non-Nara Expression projects from local World → hosted representation → second world, retaining exact source/Expression/Projection revision distinctions and no private sentinel leakage; kill/relaunch restores local Workspace by refs/revisions.
 
 ### SF2 — living knowledge encounter
 
@@ -495,7 +566,8 @@ These units resume the paused #18/#297 hosting line. They are one map, not ticke
 - permit recenter/back/forward/pin/follow and source/property inspection;
 - preserve QL layout grammar provenance where used;
 - make browser Explore and desktop resolve the same subject/relation refs;
-- ensure unsupported/degraded clients still receive an intelligible page/fallback.
+- ensure unsupported/degraded clients still receive an intelligible page/fallback;
+- expose admitted subject/presentation refs to the rebuildable Explore index so Search can reveal related Things, Beings, Expressions and WorldPresentations without scraping HTML.
 
 **Acceptance:** search → local whole → living Expression → neighbour recenter → source/page → return, with exact relation/source identity and no invented neighbour.
 
@@ -553,7 +625,8 @@ This is SF2 evidence; the actual-machine SF6 joined walk and EX6 closure remain 
 - compose or refine a bounded pedagogical Expression through native EX1 operations;
 - correlate the edit with actual Activity/Expression receipts;
 - preserve refusal/unavailable authority and unchanged private Agent context;
-- represent resulting authored work as a new Expression/Page/Contribution where chosen.
+- represent resulting authored work as a new Expression/Page/Contribution where chosen;
+- preserve Workspace-bound AgentSession/SessionSpace refs without making either SharedField state or replacing the personal Agent.
 
 **Acceptance:** second world enters a Thing → summons permitted Agent/Epii → receives a source-bearing Expression refinement → human accepts/revises/refuses → exact provenance survives.
 
@@ -592,7 +665,7 @@ Contribution
    → optional new WorldPresentation / Expression / Projection revision
 ```
 
-Projected source is never mutated in-place by the hosted service.
+Projected source is never mutated in-place by the hosted service. Shared Stage edits retain causal refs/revisions and likewise cannot become a hidden source-return path.
 
 **Acceptance:** independently grounded second world contributes; owner accepts one revision-checked difference; local source/Wiki/Expression advances through its native operation; the new Projection is visibly a later revision.
 
@@ -604,7 +677,8 @@ Projected source is never mutated in-place by the hosted service.
 - include M-coordinate/source refs and safe pedagogical form;
 - prove raw Personal sentinels are absent from payload, HTML, JSON, assets, index, backlinks and renderer fallback;
 - exercise explicit shared-presence consent where multiple Naras participate;
-- prove source/Epii apertures can be summoned without widening disclosure.
+- prove source/Epii apertures can be summoned without widening disclosure;
+- prove optional Shared Stage synchronises only admitted presentation refs/state, never raw Nara/Agent/runtime state.
 
 **Acceptance:** useful living Nara/Epi presentation in the second world with no protected-state leakage and no second numerical/audio owner.
 
@@ -614,7 +688,7 @@ Projected source is never mutated in-place by the hosted service.
 
 Owner: O:I #65, consuming accepted SF0–SF5 and current Expression/desktop/native mains.
 
-Run the complete journey with two independently grounded worlds and the actual machines/providers. Preserve repository/provider/material/human evidence as distinct standings.
+Run the complete journey with two independently grounded worlds and the actual machines/providers. Preserve repository/provider/material/human evidence as distinct standings. Explicitly prove independent local Workspaces, kill/relaunch restoration, Search→presentation discovery, optional presenter/follower Shared Stage, unfollow-without-leave, and non-leakage of local Workspace/Agent/Nara state.
 
 ---
 
@@ -623,32 +697,36 @@ Run the complete journey with two independently grounded worlds and the actual m
 The first whole-product SharedField journey is now:
 
 ```text
-1. author/select a real native subject on the primary World
+1. author/select a real native subject on the primary World inside a named/autosaved Workspace
 2. open its Wiki/knowledge bounded local whole
 3. express that whole through the current Expression Field
 4. compose it into a Being/Thing WorldPresentation with exact refs/provenance
 5. audience-filter and create a Projection revision
 6. host Projection + SharedField state on the second-machine service
-7. independently grounded second World discovers/opens it
-8. enter the live Expression or explicit safe fallback
-9. inspect provenance; recenter bounded knowledge relations; summon source depth
-10. Contact / Watch / enter the SharedField under explicit authority
-11. optionally summon an authorised Agent/Epii on the same subject
-12. contribute a response, relation, page, Expression revision/fork or related Thing
-13. return an accepted difference through the native owner path
-14. observe distinct new source/Wiki/Expression/WorldPresentation/Projection revisions as applicable
-15. reproject and observe the new representation in the second World
-16. retain the same semantic refs across desktop/web, network reconnect and server restart
-17. repeat with one selected Bimba/QL/Epi object and one safe Nara/Personal presentation
+7. independently grounded second World discovers it through Search/Explore
+8. Search reveals the native Thing plus eligible Expression/WorldPresentation occurrence
+9. enter the live Expression or explicit safe fallback
+10. inspect provenance; recenter bounded knowledge relations; summon source depth
+11. Contact / Watch / enter the SharedField under explicit authority
+12. optionally enter/follow a Shared Stage over the admitted Expression and later unfollow without leaving
+13. optionally summon an authorised Agent/Epii on the same subject
+14. contribute a response, relation, page, Expression revision/fork or related Thing
+15. return an accepted difference through the native owner path
+16. observe distinct new source/Wiki/Expression/WorldPresentation/Projection revisions as applicable
+17. reproject and observe the new representation in the second World
+18. retain the same semantic refs across desktop/web, network reconnect and server restart
+19. leave Explore/SharedField and restore each World's exact valid local Project/Workspace constellation
+20. kill/relaunch and reconcile Workspace + shared occurrence independently by stable refs/revisions
+21. repeat with one selected Bimba/QL/Epi object and one safe Nara/Personal presentation
 ```
 
 Evidence grades:
 
 - repository/CI: deterministic contracts, filtering, identity and conformance;
-- hosted provider: real SpaceTimeDB/service/subscription/admission behaviour;
+- hosted provider: real SpaceTimeDB/service/subscription/admission/Shared Stage behaviour;
 - two machines: lifecycle/network/persistence/recovery;
 - actual Agent/model/harness: provider Agency and Action results;
-- independent worlds: real authority/privacy/Contribution relation;
+- independent worlds: real authority/privacy/Contribution relation and independent Workspace state;
 - human owner: visual, creative, pedagogical, sensory and Recognition evidence.
 
 A compile, registry, screenshot or single identity does not close this walk.
@@ -657,7 +735,7 @@ A compile, registry, screenshot or single identity does not close this walk.
 
 ## 12. Parallel scheduling from current main
 
-Current state at 2026-09-15:
+Current state at 2026-09-16:
 
 ```text
 QL AW #94     COMPLETE
@@ -665,7 +743,7 @@ QL K8 #132    COMPLETE
 QL K9 #133    COMPLETE
 QL K10 #134   COMPLETE
 QL #135       OPEN — whole kernel/lived programme acceptance
-QL #197       projection contract for Expression Field — consume when landed
+QL #197       projection contract for Expression Field — consume current accepted state
 
 O:I #305      COMPLETE — Expression Field vision/UX/Wayfinder
 O:I #307      COMPLETE — WorldPresentation Expression renderer relation
@@ -681,11 +759,15 @@ Run now in parallel:
 
 ```text
 LOCAL / EXPRESSION                        SHARED / HOSTED
-EX0 current engine intake                 SF0 SpaceTimeDB/Workcell service
-EX2 Nara/M′ adapter                       SF1 Projection + Expression carrier
-EX3 Wiki/M0 adapter                ↔      SF2 living knowledge encounter
+Workspace/state continuity                SF0 state + SpaceTimeDB/Workcell service
+AIKit Search/reveal                 ↔      Explore index + presentation discovery
+EX0 current engine intake                 SF1 Projection + Expression carrier
+EX2 Nara/M′ adapter                       SF2 living knowledge encounter
+EX3 Wiki/M0 adapter                ↔      SF2 Search/local-whole convergence
 EX4 Agent/Being pedagogy           ↔      SF3 Agent/Being encounter
 EX5 Page/WorldPresentation         ↔      SF4 Contribution/Return
+                                           │
+                                    optional Shared Stage
                                            │
                                            ↓
                                       SF5 Nara/Epi specimen
@@ -695,12 +777,15 @@ EX5 Page/WorldPresentation         ↔      SF4 Contribution/Return
 
 Dependencies are contract dependencies, not blanket serial gates:
 
-- SF0 requires no EX2–EX5 completion.
-- SF1 consumes landed EX1 + WorldPresentation and can proceed while EX0 evolves the renderer body.
-- SF2 develops against the current Wiki local-whole contract and converges with EX3 for the final living renderer path.
-- SF3 develops against landed EX1/Gateway/Agent owners and converges with EX4 for final Being/pedagogy presentation.
-- SF4 develops against exact Projection/owner revision semantics and can proceed before the Nara specimen.
-- SF5 consumes accepted EX2 protected bindings.
+- state/discovery and Workspace continuity can implement in parallel with the hosted service because ownership is now locked;
+- Search presentation resolution and Explore-index work can implement in parallel against stable refs/read models;
+- Shared Stage schema/subscription work can implement once the minimal state boundary is respected; it does not wait for Nara;
+- SF0 requires no EX2–EX5 completion;
+- SF1 consumes landed EX1 + WorldPresentation and can proceed while EX0 evolves the renderer body;
+- SF2 develops against the current Wiki local-whole contract and converges with EX3 for the final living renderer path;
+- SF3 develops against landed EX1/Gateway/Agent owners and converges with EX4 for final Being/pedagogy presentation;
+- SF4 develops against exact Projection/owner revision semantics and can proceed before the Nara specimen;
+- SF5 consumes accepted EX2 protected bindings;
 - SF6 waits for the actual joined accepted revisions and real machines/worlds.
 
 Do not create another QL/Epi producer wave for SharedField. Consume accepted contracts and route defects to native owners.
@@ -711,6 +796,6 @@ Do not create another QL/Epi producer wave for SharedField. Consume accepted con
 
 This bridge returns when:
 
-> The O:I world can express native Beings and Things through one agent-native Expression Field; compose those living presentations into authored WorldPresentations; selectively project them into a real hosted SharedField; let another independently grounded world encounter, navigate, watch, contribute to and act around them; return accepted differences through the actual native owners; and do all of this while source, Wiki, Agent, M/Nara, Expression, Projection, SharedField and material-host identities remain distinct and inspectable.
+> The O:I world can preserve a person's Workspace and Project continuity across every Surface; use AIKit Search to resolve the native world and reveal relevant Beings, Things, Expressions and WorldPresentations; express native Beings and Things through one agent-native Expression Field; compose those living presentations into authored WorldPresentations; selectively project them into a real hosted SharedField; optionally synchronise an explicit Shared Stage without leaking local state; let another independently grounded world encounter, navigate, watch, contribute to and act around them; return accepted differences through the actual native owners; and do all of this while source, Wiki, Agent, M/Nara, Workspace, Expression, Projection, SharedField and material-host identities remain distinct and inspectable.
 
 The local M′/Epii/Nara instrument and the SharedField are then two encounter horizons of the same inhabited world rather than separate feature stacks.

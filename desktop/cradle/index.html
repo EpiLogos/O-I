@@ -6,6 +6,28 @@
     <title>O-I</title>
   </head>
   <body class="oi-desktop">
+    <script>
+      // Appearance before first paint: the persisted Visuals choice (light /
+      // dark / system) resolves onto the body here, ahead of the module
+      // bundle. A first opening paints its inverse field ground from the
+      // same preference/session gate; the app keeps its selected theme.
+      (function () {
+        var theme = "system";
+        var saved = null;
+        try {
+          var raw = localStorage.getItem("oi-cradle.visuals.v1");
+          saved = raw ? JSON.parse(raw) : null;
+          if (saved && (saved.theme === "light" || saved.theme === "dark")) theme = saved.theme;
+        } catch (e) {}
+        var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
+        if (dark) document.body.setAttribute("data-theme", "dark");
+        var completed = false;
+        try { completed = !!sessionStorage.getItem("oi-cradle.welcome.v1"); } catch (e) {}
+        if (!window.__OI_DETACHED__ && !completed && !(saved && (saved.enabled === false || saved.welcomeEnabled === false))) {
+          document.body.setAttribute("data-oi-opening", "true");
+        }
+      })();
+    </script>
     <div id="root"></div>
     <script type="module" src="/src/main.tsx"></script>
   </body>

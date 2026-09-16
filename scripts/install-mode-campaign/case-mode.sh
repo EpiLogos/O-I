@@ -76,19 +76,82 @@ install)
     world | python3 /campaign/scripts/world-positions.py >"$EV/world-positions-install.json"
     world >"$EV/world-install.json"
 
-    step "verify: whole-suite verifier, recorded honestly (subset installs fail it)"
+    # Mode-scoped verification (#311): the requested install mode scopes the
+    # run. A subset install is a kept promise — verify/doctor PASS on the
+    # selected products and DISCLOSE unselected ones as absent by selection,
+    # never FAIL them. The strict whole-suite question stays available via
+    # --all and must still refuse a subset; recorded honestly per case.
+    step "mode-scoped verify: requested mode scopes the run"
     set +e
-    oi verify >"$EV/verify.log" 2>&1
-    echo "oi verify rc=$?" >>"$EV/verify.log"
+    oi verify --json >"$EV/verify-scoped.json" 2>"$EV/verify-scoped.err"
+    vrc=$?
+    oi verify >"$EV/verify-scoped.log" 2>&1
+    echo "oi verify rc=$vrc" >>"$EV/verify-scoped.log"
     set -e
-    step "verify output in verify.log (rc 3 on a subset = whole-suite verifier cannot express modes)"
-
-    step "doctor"
+    if [ "$vrc" -ne 0 ]; then
+        echo "MODE-SCOPED VERIFY FAILED rc=$vrc (subset installs must verify)" >&2
+        cat "$EV/verify-scoped.err" >&2
+        exit 1
+    fi
+    python3 - "$EV/verify-scoped.json" <<'PY' | tee -a "$LOG"
+import json, sys
+d = json.load(open(sys.argv[1]))
+scope = d.get("scope") or {}
+assert d.get("ok") is True, "verify --json says ok=false"
+assert scope.get("basis") == "requested-mode", f"scope basis {scope.get('basis')!r}, wanted requested-mode"
+disclosed = [c for c in d.get("checks", []) if c.get("scope_state") in ("absent-by-selection", "outside-selection")]
+assert disclosed, "no unselected product disclosed by selection"
+failed_selected = [c for c in d.get("checks", []) if c.get("selected") and not c.get("ok")]
+assert not failed_selected, f"selected products failed: {failed_selected}"
+print(f"scope: basis={scope.get('basis')} mode={scope.get('install_mode')} "
+      f"selected={scope.get('products')} disclosed={len(disclosed)}")
+PY
+    step "mode-scoped doctor"
     set +e
+    oi doctor --json >"$EV/doctor-scoped.json" 2>"$EV/doctor-scoped.err"
+    drc=$?
     oi doctor >"$EV/doctor.log" 2>&1
-    echo "oi doctor rc=$?" >>"$EV/doctor.log"
+    echo "oi doctor rc=$drc" >>"$EV/doctor.log"
     set -e
-    step "doctor output in doctor.log"
+    if [ "$drc" -ne 0 ]; then
+        echo "MODE-SCOPED DOCTOR FAILED rc=$drc (subset installs must pass doctor)" >&2
+        cat "$EV/doctor-scoped.err" >&2
+        exit 1
+    fi
+    step "strict whole-suite question recorded honestly (--all refuses a subset)"
+    set +e
+    oi verify --all >"$EV/verify-all.log" 2>&1
+    arc=$?
+    echo "oi verify --all rc=$arc (nonzero expected: this case is a subset install)" >>"$EV/verify-all.log"
+    set -e
+    if [ "$arc" -eq 0 ]; then
+        echo "oi verify --all PASSED on a subset install; strict whole-suite semantics lost" >&2
+        exit 1
+    fi
+    step "--all refusal recorded in verify-all.log"
+
+    step "component products read honest installed state (post-#311 semantics)"
+    python3 - "$EV/world-install.json" $PRODUCTS <<'PY' | tee -a "$LOG"
+import json, sys
+world = json.load(open(sys.argv[1]))
+products = sys.argv[2:]
+COMPONENTS = {"actuation", "software-factory", "quaternal-logic"}
+by_id = {p.get("product_id"): p for p in world.get("positions", [])}
+for product in products:
+    if product not in COMPONENTS:
+        continue
+    row = by_id.get(product) or {}
+    state = row.get("state")
+    print(f"component state reading: {product} state={state} present={row.get('present')}")
+    if state == "broken":
+        print(f"FAIL: {product} reads state=broken; component material is not damage")
+        sys.exit(1)
+    if not row.get("present"):
+        print(f"FAIL: {product} present=false after install")
+        sys.exit(1)
+    if state != "installed_component":
+        print(f"NOTE: {product} state is {state!r} (expected installed_component); recorded")
+PY
 
     step "promised capability journey per product"
     for p in $PRODUCTS; do
@@ -171,17 +234,50 @@ change)
         expect_ok "recovery update" oi update
     fi
 
-    step "doctor after recovery (whole-suite verifier semantics recorded)"
+    step "doctor after recovery (mode-scoped: must pass on the subset install)"
     set +e
     oi doctor >"$EV/doctor-after-recovery.log" 2>&1
-    echo "oi doctor rc=$?" >>"$EV/doctor-after-recovery.log"
+    drc=$?
+    echo "oi doctor rc=$drc" >>"$EV/doctor-after-recovery.log"
     set -e
-    step "doctor output in doctor-after-recovery.log"
+    if [ "$drc" -ne 0 ]; then
+        echo "DOCTOR FAILED AFTER RECOVERY rc=$drc" >&2
+        exit 1
+    fi
     ;;
 
 remove)
-    step "removal through production paths"
+    step "per-product removal (the remove leg of the lifecycle planner, #311)"
     capture before-remove-world.json oi current-world --json
+    LAST_PRODUCT="$(echo $PRODUCTS | awk '{print $NF}')"
+    expect_ok "oi remove $LAST_PRODUCT" oi remove "$LAST_PRODUCT"
+    capture after-single-remove-world.json oi current-world --json
+    step "removal receipt: every residual explained"
+    ls "$OI_DATA_HOME/receipts/removals" >"$EV/removal-receipts.txt" 2>&1 || true
+    for receipt in "$OI_DATA_HOME"/receipts/removals/*.json; do
+        [ -f "$receipt" ] && cat "$receipt" >>"$EV/removal-receipts.txt"
+    done
+    python3 - "$EV/before-remove-world.json" "$EV/after-single-remove-world.json" "$LAST_PRODUCT" <<'PY' | tee -a "$LOG"
+import json, sys
+
+def positions(path):
+    world = json.load(open(path))
+    return {p.get("product_id"): p for p in world.get("positions", [])}
+
+before, after, removed = positions(sys.argv[1]), positions(sys.argv[2]), sys.argv[3]
+row = after.get(removed) or {}
+assert not row.get("present"), f"{removed} still present after oi remove"
+print(f"position after removal: {removed} present=false state={row.get('state')}")
+for product, was in before.items():
+    if product == removed:
+        continue
+    now = after.get(product)
+    assert now == was, f"COLLATERAL DRIFT: {product} changed during removal of {removed}: {was} -> {now}"
+print(f"no collateral drift: all other positions identical during removal of {removed}")
+PY
+    world | python3 /campaign/scripts/world-positions.py >"$EV/world-positions-after-single-remove.json"
+
+    step "removal of the remaining selection through managed cleanup"
     expect_ok "oi cleanup --managed" oi cleanup --managed
 
     step "retained-state verification: authored ground preserved"
@@ -189,8 +285,10 @@ remove)
     expect_ok "Work retained" test -d "$GROUND/Work"
     step "ground retained (Control + Work)"
 
-    step "final absence: unselected products absent; managed payloads gone"
-    /campaign/scripts/check-closure.sh $ABSENT || true
+    step "final absence: unselected products and the whole selection absent"
+    /campaign/scripts/check-closure.sh $ABSENT $PRODUCTS || true
+    expect_ok "managed payload subtrees gone (bin/products/receipts/cache)" \
+        sh -c "test ! -e '$OI_DATA_HOME/bin' && test ! -e '$OI_DATA_HOME/products' && test ! -e '$OI_DATA_HOME/receipts' && test ! -e '$OI_DATA_HOME/cache'"
     step "post-removal world"
     capture after-remove-world.json oi current-world --json
     ;;

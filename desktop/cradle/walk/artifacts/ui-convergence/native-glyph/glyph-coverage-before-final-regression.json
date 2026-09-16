@@ -1,0 +1,7 @@
+[
+  {
+    "name": "Sparse native glyph allocations cover both complete sequence shapes in each plane",
+    "ok": false,
+    "error": "Error: normalization must change geometry only, not which source points represent the shape: vertical|1024|coverage-0|0|ordinary\n    at assert (eval at evaluate (:290:30), <anonymous>:3:57)\n    at eval (eval at evaluate (:290:30), <anonymous>:46:8)\n    at test (eval at evaluate (:290:30), <anonymous>:5:76)\n    at eval (eval at evaluate (:290:30), <anonymous>:8:8)\n    at UtilityScript.evaluate (<anonymous>:297:18)\n    at UtilityScript.<anonymous> (<anonymous>:1:44)"
+  }
+]

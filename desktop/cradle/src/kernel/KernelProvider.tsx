@@ -52,6 +52,8 @@ export interface KernelApi {
   transport: KernelTransportStatus;
   /** BOOT-00/02/03/04 (additive; no existing read model changes). */
   boot: KernelBootState;
+  /** The first real state read has returned (success or failure). */
+  stateSettled: boolean;
   snapshot: KernelSnapshotState;
   receipts: KernelReceipt[];
   listing: SourceListingState | null;
@@ -337,6 +339,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     () => ({
       transport,
       boot,
+      stateSettled,
       snapshot,
       receipts,
       listing,
@@ -358,6 +361,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     [
       transport,
       boot,
+      stateSettled,
       snapshot,
       receipts,
       listing,

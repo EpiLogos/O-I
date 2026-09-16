@@ -1,0 +1,67 @@
+
+> oi-cradle@0.1.0 prebuild
+> node documents/build-personal.mjs
+
+
+> oi-cradle@0.1.0 build
+> tsc --noEmit && vite build
+
+vite v5.4.21 building for production...
+transforming...
+✓ 297 modules transformed.
+rendering chunks...
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/core.js is dynamically imported by /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/kernel/bridge.ts, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/stage/ExpressionStage.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/workspace/GroundChooser.tsx but also statically imported by /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/dpi.js, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/event.js, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/image.js, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/window.js, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/browser/BrowserSurface.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/terminal/TerminalSurface.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/event.js is dynamically imported by /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/kernel/bridge.ts, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/stage/ExpressionStage.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/stage/ExpressionStage.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/visuals/ParticleExpression.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/visuals/ParticleExpression.tsx but also statically imported by /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/window.js, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/browser/BrowserSurface.tsx, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/context/useBrowserContext.ts, /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+[plugin:vite:reporter] [plugin vite:reporter] 
+(!) /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/node_modules/@tauri-apps/api/window.js is dynamically imported by /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/Cradle.tsx but also statically imported by /private/tmp/oi-ui-owner-verification-20260915/oi-current/desktop/cradle/src/workspace/DetachedFrame.tsx, dynamic import will not move module into another chunk.
+
+computing gzip size...
+dist/index.html                                           1.35 kB │ gzip:   0.70 kB
+dist/assets/layout.worker-BLEG8XbY.js                     1.88 kB
+dist/assets/BrowserSurface-DFE0KTs_.css                   1.69 kB │ gzip:   0.66 kB
+dist/assets/TextEditor-DiVFpzWm.css                       1.99 kB │ gzip:   0.65 kB
+dist/assets/ExpressionView-uKNtF8lK.css                   3.21 kB │ gzip:   0.98 kB
+dist/assets/FocusedInstrumentComposition-DRrA2r0X.css     4.24 kB │ gzip:   1.21 kB
+dist/assets/MaterialSurface-B0rCyl3y.css                  5.22 kB │ gzip:   1.35 kB
+dist/assets/TerminalSurface-C7LETS46.css                  5.88 kB │ gzip:   2.14 kB
+dist/assets/SystemPanel-BjoooS8O.css                     20.22 kB │ gzip:   3.50 kB
+dist/assets/WorkspaceStudy-BaKGd2AE.css                  20.48 kB │ gzip:   4.36 kB
+dist/assets/seed-mU9b9OOy.css                            21.50 kB │ gzip:   4.84 kB
+dist/assets/FactoryDevelopmentSurface-DTtzHVxo.css       23.07 kB │ gzip:   4.39 kB
+dist/assets/index-CgLM4mEC.css                          159.40 kB │ gzip:  25.12 kB
+dist/assets/contribution-unavailable-10g4nHrS.js          1.21 kB │ gzip:   0.56 kB
+dist/assets/profile-development-C-3nDXu7.js               1.45 kB │ gzip:   0.63 kB
+dist/assets/recipes-BpiHWyeO.js                           1.67 kB │ gzip:   0.82 kB
+dist/assets/contribution-connector-fixture-C51tCAnK.js    1.87 kB │ gzip:   0.86 kB
+dist/assets/PageContext-CTxpTq6c.js                       2.17 kB │ gzip:   1.12 kB
+dist/assets/contribution-oi-CD8vvuu0.js                   2.60 kB │ gzip:   0.96 kB
+dist/assets/contribution-ai-kit-D6NjRMvl.js               4.79 kB │ gzip:   1.42 kB
+dist/assets/WalkChannel-BA64Evu3.js                       8.14 kB │ gzip:   3.10 kB
+dist/assets/BrowserSurface-Crz0QGHP.js                    9.35 kB │ gzip:   3.56 kB
+dist/assets/engineSurface-BPhLy-2L.js                    10.73 kB │ gzip:   3.68 kB
+dist/assets/fixtureSource-CK1gmPRv.js                    15.89 kB │ gzip:   5.08 kB
+dist/assets/FocusedInstrumentComposition-BdLWi6Al.js     18.04 kB │ gzip:   6.13 kB
+dist/assets/MaterialSurface-CS64AX_A.js                  23.47 kB │ gzip:   8.62 kB
+dist/assets/FactoryDevelopmentSurface-BPEwueBS.js        26.43 kB │ gzip:   7.24 kB
+dist/assets/Seed-DFzXqTRc.js                             28.40 kB │ gzip:   8.69 kB
+dist/assets/ExploreSurface-DIh1wiGA.js                   30.33 kB │ gzip:   8.89 kB
+dist/assets/WorkspaceStudy-Bw4ivEfv.js                   31.47 kB │ gzip:   9.91 kB
+dist/assets/ExpressionView-ktcAIAsQ.js                   36.44 kB │ gzip:  10.22 kB
+dist/assets/KnowledgeSurface-CyfggvX4.js                 38.32 kB │ gzip:  13.14 kB
+dist/assets/presentation-BJ7pnGkG.js                     41.70 kB │ gzip:  10.92 kB
+dist/assets/SystemPanel-CLaPqSig.js                      76.42 kB │ gzip:  20.65 kB
+dist/assets/expressions-engine-DneaE1CX.js              212.03 kB │ gzip:  66.77 kB
+dist/assets/TerminalSurface-BLry-4_q.js                 350.32 kB │ gzip:  89.27 kB
+dist/assets/index-CnaLOqGI.js                           543.91 kB │ gzip: 163.69 kB
+dist/assets/TextEditor-M46vJLEC.js                      678.16 kB │ gzip: 235.26 kB
+dist/assets/three-DVI_j9-M.js                           746.94 kB │ gzip: 190.45 kB
+
+(!) Some chunks are larger than 500 kB after minification. Consider:
+- Using dynamic import() to code-split the application
+- Use build.rollupOptions.output.manualChunks to improve chunking: https://rollupjs.org/configuration-options/#output-manualchunks
+- Adjust chunk size limit for this warning via build.chunkSizeWarningLimit.
+✓ built in 3.27s

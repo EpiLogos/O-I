@@ -1,0 +1,22 @@
+{
+  "stage": "red before native terminal context fix",
+  "head": "8cb15a62417bd8c0ea9e06803b1a879b73425512",
+  "source_sha256": {
+    "desktop/cradle/tests/visuals-preview-lifecycle.mjs": "848581cf7998c48db0cd4dbafe8da79f68cb18483e5fb83fdcc9289a729bacd2",
+    "desktop/cradle/src/stage/engineSurface.ts": "cc0e2a22ecd864ef7aa012db4647012438a3c4e9bba3a4ba67e0864beb465cd2",
+    "packages/oi-design-system/expressions-engine/engine/PointCloudField.mjs": "8d0d32bd903cabac5ae21330f39bbbea6819dc8446af8ec005d4fb56659d502f",
+    "packages/oi-design-system/expressions-engine/shell/production.mjs": "9fa6d85a6c75ed8e90201481299ab03d51a63676096cfba07f896e95c3ccfe77",
+    "packages/oi-design-system/expressions-engine/oi/retained.mjs": "d1e3ab4d593abdb1f74a257689712740cc6446efba9b5a9e59d3fbef986f2257",
+    "packages/oi-design-system/expressions-engine/PROVENANCE.json": "6f784bdfa4517834c8c4467d42bfa44a44c7f33226084bb9ec52fd99f3cfd5ea"
+  },
+  "command": "node tests/visuals-preview-lifecycle.mjs",
+  "log": "visuals-preview-terminal-before.log",
+  "result": "Off removed canvas and stopped RAF, but retained actual WebGL context remained valid: observed1 unlost, required0. Normal presentation release is separately required to retain its context.",
+  "after": {
+    "ownerRevision": "703b6970bfd405c482c2a15985c09c8925ec3b7d",
+    "ownerIntake": "2a4f76ab9b9672b25fa9bcc12573d271e2653a17",
+    "regressionCommit": "3f3a30372d68fe434133b2cb6b3f087a692450a4",
+    "log": "visuals-preview-terminal-after.log",
+    "result": "pass: terminalOff/rootunmount lose heldactualGLcontexts; ordinaryrelease retains healthyGL"
+  }
+}
