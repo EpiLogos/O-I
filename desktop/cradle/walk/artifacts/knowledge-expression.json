@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "knowledge-expression",
-  "generated_at": "2026-09-15T17:39:37.885Z",
+  "generated_at": "2026-09-16T02:11:23.840Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,50 +11,12 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
-      "repository_head": "2a0c206b43f5cbfff872ee787fc7db5600bebe44",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
       "tracked_changes": [
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-CONTINUATION-2026-09-15.md",
-        ".superpowers/sdd/cradle-rebuild/UI-CONVERGENCE-RECEIPT-2026-09-15.md",
-        "desktop/cradle/src/contributions/factory/contribution.json",
-        "desktop/cradle/src/stage/engineSurface.ts",
-        "desktop/cradle/src/visuals/store.ts",
-        "desktop/cradle/tests/theme-prepaint-csp.mjs",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
-        "desktop/cradle/walk/artifacts/expression-controls.json",
-        "desktop/cradle/walk/artifacts/instrument-failure.png",
-        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
-        "desktop/cradle/walk/artifacts/instrument-host.json",
-        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
-        "desktop/cradle/walk/artifacts/instrument.json",
-        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
-        "desktop/cradle/walk/artifacts/knowledge-expression.json",
-        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
-        "desktop/cradle/walk/artifacts/refinement.json",
-        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery.json",
-        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
-        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
-        "desktop/cradle/walk/artifacts/surfaces.json",
-        "desktop/cradle/walk/artifacts/ui-convergence/owner-verification/portable-files.json",
-        "desktop/cradle/walk/artifacts/welcome-failure.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
-        "desktop/cradle/walk/artifacts/welcome.json",
-        "desktop/cradle/walk/scenarios/instrument-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument-native-host.mjs",
-        "desktop/cradle/walk/scenarios/instrument.mjs",
-        "desktop/cradle/walk/scenarios/knowledge-expression.mjs",
-        "desktop/cradle/walk/scenarios/welcome.mjs"
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -63,48 +25,48 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 4506,
+  "duration_ms": 5011,
   "checks": [
     {
       "ok": true,
       "label": "Isolated owner ground reports the native SemanticWiki provider",
       "data": {
         "context": {
-          "context_id": "ctx_01M2K2E7VVYN4K47KTTAYDJ66D",
-          "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor",
+          "context_id": "ctx_01M2KZQA1K67DGMWW2DBPW8Z9F",
+          "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor",
           "session_id": null
         },
         "data": {
           "absences": [
             "ProjectMap CodeIndex provider absent",
             "Central identity manifest absent; no nara entity materialised",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/BOOTSTRAP-AND-LOADING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../skills/central-session-strap/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../skills/suite-operator/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/SESSION-GROUNDING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/session-grounding.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:67d6baa94913c35b (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[positions/FOUNDING-POSITIONS.md]] from central:project-source:editor-walk:7afac4ff78de1fcc (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[CANONICAL-PRODUCT-FIELD]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[cradle/02-ARCHITECTURE.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-            "ProjectCentral authored wiki unavailable at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Other: /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Other/ProjectCentral/project.json: No such file or directory (os error 2)",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/BOOTSTRAP-AND-LOADING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../skills/central-session-strap/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../skills/suite-operator/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/SESSION-GROUNDING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/session-grounding.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:67d6baa94913c35b (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[positions/FOUNDING-POSITIONS.md]] from central:project-source:editor-walk:7afac4ff78de1fcc (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[CANONICAL-PRODUCT-FIELD]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[cradle/02-ARCHITECTURE.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+            "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+            "ProjectCentral authored wiki unavailable at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Other: /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Other/ProjectCentral/project.json: No such file or directory (os error 2)",
             "ProjectMap CodeIndex unavailable: no canonical Project identity"
           ],
           "code": null,
@@ -185,33 +147,33 @@
         "warnings": [
           "ProjectMap CodeIndex provider absent",
           "Central identity manifest absent; no nara entity materialised",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/BOOTSTRAP-AND-LOADING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../skills/central-session-strap/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../skills/suite-operator/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/SESSION-GROUNDING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/session-grounding.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:67d6baa94913c35b (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[positions/FOUNDING-POSITIONS.md]] from central:project-source:editor-walk:7afac4ff78de1fcc (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[CANONICAL-PRODUCT-FIELD]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[cradle/02-ARCHITECTURE.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
-          "ProjectCentral authored wiki unavailable at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Other: /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq/Work/Other/ProjectCentral/project.json: No such file or directory (os error 2)",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/BOOTSTRAP-AND-LOADING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../skills/central-session-strap/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../skills/suite-operator/SKILL.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/SESSION-GROUNDING.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/session-grounding.json]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:2ec154fc266beb08 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[02-ARCHITECTURE.md]] from central:project-source:editor-walk:67d6baa94913c35b (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[positions/FOUNDING-POSITIONS.md]] from central:project-source:editor-walk:7afac4ff78de1fcc (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[01-DESIGN.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[03-UX-STATES.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:ac075c745ead2d7c (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[CANONICAL-PRODUCT-FIELD]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[cradle/02-ARCHITECTURE.md]] from central:project-source:editor-walk:acfe4867c90ec1fa (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../../.superpowers/sdd/cradle-rebuild/IMPLEMENTATION-PROGRAMME-2026-09-06.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md]] from central:project-source:editor-walk:c2739aa62cb557c7 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/FACTORY-AGENCY.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[../experience/factory-agency.json]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+          "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Editor: [[04-VERIFICATION.md]] from central:project-source:editor-walk:c7ed504a50f3fe33 (references) is not yet resolved",
+          "ProjectCentral authored wiki unavailable at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Other: /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj/Work/Other/ProjectCentral/project.json: No such file or directory (os error 2)",
           "ProjectMap CodeIndex unavailable: no canonical Project identity"
         ]
       }
@@ -335,17 +297,17 @@
         "width": 556,
         "height": 535,
         "minX": 269,
-        "minY": 220,
+        "minY": 219,
         "maxX": 298,
         "maxY": 254,
-        "count": 821,
+        "count": 807,
         "background": [
           251,
           251,
           249
         ],
         "lightInkPixels": 0,
-        "darkInkPixels": 777,
+        "darkInkPixels": 764,
         "maxContrast": 20.02549750095129
       }
     },
@@ -353,7 +315,7 @@
       "ok": true,
       "label": "The native Wiki circle retains its whole shape at the desktop particle budget",
       "data": {
-        "glyphAspect": 1.1724137931034482
+        "glyphAspect": 1.206896551724138
       }
     },
     {
@@ -367,17 +329,17 @@
         "width": 556,
         "height": 535,
         "minX": 269,
-        "minY": 220,
+        "minY": 219,
         "maxX": 298,
         "maxY": 254,
-        "count": 821,
+        "count": 807,
         "background": [
           251,
           251,
           249
         ],
         "lightInkPixels": 0,
-        "darkInkPixels": 777,
+        "darkInkPixels": 764,
         "maxContrast": 20.02549750095129
       }
     },
@@ -387,17 +349,17 @@
       "data": {
         "width": 556,
         "height": 535,
-        "minX": 268,
+        "minX": 269,
         "minY": 219,
-        "maxX": 299,
+        "maxX": 298,
         "maxY": 254,
-        "count": 846,
+        "count": 835,
         "background": [
           18,
           18,
           17
         ],
-        "lightInkPixels": 814,
+        "lightInkPixels": 796,
         "darkInkPixels": 0,
         "maxContrast": 12.067601898864037
       }
@@ -418,7 +380,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T17:39:38.021Z",
+        "mounted_at": "2026-09-16T02:11:23.960Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -429,7 +391,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 85.4,
+      "duration_ms": 91.7,
       "data": {
         "project": {
           "kind": "project",
@@ -443,7 +405,7 @@
           "kind": "knowledge",
           "native_owner": "ai-kit",
           "provenance": {
-            "revision": "metadata:16777231:164022600:334:1789493976:916391034",
+            "revision": "metadata:16777231:164290257:334:1789524682:751604159",
             "source": "aikit.knowledge.read"
           },
           "ref": "central:source:project:editor-walk:ProjectCentral/agents/wiki/wiki.json"
@@ -461,7 +423,7 @@
         "frames": 3,
         "presentations": [
           {
-            "id": "knowledge-expression:07f289de-7422-4478-a921-61b3aaa5b200",
+            "id": "knowledge-expression:42f71aa6-6a15-409e-aa99-15d461c299ed",
             "plane": "overlay"
           }
         ],
@@ -471,7 +433,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 43,
+      "duration_ms": 37,
       "data": {
         "file": "knowledge-expression-knowledge-expression-local-whole.png"
       }
@@ -479,12 +441,12 @@
     {
       "ok": true,
       "op": "read.stage",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "paused": false,
         "live": false,
         "scheduled": false,
-        "frames": 8,
+        "frames": 7,
         "presentations": [],
         "playback": null
       }
@@ -492,7 +454,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 10.3,
+      "duration_ms": 9.9,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -522,7 +484,7 @@
             "native_owner": "provider/source-pool/native",
             "provenance": {
               "revision": "2",
-              "source": "expression:knowledge-1efd91689df654dcf1eddebe7fcb1507"
+              "source": "expression:knowledge-5638ff99e3f94a359e3fd6ff97f2bed6"
             },
             "ref": "central:source:project:editor-walk:ProjectCentral/agents/wiki/wiki.json"
           }
@@ -602,7 +564,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 11,
@@ -671,7 +633,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-0DRLWq",
+            "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-bNyTfj",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -887,16 +849,16 @@
           }
         },
         "surfaces": {
-          "07f289de-7422-4478-a921-61b3aaa5b200": {
+          "42f71aa6-6a15-409e-aa99-15d461c299ed": {
             "kind": "knowledge",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/agents/wiki/wiki.json",
-            "surface_id": "07f289de-7422-4478-a921-61b3aaa5b200",
+            "surface_id": "42f71aa6-6a15-409e-aa99-15d461c299ed",
             "title": "ProjectCentral/agents/wiki/wiki.json"
           },
-          "538bf568-adf8-4df2-bd2b-0bf1c6b8dae4": {
+          "8ca13653-7b31-44e7-89e0-c0f0461672e8": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "538bf568-adf8-4df2-bd2b-0bf1c6b8dae4",
+            "surface_id": "8ca13653-7b31-44e7-89e0-c0f0461672e8",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -905,7 +867,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 27,
       "data": {
         "file": "knowledge-expression-graph-context-light.png"
       }
@@ -913,15 +875,15 @@
     {
       "ok": true,
       "op": "read.stage",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "paused": false,
         "live": true,
         "scheduled": true,
-        "frames": 13,
+        "frames": 11,
         "presentations": [
           {
-            "id": "knowledge-expression:3a6abf1b-ac39-413d-8867-f4cf3d00b275",
+            "id": "knowledge-expression:423fd701-49fe-4d7b-9d94-70ecf37af637",
             "plane": "overlay"
           }
         ],
@@ -931,7 +893,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 39,
       "data": {
         "file": "knowledge-expression-graph-expression-dark.png"
       }
@@ -939,7 +901,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 12,
       "data": {
         "file": "knowledge-expression-graph-context-narrow.png"
       }
@@ -949,7 +911,7 @@
     "subjects": 1,
     "relations": 0,
     "dark_glyph_contrast": 12.1,
-    "dark_glyph_visible_pixels": 814
+    "dark_glyph_visible_pixels": 796
   },
   "screenshots": [
     "knowledge-expression-knowledge-expression-local-whole.png",
