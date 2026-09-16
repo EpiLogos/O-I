@@ -309,6 +309,12 @@ fn recorded_desktop_bundle(data_root: &Path, host_target: &str) -> Result<PathBu
         }
         fs::rename(&temp, &archive)
             .map_err(|error| format!("cannot promote cached bundle: {error}"))?;
+        // The checksum sidecar the staging pass re-verifies against
+        // (sha256sum text format), written only after the recorded digest
+        // verified the downloaded bytes.
+        let sidecar = PathBuf::from(format!("{}.sha256", archive.display()));
+        fs::write(&sidecar, format!("{}  {}\n", asset.sha256, asset.name))
+            .map_err(|error| format!("cannot write bundle checksum sidecar: {error}"))?;
     }
     Ok(archive)
 }
