@@ -11,6 +11,7 @@
  *
  * Requests:
  *   status                              target binding only; no network
+ *   identity                            the caller's transport identity only
  *   snapshot                            the caller-visible field
  *   identity                            the caller's transport identity only
  *   receipt   {contribution_ref}         caller's private Contribution receipt
@@ -23,8 +24,16 @@
  *   withdraw  {ingress_ref, reason, evidence} withdraw an admitted Contribution under owner/admission authority
  *   contact   {contact_ref, recipient_participant_ref, decision, response}   respond to a Contact request
  *   watch     {watch}                   put one oi.watch/v1 contract under the caller's own authority
+ *   enter     {field_ref, participant_ref, state?}       announce the caller's live presence in a field
+ *   leave     {field_ref, participant_ref}               clear the caller's live presence (and any stage follow)
+ *   stage     {field_ref}               the field's open Shared Stage, the caller's follow row, live presence
+ *   stage-open    {stage}               open a Shared Stage from an `oi.shared-stage/v1` revision-1 contract
+ *   stage-advance {stage, expected_revision}   advance the stage one revision-checked step
+ *   stage-close   {stage, expected_revision, actor_participant_ref?}   close the open stage
+ *   stage-follow  {field_ref, stage_ref, follower_participant_ref}      follow the open stage now
+ *   stage-unfollow {field_ref, stage_ref, follower_participant_ref}     unfollow and keep a local view
  */
-import { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, waitUntil } from './field-lib';
+import { close, fieldSnapshot, open, publishArgs, readRef, resolveTarget, rows, stageReading, stageView, waitUntil } from './field-lib';
 import { createProjection } from '../index.mjs';
 import { projectionStorageKey } from '../spacetimedb.mjs';
 
@@ -151,6 +160,60 @@ try {
       await reducers.respondContact({ contactRef: request.contact_ref, recipientParticipantRef: request.recipient_participant_ref, decision: request.decision, responseJson: JSON.stringify(request.response ?? { decision: request.decision }) });
       const row = await waitUntil(() => rows(db.myContact).find((candidate: any) => candidate.contactRef === request.contact_ref), 'the Contact in the caller-visible view');
       await emit({ ok: true, data: { schema: 'oi.shared-field.contact-result/v1', contact_ref: row.contactRef, decision: request.decision, state: row.state ?? row.decision ?? null } });
+    }
+    case 'enter': {
+      if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'enter requires `field_ref` and `participant_ref`' } });
+      await reducers.enterField({ fieldRef: request.field_ref, participantRef: request.participant_ref, state: request.state ?? 'entered' });
+      const row = await waitUntil(() => rows(db.fieldPresence).find((candidate: any) => candidate.fieldRef === request.field_ref && candidate.participantRef === request.participant_ref), 'the caller presence in the caller-visible view');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.presence-result/v1', field_ref: row.fieldRef, participant_ref: row.participantRef, state: row.state } });
+    }
+    case 'leave': {
+      if (typeof request.field_ref !== 'string' || typeof request.participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'leave requires `field_ref` and `participant_ref`' } });
+      await reducers.leaveField({ fieldRef: request.field_ref, participantRef: request.participant_ref });
+      await waitUntil(() => !rows(db.fieldPresence).some((candidate: any) => candidate.fieldRef === request.field_ref && candidate.participantRef === request.participant_ref), 'presence to clear');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.presence-result/v1', field_ref: request.field_ref, participant_ref: request.participant_ref, state: 'left' } });
+    }
+    case 'stage': {
+      if (typeof request.field_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'stage requires `field_ref`' } });
+      await emit({ ok: true, data: stageView(client!, request.field_ref) });
+    }
+    case 'stage-open': {
+      const { validateSharedStage } = await import('../shared-stage.mjs');
+      const stage = validateSharedStage(request.stage);
+      if (stage.state !== 'open' || stage.revision !== 1) await emit({ ok: false, error: { kind: 'malformed', message: 'stage-open requires an `oi.shared-stage/v1` opening contract (revision 1, state open)' } });
+      await reducers.openSharedStage({ fieldRef: stage.field_ref, stageRef: stage.shared_stage_ref, presenterParticipantRef: stage.presenter_ref, subjectRef: stage.subject_ref, contractJson: JSON.stringify(stage) });
+      const row = await waitUntil(() => rows(db.sharedStage).find((candidate: any) => candidate.stageRef === stage.shared_stage_ref), 'the open Shared Stage in the caller-visible view');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.stage-result/v1', ...stageReading(row) } });
+    }
+    case 'stage-advance': {
+      const { validateSharedStage } = await import('../shared-stage.mjs');
+      const stage = validateSharedStage(request.stage);
+      if (!Number.isInteger(request.expected_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'stage-advance requires the integer `expected_revision` the writer read' } });
+      if (stage.state !== 'open' || stage.revision !== request.expected_revision + 1) await emit({ ok: false, error: { kind: 'malformed', message: `stage-advance contract must be revision ${request.expected_revision + 1}` } });
+      await reducers.advanceSharedStage({ fieldRef: stage.field_ref, stageRef: stage.shared_stage_ref, actorParticipantRef: stage.presenter_ref, expectedRevision: BigInt(request.expected_revision), contractJson: JSON.stringify(stage) });
+      const row = await waitUntil(() => rows(db.sharedStage).find((candidate: any) => candidate.stageRef === stage.shared_stage_ref && Number(candidate.revision) === stage.revision), `Shared Stage ${stage.shared_stage_ref} at revision ${stage.revision}`);
+      await emit({ ok: true, data: { schema: 'oi.shared-field.stage-result/v1', ...stageReading(row) } });
+    }
+    case 'stage-close': {
+      const { validateSharedStage } = await import('../shared-stage.mjs');
+      const stage = validateSharedStage(request.stage);
+      if (!Number.isInteger(request.expected_revision)) await emit({ ok: false, error: { kind: 'malformed', message: 'stage-close requires the integer `expected_revision` the closer read' } });
+      if (stage.state !== 'closed' || stage.revision !== request.expected_revision + 1) await emit({ ok: false, error: { kind: 'malformed', message: `stage-close contract must be the closed revision ${request.expected_revision + 1}` } });
+      await reducers.closeSharedStage({ fieldRef: stage.field_ref, stageRef: stage.shared_stage_ref, actorParticipantRef: request.actor_participant_ref ?? stage.presenter_ref, expectedRevision: BigInt(request.expected_revision), contractJson: JSON.stringify(stage) });
+      await waitUntil(() => !rows(db.sharedStage).some((candidate: any) => candidate.stageRef === stage.shared_stage_ref), 'the closed stage to leave the caller-visible view');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.stage-result/v1', stage_ref: stage.shared_stage_ref, field_ref: stage.field_ref, revision: stage.revision, state: 'closed', presenter_ref: stage.presenter_ref, subject_ref: stage.subject_ref, contract: stage } });
+    }
+    case 'stage-follow': {
+      if (typeof request.field_ref !== 'string' || typeof request.stage_ref !== 'string' || typeof request.follower_participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'stage-follow requires `field_ref`, `stage_ref`, `follower_participant_ref`' } });
+      await reducers.followSharedStage({ fieldRef: request.field_ref, stageRef: request.stage_ref, followerParticipantRef: request.follower_participant_ref });
+      const row = await waitUntil(() => rows(db.myStageFollow).find((candidate: any) => candidate.stageRef === request.stage_ref && candidate.followerParticipantRef === request.follower_participant_ref), 'the caller follow row');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.stage-follow-result/v1', stage_ref: row.stageRef, field_ref: row.fieldRef, follower_participant_ref: row.followerParticipantRef, followed_at_revision: Number(row.followedAtRevision), following: true } });
+    }
+    case 'stage-unfollow': {
+      if (typeof request.field_ref !== 'string' || typeof request.stage_ref !== 'string' || typeof request.follower_participant_ref !== 'string') await emit({ ok: false, error: { kind: 'malformed', message: 'stage-unfollow requires `field_ref`, `stage_ref`, `follower_participant_ref`' } });
+      await reducers.unfollowSharedStage({ fieldRef: request.field_ref, stageRef: request.stage_ref, followerParticipantRef: request.follower_participant_ref });
+      await waitUntil(() => !rows(db.myStageFollow).some((candidate: any) => candidate.stageRef === request.stage_ref && candidate.followerParticipantRef === request.follower_participant_ref), 'the follow row to clear');
+      await emit({ ok: true, data: { schema: 'oi.shared-field.stage-follow-result/v1', stage_ref: request.stage_ref, field_ref: request.field_ref, follower_participant_ref: request.follower_participant_ref, followed_at_revision: null, following: false } });
     }
     default:
       await emit({ ok: false, error: { kind: 'malformed', message: `unknown request kind: ${request.kind}` } });

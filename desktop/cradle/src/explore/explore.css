@@ -216,3 +216,9 @@
 /* Exact proposals are for inspection, not for stretching the Explore
    layout: cap and scroll them so the presentation body keeps its space. */
 .contribution-review pre,.contribution-stack pre { max-height:16rem; overflow:auto; white-space:pre-wrap; overflow-wrap:anywhere; margin:var(--oi-space-2) 0 0; flex:1 1 100%; }
+/* Shared Stage — the explicit synchronised presentation locus (SHARED-FIELD-DESKTOP §13). */
+.explore-stage-focus { display: flex; gap: var(--oi-space-2); align-items: center; }
+.explore-stage-focus input { flex: 1; min-width: 0; font: inherit; font-size: var(--oi-shell-type-meta); color: var(--oi-accent-ink); background: var(--oi-surface); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-sm); padding: 6px 8px; }
+.explore-stage-focus button { padding: 6px 12px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-pill); color: var(--oi-accent-ink); font: inherit; font-size: var(--oi-shell-type-meta); }
+.explore-stage-focus button:hover:not(:disabled) { border-color: var(--oi-gold); }
+.explore-stage-focus button:disabled { opacity: .4; cursor: default; }

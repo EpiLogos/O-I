@@ -27,6 +27,7 @@ import {PresentationBody,type DepthState} from "./PresentationBody";
 import {BeingEncounter} from "./BeingEncounter";
 import {ContributionPanel} from "./ContributionPanel";
 import {ContextContributionPanel} from "./ContextContributionPanel";
+import {SharedStagePanel} from "./SharedStage";
 // @ts-ignore -- language-neutral view-state codec, unit-tested in tests/explore-field.test.mjs.
 import {EXPLORE_TRAVEL_KEY,amendVisit,canTravel,currentVisit,decodeExploreTravel,freshExploreTravel,pushVisit,travelBy} from "./travel.mjs";
 // @ts-ignore -- language-neutral field reading, unit-tested in tests/explore-field.test.mjs.
@@ -181,6 +182,7 @@ function FieldBody({field_ref,view,snapshot,onOpenRef}:{field_ref:string;view:Fi
   const mine=snapshot.my_authority.filter(a=>a.field_ref===field_ref&&!a.revoked);
   return <article className="world-presentation world-presentation--field" data-field-ref={field_ref} data-field-visibility={field.visibility} data-membership={mine.length?mine.map(a=>a.role).join(","):"none"}>
     <header className="world-presentation__masthead"><div><div className="world-component__eyebrow">SharedField · {field.kind} · {field.visibility}</div><h1>{field.title??field_ref}</h1></div><div className="world-presentation__revision">{mine.length?`you: ${mine.map(a=>`${a.participant_ref} (${a.role})`).join(", ")}`:"you: no membership"}</div></header>
+    <SharedStagePanel field_ref={field_ref} entries={entries} authority={mine}/>
     <section className="world-region" data-region-role="members"><div className="world-region__label">Participants · {members.length}</div><div className="world-region__components"><div className="world-component__collection">{members.map(p=><button type="button" key={p.participant_ref} onClick={()=>onOpenRef(p.participant_ref)}><strong>{p.presentation?.chosen_name??p.participant_ref}</strong><span>{p.identity.kind} · {p.identity.ref}</span></button>)}</div></div></section>
     <section className="world-region" data-region-role="relations"><div className="world-region__label">Relations · {view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).length}</div><div className="world-region__components"><div className="world-component__collection">{view.relations.filter(r=>snapshot.relation_fields[r.relation_ref??""]===field_ref).map(r=><button type="button" key={r.relation_ref} onClick={()=>r.relation_ref&&onOpenRef(r.relation_ref)}><strong>{r.relation}</strong><span>{r.from} → {r.to}</span></button>)}</div></div></section>
     <section className="world-region" data-region-role="entries"><div className="world-region__label">Projected subjects · {entries.length}</div><div className="world-region__components"><div className="world-component__collection">{entries.map(e=><button type="button" key={e.ref} onClick={()=>onOpenRef(e.ref)}><strong>{e.label}</strong><span>{kindLabel(e.kind)}</span></button>)}</div></div></section>
