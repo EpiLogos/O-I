@@ -1,7 +1,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import { FixtureTechneAdapter, assertReading } from '../src/techne/adapter.ts';
-import { beats } from '../src/techne/story/beats.ts';
+import { beats } from '../src/techne/journey/beats.ts';
 import {
   DEFAULT_DWELL_SECONDS,
   EXPRESSION_EDIT_ACTION,
@@ -11,7 +11,7 @@ import {
   moveBeat,
   orderChanged,
   paceBeat,
-} from '../src/techne/story/sequence.ts';
+} from '../src/techne/journey/sequence.ts';
 import { loadFixtureReadings } from '../src/techne/fixtures/load-fixtures.mjs';
 
 const readings = await loadFixtureReadings();

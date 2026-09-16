@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import { beats, sceneTitle } from '../src/techne/story/beats.ts';
+import { beats, sceneTitle } from '../src/techne/journey/beats.ts';
 import { assertReading } from '../src/techne/adapter.ts';
 import { loadFixtureReadings } from '../src/techne/fixtures/load-fixtures.mjs';
 
@@ -54,8 +54,8 @@ test('a reading with no Expression bindings yields zero beats and the honest una
   }
   assert.equal(
     beats(absentFacets).unavailableReason,
-    absentFacets.disclosure.instruments.find((entry) => entry.instrument === 'story').reason,
-    'the owner disclosure’s own story reason is preferred verbatim',
+    absentFacets.disclosure.instruments.find((entry) => entry.instrument === 'journey').reason,
+    'the owner disclosure’s own journey reason is preferred verbatim',
   );
 });
 
@@ -66,7 +66,7 @@ test('bindings without scene refs are data, not errors: zero beats and a derived
     disclosure: {
       ...absentFacets.disclosure,
       instruments: absentFacets.disclosure.instruments.map((entry) => (
-        entry.instrument === 'story' ? { instrument: 'story', available: true } : entry
+        entry.instrument === 'journey' ? { instrument: 'journey', available: true } : entry
       )),
     },
   });

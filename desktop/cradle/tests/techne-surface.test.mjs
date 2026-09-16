@@ -55,12 +55,12 @@ try {
   test('the instrument registry mounts one component per instrument and refuses duplicates', () => {
     const story = () => null;
     const palace = () => null;
-    const stopStory = techneRegistry.registerTechneSurface('story', story);
-    assert.equal(techneRegistry.techneSurface('story'), story);
+    const stopStory = techneRegistry.registerTechneSurface('journey', story);
+    assert.equal(techneRegistry.techneSurface('journey'), story);
     assert.equal(techneRegistry.techneSurface('palace'), undefined, 'unmounted instruments stay unmounted');
-    assert.throws(() => techneRegistry.registerTechneSurface('story', palace), /already registered/);
+    assert.throws(() => techneRegistry.registerTechneSurface('journey', palace), /already registered/);
     stopStory();
-    assert.equal(techneRegistry.techneSurface('story'), undefined);
+    assert.equal(techneRegistry.techneSurface('journey'), undefined);
     const stopPalace = techneRegistry.registerTechneSurface('palace', palace);
     stopPalace();
     assert.equal(techneRegistry.techneSurface('palace'), undefined);

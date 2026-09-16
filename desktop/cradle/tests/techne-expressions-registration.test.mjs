@@ -90,7 +90,7 @@ try {
       selection: selection({}, absent.subject.subject_ref, absent.reading_ref),
       owner,
     });
-    assert.deepEqual(refused, { registered: false, reason: 'no warranted lens binding' });
+    assert.deepEqual(refused, { registered: false, reason: 'no Expression is bound to this subject' });
     assert.equal(k9.focusedInstrumentSource(`ql.techne:source:${absent.subject.subject_ref}`), undefined);
   });
 } finally {

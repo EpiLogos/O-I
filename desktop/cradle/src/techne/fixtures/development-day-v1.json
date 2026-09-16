@@ -10,7 +10,9 @@
     "native_owner": "central/now",
     "native_revision": null,
     "readings": [
-      {"ref": "central:now-reading:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6"}
+      {
+        "ref": "central:now-reading:control:root:b417a7c3d37cd47c2762deee3224687d59db1a9015a322e9a8d7584b3947adf6"
+      }
     ],
     "kind": "now-clearing",
     "standing": "current-development-state"
@@ -72,7 +74,10 @@
     {
       "kind": "run",
       "run_ref": "factory:run:01JBD3Z4X7Q9M2A6K4P8T3W5NQ",
-      "interval": {"from": "2026-09-15T09:10:00+01:00", "to": "2026-09-15T16:40:00+01:00"},
+      "interval": {
+        "from": "2026-09-15T09:10:00+01:00",
+        "to": "2026-09-15T16:40:00+01:00"
+      },
       "uncertainty": "Factory orders by revision, not wall-clock; bounds are the handoff-declared activity window"
     }
   ],
@@ -81,7 +86,12 @@
       "source_ref": "central:source:control:root:Control/user/civil-time-policy.json",
       "source_revision": "central.content-fnv1a64/v1:741:0ef7b5aaedd35e27",
       "native_owner": "central",
-      "selector": {"unit": "text_span", "start": 0, "end": 741, "anchor_ref": null},
+      "selector": {
+        "unit": "text_span",
+        "start": 0,
+        "end": 741,
+        "anchor_ref": null
+      },
       "standing": "architecture-contract",
       "evidence_refs": []
     },
@@ -100,7 +110,9 @@
       "native_owner": "central/ctrl",
       "authority": "registered-read-action",
       "summary": "Read a DAY record.",
-      "expected_effects": ["none — read only"],
+      "expected_effects": [
+        "none — read only"
+      ],
       "input_schema_ref": null
     },
     {
@@ -108,7 +120,9 @@
       "native_owner": "central/ctrl",
       "authority": "registered-read-action",
       "summary": "Read a NOW clearing with placement.",
-      "expected_effects": ["none — read only"],
+      "expected_effects": [
+        "none — read only"
+      ],
       "input_schema_ref": null
     },
     {
@@ -116,7 +130,9 @@
       "native_owner": "central/ctrl",
       "authority": "registered-read-action",
       "summary": "Read per-source change history.",
-      "expected_effects": ["none — read only"],
+      "expected_effects": [
+        "none — read only"
+      ],
       "input_schema_ref": null
     },
     {
@@ -124,25 +140,71 @@
       "native_owner": "central/ctrl",
       "authority": "registered-read-action",
       "summary": "Stream source changes since a cursor.",
-      "expected_effects": ["none — read only"],
+      "expected_effects": [
+        "none — read only"
+      ],
       "input_schema_ref": null
     }
   ],
   "disclosure": {
     "instruments": [
-      {"instrument": "canvas", "available": true},
-      {"instrument": "timeline", "available": true},
-      {"instrument": "place", "available": false, "reason": "no disclosed spatial reading"},
-      {"instrument": "story", "available": false, "reason": "no Expression scenes bound to this subject"},
-      {"instrument": "palace", "available": false, "reason": "no Expression composition available for this subject"},
-      {"instrument": "expressions", "available": false, "reason": "no Expression is bound to this subject"},
-      {"instrument": "m1234", "available": false, "reason": "no warranted lens binding"}
+      {
+        "instrument": "project",
+        "available": true,
+        "m_prime": 0,
+        "reading": "4:2-deep"
+      },
+      {
+        "instrument": "canvas",
+        "available": true,
+        "m_prime": 1,
+        "reading": "4:2-deep"
+      },
+      {
+        "instrument": "timeline",
+        "available": true,
+        "m_prime": 2,
+        "reading": "4:2-deep"
+      },
+      {
+        "instrument": "journey",
+        "available": false,
+        "m_prime": 3,
+        "reading": "4:2-deep",
+        "reason": "no Expression scenes bound to this subject"
+      },
+      {
+        "instrument": "place",
+        "available": false,
+        "m_prime": 4,
+        "reading": "4:2-deep",
+        "reason": "no disclosed spatial reading"
+      },
+      {
+        "instrument": "palace",
+        "available": false,
+        "m_prime": 5,
+        "reading": "4:2-deep",
+        "reason": "no Expression composition available for this subject"
+      },
+      {
+        "instrument": "expressions",
+        "available": false,
+        "reading": "3:3-conjugate",
+        "reason": "no Expression is bound to this subject"
+      }
     ],
     "degraded": [
-      {"instrument": "timeline", "reason": "Factory runs carry no wall-clock time; run lanes render from handoff-declared windows"}
+      {
+        "instrument": "timeline",
+        "reason": "Factory runs carry no wall-clock time; run lanes render from handoff-declared windows"
+      }
     ],
     "suggestions": [
-      {"instrument": "timeline", "reason": "day, now, session and run continuity are all disclosed"}
+      {
+        "instrument": "timeline",
+        "reason": "day, now, session and run continuity are all disclosed"
+      }
     ]
   }
 }

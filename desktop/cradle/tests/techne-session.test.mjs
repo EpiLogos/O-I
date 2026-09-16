@@ -71,7 +71,7 @@ test('opening the current instrument is a no-op; sessions on different subjects 
 test('the agent-session ref is carried verbatim, never minted', () => {
   const store = createDisclosureSessionStore();
   const carried = store.setSelection(selection({ agent_session_ref: null }));
-  const opened = store.openInInstrument('story');
+  const opened = store.openInInstrument('journey');
   assert.equal(opened.selection.agent_session_ref, null);
   assert.equal(carried.session_ref.startsWith('techne:disclosure-session:'), true);
 });

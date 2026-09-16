@@ -12,16 +12,18 @@
 import { registerCanvasSurface } from "./canvas/register";
 import { registerTimelineSurface } from "./timeline/register";
 import { registerPlaceSurface } from "./place/register";
-import { registerStorySurface } from "./story/register";
+import { registerJourneySurface } from "./journey/register";
 import { registerPalaceSurface } from "./palace/register";
+import { registerProjectSurface } from "./project/register";
 import { registerExpressionsSurface } from "./expressions/register";
 
 export function registerTechneInstruments(): () => void {
   const unregister = [
+    registerProjectSurface(),
     registerCanvasSurface(),
     registerTimelineSurface(),
     registerPlaceSurface(),
-    registerStorySurface(),
+    registerJourneySurface(),
     registerPalaceSurface(),
     registerExpressionsSurface(),
   ];

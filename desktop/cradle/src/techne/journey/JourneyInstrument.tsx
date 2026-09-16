@@ -1,7 +1,7 @@
 /**
- * The Story instrument surface (L5 Technē T5) — reader/editor over the
+ * The Journey instrument surface (L5 Technē T5 — M3′) — reader/editor over the
  * beats derived from the reading's own Expression bindings (see ./beats).
- * A Story is an ordered reading of scenes: scene refs, expression refs and
+ * A Journey is an ordered reading of scenes: scene refs, expression refs and
  * revisions are shown verbatim; the scene frame (time · place · subject ·
  * source) is composed from the reading's disclosed facets; source cards open
  * to their exact selector.
@@ -22,7 +22,7 @@ import { adapterForSource, techneSource } from "../adapter";
 import type { TechneActionReceipt } from "../contract";
 import type { TechneSurfaceProps } from "../registry";
 import { disclosureSession } from "../session";
-import { beats, type StoryBeat } from "./beats";
+import { beats, type JourneyBeat } from "./beats";
 import {
   composeProposal,
   DEFAULT_DWELL_SECONDS,
@@ -33,16 +33,16 @@ import {
   paceBeat,
   type SequenceDraft,
 } from "./sequence";
-import "./story.css";
+import "./journey.css";
 
 /** One Expression's beats, in binding order. */
 interface BeatGroup {
   expression_ref: string;
   revision: string | null;
-  order: StoryBeat[];
+  order: JourneyBeat[];
 }
 
-function groupBeats(beatList: StoryBeat[]): BeatGroup[] {
+function groupBeats(beatList: JourneyBeat[]): BeatGroup[] {
   const groups: BeatGroup[] = [];
   const index = new Map<string, BeatGroup>();
   for (const beat of beatList) {
@@ -63,7 +63,7 @@ function displayedOrder(group: BeatGroup, drafts: Record<string, SequenceDraft>)
   return drafts[group.expression_ref]?.scene_order ?? group.order.map((beat) => beat.scene_ref);
 }
 
-export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
+export function JourneyInstrument({ session, reading }: TechneSurfaceProps) {
   const [drafts, setDrafts] = useState<Record<string, SequenceDraft>>({});
   const [receipt, setReceipt] = useState<TechneActionReceipt | null>(null);
   const [proposalError, setProposalError] = useState<string | null>(null);
@@ -88,7 +88,7 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
     const byScene = new Map(group.order.map((beat) => [beat.scene_ref, beat]));
     return displayedOrder(group, drafts)
       .map((sceneRef) => byScene.get(sceneRef))
-      .filter((beat): beat is StoryBeat => Boolean(beat))
+      .filter((beat): beat is JourneyBeat => Boolean(beat))
       .map((beat) => ({
         scene_ref: beat.scene_ref,
         expression_ref: beat.expression_ref,
@@ -106,13 +106,13 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
   }, [playIndex, playOrder]);
 
   if (!reading || !model) {
-    return <div className="techne-story"><p className="techne-absent">No Technē reading is resolved yet — the story waits on the source.</p></div>;
+    return <div className="techne-journey"><p className="techne-absent">No Technē reading is resolved yet — the journey waits on the source.</p></div>;
   }
   if (!model.beats.length) {
     return (
-      <div className="techne-story">
-        <span className="techne-eyebrow">Story</span>
-        <p className="techne-absent" role="status">No story is readable here — {model.unavailableReason ?? "no Expression scenes are bound to this reading"}.</p>
+      <div className="techne-journey">
+        <span className="techne-eyebrow">Journey</span>
+        <p className="techne-absent" role="status">No journey is readable here — {model.unavailableReason ?? "no Expression scenes are bound to this reading"}.</p>
       </div>
     );
   }
@@ -172,15 +172,15 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
   let position = 0;
 
   return (
-    <div className="techne-story">
-      <header className="techne-story-head">
-        <span className="techne-eyebrow">Story · ordered Expression scenes</span>
-        <code className="techne-story-reading" title="Reading ref">{reading.reading_ref}</code>
-        <span className="techne-story-transport">
+    <div className="techne-journey">
+      <header className="techne-journey-head">
+        <span className="techne-eyebrow">Journey · ordered Expression scenes</span>
+        <code className="techne-journey-reading" title="Reading ref">{reading.reading_ref}</code>
+        <span className="techne-journey-transport">
           {playing
-            ? <button type="button" className="techne-story-button" onClick={() => setPlayIndex(null)}>Stop</button>
-            : <button type="button" className="techne-story-button" onClick={() => setPlayIndex(0)} disabled={!playOrder.length}>Play</button>}
-          {playing && <span className="techne-story-stand">beat {(playIndex ?? 0) + 1} of {playOrder.length}</span>}
+            ? <button type="button" className="techne-journey-button" onClick={() => setPlayIndex(null)}>Stop</button>
+            : <button type="button" className="techne-journey-button" onClick={() => setPlayIndex(0)} disabled={!playOrder.length}>Play</button>}
+          {playing && <span className="techne-journey-stand">beat {(playIndex ?? 0) + 1} of {playOrder.length}</span>}
         </span>
       </header>
 
@@ -190,12 +190,12 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
         const byScene = new Map(group.order.map((beat) => [beat.scene_ref, beat]));
         const dirty = draft ? orderChanged(draft, group.order) : false;
         return (
-          <section className="techne-story-expression" key={group.expression_ref} aria-label={`Expression ${group.expression_ref}`}>
-            <header className="techne-story-expression-head">
+          <section className="techne-journey-expression" key={group.expression_ref} aria-label={`Expression ${group.expression_ref}`}>
+            <header className="techne-journey-expression-head">
               <code title="expression_ref">{group.expression_ref}</code>
-              <span className="techne-story-rev">rev {group.revision ?? "—"}</span>
+              <span className="techne-journey-rev">rev {group.revision ?? "—"}</span>
             </header>
-            <ol className="techne-story-beats">
+            <ol className="techne-journey-beats">
               {order.map((sceneRef, index) => {
                 const beat = byScene.get(sceneRef);
                 if (!beat) return null;
@@ -203,49 +203,49 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
                 const current = playing && playOrder[playIndex ?? 0]?.scene_ref === sceneRef;
                 const dwell = draft ? dwellFor(draft, sceneRef) : DEFAULT_DWELL_SECONDS;
                 return (
-                  <li className="techne-story-beat" key={sceneRef} data-current={current || undefined}>
-                    <div className="techne-story-beat-head">
-                      <span className="techne-story-index">{position}</span>
-                      <strong className="techne-story-title">{beat.title}</strong>
-                      <span className="techne-story-move">
+                  <li className="techne-journey-beat" key={sceneRef} data-current={current || undefined}>
+                    <div className="techne-journey-beat-head">
+                      <span className="techne-journey-index">{position}</span>
+                      <strong className="techne-journey-title">{beat.title}</strong>
+                      <span className="techne-journey-move">
                         <button type="button" aria-label={`Move ${beat.title} earlier`} disabled={index === 0 || playing} onClick={() => moveInGroup(group, sceneRef, -1)}>↑</button>
                         <button type="button" aria-label={`Move ${beat.title} later`} disabled={index === order.length - 1 || playing} onClick={() => moveInGroup(group, sceneRef, 1)}>↓</button>
                       </span>
                     </div>
-                    <div className="techne-story-ids">
+                    <div className="techne-journey-ids">
                       <code title="scene_ref">{beat.scene_ref}</code>
-                      <span className="techne-story-rev">rev {beat.revision ?? "—"}</span>
+                      <span className="techne-journey-rev">rev {beat.revision ?? "—"}</span>
                     </div>
-                    <ul className="techne-story-chips" aria-label="Scene frame">
+                    <ul className="techne-journey-chips" aria-label="Scene frame">
                       {beat.frame.temporal.map((facet) => (
-                        <li className="techne-story-chip" key={`${facet.kind}:${facet.instant ?? facet.day_ref ?? facet.facet_ref ?? ""}`} title={`temporal · ${facet.kind}`}>
+                        <li className="techne-journey-chip" key={`${facet.kind}:${facet.instant ?? facet.day_ref ?? facet.facet_ref ?? ""}`} title={`temporal · ${facet.kind}`}>
                           <span>time · {facet.kind}</span> <code>{facet.day_ref ?? facet.instant ?? "—"}</code>
                         </li>
                       ))}
                       {beat.frame.places.map((place) => (
-                        <li className="techne-story-chip" key={place.place_ref} title={`place · ${place.precision}`}>
+                        <li className="techne-journey-chip" key={place.place_ref} title={`place · ${place.precision}`}>
                           <span>place · {place.precision}</span> {place.names.length ? place.names.join(" · ") : <code>{place.place_ref}</code>}
                         </li>
                       ))}
-                      <li className="techne-story-chip" title="subject">
+                      <li className="techne-journey-chip" title="subject">
                         <span>subject</span> <code>{beat.frame.subject_ref}</code>
                       </li>
                     </ul>
-                    <details className="techne-story-sources">
+                    <details className="techne-journey-sources">
                       <summary>sources · {beat.frame.sources.length}</summary>
                       <ul>
                         {beat.frame.sources.map((source) => (
-                          <li className="techne-story-source" key={source.source_ref}>
+                          <li className="techne-journey-source" key={source.source_ref}>
                             <code title="source_ref">{source.source_ref}</code>
-                            {source.source_revision && <span className="techne-story-rev">{source.source_revision}</span>}
+                            {source.source_revision && <span className="techne-journey-rev">{source.source_revision}</span>}
                             {source.selector
-                              ? <span className="techne-story-selector">selector · {source.selector.unit}{source.selector.unit === "text_span" ? ` [${source.selector.start}, ${source.selector.end}]` : ""}</span>
-                              : <span className="techne-story-selector">selector · none disclosed</span>}
+                              ? <span className="techne-journey-selector">selector · {source.selector.unit}{source.selector.unit === "text_span" ? ` [${source.selector.start}, ${source.selector.end}]` : ""}</span>
+                              : <span className="techne-journey-selector">selector · none disclosed</span>}
                           </li>
                         ))}
                       </ul>
                     </details>
-                    <div className="techne-story-pace" title="Local reading pace — held in this surface, never routed">
+                    <div className="techne-journey-pace" title="Local reading pace — held in this surface, never routed">
                       <span>pace</span>
                       <button type="button" aria-label={`Slower ${beat.title}`} disabled={dwell <= 1 || playing} onClick={() => paceInGroup(group, sceneRef, dwell - 1)}>−</button>
                       <output>{dwell}s</output>
@@ -255,23 +255,23 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
                 );
               })}
             </ol>
-            <footer className="techne-story-expression-foot">
+            <footer className="techne-journey-expression-foot">
               {dirty
                 ? <>
-                    <span className="techne-story-note">Local draft — order {order.length} scenes; nothing is written until routed.</span>
-                    <button type="button" className="techne-story-button" onClick={() => discard(group)} disabled={proposing || playing}>Discard draft</button>
-                    <button type="button" className="techne-story-button techne-story-propose" onClick={() => propose(group)} disabled={proposing || playing}>
+                    <span className="techne-journey-note">Local draft — order {order.length} scenes; nothing is written until routed.</span>
+                    <button type="button" className="techne-journey-button" onClick={() => discard(group)} disabled={proposing || playing}>Discard draft</button>
+                    <button type="button" className="techne-journey-button techne-journey-propose" onClick={() => propose(group)} disabled={proposing || playing}>
                       {proposing ? "Routing…" : "Propose to Expression owner"}
                     </button>
                   </>
-                : <span className="techne-story-note">Reading order — reorder a scene to draft a composition proposal.</span>}
+                : <span className="techne-journey-note">Reading order — reorder a scene to draft a composition proposal.</span>}
             </footer>
           </section>
         );
       })}
 
       {(receipt || proposalError) && (
-        <div className="techne-story-receipt" data-routed={receipt?.routed === true} role="status">
+        <div className="techne-journey-receipt" data-routed={receipt?.routed === true} role="status">
           <strong>{receipt ? (receipt.routed ? "Proposal routed to the Expression owner" : "Proposal refused by routing") : "Proposal could not be routed"}</strong>
           {receipt && (
             <p><code>{receipt.action_ref}</code> · owner <code>{receipt.native_owner}</code>
@@ -283,16 +283,16 @@ export function StoryInstrument({ session, reading }: TechneSurfaceProps) {
           {!!receipt?.expected_effects?.length && (
             <ul>{receipt.expected_effects.map((effect) => <li key={effect}>{effect}</li>)}</ul>
           )}
-          <p className="techne-story-note">Routing proposes only — the Expression owner executes under its own authority; the story instrument wrote nothing.</p>
+          <p className="techne-journey-note">Routing proposes only — the Expression owner executes under its own authority; the journey instrument wrote nothing.</p>
         </div>
       )}
 
-      <footer className="techne-story-cross">
+      <footer className="techne-journey-cross">
         {expressionsDisclosure?.available
           ? (
             <button
               type="button"
-              className="techne-story-button"
+              className="techne-journey-button"
               disabled={!session}
               title="Project the DisclosureSession into the expressions instrument; an expression_focus_ref already on the session rides across"
               onClick={() => disclosureSession.openInInstrument("expressions")}

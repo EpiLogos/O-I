@@ -55,23 +55,66 @@
       "native_owner": "central/ctrl",
       "authority": "registered-read-action",
       "summary": "Read the source's change history.",
-      "expected_effects": ["none — read only"],
+      "expected_effects": [
+        "none — read only"
+      ],
       "input_schema_ref": null
     }
   ],
   "disclosure": {
     "instruments": [
-      {"instrument": "canvas", "available": true},
-      {"instrument": "timeline", "available": true},
-      {"instrument": "place", "available": false, "reason": "no disclosed spatial reading"},
-      {"instrument": "story", "available": false, "reason": "no Expression scenes bound to this subject"},
-      {"instrument": "palace", "available": false, "reason": "no Expression composition available for this subject"},
-      {"instrument": "expressions", "available": false, "reason": "no Expression is bound to this subject"},
-      {"instrument": "m1234", "available": false, "reason": "no warranted lens binding"}
+      {
+        "instrument": "project",
+        "available": true,
+        "m_prime": 0,
+        "reading": "4:2-deep"
+      },
+      {
+        "instrument": "canvas",
+        "available": true,
+        "m_prime": 1,
+        "reading": "4:2-deep"
+      },
+      {
+        "instrument": "timeline",
+        "available": true,
+        "m_prime": 2,
+        "reading": "4:2-deep"
+      },
+      {
+        "instrument": "journey",
+        "available": false,
+        "m_prime": 3,
+        "reading": "4:2-deep",
+        "reason": "no Expression scenes bound to this subject"
+      },
+      {
+        "instrument": "place",
+        "available": false,
+        "m_prime": 4,
+        "reading": "4:2-deep",
+        "reason": "no disclosed spatial reading"
+      },
+      {
+        "instrument": "palace",
+        "available": false,
+        "m_prime": 5,
+        "reading": "4:2-deep",
+        "reason": "no Expression composition available for this subject"
+      },
+      {
+        "instrument": "expressions",
+        "available": false,
+        "reading": "3:3-conjugate",
+        "reason": "no Expression is bound to this subject"
+      }
     ],
     "degraded": [],
     "suggestions": [
-      {"instrument": "timeline", "reason": "a receipt time is disclosed"}
+      {
+        "instrument": "timeline",
+        "reason": "a receipt time is disclosed"
+      }
     ]
   }
 }

@@ -1,0 +1,173 @@
+/* M0′ Project ground instrument (L5 Technē) — scoped under the opt-in
+ * .oi-techne host scope; existing --oi-* tokens only. */
+.oi-techne.project-ground {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3, 10px);
+  height: 100%;
+  overflow: auto;
+  padding: var(--oi-space-3, 12px);
+  background: var(--oi-surface);
+  color: var(--oi-foreground);
+}
+
+.project-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3, 10px);
+  flex-wrap: wrap;
+}
+
+.project-eyebrow {
+  font-size: var(--oi-type-xs, 11px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--oi-muted);
+}
+
+.project-subject {
+  font-family: var(--oi-font-mono, monospace);
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+}
+
+.project-meta {
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+  margin: 0;
+}
+
+.project-section {
+  border: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border-radius: var(--oi-techne-panel-radius, 8px);
+  padding: var(--oi-space-3, 10px);
+  background: var(--oi-techne-wash, transparent);
+}
+
+.project-heading {
+  font-size: var(--oi-type-xs, 11px);
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.04em;
+  color: var(--oi-muted);
+  margin: 0 0 var(--oi-space-2, 6px);
+}
+
+.project-ground-ref {
+  font-family: var(--oi-font-mono, monospace);
+  font-size: var(--oi-type-xs, 11px);
+  margin: 0 0 var(--oi-space-2, 6px);
+  overflow-wrap: anywhere;
+}
+
+.project-members,
+.project-sources {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1, 4px);
+}
+
+.project-member {
+  border: 1px solid transparent;
+  background: transparent;
+  color: var(--oi-foreground);
+  font-family: var(--oi-font-mono, monospace);
+  font-size: var(--oi-type-xs, 11px);
+  padding: 2px 6px;
+  border-radius: var(--oi-techne-tool-radius, 6px);
+  cursor: pointer;
+  text-align: left;
+  max-width: 100%;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.project-member:hover {
+  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+}
+
+.project-member.is-picked {
+  border-color: var(--oi-techne-accent, var(--oi-accent));
+}
+
+.project-member:focus-visible,
+.project-open:focus-visible,
+.project-return:focus-visible {
+  outline: 2px solid var(--oi-techne-accent, var(--oi-accent));
+  outline-offset: 2px;
+}
+
+.project-source-ref {
+  font-family: var(--oi-font-mono, monospace);
+  font-size: var(--oi-type-xs, 11px);
+  margin-right: var(--oi-space-2, 6px);
+}
+
+.project-open-row {
+  display: flex;
+  gap: var(--oi-space-2, 6px);
+  flex-wrap: wrap;
+}
+
+.project-open {
+  border: 1px solid var(--oi-rule, #ccc);
+  background: var(--oi-techne-hud-solid, var(--oi-surface));
+  color: var(--oi-foreground);
+  border-radius: var(--oi-techne-tool-radius, 6px);
+  padding: 4px 10px;
+  font-size: var(--oi-type-xs, 11px);
+  cursor: pointer;
+}
+
+.project-open:hover {
+  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+}
+
+.project-foot {
+  margin-top: auto;
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2, 6px);
+}
+
+.project-return {
+  align-self: flex-start;
+  border: 1px solid var(--oi-rule, #ccc);
+  background: var(--oi-techne-hud-solid, var(--oi-surface));
+  color: var(--oi-foreground);
+  border-radius: var(--oi-techne-tool-radius, 6px);
+  padding: 6px 12px;
+  font-size: var(--oi-type-xs, 11px);
+  cursor: pointer;
+}
+
+.project-return:hover {
+  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+}
+
+.project-receipt {
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+  margin: 0;
+  overflow-wrap: anywhere;
+}
+
+.project-receipt.is-routed {
+  color: var(--oi-foreground);
+}
+
+.project-receipt.is-refused {
+  color: var(--oi-techne-accent, var(--oi-accent));
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .oi-techne.project-ground * {
+    transition: none !important;
+    animation: none !important;
+  }
+}

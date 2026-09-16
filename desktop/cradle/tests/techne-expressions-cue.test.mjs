@@ -74,11 +74,11 @@ test('absent-facets fixture → the cue builds WITHOUT QL cues', () => {
   ]);
 });
 
-test('absent-facets fixture → embody() refuses with the disclosure m1234 reason, word for word', () => {
+test('absent-facets fixture → embody() refuses with the conjugate Expression disclosure reason, word for word', () => {
   const gate = embody(absent, selection({}, ABSENT_SUBJECT, absent.reading_ref));
   assert.equal(gate.embodyable, false);
-  const disclosed = absent.disclosure.instruments.find((entry) => entry.instrument === 'm1234');
-  assert.equal(disclosed.reason, 'no warranted lens binding');
+  const disclosed = absent.disclosure.instruments.find((entry) => entry.instrument === 'expressions');
+  assert.equal(disclosed.reason, 'no Expression is bound to this subject');
   assert.equal(gate.reason, disclosed.reason, 'capability honesty mirrors the disclosure reason exactly');
 });
 

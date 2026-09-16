@@ -27,25 +27,32 @@ export const TECHNE_CONTRACT = "ql.techne/v1";
 // Reading (ql.techne/reading/v1)
 // ---------------------------------------------------------------------------
 
-/** The seven instruments of the constellation. `m1234` is M1′–M4′. */
+/** The instrument set of the one M′ field's two readings (amended
+ * 2026-09-16, owner-ratified; grounds: QL-MEF #73/#201/#42). The six 4:2
+ * deep instruments bind M0′–M5′; `expressions` is the conjugate 3:3
+ * Expression reading, not a deep instrument. */
 export type TechneInstrument =
+  | "project"
   | "canvas"
   | "timeline"
+  | "journey"
   | "place"
-  | "story"
   | "palace"
-  | "expressions"
-  | "m1234";
+  | "expressions";
 
 export const TECHNE_INSTRUMENTS: readonly TechneInstrument[] = [
+  "project",
   "canvas",
   "timeline",
+  "journey",
   "place",
-  "story",
   "palace",
   "expressions",
-  "m1234",
 ] as const;
+
+/** Which reading of the one M′ field an aperture carries. Crossing changes
+ * the mode of disclosure and available operations, never the subject. */
+export type TechneReadingKind = "4:2-deep" | "3:3-conjugate";
 
 /** One labelled native time fact. Occurrence, receipt, validity and
  * continuity stay distinct; consumers never collapse them to created_at. */
@@ -244,6 +251,10 @@ export interface TechneDisclosureEntry {
   available: boolean;
   /** Required when available is false; capability honesty, never hidden. */
   reason?: string;
+  /** The M′ office this instrument is the Technē face of. Absent on the
+   * conjugate 3:3 reading. */
+  m_prime?: number;
+  reading?: TechneReadingKind;
 }
 
 export interface TechneDisclosureNote {
@@ -557,11 +568,17 @@ function validateDisclosure(value: unknown, label: string, errors: string[]): vo
   value.instruments.forEach((entry, index) => {
     const entryLabel = `${label}.instruments[${index}]`;
     if (!isObject(entry)) { errors.push(`${entryLabel}: must be an object`); return; }
-    keysAllowed(entry, ["instrument", "available", "reason"], entryLabel, errors);
+    keysAllowed(entry, ["instrument", "available", "reason", "m_prime", "reading"], entryLabel, errors);
     if (!isInstrument(entry.instrument)) errors.push(`${entryLabel}.instrument: not an instrument`);
     if (typeof entry.available !== "boolean") { errors.push(`${entryLabel}.available: boolean`); return; }
     if (entry.available === false && !ref(entry.reason)) errors.push(`${entryLabel}: an unavailable instrument requires a reason`);
     if (entry.reason !== undefined && !stringOrNull(entry.reason)) errors.push(`${entryLabel}.reason: must be a string or null`);
+    if (entry.m_prime !== undefined && (typeof entry.m_prime !== "number" || !Number.isInteger(entry.m_prime) || entry.m_prime < 0 || entry.m_prime > 5)) {
+      errors.push(`${entryLabel}.m_prime: must be an integer 0-5 (the field has M′0–M′5 only)`);
+    }
+    if (entry.reading !== undefined && entry.reading !== "4:2-deep" && entry.reading !== "3:3-conjugate") {
+      errors.push(`${entryLabel}.reading: must be "4:2-deep" or "3:3-conjugate"`);
+    }
   });
   for (const key of ["degraded", "suggestions"]) {
     if (value[key] === undefined) continue;

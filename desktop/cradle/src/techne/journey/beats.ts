@@ -1,6 +1,6 @@
 /**
- * The Story instrument's beat model (L5 Technē T5) — pure derivation, no
- * store, no persistence. A Story beat is ONE expression binding's scene:
+ * The Journey instrument's beat model (L5 Technē T5) — pure derivation, no
+ * store, no persistence. A Journey beat is ONE expression binding's scene:
  * `expressions[]` entries that carry a `scene_ref`, with scene refs carried
  * verbatim (never re-keyed, never shortened — the Expression substrate
  * `oi.expression/v1` stays the only persistence; this model persists
@@ -25,12 +25,12 @@ import type {
 } from "../contract.ts";
 
 /** One beat's frame, composed only of facets the reading itself discloses. */
-export interface StoryBeatFrame {
+export interface JourneyBeatFrame {
   /** The reading's subject — every beat discloses the same subject. */
   subject_ref: string;
   /** The reading's occurrence/day temporal facets, verbatim and in reading
    * order. Other kinds (receipt, now, session, run, …) belong to the
-   * timeline instrument, not to the story's scene time. */
+   * timeline instrument, not to the journey's scene time. */
   temporal: TechneTemporalFacet[];
   /** Spatial frame: place ref, current names and precision, verbatim. */
   places: { place_ref: string; names: string[]; precision: TechnePlacePrecision }[];
@@ -44,20 +44,20 @@ export interface StoryBeatFrame {
 }
 
 /** One beat: one scene of one Expression binding, framed by the reading. */
-export interface StoryBeat {
+export interface JourneyBeat {
   expression_ref: string;
   revision: string | null;
   scene_ref: string;
   /** The scene_ref tail — a display title derived from the ref, never a
    * replacement for it. */
   title: string;
-  frame: StoryBeatFrame;
+  frame: JourneyBeatFrame;
 }
 
-/** The story a reading supports: its beats, or the honest reason it
+/** The journey a reading supports: its beats, or the honest reason it
  * supports none. */
-export interface StoryModel {
-  beats: StoryBeat[];
+export interface JourneyModel {
+  beats: JourneyBeat[];
   /** Present exactly when beats is empty. */
   unavailableReason?: string;
 }
@@ -68,7 +68,7 @@ export function sceneTitle(sceneRef: string): string {
   return tail.length > 0 ? tail : sceneRef;
 }
 
-function frameOf(reading: TechneReading): StoryBeatFrame {
+function frameOf(reading: TechneReading): JourneyBeatFrame {
   const temporal = (reading.temporal ?? []).filter(
     (facet) => facet.kind === "occurrence" || facet.kind === "day",
   );
@@ -85,12 +85,12 @@ function frameOf(reading: TechneReading): StoryBeatFrame {
   return { subject_ref: reading.subject.subject_ref, temporal, places, sources };
 }
 
-/** Derive the story beats of one reading: one beat per scene-bearing
+/** Derive the journey beats of one reading: one beat per scene-bearing
  * Expression binding, in binding order. No Expression scenes bound means
  * zero beats plus the honest unavailable reason — data, never an error. */
-export function beats(reading: TechneReading): StoryModel {
+export function beats(reading: TechneReading): JourneyModel {
   const frame = frameOf(reading);
-  const sceneBeats: StoryBeat[] = [];
+  const sceneBeats: JourneyBeat[] = [];
   for (const binding of reading.expressions ?? []) {
     if (!binding.scene_ref) continue;
     sceneBeats.push({
@@ -102,11 +102,11 @@ export function beats(reading: TechneReading): StoryModel {
     });
   }
   if (sceneBeats.length > 0) return { beats: sceneBeats };
-  // The disclosure's own story reason is the owner's honesty — prefer it
+  // The disclosure's own journey reason is the owner's honesty — prefer it
   // verbatim; derive from the data when the disclosure is silent or
   // contradicts it (capability honesty never papers over absent data).
-  const story = reading.disclosure.instruments.find((entry) => entry.instrument === "story");
-  if (story && !story.available && story.reason) return { beats: [], unavailableReason: story.reason };
+  const journey = reading.disclosure.instruments.find((entry) => entry.instrument === "journey");
+  if (journey && !journey.available && journey.reason) return { beats: [], unavailableReason: journey.reason };
   if (!(reading.expressions ?? []).length) {
     return { beats: [], unavailableReason: "no Expression is bound to this subject" };
   }

@@ -1,5 +1,5 @@
 /**
- * The Story instrument's sequence draft (L5 Technē T5) — pure composition
+ * The Journey instrument's sequence draft (L5 Technē T5) — pure composition
  * draft over derived beats. LOCKED LAW: there is no second Journey
  * persistence ontology. The draft is presentation-composition state held in
  * the component (contract §3 keeps view/layout/lane state inexpressible in
@@ -26,7 +26,7 @@ import {
   type TechneActionRoute,
   type TechneReading,
 } from "../contract.ts";
-import type { StoryBeat } from "./beats.ts";
+import type { JourneyBeat } from "./beats.ts";
 
 /** The Expression owner's real edit operation (ExpressionRequest
  * `operation: "edit"`); used verbatim when the reading discloses it. */
@@ -49,9 +49,9 @@ export interface SequenceDraft {
 }
 
 /** The identity draft: the beats' own order, default pace — nothing edited. */
-export function draftFromBeats(beatGroup: StoryBeat[], expressionRef: string): SequenceDraft {
+export function draftFromBeats(beatGroup: JourneyBeat[], expressionRef: string): SequenceDraft {
   const owned = beatGroup.filter((beat) => beat.expression_ref === expressionRef);
-  if (!owned.length) throw new Error(`No story beats exist for expression ${expressionRef} — no draft can be taken`);
+  if (!owned.length) throw new Error(`No journey beats exist for expression ${expressionRef} — no draft can be taken`);
   return {
     expression_ref: expressionRef,
     revision: owned[0].revision ?? null,
@@ -90,7 +90,7 @@ export function dwellFor(draft: SequenceDraft, sceneRef: string): number {
 
 /** True when the draft's order differs from `beats`' own (binding) order —
  * the condition under which a proposal is worth routing at all. */
-export function orderChanged(draft: SequenceDraft, beatGroup: StoryBeat[]): boolean {
+export function orderChanged(draft: SequenceDraft, beatGroup: JourneyBeat[]): boolean {
   const identity = beatGroup
     .filter((beat) => beat.expression_ref === draft.expression_ref)
     .map((beat) => beat.scene_ref);

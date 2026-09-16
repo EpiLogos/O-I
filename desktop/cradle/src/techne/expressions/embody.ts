@@ -6,7 +6,8 @@
  * The gate: a subject is embodyable when its reading WARRANTS ql (M′
  * embodiment engages the harmonic/geometric depth) OR an Expression binding
  * exists (scene embodiment). When neither holds, the refusal is capability
- * honesty: the reason mirrors the reading's own disclosure for m1234, the
+ * honesty: the reason mirrors the reading's own disclosure for the conjugate
+ * Expression reading
  * same way every unavailable instrument carries its reason.
  *
  * The descriptor names where embodiment would live —
@@ -72,7 +73,7 @@ export function embody(reading: TechneReading, selection: DisclosureSelection): 
   const warranted = reading.ql !== undefined;
   const bound = (reading.expressions?.length ?? 0) > 0;
   if (!warranted && !bound) {
-    const m1234 = reading.disclosure.instruments.find((entry) => entry.instrument === "m1234");
+    const m1234 = reading.disclosure.instruments.find((entry) => entry.instrument === "expressions");
     const reason = m1234 && !m1234.available && m1234.reason
       ? m1234.reason
       : "no warranted QL facet and no Expression binding — nothing to embody";

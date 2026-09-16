@@ -64,14 +64,14 @@ try {
     const targets = place.crossOpenTargets(representative);
     assert.deepEqual(
       targets.map((entry) => entry.instrument),
-      ['canvas', 'timeline', 'story', 'palace', 'expressions', 'm1234'],
+      ['project', 'canvas', 'timeline', 'journey', 'palace', 'expressions'],
       'every available instrument except the current place aperture is offered',
     );
     const absent = await loadFixture('absent-facets-v1.json');
     assert.deepEqual(
       place.crossOpenTargets(absent).map((entry) => entry.instrument),
-      ['canvas', 'timeline'],
-      'unavailable instruments carry their reason, they are not offered',
+      ['project', 'canvas', 'timeline'],
+      'unavailable instruments carry their reason, they are not offered; the M0′ ground is available',
     );
     assert.deepEqual(place.crossOpenTargets(null), []);
   });
