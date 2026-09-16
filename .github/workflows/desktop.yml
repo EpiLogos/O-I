@@ -63,6 +63,9 @@ jobs:
       - name: Prove the live configuration source against the typed kernel seam (#299 C6)
         working-directory: desktop/cradle
         run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs
+      - name: Prove Workspace state continuity across relaunch and degradation (#18/#65)
+        working-directory: desktop/cradle
+        run: node --test tests/workspace-continuity.test.mjs
       - name: Install browser engines for search component contracts
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium webkit
