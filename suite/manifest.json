@@ -273,5 +273,27 @@
   ],
   "recorded_at": "2026-09-14",
   "standing": "historical-unratified-prelocal-build-record",
-  "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority."
+  "purpose": "Historical checksummed and attested pre-local build evidence retained for reproducibility and deterministic installation tests; not release ratification, product acceptance, or current-main authority.",
+  "desktop_bundle": {
+    "id": "desktop",
+    "public_name": "O-I Desktop",
+    "repository": "https://github.com/EpiLogos/O-I",
+    "checkout": "O-I",
+    "revision": "fcc83989cce85d026b832366cf6b359061f9d606",
+    "historical_tag": "oi-desktop-v0.1.0-prelocal.1",
+    "artifact": {
+      "kind": "desktop-bundle",
+      "entry": null,
+      "assets": [
+        {
+          "target": "x86_64-unknown-linux-gnu",
+          "name": "oi-cradle-0.1.0-x86_64-unknown-linux-gnu.tar.gz",
+          "sha256": "7bc6ab8304d396a74bad234f283e55e12fff298726fe841da351946a0bb13af0",
+          "attestation": "https://github.com/EpiLogos/O-I/attestations/47947685"
+        }
+      ],
+      "installed_verify": []
+    },
+    "recorded_at": "2026-09-16"
+  }
 }

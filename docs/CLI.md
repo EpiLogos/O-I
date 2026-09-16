@@ -83,6 +83,36 @@ oi desktop session-spaces CWD PROJECT_REF
 
 All of those results are JSON. Knowledge accepts the kernel Request contract. Window, tab and workspace arrangement remain in the running app's native menu. `oi desktop capabilities --json` discloses the bounded application bindings; it does not assert that the full desktop programme is accepted.
 
+### The installer-owned Desktop lifecycle
+
+`oi desktop install`, `oi desktop status` and `oi desktop remove` are the
+installer-owned lifecycle for the packaged Desktop bundle. Recognition
+precedes mutation: `--plan` produces the full install or removal plan and
+mutates nothing. The bundle is adopted only after checksum verification, in
+a disposable staging root; the install receipt records every resource the
+installer owns, and `oi desktop remove` removes exactly those — Central
+ground, Agents and Projects are never owned, and paths inside Control/,
+Work/ or .central are refused outright.
+
+```text
+oi desktop install --bundle PATH [--sha256 HEX] [--backing ID] [--plan] [--json]
+oi desktop install --recorded [--backing ID] [--plan] [--json]
+oi desktop remove [--plan] [--json]
+oi desktop status [--json]
+```
+
+`--recorded` resolves the bundle asset recorded in the suite manifest's
+`desktop_bundle` section (same asset shape and trust pattern as the suite
+products): it downloads the bundle from the release the record pins —
+[`oi-desktop-v0.1.0-prelocal.1` on EpiLogos/O-I](https://github.com/EpiLogos/O-I/releases/tag/oi-desktop-v0.1.0-prelocal.1)
+— verifies the recorded SHA-256 before anything is staged, caches the
+verified archive under the application-data root, and adopts it through the
+same plan-then-commit path as a local `--bundle`. The linux bundle is built
+by the `desktop-bundle` workflow and carries the same build-provenance
+attestation as every other release artifact. Backing compositions are
+disclosed, never installed: backing products install through their own
+flows.
+
 ## `oi aikit-session-space`
 
 `oi aikit-session-space ...` dispatches AIKit's SessionSpace companion and preserves native arguments. It is not a seventh product namespace.
