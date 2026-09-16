@@ -749,10 +749,17 @@ O:I #305      COMPLETE — Expression Field vision/UX/Wayfinder
 O:I #307      COMPLETE — WorldPresentation Expression renderer relation
 O:I EX1/#310  COMPLETE — oi.expression/v1 human/Agent application seam
 O:I EX0       ACTIVE — current Point-Cloud/Studio/Global Stage intake
-O:I EX2–EX5   ACTIVE/READY — Nara, Wiki, Agent, page consumers of EX1
-O:I #18       ACTIVE — SharedField/Explore
-O:I #306      ACTIVE — Expression Field; EX6 is this SharedField map
-O:I #65       ACTIVE — physical/two-world acceptance
+O:I EX2–EX5   COMPLETE — Nara #332, knowledge #327, Being #333, page/WorldPresentation #329
+O:I #18       COMPLETE through SF6 #344 — SharedField/Explore lanes all landed
+O:I #306      EX6 evidence complete to repository/hosted/two-machine grades; human grades with the owner
+O:I #65       ACTIVE — physical/two-world acceptance; SF6 #344 carries the joined machine grade
+
+SF6 evidence: `desktop/cradle/walk/scenarios/sf6-joined-two-worlds.mjs` (35/35 hosted
+checks on the second-machine acceptance service) — the §11 journey across three
+subjects with owner-dark connectivity, ref stability across restart, and the safe
+Nara presence under explicit consent. Agent model-grade invocation inside the
+joined field remains carried by SF3 #333/#334 until an owner-side Agency binding
+provisions it per-run.
 ```
 
 Run now in parallel:

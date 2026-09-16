@@ -474,7 +474,10 @@ try {
     );
   }
   if (needsPreview) {
-    spawnService("preview", "npm", ["run", "preview", "--", "--port", String(PREVIEW_PORT)]);
+    // Spawn vite directly: the npm indirection re-appends the script's own
+    // --port/--strictPort, and duplicated flags have produced servers that
+    // bind one port while reporting another.
+    spawnService("preview", "node", ["node_modules/.bin/vite", "preview", "--port", String(PREVIEW_PORT), "--strictPort"]);
     await waitForHttp(baseUrl, "the preview server", 60_000);
   }
   console.log(`serving the cradle at ${baseUrl}${externalUrl ? " (external)" : ""}`);

@@ -287,6 +287,17 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await freshContext.close();
  const stillThere=p.doorway({kind:"receipt",contribution_ref:contributionRef});
  check(stillThere.contribution_ref===contributionRef,"[16] Contribution identity survives transport churn");
+ // EX6 clause: the hosted representation may outlive source connectivity
+ // without becoming canonical source. The owner's application goes dark; the
+ // second world's encounter continues on the hosted field, still attributed.
+ await p.ownerBridge.stop();
+ const darkRead=p.doorway({kind:"read",ref:p.worldA});
+ check(darkRead.state==="hosted"&&darkRead.entry.ref===p.worldA&&darkRead.entry.revision===p.bundle.projection.representation.payload.revision||darkRead.entry.revision,"[EX6] With the owner dark, the second world still encounters the hosted representation",{state:darkRead.state,revision:darkRead.entry.revision});
+ check(darkRead.entry.meta?.owner_identity_ref==="human:sf6-owner"&&darkRead.entry.meta?.projection_ref===p.projectionRef,"[EX6] The dark-owner reading remains attributed disclosure with its owner and projection refs — never canonical source");
+ check(JSON.stringify(darkRead).includes(p.expressionRef),"[EX6] The disclosed Expression binding stays encounterable inside the hosted whole while the owner is dark");
+ await restartOwnerBridge(p);
+ const recovered=p.ownerDoorway({kind:"read",ref:p.worldA});
+ check(recovered.state==="hosted"&&recovered.owner_pending_contributions!==undefined,"[EX6] The owner returns and reads its field after connectivity returns");
  // Step 17a: the safe Nara presentation joins the SAME field under explicit
  // consent, is encountered by the admitted second world, and withdraws.
  const naraDoc=naraSafeCueDocument(p.naraRef);

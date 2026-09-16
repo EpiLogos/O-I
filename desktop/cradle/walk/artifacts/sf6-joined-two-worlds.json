@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "sf6-joined-two-worlds",
-  "generated_at": "2026-09-16T03:16:28.859Z",
+  "generated_at": "2026-09-16T14:49:40.246Z",
   "environment": {
     "base_url": "http://localhost:4303",
     "bridge_url": "http://127.0.0.1:4309",
@@ -10,19 +10,22 @@
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf6-joined-acceptance",
-      "repository_head": "6f4f34bb8d3425f4aada4205a0068be8bb8343ca",
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf6-ex6-closure",
+      "repository_head": "31b5fa3ef24c2da247cf804ed5d85bad6020a5d8",
       "tracked_changes": [
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/sf6-joined-two-worlds-sf6-joined-two-worlds.png",
+        "desktop/cradle/walk/artifacts/sf6-joined-two-worlds.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/sf6-joined-two-worlds.mjs"
       ],
-      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf6-joined-acceptance/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/sf6-ex6-closure/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
-      "engine_revision": "7306b7b8882f54fec931922d46fdbaba9f656212"
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 86288,
+  "duration_ms": 79905,
   "checks": [
     {
       "ok": true,
@@ -63,7 +66,7 @@
       "ok": true,
       "label": "[17b] The Bimba/QL object is an ordinary hosted subject in the joined field",
       "data": {
-        "ref": "world:sf6:mu3j3xxh:a/wiki:node:sf6-mu3j3xxh:ql",
+        "ref": "world:sf6:mu47v38i:a/wiki:node:sf6-mu47v38i:ql",
         "state": "hosted"
       }
     },
@@ -72,7 +75,7 @@
       "label": "[17b] The Bimba/QL object encounters as a bounded whole carrying its own source lineage",
       "data": {
         "nodes": 2,
-        "focus": "world:sf6:mu3j3xxh:a/wiki:node:sf6-mu3j3xxh:ql"
+        "focus": "world:sf6:mu47v38i:a/wiki:node:sf6-mu47v38i:ql"
       }
     },
     {
@@ -128,6 +131,26 @@
     },
     {
       "ok": true,
+      "label": "[EX6] With the owner dark, the second world still encounters the hosted representation",
+      "data": {
+        "state": "hosted",
+        "revision": "central.content-fnv1a64/v1:765:62a9e71bbdeba40d"
+      }
+    },
+    {
+      "ok": true,
+      "label": "[EX6] The dark-owner reading remains attributed disclosure with its owner and projection refs — never canonical source"
+    },
+    {
+      "ok": true,
+      "label": "[EX6] The disclosed Expression binding stays encounterable inside the hosted whole while the owner is dark"
+    },
+    {
+      "ok": true,
+      "label": "[EX6] The owner returns and reads its field after connectivity returns"
+    },
+    {
+      "ok": true,
       "label": "[17a] The consented Nara target is admitted on the second world's own transport identity"
     },
     {
@@ -178,7 +201,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-16T03:16:29.318Z",
+        "mounted_at": "2026-09-16T14:49:40.387Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4309"
@@ -189,7 +212,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 143,
+      "duration_ms": 38,
       "data": {
         "file": "sf6-joined-two-worlds-sf6-joined-two-worlds.png"
       }
