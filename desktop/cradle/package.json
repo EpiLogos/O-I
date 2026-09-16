@@ -11,7 +11,8 @@
     "predev": "node documents/build-personal.mjs",
     "prebuild": "node documents/build-personal.mjs",
     "test:personal-web": "node documents/build-personal.mjs && node --test tests/personal-web.test.mjs && node tests/personal-web-browser.mjs",
-    "test:configuration-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs"
+    "test:configuration-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs",
+    "test:configuration-composition": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-composition.test.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",

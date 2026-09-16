@@ -21,6 +21,8 @@ import type {
   SettingSpec,
 } from "./contracts";
 import {SINGULAR_SCOPE_KINDS, compactScope} from "./contracts";
+import type {RegistryComposition} from "./composition";
+import {compositionLine, settingsActionable} from "./composition";
 import type {ChangeRequest, ConfigPlaneSource, ContributionMount} from "./source";
 import {configPlaneSource, fixtureWorld} from "./sourceHost";
 import {Loading} from "../shared/Loading";
@@ -38,6 +40,7 @@ export function ConfigurationView() {
   const [source, setSource] = useState<ConfigPlaneSource | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [mounts, setMounts] = useState<ContributionMount[] | null>(null);
+  const [composition, setComposition] = useState<RegistryComposition | null>(null);
   const [resolutions, setResolutions] = useState<Record<string, ConfigResolution>>({});
   const [scopeChoices, setScopeChoices] = useState<Record<string, ScopeChoice>>({});
   const [drawer, setDrawer] = useState<ChangeRequest[] | null>(null);
@@ -70,8 +73,12 @@ export function ConfigurationView() {
     try {
       const registry = await planeSource.readRegistry();
       setMounts(registry.mounts);
+      setComposition(registry.composition ?? null);
       const pairs: {setting_ref: string; scope: ScopeAddress}[] = [];
       for (const mount of registry.mounts) {
+        // An owner standing outside the effective composition has nothing
+        // to resolve here (lock §5): its settings are disclosure-only.
+        if (!settingsActionable(mount)) continue;
         for (const section of mount.document?.sections ?? []) {
           for (const setting of section.settings) {
             pairs.push({setting_ref: setting.setting_ref, scope: chosenScope(setting, scopeChoices, planeSource)});
@@ -149,6 +156,10 @@ export function ConfigurationView() {
     </header>
     {source.kind === "fixture" && <p className="config-source-label" data-config-source="fixture">{source.label} — simulated state for development; not this machine's truth</p>}
     {source.kind === "live" && <p className="config-source-label" data-config-source="live">{source.label}</p>}
+    {compositionLine(composition) && (
+      <p className="config-muted" data-config-composition>{compositionLine(composition)}</p>
+    )}
+    {composition?.warnings.map((warning, index) => <p key={index} role="note" className="config-muted" data-config-warning>{warning}</p>)}
     {error && <p role="alert" className="config-error">{error}</p>}
     {mounts.length === 0 && (
       <p className="config-empty" data-config-empty-registry>No owner contributes configuration in this World yet. An empty World is the same system at its beginning — install the suite, or bind owners, and their contributions appear here unchanged.</p>
@@ -199,26 +210,37 @@ function OwnerSection(props: {
   const {mount} = props;
   const document_ = mount.document;
   const availability = mount.availability;
-  return <details className="config-owner" data-owner={mount.owner_ref} data-availability={availability.state} open>
+  const standing = mount.composition?.standing ?? "unknown";
+  // An owner standing outside the effective composition renders as
+  // disclosure only (lock §5, §7): even if a document somehow arrived, its
+  // settings are not actionable here — recognising the product is an
+  // explicit owner operation, never a silent control.
+  const disclosedAbsent = standing === "absent";
+  return <details className="config-owner" data-owner={mount.owner_ref} data-availability={availability.state} data-standing={standing} open>
     <summary>
       <strong>{ownerTitle(mount.owner_ref)}</strong>
       <span className="config-owner-meta">
         {document_?.owner.owner_version && <span className="config-muted">{document_.owner.owner_version}</span>}
         <span className={`config-chip is-availability-${availability.state}`}>{availability.state}{availability.reason ? ` — ${availability.reason}` : ""}</span>
+        {disclosedAbsent && <span className="config-chip is-standing-absent">absent from the effective composition</span>}
+        {standing === "unknown" && <span className="config-chip is-standing-unknown">composition standing unknown</span>}
         <span className="config-mono config-ref">{mount.owner_ref}</span>
       </span>
     </summary>
     {mount.error && <p role="alert" className="config-error">{mount.error}</p>}
-    {document_ && <p className="config-muted config-about">{document_.about}</p>}
-    {document_?.obligations && document_.obligations.length > 0 && (
+    {disclosedAbsent && <p className="config-muted" data-config-absent-owner>
+      This product is not part of the effective composition. Its settings are disclosed as absent, never operated from here — adding the product is an explicit owner operation (`oi mode set` names the mode consequence).
+    </p>}
+    {!disclosedAbsent && document_ && <p className="config-muted config-about">{document_.about}</p>}
+    {!disclosedAbsent && document_?.obligations && document_.obligations.length > 0 && (
       <details className="config-obligations"><summary>Obligations ({document_.obligations.length})</summary>
         {document_.obligations.map((obligation, index) => <p key={index} className="config-muted">{obligation}</p>)}
       </details>
     )}
-    {document_ && document_.sections.length === 0 && (
+    {!disclosedAbsent && document_ && document_.sections.length === 0 && (
       <p className="config-empty" data-config-empty-owner>This owner discloses no configurable settings here — absence is the owner's own fact, nothing is fabricated.</p>
     )}
-    {document_?.sections.map((section) => <div className="config-section" key={section.id}>
+    {!disclosedAbsent && document_?.sections.map((section) => <div className="config-section" key={section.id}>
       <h4>{section.title}</h4>
       {section.settings.map((setting) => <SettingRowView key={setting.setting_ref} {...props} setting={setting}/>)}
     </div>)}
@@ -247,7 +269,7 @@ function SettingRowView({
   const key = `${setting.setting_ref}|${compactScope(scope)}`;
   const resolution = resolutions[key];
   const secret = setting.value_schema.type === "secret";
-  const ownerOperable = mount.availability.state === "available" && mount.document?.operations.plan.availability === "disclosed";
+  const ownerOperable = settingsActionable(mount) && mount.document?.operations.plan.availability === "disclosed";
   const canPlan = setting.writable && setting.operations.plan && setting.operations.apply && ownerOperable;
   const desired = resolution?.desired ?? null;
   const nativeAxisValue = resolution?.native.effective?.value ?? resolution?.native.declared?.value;

@@ -66,7 +66,7 @@ export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
 
   const readRegistryImpl = async () => {
     const outcome = unwrap<any>(await call({ op: "config_registry_read" }), "config_registry_reading", "the configuration registry");
-    return outcome.reading as { mounts: any[]; observed_at_unix_ms: number };
+    return outcome.reading as { mounts: any[]; observed_at_unix_ms: number; composition?: any };
   };
 
   const loadSettings = (): Promise<Record<string, SettingSpec>> => {
@@ -97,7 +97,11 @@ export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
 
     async readRegistry() {
       const registry = await readRegistryImpl();
-      return { mounts: registry.mounts, observed_at_unix_ms: registry.observed_at_unix_ms };
+      return {
+        mounts: registry.mounts,
+        observed_at_unix_ms: registry.observed_at_unix_ms,
+        composition: registry.composition ?? null,
+      };
     },
 
     async readResolutions(pairs: { setting_ref: string; scope: ScopeAddress }[]) {

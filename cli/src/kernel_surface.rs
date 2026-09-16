@@ -36,10 +36,10 @@
 //! [`crate::fixture_surface::FixtureSurface`], which remains a test double.
 
 use crate::config_surface::{
-    classify_reconciliation, AppliedChange, ChangeRequest, ConfigPlan, ConfigSurface,
-    DoctorClassification, DoctorFinding, ListedSetting, OwnerContribution, PlanChange,
-    ProfileActivation, ProfileEditApplied, ProfileEditOp, ProfileEditOutcome, ProfileSummary,
-    ProfileSurface, ReceiptSummary, SurfaceError, SurfaceResult,
+    classify_reconciliation, AppliedChange, ChangeRequest, CompositionDisclosure, ConfigPlan,
+    ConfigSurface, DoctorClassification, DoctorFinding, ListedSetting, OwnerContribution,
+    PlanChange, ProfileActivation, ProfileEditApplied, ProfileEditOp, ProfileEditOutcome,
+    ProfileSummary, ProfileSurface, ReceiptSummary, SurfaceError, SurfaceResult,
 };
 use crate::configuration::kernel::{
     assemble_changeset, desired_change, execute_changeset, mint_changeset_id, plan_request,
@@ -77,7 +77,17 @@ pub struct KernelSurface {
     store: ConfigurationStore,
     profiles: ProfileStore,
     home: PathBuf,
+    /// The world reading this surface stands in (lock §5): taken once at
+    /// open, disclosed verbatim, never re-decided. `None` when the reading
+    /// was unavailable — the reason travels beside it, and no owner
+    /// standings are invented.
+    world: Option<oi_cli_current_world::CurrentWorldReading>,
+    world_error: Option<String>,
 }
+
+/// The current-world module, aliased so the engine binding reads as one
+/// seam against the world reading it joins.
+use crate::current_world as oi_cli_current_world;
 
 impl KernelSurface {
     /// Discover the machine's owners and open every store under the
@@ -94,13 +104,51 @@ impl KernelSurface {
         let transport = ProcessTransport::with_specs(&specs);
         let mut registry = OwnerRegistry::new();
         registry.discover_specs(&transport, &specs);
+        // The world reading is data, never a gate: a reading that fails
+        // leaves every owner's standing `unknown` and the reason disclosed,
+        // and does not stop the engine from answering.
+        let (world, world_error) = match oi_cli_current_world::live_current_world() {
+            Ok(reading) => (Some(reading), None),
+            Err(error) => (None, Some(error)),
+        };
         Ok(Self {
             registry,
             transport,
             store: ConfigurationStore::open(&home),
             profiles: ProfileStore::from_config_home(&home),
             home,
+            world,
+            world_error,
         })
+    }
+
+    /// The composition disclosure of the settings surface (lock §5): the
+    /// world's own facts, verbatim.
+    fn composition_disclosure(&self) -> CompositionDisclosure {
+        match &self.world {
+            Some(reading) => CompositionDisclosure {
+                requested_mode: reading
+                    .requested_mode
+                    .as_ref()
+                    .map(|requested| requested.mode.clone()),
+                install_mode: reading.context_frame.install_mode.clone(),
+                install_mode_basis: reading.context_frame.install_mode_basis.clone(),
+                present_positions: reading.context_frame.present_positions.clone(),
+                warnings: reading.warnings.clone(),
+                error: None,
+            },
+            None => CompositionDisclosure {
+                error: self
+                    .world_error
+                    .clone()
+                    .or_else(|| Some("the world reading is unavailable".to_owned())),
+                ..CompositionDisclosure::default()
+            },
+        }
+    }
+
+    fn absent_owner_reason(&self, setting_ref: &str) -> Option<String> {
+        absent_owner_reason(&self.registry, setting_ref)
     }
 
     fn gateway(&self) -> OwnerGateway<'_> {
@@ -492,13 +540,19 @@ impl KernelSurface {
 
     /// The resolution reading for one setting at one scope with an optional
     /// held desired entry — C1's `resolve_setting` with the redaction check
-    /// the C0 validators carry.
+    /// the C0 validators carry. A held entry whose owner left the
+    /// composition resolves through [`absent_owner_resolution`] instead: one
+    /// absent product must not blind the whole diff reading, and its
+    /// retained desired state stays legible and truthfully named.
     fn build_resolution(
         &self,
         setting_ref: &str,
         scope: &Scope,
         held: Option<&HeldDesired>,
     ) -> SurfaceResult<Resolution> {
+        if let Some(reason) = self.absent_owner_reason(setting_ref) {
+            return Ok(absent_owner_resolution(setting_ref, scope, held, reason));
+        }
         let (desired_value, desired_secret) = held
             .map(|held| {
                 (
@@ -565,11 +619,75 @@ fn now_unix_ms() -> u64 {
         .unwrap_or(0)
 }
 
+/// Why this setting's owner is absent from the registry, when it is: the
+/// discovery degradation that recorded the failed read. `None` when the
+/// owner answered discovery (or was never probed) — the caller then treats
+/// the subject as genuinely unaddressable. The message names the failed
+/// read only; the composition relation is disclosed separately through the
+/// standings, never asserted here.
+fn absent_owner_reason(registry: &OwnerRegistry, setting_ref: &str) -> Option<String> {
+    let owner = setting_ref.split(':').next()?;
+    if owner.is_empty() || registry.entry(owner).is_some() {
+        return None;
+    }
+    registry
+        .degradations()
+        .iter()
+        .find(|degradation| degradation.owner_ref == owner)
+        .map(|degradation| {
+            format!(
+                "owner `{owner}` did not answer discovery ({}); held desired intent for its \
+                 settings is retained but cannot reconcile until the owner answers again",
+                degradation.reason
+            )
+        })
+}
+
+/// The truthful resolution of a held desired entry whose owner no longer
+/// answers discovery (a product that left the composition): the frozen
+/// `blocked` status — the owner cannot reconcile — with the retained
+/// desired axis still legible beside the named absence. Retained state is
+/// disclosed, never deleted, and never renamed into a false status.
+fn absent_owner_resolution(
+    setting_ref: &str,
+    scope: &Scope,
+    held: Option<&HeldDesired>,
+    reason: String,
+) -> Resolution {
+    Resolution {
+        schema: RESOLUTION_SCHEMA.to_owned(),
+        setting_ref: setting_ref.to_owned(),
+        scope: scope.clone(),
+        desired: held.map(|held| Desired {
+            value: held.entry.value.clone(),
+            secret_reference: held.entry.secret_reference.as_ref().map(|reference| {
+                SecretReference {
+                    ref_: reference.ref_.clone(),
+                    present: None,
+                }
+            }),
+            source_ref: held.changeset_id.clone(),
+            set_at_unix_ms: None,
+        }),
+        native: None,
+        native_reading: None,
+        reconciliation: Reconciliation {
+            status: ReconciliationStatus::Blocked,
+            reason: Some(reason),
+            detail_ref: None,
+        },
+    }
+}
+
 fn internal(error: impl std::fmt::Display) -> SurfaceError {
     SurfaceError::new(ErrorCode::Internal, error.to_string())
 }
 
 impl ConfigSurface for KernelSurface {
+    fn composition(&self) -> SurfaceResult<CompositionDisclosure> {
+        Ok(self.composition_disclosure())
+    }
+
     fn discover(&self) -> SurfaceResult<Vec<OwnerContribution>> {
         let mut owners = Vec::new();
         for owner_ref in self.registry.owner_refs() {
@@ -786,32 +904,39 @@ impl ConfigSurface for KernelSurface {
                 .map(|(registered, _)| registered.spec.effect.kind);
             // A desired entry that violates its own contribution (e.g. a
             // secret-kind entry carrying a value) is invalid desired state.
-            let shape_ok = validate_resolution(
-                &Resolution {
-                    schema: RESOLUTION_SCHEMA.to_owned(),
-                    setting_ref: setting_ref.clone(),
-                    scope: scope.clone(),
-                    desired: Some(Desired {
-                        value: entry.value.clone(),
-                        secret_reference: entry.secret_reference.as_ref().map(|reference| {
-                            SecretReference {
-                                ref_: reference.ref_.clone(),
-                                present: None,
-                            }
+            // An entry whose owner left the composition is not invalid —
+            // it is retained state whose owner cannot answer; it is judged
+            // by the resolution path below, which names the absence.
+            let shape_ok = if self.absent_owner_reason(&setting_ref).is_some() {
+                Ok(())
+            } else {
+                validate_resolution(
+                    &Resolution {
+                        schema: RESOLUTION_SCHEMA.to_owned(),
+                        setting_ref: setting_ref.clone(),
+                        scope: scope.clone(),
+                        desired: Some(Desired {
+                            value: entry.value.clone(),
+                            secret_reference: entry.secret_reference.as_ref().map(|reference| {
+                                SecretReference {
+                                    ref_: reference.ref_.clone(),
+                                    present: None,
+                                }
+                            }),
+                            source_ref: None,
+                            set_at_unix_ms: None,
                         }),
-                        source_ref: None,
-                        set_at_unix_ms: None,
-                    }),
-                    native: None,
-                    native_reading: None,
-                    reconciliation: Reconciliation {
-                        status: ReconciliationStatus::Satisfied,
-                        reason: None,
-                        detail_ref: None,
+                        native: None,
+                        native_reading: None,
+                        reconciliation: Reconciliation {
+                            status: ReconciliationStatus::Satisfied,
+                            reason: None,
+                            detail_ref: None,
+                        },
                     },
-                },
-                self.registry.settings(),
-            );
+                    self.registry.settings(),
+                )
+            };
             if let Err(error) = shape_ok {
                 findings.push(DoctorFinding {
                     classification: DoctorClassification::InvalidDesiredState,
@@ -1382,6 +1507,149 @@ fn set_active_mark(home: &Path, profile_ref: Option<&str>) -> SurfaceResult<()> 
 #[cfg(test)]
 mod tests {
     use super::*;
+    use crate::configuration::kernel::transport::{
+        OwnerTransport, TransportError, TransportFailure,
+    };
+    use crate::configuration::refs::ScopeKind;
+
+    /// A transport where every owner fails discovery: exactly the shape of
+    /// a machine whose products did not answer.
+    #[derive(Debug)]
+    struct FailingTransport;
+
+    impl OwnerTransport for FailingTransport {
+        fn discover(&self, owner_ref: &str) -> Result<Value, TransportError> {
+            Err(TransportFailure::owner_unavailable(format!(
+                "{owner_ref} executable not installed"
+            ))
+            .into())
+        }
+        fn system_reading(&self, _owner_ref: &str) -> Result<Value, TransportError> {
+            Err(TransportFailure::owner_unavailable("stub").into())
+        }
+        fn validate(
+            &self,
+            _: &str,
+            _: &crate::configuration::kernel::transport::SettingRequest,
+        ) -> Result<Value, TransportError> {
+            Err(TransportFailure::owner_unavailable("stub").into())
+        }
+        fn plan(
+            &self,
+            _: &str,
+            _: &crate::configuration::kernel::transport::SettingRequest,
+        ) -> Result<Value, TransportError> {
+            Err(TransportFailure::owner_unavailable("stub").into())
+        }
+        fn apply(
+            &self,
+            _: &str,
+            _: &crate::configuration::kernel::transport::ApplyRequest,
+        ) -> Result<Value, TransportError> {
+            Err(TransportFailure::owner_unavailable("stub").into())
+        }
+        fn reset(
+            &self,
+            _: &str,
+            _: &crate::configuration::kernel::transport::ResetRequest,
+        ) -> Result<Value, TransportError> {
+            Err(TransportFailure::owner_unavailable("stub").into())
+        }
+    }
+
+    fn scope_world() -> Scope {
+        Scope {
+            scope_kind: ScopeKind::World,
+            scope_ref: None,
+        }
+    }
+
+    #[test]
+    fn a_held_entry_whose_owner_left_composition_resolves_blocked_with_retained_desired() {
+        // The transition law (lock §5, §7): when a product leaves the
+        // composition, its held desired intent is retained state — resolved
+        // as `blocked` with the failed discovery named, never deleted,
+        // never renamed into invalid-desired-state, and never a wholesale
+        // diff failure.
+        let mut registry = OwnerRegistry::new();
+        registry.discover_specs(
+            &FailingTransport,
+            &[crate::configuration::kernel::OwnerSpec {
+                owner_ref: "workcell".into(),
+                program: "workcell".into(),
+            }],
+        );
+        let reason = absent_owner_reason(&registry, "workcell:placement:placement.policy")
+            .expect("the absent owner is named");
+        assert!(
+            reason.contains("workcell") && reason.contains("did not answer discovery"),
+            "{reason}"
+        );
+
+        let held = HeldDesired {
+            entry: DesiredEntry {
+                setting_ref: "workcell:placement:placement.policy".to_owned(),
+                scope: scope_world(),
+                value: Some(serde_json::json!("balanced")),
+                secret_reference: None,
+            },
+            changeset_id: Some("cs-1".to_owned()),
+        };
+        let resolution = absent_owner_resolution(
+            "workcell:placement:placement.policy",
+            &scope_world(),
+            Some(&held),
+            reason,
+        );
+        assert_eq!(
+            resolution.reconciliation.status,
+            ReconciliationStatus::Blocked
+        );
+        assert_eq!(
+            resolution.desired.as_ref().unwrap().value,
+            Some(serde_json::json!("balanced"))
+        );
+        assert_eq!(
+            resolution.desired.as_ref().unwrap().source_ref.as_deref(),
+            Some("cs-1")
+        );
+        assert!(
+            resolution.native.is_none(),
+            "no native axes are invented for an absent owner"
+        );
+    }
+
+    #[test]
+    fn an_owner_that_answered_discovery_is_never_reported_absent() {
+        use crate::configuration::contribution::Contribution;
+        let contribution: Contribution = serde_json::from_value(serde_json::json!({
+            "schema": "oi.configuration-contribution/v1",
+            "owner": {
+                "owner_ref": "ai-kit",
+                "owner_kind": "product",
+                "owner_version": "test",
+                "contribution_command": ["aikit", "config-contribution", "--json"],
+                "disclosed_at_unix_ms": 0
+            },
+            "about": "test contribution",
+            "sections": [],
+            "operations": { "transport": "cli/v1" },
+            "availability": { "state": "available", "reason": null }
+        }))
+        .unwrap();
+        let mut registry = OwnerRegistry::new();
+        registry.register_contribution(contribution).unwrap();
+        // An answered owner and a never-probed name are both None: the
+        // absent-owner reading applies only where discovery failed.
+        assert_eq!(
+            absent_owner_reason(&registry, "ai-kit:resolution:model.default"),
+            None
+        );
+        assert_eq!(
+            absent_owner_reason(&registry, "elsewhere:section:key"),
+            None
+        );
+    }
 
     #[test]
     fn composition_mark_round_trips_without_touching_unknown_fields() {

@@ -75,6 +75,79 @@ fn help_screens_are_wired_and_the_real_engine_binds_without_fixtures() {
 }
 
 #[test]
+fn config_list_discloses_the_world_composition_and_each_owner_standing() {
+    // The settings × mode interface (CONTEXT-FRAME-COMPOSITION-LOCK §5, §7):
+    // the listing carries the world's own composition facts and each
+    // owner's standing against the effective composition — requested and
+    // effective distinct, standings joined from the present positions,
+    // never a second composition decision.
+    let mut command = oi();
+    command.env_remove("OI_CONFIG_SURFACE_FIXTURES");
+    let output = command.args(["config", "list", "--json"]).output().unwrap();
+    assert_eq!(output.status.code(), Some(0));
+    let listing: Value = serde_json::from_str(&String::from_utf8_lossy(&output.stdout))
+        .expect("the real engine answers with a JSON listing");
+    let composition = &listing["composition"];
+    assert!(
+        composition.is_object(),
+        "the listing discloses the world composition: {listing}"
+    );
+    // Requested and effective stay distinct fields, whichever is speaking.
+    assert!(
+        composition.get("requested_mode").is_some(),
+        "the requested mode is a named field (null when none was stated)"
+    );
+    let positions = composition["present_positions"]
+        .as_array()
+        .expect("present_positions array");
+    let owners = listing["owners"].as_array().expect("owners array");
+    for owner in owners {
+        let standing = owner["composition"]["standing"]
+            .as_str()
+            .expect("standing wire name");
+        assert!(
+            matches!(
+                standing,
+                "in_composition" | "absent" | "unpositioned" | "unknown"
+            ),
+            "{standing} is a wire standing"
+        );
+        let position = owner["composition"]["position"].as_u64();
+        match (standing, composition.get("error")) {
+            // Behind a disclosure error every standing reads unknown.
+            (_, Some(_)) => assert_eq!(standing, "unknown", "{owner}"),
+            // The join is consistent with the present positions: a product
+            // claimed present is in them; a product claimed absent is not.
+            ("in_composition", _) => assert!(
+                position.is_some_and(|position| positions.contains(&Value::from(position))),
+                "{owner} claims presence outside the disclosed positions"
+            ),
+            ("absent", _) => assert!(
+                position.is_none_or(|position| !positions.contains(&Value::from(position))),
+                "{owner} claims absence while its position is disclosed present"
+            ),
+            _ => {}
+        }
+    }
+}
+
+#[test]
+fn the_fixture_surface_discloses_no_machine_composition() {
+    // The fixture surface is a test double, not this machine's truth: it
+    // discloses the honest unknown form instead of inventing standings.
+    let (code, listing, _) = run(&["config", "list", "--json"]);
+    assert_eq!(code, 0);
+    let composition = &listing["composition"];
+    assert!(
+        composition.get("error").is_some(),
+        "the fixture surface names why it discloses no composition: {composition}"
+    );
+    for owner in listing["owners"].as_array().expect("owners array") {
+        assert_eq!(owner["composition"]["standing"], "unknown", "{owner}");
+    }
+}
+
+#[test]
 fn ordinary_setting_round_trips_set_plan_apply_and_receipt_identity() {
     // A CLI set → ChangeSet request → owner-native plan → apply → receipt.
     let (code, request, _) = run(&[

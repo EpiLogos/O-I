@@ -53,6 +53,7 @@ import type {
   PlanBundle,
   ProfileUsePlan,
 } from "./source";
+import type {MountComposition, RegistryComposition} from "./composition";
 
 // ---------------------------------------------------------------------------
 // fixture documents (lazy: dev/walk chunks only)
@@ -269,6 +270,38 @@ function validateValue(schema: ValueSchema, request: ChangeRequest): ConfigError
 }
 
 // ---------------------------------------------------------------------------
+// the simulated world's composition (lock §5)
+
+/** The simulated world stands in the `0/1/2` operational core: AIKit
+ * present, Workcell absent — the contract's own absence case, so the
+ * disclosed-absent standing renders first-class. Facts a real reading
+ * would carry; clearly labelled as simulation beside the data. */
+const SIMULATED_COMPOSITION: RegistryComposition = {
+  requested_mode: null,
+  install_mode: "0/1/2",
+  install_mode_basis: "effective",
+  present_positions: [0, 1, 2],
+  warnings: [],
+  error: null,
+};
+
+/** The product position of each simulated owner. `oi` and the connector
+ * are unpositioned (the doorway and its connector hold no position);
+ * Workcell is absent from the simulated selection. */
+function simulatedMountComposition(owner_ref: string): MountComposition {
+  const POSITIONS: Record<string, number> = {
+    central: 0, actuation: 1, "ai-kit": 2,
+    "software-factory": 3, workcell: 4, "quaternal-logic": 5,
+  };
+  const position = POSITIONS[owner_ref];
+  if (position === undefined) return { standing: "unpositioned", position: null };
+  return {
+    standing: SIMULATED_COMPOSITION.present_positions.includes(position as 0|1|2|3|4|5) ? "in_composition" : "absent",
+    position,
+  };
+}
+
+// ---------------------------------------------------------------------------
 // source creation
 
 export function createFixtureConfigPlaneSource(): ConfigPlaneSource {
@@ -280,6 +313,7 @@ export function createFixtureConfigPlaneSource(): ConfigPlaneSource {
       document: clone(document),
       availability: { ...document.availability },
       error: null,
+      composition: simulatedMountComposition(document.owner.owner_ref),
     }));
     // The simulated degradation is injected into the owner's own
     // degradations list so the mount renders it from the contract's
@@ -370,8 +404,10 @@ export function createFixtureConfigPlaneSource(): ConfigPlaneSource {
 
     async readRegistry() {
       const current = await init();
-      if (current.registryMode === "empty") return { mounts: [], observed_at_unix_ms: Date.now() };
-      return { mounts: clone(current.mounts), observed_at_unix_ms: Date.now() };
+      if (current.registryMode === "empty") {
+        return { mounts: [], observed_at_unix_ms: Date.now(), composition: clone(SIMULATED_COMPOSITION) };
+      }
+      return { mounts: clone(current.mounts), observed_at_unix_ms: Date.now(), composition: clone(SIMULATED_COMPOSITION) };
     },
 
     async readResolutions(pairs) {

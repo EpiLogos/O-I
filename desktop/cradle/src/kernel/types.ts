@@ -256,7 +256,7 @@ export type KernelOpResult =
   | {result:"system_composition_reading";reading:import("../workspace/settings/types").SystemCompositionReading}
   // Configuration-plane results: contract documents verbatim, degraded
   // states as named data (see `configuration.rs` in the kernel crate).
-  | { result: "config_registry_reading"; reading: { schema: string; observed_at_unix_ms: number; mounts: ConfigurationMountState[] } }
+  | { result: "config_registry_reading"; reading: { schema: string; observed_at_unix_ms: number; mounts: ConfigurationMountState[]; composition?: import("../configuration/composition").RegistryComposition | null } }
   | { result: "config_resolutions"; resolutions: ConfigResolutionWire[] }
   | { result: "config_desired_held"; entry: unknown }
   | { result: "config_desired_discarded"; document: unknown }

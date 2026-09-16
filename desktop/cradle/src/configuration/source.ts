@@ -73,13 +73,17 @@ import type {
   ScopeKind,
   SettingSpec,
 } from "./contracts";
+import type {MountComposition, RegistryComposition} from "./composition";
 
 // ---------------------------------------------------------------------------
 // registry
 
 /** One owner position of the configuration registry: the contribution
  * document itself is the registration content (§4) — there is no second
- * descriptor format. A mount that failed reads as a named degradation. */
+ * descriptor format. A mount that failed reads as a named degradation.
+ * `composition` is the owner's standing against the effective composition
+ * (CONTEXT-FRAME-COMPOSITION-LOCK §5) — a different axis from
+ * availability, read from the current-world facts, never re-decided here. */
 export interface ContributionMount {
   owner_ref: string;
   document: ContributionDocument | null;
@@ -87,6 +91,9 @@ export interface ContributionMount {
   /** The transport-level failure, when the read itself failed (§4: a failed
    * or non-conforming read is a named degradation, never an invention). */
   error: string | null;
+  /** The world fact (lock §5). Absent on readings from kernels that
+   * predate the disclosure: the views then render the honest `unknown`. */
+  composition?: MountComposition | null;
 }
 
 // ---------------------------------------------------------------------------
@@ -139,7 +146,11 @@ export interface ConfigPlaneSource {
    * fixture registry name, or the kernel binding). */
   readonly label: string;
 
-  readRegistry(): Promise<{ mounts: ContributionMount[]; observed_at_unix_ms: number }>;
+  /** The mounted owners beside the world composition they stand in
+   * (lock §5): requested/effective mode, present positions, the reading's
+   * own warnings — and, behind `composition.error`, the honest refusal to
+   * invent standings. */
+  readRegistry(): Promise<{ mounts: ContributionMount[]; observed_at_unix_ms: number; composition: RegistryComposition | null }>;
 
   /** One resolution per (setting_ref, scope). Absent from the returned
    * array = the caller did not ask for it; a resolution for an unsupported
@@ -186,7 +197,7 @@ export function createUnboundConfigPlaneSource(reason: string): ConfigPlaneSourc
   return {
     kind: "unbound",
     label: "not bound in this build",
-    readRegistry: async () => ({ mounts: [], observed_at_unix_ms: 0 }),
+    readRegistry: async () => ({ mounts: [], observed_at_unix_ms: 0, composition: null }),
     readResolutions: async () => [],
     holdDesired: async () => unbound(reason),
     discardDesired: async () => unbound(reason),
