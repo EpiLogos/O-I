@@ -65,22 +65,24 @@ through its existing SemanticWiki knowledge operations
 and `aikit search` resolve byte-identical semantic refs and record familiarity
 on them — History returns through the same refs.
 
-**Carrier placement.** A World announces its discovery to agents by placing an
-export JSON under its agent register: `ProjectCentral/agents/explore/*.json`
-at the root register, or `Work/<Name>/ProjectCentral/agents/explore/*.json`
-for a project. AIKit scans exactly those registers (plus, in a standalone
-placement, any discovery export in its indexed horizon) and compiles each
-export into ordinary wiki objects: entries become nodes carrying the
-conventional `aliases` extension, exported relations stay edges with the
-relation name verbatim, SharedField membership and presentation bindings are
-typed edges (`oi.explore/field-member`, `oi.presentation/subject` with
-role/availability), and provenance points at the export carrier. Exporting is
-a deliberate disclosure act — nothing is indexed unless a World put it there.
-Ref closure is enforced exactly as the Explore application enforces it (a
-relation whose endpoint is not an exported entry is refused and disclosed),
-an exported ref never overrides curated local wiki material carrying the same
-ref, and the compilation is derived: deleting the export and recompiling
-rebuilds the same objects.
+**Carrier placement.** The discovery export lives next to the public seed it
+derives from: `site/public/data/explore-discovery.json` in the O-I checkout
+(committed empty and regenerated whenever projections publish — see
+`site/explore-discovery-carrier.test.mjs`, which proves the file is exactly
+`discoverySeed()` of `explore-public.json` and round-trips into another
+World's Explore application). AIKit's materialisation
+(`aikit-adapters::oi_explore`, landed through ai-kit #321) reads that carrier
+by default, or the file named by `OI_EXPLORE_DISCOVERY`; an absent seed is
+ordinary — nothing is indexed until a World actually exported a projected
+field — and never gates addressability. Compilation joins the existing
+SemanticWiki rebuild: entries become nodes carrying kind, world context,
+entry revision, aliases and the Projection ref in the namespaced
+`oi.explore/v1` extension; exported relations stay edges with the relation
+name verbatim (origin Compiled); presentations become addressable
+presentation nodes with derived `presents` edges per presented subject;
+SharedField membership compiles to `projected-in` edges. Refusals (invalid
+refs, unknown endpoints, duplicate rows) are disclosed as absences and
+skipped, never silently invented, and never become synthetic nodes.
 
 ## What this contract does not do
 
