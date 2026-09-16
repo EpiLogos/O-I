@@ -57,6 +57,175 @@
         "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}}
       }
     },
+    "presentationSummary": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["roles", "expressions", "world_presentations", "projections", "field_occurrences"],
+      "description": "The compact per-result reveal: eligible presentation forms of the subject, each category a distinct kind of ref.",
+      "properties": {
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "presentation_ref"],
+            "properties": {
+              "role": {"enum": ["being", "thing"]},
+              "presentation_ref": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "expressions": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "world_presentations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "projections": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "field_occurrences": {"type": "array", "items": {"type": "string", "minLength": 1}}
+      }
+    },
+    "subjectPresentations": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "subject_ref", "roles", "expressions", "world_presentations", "projections", "field_occurrences"],
+      "description": "The full presentation reading of one native subject. subject != presentation != Projection != live SharedField occurrence; never one aggregate.",
+      "properties": {
+        "schema": {"const": "oi.subject-presentations/v1"},
+        "subject_ref": {"type": "string", "minLength": 1},
+        "roles": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["role", "presentation_ref"],
+            "properties": {
+              "role": {"enum": ["being", "thing"]},
+              "presentation_ref": {"type": "string", "minLength": 1},
+              "expression_ref": {"type": "string", "minLength": 1},
+              "projection_ref": {"type": "string", "minLength": 1},
+              "projection_revision": {"type": "integer", "minimum": 1}
+            }
+          }
+        },
+        "expressions": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["expression_ref", "expression_revision", "presentation_ref", "subjects_available"],
+            "properties": {
+              "expression_ref": {"type": "string", "minLength": 1},
+              "expression_revision": {"type": "integer", "minimum": 1},
+              "presentation_ref": {"type": "string", "minLength": 1},
+              "projection_ref": {"type": "string", "minLength": 1},
+              "projection_revision": {"type": "integer", "minimum": 1},
+              "live_renderer_ref": {"type": "string", "minLength": 1},
+              "subjects_available": {"type": "boolean"}
+            }
+          }
+        },
+        "world_presentations": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "projections": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["projection_ref", "projection_revision", "state", "subject"],
+            "properties": {
+              "projection_ref": {"type": "string", "minLength": 1},
+              "projection_revision": {"type": "integer", "minimum": 1},
+              "state": {"type": "string", "minLength": 1},
+              "subject": {
+                "type": "object",
+                "additionalProperties": false,
+                "required": ["kind", "ref"],
+                "properties": {
+                  "kind": {"type": "string", "minLength": 1},
+                  "ref": {"type": "string", "minLength": 1}
+                }
+              },
+              "source_revision": {"type": "string", "minLength": 1}
+            }
+          }
+        },
+        "field_occurrences": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field_ref", "via"],
+            "properties": {
+              "field_ref": {"type": "string", "minLength": 1},
+              "via": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
+    "discoveryView": {
+      "type": "object",
+      "additionalProperties": false,
+      "required": ["schema", "generated_from", "revision", "entries", "relations", "presentations"],
+      "description": "The bounded, rebuildable discovery export of one Explore read model: stable refs, aliases, typed relations, structured presentation bindings, Projection identity and SharedField membership. Payloads excluded; another World or AIKit Search/Resolve resolves the same semantic refs from it.",
+      "properties": {
+        "schema": {"const": "oi.explore-discovery/v1"},
+        "generated_from": {"type": "string", "minLength": 1},
+        "revision": {"type": "string", "minLength": 1},
+        "entries": {"type": "array", "items": {"$ref": "#/$defs/entry"}},
+        "relations": {"type": "array", "items": {"$ref": "#/$defs/relation"}},
+        "presentations": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["presentation_ref", "kind", "world_ref", "subjects"],
+            "properties": {
+              "presentation_ref": {"type": "string", "minLength": 1},
+              "revision": {"type": "integer", "minimum": 1},
+              "kind": {"type": "string", "minLength": 1},
+              "world_ref": {"type": "string", "minLength": 1},
+              "title": {"type": "string", "minLength": 1},
+              "projection_ref": {"type": "string", "minLength": 1},
+              "projection_revision": {"type": "integer", "minimum": 1},
+              "projection_state": {"type": "string", "minLength": 1},
+              "subjects": {
+                "type": "array",
+                "items": {
+                  "type": "object",
+                  "additionalProperties": false,
+                  "required": ["ref"],
+                  "properties": {
+                    "ref": {"type": "string", "minLength": 1},
+                    "role": {"enum": ["being", "thing"]},
+                    "availability": {"type": "string", "minLength": 1}
+                  }
+                }
+              }
+            }
+          }
+        },
+        "membership": {
+          "type": "object",
+          "additionalProperties": false,
+          "required": ["entry_fields", "relation_fields"],
+          "properties": {
+            "entry_fields": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}},
+            "relation_fields": {"type": "object", "additionalProperties": {"type": "string", "minLength": 1}}
+          }
+        },
+        "fields": {
+          "type": "array",
+          "items": {
+            "type": "object",
+            "additionalProperties": false,
+            "required": ["field_ref"],
+            "properties": {
+              "field_ref": {"type": "string", "minLength": 1},
+              "kind": {"type": "string", "minLength": 1},
+              "visibility": {"type": "string", "minLength": 1},
+              "title": {"type": "string", "minLength": 1}
+            }
+          }
+        }
+      }
+    },
     "searchResult": {
       "type": "object",
       "additionalProperties": false,
@@ -71,6 +240,9 @@
         "revision": {"type": "string", "minLength": 1},
         "provenance": {"type": "array", "minItems": 1, "items": {"$ref": "#/$defs/provenance"}},
         "locators": {"type": "array", "items": {"$ref": "#/$defs/locator"}},
+        "projection_ref": {"type": "string", "minLength": 1},
+        "field_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "presentations": {"$ref": "#/$defs/presentationSummary"},
         "score": {"type": "number", "minimum": 0}
       }
     },
@@ -129,6 +301,8 @@
       "properties": {
         "resource": {"$ref": "#/$defs/entry"},
         "relations": {"$ref": "#/$defs/relationView"},
+        "field_refs": {"type": "array", "items": {"type": "string", "minLength": 1}},
+        "presentations": {"$ref": "#/$defs/subjectPresentations"},
         "actions": {"type": "array", "items": {"type": "string", "minLength": 1}}
       }
     },
@@ -149,6 +323,8 @@
     "source_view": {"$ref": "#/$defs/sourceView"},
     "explain_view": {"$ref": "#/$defs/explainView"},
     "open_view": {"$ref": "#/$defs/openView"},
-    "surface_view": {"$ref": "#/$defs/surfaceView"}
+    "surface_view": {"$ref": "#/$defs/surfaceView"},
+    "subject_presentations": {"$ref": "#/$defs/subjectPresentations"},
+    "discovery_view": {"$ref": "#/$defs/discoveryView"}
   }
 }

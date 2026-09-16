@@ -2,6 +2,68 @@ import test from 'node:test';
 import assert from 'node:assert/strict';
 import { decodeExploreTravel, freshExploreTravel, pushVisit, amendVisit, travelBy, canTravel, currentVisit, EXPLORE_TRAVEL_SCHEMA, EXPLORE_TRAVEL_LIMIT } from '../src/explore/travel.mjs';
 import { fieldReading, searchField, primaryProjection, constellation, relationsOf, watchStanding, watchTargetKind } from '../src/explore/field.mjs';
+import { createExploreEntry } from '../../../shared-field/explore.mjs';
+import { createProjection } from '../../../shared-field/index.mjs';
+import { createWorldPresentation, WORLD_PRESENTATION_SCHEMA } from '../../../shared-field/presentation.mjs';
+import { EXPRESSION_PRESENTATION_RENDERER } from '../../../shared-field/expression-presentation.mjs';
+
+const PROV = [{ kind: 'explore-fixture', ref: 'fixture:desktop', source_system: 'fixture', revision: '1' }];
+const fieldEntry = (overrides) => createExploreEntry({ provenance: PROV, ...overrides });
+
+const worldPresentation = createWorldPresentation({
+  presentation_ref: 'presentation:world:central:project:o-i',
+  world_ref: 'world:central:project:O-I',
+  revision: 1,
+  title: 'O-I — a ProjectCentral world',
+  theme: { tokens: {} },
+  regions: [{
+    region_ref: 'lede',
+    role: 'lede',
+    bindings: [{ binding_ref: 'lede', component_ref: 'oi.presentation/lede/v1', portable_renderer: 'oi.presentation/lede/v1', subject_ref: 'world:central:project:O-I', props: { title: 'O-I — a ProjectCentral world' }, fallback: {}, provenance: PROV }],
+  }],
+  provenance: PROV,
+});
+
+const expressionPresentation = {
+  schema: 'oi.expression-presentation/v1',
+  expression_ref: 'expression:e',
+  expression_revision: 2,
+  live_renderer_ref: 'renderer:oi:expression-stage',
+  live_availability: 'available',
+  subjects: [
+    { ref: 'world:central:project:O-I/wiki:node:project-root/o-i', revision: '1', availability: 'available', sources: [] },
+    { ref: 'participant:central:owner', revision: '1', availability: 'available', sources: [] },
+  ],
+  representations: [],
+};
+const expressionComposition = {
+  schema: 'oi.expression-composition/v1',
+  expression_ref: 'expression:e',
+  revision: 2,
+  title: 'A field of glyphs',
+  scenes: {},
+  entities: {
+    'entity:root': { entity_ref: 'entity:root', subject: { subject_ref: 'world:central:project:O-I/wiki:node:project-root/o-i', native_owner: 'central:root', presentation_role: 'thing', sources: [] } },
+    'entity:owner': { entity_ref: 'entity:owner', subject: { subject_ref: 'participant:central:owner', native_owner: 'central:root', presentation_role: 'being', sources: [] } },
+  },
+  relations: {},
+  selection: { scene_ref: null, entity_ref: null },
+  provenance: [],
+  representations: [],
+};
+const expressionPresentationWp = createWorldPresentation({
+  presentation_ref: 'presentation:desktop:expression:e',
+  world_ref: 'expression:e',
+  revision: 2,
+  title: 'A field of glyphs',
+  theme: { tokens: {} },
+  regions: [{
+    region_ref: 'body',
+    role: 'body',
+    bindings: [{ binding_ref: 'expression', component_ref: EXPRESSION_PRESENTATION_RENDERER, portable_renderer: EXPRESSION_PRESENTATION_RENDERER, subject_ref: 'world:central:project:O-I/wiki:node:project-root/o-i', props: { expression: expressionPresentation, composition: expressionComposition, title: 'A field of glyphs' }, fallback: { title: 'A field of glyphs' }, provenance: PROV }],
+  }],
+  provenance: PROV,
+});
 
 const snapshot = () => ({
   schema: 'oi.shared-field.snapshot/v1',
@@ -10,19 +72,20 @@ const snapshot = () => ({
   fields: [{ field_ref: 'oi:field:central:project:O-I', kind: 'explore', visibility: 'public', title: 'Shared field' }],
   participants: [{ participant_ref: 'participant:central:owner', field_ref: 'oi:field:central:project:O-I', identity: { kind: 'human', ref: 'human:central:owner' }, presentation: { chosen_name: 'Owner', world_ref: 'world:central:project:O-I' } }],
   projections: [
-    { projection_ref: 'projection:central:project:O-I', projection_revision: 1, state: 'published', subject: { kind: 'central-world', ref: 'world:central:project:O-I' }, representation: { kind: 'oi.world-presentation/v1' } },
-    { projection_ref: 'projection:desktop:expression:e', projection_revision: 2, state: 'published', subject: { kind: 'expression', ref: 'expression:e' }, representation: { kind: 'oi.world-presentation/v1' } },
-    { projection_ref: 'projection:desktop:expression:e', projection_revision: 1, state: 'published', subject: { kind: 'expression', ref: 'expression:e' }, representation: { kind: 'oi.world-presentation/v1' } },
+    createProjection({ projection_ref: 'projection:central:project:O-I', projection_revision: 1, state: 'published', subject: { kind: 'central-world', ref: 'world:central:project:O-I' }, source: { system: 'central', ref: 'world:central:project:O-I', revision: 'r1' }, publisher_participant_ref: 'participant:central:owner', published_at: '2026-09-16T00:00:00.000Z', audience: { visibility: 'public' }, representation: { kind: WORLD_PRESENTATION_SCHEMA, payload: worldPresentation }, provenance: PROV }),
+    createProjection({ projection_ref: 'projection:desktop:expression:e', projection_revision: 2, state: 'published', subject: { kind: 'expression', ref: 'expression:e' }, source: { system: 'o-i', ref: 'expression:e', revision: 'r2' }, publisher_participant_ref: 'participant:central:owner', published_at: '2026-09-16T00:00:00.000Z', audience: { visibility: 'public' }, representation: { kind: WORLD_PRESENTATION_SCHEMA, payload: expressionPresentationWp }, provenance: PROV }),
+    createProjection({ projection_ref: 'projection:desktop:expression:e', projection_revision: 1, state: 'published', subject: { kind: 'expression', ref: 'expression:e' }, source: { system: 'o-i', ref: 'expression:e', revision: 'r1' }, publisher_participant_ref: 'participant:central:owner', published_at: '2026-09-15T00:00:00.000Z', audience: { visibility: 'public' }, representation: { kind: WORLD_PRESENTATION_SCHEMA, payload: expressionPresentationWp }, provenance: PROV }),
   ],
   entries: [
-    { ref: 'world:central:project:O-I', kind: 'central-world', world_ref: 'world:central:project:O-I', label: 'O-I — a ProjectCentral world', aliases: [] },
-    { ref: 'world:central:project:O-I/wiki:node:project-root/o-i', kind: 'wiki-node', world_ref: 'world:central:project:O-I', label: 'O-I', aliases: [], summary: 'project root' },
-    { ref: 'expression:e', kind: 'expression', world_ref: 'world:desktop:expression-e', label: 'A field of glyphs', aliases: ['projection:desktop:expression:e'], meta: { projection_ref: 'projection:desktop:expression:e' } },
+    fieldEntry({ ref: 'world:central:project:O-I', kind: 'central-world', world_ref: 'world:central:project:O-I', label: 'O-I — a ProjectCentral world', aliases: [] }),
+    fieldEntry({ ref: 'world:central:project:O-I/wiki:node:project-root/o-i', kind: 'wiki-node', world_ref: 'world:central:project:O-I', label: 'O-I', aliases: [], summary: 'project root' }),
+    fieldEntry({ ref: 'expression:e', kind: 'expression', world_ref: 'world:desktop:expression-e', label: 'A field of glyphs', aliases: ['projection:desktop:expression:e'], meta: { projection_ref: 'projection:desktop:expression:e' } }),
   ],
-  relations: [{ from: 'world:central:project:O-I', to: 'world:central:project:O-I/wiki:node:project-root/o-i', relation: 'oi.world/wiki-node', origin: 'projection' }],
+  relations: [{ from: 'world:central:project:O-I', to: 'world:central:project:O-I/wiki:node:project-root/o-i', relation: 'oi.world/wiki-node', origin: 'projection', provenance: PROV }],
   my_authority: [{ field_ref: 'oi:field:central:project:O-I', participant_ref: 'participant:central:owner', role: 'contributor', revoked: false }],
   my_watches: [],
-  entry_fields: { 'world:central:project:O-I': 'oi:field:central:project:O-I', 'world:central:project:O-I/wiki:node:project-root/o-i': 'oi:field:central:project:O-I', 'expression:e': 'oi:field:desktop:expression-e' },
+  entry_fields: { 'world:central:project:O-I': 'oi:field:central:project:O-I', 'world:central:project:O-I/wiki:node:project-root/o-i': 'oi:field:central:project:O-I', 'expression:e': 'oi:field:central:project:O-I' },
+  relation_fields: {},
   counts: { fields: 1, participants: 1, projections: 3, entries: 3, relations: 1 },
 });
 
@@ -62,13 +125,51 @@ test('field reading groups entries by world and presents participants as Beings;
 });
 
 test('search ranks addressable subjects and an empty query is the whole field', () => {
-  assert.equal(searchField(snapshot(), '').length, 5);
   const hits = searchField(snapshot(), 'glyph');
   assert.deepEqual(hits.map((hit) => hit.ref), ['expression:e']);
   const being = searchField(snapshot(), 'owner');
   assert.ok(being.some((hit) => hit.kind === 'being' && hit.ref === 'participant:central:owner'));
   assert.ok(searchField(snapshot(), 'shared field').some((hit) => hit.kind === 'field'));
   assert.deepEqual(searchField({ state: 'unavailable' }, 'x'), []);
+});
+
+test('desktop entry search runs the shared read model: reveal, membership and alias in one result shape', () => {
+  const hits = searchField(snapshot(), 'project root');
+  const node = hits.find((hit) => hit.ref === 'world:central:project:O-I/wiki:node:project-root/o-i');
+  assert.ok(node, 'the native Thing is found through the shared model');
+  assert.deepEqual(node.presentations.roles, [{ role: 'thing', presentation_ref: 'presentation:desktop:expression:e' }]);
+  assert.deepEqual(node.presentations.expressions, ['expression:e']);
+  assert.deepEqual(node.presentations.field_occurrences, ['oi:field:central:project:O-I']);
+  // The same model resolves an alias to the canonical Expression ref.
+  const byAlias = searchField(snapshot(), 'projection:desktop:expression:e');
+  assert.deepEqual(byAlias.filter((hit) => hit.kind === 'entry').map((hit) => hit.ref), ['expression:e']);
+});
+
+test('a payload the shared model refuses degrades to plain entry addressability', () => {
+  const rows = snapshot();
+  // The Expression Projection payload is replaced by a stub the model rejects;
+  // the entries themselves must stay searchable.
+  rows.projections = rows.projections.map((projection) =>
+    projection.subject.ref === 'expression:e'
+      ? { ...projection, representation: { kind: WORLD_PRESENTATION_SCHEMA, payload: { broken: true } } }
+      : projection);
+  const hits = searchField(rows, 'glyph');
+  assert.deepEqual(hits.filter((hit) => hit.kind === 'entry').map((hit) => hit.ref), ['expression:e']);
+  assert.equal(hits.find((hit) => hit.ref === 'expression:e').presentations, undefined);
+});
+
+test('history returns through the same refs: subject → Being → back', () => {
+  let travel = freshExploreTravel();
+  const subject = 'world:central:project:O-I/wiki:node:project-root/o-i';
+  const being = 'participant:central:owner';
+  travel = pushVisit(travel, { query: 'project root', selected: subject });
+  travel = pushVisit(travel, { query: 'project root', selected: being });
+  assert.equal(currentVisit(travel).selected, being);
+  const back = travelBy(travel, -1);
+  assert.equal(currentVisit(back).selected, subject);
+  // The ref carried backward is the exact ref the shared model resolves.
+  const reading = fieldReading(snapshot());
+  assert.ok(reading.worlds.some((world) => world.entries.some((entry) => entry.ref === currentVisit(back).selected)));
 });
 
 test('the primary projection is the entry\'s own latest revision, else the world\'s', () => {

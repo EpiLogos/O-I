@@ -74,6 +74,10 @@ test('language-neutral Explore schema names the versioned cross-client contracts
   assert.ok(schema.$defs.sourceView);
   assert.ok(schema.$defs.explainView);
   assert.ok(schema.$defs.surfaceView);
+  assert.equal(schema.$defs.subjectPresentations.properties.schema.const, 'oi.subject-presentations/v1');
+  assert.equal(schema.$defs.discoveryView.properties.schema.const, 'oi.explore-discovery/v1');
+  assert.ok(schema.$defs.searchResult.properties.presentations, 'search results carry the compact presentation reveal');
+  assert.ok(schema.$defs.openView.properties.presentations, 'open carries the full presentation reading');
 });
 
 
