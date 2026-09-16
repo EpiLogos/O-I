@@ -78,6 +78,20 @@ impl Scene {
         json
     }
 
+    /// Run a command and return its exit code with the raw output text —
+    /// for the plain (non-JSON) renderings.
+    fn run_raw(&self, args: &[&str]) -> (i32, String) {
+        let output = self.oi().args(args).output().expect("the oi binary runs");
+        (
+            output.status.code().unwrap_or(-1),
+            format!(
+                "{}{}",
+                String::from_utf8_lossy(&output.stdout),
+                String::from_utf8_lossy(&output.stderr)
+            ),
+        )
+    }
+
     fn configuration_dir(&self) -> PathBuf {
         self.home.path().join("configuration")
     }
@@ -934,4 +948,281 @@ fn executed_changeset_retires_the_hold_and_secret_holds_carry_references_only() 
         "aikit:credentials:held-ref"
     );
     assert!(secret_show["desired"].get("value").is_none());
+}
+
+// ---------------------------------------------------------------------------
+// `oi profile edit`: in-place desired edits through the store's own laws
+// ---------------------------------------------------------------------------
+
+#[test]
+fn profile_edit_rewrites_desired_in_place_and_reports_what_changed() {
+    let scene = Scene::open();
+
+    let created = scene.run_ok(&["profile", "create", "dev", "--json"]);
+    assert_eq!(created["profile_ref"], "dev");
+
+    // Add: one entry, reported by name, stored in the profile document.
+    let edited = scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--set",
+        SETTING_REF,
+        "sonnet-next",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    assert_eq!(edited["schema"], "oi.profile-edit/v1");
+    assert_eq!(edited["profile"]["profile_ref"], "dev");
+    assert_eq!(edited["applied"][0]["action"], "entry_added");
+    assert_eq!(edited["applied"][0]["next"]["value"], "sonnet-next");
+    assert_eq!(edited["profile"]["desired"][0]["value"], "sonnet-next");
+
+    // Nothing was applied and nothing was activated: the owner's native
+    // fact is unchanged and no desired state is held yet — edit composes
+    // with the explicit use/plan/apply flow, never replacing it.
+    let got = scene.run_ok(&["config", "get", SETTING_REF, SCOPE_ARG, "--json"]);
+    assert_eq!(got["source"], "native", "{got}");
+    let diff = scene.run_ok(&["config", "diff", "--json"]);
+    assert_eq!(
+        diff["resolutions"].as_array().expect("resolutions").len(),
+        0,
+        "an edit never activates a profile or touches an owner: {diff}"
+    );
+
+    // Update: the same (setting, scope) is replaced in place, and the
+    // report names the previous entry.
+    let edited = scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--set",
+        SETTING_REF,
+        "opus",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    assert_eq!(edited["applied"][0]["action"], "entry_updated");
+    assert_eq!(edited["applied"][0]["previous"]["value"], "sonnet-next");
+    assert_eq!(edited["applied"][0]["next"]["value"], "opus");
+    assert_eq!(
+        edited["profile"]["desired"]
+            .as_array()
+            .expect("desired")
+            .len(),
+        1,
+        "the replacement kept one entry"
+    );
+
+    // The store's own file law holds on the edited document: 0600.
+    let stored = scene.home.path().join("profiles").join("dev.json");
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        let mode = std::fs::metadata(&stored)
+            .expect("stored profile")
+            .permissions()
+            .mode();
+        assert_eq!(mode & 0o777, 0o600, "edited profiles stay 0600");
+    }
+
+    // Secret law: a secret-kind entry carries the reference and never a
+    // value (09 §14) — the same normalisation as any change request.
+    let edited = scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--set",
+        "ai-kit:providers:credentials.anthropic",
+        "aikit:credentials:held-ref",
+        "world",
+        "--json",
+    ]);
+    assert_eq!(edited["applied"][0]["action"], "entry_added");
+    assert_eq!(
+        edited["profile"]["desired"][1]["secret_reference"]["ref"],
+        "aikit:credentials:held-ref"
+    );
+    assert!(edited["profile"]["desired"][1].get("value").is_none());
+
+    // show reads the edited document back from the store.
+    let shown = scene.run_ok(&["profile", "show", "dev", "--json"]);
+    assert_eq!(shown["desired"].as_array().expect("desired").len(), 2);
+
+    // Removal by setting+scope; removing an absent entry reads as absence.
+    let removed = scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--remove",
+        SETTING_REF,
+        SCOPE_ARG,
+        "--json",
+    ]);
+    assert_eq!(removed["applied"][0]["action"], "entry_removed");
+    assert_eq!(removed["applied"][0]["previous"]["value"], "opus");
+
+    let absent = scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--remove",
+        SETTING_REF,
+        SCOPE_ARG,
+        "--json",
+    ]);
+    assert_eq!(absent["applied"][0]["action"], "entry_absent");
+
+    // A removal without a scope that matches several held entries refuses,
+    // names the scopes, and stores nothing — no partial edit.
+    scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--set",
+        SETTING_REF,
+        "opus",
+        SCOPE_ARG,
+        "--set",
+        SETTING_REF,
+        "opus",
+        "project:other",
+        "--json",
+    ]);
+    let (code, error, _) =
+        scene.run(&["profile", "edit", "dev", "--remove", SETTING_REF, "--json"]);
+    assert_eq!(code, 1);
+    assert_eq!(error["error_code"], "invalid_value");
+    assert!(
+        error["message"]
+            .as_str()
+            .expect("message")
+            .contains("several scopes"),
+        "{error}"
+    );
+    let shown = scene.run_ok(&["profile", "show", "dev", "--json"]);
+    assert_eq!(
+        shown["desired"].as_array().expect("desired").len(),
+        3,
+        "a refused edit stores nothing: the two held entries and the secret stay"
+    );
+
+    // The engine's own addressing law refuses an unknown setting.
+    let (code, error, _) = scene.run(&[
+        "profile",
+        "edit",
+        "dev",
+        "--set",
+        "nope:section:key",
+        "x",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    assert_eq!(code, 1);
+    assert_eq!(error["error_code"], "unsupported_setting");
+
+    // Title/description edits and clears ride the same operation set.
+    let titled = scene.run_ok(&[
+        "profile",
+        "edit",
+        "dev",
+        "--title",
+        "Staging",
+        "--description",
+        "Sparse staging intent",
+        "--json",
+    ]);
+    assert_eq!(titled["profile"]["title"], "Staging");
+    let cleared = scene.run_ok(&["profile", "edit", "dev", "--clear-title", "--json"]);
+    assert!(cleared["profile"]["title"].is_null());
+
+    // The plain report names exactly what changed and says nothing was
+    // applied.
+    let (code, text) = scene.run_raw(&[
+        "profile",
+        "edit",
+        "dev",
+        "--set",
+        SETTING_REF,
+        "sonnet-next",
+        SCOPE_ARG,
+    ]);
+    assert_eq!(code, 0, "{text}");
+    assert!(text.contains("Profile `dev` edited"), "{text}");
+    assert!(text.contains("nothing was applied"), "{text}");
+    assert!(
+        text.contains("set ai-kit:resolution:model.default"),
+        "{text}"
+    );
+}
+
+// ---------------------------------------------------------------------------
+// Receipts listing: a reading of the recorded refs, never a second store
+// ---------------------------------------------------------------------------
+
+#[test]
+fn receipts_listing_reads_the_recorded_refs_and_names_absence() {
+    let scene = Scene::open();
+
+    // Nothing recorded yet: an empty listing, never invented content.
+    let (code, empty, _) = scene.run(&["config", "receipts", "--json"]);
+    assert_eq!(code, 0);
+    assert_eq!(empty["schema"], "oi.config-receipts/v1");
+    assert_eq!(empty["receipts"].as_array().expect("receipts").len(), 0);
+
+    // Apply one ChangeSet through the owner: the receipt ref is recorded
+    // under the O:I configuration store.
+    let request = scene.run_ok(&[
+        "config",
+        "set",
+        SETTING_REF,
+        "sonnet-next",
+        SCOPE_ARG,
+        "--json",
+    ]);
+    let request_path = write_request(&scene, "receipts-request.json", &request);
+    let applied = scene.run_ok(&[
+        "config",
+        "apply",
+        "--request-file",
+        &request_path,
+        "--changeset",
+        "cs-receipts-1",
+        "--json",
+    ]);
+    let receipt_id = applied["receipts"][0]["receipt_id"].clone();
+
+    // The listing reads the recorded ref with its identity intact.
+    let listed = scene.run_ok(&["config", "receipts", "--json"]);
+    assert_eq!(listed["schema"], "oi.config-receipts/v1");
+    let rows = listed["receipts"].as_array().expect("receipt rows");
+    assert_eq!(rows.len(), 1);
+    assert_eq!(rows[0]["receipt_id"], receipt_id);
+    assert_eq!(rows[0]["owner_ref"], "ai-kit");
+    assert_eq!(rows[0]["changeset_id"], "cs-receipts-1");
+    assert_eq!(rows[0]["operation"], "apply");
+    assert_eq!(rows[0]["outcome"], "applied");
+    assert_eq!(rows[0]["native_ref"], "aikit:history:model.default:1");
+
+    // Filtering is by the changeset identity; an unknown changeset reads
+    // as named absence — an empty list, not an error and not a fabrication.
+    let filtered = scene.run_ok(&[
+        "config",
+        "receipts",
+        "--changeset",
+        "cs-receipts-1",
+        "--json",
+    ]);
+    assert_eq!(filtered["receipts"].as_array().expect("receipts").len(), 1);
+    let absent = scene.run_ok(&["config", "receipts", "--changeset", "cs-absent", "--json"]);
+    assert_eq!(absent["receipts"].as_array().expect("receipts").len(), 0);
+
+    // The plain form carries the same identity.
+    let (code, text) = scene.run_raw(&["config", "receipts"]);
+    assert_eq!(code, 0, "{text}");
+    assert!(
+        text.contains(receipt_id.as_str().expect("receipt id")),
+        "{text}"
+    );
+    assert!(text.contains("owner-minted identity"), "{text}");
 }

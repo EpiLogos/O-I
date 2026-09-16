@@ -316,6 +316,17 @@ pub enum KernelOp {
     ProfileUseApply { profile_ref: String },
     /// Create an empty sparse profile.
     ProfileCreate { profile_ref: String, #[serde(default)] title: Option<String> },
+    /// Edit a stored profile in place through the engine's own `oi profile
+    /// edit` verb (09 §12, additive): an explicit operation set, judged and
+    /// stored by the engine's own laws. Nothing is applied to any owner.
+    ProfileEdit {
+        profile_ref: String,
+        operations: Vec<configuration::ProfileEditOp>,
+    },
+    /// The recorded receipt references (09 §9): a listing of the recorded
+    /// refs, never a second store; the owner's own history stays the record
+    /// of record.
+    ConfigReceipts,
     Ground {request:ground::Request},
     CompositionRead {#[serde(default)] owners:bool},
     /// Wave 5 (docs/cradle/07): mount each of the six owners' own native
@@ -445,6 +456,12 @@ pub enum KernelOpResult {
     /// The activation document the engine recorded (the mark, nothing else).
     ProfileUsed { activation: serde_json::Value },
     ProfileCreated { profile: serde_json::Value },
+    /// The edited document beside the per-operation record — the
+    /// `oi.profile-edit/v1` envelope, verbatim.
+    ProfileEdited { document: serde_json::Value },
+    /// The recorded receipt references — the `oi.config-receipts/v1`
+    /// envelope, verbatim; an absent history is an empty list.
+    ConfigReceipts { document: serde_json::Value },
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
@@ -663,6 +680,18 @@ impl Kernel {
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let profile=configuration::Client::discover().profile_create(&cwd,&profile_ref,title.as_deref())?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileCreated{profile}})
+            },
+            KernelOp::ProfileEdit {profile_ref,operations} => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let document=configuration::Client::discover().profile_edit(&cwd,&profile_ref,&operations)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileEdited{document}})
+            },
+            KernelOp::ConfigReceipts => {
+                let root=world::read_world(&self.client).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let document=configuration::Client::discover().config_receipts(&cwd)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigReceipts{document}})
             },
             KernelOp::FileOperation {location,request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileOperation {data:files::operate(&self.client,&location,&request)?}}),
             KernelOp::FilesList {path} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:files::list(&self.client,&path)?} }),

@@ -45,6 +45,7 @@ fn command_config(args: &[OsString]) -> Result<i32, String> {
         "plan" => config_plan(&*config, rest, json),
         "apply" => config_apply(&*config, rest, json),
         "doctor" => config_doctor(&*config, json),
+        "receipts" => config_receipts(&*config, rest, json),
         other => {
             return Err(format!(
                 "unknown `oi config` command {other:?}; see `oi config --help`"
@@ -956,6 +957,74 @@ fn config_apply(
     config_outcome(Some(text), None)
 }
 
+/// List the recorded receipt references (09 §9): a reading of what the
+/// engine recorded, owner-minted identity intact. This is never a second
+/// store — the owner's own history (`native_ref`) remains the record of
+/// record. A changeset with no recorded receipts reads as empty: named
+/// absence, never invented content.
+fn config_receipts(
+    config: &dyn ConfigSurface,
+    args: &[String],
+    json: bool,
+) -> SurfaceResult<ConfigCommandOutcome> {
+    let changeset_filter = config_flag_value(args, "--changeset");
+    let mut receipts = config.receipts()?;
+    if let Some(changeset_id) = &changeset_filter {
+        receipts.retain(|receipt| &receipt.changeset_id == changeset_id);
+    }
+    if json {
+        return config_outcome(
+            None,
+            Some(
+                serde_json::to_value(&receipts)
+                    .map(|receipts| {
+                        serde_json::json!({ "schema": "oi.config-receipts/v1", "receipts": receipts })
+                    })
+                    .map_err(|error| SurfaceError::new(ErrorCode::Internal, error.to_string()))?,
+            ),
+        );
+    }
+    if receipts.is_empty() {
+        let absent = changeset_filter
+            .as_deref()
+            .map(|id| format!(" for changeset `{id}`"))
+            .unwrap_or_default();
+        return config_outcome(
+            Some(format!(
+                "No receipts are recorded{absent}. The owner's own history remains the record of record."
+            )),
+            None,
+        );
+    }
+    let rows = receipts
+        .iter()
+        .map(|receipt| {
+            format!(
+                "{}  {}  {}  {}  {} @ {}  {}{}",
+                receipt.receipt_id,
+                receipt.changeset_id,
+                receipt.owner_ref,
+                wire_string(&receipt.operation),
+                receipt.setting_ref,
+                receipt.scope.compact(),
+                wire_string(&receipt.outcome),
+                receipt
+                    .native_ref
+                    .as_deref()
+                    .map(|native| format!("  native record: {native}"))
+                    .unwrap_or_default(),
+            )
+        })
+        .collect::<Vec<_>>()
+        .join("\n");
+    config_outcome(
+        Some(format!(
+            "Recorded receipts (oldest first; O:I-side references, owner-minted identity):\n{rows}"
+        )),
+        None,
+    )
+}
+
 fn config_doctor(config: &dyn ConfigSurface, json: bool) -> SurfaceResult<ConfigCommandOutcome> {
     let findings = config.doctor()?;
     if json {
@@ -1029,6 +1098,7 @@ surface used by the conformance tests.\n\
   oi config diff [--json]                     desired vs native for held desired state\n\
   oi config plan --request-file <path|-> [--json]   owner-native plans, no mutation\n\
   oi config apply --request-file <path|-> [--changeset <id>] [--json]   apply + receipts\n\
+  oi config receipts [--changeset <id>] [--json]   the recorded receipt references (09 §9)\n\
   oi config doctor [--json]                   drift/pending/availability findings\n\
 \n\
 Scopes use the compact form: kind, plus `:ref` for non-singular kinds\n\

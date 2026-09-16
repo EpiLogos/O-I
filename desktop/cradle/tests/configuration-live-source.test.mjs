@@ -151,12 +151,120 @@ test("profile use plan enriches settings from the registry and use moves nothing
   assert.equal(result, null, "the engine's `use` moves no native state, so no ChangeSet exists");
 });
 
-test("create works and in-place profile edits refuse honestly", async () => {
-  const profile = { schema: "oi.profile/v1", profile_ref: "staging", desired: [], native_profiles: [] };
-  const { source } = stubSource({
-    profile_create: { outcome: { result: "profile_created", profile } },
+test("create works and saveProfile edits in place through the engine's own op set", async () => {
+  const stored = {
+    schema: "oi.profile/v1", profile_ref: "dev", title: "Dev", description: null,
+    created_at_unix_ms: 0, revised_at_unix_ms: 0, native_profiles: [],
+    desired: [
+      { setting_ref: "ai-kit:resolution:model.default", scope: SCOPE, value: "sonnet-next" },
+      { setting_ref: "ai-kit:session:session.provider", scope: { scope_kind: "world", scope_ref: null }, value: "herdr" },
+    ],
+  };
+  const { source, ops } = stubSource({
+    profile_read: { outcome: { result: "profile_reading", profile: stored } },
+    profile_edit: {
+      outcome: {
+        result: "profile_edited",
+        document: { schema: "oi.profile-edit/v1", profile: stored, applied: [] },
+      },
+    },
   });
-  const created = await source.createProfile("staging", "Staging");
-  assert.equal(created.profile_ref, "staging");
-  await assert.rejects(() => source.saveProfile(profile), /does not offer in-place profile edits yet/);
+
+  // The edited document differs by: one updated value, one removed entry,
+  // one added secret reference, and a set title. The op set names exactly
+  // that — nothing else crosses.
+  await source.saveProfile({
+    ...stored,
+    title: "Development",
+    desired: [
+      { setting_ref: "ai-kit:resolution:model.default", scope: SCOPE, value: "opus" },
+      {
+        setting_ref: "ai-kit:providers:credentials.anthropic",
+        scope: { scope_kind: "world", scope_ref: null },
+        secret_reference: { ref: "aikit:credentials:held" },
+      },
+    ],
+  });
+
+  assert.equal(ops[0].op, "profile_read");
+  assert.equal(ops[1].op, "profile_edit");
+  assert.equal(ops[1].profile_ref, "dev");
+  assert.deepEqual(ops[1].operations, [
+    { action: "set_title", title: "Development" },
+    {
+      action: "set", setting_ref: "ai-kit:resolution:model.default", scope: SCOPE,
+      value: "opus", secret_reference: null,
+    },
+    {
+      action: "set", setting_ref: "ai-kit:providers:credentials.anthropic",
+      scope: { scope_kind: "world", scope_ref: null }, value: undefined,
+      secret_reference: { ref: "aikit:credentials:held" },
+    },
+    {
+      action: "remove", setting_ref: "ai-kit:session:session.provider",
+      scope: { scope_kind: "world", scope_ref: null },
+    },
+  ]);
+
+  // Saving an identical document reads the stored document but sends no
+  // edit operations at all.
+  const quiet = stubSource({
+    profile_read: { outcome: { result: "profile_reading", profile: stored } },
+  });
+  await quiet.source.saveProfile(stored);
+  assert.deepEqual(
+    quiet.ops.filter((op) => op.op === "profile_edit"),
+    [],
+    "no edit op crosses when nothing changed",
+  );
+
+  // The engine's own refusal travels in its own words.
+  const refused = stubSource({
+    profile_read: { outcome: { result: "profile_reading", profile: stored } },
+    profile_edit: { error: "invalid_value: `ai-kit:resolution:model.default` carries no value" },
+  });
+  await assert.rejects(
+    () => refused.source.saveProfile({ ...stored, title: null }),
+    /invalid_value/,
+  );
+});
+
+test("receipts lists the recorded refs and a missing changeset reads as empty", async () => {
+  const { source, ops } = stubSource({
+    config_receipts: {
+      outcome: {
+        result: "config_receipts",
+        document: {
+          schema: "oi.config-receipts/v1",
+          receipts: [
+            {
+              schema: "oi.config-receipt/v1", receipt_id: "aikit-receipt-1", owner_ref: "ai-kit",
+              changeset_id: "cs-cradle-1", plan_digest: null,
+              setting_ref: "ai-kit:resolution:model.default", scope: SCOPE,
+              operation: "apply", outcome: "applied", applied_at_unix_ms: 7,
+              native_ref: "aikit:history:model.default:1",
+            },
+            {
+              schema: "oi.config-receipt/v1", receipt_id: "aikit-receipt-2", owner_ref: "ai-kit",
+              changeset_id: "cs-cradle-2", plan_digest: null,
+              setting_ref: "ai-kit:resolution:model.default", scope: SCOPE,
+              operation: "apply", outcome: "applied", applied_at_unix_ms: 8,
+              native_ref: "aikit:history:model.default:2",
+            },
+          ],
+        },
+      },
+    },
+  });
+
+  const mine = await source.receipts("cs-cradle-1");
+  assert.equal(ops[0].op, "config_receipts", "the listing is one engine read");
+  assert.equal(mine.length, 1, "only the addressed changeset's receipts come back");
+  assert.equal(mine[0].receipt_id, "aikit-receipt-1");
+  assert.equal(mine[0].native_ref, "aikit:history:model.default:1", "the record of record stays named");
+
+  // A changeset with no recorded receipts reads as named absence: an empty
+  // list, never invented content.
+  const none = await source.receipts("cs-never-applied");
+  assert.deepEqual(none, []);
 });

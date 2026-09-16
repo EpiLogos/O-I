@@ -41,6 +41,7 @@ import type {
   KernelOp,
   KernelOpResult,
   KernelOutcome,
+  ProfileEditOpWire,
   ProfileUsePlanWire,
 } from "../kernel/types";
 
@@ -188,11 +189,24 @@ export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
       return null;
     },
 
-    async saveProfile() {
-      // The `oi profile` surface offers create/import/clone/use; in-place
-      // entry editing is not an engine operation yet. Refusing honestly
-      // beats a desktop-side edit that the engine would not recognise.
-      throw new Error("the oi profile surface does not offer in-place profile edits yet; hold desired changes or create another profile");
+    async saveProfile(profile: ProfileDocument) {
+      // The engine's own edit verb (09 §12, additive): the stored document
+      // is read first, the explicit operation set is derived from the
+      // difference, and the engine judges every operation through its own
+      // laws. Nothing is applied to any owner — an edit only rewrites the
+      // sparse desired document in the profile store.
+      const stored = unwrap<any>(
+        await call({ op: "profile_read", profile_ref: profile.profile_ref }),
+        "profile_reading",
+        "the stored profile",
+      ).profile as ProfileDocument;
+      const operations = profileEditOps(stored, profile);
+      if (operations.length === 0) return;
+      unwrap(
+        await call({ op: "profile_edit", profile_ref: profile.profile_ref, operations }),
+        "profile_edited",
+        "saving the profile",
+      );
     },
 
     async createProfile(profile_ref: string, title?: string) {
@@ -203,5 +217,56 @@ export function createLiveConfigPlaneSource(call: OpCall): ConfigPlaneSource {
       );
       return outcome.profile as ProfileDocument;
     },
+
+    async receipts(changeset_id: string) {
+      // The recorded receipt references (09 §9): a listing of recorded refs
+      // only, filtered to the addressed changeset. A changeset with no
+      // recorded receipts reads as empty — named absence, never invented
+      // content; the owner's own history stays the record of record.
+      const outcome = unwrap<any>(await call({ op: "config_receipts" }), "config_receipts", "the receipt history");
+      const receipts = (outcome.document?.receipts ?? []) as import("./contracts").ReceiptDocument[];
+      return receipts.filter((receipt) => receipt.changeset_id === changeset_id);
+    },
   };
+}
+
+/** Derive the explicit edit operation set that turns `stored` into `next`
+ * (09 §12: the engine edits through a reviewable op set, never a blind
+ * overwrite). Entries are identified by (setting_ref, scope). */
+export function profileEditOps(stored: ProfileDocument, next: ProfileDocument): ProfileEditOpWire[] {
+  const operations: ProfileEditOpWire[] = [];
+  if ((stored.title ?? null) !== (next.title ?? null)) {
+    operations.push({ action: "set_title", title: next.title ?? null });
+  }
+  if ((stored.description ?? null) !== (next.description ?? null)) {
+    operations.push({ action: "set_description", description: next.description ?? null });
+  }
+  const key = (entry: { setting_ref: string; scope: ScopeAddress }) =>
+    `${entry.setting_ref}@${compactScope(entry.scope)}`;
+  const storedEntries = new Map(stored.desired.map((entry) => [key(entry), entry]));
+  for (const entry of next.desired) {
+    const current = storedEntries.get(key(entry));
+    const changed =
+      !current ||
+      JSON.stringify(current.value ?? null) !== JSON.stringify(entry.value ?? null) ||
+      (current.secret_reference?.ref ?? null) !== (entry.secret_reference?.ref ?? null);
+    if (changed) {
+      operations.push({
+        action: "set",
+        setting_ref: entry.setting_ref,
+        scope: { scope_kind: entry.scope.scope_kind, scope_ref: entry.scope.scope_ref ?? null },
+        value: entry.value,
+        secret_reference: entry.secret_reference ? { ref: entry.secret_reference.ref } : null,
+      });
+    }
+    storedEntries.delete(key(entry));
+  }
+  for (const entry of storedEntries.values()) {
+    operations.push({
+      action: "remove",
+      setting_ref: entry.setting_ref,
+      scope: { scope_kind: entry.scope.scope_kind, scope_ref: entry.scope.scope_ref ?? null },
+    });
+  }
+  return operations;
 }

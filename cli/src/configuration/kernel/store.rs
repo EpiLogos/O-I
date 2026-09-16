@@ -213,6 +213,22 @@ impl ConfigurationStore {
         Ok(receipts)
     }
 
+    /// Every stored receipt reference, in stable name order. This reads the
+    /// recorded refs and nothing else — the owner's own history remains the
+    /// record of record (09 §9); a ref that is gone is simply not listed.
+    pub fn list_receipts(&self) -> Result<Vec<Receipt>, String> {
+        let mut receipts = Vec::new();
+        for entry in list_regular(&self.root.join("receipts"))? {
+            let Some(bytes) = read_regular(&entry)? else {
+                continue;
+            };
+            let receipt: Receipt = serde_json::from_slice(&bytes)
+                .map_err(|error| format!("invalid receipt {}: {error}", entry.display()))?;
+            receipts.push(receipt);
+        }
+        Ok(receipts)
+    }
+
     /// Record the latest reconciliation observation for a setting.
     pub fn save_reconciliation(&self, record: &ReconciliationRecord) -> Result<PathBuf, String> {
         let path = self.reconciliation_path(&record.setting_ref);
@@ -491,6 +507,9 @@ mod tests {
             .expect("receipts load");
         assert_eq!(receipts.len(), 1);
         assert_eq!(receipts[0], receipt);
+        // The whole-store listing reads the same recorded refs.
+        let listed = store.list_receipts().expect("receipts listed");
+        assert_eq!(listed, receipts);
 
         let record = ReconciliationRecord {
             setting_ref: "connector/factory-actuation:authority:authority.mode".to_owned(),
