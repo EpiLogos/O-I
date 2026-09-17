@@ -1,0 +1,112 @@
+[
+  {
+    "id": "state_1789141020735",
+    "name": "niiiice",
+    "timestamp": 1789141020735,
+    "config": {
+      "glyph": [
+        "O",
+        "I"
+      ],
+      "particleCount": 200000,
+      "fontFamily": "system-ui, -apple-system, sans-serif",
+      "fontWeight": 900,
+      "colorMode": "blackOnWhite",
+      "backgroundColor": "#09090b",
+      "backgroundMode": "ambientGlow",
+      "backgroundGlowIntensity": 0.45,
+      "style": "stipple",
+      "dotShape": "circle",
+      "particleSize": {
+        "min": 0.3,
+        "max": 0.99
+      },
+      "fluid": {
+        "curlScale": 13.07,
+        "curlSpeed": 0.6,
+        "vortexStrength": 8.6,
+        "viscosity": 0.875,
+        "returnSpeed": 3.7,
+        "turbulence": 0.5,
+        "dispersion": 0.65
+      },
+      "interaction": {
+        "radius": 1420,
+        "strength": 26.7,
+        "mode": "vortex",
+        "velocityInfluence": 3.75
+      },
+      "relational": {
+        "enabled": false,
+        "mode": "orbital",
+        "attractorCount": 3,
+        "attractorGravity": 1.6,
+        "orbitSpeed": 0.8,
+        "orbitRadius": 240,
+        "relationalSpin": 1.4,
+        "chaosFactor": 0.2,
+        "wanderSpeed": 0.5
+      },
+      "chaining": {
+        "enabled": false,
+        "chain": [
+          "▲",
+          "■",
+          "⬟",
+          "⬢",
+          "⯎",
+          "◉"
+        ],
+        "mode": "loop",
+        "stepHoldDuration": 1,
+        "transitionDuration": 2.2,
+        "easing": "smoothstep",
+        "timingJitter": 0.15,
+        "disperseImpulse": 0.8,
+        "paused": false
+      },
+      "color": {
+        "enabled": false,
+        "mode": "linearGradient",
+        "primaryColor": "#00f0ff",
+        "secondaryColor": "#ff007f",
+        "accentColor": "#ffe600",
+        "cycleSpeed": 1.2,
+        "waveFrequency": 1.8,
+        "angle": 45,
+        "fieldCenterOffset": [
+          0,
+          0
+        ],
+        "turbulenceModulation": 0.35,
+        "speedReactiveIntensity": 0.6,
+        "densityWeight": 0.5,
+        "hueShiftSpeed": 0,
+        "contrast": 1,
+        "paletteId": "cyberpunk_neon",
+        "backgroundColor": "#09090b",
+        "backgroundMode": "ambientGlow",
+        "backgroundGlowIntensity": 0.45
+      },
+      "morphProgress": 0.36,
+      "autoMorph": true,
+      "autoMorphDuration": 17,
+      "positioning": "absolute",
+      "toroidalMorph": {
+        "enabled": true,
+        "trajectory": "quantumInterference",
+        "progress": 0,
+        "autoOscillate": true,
+        "oscillationSpeed": 0.55,
+        "oscillationAmplitude": 2.35,
+        "fiberPhaseOffset": -4.36,
+        "toroidalWinding": 6,
+        "poloidalWinding": 7,
+        "chiralCoupling": -0.05,
+        "manifoldRadius": 745,
+        "volumetricDepthScale": 6
+      }
+    },
+    "_origin": "https+++ais-dev-qyajkzfj3e7gs6nnjf6uzw-282401356931.europe-west2.run.app^partitionKey=%28https%2Cgoogle.com%29"
+  }
+]

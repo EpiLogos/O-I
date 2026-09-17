@@ -45,6 +45,10 @@ declare module "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge
    * the complete native config (schema-4 through the current schema-5)
    * losslessly. Throws on unrecognised input. */
   export function nativeSnapshotToJourney(raw: unknown, index?: number): StageJourney;
+  /** Imports authored documents: `oi.journey` documents are validated as
+   * they are; anything else is migrated through nativeSnapshotToJourney.
+   * Never truncates — refusals come back per document with reasons. */
+  export function importDocuments(raw: unknown): {journeys: StageJourney[]; errors: {index: number; message: string}[]};
   /** Projects an authoring scene into a complete native configuration at the
    * engine's current schema version (schema-5 as of the 7306b7b intake). */
   export function nativeExport(scene: unknown): { schemaVersion: 4 | 5; config: NativeConfig; [key: string]: unknown };

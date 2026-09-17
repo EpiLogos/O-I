@@ -6,6 +6,7 @@ import {expressionConfig} from "./engineProjection";
 import type {Change,ExpressionDocument,ExpressionRequest,ExpressionResult,SubjectBinding} from "./types";
 import type {CentralLocation} from "../kernel/types";
 import {compilePedagogy,type PedagogicalSequence} from "./pedagogy";
+import {ExpressionVerso} from "./ExpressionVerso";
 import {ShareProjection} from "../explore/ShareProjection";
 import "./expression.css";
 const ACTOR="human:expression-editor";
@@ -26,6 +27,12 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
  const [lesson,setLesson]=useState("");
  const [presentationDisclosure,setPresentationDisclosure]=useState<ReturnType<typeof compilePedagogy>["agentPresentation"]>([]);
  const [presenting,setPresenting]=useState(false);const presentation=useRef<StagePresentation|null>(null);const stageHost=useRef<HTMLDivElement|null>(null);
+ // ES2 front/verso: two presentations over ONE Expression identity. The flip
+ // never releases, remints or re-opens the stage presentation — the front's
+ // contained renderer suspends through the stage's own viewport law while the
+ // verso reads, and returns to the same canvas, scene and selection.
+ const [face,setFace]=useState<"front"|"verso">("front");
+ useEffect(()=>{if(!presenting)setFace("front");},[presenting]);
  const mounted=useRef(true);const readGeneration=useRef(0);const selectedRef=useRef<string>();
  useEffect(()=>{mounted.current=true;return()=>{mounted.current=false;readGeneration.current++;};},[]);
  // Share / Project remains separate from Save, Export and Present.
@@ -111,7 +118,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
  }
  const pendingRefinements=document?.refinements.filter(proposal=>!proposal.decision)??[];
  const sceneEntities=document?.scenes.find(s=>s.scene_ref===document.selection.scene_ref)?.entity_refs??[];
- return <section className="expression-editor" aria-label="Expression composition" data-expression-ref={document?.expression_ref} data-presenting={presenting}>
+ return <section className="expression-editor" aria-label="Expression composition" data-expression-ref={document?.expression_ref} data-presenting={presenting} data-face={face}>
   {/* Head: what this composition is (title, revision, file identity) and the
       few primary tools — one row, no banner. The field itself is the body. */}
   <header className="expression-head oi-context-head">
@@ -121,6 +128,7 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
    </div>
    {document&&<div className="oi-action-group">
     <button className="oi-action" aria-pressed={presenting} onClick={()=>setPresenting(!presenting)}>{presenting?"Close presentation":"Present on stage"}</button>
+    {presenting&&<button className="oi-action expression-flip" aria-pressed={face==="verso"} onClick={()=>setFace(current=>current==="front"?"verso":"front")}>{face==="verso"?"Return to front":"Flip to verso"}</button>}
     <button className="oi-action expression-share" aria-pressed={sharing} onClick={()=>setSharing(!sharing)} title="Project this Expression for an audience: exact outward preview, omissions, audience, Projection, Open in Explore">{sharing?"Close share":"Share / Project"}</button>
    </div>}
   </header>
@@ -131,10 +139,15 @@ export function ExpressionView({initialExpressionRef}:{initialExpressionRef?:str
    <label className="oi-field">New Expression title<input className="oi-input" aria-label="Expression title" value={title} onChange={e=>setTitle(e.target.value)}/></label>
    <button className="oi-action" disabled={pending} onClick={()=>{setFile(undefined);void run({operation:"create",expression_ref:`expression:${crypto.randomUUID()}`,title,actor:ACTOR});}}>New Expression</button>
   </div>
-  {document&&<>
+   {document&&<>
    {/* The field: the stage artboard is the primary body while presenting;
-       scenes and entities are its plane nav and its selection row. */}
-   <div ref={stageHost} className="expression-stage-host" aria-label="Expression artboard" hidden={!presenting}/>
+       scenes and entities are its plane nav and its selection row. Flipping
+       to the verso hides the artboard — the presentation stays mounted and
+       the stage's viewport law suspends its clock until the return. */}
+   <div ref={stageHost} className="expression-stage-host" aria-label="Expression artboard" hidden={!presenting||face==="verso"}/>
+   {presenting&&face==="verso"&&<ExpressionVerso document={document}
+     onInvokeAction={(entityRef,actionRef)=>void run({operation:"invoke",expression_ref:document.expression_ref,expected_revision:document.revision,entity_ref:entityRef,action_ref:actionRef,input:null,project:null})}
+     onOpenRef={entityRef=>{void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:entityRef}]);setFace("front");}}/>}
    <nav className="expression-scenes oi-plane-nav" aria-label="Expression scenes">{document.scenes.map(s=><button key={s.scene_ref} aria-pressed={s.scene_ref===document.selection.scene_ref} onClick={()=>void edit([{change:"focus",scene_ref:s.scene_ref,entity_ref:null}])}>{s.title}</button>)}<button className="oi-tool expression-add" aria-label="Add scene" title="Add scene" disabled={pending} onClick={()=>void edit([{change:"scene_create",scene_ref:`${document.expression_ref}:scene:${crypto.randomUUID()}`,title:`Scene ${document.scenes.length+1}`}])}>+</button></nav>
    <div className="expression-entities" role="group" aria-label="Expression entities">
     {sceneEntities.map(ref=>{const e=document.entities[ref];return <button key={ref} className="expression-entity" aria-pressed={selected?.entity_ref===ref} onClick={()=>void edit([{change:"focus",scene_ref:document.selection.scene_ref,entity_ref:ref}])}>{e.title}{e.subject?<span className="oi-state">{e.subject.presentation_role} · {e.subject.native_owner}</span>:null}</button>;})}

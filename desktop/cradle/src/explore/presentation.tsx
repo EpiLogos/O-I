@@ -18,6 +18,8 @@ import {useExpressionStage,type StagePresentation} from "../stage/ExpressionStag
 import {useVisuals} from "../visuals/ParticleExpression";
 import {expressionConfig} from "../expression/engineProjection";
 import type {ExpressionDocument} from "../expression/types";
+// @ts-ignore -- the bounded live-embedding law (ES2 anti-recursion).
+import {tryAdmitLive} from "../expression/embedding.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
 import {resolveExpressionPresentation} from "../../../../shared-field/expression-presentation.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
@@ -125,6 +127,10 @@ interface ExpressionReading {expression_ref:string;expression_revision:number;sc
 
 /** A presentation may already expose the EX5 element host; on this main it may not. Detected, never assumed. */
 type HostablePresentation=StagePresentation&{setContainer?:(container:HTMLElement|null)=>void};
+/** The bounded live-embedding receipt (ES2): the anti-recursion law's answer
+ * for this placement — a live slot was taken, or the placement resolves to a
+ * visible portal with the owner-stated reason. */
+type EmbeddingReceipt={admitted:boolean;reason?:string};
 
 /** The living body (WORLD-PRESENTATION.md "Expression Field renderer
  * relation"): the same subject/Expression/revision whether the live
@@ -143,11 +149,18 @@ function ExpressionBody({binding,presentationRef,hosting}:RendererProps) {
   },[binding,resolved.state]);
   const [liveError,setLiveError]=useState<string>();
   const [live,setLive]=useState(false);
+  /** ES2 anti-recursion receipt: a portal instead of a second engine. */
+  const [portal,setPortal]=useState<EmbeddingReceipt>();
   const inline=useRef<HTMLDivElement>(null);const presentation=useRef<HostablePresentation|null>(null);
   const id=`explore:${presentationRef}:${binding.binding_ref}`;
   useEffect(()=>{
     if(resolved.state!=="live")return;
     if(!composition){setLiveError("The carried composition is not admissible on this client");return;}
+    // One law guards every live placement: same-expression same-host — or a
+    // depth beyond the budget — resolves to a portal, never another engine.
+    const embedding=tryAdmitLive(expression.expression_ref) as {admitted:boolean;resolution:{mode:string;reason?:string};release?:()=>void};
+    if(!embedding.admitted){setPortal({admitted:false,reason:embedding.resolution.reason});return;}
+    setPortal(undefined);
     try{
       const handle=stage.present({id,plane:"overlay",recipe:"",config:expressionConfig(composition),appearance:"host",sceneRef:composition.selection.scene_ref}) as HostablePresentation|null;
       if(!handle)throw new Error(stage.error??"The Expression stage is off, occupied by another presentation in this window, or unavailable");
@@ -155,12 +168,22 @@ function ExpressionBody({binding,presentationRef,hosting}:RendererProps) {
       if(typeof handle.setContainer==="function")handle.setContainer(inline.current);
       setLive(true);setLiveError(undefined);
     }catch(cause){setLive(false);setLiveError(String(cause instanceof Error?cause.message:cause));}
-    return()=>{presentation.current?.release();presentation.current=null;setLive(false);};
+    return()=>{embedding.release?.();presentation.current?.release();presentation.current=null;setLive(false);};
   },[resolved.state,composition,id,stage]);
   useLayoutEffect(()=>{const handle=presentation.current;if(handle&&typeof handle.setContainer==="function")handle.setContainer(inline.current);});
   if(resolved.state==="malformed")return <article className="world-component world-component--fallback" role="alert" data-expression-state="malformed"><div className="world-component__eyebrow">Expression unavailable</div><h3>{textProp(binding.fallback.title,"Expression")}</h3><p>{resolved.reason}</p></article>;
   const expression=resolved.expression;
   const attributes={"data-expression-ref":expression.expression_ref,"data-expression-revision":expression.expression_revision,"data-subject-ref":binding.subject_ref,"data-live-renderer":expression.live_renderer_ref} as const;
+  // ES2 anti-recursion: the same Expression is already live on this host (or
+  // the depth budget is spent) — a visible portal names the live occurrence
+  // instead of instantiating a second engine.
+  if(portal&&!portal.admitted){
+    return <section className="world-component world-component--expression world-expression__portal" {...attributes} data-expression-state="portal" data-portal-reason={portal.reason}>
+      <div className="world-component__eyebrow">Live elsewhere on this surface</div>
+      <h3>{textProp(binding.fallback.title,expression.expression_ref)}</h3>
+      <p>{portal.reason}. This placement stays a portal to the one live Expression <code>{expression.expression_ref}</code> · revision {expression.expression_revision} — this host never runs a second copy of it.</p>
+    </section>;
+  }
   if(resolved.state==="live"&&!liveError){
     return <section className="world-component world-component--expression" {...attributes} data-expression-state="live" data-expression-hosting={typeof presentation.current?.setContainer==="function"?"element":"window-stage"}>
       <div ref={inline} className="world-expression__live" aria-label={`Live Expression ${expression.expression_ref}`}>{!live&&<p role="status">Presenting on the stage…</p>}{live&&typeof presentation.current?.setContainer!=="function"&&<p className="world-expression__note">Live on this window's Expression stage · {expression.expression_ref} r{expression.expression_revision}</p>}</div>

@@ -154,6 +154,11 @@
 .world-expression__live > p { position: absolute; left: var(--oi-space-3); bottom: var(--oi-space-2); margin: 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
 .world-expression__meta, .world-component--expression figcaption { display: flex; justify-content: space-between; gap: var(--oi-space-3); font-size: var(--oi-shell-type-meta); color: var(--oi-world-muted); flex-wrap: wrap; }
 .world-expression__frozen { width: 100%; aspect-ratio: 16 / 10; border: var(--oi-shell-edge) solid var(--oi-world-rule); border-radius: var(--oi-radius-lg); background: var(--oi-black); }
+/* ES2 anti-recursion portal: the same Expression presents once per host —
+ * other placements of it stay visible, addressable links, never engines. */
+.world-expression__portal { padding: var(--oi-space-3); border: 1px dashed var(--oi-gold); border-radius: var(--oi-radius-lg); }
+.world-expression__portal h3 { margin: 0; font-size: var(--oi-shell-type-ui); }
+.world-expression__portal p { margin: 0; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); overflow-wrap: anywhere; }
 .world-presentation--sparse .world-component p, .world-presentation--being .world-component p { color: var(--oi-foreground); }
 .being-encounter { overflow: auto; padding: var(--oi-space-3) var(--oi-space-6) var(--oi-space-7); }
 .being-activity { display: grid; gap: 3px; padding: var(--oi-space-3); border-left: 2px solid var(--oi-gold); background: var(--oi-wash); }
