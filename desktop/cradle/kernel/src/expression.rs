@@ -304,6 +304,18 @@ pub enum Request {
         input: Option<Value>,
         project: Option<String>,
     },
+    // --- expression_world (ES4) addition, lane aikit/es-one-state-relation ---
+    // Explicit restore of an open draft to an exact prior document (an act
+    // checkpoint): the draft is replaced only when `expected_revision` still
+    // matches, and the restored document advances the revision by one — a
+    // change, never a silent rewind. Identity and subject refs are those of
+    // the checkpointed document, byte for byte.
+    Restore {
+        expression_ref: String,
+        expected_revision: u64,
+        document: Document,
+        actor: String,
+    },
 }
 #[derive(Clone, Debug, Serialize)]
 pub struct Changed {
@@ -1192,6 +1204,50 @@ impl Application {
                     },
                 );
                 json!({"state":"action_result","action_ref":action_ref,"target_ref":binding.subject_ref,"dispatch":dispatch})
+            }
+            // --- expression_world (ES4) addition, lane aikit/es-one-state-relation ---
+            Request::Restore {
+                expression_ref,
+                expected_revision,
+                document,
+                actor,
+            } => {
+                text(&actor)?;
+                if let Some(c) = self.conflict(&expression_ref, expected_revision)? {
+                    return Ok((c, None));
+                }
+                if document.expression_ref != expression_ref {
+                    return Err("Restore document belongs to another Expression".into());
+                }
+                if document.revision > expected_revision {
+                    return Err("Restore document is not behind the current draft".into());
+                }
+                let mut d = document;
+                d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
+                while d.revision <= expected_revision {
+                    // Stay strictly ahead of the draft the checkpoint returns over.
+                    d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
+                }
+                // A checkpoint whose content already matches the current draft
+                // restores nothing — content equality, revisions normalised.
+                {
+                    let mut restored = d.clone();
+                    restored.revision = expected_revision;
+                    let mut current = self.document(&expression_ref)?.clone();
+                    current.revision = expected_revision;
+                    if restored == current {
+                        return Ok((self.inspect(&expression_ref)?, None));
+                    }
+                }
+                d.validate()?;
+                changed = Some(Changed {
+                    expression_ref: expression_ref.clone(),
+                    revision: d.revision,
+                    actor,
+                    activity_ref: None,
+                });
+                self.documents.insert(expression_ref.clone(), d);
+                self.inspect(&expression_ref)?
             }
         };
         Ok((result, changed))
