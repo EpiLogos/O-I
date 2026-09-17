@@ -19,6 +19,29 @@ Skill/METHOD discovery, composition, trust and projection; Central owns source,
 placement and temporal operations; Actuation owns Agency/authority; Workcell owns
 actual hosting and restrictions. A Skill cannot enforce a filesystem boundary.
 
+## Receiving another Agent's working world
+
+On entry, resume or compaction recovery, retain the difference between what the
+previous participant reported, the evidence it supplied and what is now established
+for this task. Recover original purpose, subject/revision and unresolved claims
+alongside the next action. Keep observation, inference, intended result and proposal
+legible; an authenticated sender or confident summary does not settle verification.
+Use adequate current owner evidence proportionately. For consequential completion,
+follow the existing Factory operation Skill (`factory:operator`) and its whole-relative
+verification obligations where applicable; Direct/root work needs no invented Run.
+
+Resolve the O:I Skill's `references/claim-reception.md` through the actual AIKit
+source/Skill route for deeper reception and learning practice. Preserve the same
+standing through Day contributions, NOW T/T′, search, handoff and re-entry. Repeated
+summaries of one receipt are not independent confirmation. Human inclusion remains
+distinct from truth, Recognition and permission for a subsequent act.
+
+When scope/Profile/Agency or source changes, inspect the effective SkillSet and
+source/overlay revision, target projection and actual activation evidence. Confirm
+companion references/scripts/assets remain reachable. Record an explicit bounded
+load when using a bootstrap fallback; neither an apply receipt nor a changed
+`current` pointer proves that this running session reread the practice.
+
 ## Orient and choose the next practice
 
 1. Recover the human request and governing issue/Wayfinder/plan, current World,
