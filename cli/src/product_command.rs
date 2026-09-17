@@ -1,7 +1,6 @@
 use serde::{Deserialize, Serialize};
 use std::collections::HashSet;
 
-const SURFACES_JSON: &str = include_str!("../../surfaces.json");
 const EXPECTED_PRODUCT_COUNT: usize = 6;
 
 #[derive(Debug, Clone, Deserialize)]
@@ -90,8 +89,21 @@ impl ProductCommandCatalogue {
 }
 
 pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
-    let source: SurfaceCatalogSource = serde_json::from_str(SURFACES_JSON)
-        .map_err(|error| format!("embedded O:I surface catalogue is invalid: {error}"))?;
+    let resolved = crate::catalog_source::resolve()?;
+    product_command_catalogue_from_json(&resolved.json, resolved.origin)
+}
+
+/// The catalogue constructor over one explicit catalogue document. The
+/// runtime entry above is this plus the live resolution order (`$OI_CATALOG`,
+/// the adopted `<state>/catalogue.json`, the embedded snapshot). Hermetic
+/// tests pin the document — a machine-adopted catalogue must never move a
+/// unit-test floor.
+pub fn product_command_catalogue_from_json(
+    json: &str,
+    origin: &str,
+) -> Result<ProductCommandCatalogue, String> {
+    let source: SurfaceCatalogSource = serde_json::from_str(json)
+        .map_err(|error| format!("O:I surface catalogue ({origin}) is invalid: {error}"))?;
     if source.schema != 1 {
         return Err(format!(
             "unsupported O:I surface catalogue schema {}",

@@ -1,0 +1,323 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "welcome",
+  "generated_at": "2026-09-16T02:14:02.944Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 18910,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The welcome frontstate stands on first open"
+    },
+    {
+      "ok": true,
+      "label": "Boot uses one continuous frontstate"
+    },
+    {
+      "ok": true,
+      "label": "The opening uses one production Expression canvas"
+    },
+    {
+      "ok": true,
+      "label": "Entry becomes available after actual field drawing and native boot"
+    },
+    {
+      "ok": true,
+      "label": "The workspace is composed beneath the opening field"
+    },
+    {
+      "ok": true,
+      "label": "The covered workspace is unavailable to pointer and keyboard interaction"
+    },
+    {
+      "ok": true,
+      "label": "Escape waits for the full rendered enter sequence"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard entry restores focus in the working app"
+    },
+    {
+      "ok": true,
+      "label": "The completed opening does not re-trap the same session"
+    },
+    {
+      "ok": true,
+      "label": "Reduced motion paints the final authored still before keyboard entry"
+    },
+    {
+      "ok": true,
+      "label": "Reduced motion releases the opening without continuing a simulation"
+    },
+    {
+      "ok": true,
+      "label": "light app starts on the opposite canonical scene ground",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 71,
+        "maxX": 962,
+        "maxY": 570,
+        "count": 69535,
+        "background": [
+          18,
+          18,
+          17
+        ],
+        "lightInkPixels": 57349,
+        "darkInkPixels": 0,
+        "maxContrast": 12.067601898864037
+      }
+    },
+    {
+      "ok": true,
+      "label": "light opening has readable native O:I mark ink",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 71,
+        "maxX": 962,
+        "maxY": 570,
+        "count": 69535,
+        "background": [
+          18,
+          18,
+          17
+        ],
+        "lightInkPixels": 57349,
+        "darkInkPixels": 0,
+        "maxContrast": 12.067601898864037
+      }
+    },
+    {
+      "ok": true,
+      "label": "The field owns its full ground and the labelled control stays above it"
+    },
+    {
+      "ok": true,
+      "label": "The frontstate and incomplete session remain through the explosion"
+    },
+    {
+      "ok": true,
+      "label": "light entry reaches the application palette on the same field"
+    },
+    {
+      "ok": true,
+      "label": "light entry releases only after the rendered tail",
+      "data": {
+        "name": "welcome.enter",
+        "elapsed": 2649.099999999998,
+        "duration": 2600,
+        "status": "completed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Rest, explosion and final release retain one canvas/context"
+    },
+    {
+      "ok": true,
+      "label": "The opening preserves the saved app appearance"
+    },
+    {
+      "ok": true,
+      "label": "dark app starts on the opposite canonical scene ground",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 70,
+        "maxX": 961,
+        "maxY": 570,
+        "count": 72129,
+        "background": [
+          251,
+          251,
+          249
+        ],
+        "lightInkPixels": 0,
+        "darkInkPixels": 56896,
+        "maxContrast": 20.02549750095129
+      }
+    },
+    {
+      "ok": true,
+      "label": "dark opening has readable native O:I mark ink",
+      "data": {
+        "width": 1280,
+        "height": 574,
+        "minX": 293,
+        "minY": 70,
+        "maxX": 961,
+        "maxY": 570,
+        "count": 72129,
+        "background": [
+          251,
+          251,
+          249
+        ],
+        "lightInkPixels": 0,
+        "darkInkPixels": 56896,
+        "maxContrast": 20.02549750095129
+      }
+    },
+    {
+      "ok": true,
+      "label": "The field owns its full ground and the labelled control stays above it"
+    },
+    {
+      "ok": true,
+      "label": "The frontstate and incomplete session remain through the explosion"
+    },
+    {
+      "ok": true,
+      "label": "dark entry reaches the application palette on the same field"
+    },
+    {
+      "ok": true,
+      "label": "dark entry releases only after the rendered tail",
+      "data": {
+        "name": "welcome.enter",
+        "elapsed": 2649.1000000000004,
+        "duration": 2600,
+        "status": "completed"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Rest, explosion and final release retain one canvas/context"
+    },
+    {
+      "ok": true,
+      "label": "The opening preserves the saved app appearance"
+    },
+    {
+      "ok": true,
+      "label": "No presentation remains live in the settled desktop"
+    },
+    {
+      "ok": true,
+      "label": "The completed opening schedules no simulation frames",
+      "data": {
+        "presentations": 0,
+        "frames": 0,
+        "scheduled": false,
+        "live": false,
+        "dormant": true,
+        "canvases": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "The single production canvas/context stays resident and dormant"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 51,
+      "data": {
+        "file": "welcome-welcome-reduced-motion.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 387,
+      "data": {
+        "file": "welcome-welcome-light-rest.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 276,
+      "data": {
+        "file": "welcome-welcome-light-explosion.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 27,
+      "data": {
+        "file": "welcome-welcome-light-entered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 283,
+      "data": {
+        "file": "welcome-welcome-dark-rest.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 385,
+      "data": {
+        "file": "welcome-welcome-dark-explosion.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "welcome-welcome-dark-entered.png"
+      }
+    }
+  ],
+  "metrics": {
+    "welcome_light_inverse_ink_pixels": 57349,
+    "welcome_dark_inverse_ink_pixels": 56896
+  },
+  "screenshots": [
+    "welcome-welcome-reduced-motion.png",
+    "welcome-welcome-light-rest.png",
+    "welcome-welcome-light-explosion.png",
+    "welcome-welcome-light-entered.png",
+    "welcome-welcome-dark-rest.png",
+    "welcome-welcome-dark-explosion.png",
+    "welcome-welcome-dark-entered.png"
+  ]
+}

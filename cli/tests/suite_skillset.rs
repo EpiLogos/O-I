@@ -15,7 +15,7 @@ fn canonical_manifest() -> SuiteSkillSetManifest {
 /// An in-code fixture representing the general multi-product composition the
 /// resolution machinery handles: per-product owner/purpose/source entries and
 /// Base/Root profile inheritance. This is NOT the shipped manifest — the
-/// shipped one declares only O:I's guardian pair (see the
+/// shipped one declares only O:I's guardian skills (see the
 /// `shipped_manifest_declares_only_oi_owned_skills` guard below). O:I used to
 /// pin every product's skills in the shipped file; that was a second skill
 /// registry, and registration is AIKit's job.
@@ -461,10 +461,17 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
         "oi:skillset:base-guardian"
     );
     assert!(manifest.expected_native_skills.is_empty());
-    // O:I owns exactly its two guardian Skills here. Every other product's
-    // skills are composed by AIKit's sets; pinning them in this file made it
-    // a second registry in a second format.
-    assert_eq!(manifest.skills.len(), 2);
+    // The shipped manifest names the router and suite operator. The retired
+    // Central session strap belongs to Central ground and is delivered through
+    // AIKit's Central binding, not frozen into O:I's guardian registry.
+    assert_eq!(
+        manifest
+            .skills
+            .iter()
+            .map(|skill| skill.skill_ref.as_str())
+            .collect::<Vec<_>>(),
+        vec!["oi:skill:operate-suite", "oi:skill:suite-operator"]
+    );
     for skill in &manifest.skills {
         assert!(
             skill.skill_ref.starts_with("oi:skill:"),

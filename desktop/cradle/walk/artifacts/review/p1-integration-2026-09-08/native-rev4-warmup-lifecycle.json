@@ -1,0 +1,394 @@
+[
+  {
+    "action": "attached",
+    "attachment": 1,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788895957331
+  },
+  {
+    "action": "bounds",
+    "attachment": 1,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896019300
+  },
+  {
+    "action": "hide",
+    "attachment": 1,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896049396
+  },
+  {
+    "action": "attached",
+    "attachment": 2,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896172849
+  },
+  {
+    "action": "hide",
+    "attachment": 2,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896174237
+  },
+  {
+    "action": "attached",
+    "attachment": 3,
+    "host": "surface-1",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896174689
+  },
+  {
+    "action": "returned-awaiting-attachment",
+    "attachment": 0,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896175318
+  },
+  {
+    "action": "attached",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896175379
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896176486
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187636
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187651
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187668
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187685
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187702
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187718
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187735
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187752
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187768
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187785
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187801
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187818
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187835
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187852
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187867
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187885
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187902
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187920
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187937
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187951
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187968
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896187985
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896188001
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896188018
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896188085
+  },
+  {
+    "action": "bounds",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896188517
+  },
+  {
+    "action": "hide",
+    "attachment": 4,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896189180
+  },
+  {
+    "action": "attached",
+    "attachment": 5,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896190040
+  },
+  {
+    "action": "hide",
+    "attachment": 5,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896191620
+  },
+  {
+    "action": "attached",
+    "attachment": 6,
+    "host": "surface-2",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896191762
+  },
+  {
+    "action": "returned-awaiting-attachment",
+    "attachment": 0,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896192581
+  },
+  {
+    "action": "attached",
+    "attachment": 7,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896192601
+  },
+  {
+    "action": "bounds",
+    "attachment": 7,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896193619
+  },
+  {
+    "action": "hide",
+    "attachment": 7,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896194549
+  },
+  {
+    "action": "attached",
+    "attachment": 8,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896197352
+  },
+  {
+    "action": "hide",
+    "attachment": 8,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896198733
+  },
+  {
+    "action": "attached",
+    "attachment": 9,
+    "host": "surface-3",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896198864
+  },
+  {
+    "action": "returned-awaiting-attachment",
+    "attachment": 0,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896200028
+  },
+  {
+    "action": "attached",
+    "attachment": 10,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896200051
+  },
+  {
+    "action": "bounds",
+    "attachment": 10,
+    "host": "main",
+    "id": "db545220-e609-495d-aede-78dcf4d72ec4",
+    "schema": "oi.native-browser-lifecycle/v1",
+    "unix_ms": 1788896201036
+  }
+]

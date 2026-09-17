@@ -1,0 +1,7 @@
+.welcome-prompt{display:grid;place-items:center;width:100%;min-height:3em;color:var(--oi-accent-ink);text-align:center}
+.welcome-prompt h2{grid-area:1/1;max-width:100%;margin:0;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere}
+.welcome-prompt[data-tone="quiet"] h2{color:var(--oi-muted)}
+.welcome-prompt[data-tone="warm"] h2{color:var(--oi-accent-ink)}
+.welcome-prompt[data-tone="playful"] h2{color:var(--oi-meta-relation)}
+@media(prefers-reduced-motion:no-preference){.welcome-prompt[data-rotating="true"] h2{animation:welcome-prompt-in var(--oi-motion-normal) var(--oi-motion-ease)}}
+@keyframes welcome-prompt-in{from{opacity:0;transform:translateY(.18em)}to{opacity:1;transform:translateY(0)}}

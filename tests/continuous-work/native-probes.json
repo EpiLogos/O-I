@@ -1,0 +1,25 @@
+[
+  {
+    "schema": "oi.caw-native-probe/v1",
+    "id": "factory-commission-publication",
+    "case": "P13",
+    "obligation": "commission-publication",
+    "max_grade": "D",
+    "owner_contract": "Factory development commission / commission-read; factory.commission-request/v1; factory.commission-reading/v1",
+    "source_basis": "EpiLogos/Factory@366a6b2bf18ba23053601f5d5eb543b79bfcfb27; existing O:I cli/src/factory_proving.rs public command adapter",
+    "owner_fixtures": {
+      "request.json": {"owner": "factory", "path": "contracts/factory/fixtures/oi-self-hosting-commission-request.json"}
+    },
+    "initial_checks": [{"file": "factory.json", "exists": false}],
+    "steps": [
+      {"id": "commission", "kind": "operation", "owner": "factory", "argv": ["development", "commission", "{world}/factory.json", "{world}/request.json", "--json"]},
+      {"id": "readback", "kind": "readback", "owner": "factory", "argv": ["development", "commission-read", "{world}/factory.json", "commission-request:factory-195-self-hosting-201", "--json"]}
+    ],
+    "disconnect": "commission",
+    "checks": [
+      {"file": "factory.json", "exists": true},
+      {"step": "readback", "pointer": "/contract", "equals": "factory.commission-reading/v1"},
+      {"step": "readback", "pointer": "/commission/request/requestRef", "equals": "commission-request:factory-195-self-hosting-201"}
+    ]
+  }
+]

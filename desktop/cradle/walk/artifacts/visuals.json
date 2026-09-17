@@ -1,0 +1,121 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "visuals",
+  "generated_at": "2026-09-16T02:15:03.190Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
+        "desktop/cradle/walk/artifacts/instrument-host.json",
+        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
+        "desktop/cradle/walk/artifacts/instrument.json",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-explosion.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-rest.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-explosion.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-rest.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
+        "desktop/cradle/walk/artifacts/welcome.json"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 7854,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Visuals splits into Themes and Expression"
+    },
+    {
+      "ok": true,
+      "label": "The expression layer starts on"
+    },
+    {
+      "ok": true,
+      "label": "Enabling the visuals hosts exactly one window expression canvas"
+    },
+    {
+      "ok": true,
+      "label": "The baked word reaches the running field"
+    },
+    {
+      "ok": true,
+      "label": "Capture produces a PNG download"
+    },
+    {
+      "ok": true,
+      "label": "Capture carries real image bytes (6056)"
+    },
+    {
+      "ok": true,
+      "label": "Off removes the renderer — nothing runs hidden"
+    },
+    {
+      "ok": true,
+      "label": "The master switch reports the off state"
+    },
+    {
+      "ok": true,
+      "label": "On recreates the renderer"
+    },
+    {
+      "ok": true,
+      "label": "Dark theme resolves onto the oi-desktop body"
+    },
+    {
+      "ok": true,
+      "label": "Light theme clears the override"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 323,
+      "data": {
+        "file": "visuals-visuals-expression.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 26,
+      "data": {
+        "file": "visuals-visuals-panel.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "visuals-visuals-expression.png",
+    "visuals-visuals-panel.png"
+  ]
+}

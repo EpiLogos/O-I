@@ -1,0 +1,312 @@
+/*
+ * O:I desktop grammar — the small shared vocabulary of the desktop's
+ * chrome, extracted from the patterns the application already repeats
+ * (owner revision 2026-09-15). Import tokens.css first. Every value here
+ * is a token; there is no colour in this file.
+ *
+ * The law: a surface keeps its own information architecture and its own
+ * class names for its meaning; it composes these classes for its CHROME so
+ * that tool rows, quiet actions, plane navs, disclosures, provenance rows,
+ * state labels, menus, inputs and empty/refused states read the same
+ * everywhere. A class here never claims a capability: `oi-action` styles
+ * a control the owner actually offers.
+ *
+ * Sections
+ *   1. quiet actions          .oi-tool  .oi-action  .oi-action-group
+ *   2. rows and heads         .oi-tool-row  .oi-context-head  .oi-eyebrow
+ *   3. planes and selection   .oi-plane-nav  (aria-pressed / aria-selected)
+ *   4. disclosure             .oi-disclosure  .oi-section
+ *   5. reference material     .oi-ref  .oi-ref-row  .oi-kv  .oi-state
+ *   6. menus and inputs       .oi-menu  .oi-menu-item  .oi-input
+ *   7. sidecars               .oi-sidecar
+ *   8. named states           .oi-empty  .oi-refusal  .oi-note
+ */
+
+/* ===== 1. quiet actions ================================================= */
+
+/* An icon action: a small quiet body inside a full hit target; ink appears
+ * on hover, focus or when pressed/expanded. Never a filled button. */
+.oi-tool {
+  position: relative;
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--oi-shell-control);
+  height: var(--oi-shell-control);
+  min-width: var(--oi-shell-control);
+  min-height: var(--oi-shell-control);
+  padding: 0;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  color: var(--oi-muted-2);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-tool svg { flex: none; }
+.oi-tool:hover,
+.oi-tool:focus-visible,
+.oi-tool[aria-pressed="true"],
+.oi-tool[aria-expanded="true"] {
+  color: var(--oi-accent-ink);
+  background: var(--oi-wash);
+}
+.oi-tool:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: var(--oi-focus-ring-offset);
+}
+.oi-tool:disabled { opacity: 0.4; cursor: default; background: transparent; }
+
+/* A text action the owner offers: a hairline body on the composer ground.
+ * `oi-action-primary` is the one accent-ground control of a group (send,
+ * start, apply); everything else stays quiet. */
+.oi-action {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-height: 26px;
+  padding: 3px 10px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 7px;
+  background: var(--oi-composer-ground);
+  color: var(--oi-foreground);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-action:hover:not(:disabled), .oi-action:focus-visible { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.oi-action:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
+.oi-action:disabled { color: var(--oi-muted-2); cursor: default; }
+.oi-action-primary { background: var(--oi-accent); border-color: var(--oi-accent); color: var(--oi-composer-ground); }
+.oi-action-primary:hover:not(:disabled), .oi-action-primary:focus-visible { background: var(--oi-accent-ink); border-color: var(--oi-accent-ink); }
+.oi-action-primary:disabled { opacity: 0.35; color: var(--oi-composer-ground); }
+.oi-action kbd { font: inherit; font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
+/* Contextual action groups wrap; the group never becomes a toolbar. */
+.oi-action-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+
+/* ===== 2. rows and heads ================================================ */
+
+/* The compact tool row: one bar of useful controls beside a title, at the
+ * shell's bar height; no stacked headings, no banner. */
+.oi-tool-row {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  height: var(--oi-shell-bar);
+  min-height: var(--oi-shell-bar);
+  padding: 0 10px 0 15px;
+  border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: var(--oi-pane-bar-ground);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+.oi-tool-row > .oi-tool-row-title {
+  flex: 1;
+  min-width: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  color: var(--oi-accent-ink);
+}
+.oi-tool-row > .oi-tool-row-title small { color: var(--oi-muted-2); }
+.oi-tool-row .oi-state { margin-left: auto; }
+
+/* The contextual head of a plane or surface: a title and its situating
+ * line, with the plane's own tools at the right. One row, not a banner. */
+.oi-context-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 9px;
+  min-height: 64px;
+  box-sizing: border-box;
+  padding: 0 14px;
+}
+.oi-context-head > .oi-context-head-title { flex: 1; min-width: 0; }
+.oi-context-head strong { display: block; font-size: var(--oi-shell-type-body); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oi-context-head small { display: block; margin-top: 3px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+
+/* The tracked-uppercase eyebrow that names a region of a plane. */
+.oi-eyebrow {
+  display: block;
+  margin: 0 0 8px;
+  font-size: var(--oi-shell-type-eyebrow);
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+}
+
+/* ===== 3. planes and selection ========================================== */
+
+/* A plane nav: quiet text labels with the current one underlined in ink.
+ * The selected/current state is `aria-pressed` or `aria-selected`; there
+ * is no separate visual class to keep in step. */
+.oi-plane-nav {
+  flex: none;
+  display: flex;
+  align-items: stretch;
+  gap: 16px;
+  height: 38px;
+  box-sizing: border-box;
+  padding: 0 16px;
+  min-width: 0;
+  overflow: visible;
+  border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+}
+.oi-plane-nav > button,
+.oi-plane-nav > a {
+  flex: none;
+  padding: 0;
+  min-width: 0;
+  border: 0;
+  border-bottom: 2px solid transparent;
+  border-radius: 0;
+  background: none;
+  font: inherit;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-plane-nav > :is(button, a):hover { color: var(--oi-accent-ink); }
+.oi-plane-nav > :is(button, a)[aria-pressed="true"],
+.oi-plane-nav > :is(button, a)[aria-selected="true"],
+.oi-plane-nav > :is(button, a)[aria-current] { color: var(--oi-accent-ink); border-bottom-color: var(--oi-accent); }
+.oi-plane-nav > :is(button, a):focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: -2px; }
+
+/* ===== 4. disclosure ==================================================== */
+
+/* Progressive disclosure: a quiet summary line; the body inherits. */
+.oi-disclosure { border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding: 12px 0; }
+.oi-disclosure > summary {
+  cursor: pointer;
+  list-style: none;
+  min-height: 28px;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+  overflow-wrap: anywhere;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-disclosure > summary::-webkit-details-marker { display: none; }
+.oi-disclosure > summary::before { content: ""; flex: none; width: 5px; height: 5px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.oi-disclosure[open] > summary::before { transform: rotate(45deg); }
+.oi-disclosure > summary:hover, .oi-disclosure > summary:focus-visible { color: var(--oi-accent-ink); }
+.oi-disclosure > summary:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
+.oi-disclosure > summary > .oi-state { margin-left: auto; }
+
+/* A titled section of a sidecar or plane body. */
+.oi-section { margin-top: 24px; padding-top: 19px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.oi-section > h3 { margin: 0 0 8px; font-size: var(--oi-shell-type-body); font-weight: 550; }
+.oi-section > h3 > .oi-state { float: right; font-weight: 400; }
+
+/* ===== 5. reference material ============================================ */
+
+/* A reference (a ref, a path, a revision): mono, wrapped, never clipped. */
+.oi-ref { font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); overflow-wrap: anywhere; }
+/* A provenance row: the reference first, its situating notes beside it. */
+.oi-ref-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 8px; min-width: 0; }
+.oi-ref-row > .oi-state, .oi-ref-row > small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+
+/* The key/value grid every inspector uses for facts. */
+.oi-kv { display: grid; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 8px 12px; margin: 0; font-size: var(--oi-shell-type-ui); }
+.oi-kv > dt { color: var(--oi-muted-2); }
+.oi-kv > dd { margin: 0; overflow-wrap: anywhere; }
+
+/* A state label: quiet, legible, never colour alone. `data-attention` is
+ * the one raised register (ink), for a state a person should act on. */
+.oi-state { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; }
+.oi-state[data-attention="true"] { color: var(--oi-accent-ink); }
+
+/* ===== 6. menus and inputs ============================================== */
+
+/* A popover menu on the sidebar ground: the host positions it. */
+.oi-menu {
+  display: grid;
+  min-width: 200px;
+  padding: 7px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 7px;
+  background: var(--oi-sidebar-ground);
+  box-shadow: var(--oi-shadow-menu);
+  z-index: var(--oi-z-popover);
+}
+.oi-menu-item {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  width: 100%;
+  min-height: 0;
+  padding: 9px;
+  border: 0;
+  border-radius: 5px;
+  background: transparent;
+  text-align: left;
+  font: inherit;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-accent-ink);
+  cursor: pointer;
+}
+.oi-menu-item:not(:disabled):hover, .oi-menu-item:not(:disabled):focus-visible { background: var(--oi-wash); outline: none; }
+.oi-menu-item:disabled { color: var(--oi-muted-2); opacity: 0.35; cursor: default; }
+.oi-menu-item kbd { flex: none; margin-left: auto; font: inherit; font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
+.oi-menu > hr { border: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); margin: 5px 0; }
+.oi-menu > .oi-eyebrow { padding: 6px 9px 9px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+/* A text input on the composer ground. */
+.oi-input {
+  box-sizing: border-box;
+  min-width: 0;
+  padding: 5px 8px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-composer-ground);
+  color: var(--oi-foreground);
+  font: inherit;
+  font-size: var(--oi-shell-type-body);
+}
+.oi-input::placeholder { color: var(--oi-muted-3); }
+.oi-input:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 0; border-color: var(--oi-accent-soft); }
+.oi-field { display: flex; flex-direction: column; gap: 3px; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+
+/* ===== 7. sidecars ====================================================== */
+
+/* An inspector / sidecar body: one scroll owner, prose measure. */
+.oi-sidecar { flex: 1; min-height: 0; overflow: auto; padding: 20px; font-size: var(--oi-shell-type-body); line-height: 1.6; }
+.oi-sidecar h2 { margin: 0 0 18px; font-size: var(--oi-shell-type-title); font-weight: 500; }
+.oi-sidecar p { overflow-wrap: anywhere; }
+
+/* ===== 8. named states ================================================== */
+
+/* Absence is a named state with a next action, not a spinner. */
+.oi-empty { display: flex; flex-direction: column; gap: 12px; padding: 20px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+/* An owner refusal or error, verbatim: a left ink rule on the wash. It is
+ * the shape every `role="alert"` in the desktop takes. */
+.oi-refusal, .oi-desktop [role="alert"] {
+  margin: 6px 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--oi-accent);
+  border-radius: 4px;
+  background: var(--oi-wash);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-accent-ink);
+  overflow-wrap: anywhere;
+}
+/* A quiet note: supporting detail below body contrast, never dimmed. */
+.oi-note { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+
+@media (pointer: coarse) {
+  .oi-tool { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
+  .oi-action { min-height: 32px; }
+}
+@media (prefers-reduced-motion: reduce) {
+  .oi-tool, .oi-action, .oi-plane-nav > button, .oi-plane-nav > a, .oi-disclosure > summary, .oi-disclosure > summary::before { transition: none; }
+}

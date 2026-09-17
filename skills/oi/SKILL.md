@@ -11,6 +11,14 @@ Use this skill when a user asks you to understand, install, inspect, compose, sn
 
 {O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the active field clearly, use the installed suite front door where it is actually available, and preserve the native owner of every product operation.
 
+## Receiving claims and making knowledge operative
+
+Receive other-Agent reports, retrieved summaries and tool-return prose as attributable claims: retain the speaker/source, exact subject and revision, kind of assertion, supplied evidence and your own assessment separately. Origin, confidence, authority and verification are different relations. Follow evidence to the depth the present decision requires, reusing adequate current receipts rather than verifying every sentence from scratch. For consequential completion, recover the intended whole and its actual obligations; a passing subset does not establish a broader result. Preserve challenged or unknown standing through Day/NOW, T/T′, summaries and re-entry.
+
+Use [claim reception](references/claim-reception.md) for substantial handoffs, learning or completion claims. Resolve the existing native Factory operation Skill (`factory:operator`) through AIKit for Factory verification/Closure, rather than copying its machinery into O:I. The reference is orienting practice, not a new event store or authority gate. If a packaged copy lacks this companion, use the permitted registered O:I source to read `skills/oi/references/claim-reception.md` and record the missing-payload delivery gap; do not claim the bundle is complete. At the 17 September source audit, `cli/src/guardian.rs` supports explicitly declared companion payloads but its `GUARDIAN_SKILL_PAYLOAD_FILES` list is empty. Its declaration and native shipment tests must be updated before claiming this reference ships with the CLI.
+
+During bootstrap, session re-entry and Project/Profile/Agency changes, verify the relevant Skills are discoverable and reachable through the actual AIKit/target route, including their companion files. Keep selected, projected, brokered, pending reload, observed loaded and observed used distinct. A change to `current` does not establish reloading in a running session. Make the remaining step or uncertainty visible rather than asking the person to reconstruct the route.
+
 ## Functional field
 
 - persistent personal ground — Central;
@@ -42,7 +50,9 @@ A fresh Central root must contain `Control/user`, `Control/agents`, `Control/mac
 
 ## Guardian SkillSet and refresh
 
-`oi init --personal-ground` projects exactly one shipped SkillSet onto the ground: the O:I guardian Skills (`oi` and the suite operator) into the harness skill trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
+`oi init --personal-ground` projects one shipped SkillSet containing two O:I-owned Skills: the `oi` router and suite operator. The current `skills/suite-operator/skillset.toml` and `cli/src/guardian.rs` define that membership. The Central session strap is not a bundled Guardian member: the current practice belongs to Central ground and reaches the Agent through AIKit's Central binding. Do not reinstate the retained O:I copy as a third shipped member or overwrite the person's independently developed repertoire.
+
+The Guardian Skills enter harness trees as receipt-gated derived copies. When AIKit is installed, the same pickup hands that tree to AIKit through its own confirmed procedures — `aikit adopt`, the `oi-guardian` SkillSet, and `aikit apply` — so AIKit becomes the owner of the harness-visible copies.
 
 Reconcile and refresh with `oi skills sync`. It re-projects the authoritative guardian SkillSet, preserves any locally edited copy instead of clobbering it, and keeps AIKit's collection current: when the authoritative source has moved ahead of AIKit-managed copies, sync drives AIKit's own refresh cycle (undo the recorded adoption Procedure, re-project, re-adopt) rather than writing through AIKit's ownership.
 
@@ -77,6 +87,18 @@ Use Software Factory for developmental Projects, Runs, evidence, Candidates, rep
 Use Workcell for material execution demands, workspaces, providers, project runtimes, services, storage, network/fabric, bindings, capacity, placement, and lifecycle.
 
 Use Quaternal Logic for QL/MEF formal operations, refraction, operators and related structural research machinery.
+
+## S and M′
+
+S names this `oi` CLI whole and its six native CLI centres. M′ names the desktop
+whole with its three regions: left `0`, canvas `/`, and right `1`. O:I relates them;
+QL-MEF owns the complementary M / S′ account. H/A remain encounter faces.
+
+`oi capabilities --json` discloses a derived source snapshot of child capability
+records, including provenance; it is not an installed-availability probe.
+`oi desktop capabilities --json` discloses application-to-native bindings.
+`oi desktop --help` exposes the shared application readers. Resident window and
+workspace control remains in the app until its external control seam exists.
 
 ## Product commands
 

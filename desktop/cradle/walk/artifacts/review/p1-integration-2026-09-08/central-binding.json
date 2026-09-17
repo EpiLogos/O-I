@@ -1,0 +1,24 @@
+{
+  "standing": "verification only; native acceptance open",
+  "owner_revision": "f3559dbf900b8409ff00b24a84b824c6cd6ec2c3",
+  "owner_source": "git archive f3559db",
+  "source_files_match": true,
+  "ordinary_checks": 35,
+  "kernel_results": [
+    "test result: ok. 2 passed; 0 failed; 0 ignored; 0 measured; 0 filtered out; finished in 0.02s",
+    "test result: ok. 9 passed; 0 failed; 1 ignored; 0 measured; 2 filtered out; finished in 0.12s",
+    "test result: ok. 1 passed; 0 failed; 0 ignored; 0 measured; 11 filtered out; finished in 0.10s"
+  ],
+  "owner_results": [
+    "test result: ok. 8 passed; 0 failed; 0 ignored; 0 measured; 75 filtered out; finished in 0.03s"
+  ],
+  "limitations": [
+    "Pinned ctrl hash matches but ctrl.d source points to live checkout: archive provenance not proven for whole binary",
+    "AIKit-dependent 2 source-CAS tests excluded; no provider access",
+    "Native UI gate not run; no phase acceptance"
+  ],
+  "executables": {
+    "/tmp/central-f3559db-build.r1WwS1/target/release/ctrl": "4389437f40a1361b36e92202ce5c4ffc8fd826b853c2a0ad0ff8e61285fbf36a",
+    "/Users/admin/Central/Work/O-I/cli/target/debug/oi": "582c2b5ad541c09fc0890a501d035f73b6e5224e4cce5e569de9d66d191cf999"
+  }
+}

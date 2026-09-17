@@ -1,0 +1,117 @@
+/* Configuration + Profiles (docs/cradle/09-CONFIGURATION-PLANE.md, issue 299
+   §11). Reuses the settings surface's token vocabulary; nothing here is
+   product-specific because nothing here is product-shaped. */
+
+.config-view { padding: 8px 0 16px; }
+.config-toolbar { display: flex; flex-wrap: wrap; gap: 8px 16px; align-items: baseline; justify-content: space-between; }
+.config-toolbar-actions { display: flex; gap: 8px; align-items: baseline; }
+.config-note { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); max-width: 72ch; margin: 4px 0; }
+.config-source-label { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); font-style: italic; margin: 4px 0 10px; }
+.config-muted { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.config-mono { font-family: var(--oi-font-mono, ui-monospace, monospace); }
+.config-ref { font-size: var(--oi-shell-type-ui); opacity: .85; }
+.config-empty { color: var(--oi-muted-2); font-style: italic; max-width: 72ch; }
+.config-error { color: inherit; border: 1px solid var(--oi-accent-ink); border-radius: 4px; padding: 6px 10px; font-size: var(--oi-shell-type-ui); background: var(--oi-wash); }
+.config-error-inline { display: block; color: inherit; font-size: var(--oi-shell-type-ui); opacity: .8; }
+
+.config-owner { border: 1px solid var(--oi-hairline-soft); border-radius: 6px; padding: 8px 12px; margin: 10px 0; }
+.config-owner > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: var(--oi-shell-type-heading); }
+.config-owner-meta { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: var(--oi-shell-type-ui); }
+.config-about { margin: 6px 0; max-width: 72ch; }
+.config-obligations { margin: 6px 0; font-size: var(--oi-shell-type-ui); }
+.config-section { margin: 10px 0 4px; }
+.config-section > h4 { font-size: var(--oi-shell-type-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--oi-muted-2); margin: 0 0 6px; font-weight: 500; }
+
+.config-setting { border-top: 1px solid var(--oi-hairline-soft); padding: 8px 0; }
+.config-setting-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.config-desc { margin: 2px 0 6px; max-width: 72ch; }
+.config-setting-body { display: grid; gap: 6px; }
+.config-facts { display: flex; flex-wrap: wrap; gap: 4px 18px; }
+.config-axis { display: inline-flex; gap: 6px; align-items: baseline; font-size: var(--oi-shell-type-ui); }
+.config-axis-name { color: var(--oi-muted-2); }
+.config-axis.is-desired .config-mono { border-bottom: 1px dashed currentColor; }
+.config-setting-actions { display: flex; gap: 8px; align-items: baseline; }
+.config-reason { margin: 0; }
+
+.config-control { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
+.config-scope-picker { display: inline-flex; gap: 6px; align-items: center; }
+.config-scope-picker::before { content: "scope"; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.config-input { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 3px 8px; }
+.config-input:disabled { opacity: .55; }
+.config-mini { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 2px 8px; cursor: pointer; }
+.config-mini:disabled { opacity: .45; cursor: default; }
+.config-switch { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
+.config-reference, .config-secret, .config-secret-edit { display: inline-flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
+.config-structured { display: grid; gap: 6px; justify-items: start; }
+.config-structured .config-input { width: 100%; min-width: 90px; }
+
+.config-table { border-collapse: collapse; font-size: var(--oi-shell-type-ui); margin: 4px 0; }
+.config-table th, .config-table td { text-align: left; padding: 3px 12px 3px 0; border-bottom: 1px solid var(--oi-hairline-soft); vertical-align: top; }
+.config-table th { color: var(--oi-muted-2); font-weight: 500; }
+.config-list { list-style: none; margin: 0; padding: 0; display: grid; gap: 4px; }
+.config-list li { display: flex; gap: 6px; align-items: center; }
+
+/* The frozen reconciliation vocabulary (09 §7.1) — six statuses, six
+   styles, nothing else. */
+.config-chip { display: inline-block; border: 1px solid var(--oi-hairline-soft); border-radius: 999px; padding: 0 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.config-status { display: inline-block; border: 1px solid; border-radius: 999px; padding: 0 8px; font-size: var(--oi-shell-type-ui); }
+.config-status.is-satisfied { border-color: var(--oi-accent); color: var(--oi-accent-ink); }
+.config-status.is-drifted { border-color: var(--oi-accent-soft); color: var(--oi-foreground); }
+.config-status.is-pending { border-color: var(--oi-hairline); border-style: dashed; color: var(--oi-muted); }
+.config-status.is-blocked { border-color: var(--oi-accent-ink); color: var(--oi-accent-ink); background: var(--oi-wash-strong); }
+.config-status.is-unsupported, .config-status.is-unknown { border-color: var(--oi-hairline-soft); color: var(--oi-muted-2); font-style: italic; }
+.config-chip.is-availability-available { border-color: var(--oi-accent); }
+.config-chip.is-availability-degraded { border-color: var(--oi-accent-soft); }
+.config-chip.is-availability-unavailable, .config-chip.is-availability-unknown { border-style: dashed; }
+.config-chip.is-standing-absent { border-style: dashed; font-style: italic; }
+.config-chip.is-standing-unknown { border-style: dotted; font-style: italic; }
+.config-chip.is-active { border-color: var(--oi-accent); color: var(--oi-accent-ink); }
+.config-chip.is-unsupported, .config-chip.is-error { border-style: dashed; }
+.config-chip.is-readonly { border-style: dashed; }
+.config-chip.is-effect { border-style: dotted; }
+
+/* Plan drawer. */
+.config-drawer { position: fixed; inset: 8vh 16vw 8vh; z-index: 60; overflow: auto; background: var(--oi-surface); color: var(--oi-foreground); border: 1px solid var(--oi-hairline-soft); border-radius: 8px; padding: 16px 20px; box-shadow: var(--oi-shadow-overlay); display: grid; gap: 10px; justify-items: start; align-content: start; }
+.config-drawer header { display: flex; gap: 16px; align-items: baseline; justify-content: space-between; width: 100%; }
+.config-drawer h4 { margin: 0; font-size: var(--oi-shell-type-heading); font-weight: 500; }
+.config-plan { border: 1px solid var(--oi-hairline-soft); border-radius: 6px; padding: 6px 10px; width: 100%; }
+.config-plan > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
+.config-plan-facts { margin: 6px 0 0; display: grid; gap: 4px; font-size: var(--oi-shell-type-ui); }
+.config-plan-facts > div { display: flex; gap: 8px; }
+.config-plan-facts dt { color: var(--oi-muted-2); min-width: 11ch; }
+.config-plan-facts dd { margin: 0; }
+.config-drawer-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
+.config-drawer-actions button { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 4px 14px; cursor: pointer; }
+.config-drawer-actions button:disabled { opacity: .45; cursor: default; }
+
+/* ChangeSet result (§8). */
+.config-changeset { width: 100%; display: grid; gap: 8px; justify-items: start; }
+.config-changeset-head { display: flex; gap: 10px; align-items: baseline; margin: 0; }
+.config-chip.status-partially_applied { border-color: var(--oi-accent-soft); color: var(--oi-foreground); }
+.config-chip.status-verified { border-color: var(--oi-accent); color: var(--oi-accent-ink); }
+.config-chip.status-failed { border-color: var(--oi-accent-ink); color: var(--oi-accent-ink); background: var(--oi-wash-strong); }
+.config-verification ul { margin: 4px 0; padding-left: 18px; font-size: var(--oi-shell-type-ui); }
+.config-receipts { font-size: var(--oi-shell-type-ui); }
+.config-receipt { margin: 2px 0; }
+
+/* Fixture console. */
+.config-fixture-console { border: 1px dashed var(--oi-hairline-soft); border-radius: 6px; padding: 6px 10px; margin-top: 8px; font-size: var(--oi-shell-type-ui); }
+.config-fixture-console summary { cursor: pointer; color: var(--oi-muted-2); }
+.config-fixture-console button { margin: 4px 8px 0 0; }
+
+/* Profiles. */
+.profiles-layout { display: flex; gap: 18px; align-items: flex-start; }
+.profiles-list { display: grid; gap: 6px; min-width: 200px; }
+.profiles-list > button { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 6px; color: inherit; font: inherit; text-align: left; padding: 6px 10px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
+.profiles-list > button[aria-pressed="true"] { border-color: var(--oi-accent); }
+.profile-detail { flex: 1; min-width: 0; }
+.profile-detail-head { display: flex; gap: 16px; justify-content: space-between; align-items: flex-start; }
+.profile-detail-head h4 { margin: 0 0 4px; font-size: var(--oi-shell-type-heading); font-weight: 500; }
+.profile-detail-actions { display: flex; gap: 8px; }
+.profile-detail-actions button { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 3px 12px; cursor: pointer; }
+.profile-detail-actions button:disabled { opacity: .5; cursor: default; }
+.profile-entries { margin-top: 10px; }
+.config-native-profiles ul { margin: 4px 0; padding-left: 18px; font-size: var(--oi-shell-type-ui); list-style: none; }
+.config-native-profiles strong { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.config-add-entry { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
+.config-new-profile { display: flex; gap: 6px; align-items: center; }

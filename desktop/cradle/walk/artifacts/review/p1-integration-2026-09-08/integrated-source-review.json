@@ -1,0 +1,20 @@
+{
+  "standing": "root integrated source review; native gate pending",
+  "reviewed": [
+    "Expression overlay bounds/lease/visibility/theme/disposal",
+    "Per-window React provider and observer lifetime",
+    "Completion cursor and single Context encounter observer",
+    "Encounter disclosed-action guards in UI and handlers",
+    "Flow owner capability inspect before read and save; owner CAS retained",
+    "Typed native debug observation allowlist and main/surface-only permission",
+    "Exact owner selection in context check and real Flow tests"
+  ],
+  "findings": [],
+  "limitations": [
+    "Flow inspect actor remains owner-defined agent authority while writes name human; no disclosure bypass added",
+    "Existing Flow local recovery remains presentation recovery, not adopted owner state",
+    "Native visual, two-session and repeated native lifecycle results required independently",
+    "Resource observation reports RSS and explicitly unavailable heap/GPU/subscription counts"
+  ],
+  "validation": "git diff --check passed; coherent native build succeeded; 145 input hashes unchanged"
+}

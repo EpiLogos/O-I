@@ -1,0 +1,122 @@
+/* Search aperture and owner-dispatch states retain their existing contracts. */
+.search-aperture { width:var(--oi-dialog-width); max-width:calc(100vw - var(--oi-space-6)); max-height:calc(100vh - calc(var(--oi-space-6) + var(--oi-space-5))); margin:var(--oi-space-7) auto auto; padding:0; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-desktop-gap); background:var(--oi-sidebar-ground); color:var(--oi-accent-ink); box-shadow:var(--oi-shadow-overlay); font:var(--oi-shell-type-ui) var(--oi-font-sans); animation: ctx-menu-in var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.search-aperture::backdrop { background:var(--oi-rule); backdrop-filter:blur(var(--oi-focus-ring-offset)); -webkit-backdrop-filter:blur(var(--oi-focus-ring-offset)); }
+.search-aperture form { display:flex; align-items:center; border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft); padding:var(--oi-desktop-gap-lg) var(--oi-desktop-gap-lg); gap:var(--oi-desktop-gap); }
+.search-aperture input { flex:1; min-width:0; border:0; background:transparent; outline:none; color:inherit; font-size:var(--oi-shell-type-prose); font-family:var(--oi-font-sans); height:auto; }
+.search-aperture button { font:inherit; color:var(--oi-muted-2); background:transparent; border:0; cursor:pointer; padding:var(--oi-desktop-gap-sm); border-radius:var(--oi-radius-xs); transition:color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.search-aperture button:hover, .search-aperture button:focus-visible { background:var(--oi-wash); color:var(--oi-accent-ink); outline:none; }
+.search-aperture input:focus-visible { outline: var(--oi-shell-edge) solid var(--oi-accent-soft); outline-offset: calc(0px - var(--oi-focus-ring-offset)); border-radius: var(--oi-desktop-gap-xs); }
+.search-aperture [role="alert"] { margin: var(--oi-desktop-gap-xs) var(--oi-desktop-gap-lg) var(--oi-desktop-gap); padding: var(--oi-desktop-gap-sm) var(--oi-shell-type-ui); border-left: var(--oi-focus-ring-width) solid var(--oi-accent); background: var(--oi-wash); border-radius: var(--oi-desktop-gap-xs); color: var(--oi-accent-ink); }
+.search-aperture header { display:flex; align-items:center; justify-content:space-between; padding:var(--oi-desktop-gap-xs) var(--oi-desktop-gap-lg) var(--oi-desktop-gap); font-size:var(--oi-shell-type-eyebrow); letter-spacing:var(--oi-shell-tracking); text-transform:uppercase; color:var(--oi-muted-2); }
+.search-aperture ul { padding:0 var(--oi-desktop-gap-sm) var(--oi-desktop-gap-sm); margin:0; list-style:none; }
+.search-aperture li { display:flex; align-items:center; border-radius:var(--oi-shell-radius); }
+.search-aperture li > button:first-child { text-align:left; flex:1; padding:var(--oi-shell-type-ui) var(--oi-desktop-gap); border-radius:var(--oi-shell-radius); }
+.search-aperture li:hover, .search-aperture li:focus-within { background:var(--oi-wash); }
+.search-aperture strong { display:block; font-weight:normal; font-size:var(--oi-shell-type-ui); }
+.search-aperture small { display:block; margin-top:var(--oi-desktop-gap-xs); color:var(--oi-muted-2); font-size:var(--oi-shell-type-meta); }
+.search-aperture p,.search-aperture details { margin:var(--oi-desktop-gap) var(--oi-desktop-gap-lg); overflow-wrap:anywhere; font-size:var(--oi-shell-type-ui); color:var(--oi-muted-2); }
+.search-aperture pre { white-space:pre-wrap; font-size:var(--oi-shell-type-eyebrow); }
+.search-shortcut { display:flex; align-items:center; gap:var(--oi-desktop-gap-sm); padding:var(--oi-desktop-gap-xs) var(--oi-desktop-gap-lg) var(--oi-desktop-gap); color:var(--oi-muted-2); font-size:var(--oi-shell-type-eyebrow); }
+.search-shortcut select { color:inherit; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-radius-xs); background:var(--oi-canvas-ground); font:inherit; padding:var(--oi-focus-ring-width) var(--oi-desktop-gap-xs); }
+.knowledge-actions button { display:block; overflow-wrap:anywhere; text-align:left; }
+.search-aperture [data-selected=true] { background:var(--oi-wash); outline:var(--oi-desktop-rule) solid var(--oi-accent-soft); }
+.search-resolution-row { margin:var(--oi-desktop-gap-sm); padding:var(--oi-desktop-gap-sm); border-radius:var(--oi-shell-radius); }
+.search-resolution-row > button { text-align:left; width:100%; }
+.knowledge-raw, .knowledge-provenance, .knowledge-detail-body .knowledge-actions { margin-top:var(--oi-space-4); color:var(--oi-muted); font-size:var(--oi-shell-type-ui); }
+.knowledge-actions ul { list-style:none; padding:0; margin:0; }
+.knowledge-actions li { padding-block:var(--oi-desktop-gap-sm); border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.knowledge-actions li:last-child { border-bottom:0; }
+.knowledge-actions li > p { margin-top:var(--oi-desktop-gap-sm); overflow-wrap:anywhere; line-height:var(--oi-space-3); }
+.knowledge-actions [data-dispatch-state] { margin-top:var(--oi-desktop-gap-sm); padding:var(--oi-desktop-gap-sm) var(--oi-desktop-gap); border-radius:var(--oi-desktop-gap-xs); overflow-wrap:anywhere; line-height:var(--oi-space-3); }
+.knowledge-actions [data-dispatch-state] pre { white-space:pre-wrap; overflow-wrap:anywhere; margin-top:var(--oi-desktop-gap-sm); max-height:calc(var(--oi-space-6) + var(--oi-space-6) + var(--oi-space-6)); overflow:auto; }
+.knowledge-actions [data-dispatch-state=invoked] { background:var(--oi-wash); color:var(--oi-foreground); }
+.knowledge-actions [data-dispatch-state=unsupported_action] { border-left:var(--oi-focus-ring-width) solid var(--oi-rule); color:var(--oi-muted-2); }
+.knowledge-actions [data-dispatch-state=malformed_ref] { border-left:var(--oi-focus-ring-width) solid var(--oi-rule); color:var(--oi-muted-2); }
+.knowledge-actions [data-dispatch-state=unknown_owner] { border-left:var(--oi-focus-ring-width) solid var(--oi-rule); color:var(--oi-muted-2); }
+.knowledge-actions [data-dispatch-state=owner_refused] { border-left:var(--oi-focus-ring-width) solid var(--oi-accent); background:var(--oi-wash); color:var(--oi-accent-ink); }
+.knowledge-actions [data-dispatch-state=owner_unavailable] { border-left:var(--oi-focus-ring-width) solid var(--oi-hairline); color:var(--oi-muted); }
+.search-aperture .knowledge-actions { margin:var(--oi-desktop-gap-sm) 0 0; }
+.search-aperture .knowledge-actions > p { margin:0 0 var(--oi-desktop-gap-sm); }
+.search-aperture .knowledge-actions li { display:block; align-items:initial; border-radius:0; }
+.search-aperture .knowledge-actions li > button { width:100%; text-align:left; padding:var(--oi-desktop-gap-sm) 0; }
+.search-aperture .knowledge-actions li > p, .search-aperture .knowledge-actions [data-dispatch-state] { margin:0 0 var(--oi-desktop-gap-sm); }
+.search-aperture .knowledge-actions [data-dispatch-state] > p { margin:0; }
+.search-aperture .knowledge-actions { padding-left:var(--oi-desktop-gap-sm); }
+.search-aperture .knowledge-actions pre { margin-top:var(--oi-desktop-gap-sm); text-align:left; }
+
+/* The graph remains spatial. Its controls, inspector, disclosures and
+ * Actions compose desktop.css; this file owns only their placement and
+ * the specific native knowledge reading. GraphCanvas owns drawing. */
+.knowledge-surface { height:100%; display:flex; flex-direction:column; min-height:0; min-width:0; position:relative; background:var(--oi-canvas-ground); }
+.knowledge-surface > p { padding:var(--oi-desktop-gap-sm) var(--oi-desktop-gap-lg); font-size:var(--oi-shell-type-nav); }
+.knowledge-graph { position:relative; flex:1; min-height:var(--oi-spatial-min-height); }
+.knowledge-canvas { position:absolute; inset:0; width:100%; height:100%; outline:none; touch-action:none; cursor:grab; }
+.knowledge-canvas:focus, .knowledge-canvas:focus-visible { outline:none; box-shadow:none; }
+.knowledge-node-accessibility { position:absolute; width:var(--oi-shell-edge); height:var(--oi-shell-edge); overflow:hidden; clip-path:inset(100%); }
+.knowledge-zoom { position:absolute; right:var(--oi-space-4); bottom:var(--oi-space-4); display:flex; align-items:center; gap:var(--oi-desktop-gap-xs); padding:var(--oi-desktop-gap-xs); border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-shell-radius); background:var(--oi-sidebar-ground); box-shadow:var(--oi-shadow-menu); }
+.knowledge-zoom > span { font-size:var(--oi-shell-type-ui); color:var(--oi-muted); min-width:var(--oi-shell-hit); text-align:center; }
+.knowledge-zoom .knowledge-control-hint { position:absolute; right:0; bottom:100%; margin-bottom:var(--oi-desktop-gap-sm); white-space:nowrap; font-size:var(--oi-shell-type-meta); color:var(--oi-muted-2); pointer-events:none; }
+.knowledge-inputs { flex:none; display:flex; flex-wrap:wrap; gap:var(--oi-desktop-gap); padding:var(--oi-desktop-gap-sm) var(--oi-space-4); color:var(--oi-muted); font-size:var(--oi-shell-type-meta); }
+.knowledge-inputs details[open] { width:100%; }
+.knowledge-inputs summary { cursor:pointer; }
+.knowledge-inputs p { overflow-wrap:anywhere; line-height:var(--oi-space-3); }
+.knowledge-content { box-sizing:border-box; flex:1; min-height:0; overflow:auto; max-width:var(--oi-reading-width); width:100%; margin-inline:auto; padding:var(--oi-space-6) var(--oi-space-5); font-size:var(--oi-desktop-type-body); }
+.knowledge-content:empty { display:none; }
+.knowledge-content pre { white-space:pre-wrap; overflow-wrap:anywhere; }
+.knowledge-page-heading h1 { font-size:var(--oi-shell-type-title); font-weight:normal; margin-block:var(--oi-space-4) var(--oi-space-3); }
+.knowledge-page-heading > .oi-action { margin-block:var(--oi-desktop-gap) var(--oi-space-5); }
+.knowledge-prose { white-space:pre-wrap; overflow-wrap:anywhere; color:var(--oi-foreground); font-size:var(--oi-shell-type-prose); line-height:var(--oi-space-4); margin-block:var(--oi-space-3); }
+.knowledge-muted, .knowledge-revision { color:var(--oi-muted); font-size:var(--oi-shell-type-nav); overflow-wrap:anywhere; }
+.knowledge-owner { color:var(--oi-muted-2); font-size:var(--oi-shell-type-ui); margin-bottom:var(--oi-space-3); }
+
+/* Details inhabit the graph and retain its position, resizing, focus and
+ * native subject. The body is the sole scrolling region of the sidecar. */
+.knowledge-detail-dialog { position:absolute; margin:0; min-width:0; min-height:0; display:flex; flex-direction:column; overflow:hidden; box-sizing:border-box; z-index:3; container-type:inline-size; border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-shell-radius); box-shadow:var(--oi-shadow-menu); background:var(--oi-sidebar-ground); color:var(--oi-foreground); font:var(--oi-shell-type-ui) var(--oi-font-sans); }
+.knowledge-detail-bar { flex:none; display:flex; align-items:center; gap:var(--oi-desktop-gap-xs); padding:var(--oi-desktop-gap-sm); border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.knowledge-detail-move { display:flex; align-items:center; justify-content:space-between; gap:var(--oi-desktop-gap); flex:1; min-width:0; min-height:var(--oi-shell-control); border:0; background:transparent; padding:var(--oi-desktop-gap-sm); text-align:left; cursor:grab; touch-action:none; font:inherit; font-size:var(--oi-shell-type-eyebrow); letter-spacing:var(--oi-shell-tracking); text-transform:uppercase; color:var(--oi-muted-2); }
+.knowledge-detail-move:active { cursor:grabbing; }
+.knowledge-detail-move span:first-child { overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.knowledge-detail-move:focus-visible, .knowledge-detail-edge:focus-visible { outline:var(--oi-focus-ring-width) solid var(--oi-focus); outline-offset:calc(0px - var(--oi-focus-ring-width)); }
+.knowledge-detail-body { padding:var(--oi-space-3) var(--oi-space-4); }
+.knowledge-detail-body h1 { font-size:var(--oi-shell-type-prose); font-weight:500; line-height:var(--oi-space-4); margin:0 0 var(--oi-desktop-gap-sm); }
+.knowledge-detail-body .knowledge-prose { font-size:var(--oi-shell-type-nav); }
+.knowledge-detail-body pre { white-space:pre-wrap; overflow-wrap:anywhere; font-size:var(--oi-shell-type-nav); line-height:var(--oi-space-3); }
+.knowledge-detail-body .oi-kv { grid-template-columns:minmax(0,1fr); gap:var(--oi-desktop-gap-xs); }
+.knowledge-detail-body .oi-kv > dd { margin-bottom:var(--oi-desktop-gap-sm); }
+.knowledge-related ul { list-style:none; padding:0; }
+.knowledge-related li { padding-block:var(--oi-desktop-gap-sm); border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft); overflow-wrap:anywhere; }
+.knowledge-related .oi-action { white-space:normal; text-align:left; }
+.knowledge-related small { display:block; margin-top:var(--oi-desktop-gap-xs); color:var(--oi-muted-2); }
+.knowledge-detail-footer { flex:none; justify-content:space-between; gap:var(--oi-desktop-gap-xs); padding:var(--oi-desktop-gap-xs) var(--oi-desktop-gap-sm); border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.knowledge-detail-footer button span { margin-left:var(--oi-desktop-gap-xs); }
+@container (max-width:340px) { .knowledge-detail-body { padding:var(--oi-desktop-gap) var(--oi-space-3); } .knowledge-detail-body .knowledge-prose { font-size:var(--oi-shell-type-ui); } }
+.knowledge-detail-edge { position:absolute; padding:0; background:transparent; border:0; touch-action:none; z-index:4; }
+.knowledge-detail-edge-n, .knowledge-detail-edge-s { left:var(--oi-space-3); right:var(--oi-space-3); height:var(--oi-desktop-gap-xs); cursor:ns-resize; }
+.knowledge-detail-edge-e, .knowledge-detail-edge-w { top:var(--oi-space-3); bottom:var(--oi-space-3); width:var(--oi-desktop-gap-xs); cursor:ew-resize; }
+.knowledge-detail-edge-nw, .knowledge-detail-edge-ne, .knowledge-detail-edge-sw, .knowledge-detail-edge-se { width:var(--oi-space-3); height:var(--oi-space-3); }
+.knowledge-detail-edge-nw, .knowledge-detail-edge-se { cursor:nwse-resize; }
+.knowledge-detail-edge-ne, .knowledge-detail-edge-sw { cursor:nesw-resize; }
+.knowledge-detail-edge-n, .knowledge-detail-edge-nw, .knowledge-detail-edge-ne { top:0; }
+.knowledge-detail-edge-s, .knowledge-detail-edge-sw, .knowledge-detail-edge-se { bottom:0; }
+.knowledge-detail-edge-w, .knowledge-detail-edge-nw, .knowledge-detail-edge-sw { left:0; }
+.knowledge-detail-edge-e, .knowledge-detail-edge-ne, .knowledge-detail-edge-se { right:0; }
+.knowledge-surface-footer { display:flex; flex:none; align-items:center; gap:var(--oi-desktop-gap-sm); padding:var(--oi-desktop-gap-xs) var(--oi-desktop-gap); border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft); color:var(--oi-muted-2); font-size:var(--oi-shell-type-meta); }
+.knowledge-surface-footer > span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.knowledge-surface-footer nav { display:flex; }
+.knowledge-surface-footer svg { width:var(--oi-space-3); height:var(--oi-space-3); fill:none; stroke:currentColor; stroke-width:var(--oi-focus-ring-width); }
+.knowledge-actions .oi-action { white-space:normal; }
+
+/* Local-whole Expression is a view over the same native selection. In a
+ * page it flows in the body; in the graph it inhabits the spatial region.
+ * The host supplies both appearances, including the canvas ground. */
+.knowledge-expression-bar { position:absolute; inset:var(--oi-space-4); z-index:2; display:flex; flex-direction:column; align-items:stretch; gap:var(--oi-desktop-gap-sm); pointer-events:none; }
+.knowledge-expression-selection, .knowledge-expression-controls { pointer-events:auto; }
+.knowledge-expression-selection { flex:none; }
+.knowledge-expression-controls { position:relative; display:flex; flex-direction:column; gap:var(--oi-desktop-gap-sm); min-width:0; }
+.knowledge-expression-controls[data-visible="true"] { padding:var(--oi-desktop-gap-sm); background:var(--oi-canvas-ground); border:var(--oi-shell-edge) solid var(--oi-hairline); border-radius:var(--oi-shell-radius); }
+.knowledge-expression-bar .knowledge-expression-controls[data-visible="true"] { flex:1; min-height:0; overflow:auto; }
+.knowledge-expression-host { flex:1; min-height:12rem; border-radius:var(--oi-shell-radius); overflow:hidden; background:var(--oi-canvas-ground); color:var(--oi-foreground); }
+.knowledge-expression-controls[data-visible="false"] .knowledge-expression-host { display:none; }
+.knowledge-expression-controls > span { font-size:var(--oi-shell-type-meta); color:var(--oi-muted-2); }
+.knowledge-expression-controls .oi-disclosure { flex:none; }
+.knowledge-expression-controls li { overflow-wrap:anywhere; }

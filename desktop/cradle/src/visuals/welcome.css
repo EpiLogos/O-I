@@ -1,0 +1,56 @@
+/* The engine paints the complete scene below these controls. The inverse
+ * CSS ground covers only import / first paint / failure; once ready, the
+ * full native field is visible without a scrim or a separate exit fade. */
+.oi-welcome {
+  position: fixed;
+  inset: 0;
+  z-index: calc(var(--oi-z-stage-frontstate) + 1);
+  background: var(--oi-inverse-canvas-ground);
+  color: var(--oi-inverse-foreground);
+}
+.oi-welcome[data-field-ready="true"]:not([data-field-error="true"]) {
+  background: transparent;
+}
+.oi-welcome[data-phase="entering"] {
+  color: var(--oi-foreground);
+}
+.oi-welcome-enter {
+  position: absolute;
+  inset: 0;
+  inline-size: 100%;
+  background: none;
+  border: none;
+  cursor: pointer;
+  display: grid;
+  align-content: end;
+  justify-items: center;
+  gap: var(--oi-desktop-gap-xs);
+  padding-block-end: 10vh;
+  color: inherit;
+  font-family: var(--oi-font-mono);
+}
+.oi-welcome-enter:disabled {
+  cursor: default;
+}
+.oi-welcome-enter:focus-visible {
+  outline: var(--oi-focus-ring-width) solid currentColor;
+  outline-offset: calc(-1 * var(--oi-focus-ring-width));
+}
+.oi-welcome-mark {
+  font-size: var(--oi-shell-type-ui);
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+}
+.oi-welcome-hint,
+.oi-welcome-detail {
+  font-size: var(--oi-shell-type-nav);
+}
+.oi-welcome-error {
+  position: absolute;
+  inset-inline: 15%;
+  inset-block-end: 17vh;
+  margin: 0;
+  text-align: center;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-nav);
+}

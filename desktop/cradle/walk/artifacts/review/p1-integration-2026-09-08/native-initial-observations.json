@@ -1,0 +1,35 @@
+{
+  "standing": "partial native evidence; FND gate remains open",
+  "source_save": {
+    "native_action": "Opened adopted Central source; appended test marker; Cmd-S",
+    "path": "Work/Editor/ProjectCentral/user/08 OI-CENTRAL-FOUNDATION-2026-09-04.md",
+    "verified_bytes": 7003,
+    "marker": "Native P1 acceptance: exact Central owner save."
+  },
+  "terminal": {
+    "native_action": "Workspace > New Terminal; ran printf",
+    "observed_output": "P1_NATIVE_PTY_OK",
+    "isolated_cwd": "Work/Editor"
+  },
+  "bootstrap": {
+    "observed_projects": [
+      "Editor",
+      "Material",
+      "Other"
+    ],
+    "live_user_app_untouched": true
+  },
+  "initial_idle": {
+    "samples": 53,
+    "rss_min_kib": 15104,
+    "rss_max_kib": 96848,
+    "last_10_median_kib": 24336.0,
+    "disposition": "Initial idle includes startup/cache reclamation, not yet predeclared cycle budget; WebKit attribution uncertain"
+  },
+  "resize": {
+    "attempted_drags": 2,
+    "confirmed_geometry_change": false,
+    "disposition": "Not accepted; UI lead resolving native coordinate targeting"
+  },
+  "handoff": "UI lead has exclusive native visual control; root is reviewing diff"
+}

@@ -15,9 +15,14 @@ on:
 permissions:
   contents: read
 
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: true
+
 jobs:
   test:
     runs-on: ubuntu-latest
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -28,6 +33,7 @@ jobs:
 
   spacetimedb-live:
     runs-on: ubuntu-latest
+    timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
@@ -66,16 +72,51 @@ jobs:
         run: spacetime publish oi-shared-field-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Generate current TypeScript client bindings
         run: spacetime generate --lang typescript --out-dir shared-field/spacetimedb/module_bindings --module-path shared-field/spacetimedb
+      - name: Prove large client envelopes survive native process exit
+        run: node --test shared-field/spacetimedb/field-cli.test.mjs
+      - name: Prove unavailable relation isolation and exact owner repair
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        working-directory: shared-field/spacetimedb
+        run: npx tsx relation-recovery-live-acceptance.ts
       - name: Prove Phase 1 privacy, Phase 2 Admission and Phase 3 Exchange conformance
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance
+      - name: Prove live SharedField drives Explore Surface and Projection refinement
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:explore-surface
       - name: Prove W11 authorised Projection return across application Surfaces
         env:
           SPACETIMEDB_URI: ws://127.0.0.1:3000
           SPACETIMEDB_DATABASE: oi-shared-field-ci
         run: npm --prefix shared-field/spacetimedb run acceptance:w11-return
+      - name: Publish a Central-shaped world through the real Projection provider and hosted push
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: |
+          node shared-field/scripts/publish-world.mjs \
+            --selection shared-field/fixtures/central-world-ci.selection.json \
+            --reading shared-field/fixtures/central-world-ci.root-reading.json \
+            --reading shared-field/fixtures/central-world-ci.project-reading.json \
+            --sentinel PRIVATE_SENTINEL --sentinel identity.md --sentinel 'wiki:node:identity' \
+            --out /tmp/oi-world-ci
+          npm --prefix shared-field/spacetimedb run publish:world -- --bundle /tmp/oi-world-ci/bundle.json --token-file /tmp/oi-world-ci/owner-token
+      - name: Prove two independently grounded worlds meet, contribute, return and re-project in one field
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:two-world
+      - name: Prove the revisioned Shared Stage with two independently admitted identities
+        env:
+          SPACETIMEDB_URI: ws://127.0.0.1:3000
+          SPACETIMEDB_DATABASE: oi-shared-field-ci
+        run: npm --prefix shared-field/spacetimedb run acceptance:shared-stage
       - name: Publish isolated live A2A SharedField database
         run: spacetime publish oi-shared-field-a2a-ci --server local --module-path shared-field/spacetimedb --yes=all
       - name: Prove grant-gated A2A exchange returns only to generic quarantine

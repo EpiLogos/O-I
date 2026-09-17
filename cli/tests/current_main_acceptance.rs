@@ -159,7 +159,6 @@ fn dev_status_reports_current_main_pins_not_release_snapshot() {
         .unwrap();
 
     let accepted = snapshot_revision(include_str!("../../suite/mainline.json"), "central");
-    let released = snapshot_revision(include_str!("../../suite/manifest.json"), "central");
     assert_eq!(central["accepted_current_main"], accepted);
-    assert_ne!(accepted, released);
+    assert_eq!(value["truth_basis"], "observed local HEAD and origin/main; accepted_current_main is historical descriptor evidence, not a development ceiling");
 }

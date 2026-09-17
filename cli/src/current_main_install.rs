@@ -1,11 +1,24 @@
 fn current_main_source_install(
     id: &str,
 ) -> Result<oi_cli::product_command::SourceInstallDescriptor, String> {
-    oi_cli::product_command::product_command_catalogue()?
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    current_main_source_install_from_catalogue(&catalogue, id)
+}
+
+/// The extraction law over one explicit catalogue: the current-main install
+/// path publishes exactly the descriptor the catalogue carries — it never
+/// overrides an owner's build or entry. Split from the runtime entry above so
+/// hermetic tests can pin the checked-in snapshot instead of whatever
+/// catalogue the running machine has adopted.
+fn current_main_source_install_from_catalogue(
+    catalogue: &oi_cli::product_command::ProductCommandCatalogue,
+    id: &str,
+) -> Result<oi_cli::product_command::SourceInstallDescriptor, String> {
+    catalogue
         .products
-        .into_iter()
+        .iter()
         .find(|product| product.id == id)
-        .map(|product| product.source_install)
+        .map(|product| product.source_install.clone())
         .ok_or_else(|| format!("missing current-main command descriptor for {id}"))
 }
 
@@ -64,6 +77,7 @@ fn command_descriptor_current_dev_install(args: &[OsString]) -> Result<i32, Stri
     }
 
     let mut composition = load_composition()?;
+    let installed_ids = ids.clone();
     for id in ids {
         let root = dev_source_path(&ground, &id);
         if id == "oi" {
@@ -102,15 +116,82 @@ fn command_descriptor_current_dev_install(args: &[OsString]) -> Result<i32, Stri
         );
     }
     save_composition(&composition)?;
+    post_install_instance_scan(&composition, &installed_ids);
     Ok(0)
+}
+
+/// Post-install hook (registry plan §3.1): installing the workcell product
+/// runs one instance scan so the registry adopts whatever exists right
+/// now. Best-effort by law: a failed scan is disclosed unavailability and
+/// never fails the install itself.
+fn post_install_instance_scan(composition: &Composition, installed: &[String]) {
+    let Some(executable) = post_install_scan_target(composition, installed) else {
+        return;
+    };
+    match std::process::Command::new(executable)
+        .args(["instances", "scan", "--json"])
+        .stdin(std::process::Stdio::null())
+        .output()
+    {
+        Ok(output) if output.status.success() => {
+            let summary = String::from_utf8_lossy(&output.stdout);
+            let parsed: Result<serde_json::Value, _> = serde_json::from_str(&summary);
+            match parsed {
+                Ok(report) => println!(
+                    "workcell: post-install instance scan — {} live, {} stale ({} adopted, {} conflicts)",
+                    report["live"].as_u64().unwrap_or(0),
+                    report["stale"].as_u64().unwrap_or(0),
+                    report["transitions"]["adopted"].as_u64().unwrap_or(0),
+                    report["conflicts"].as_array().map_or(0, Vec::len),
+                ),
+                Err(_) => println!("workcell: post-install instance scan completed"),
+            }
+        }
+        Ok(output) => println!(
+            "workcell: post-install scan exited {} — instance registry not refreshed (the install itself succeeded)",
+            output.status
+        ),
+        Err(error) => println!(
+            "workcell: post-install scan unavailable ({error}) — instance registry not refreshed"
+        ),
+    }
+}
+
+/// The scan runs only when the workcell product was among the installed
+/// ids, and targets the workcell executable just registered into the
+/// composition.
+fn post_install_scan_target<'a>(
+    composition: &'a Composition,
+    installed: &[String],
+) -> Option<&'a str> {
+    if !installed.iter().any(|id| id == "workcell") {
+        return None;
+    }
+    composition
+        .modules
+        .get("workcell")?
+        .native_executable
+        .as_deref()
 }
 
 #[cfg(test)]
 mod current_main_install_tests {
     use super::*;
 
+    /// The catalogue document both hermetic tests below validate against:
+    /// the checked-in snapshot, never a machine-adopted catalogue and never
+    /// an `OI_HOME` another test is concurrently isolating.
+    fn pinned_catalogue() -> oi_cli::product_command::ProductCommandCatalogue {
+        oi_cli::product_command::product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "embedded-snapshot",
+        )
+        .unwrap()
+    }
+
     #[test]
     fn every_product_has_a_current_main_native_source_install() {
+        let catalogue = pinned_catalogue();
         for id in [
             "central",
             "actuation",
@@ -119,15 +200,75 @@ mod current_main_install_tests {
             "workcell",
             "quaternal-logic",
         ] {
-            let spec = current_main_source_install(id).unwrap();
+            let spec = current_main_source_install_from_catalogue(&catalogue, id).unwrap();
             assert!(!spec.executable_path.is_empty(), "{id}");
         }
     }
 
     #[test]
-    fn actuation_uses_its_owner_native_source_entry_without_inventing_a_build() {
-        let spec = current_main_source_install("actuation").unwrap();
-        assert!(spec.build.is_empty());
-        assert_eq!(spec.executable_path, "bin/actuation");
+    fn native_source_installs_preserve_each_published_descriptor() {
+        // Hermetic by construction: both sides read the checked-in snapshot,
+        // so a machine-adopted catalogue or a concurrently-isolated OI_HOME
+        // cannot flip one resolution mid-test. The production entry
+        // (`current_main_source_install`) differs only by
+        // `catalog_source::resolve()`.
+        let catalogue = pinned_catalogue();
+        for product in &catalogue.products {
+            assert_eq!(
+                current_main_source_install_from_catalogue(&catalogue, &product.id).unwrap(),
+                product.source_install,
+                "{} must retain its owner's build and entry, regardless of language",
+                product.id
+            );
+        }
+    }
+
+    #[test]
+    fn post_install_scan_targets_the_registered_workcell_executable() {
+        let mut composition = Composition::default();
+        let central_only = vec!["central".to_owned()];
+        assert!(post_install_scan_target(&composition, &central_only).is_none());
+
+        composition.modules.insert(
+            "workcell".to_owned(),
+            Registration {
+                id: "workcell".to_owned(),
+                public_name: "Workcell".to_owned(),
+                native_executable: Some("/usr/local/bin/workcell".to_owned()),
+                alias: None,
+                version: None,
+                docs: String::new(),
+                skill: None,
+                root: None,
+                modality: InstallModality::DeveloperSource,
+                install_source: None,
+            },
+        );
+        let workcell_installed = vec!["workcell".to_owned()];
+        assert_eq!(
+            post_install_scan_target(&composition, &workcell_installed),
+            Some("/usr/local/bin/workcell")
+        );
+        // Registered but not installed this run → no scan.
+        assert!(post_install_scan_target(&composition, &central_only).is_none());
+
+        // Installed but no registered executable → disclosed skip, no panic.
+        let mut bare = Composition::default();
+        bare.modules.insert(
+            "workcell".to_owned(),
+            Registration {
+                id: "workcell".to_owned(),
+                public_name: "Workcell".to_owned(),
+                native_executable: None,
+                alias: None,
+                version: None,
+                docs: String::new(),
+                skill: None,
+                root: None,
+                modality: InstallModality::DeveloperSource,
+                install_source: None,
+            },
+        );
+        assert!(post_install_scan_target(&bare, &workcell_installed).is_none());
     }
 }

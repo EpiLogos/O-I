@@ -1,0 +1,70 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "permission",
+  "generated_at": "2026-09-06T18:15:16.604Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin"
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 23911,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Consent displays exact native tool request content"
+    },
+    {
+      "ok": true,
+      "label": "Native consent choice preserved: Yes, proceed"
+    },
+    {
+      "ok": true,
+      "label": "Native consent choice preserved: Yes, and don't ask again for commands that start with `/bin/zsh -lc printf '%s' 'OI_APPROVED_TOOL_WRITE' > consent-output.txt && cat consent-output.txt`"
+    },
+    {
+      "ok": true,
+      "label": "Native consent choice preserved: No, and tell Codex what to do differently"
+    },
+    {
+      "ok": true,
+      "label": "UI native consent completes the real isolated tool write/read"
+    },
+    {
+      "ok": true,
+      "label": "Activity retains native tool execution results after consent"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-06T18:15:16.756Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 51,
+      "data": {
+        "file": "permission-native-consent-and-tool-result.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "permission-native-consent-and-tool-result.png"
+  ]
+}

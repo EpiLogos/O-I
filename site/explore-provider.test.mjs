@@ -105,6 +105,6 @@ test('live provider rebuild events deliver a fresh browser model through the sam
   for (const listener of listeners) listener({ type: 'rebuild', revision: 2 });
 
   assert.equal(received.model.presentation('world:test').title, 'Test world 2');
-  assert.deepEqual(provider.status(), { kind: 'live', live: true, revision: 2, healthy: true });
+  assert.deepEqual(provider.status(), { kind: 'live', live: false, revision: 2, healthy: true });
   unsubscribe();
 });

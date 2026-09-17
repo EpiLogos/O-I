@@ -1,0 +1,607 @@
+{
+  "standing": "Executed native CUA observations; shared overlay telemetry is separate from production engine browser metrics",
+  "binary_sha256": "387441546c1ea758177529f9432d0d2ac5860ce98e62895dcd76bb731f351913",
+  "launch": {
+    "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-6fgGYt",
+    "oiHome": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-home-Hnuhe6",
+    "store": "41f1c8abd4b64638ac2617e8574b4538",
+    "socket": "/tmp/oi-ui-native-window-walk/expression.sock",
+    "binary": "/Users/admin/Central/Work/O-I/desktop/cradle/src-tauri/target/debug/oi-cradle"
+  },
+  "source_sha256": "1a7a45e2a6ee259db1cfa8e5e6778493b19779e6ec41842b330ba6991b5216a0",
+  "source_unchanged": true,
+  "scenarios": [
+    "Native system-dark source detach to surface-1, redock, original editor focus restored",
+    "Native explicit-light selected through System / Visuals / Themes; source detach to surface-2 retains light; redock restores source and editor focus"
+  ],
+  "limits": [
+    "System titlebar retains operating system appearance under explicit body light",
+    "Screenshots inspected inline in CUA; no persisted screenshot file claimed",
+    "Binary predates final glyph, editor syntax and shared settings preview changes"
+  ],
+  "windows": {
+    "main": {
+      "samples": 783,
+      "first": {
+        "native_window": {
+          "inner_position_physical": {
+            "x": 0,
+            "y": 58
+          },
+          "inner_size_physical": {
+            "height": 1606,
+            "width": 2118
+          },
+          "scale_factor": 2.0
+        },
+        "report": {
+          "emitters": 0,
+          "entries": 1,
+          "forms": [
+            "idle"
+          ],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 1,
+          "scheduled": true
+        },
+        "schema": "oi.native-expression-observation/v1",
+        "unix_ms": 1789481523866,
+        "webview": "main"
+      },
+      "last": {
+        "native_window": {
+          "inner_position_physical": {
+            "x": 0,
+            "y": 58
+          },
+          "inner_size_physical": {
+            "height": 1606,
+            "width": 2118
+          },
+          "scale_factor": 2.0
+        },
+        "report": {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 82,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 81,
+          "scheduled": false
+        },
+        "schema": "oi.native-expression-observation/v1",
+        "unix_ms": 1789482307427,
+        "webview": "main"
+      },
+      "last_ten_reports": [
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 81,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 80,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 81,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 80,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 81,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 80,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 81,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 80,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 81,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 80,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 81,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 80,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 1,
+          "forms": [
+            "idle"
+          ],
+          "frames": 82,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 81,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 82,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 81,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 82,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 81,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 82,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 81,
+          "scheduled": false
+        }
+      ]
+    },
+    "surface-1": {
+      "samples": 60,
+      "first": {
+        "native_window": {
+          "inner_position_physical": {
+            "x": 480,
+            "y": 136
+          },
+          "inner_size_physical": {
+            "height": 1300,
+            "width": 1600
+          },
+          "scale_factor": 2.0
+        },
+        "report": {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        "schema": "oi.native-expression-observation/v1",
+        "unix_ms": 1789481601014,
+        "webview": "surface-1"
+      },
+      "last": {
+        "native_window": {
+          "inner_position_physical": {
+            "x": 480,
+            "y": 136
+          },
+          "inner_size_physical": {
+            "height": 1300,
+            "width": 1600
+          },
+          "scale_factor": 2.0
+        },
+        "report": {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        "schema": "oi.native-expression-observation/v1",
+        "unix_ms": 1789481659207,
+        "webview": "surface-1"
+      },
+      "last_ten_reports": [
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.566196 0.566196 0.553176)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        }
+      ]
+    },
+    "surface-2": {
+      "samples": 81,
+      "first": {
+        "native_window": {
+          "inner_position_physical": {
+            "x": 480,
+            "y": 136
+          },
+          "inner_size_physical": {
+            "height": 1300,
+            "width": 1600
+          },
+          "scale_factor": 2.0
+        },
+        "report": {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        "schema": "oi.native-expression-observation/v1",
+        "unix_ms": 1789481715914,
+        "webview": "surface-2"
+      },
+      "last": {
+        "native_window": {
+          "inner_position_physical": {
+            "x": 480,
+            "y": 136
+          },
+          "inner_size_physical": {
+            "height": 1300,
+            "width": 1600
+          },
+          "scale_factor": 2.0
+        },
+        "report": {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        "schema": "oi.native-expression-observation/v1",
+        "unix_ms": 1789481816279,
+        "webview": "surface-2"
+      },
+      "last_ten_reports": [
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        },
+        {
+          "emitters": 0,
+          "entries": 0,
+          "forms": [],
+          "frames": 0,
+          "ink": "color(srgb 0.463451 0.463451 0.455608)",
+          "paused": false,
+          "peakEmitters": 0,
+          "pointCount": 0,
+          "reduced": false,
+          "requests": 0,
+          "scheduled": false
+        }
+      ]
+    }
+  }
+}

@@ -1,0 +1,53 @@
+{
+  "schema": "oi.desktop-footprint/v1",
+  "app_id": "org.epilogos.oi.cradle",
+  "public_name": "O-I Desktop",
+  "managed_root": "products/desktop",
+  "bin_shim": "oi-cradle",
+  "backing": {
+    "default": "0/1/2",
+    "note": "Packaging default for a new Desktop install, per the composition lock section 3. It is a disclosure, not an action: the backing products install through their own flows and adding or removing the Desktop never reinstalls ground, reconstitutes Agents or renames Projects.",
+    "options": {
+      "0/1": {
+        "label": "Central + Actuation",
+        "products": ["central", "actuation"]
+      },
+      "0/1/2": {
+        "label": "Central + Actuation + AIKit",
+        "products": ["central", "actuation", "ai-kit"]
+      }
+    }
+  },
+  "targets": {
+    "x86_64-unknown-linux-gnu": {
+      "shim": true,
+      "registrations": [
+        {
+          "kind": "xdg-launcher-entry",
+          "path": "~/.local/share/applications/org.epilogos.oi.cradle.desktop"
+        },
+        {
+          "kind": "xdg-icon",
+          "path": "~/.local/share/icons/hicolor/512x512/apps/org.epilogos.oi.cradle.png"
+        }
+      ]
+    },
+    "aarch64-apple-darwin": {
+      "shim": false,
+      "app_copy_root": "~/Applications",
+      "exec_relative": "Contents/MacOS/oi-cradle",
+      "registrations": [
+        {
+          "kind": "macos-app-copy",
+          "path": "~/Applications/O-I.app"
+        }
+      ]
+    }
+  },
+  "never_owned": [
+    "Central ground: Control/, Work/ and .central under the personal ground are never created, moved or deleted by the Desktop installer",
+    "Agent and Project records: adding or removing the Desktop never reconstitutes Agents or renames Projects",
+    "system package-manager databases: deb/rpm installs are separate owner flows and are not installed or removed here",
+    "desktop-environment autostart, mimeapps.list and session files beyond the registrations listed for the target"
+  ]
+}

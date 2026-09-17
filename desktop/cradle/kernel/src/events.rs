@@ -45,7 +45,17 @@ pub const KERNEL_EVENT_TOPIC: &str = "oi:kernel-event";
 /// is a disclosure trigger, never a second source of truth.
 #[derive(Clone, Debug, Deserialize, Eq, PartialEq, Serialize)]
 #[serde(tag = "event", rename_all = "snake_case")]
+// The event payloads are the owner's own shapes and differ in size by
+// nature; boxing one arm would change how every emitter constructs it.
+#[allow(clippy::large_enum_variant)]
 pub enum KernelEvent {
+    ExpressionChanged { expression_ref: String, revision: u64, actor: String,
+        /// Caller-supplied Activity correlation. It is unverified here and
+        /// never authenticates the caller or grants Action authority.
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        activity_ref: Option<String>,
+    },
+    WorldChanged { summary: String },
     /// The one global focus relation moved (02 §7, 03 §B).
     FocusChanged {
         focus: GlobalFocus,
@@ -98,6 +108,7 @@ impl KernelEvent {
     /// subject without matching every variant.
     pub fn subject(&self) -> Option<&SemanticRef> {
         match self {
+            Self::WorldChanged { .. } | Self::ExpressionChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -110,6 +121,8 @@ impl KernelEvent {
     /// The event tag exactly as it is tagged on the wire.
     pub fn tag(&self) -> &'static str {
         match self {
+            Self::WorldChanged { .. } => "world_changed",
+            Self::ExpressionChanged { .. } => "expression_changed",
             Self::FocusChanged { .. } => "focus_changed",
             Self::SurfaceChanged { .. } => "surface_changed",
             Self::SourceOpened { .. } => "source_opened",
@@ -125,6 +138,19 @@ impl KernelEvent {
     /// is refused here.
     pub fn validate(&self) -> Result<(), String> {
         match self {
+            Self::ExpressionChanged { expression_ref, revision, actor, activity_ref } => {
+                non_empty("expression_ref", expression_ref)?;
+                non_empty("actor", actor)?;
+                if let Some(activity_ref) = activity_ref {
+                    non_empty("activity_ref", activity_ref)?;
+                }
+                if *revision == 0 {
+                    Err("Expression revision must be positive".into())
+                } else {
+                    Ok(())
+                }
+            },
+            Self::WorldChanged { summary } => non_empty("WorldChanged.summary", summary),
             Self::FocusChanged { focus } => {
                 let relation = |name: &str| format!("FocusChanged.focus.{name}");
                 if let Some(world) = focus.world.as_ref() {

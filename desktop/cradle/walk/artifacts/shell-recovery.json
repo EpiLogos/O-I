@@ -1,0 +1,443 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "shell-recovery",
+  "generated_at": "2026-09-16T04:29:56.294Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/workspace-state-continuity",
+      "repository_head": "2e334ab0a7875ea3827830ad5fb2f920ef95cc09",
+      "tracked_changes": [],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/workspace-state-continuity/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 3046,
+  "checks": [
+    {
+      "ok": true,
+      "label": "One-tab Split creates a usable empty sibling"
+    },
+    {
+      "ok": true,
+      "label": "Empty split survives relaunch of the renderer"
+    },
+    {
+      "ok": true,
+      "label": "Opening another source fills the focused empty pane"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer visible at 1280"
+    },
+    {
+      "ok": true,
+      "label": "Global top strip visible at 1280"
+    },
+    {
+      "ok": true,
+      "label": "Both region toggles remain at the top at 1280"
+    },
+    {
+      "ok": true,
+      "label": "No page overflow at 1280"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer visible at 900"
+    },
+    {
+      "ok": true,
+      "label": "Global top strip visible at 900"
+    },
+    {
+      "ok": true,
+      "label": "Both region toggles remain at the top at 900"
+    },
+    {
+      "ok": true,
+      "label": "No page overflow at 900"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer visible at 760"
+    },
+    {
+      "ok": true,
+      "label": "Global top strip visible at 760"
+    },
+    {
+      "ok": true,
+      "label": "Both region toggles remain at the top at 760"
+    },
+    {
+      "ok": true,
+      "label": "No page overflow at 760"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer visible at 639"
+    },
+    {
+      "ok": true,
+      "label": "Global top strip visible at 639"
+    },
+    {
+      "ok": true,
+      "label": "Both region toggles remain at the top at 639"
+    },
+    {
+      "ok": true,
+      "label": "No page overflow at 639"
+    },
+    {
+      "ok": true,
+      "label": "Narrow canvas exposes one usable focused pane at 639"
+    },
+    {
+      "ok": true,
+      "label": "Top strip switches the focused pane at 639"
+    },
+    {
+      "ok": true,
+      "label": "Central is summonable at 639"
+    },
+    {
+      "ok": true,
+      "label": "Overlay returns focus at 639"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard summons Central at 639"
+    },
+    {
+      "ok": true,
+      "label": "Workspace footer visible at 390"
+    },
+    {
+      "ok": true,
+      "label": "Global top strip visible at 390"
+    },
+    {
+      "ok": true,
+      "label": "Both region toggles remain at the top at 390"
+    },
+    {
+      "ok": true,
+      "label": "No page overflow at 390"
+    },
+    {
+      "ok": true,
+      "label": "Narrow canvas exposes one usable focused pane at 390"
+    },
+    {
+      "ok": true,
+      "label": "Top strip switches the focused pane at 390"
+    },
+    {
+      "ok": true,
+      "label": "Central is summonable at 390"
+    },
+    {
+      "ok": true,
+      "label": "Overlay returns focus at 390"
+    },
+    {
+      "ok": true,
+      "label": "Keyboard summons Central at 390"
+    },
+    {
+      "ok": true,
+      "label": "Responsive transitions preserve the pane tree"
+    },
+    {
+      "ok": true,
+      "label": "Overlay preserves intended sidebar depth"
+    },
+    {
+      "ok": true,
+      "label": "Point-cloud proposals are not mounted in production"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-16T04:29:56.361Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-16T04:29:56.923Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp1",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g1",
+                "tabs": [
+                  "03f787ba-9b55-4881-9b77-37a9273b22ec"
+                ],
+                "pinned": [],
+                "active": "03f787ba-9b55-4881-9b77-37a9273b22ec"
+              },
+              {
+                "type": "group",
+                "id": "g2",
+                "tabs": [
+                  "16c17cc3-00ea-473c-a774-ca689009322c"
+                ],
+                "pinned": [],
+                "active": "16c17cc3-00ea-473c-a774-ca689009322c"
+              }
+            ]
+          },
+          "surfaces": {
+            "03f787ba-9b55-4881-9b77-37a9273b22ec": {
+              "project": "Editor",
+              "id": "03f787ba-9b55-4881-9b77-37a9273b22ec",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "16c17cc3-00ea-473c-a774-ca689009322c": {
+              "id": "16c17cc3-00ea-473c-a774-ca689009322c",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "project": "Editor",
+              "title": "01 02-ARCHITECTURE.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g2",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 38,
+      "data": {
+        "file": "shell-recovery-1280.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "shell-recovery-900.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 33,
+      "data": {
+        "file": "shell-recovery-760.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 34,
+      "data": {
+        "file": "shell-recovery-639.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 17,
+      "data": {
+        "file": "shell-recovery-390.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0.1,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp1",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g1",
+                "tabs": [
+                  "03f787ba-9b55-4881-9b77-37a9273b22ec"
+                ],
+                "pinned": [],
+                "active": "03f787ba-9b55-4881-9b77-37a9273b22ec"
+              },
+              {
+                "type": "group",
+                "id": "g2",
+                "tabs": [
+                  "16c17cc3-00ea-473c-a774-ca689009322c"
+                ],
+                "pinned": [],
+                "active": "16c17cc3-00ea-473c-a774-ca689009322c"
+              }
+            ]
+          },
+          "surfaces": {
+            "03f787ba-9b55-4881-9b77-37a9273b22ec": {
+              "project": "Editor",
+              "id": "03f787ba-9b55-4881-9b77-37a9273b22ec",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "16c17cc3-00ea-473c-a774-ca689009322c": {
+              "id": "16c17cc3-00ea-473c-a774-ca689009322c",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "project": "Editor",
+              "title": "01 02-ARCHITECTURE.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g2",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.layout",
+      "duration_ms": 0,
+      "data": {
+        "layout": {
+          "subjectPlanes": {},
+          "windowBounds": {},
+          "detached": [],
+          "root": {
+            "type": "split",
+            "id": "sp1",
+            "dir": "h",
+            "children": [
+              {
+                "type": "group",
+                "id": "g1",
+                "tabs": [
+                  "03f787ba-9b55-4881-9b77-37a9273b22ec"
+                ],
+                "pinned": [],
+                "active": "03f787ba-9b55-4881-9b77-37a9273b22ec"
+              },
+              {
+                "type": "group",
+                "id": "g2",
+                "tabs": [
+                  "16c17cc3-00ea-473c-a774-ca689009322c"
+                ],
+                "pinned": [],
+                "active": "16c17cc3-00ea-473c-a774-ca689009322c"
+              }
+            ]
+          },
+          "surfaces": {
+            "03f787ba-9b55-4881-9b77-37a9273b22ec": {
+              "project": "Editor",
+              "id": "03f787ba-9b55-4881-9b77-37a9273b22ec",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+              "title": "00 01-DESIGN.md"
+            },
+            "16c17cc3-00ea-473c-a774-ca689009322c": {
+              "id": "16c17cc3-00ea-473c-a774-ca689009322c",
+              "kind": "source",
+              "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
+              "project": "Editor",
+              "title": "01 02-ARCHITECTURE.md"
+            }
+          },
+          "closedStack": [],
+          "focusedGroupId": "g2",
+          "agencyDepth": "panel",
+          "rightDepth": "collapsed",
+          "leftWidth": 240,
+          "rightWidth": 320
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 32,
+      "data": {
+        "file": "shell-recovery-system-1280.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 42,
+      "data": {
+        "file": "shell-recovery-system-900.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "shell-recovery-1280.png",
+    "shell-recovery-900.png",
+    "shell-recovery-760.png",
+    "shell-recovery-639.png",
+    "shell-recovery-390.png",
+    "shell-recovery-system-1280.png",
+    "shell-recovery-system-900.png"
+  ]
+}

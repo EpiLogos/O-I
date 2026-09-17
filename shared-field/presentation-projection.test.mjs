@@ -52,6 +52,19 @@ function projection() {
   });
 }
 
+const refinementInput = {
+  publisher_participant_ref: 'participant:public:human',
+  published_at: '2026-08-18T00:30:00Z',
+  provenance: [
+    {
+      kind: 'human-refinement',
+      ref: 'human:root',
+      source_system: 'central',
+      revision: 'central@7',
+    },
+  ],
+};
+
 test('world presentation is a Projection representation, not source identity', () => {
   const value = projection();
   assert.equal(value.subject.ref, 'world:human:root');
@@ -62,18 +75,7 @@ test('world presentation is a Projection representation, not source identity', (
 
 test('human edit creates a new attributable Projection revision without rewriting source', () => {
   const previous = projection();
-  const next = refineWorldPresentationProjection(previous, presentation(2, 'Edited world'), {
-    publisher_participant_ref: 'participant:public:human',
-    published_at: '2026-08-18T00:30:00Z',
-    provenance: [
-      {
-        kind: 'human-refinement',
-        ref: 'human:root',
-        source_system: 'central',
-        revision: 'central@7',
-      },
-    ],
-  });
+  const next = refineWorldPresentationProjection(previous, presentation(2, 'Edited world'), refinementInput);
 
   assert.equal(next.projection_revision, 2);
   assert.equal(next.source.system, 'central');
@@ -81,26 +83,34 @@ test('human edit creates a new attributable Projection revision without rewritin
   assert.equal(next.supersedes.projection_revision, 1);
   assert.equal(next.supersedes.source_revision, 'central@7');
   assert.equal(worldPresentationFromProjection(next).title, 'Edited world');
+  assert.equal(worldPresentationFromProjection(next).revision, 2);
   assert.equal(next.provenance.at(-1).kind, 'human-refinement');
+});
+
+test('working representation ratifies from W1 to W2 when the draft intentionally retains the published revision', () => {
+  const previous = projection();
+  const working = presentation(1, 'Edited in place');
+  const next = refineWorldPresentationProjection(previous, working, refinementInput);
+  assert.equal(next.projection_revision, 2);
+  assert.equal(worldPresentationFromProjection(next).revision, 2);
+  assert.equal(worldPresentationFromProjection(next).title, 'Edited in place');
+  assert.equal(next.source.revision, 'central@7');
 });
 
 test('presentation cannot silently switch to another world while editing', () => {
   const wrongWorld = presentation(2, 'Wrong world');
   wrongWorld.world_ref = 'world:other';
-  assert.throws(
-    () =>
-      refineWorldPresentationProjection(projection(), wrongWorld, {
-        publisher_participant_ref: 'participant:public:human',
-        published_at: '2026-08-18T00:30:00Z',
-        provenance: [
-          {
-            kind: 'human-refinement',
-            ref: 'human:root',
-            source_system: 'central',
-            revision: 'central@7',
-          },
-        ],
-      }),
-    /world_ref must match Projection subject.ref/,
-  );
+  assert.throws(() => refineWorldPresentationProjection(projection(), wrongWorld, refinementInput), /world_ref must match Projection subject.ref/);
+});
+
+test('presentation identity and revision cannot drift backwards during refinement', () => {
+  const wrongPresentation = presentation(2, 'Wrong presentation');
+  wrongPresentation.presentation_ref = 'presentation:other';
+  assert.throws(() => refineWorldPresentationProjection(projection(), wrongPresentation, refinementInput), /presentation_ref must remain stable/);
+
+  const previous = refineWorldPresentationProjection(projection(), presentation(2, 'Second'), refinementInput);
+  assert.throws(() => refineWorldPresentationProjection(previous, presentation(1, 'Older'), {
+    ...refinementInput,
+    published_at: '2026-08-18T00:40:00Z',
+  }), /revision cannot move backwards/);
 });

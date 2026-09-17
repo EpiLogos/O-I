@@ -1,11 +1,10 @@
 #!/usr/bin/env python3
-"""Exercise one exact product source revision from O:I's source catalogue.
+"""Exercise one exact native product main through its owner lifecycle contract.
 
-This is intentionally distinct from the immutable released-artifact suite. O:I #97's
-remote handoff uses this verifier for its explicitly in-scope native-main owners before
-a physical workstation inhabits that source world. The separately owned Quaternal
-Logic product may retain a stable suite pin while its own development programme moves;
-it is therefore not part of #97's current-main workflow matrix.
+The product owns build and source-verification operations through `.oi/product.json`.
+O:I owns selecting the suite revision, proving it is the owner's actual live `main`,
+executing the owner contract and retaining a composition receipt. The historical
+`suite/manifest.json` is build evidence only and is never CI configuration.
 """
 
 from __future__ import annotations
@@ -22,7 +21,7 @@ from pathlib import Path
 
 ROOT = Path(__file__).resolve().parents[1]
 SURFACES = ROOT / "surfaces.json"
-RELEASE_MANIFEST = ROOT / "suite/manifest.json"
+LIFECYCLE_PATH = Path(".oi/product.json")
 
 
 def fail(message: str) -> None:
@@ -31,7 +30,10 @@ def fail(message: str) -> None:
 
 def load(path: Path) -> dict:
     with path.open("r", encoding="utf-8") as handle:
-        return json.load(handle)
+        value = json.load(handle)
+    if not isinstance(value, dict):
+        fail(f"{path}: expected JSON object")
+    return value
 
 
 def run(command: list[str], *, cwd: Path | None = None) -> subprocess.CompletedProcess[str]:
@@ -39,20 +41,32 @@ def run(command: list[str], *, cwd: Path | None = None) -> subprocess.CompletedP
     return subprocess.run(command, cwd=cwd, text=True, check=False)
 
 
-def product_contract(product_id: str) -> tuple[dict, dict]:
+def command(value: object, context: str) -> list[str]:
+    if not isinstance(value, list) or not value or not all(isinstance(part, str) and part for part in value):
+        fail(f"{context}: expected a non-empty command array")
+    return value
+
+
+def surface_contract(product_id: str) -> dict:
     surfaces = load(SURFACES).get("surfaces", [])
-    products = load(RELEASE_MANIFEST).get("products", [])
     surface = next((item for item in surfaces if item.get("id") == product_id), None)
-    product = next((item for item in products if item.get("id") == product_id), None)
     if surface is None:
         fail(f"no current surface for {product_id}")
-    if product is None:
-        fail(f"no native test contract for {product_id}")
-    return surface, product
+    return surface
+
+
+def live_main(repository: str) -> str:
+    observed = run(["git", "ls-remote", repository, "refs/heads/main"])
+    if observed.returncode != 0:
+        fail(f"cannot inspect live main for {repository}")
+    fields = observed.stdout.strip().split()
+    if len(fields) != 2 or fields[1] != "refs/heads/main":
+        fail(f"unexpected live-main response for {repository}: {observed.stdout.strip()}")
+    return fields[0]
 
 
 def verify(product_id: str, receipt_path: Path | None) -> int:
-    surface, product = product_contract(product_id)
+    surface = surface_contract(product_id)
     repository = surface.get("repository")
     revision = surface.get("docs_ref")
     install = surface.get("install", {})
@@ -63,24 +77,28 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
     if install.get("revision") != revision or install.get("ref") != revision:
         fail(f"{product_id}: source descriptor is internally inconsistent")
 
-    command = product.get("dev", {}).get("test", [])
-    if not isinstance(command, list) or not command or not all(isinstance(part, str) and part for part in command):
-        fail(f"{product_id}: native source test command is missing")
-
     started = time.time()
     temp_root = Path(tempfile.mkdtemp(prefix=f"oi-source-{product_id}-"))
     checkout = temp_root / "source"
     result = {
-        "schema": "oi.current-main-source-evidence/v1",
+        "schema": "oi.current-main-source-evidence/v2",
         "product": product_id,
         "repository": repository,
         "revision": revision,
-        "test_command": command,
+        "observed_live_main": None,
+        "lifecycle_contract": str(LIFECYCLE_PATH),
+        "build_command": None,
+        "verification_command": None,
         "status": "failed",
         "head": None,
         "elapsed_seconds": None,
     }
     try:
+        observed_main = live_main(repository)
+        result["observed_live_main"] = observed_main
+        if observed_main != revision:
+            fail(f"{product_id}: current-source pin {revision} is stale; live main is {observed_main}")
+
         if run(["git", "init", "--quiet", str(checkout)]).returncode != 0:
             fail(f"{product_id}: git init failed")
         if run(["git", "-C", str(checkout), "remote", "add", "origin", repository]).returncode != 0:
@@ -89,16 +107,34 @@ def verify(product_id: str, receipt_path: Path | None) -> int:
             fail(f"{product_id}: exact source revision fetch failed")
         if run(["git", "-C", str(checkout), "checkout", "--quiet", "--detach", "FETCH_HEAD"]).returncode != 0:
             fail(f"{product_id}: exact source revision checkout failed")
-        head = subprocess.check_output(
-            ["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True
-        ).strip()
+        head = subprocess.check_output(["git", "-C", str(checkout), "rev-parse", "HEAD"], text=True).strip()
         result["head"] = head
         if head != revision:
             fail(f"{product_id}: checked out {head}, expected {revision}")
 
-        test = run(command, cwd=checkout)
-        if test.returncode != 0:
-            fail(f"{product_id}: native source test contract exited {test.returncode}")
+        lifecycle_file = checkout / LIFECYCLE_PATH
+        if not lifecycle_file.is_file():
+            fail(f"{product_id}: owner lifecycle contract is missing")
+        lifecycle = load(lifecycle_file)
+        if lifecycle.get("schema") != "oi.product-lifecycle/v1":
+            fail(f"{product_id}: unsupported lifecycle schema {lifecycle.get('schema')!r}")
+        if lifecycle.get("id") != product_id:
+            fail(f"{product_id}: lifecycle id is {lifecycle.get('id')!r}")
+        if lifecycle.get("repository") != repository:
+            fail(f"{product_id}: lifecycle repository disagrees with suite source")
+
+        build = command(lifecycle.get("build", {}).get("command"), f"{product_id}.build.command")
+        source_verify = command(lifecycle.get("verify", {}).get("source_command"), f"{product_id}.verify.source_command")
+        result["build_command"] = build
+        result["verification_command"] = source_verify
+
+        built = run(build, cwd=checkout)
+        if built.returncode != 0:
+            fail(f"{product_id}: owner build contract exited {built.returncode}")
+        tested = run(source_verify, cwd=checkout)
+        if tested.returncode != 0:
+            fail(f"{product_id}: owner source verification exited {tested.returncode}")
+
         result["status"] = "passed"
         return 0
     finally:

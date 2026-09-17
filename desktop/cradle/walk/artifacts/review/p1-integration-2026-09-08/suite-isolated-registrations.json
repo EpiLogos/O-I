@@ -1,0 +1,40 @@
+{
+  "operations": [
+    {
+      "owner": "central",
+      "executable": "/tmp/oi-p1-exact-bindings-20260908/ctrl",
+      "result": "Registered: Central\nNative command: /tmp/oi-p1-exact-bindings-20260908/ctrl\n{O:I} alias: oi ctrl\nDocs: https://github.com/EpiLogos/Central/blob/f66794a712609ea29760355d66f632d669ad7c98/README.md"
+    },
+    {
+      "owner": "ai-kit",
+      "executable": "/tmp/oi-p1-exact-bindings-20260908/aikit",
+      "result": "Registered: AIKit\nNative command: /tmp/oi-p1-exact-bindings-20260908/aikit\n{O:I} alias: oi kit\nDocs: https://github.com/EpiLogos/ai-kit/blob/25cfdc72c29671673f1434abdea454442c91a47c/README.md"
+    },
+    {
+      "owner": "actuation",
+      "executable": "/tmp/oi-p1-exact-bindings-20260908/actuation",
+      "result": "Registered: Actuation\nNative command: /tmp/oi-p1-exact-bindings-20260908/actuation\n{O:I} alias: none (no native CLI exists to alias)\nDocs: https://github.com/EpiLogos/Actuation/blob/7c59dbcb295faf42e1cb85d873efe57d85af86b7/docs/WORLD-BOUND-ROOT-AGENCY.md"
+    },
+    {
+      "owner": "software-factory",
+      "executable": "/tmp/oi-p1-exact-bindings-20260908/factory",
+      "result": "Registered: Software Factory\nNative command: /tmp/oi-p1-exact-bindings-20260908/factory\n{O:I} alias: none (no native CLI exists to alias)\nDocs: https://github.com/EpiLogos/agent-system-design/blob/3d9094177a7216697619db0a3c16bafb6bb815ca/factory/README.md"
+    },
+    {
+      "owner": "workcell",
+      "executable": "/tmp/oi-p1-exact-bindings-20260908/workcell",
+      "result": "Registered: Workcell\nNative command: /tmp/oi-p1-exact-bindings-20260908/workcell\n{O:I} alias: oi workcell\nDocs: https://github.com/EpiLogos/Workcell/blob/dc076fdf0c3e12835c17ded95ef199e200f7f8e1/README.md"
+    },
+    {
+      "owner": "quaternal-logic",
+      "executable": "/tmp/oi-p1-exact-bindings-20260908/ql",
+      "result": "Registered: Quaternal Logic\nNative command: /tmp/oi-p1-exact-bindings-20260908/ql\n{O:I} alias: none (no native CLI exists to alias)\nDocs: https://github.com/EpiLogos/QL-MEF/blob/781981374eaa1f02952249dcdbca1af671d1ece4/README.md"
+    }
+  ],
+  "ground": {
+    "personal_ground": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve",
+    "schema": "oi.ground-binding/v1"
+  },
+  "composition_path": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-kumDve/.oi-home/composition.json",
+  "composition_sha256": "52e790ccb544ebdd71dccf8672c1c67ecf32df63d1ce4207d3269124fd7814cd"
+}

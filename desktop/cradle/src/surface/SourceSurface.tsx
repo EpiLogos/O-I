@@ -1,3 +1,4 @@
+import {TextEditor,EditorCommands,type EditorHandle} from "../editor/lazy";
 /**
  * The source editor surface (U0.4, kind 'source') — the minimal editor the
  * kernel seam re-proof walks: a real file opened from the horizon
@@ -12,8 +13,15 @@
  */
 
 import { useEffect, useRef, useState } from "react";
+import { readDraft, writeDraft } from "../workspace/drafts";
+import { SourceHistory } from "./SourceHistory";
+import { DocumentReturns } from "../receiving/DocumentReturns";
+import { DocumentContributions } from "../receiving/DocumentContributions";
+import { SharedFieldMaterial } from "../receiving/SharedFieldMaterial";
+import { DayDieFace } from "../receiving/DayDieFace";
 import { useKernel } from "../kernel/KernelProvider";
 import type { SurfaceBinding } from "./types";
+import {EditorFrame} from "../editor/EditorChrome";
 
 export interface SourceSurfaceProps {
   binding: SurfaceBinding;
@@ -29,10 +37,40 @@ export function SourceSurface(props: SourceSurfaceProps) {
   const { binding } = props;
   const kernel = useKernel();
   const buffer = kernel.snapshot.buffers[binding.ref ?? ""];
-  const [text, setText] = useState(buffer?.content ?? "");
-  const textareaRef = useRef<HTMLTextAreaElement>(null);
-  const bufferRef = useRef(buffer);
-  bufferRef.current = buffer;
+  const error = kernel.sourceErrors[binding.ref ?? ""];
+  const [historyOpen, setHistoryOpen] = useState(false);
+  // Declared with the other hooks, BEFORE any early return: a restored
+  // surface can mount while its buffer has not arrived yet, and hook counts
+  // must match across that transition.
+  const [view,setView]=useState<"rendered"|"source">("rendered");
+  const initialDraft = useRef(binding.ref ? readDraft(binding.ref) : null);
+  const [draftError, setDraftError] = useState<string | null>(null);
+  const [text, setText] = useState(initialDraft.current?.content ?? buffer?.content ?? "");
+  const [caret,setCaret]=useState({line:1,column:1,selected:false});
+  const textareaRef = useRef<EditorHandle>(null);
+  const scrollRef = useRef<HTMLDivElement>(null);
+  const viewKey = `oi-cradle.source-view:${binding.ref}`;
+  const restoredView = useRef(false);
+  const savedView = useRef((() => {
+    try { return JSON.parse(localStorage.getItem(viewKey) ?? "null"); } catch { return null; }
+  })());
+  const retainView = () => {
+    if (!restoredView.current || !textareaRef.current) return;
+    const el = textareaRef.current;
+    try { localStorage.setItem(viewKey, JSON.stringify({ start: el.selectionStart, end: el.selectionEnd, direction: el.selectionDirection, top: scrollRef.current?.scrollTop ?? 0, left: scrollRef.current?.scrollLeft ?? 0 })); } catch { /* View coordinates are optional; drafts retain their separate error path. */ }
+  };
+  useEffect(() => {
+    if (!buffer || restoredView.current) return;
+    const frame = requestAnimationFrame(() => {
+      const view = savedView.current;
+      if (view && Number.isInteger(view.start) && Number.isInteger(view.end)) {
+        textareaRef.current?.setSelectionRange(view.start, view.end, view.direction);
+        if (scrollRef.current) { scrollRef.current.scrollTop = Number(view.top) || 0; scrollRef.current.scrollLeft = Number(view.left) || 0; }
+      }
+      restoredView.current = true;
+    });
+    return () => cancelAnimationFrame(frame);
+  }, [!!buffer]);
 
   // Mirror the kernel buffer into the textarea only when the buffer's
   // content changed from OUTSIDE this surface (open, re-read, save) —
@@ -41,9 +79,12 @@ export function SourceSurface(props: SourceSurfaceProps) {
   // synchronously, so the async edit op's return can never race the caret
   // back to a stale clean layer.
   const lastSynced = useRef<string | null>(null);
+  const pendingEdits = useRef(0);
   useEffect(() => {
     if (!buffer) return;
-    if (buffer.dirty) return; // the person's layer is never clobbered
+    if (pendingEdits.current > 0) return;
+    if (lastSynced.current === null && initialDraft.current && buffer.content !== initialDraft.current.content) return;
+    if (buffer.dirty && lastSynced.current !== null) return;
     if (lastSynced.current === buffer.content) return;
     lastSynced.current = buffer.content;
     setText(buffer.content);
@@ -51,6 +92,11 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   // Focus the editor when its surface becomes the active one.
   useEffect(() => {
+    // The restored pane arrangement owns interaction focus. A kernel
+    // subject retained from before reload must not take an empty slot's
+    // focus while its source is mounting in another pane.
+    const pane = textareaRef.current?.closest<HTMLElement>('.pane.group');
+    if (pane && pane.dataset.focused !== 'true') return;
     if (kernel.snapshot.focus.subject?.ref === binding.ref) {
       // Only when the browser focus is not already inside this surface.
       if (!textareaRef.current?.contains(document.activeElement)) {
@@ -65,15 +111,24 @@ export function SourceSurface(props: SourceSurfaceProps) {
 
   const onEdit = (value: string) => {
     setText(value);
+    if (binding.ref && buffer) {
+      try { writeDraft(binding.ref, { content: value, base_revision: buffer.base_revision, saved_content: buffer.saved_content }); setDraftError(null); }
+      catch { setDraftError("This draft could not be saved on this device. Keep this window open until the source is saved."); }
+    }
     lastSynced.current = value; // this surface authored it — no mirror-back
-    void kernel.editBuffer(binding.ref ?? "", value);
+    pendingEdits.current += 1;
+    void kernel.editBuffer(binding.ref ?? "", value).finally(() => {
+      pendingEdits.current -= 1;
+    });
   };
 
   const onSave = () => {
-    if (!binding.ref || bufferRef.current?.dirty || bufferRef.current?.conflict) {
-      void kernel.saveSource(binding.ref ?? "");
-    }
+    // Always queue an explicit save after preceding edits. The renderer's
+    // dirty flag can still be one response behind a fast Cmd+S.
+    if (binding.ref) void kernel.saveSource(binding.ref);
   };
+  const updateCaret=()=>{const el=textareaRef.current;if(!el)return;const before=el.value.slice(0,el.selectionStart);const lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});retainView();};
+  const extension=buffer?.path?.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";
 
   // ⌘S saves from anywhere in this surface (textarea, conflict panel) —
   // the save is the surface's act, wherever the caret idles. Every other
@@ -96,45 +151,46 @@ export function SourceSurface(props: SourceSurfaceProps) {
   if (!buffer) {
     return (
       <div className="source-editor" data-kind="source" data-ref={binding.ref}>
-        <p className="source-note source-note-muted">opening {binding.ref}…</p>
+        <p className="source-note source-note-muted" role="status">{error ?? `Opening ${binding.title}…`}</p>
       </div>
     );
   }
 
   const conflict = buffer.conflict;
   const saveFailed = conflict !== undefined;
+  /** A native Day document carries the owner's ql-doc format as its payload
+   * (central.contribution-document/v1, kind "day"). Its face is the supplied
+   * die shell projected with the CANONICAL payload — the owner's bytes, never
+   * the local dirty layer. Detection is total: anything that does not parse
+   * as a Day document is simply the ordinary source surface. */
+  const dayDocument = (()=>{
+    try{
+      const parsed=JSON.parse(buffer.content) as {schema?:string;kind?:string;template_payload?:unknown;document_id?:string;fields?:{id:string;label?:string;template_pointer?:string}[]};
+      return parsed.schema==="central.contribution-document/v1"&&parsed.kind==="day"&&parsed.template_payload&&typeof parsed.template_payload==="object"?parsed:null;
+    }catch{return null;}
+  })();
+  const dieView = dayDocument!==null && view==="rendered";
+  /** Register routing follows the owner's ref grammar (same law as the
+   * strips below): a `central:source:control:root:` source is the ROOT
+   * register, named to the owner as an explicit null. */
+  const dayProject = binding.ref?.startsWith("central:source:control:root:")?null:buffer.project;
   return (
-    <div
+    <EditorFrame
       className={`source-editor${buffer.dirty ? " dirty" : ""}${saveFailed ? " conflicted" : ""}`}
-      data-kind="source"
-      data-ref={binding.ref}
-      data-dirty={buffer.dirty}
-      data-conflicted={saveFailed}
-      onKeyDown={onKeyDown}
+      label={`Editor ${binding.title}`}
+      toolbar={<>{dayDocument&&<span className="source-view-toggle" role="group" aria-label="Document view"><button type="button" role="tab" aria-selected={dieView} onClick={()=>setView("rendered")}>Rendered</button><button type="button" role="tab" aria-selected={!dieView} onClick={()=>setView("source")}>Source</button></span>}{buffer.root_register&&<button type="button" className="source-reread-day" data-action="source.day-reread" onClick={()=>void kernel.rereadSource(binding.ref!)}>Re-read canonical</button>}<EditorCommands editor={textareaRef} markdown={markdown}/></>}
+      footer={<><span className="editor-path source-revision" data-revision={buffer.base_revision} title={`Central / Work / ${buffer.project} / ${buffer.path}`}>Central / Work / {buffer.project} / {buffer.path}</span><span>Ln {caret.line}, Col {caret.column}</span><span className={buffer.dirty?"source-dirty-marker":"source-clean-marker"}>{buffer.dirty?"Unsaved":"Saved"}</span><button type="button" aria-expanded={historyOpen} onClick={()=>setHistoryOpen(open=>!open)}>History</button><button type="button" onClick={onSave} disabled={!buffer.dirty}>Save · ⌘S</button></>}
+      data={{kind:"source",ref:binding.ref,dirty:buffer.dirty,conflicted:saveFailed}}
     >
-      <div className="source-status" role="status">
-        <span className="source-revision" data-revision={buffer.base_revision}>
-          canonical {shortRevision(buffer.base_revision)}
-        </span>
-        {buffer.dirty ? (
-          <span className="source-dirty-marker" title="The buffer differs from the canonical layer">
-            edited — unsaved
-          </span>
-        ) : (
-          <span className="source-clean-marker">clean</span>
-        )}
-        <span className="source-hint">⌘S save</span>
-      </div>
-      <textarea
-        ref={textareaRef}
-        className="source-textarea"
-        aria-label={`Editing ${binding.title}`}
-        data-source-ref={binding.ref}
-        spellCheck={false}
-        value={text}
-        onChange={(event) => onEdit(event.target.value)}
-      />
-      {conflict ? (
+      {draftError && <p role="alert">{draftError}</p>}
+      {error && <p className="source-note" role="alert">{error}</p>}
+      {dieView&&dayDocument&&<DayDieFace payload={dayDocument.template_payload} revision={buffer.base_revision} sourceRef={binding.ref} documentId={dayDocument.document_id??""} fields={dayDocument.fields??[]} project={dayProject}/>}
+      <div className="source-editor-scroll" ref={scrollRef} onScroll={retainView} onKeyDown={onKeyDown} hidden={dieView}>
+        <div className="source-editor-body">
+          <TextEditor ref={textareaRef} binding={binding} filename={buffer.path} aria-label={`Editing ${binding.title}`} value={text} onChange={onEdit} onSelect={updateCaret} onSave={onSave}/>
+        </div>
+        {historyOpen && <SourceHistory sourceRef={binding.ref} revision={buffer.conflict?.current_revision ?? buffer.base_revision} />}
+        {conflict ? (
         <div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
           <p className="source-conflict-title">
             revision conflict — the canonical layer moved while this buffer was open
@@ -181,7 +237,14 @@ export function SourceSurface(props: SourceSurfaceProps) {
             after the re-read, ⌘S saves your buffer on the new revision
           </p>
         </div>
-      ) : null}
-    </div>
+        ) : null}
+      </div>
+      {/* The strips' register follows the owner's own ref grammar — the same
+          `dayProject` routing the die face uses. */}
+      <DocumentReturns sourceRef={binding.ref} project={dayProject}/>
+      <DocumentContributions sourceRef={binding.ref} project={dayProject}/>
+      <SharedFieldMaterial sourceRef={binding.ref}/>
+
+    </EditorFrame>
   );
 }

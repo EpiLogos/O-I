@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788720084220755000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "zcode-session-2026-09-06-rootnow",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788720084,
+  "subject": "Guardian payload follow-up landed: full skill payload directories project (68e60af)",
+  "result": "Closes the open item in handoff-1788719453472397000: guardian projection now materialises each member skill as a full payload directory, not SKILL.md only. GUARDIAN_SKILL_PAYLOAD_FILES embeds the four strap siblings (now.py, render-context.py, skill.json, verify.sh) via include_str!; guardian_sibling_payloads keeps oi/suite-operator projecting exactly as before; siblings are byte-identical raw copies with the same preservation law (ConflictPreserved surfaces through oi skills sync; AikitManaged symlinks never written through); the AIKit refresh cycle (undo/re-project/re-adopt) provably relinks siblings byte-identical. Tests: guardian_projection 10/10, suite_skillset 12/12, oi-cli build green. Commit 68e60af on cradle-p1, not pushed. The Central default-tree README claim (executor arrives via the O:I guardian projection) is now true on a fresh install.",
+  "status": "resolved"
+}

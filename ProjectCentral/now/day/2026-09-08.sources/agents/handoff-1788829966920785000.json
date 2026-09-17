@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788829966920785000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-desktop-planning-20260908",
+  "kind": "note",
+  "recorded_at_unix_seconds": 1788829966,
+  "subject": "Refresh desktop foundations against current native products",
+  "result": "Read-only product audits underway for AIKit wiki/detection, Central filesystem, Actuation detection, Factory full-page encounter GUI and upcoming Workcell detection. O-I planning update only; native implementation remains paused. Preserve ongoing product work. User design direction: Factory is the full-page chat aspect; unresolved presentation choices will be proposed with context before adoption.",
+  "status": "active"
+}

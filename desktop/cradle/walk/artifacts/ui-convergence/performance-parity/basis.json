@@ -1,0 +1,20 @@
+{
+  "oiCommit": "2a4f76ab9b9672b25fa9bcc12573d271e2653a17",
+  "nativeCompatibilityCommit": "703b6970bfd405c482c2a15985c09c8925ec3b7d",
+  "inputHashes": {
+    "packages/oi-design-system/expressions-engine/oi/retained.mjs": "d1e3ab4d593abdb1f74a257689712740cc6446efba9b5a9e59d3fbef986f2257",
+    "packages/oi-design-system/expressions-engine/shell/production.mjs": "cf7052888b2c39741a2245c2fb4080c295ee8208626dd2ed535c858b130376cb",
+    "packages/oi-design-system/expressions-engine/engine/PointCloudField.mjs": "5956b5a3327a98b35a56ab01a7b88d2b49f3a9edafec6084d711d6b3e4041d95",
+    "entry.ts": "13348d0d3a063bd9db7f04daf11676c69c1e3d61f2db6b0898c0ca28b0341933",
+    "run.mjs": "562c7a8778dd759e78d299398c8cca80d85bb8a17a28b8ec2ea66b768389c977",
+    "build.mjs": "27b66f63472db0ea291a9119a881e49a3af844b6803871753b9a28982d51d53f",
+    "snapshot/engineSurface.ts": "e2c93983db6fff0319456637be34e806c25eb9419cc4aa1c958d883b6b4c31b8",
+    "snapshot/recipes.ts": "0fc91071fae7fd9680e15ab7dea1bff627b5f5b0f02bec45b2557db5318c6084"
+  },
+  "currentFilesMatchOiCommit": {
+    "packages/oi-design-system/expressions-engine/oi/retained.mjs": true,
+    "packages/oi-design-system/expressions-engine/shell/production.mjs": true,
+    "packages/oi-design-system/expressions-engine/engine/PointCloudField.mjs": true
+  },
+  "allResultsShareExactConfig": true
+}

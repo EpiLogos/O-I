@@ -1,0 +1,51 @@
+name: Personal Web reference forms
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/documents/**'
+      - 'desktop/cradle/src/personal/**'
+      - 'desktop/cradle/src/flow/documentForms.ts'
+      - 'desktop/cradle/tests/personal-web*'
+      - 'desktop/cradle/package.json'
+      - '.github/workflows/personal-web.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  carriers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Generate actual standalone forms and verify data contracts
+        run: |
+          node desktop/cradle/documents/build-personal.mjs
+          node desktop/cradle/documents/build-personal.mjs --check
+          node --test desktop/cradle/tests/personal-web.test.mjs
+      - name: Install the locked desktop graph
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Build the real desktop consumer
+        run: npm --prefix desktop/cradle run build
+      - name: Install Chromium
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Exercise standalone editing, export, narrow reading and safe data
+        working-directory: desktop/cradle
+        run: node tests/personal-web-browser.mjs
+      - name: Preserve actual carrier/browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: personal-web-${{ github.sha }}
+          path: |
+            desktop/cradle/tests/artifacts/personal-web/
+            desktop/cradle/documents/oi-beings.html
+            desktop/cradle/documents/oi-things.html
+          if-no-files-found: error
+      - name: No dependency lock changes
+        run: git diff --exit-code -- desktop/cradle/package-lock.json

@@ -7,7 +7,6 @@ use std::path::{Path, PathBuf};
 use std::process::Command;
 use std::time::UNIX_EPOCH;
 
-const CATALOG_JSON: &str = include_str!("../../surfaces.json");
 const STATE_SCHEMA: u32 = 1;
 
 #[derive(Clone, Debug, Deserialize)]
@@ -77,6 +76,12 @@ pub enum NativeSurfaceState {
     Missing,
     Installed,
     Registered,
+    /// Registered component material (payloads, skills, docs) is present at
+    /// its recorded root, and this install recorded no native command: the
+    /// product ships components rather than an executable for this target.
+    /// Present at the artifact level; the command surface is unavailable
+    /// per-surface, which is not damage. Damage stays `Broken`.
+    InstalledComponent,
     Broken,
 }
 
@@ -172,7 +177,7 @@ pub fn live_disclosure() -> Result<SuiteCompositionDisclosure, String> {
     };
 
     disclosure_from_json(
-        CATALOG_JSON,
+        &crate::catalog_source::resolve()?.json,
         composition_json.as_deref(),
         |candidate| resolve_executable(candidate).map(|path| path.display().to_string()),
         |candidate| Path::new(candidate).is_dir(),
@@ -234,6 +239,16 @@ fn live_git_head(inside: &Path) -> Option<LiveCheckout> {
     Some(LiveCheckout { head, committed_at })
 }
 
+/// The suite's parenthesised build revision, from a recorded version line
+/// of the form `... (<hex-rev>)`. None for legacy versions that carry no
+/// revision.
+fn recorded_revision(recorded: &str) -> Option<&str> {
+    let inner = recorded.strip_suffix(')')?;
+    let start = inner.rfind('(')? + 1;
+    let revision = &inner[start..];
+    (!revision.is_empty() && revision.chars().all(|c| c.is_ascii_hexdigit())).then_some(revision)
+}
+
 /// Augment a catalog disclosure with machine facts the pure pass cannot know:
 /// whether the registered checkout has moved past its recorded version, whether
 /// its built executable predates the checkout HEAD, and whether a PATH copy of
@@ -243,7 +258,7 @@ fn live_git_head(inside: &Path) -> Option<LiveCheckout> {
 /// `ctrl` at all disclosed `ok: true` across the board, because every check
 /// compared recorded state against recorded state. Drift is a fact about this
 /// machine; it is observed, never derived from recordings.
-pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
+fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
     disclosure: &mut SuiteCompositionDisclosure,
     git_probe: GitProbe,
     path_probe: PathProbe,
@@ -310,17 +325,26 @@ pub fn annotate_live_drift<GitProbe, PathProbe, HashProbe>(
             }
         }
 
-        let mut findings: Vec<String> = Vec::new();
         if let Some(checkout) = &checkout {
             surface.registered_version = surface.version.clone();
             match &surface.version {
-                Some(recorded)
-                    if !recorded.is_empty() && !recorded.starts_with(&checkout.head[..7]) =>
-                {
-                    findings.push(format!(
-                        "registered {} but checkout HEAD is {}",
-                        recorded, checkout.head
-                    ));
+                Some(recorded) if !recorded.is_empty() => {
+                    // A recorded version either starts with the checkout head
+                    // (legacy) or carries the suite's parenthesised build
+                    // revision, '… (<rev>)', which must agree with the head.
+                    let mismatched = match recorded_revision(recorded) {
+                        Some(revision) => {
+                            let prefix = revision.len().min(7);
+                            !checkout.head.starts_with(&revision[..prefix])
+                        }
+                        None => !recorded.starts_with(&checkout.head[..7]),
+                    };
+                    if mismatched {
+                        findings.push(format!(
+                            "registered {} but checkout HEAD is {}",
+                            recorded, checkout.head
+                        ));
+                    }
                 }
                 _ => {}
             }
@@ -441,6 +465,30 @@ where
                         Some(resolved) => {
                             disclosure.state = NativeSurfaceState::Registered;
                             disclosure.resolved = Some(resolved);
+                        }
+                        // No command was recorded as part of this install
+                        // (component install): the recorded material root is
+                        // what the product installed here. Present material
+                        // is an installed component, not a broken one.
+                        None if registration.native_executable.is_none() => {
+                            match registration.root.as_deref() {
+                                Some(root) if root_probe(root) => {
+                                    disclosure.state =
+                                        NativeSurfaceState::InstalledComponent;
+                                    disclosure.resolved = Some(root.to_owned());
+                                    disclosure.detail = Some(format!(
+                                        "installed as component material at {root}; no native {} command is part of this install",
+                                        disclosure.native_entry
+                                    ));
+                                }
+                                _ => {
+                                    disclosure.state = NativeSurfaceState::Broken;
+                                    disclosure.detail = Some(
+                                        "this install recorded no native command and its component material root is missing"
+                                            .into(),
+                                    );
+                                }
+                            }
                         }
                         None => {
                             disclosure.state = NativeSurfaceState::Broken;
@@ -622,6 +670,16 @@ mod tests {
     }
 
     #[test]
+    fn recorded_revision_reads_the_suite_suffix() {
+        assert_eq!(
+            recorded_revision("oi 0.1.0 (5d1b8bf6692f)"),
+            Some("5d1b8bf6692f")
+        );
+        assert_eq!(recorded_revision("oi 0.1.0"), None);
+        assert_eq!(recorded_revision("oi 0.1.0 (not-hex!)"), None);
+    }
+
+    #[test]
     fn drift_records_revision_gap_shadow_and_stale_binary() {
         // A real temp file so the executable-predates-HEAD mtime check runs.
         let executable = std::env::temp_dir().join(format!("oi-drift-test-{}", std::process::id()));
@@ -666,6 +724,45 @@ mod tests {
             .as_deref()
             .unwrap_or_default()
             .contains("PATH resolves aikit"));
+        fs::remove_file(&executable).ok();
+    }
+
+    #[test]
+    fn drift_names_the_shadow_binary_this_machine_actually_runs() {
+        // The registered executable is in step with HEAD; only the PATH copy
+        // differs in content. That copy is what actually runs, so it is drift.
+        // This finding was computed and then dropped by a shadowed `findings`
+        // binding, which is how a three-week-old registered aikit — missing
+        // the whole knowledge subcommand — kept reporting a clean bill.
+        let executable =
+            std::env::temp_dir().join(format!("oi-shadow-test-{}", std::process::id()));
+        fs::write(&executable, b"registered").unwrap();
+        let mut disclosure = disclosure_with_resolved(&executable.display().to_string());
+        disclosure.surfaces[0].version = Some("aaaa1111".into());
+
+        annotate_live_drift(
+            &mut disclosure,
+            |_inside| {
+                Some(LiveCheckout {
+                    head: "aaaa1111bbbb2222cccc3333dddd4444eeee5555".into(),
+                    committed_at: Some(0), // old commit: the fresh file is newer
+                })
+            },
+            |_entry| Some("/usr/local/bin/aikit".into()),
+            |path| {
+                Some(if path == Path::new("/usr/local/bin/aikit") {
+                    "shadow-content".to_owned()
+                } else {
+                    "registered-content".to_owned()
+                })
+            },
+        );
+
+        let drift = disclosure.surfaces[0].drift.as_deref().unwrap_or_default();
+        assert!(
+            drift.contains("differs from the registered executable"),
+            "drift must name the binary this machine actually runs: {drift}"
+        );
         fs::remove_file(&executable).ok();
     }
 

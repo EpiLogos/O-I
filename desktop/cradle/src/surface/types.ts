@@ -43,13 +43,28 @@ export interface SurfaceBinding {
   kind: string;
   /** Stable ref into the owner's grammar, when one exists. */
   ref?: string;
+  project?: string;
   title: string;
+  address?: import("../kernel/types").KnowledgeAddress;
+  encounter?: {space:string};
+  browser?: {url:string};
+  terminal?: {cwd?:string};
+  flow?: {flowRef:string;path:string};
+  view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  location?: import("../kernel/types").CentralLocation;
+  /** SF1: a projected subject pinned as its own Surface (kind
+   * 'presentation') carries the exact World/Projection/Presentation/
+   * Expression refs it was opened with — presentation state naming semantic
+   * addresses, never a cloned remote payload. `ref` is the hosted entry ref. */
+  presentation?: {world_ref:string;field_ref?:string;projection_ref?:string;projection_revision?:number;presentation_ref?:string;presentation_revision?:number;expression_ref?:string;expression_revision?:number};
 }
 
 /** A tab group: one tab strip + the surface it presents. */
 export interface TabGroupPane {
   type: "group";
   id: string;
+  /** An intentionally empty split destination, retained until filled or dismissed. */
+  emptySlot?: boolean;
   /** Ordered tab surface ids (pinned tabs render first). */
   tabs: SurfaceId[];
   /** Subset of tabs — pinned surfaces refuse close until unpinned. */
@@ -63,11 +78,15 @@ export interface SplitPane {
   id: string;
   dir: PaneDir;
   children: Pane[];
+  weights?: number[];
 }
 
 export type Pane = TabGroupPane | SplitPane;
 
+export interface NativeWindowBounds { x: number; y: number; width: number; height: number }
+
 export interface LayoutState {
+  focusedTabId?: SurfaceId;
   /** null = austere rest (law 12: rest is *what is on screen*). */
   root: Pane | null;
   /** All bindings ever opened this workspace, including closed ones
@@ -76,7 +95,19 @@ export interface LayoutState {
   /** Most recently closed last. Reopen pops. */
   closedStack: SurfaceId[];
   focusedGroupId: string | null;
+  /** A presentation mask; the full pane tree and mounted views remain intact. */
+  maximizedGroupId?: string;
   agencyDepth: AgencyDepth;
+  windowBounds?: Record<SurfaceId, NativeWindowBounds>;
+  detached?: {surfaceId: string; groupId: string; index: number; pinned: boolean}[];
+  subjectPlanes?: Record<string,"context"|"history"|"system">;
+  rightDepth?: AgencyDepth;
+  leftWidth?: number;
+  rightWidth?: number;
+  /** FND-02: the person's own accompanying encounter bound into the right
+   * agent plane — a ref into AIKit's real agent_session grammar, never a
+   * desktop-owned session record (map §2 law 7). */
+  accompanying?: {ref: string; project: string; space: string};
 }
 
 /**
@@ -99,6 +130,8 @@ export interface ActionArg {
   dir?: Dir;
   /** 1-based tab position for ⌘1…⌘9 jumps (visual order). */
   n?: number;
+  splitId?: string;
+  weights?: number[];
 }
 
 /** The layout as it was at load — the restore point for `restore-layout`. */

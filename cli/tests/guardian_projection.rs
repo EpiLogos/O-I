@@ -29,7 +29,7 @@ fn guardian_refs() -> Vec<String> {
 fn guardian_profile_resolves_to_the_shipped_oi_skills_only() {
     let manifest = guardian_manifest().unwrap();
     assert_eq!(manifest.schema, "oi.suite-skillset/v1");
-    // O:I ships exactly one profile — its guardian pair. Cross-product skill
+    // O:I ships exactly one profile — its guardian set. Cross-product skill
     // composition belongs to AIKit's sets, not to this manifest.
     assert_eq!(manifest.profiles.len(), 1);
     assert_eq!(
@@ -112,7 +112,10 @@ fn guardian_sources_carry_discoverable_frontmatter() {
             name
         })
         .collect();
-    assert_eq!(names, vec!["oi".to_owned(), "oi-suite-operator".to_owned()]);
+    assert_eq!(
+        names,
+        vec!["oi".to_owned(), "oi-suite-operator".to_owned(),]
+    );
 
     // Every shipped source is manifest-referenced and O:I-owned.
     let manifest = guardian_manifest().unwrap();
@@ -126,6 +129,32 @@ fn guardian_sources_carry_discoverable_frontmatter() {
         assert_eq!(
             skill.source.revision_policy,
             oi_cli::skillset::RevisionPolicy::ResolveAuthoritativeInstalledRevision
+        );
+    }
+}
+
+#[test]
+fn guardian_payload_files_ship_beside_a_manifest_skill() {
+    // A declared payload sibling belongs to a shipped guardian Skill: its
+    // directory must be a manifest source path, so the projection can place
+    // it beside that Skill's SKILL.md. A payload without its Skill (or a
+    // Skill whose tooling never ships) is a projection fault.
+    let manifest = guardian_manifest().unwrap();
+    // The list may legitimately be empty (the Central session strap retired
+    // from the guardian set); a declared payload must still sit beside a
+    // shipped guardian Skill.
+    for (path, _) in oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES {
+        let (directory, file) = path.rsplit_once('/').unwrap();
+        assert!(
+            !file.is_empty() && file != "SKILL.md",
+            "{path} must declare a sibling payload, not the SKILL.md itself"
+        );
+        assert!(
+            manifest
+                .skills
+                .iter()
+                .any(|skill| skill.source.path == format!("{directory}/SKILL.md")),
+            "payload {path} does not sit beside a shipped guardian Skill"
         );
     }
 }
@@ -180,6 +209,20 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
                 serde_json::from_slice(&fs::read(&receipt).unwrap()).unwrap();
             assert_eq!(receipt["schema"], "oi.skill-projection-receipt/v1");
             assert_eq!(receipt["source_revision"], oi_source_revision());
+        }
+    }
+
+    for name in ["oi", "oi-suite-operator"] {
+        for root in GUARDIAN_HARNESS_SKILL_ROOTS {
+            let entries: Vec<_> = fs::read_dir(ground.join(root).join(name))
+                .unwrap()
+                .map(|entry| entry.unwrap().file_name())
+                .collect();
+            assert_eq!(
+                entries.len(),
+                2,
+                "{name} projects SKILL.md and its receipt only: {entries:?}"
+            );
         }
     }
 
@@ -413,8 +456,10 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
     );
 
     // Simulate AIKit ownership: payload copies in a store, destinations
-    // rewired as symlinks — for the whole `.claude` tree AIKit adopted.
+    // rewired as symlinks — for the whole `.claude` tree AIKit adopted,
+    // payload siblings included.
     let mut managed_destinations = Vec::new();
+    let mut managed_skill_destinations = Vec::new();
     for name in ["oi", "oi-suite-operator"] {
         let projected = projected_paths(&ground, name).remove(0);
         let store = home
@@ -430,7 +475,19 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
         fs::copy(&receipt, store.join("SKILL.md.oi-projection.json")).unwrap();
         fs::remove_file(&receipt).unwrap();
         std::os::unix::fs::symlink(store.join("SKILL.md.oi-projection.json"), &receipt).unwrap();
-        managed_destinations.push(projected);
+        managed_destinations.push(projected.clone());
+        managed_skill_destinations.push(projected.clone());
+        for entry in fs::read_dir(projected.parent().unwrap()).unwrap().flatten() {
+            let file_name = entry.file_name();
+            if file_name == "SKILL.md" || file_name == "SKILL.md.oi-projection.json" {
+                continue;
+            }
+            let sibling = entry.path();
+            fs::copy(&sibling, store.join(&file_name)).unwrap();
+            fs::remove_file(&sibling).unwrap();
+            std::os::unix::fs::symlink(store.join(&file_name), &sibling).unwrap();
+            managed_destinations.push(sibling);
+        }
     }
 
     // A post-adoption aikit whose adopt refuses, like the real one does on a
@@ -487,14 +544,18 @@ exit 2
         "sync must not re-adopt an AIKit-managed tree: {aikit_log}"
     );
 
-    // The managed symlinks were left exactly as AIKit left them.
+    // The managed symlinks were left exactly as AIKit left them: every
+    // destination is a link; the SKILL.md copies still carry the derivation
+    // marker (payload siblings are byte-identical copies without one).
     for projected in &managed_destinations {
-        let content = fs::read_to_string(projected).unwrap();
-        assert!(content.contains("O:I DERIVED SKILL PROJECTION"));
         assert!(fs::symlink_metadata(projected)
             .unwrap()
             .file_type()
             .is_symlink());
+    }
+    for projected in &managed_skill_destinations {
+        let content = fs::read_to_string(projected).unwrap();
+        assert!(content.contains("O:I DERIVED SKILL PROJECTION"));
     }
 }
 
@@ -705,7 +766,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     assert_eq!(
         stdout.matches("cleared empty capsule residue").count(),
         2,
-        "expected both capsule husks to be cleared:\n{stdout}\naikit calls:\n{aikit_log}"
+        "expected every capsule husk to be cleared:\n{stdout}\naikit calls:\n{aikit_log}"
     );
 
     // The cycle ran in AIKit's own order: find, undo, re-adopt, recompose.

@@ -44,6 +44,7 @@ retired):
 | `rest` | austere rest (map §5 U0.3) | exact 6-node census, caret in canvas, To: keyboard path, cold-start FCP, honest unavailability without a bridge |
 | `surfaces` | surface management (map §5 U0.3b) | open/split/tile/move/pin/close/reopen via keyboard AND pointer, D15 menu disclosures, D17 depth states, reload restore, close-all → rest; kernel log monotonic |
 | `kernel-cas` | the kernel seam (map §5 U0.4) | real horizon listing, open/edit/save with revision advance, structured conflict with both sides preserved, channel-driven re-read + save, channel-driven focus change, log monotonic 1..N |
+| `explore-sf1` | SF1 — the first desktop home for SharedField (`docs/experience/SHARED-FIELD-DESKTOP.md` §14; needs `OI_SHARED_FIELD_TARGET`) | global Explore entry with local arrangements intact; search/open a real projected world; WorldPresentation as the main body with exact World/Projection/Presentation refs; relation + source depth summoned and dismissed; personal Agent beside the subject; full/split/pin with refs preserved; back/forward with history; Share / Project one Expression with planted private sentinels → exact preview + omissions → Projection → hosted publish → Open in Explore (live or explicit fallback); Watch; offline honesty through a target-less bridge |
 
 ## The op vocabulary
 
@@ -171,3 +172,32 @@ walk reproducible and evidence-bearing (map §1 law 2/9, §7):
 - Screenshots accompany every receipt (APP-SPEC §17: visual acceptance is
   human evidence) — the owner views `walk/artifacts/*.png` and re-walks
   the app itself; the receipts are the apparatus, never the acceptor.
+
+### U1.1: World and native packaging
+
+`all` now includes `navigator` (real Central World mapping, project focus,
+root/project wiki relations, absence and caret retention) and `native` (actual
+Tauri frontend hook/build, macOS app bundle metadata, production walk-channel
+exclusion). On other hosts `native` builds the native executable without a
+macOS bundle.
+
+World is summoned with Cmd/Ctrl+B or by right-clicking the Agency field and
+choosing World. Escape or its close button returns to the prior caret.
+
+The U1.1 receipt used Central from suite/mainline.json, compiled from a `git
+archive` of that exact commit into `/tmp/oi-cradle-pins/<revision>`, leaving
+active product checkouts and installed binaries untouched. Set
+`OI_CENTRAL_CTRL_BIN` to that build's `target/release/ctrl` when repeating the
+pinned walk. `navigator-native.json` records the exact binary/revision and the
+computer-use operations on the real app; native PNG and AX receipts are beside it.
+
+### U1.2: Source editor
+
+`editor` provisions a temporary Central root with the actual pinned `ctrl`,
+initializes a real project, and copies ten existing documents into its source
+ground. UI operations open, edit, switch, save and reopen their owner refs. The
+walk also selects a different project before saving, invokes a real exclusion
+refusal, and checks that initial writing survives closing sources. No owner
+executable or response is mocked. Temporary ground is removed after the walk.
+`editor-native.json` records an actual O-I source edit/save/restore and retained
+writing, observed through computer-use on the native bundle.

@@ -1,0 +1,72 @@
+{
+  "head": "04c5eb4573ba80ab6c0ab7c64ed8f4602ca15dd0",
+  "sources": {
+    "desktop/cradle/src/workspace/settings/VisualsView.tsx": "3e4665e3aae147315848d384985ec4ec0ca046ad0d44d995f3d9252d4d4e3753",
+    "desktop/cradle/src/stage/ExpressionStage.tsx": "c75f93ba867c22bec4fa8f3971f5c919dc9851d207077f1f94b118b34c90b707",
+    "desktop/cradle/src/stage/engineSurface.ts": "aa7aa7f85cd220da5ccd30846e570de0ce737f85bf11ae2f833ff1c45399179a",
+    "desktop/cradle/src/visuals/store.ts": "b67821610b26e2cfa332bdc4dc59c1b8dcb58c3dd5bdc3d5dccbb8586b26862b",
+    "desktop/cradle/tests/visuals-preview-page.tsx": "442c44f1d182ae9794a40fdc198de108dc31fb375f561bc7ab998db8280f3579",
+    "packages/oi-design-system/expressions-engine/engine/entityRuntime.mjs": "ae4a00f00d3173c6cfb21a04cc704b31401b5ec6165195c19528d27449cd3f29",
+    "packages/oi-design-system/expressions-engine/PROVENANCE.json": "6f784bdfa4517834c8c4467d42bfa44a44c7f33226084bb9ec52fd99f3cfd5ea",
+    "desktop/cradle/package-lock.json": "ce01f9cbd7f686f23b5ca805f6519deb919fbe97b4acae7dc2552afdab8ec4f4"
+  },
+  "interpretation": "One bounded actual Visuals settings component sample with real providers/native engine, after initial frame warmup. Chromium ANGLE SwiftShader is software rendering; no physical GPU or cross-machine extrapolation. Other desktop work may run concurrently; renderer TaskDuration excludes the software GPU process.",
+  "measuredAt": "2026-09-15T14:27:52.532Z",
+  "active": {
+    "elapsedMs": 5000.900000095367,
+    "particleCount": 120000,
+    "frames": 31,
+    "rafCallbacks": 31,
+    "stage": {
+      "presentations": [
+        {
+          "id": "oi-visuals-preview:r1:",
+          "plane": "overlay"
+        }
+      ],
+      "live": true,
+      "scheduled": true,
+      "paused": false
+    },
+    "connectedCanvases": 2,
+    "connectedWebGLContexts": 1,
+    "instrumentedUnlostContexts": 1,
+    "rendererTaskSeconds": 0.03417099999999973,
+    "rendererTaskPercent": 0.6832970065257871
+  },
+  "released": {
+    "elapsedMs": 2501.2000002861023,
+    "particleCount": 120000,
+    "frames": 0,
+    "rafCallbacks": 0,
+    "stage": {
+      "presentations": [],
+      "live": false,
+      "scheduled": false,
+      "paused": false
+    },
+    "connectedCanvases": 2,
+    "connectedWebGLContexts": 1,
+    "instrumentedUnlostContexts": 1,
+    "rendererTaskSeconds": 0.0014379999999998283,
+    "rendererTaskPercent": 0.057492403639666616
+  },
+  "disabled": {
+    "elapsedMs": 500.69999980926514,
+    "particleCount": 120000,
+    "frames": null,
+    "rafCallbacks": 0,
+    "stage": {
+      "presentations": [],
+      "live": null,
+      "scheduled": null,
+      "paused": null
+    },
+    "connectedCanvases": 1,
+    "connectedWebGLContexts": 0,
+    "instrumentedUnlostContexts": 1,
+    "rendererTaskSeconds": 0.0011969999999998926,
+    "rendererTaskPercent": 0.23906530865905204
+  },
+  "errors": []
+}

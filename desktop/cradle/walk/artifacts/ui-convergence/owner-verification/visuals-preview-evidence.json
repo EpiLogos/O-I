@@ -1,0 +1,36 @@
+{
+  "commit": "c5418ac0d3829afcd28e7d4d7141a6387fb8dc06",
+  "priorCommit": "aa14aa3d1d67a45cb04f18ba5246a26c983c0604",
+  "branch": "aikit/ui-expression-convergence",
+  "scope": [
+    "desktop/cradle/src/stage/ExpressionStage.tsx",
+    "desktop/cradle/src/workspace/settings/VisualsView.tsx",
+    "desktop/cradle/tests/visuals-preview-page.tsx",
+    "desktop/cradle/tests/visuals-preview-lifecycle.mjs"
+  ],
+  "committedSourceSha256": {
+    "desktop/cradle/src/stage/ExpressionStage.tsx": "c75f93ba867c22bec4fa8f3971f5c919dc9851d207077f1f94b118b34c90b707",
+    "desktop/cradle/src/workspace/settings/VisualsView.tsx": "3e4665e3aae147315848d384985ec4ec0ca046ad0d44d995f3d9252d4d4e3753",
+    "desktop/cradle/tests/visuals-preview-page.tsx": "442c44f1d182ae9794a40fdc198de108dc31fb375f561bc7ab998db8280f3579",
+    "desktop/cradle/tests/visuals-preview-lifecycle.mjs": "233539b91f9bdfe93c1afa49baa9892c9ecb8204e19c6149e33fa424b2a44004"
+  },
+  "checks": [
+    {
+      "command": "npx tsc --noEmit",
+      "result": "pass"
+    },
+    {
+      "command": "node tests/visuals-preview-lifecycle.mjs",
+      "result": "red before change: actual 3 canvases vs required 2; pass after",
+      "beforeLog": "visuals-preview-before.log",
+      "afterLog": "visuals-preview-after.log"
+    },
+    {
+      "command": "node tests/expression-provider-lifecycle.mjs",
+      "result": "pass",
+      "log": "visuals-provider-regression.log"
+    }
+  ],
+  "sample": "visuals-preview-sample.json",
+  "sampleInterpretation": "Actual production Visuals component, React StrictMode and real providers, owner120000 particle default on Chromium ANGLE SwiftShader; component page is not full native app or physical GPU performance evidence."
+}

@@ -42,7 +42,16 @@ import type {
   SourceListingState,
 } from "../src/kernel/types";
 import type { LayoutState } from "../src/surface/types";
-import { loadLayout } from "../src/surface/persist";
+import {
+  FOCUSED_INSTRUMENT_CONTRACT,
+  focusedInstrumentSource,
+  registerFocusedInstrumentSource,
+  requestFocusedInstrumentOpen,
+  type BimbaNavigation,
+  type FocusedInstrumentCommand,
+  type FocusedInstrumentSnapshot,
+  type RetainedExpressionLease,
+} from "../src/instrument/source";
 
 /** Schema of the walk channel contract. */
 export const WALK_CHANNEL_SCHEMA = "oi.cradle.walk/v1";
@@ -75,6 +84,18 @@ export interface WalkEventsData {
   since_seq?: number;
 }
 
+/** The stage's clock law as data: a live presentation stands, a drawing
+ * frame is scheduled, frames rendered so far. An idle desktop reads
+ * live=false, scheduled=false and a frame count that stops moving. */
+export interface WalkStageData {
+  paused: boolean | null;
+  live: boolean | null;
+  scheduled: boolean | null;
+  playback: {name: string; elapsed: number; duration: number; status: "active" | "completed" | "cancelled"} | null;
+  frames: number | null;
+  presentations: Array<{ id: string; plane: string }>;
+}
+
 export interface WalkTimingData {
   /** First contentful paint, ms from navigation start (null = not observed). */
   fcp_ms: number | null;
@@ -87,6 +108,15 @@ export interface WalkInfoData {
   mounted_at: string;
   transport: KernelApi["transport"];
   url: string;
+}
+
+/** What the controlled focused-instrument double has observed. */
+export interface WalkInstrumentData {
+  registered: boolean;
+  available: boolean | null;
+  commands: Array<Record<string, unknown>>;
+  lease_events: string[];
+  attached: boolean;
 }
 
 // ---------------------------------------------------------------------------
@@ -131,12 +161,37 @@ export interface CradleWalkChannel {
     sources(project?: string): Promise<WalkReceipt<SourceListingState>>;
     /** The frame's persisted layout state — the presentation read model. */
     layout(): Promise<WalkReceipt<{ layout: LayoutState | null }>>;
+    /** The Global Expression Stage's bounded inspection: presentations,
+     * engine capabilities, and whether the window surface's clock is held. */
+    stage(): Promise<WalkReceipt<WalkStageData>>;
   };
   capture: {
     /** In-page timing measurements (cold-start FCP lives here). */
     timing(): Promise<WalkReceipt<WalkTimingData>>;
     /** Snapshot the event receipts with their seq numbers at capture time. */
     events(sinceSeq?: number): Promise<WalkReceipt<WalkEventsData & { captured_at: string }>>;
+  };
+  /** The focused-instrument seam (K9). Registering a source here is exactly
+   * what an external QL adapter does at runtime; the channel adds no
+   * renderer authority — the double records what the composition did with
+   * the real stage lease and serves contract-shaped snapshots. */
+  instrument: {
+    /** Register a controlled source double carrying a valid contract snapshot. */
+    register(source: { ref: string; title?: string; snapshot: Record<string, unknown>; bimba: Record<string, unknown> }): Promise<WalkReceipt<{ ref: string }>>;
+    /** Patch the double's snapshot and notify its subscribers. */
+    drive(ref: string, snapshot: Record<string, unknown>): Promise<WalkReceipt<{ available: boolean }>>;
+    /** Ask the workspace owner to open the privileged composition. */
+    requestOpen(ref: string, title?: string): Promise<WalkReceipt<{ requested: boolean }>>;
+    /** What the double observed: commands the composition sent, lease
+     * events (checkpoint/pause/recovery/…), attachment state. */
+    read(ref: string): Promise<WalkReceipt<WalkInstrumentData>>;
+    /** Deregister (the honest source-absent path on a live binding). */
+    unregister(ref: string): Promise<WalkReceipt<{ registered: boolean }>>;
+    /** Register an externally constructed source object (the controlled-host
+     * path: the QL adapter builds its own session; the channel only hands it
+     * to the registry). The object must already sit on
+     * `globalThis.__k9ExternalSources[ref]`. */
+    registerExisting(ref: string): Promise<WalkReceipt<{ registered: boolean }>>;
   };
   /** Channel identity — schema, transport, mount time. */
   info(): Promise<WalkReceipt<WalkInfoData>>;
@@ -203,8 +258,218 @@ function eventsData(receipts: KernelReceipt[], sinceSeq: number): WalkEventsData
   };
 }
 
-/** Build the channel over the live kernel API. */
-export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
+// ---------------------------------------------------------------------------
+// The controlled focused-instrument double (K9 walk source)
+//
+// A contract-shaped FocusedInstrumentSource whose QL side is a recording
+// stand-in: snapshots/bimba are supplied by the scenario, commands apply
+// their honest minimal state change and are recorded, and the real stage
+// lease the composition hands over is wrapped so every checkpoint, pause,
+// resume and recovery phase is observed without serialising GPU objects.
+
+interface InstrumentDouble {
+  handle: Parameters<typeof registerFocusedInstrumentSource>[0];
+  snapshot: FocusedInstrumentSnapshot;
+  bimba: BimbaNavigation;
+  commands: FocusedInstrumentCommand[];
+  leaseEvents: string[];
+  lease: RetainedExpressionLease | null;
+  listeners: Set<() => void>;
+}
+
+const doubles = new Map<string, InstrumentDouble>();
+const doubleStops = new Map<string, () => void>();
+const EVENT_CAP = 64;
+
+function note(double: InstrumentDouble, event: string): void {
+  double.leaseEvents = [...double.leaseEvents.slice(-(EVENT_CAP - 1)), event];
+}
+
+function notify(double: InstrumentDouble): void {
+  for (const listener of double.listeners) listener();
+}
+
+/** Apply the minimal honest state change a command implies, mirroring what
+ * a QL owner would answer. Unknown commands apply nothing (still applied —
+ * the double owns its own state law; refusals are the producer's judgement). */
+function applyCommand(double: InstrumentDouble, command: FocusedInstrumentCommand): void {
+  const snapshot = double.snapshot;
+  switch (command.kind) {
+    case "set-focus":
+      snapshot.focus = { ...snapshot.focus, focus: command.focus, available: true, current: true };
+      break;
+    case "select-bimba":
+      snapshot.selection = command.selection;
+      snapshot.selection_standing = "current";
+      double.bimba = { ...double.bimba, selected_ref: command.selection.selection_ref };
+      break;
+    case "clear-selection":
+      snapshot.selection = null;
+      snapshot.selection_standing = null;
+      double.bimba = { ...double.bimba, selected_ref: null };
+      break;
+    case "set-tracking":
+      snapshot.tracking = command.tracking;
+      break;
+    case "freeze":
+      snapshot.temporal = "frozen";
+      break;
+    case "resume-live":
+      snapshot.temporal = "live";
+      break;
+    case "assemble-clock":
+      snapshot.clock = { ...snapshot.clock, presentation: { view: "assembled" } };
+      break;
+    case "explode-clock":
+      snapshot.clock = { ...snapshot.clock, presentation: { view: "exploded", pair: command.pair ?? null } };
+      break;
+    default:
+      break;
+  }
+}
+
+/** Minimal structural shapes for the walk binding's GPU work. The cradle
+ * never imports three directly (the engine is vendored plain JS), so the
+ * double loads it dynamically and speaks to it through these shapes only. */
+interface WalkRenderTarget { texture: unknown; dispose(): void }
+interface WalkRenderer {
+  readRenderTargetPixels(target: WalkRenderTarget, x: number, y: number, width: number, height: number, buffer: Float32Array): void;
+  copyTextureToTexture(source: { data: Float32Array; needsUpdate: boolean; dispose(): void }, destination: unknown): void;
+}
+interface WalkThree {
+  WebGLRenderTarget: new (width: number, height: number, options: {
+    minFilter: number; magFilter: number; format: number; type: number;
+    depthBuffer: boolean; stencilBuffer: boolean;
+  }) => WalkRenderTarget;
+  DataTexture: new (data: Float32Array, width: number, height: number, format: number, type: number) => { data: Float32Array; needsUpdate: boolean; dispose(): void };
+  Vector2: new (x?: number, y?: number) => unknown;
+  RGBAFormat: number;
+  FloatType: number;
+  NearestFilter: number;
+}
+
+function makeDouble(source: { ref: string; title?: string; snapshot: Record<string, unknown>; bimba: Record<string, unknown> }): InstrumentDouble {
+  const snapshot = source.snapshot as unknown as FocusedInstrumentSnapshot;
+  if (snapshot.schema !== FOCUSED_INSTRUMENT_CONTRACT) {
+    throw new Error(`Controlled source snapshot must be ${FOCUSED_INSTRUMENT_CONTRACT}, got ${String(snapshot.schema)}`);
+  }
+  const double: InstrumentDouble = {
+    handle: {
+      ref: source.ref,
+      title: source.title ?? "Epi / Nara (controlled)",
+      async read() { return structuredClone(double.snapshot); },
+      async readBimba() { return structuredClone(double.bimba); },
+      async command(command: FocusedInstrumentCommand) {
+        double.commands = [...double.commands.slice(-31), structuredClone(command)];
+        applyCommand(double, command);
+        notify(double);
+        return { standing: "applied" as const, operation: command.kind, snapshot: structuredClone(double.snapshot) };
+      },
+      subscribe(listener: () => void) {
+        double.listeners.add(listener);
+        return () => double.listeners.delete(listener);
+      },
+      attachExpression(lease: RetainedExpressionLease) {
+        // The walk's stand-in binding: take the retained port, own real GPU
+        // targets, and answer checkpoint/restore exactly as the admitted law
+        // requires — so the composition exercises the real engine lease
+        // lifecycle without reproducing QL's sample-correspondence law.
+        return (async () => {
+          if (double.lease) throw new Error("focused expression already attached");
+          const port = lease.retainedTargetPort() as {
+            texWidth: number; texHeight: number;
+            setTargetTextures(a: unknown, b: unknown, centre: unknown): void;
+          };
+          note(double, "port");
+          const THREE = (await import("three" as string)) as unknown as WalkThree;
+          const makeTarget = () => new THREE.WebGLRenderTarget(port.texWidth, port.texHeight, {
+            minFilter: THREE.NearestFilter,
+            magFilter: THREE.NearestFilter,
+            format: THREE.RGBAFormat,
+            type: THREE.FloatType,
+            depthBuffer: false,
+            stencilBuffer: false,
+          });
+          const size = port.texWidth * port.texHeight * 4;
+          const targets = [makeTarget(), makeTarget()];
+          const readPixels = (renderer: WalkRenderer, target: WalkRenderTarget) => {
+            const buffer = new Float32Array(size);
+            renderer.readRenderTargetPixels(target, 0, 0, port.texWidth, port.texHeight, buffer);
+            return buffer;
+          };
+          const centre = new THREE.Vector2();
+          port.setTargetTextures(targets[0], targets[1], centre);
+          note(double, "targets-own");
+          // Wrap, observe, delegate: the real engine lease does the work; the
+          // double only records what the composition asked of it.
+          const observed: RetainedExpressionLease = {
+            retainedTargetPort: () => lease.retainedTargetPort(),
+            checkpointRetainedField: (binding) => { note(double, "checkpoint"); return lease.checkpointRetainedField(binding); },
+            restoreRetainedField: (binding, checkpoint) => { note(double, "restore"); return lease.restoreRetainedField(binding, checkpoint); },
+            onRecoveryRequired: (listener) => lease.onRecoveryRequired((phase) => { note(double, `recovery:${phase}`); listener(phase); }),
+            inspect: () => lease.inspect(),
+            pause: (value = true) => { note(double, value ? "paused" : "resumed"); return lease.pause(value); },
+            resume: () => { note(double, "resumed"); return lease.resume(); },
+            renderOnce: () => { note(double, "render-once"); return lease.renderOnce(); },
+            updatePresentation: (request) => { note(double, "presentation"); return lease.updatePresentation(request); },
+          };
+          double.lease = observed;
+          note(double, "attach");
+          const binding = {
+            checkpoint(renderer: WalkRenderer) {
+              const taken = { pos: readPixels(renderer, targets[0]), vel: readPixels(renderer, targets[1]) };
+              note(double, "checkpoint-taken");
+              return taken;
+            },
+            restore(renderer: WalkRenderer, checkpoint: { pos: Float32Array; vel: Float32Array }) {
+              targets.forEach((target) => target.dispose());
+              targets[0] = makeTarget();
+              targets[1] = makeTarget();
+              port.setTargetTextures(targets[0], targets[1], centre);
+              const upload = (data: Float32Array, target: WalkRenderTarget) => {
+                const texture = new THREE.DataTexture(data, port.texWidth, port.texHeight, THREE.RGBAFormat, THREE.FloatType);
+                texture.needsUpdate = true;
+                renderer.copyTextureToTexture(texture, target.texture);
+                texture.dispose();
+              };
+              upload(checkpoint.pos, targets[0]);
+              upload(checkpoint.vel, targets[1]);
+              note(double, "checkpoint-restored");
+            },
+          };
+          const taken = observed.checkpointRetainedField(binding as unknown as Parameters<RetainedExpressionLease["checkpointRetainedField"]>[0]) as { pos: Float32Array; vel: Float32Array } | undefined;
+          observed.onRecoveryRequired((phase) => {
+            if (phase === "restored" && taken !== undefined) {
+              observed.restoreRetainedField(binding as unknown as Parameters<RetainedExpressionLease["restoreRetainedField"]>[0], taken);
+            }
+          });
+          note(double, "recovery-observed");
+          return () => {
+            note(double, "detach");
+            double.lease = null;
+            targets.forEach((target) => target.dispose());
+          };
+        })();
+      },
+    },
+    snapshot,
+    bimba: source.bimba as unknown as BimbaNavigation,
+    commands: [],
+    leaseEvents: [],
+    lease: null,
+    listeners: new Set(),
+  };
+  return double;
+}
+
+/** Build the channel over the live kernel API. The expression stage is
+ * bound when the mount sits inside its provider (walk bundles do); ops
+ * that need it report its absence honestly. */
+export function createWalkChannel(
+  kernel: KernelApi,
+  readLayout:()=>LayoutState,
+  stage?: { inspect(): Record<string, unknown> },
+): CradleWalkChannel {
   const mountedAt = new Date().toISOString();
 
   /** One typed op through the provider's queue — THE seam, no other path. */
@@ -213,9 +478,11 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
       const outcome = await kernel.apply(payload);
       if (!outcome) {
         // The provider resolves kernel refusals to a null outcome and
-        // records the reason on opError; ops are serialised, so the reason
-        // on the API right now is this op's reason.
-        return { error: kernel.opError ?? "the operation produced no outcome" };
+        // records the reason on its stable last-op-error ref; ops are
+        // serialised, so the reason on the API right now is this op's
+        // reason. The React-state fallback covers providers that predate
+        // the ref.
+        return { error: kernel.lastOpError?.() ?? kernel.opError ?? "the operation produced no outcome" };
       }
       // The receipts ride the receipt envelope (seq_range); the data carries
       // the outcome's result payload without duplicating them.
@@ -287,7 +554,7 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
         timed("read.state", async () => {
           const outcome = await kernel.apply({ op: "state" });
           if (!outcome || outcome.result !== "state") {
-            return { error: kernel.opError ?? "the state read did not serve" };
+            return { error: kernel.lastOpError?.() ?? kernel.opError ?? "the state read did not serve" };
           }
           return { data: outcome.snapshot };
         }),
@@ -295,7 +562,7 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
         timed("read.focus", async () => {
           const outcome = await kernel.apply({ op: "state" });
           if (!outcome || outcome.result !== "state") {
-            return { error: kernel.opError ?? "the focus read did not serve" };
+            return { error: kernel.lastOpError?.() ?? kernel.opError ?? "the focus read did not serve" };
           }
           return { data: outcome.snapshot.focus };
         }),
@@ -313,7 +580,13 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
           return { data: outcome.listing };
         }),
       layout: () =>
-        timed("read.layout", async () => ({ data: { layout: loadLayout() } })),
+        timed("read.layout", async () => ({ data: { layout: structuredClone(readLayout()) } })),
+      stage: () =>
+        timed<WalkStageData>("read.stage", async () => {
+          if (!stage) return { error: "the expression stage is not bound to this channel" };
+          const inspect = stage.inspect() as Partial<WalkStageData>;
+          return { data: { paused: inspect.paused ?? null, live: inspect.live ?? null, scheduled: inspect.scheduled ?? null, frames: inspect.frames ?? null, presentations: inspect.presentations ?? [], playback: inspect.playback ?? null } };
+        }),
     },
     capture: {
       timing: () => timed("capture.timing", async () => ({ data: await timingData() })),
@@ -321,6 +594,70 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
         timed("capture.events", async () => ({
           data: { ...eventsData(readEvents(sinceSeq), sinceSeq), captured_at: new Date().toISOString() },
         })),
+    },
+    instrument: {
+      register: (source) =>
+        timed<{ ref: string }>("instrument.register", async () => {
+          // The same ref resurrects the SAME double: a returning owner is
+          // one owner, not a second one — the composition's held lease and
+          // the recorded history stay continuous across re-registration.
+          const existing = doubles.get(source.ref);
+          if (existing) {
+            existing.snapshot = source.snapshot as unknown as FocusedInstrumentSnapshot;
+            existing.bimba = source.bimba as unknown as BimbaNavigation;
+            if (!focusedInstrumentSource(source.ref)) {
+              doubleStops.set(source.ref, registerFocusedInstrumentSource(existing.handle));
+            }
+            return { data: { ref: source.ref } };
+          }
+          const double = makeDouble(source);
+          doubleStops.set(source.ref, registerFocusedInstrumentSource(double.handle));
+          doubles.set(source.ref, double);
+          return { data: { ref: source.ref } };
+        }),
+      drive: (ref, snapshot) =>
+        timed<{ available: boolean }>("instrument.drive", async () => {
+          const double = doubles.get(ref);
+          if (!double) return { error: `controlled source ${ref} is not registered` };
+          double.snapshot = { ...double.snapshot, ...snapshot } as FocusedInstrumentSnapshot;
+          notify(double);
+          return { data: { available: double.snapshot.available } };
+        }),
+      requestOpen: (ref, title) =>
+        timed<{ requested: boolean }>("instrument.requestOpen", async () => {
+          requestFocusedInstrumentOpen(ref, title);
+          return { data: { requested: true } };
+        }),
+      read: (ref) =>
+        timed<WalkInstrumentData>("instrument.read", async () => {
+          const double = doubles.get(ref);
+          if (!double) return { error: `controlled source ${ref} is not registered` };
+          return {
+            data: {
+              registered: true,
+              available: double.snapshot.available,
+              commands: double.commands as Array<Record<string, unknown>>,
+              lease_events: double.leaseEvents,
+              attached: double.lease !== null,
+            },
+          };
+        }),
+      unregister: (ref) =>
+        timed<{ registered: boolean }>("instrument.unregister", async () => {
+          const double = doubles.get(ref);
+          if (!double) return { error: `controlled source ${ref} is not registered` };
+          doubleStops.get(ref)?.();
+          doubleStops.delete(ref);
+          doubles.delete(ref);
+          return { data: { registered: false } };
+        }),
+      registerExisting: (ref) =>
+        timed<{ registered: boolean }>("instrument.registerExisting", async () => {
+          const external = (globalThis as unknown as { __k9ExternalSources?: Record<string, unknown> }).__k9ExternalSources?.[ref];
+          if (!external) return { error: `no externally constructed source sits at __k9ExternalSources.${ref}` };
+          doubleStops.set(ref, registerFocusedInstrumentSource(external as Parameters<typeof registerFocusedInstrumentSource>[0]));
+          return { data: { registered: true } };
+        }),
     },
     info: () =>
       timed("info", async () => ({
@@ -337,8 +674,12 @@ export function createWalkChannel(kernel: KernelApi): CradleWalkChannel {
 /** Mount the channel on `window.__cradle.walk` (dev/walk bundles only —
  * the mount itself is dynamically imported behind the build gate in
  * Cradle.tsx, so production never carries this code). */
-export function bindWalkChannel(kernel: KernelApi): CradleWalkChannel {
-  const channel = createWalkChannel(kernel);
+export function bindWalkChannel(
+  kernel: KernelApi,
+  readLayout:()=>LayoutState,
+  stage?: { inspect(): Record<string, unknown> },
+): CradleWalkChannel {
+  const channel = createWalkChannel(kernel,readLayout,stage);
   window.__cradle = { ...(window.__cradle ?? {}), walk: channel };
   return channel;
 }

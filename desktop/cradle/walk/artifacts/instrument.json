@@ -1,0 +1,366 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "instrument",
+  "generated_at": "2026-09-16T02:14:23.007Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "fedbf19839af50b117ab3c3aa60d1303f3246a02",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 6163,
+  "checks": [
+    {
+      "ok": true,
+      "label": "Opening with no registered source refuses, naming the absence"
+    },
+    {
+      "ok": true,
+      "label": "The privileged composition portals into the shell's centre host"
+    },
+    {
+      "ok": true,
+      "label": "The focused mode is announced once on the body"
+    },
+    {
+      "ok": true,
+      "label": "The canonical right AgentLayer region stays mounted"
+    },
+    {
+      "ok": true,
+      "label": "The hosted composition wakes the one production stage"
+    },
+    {
+      "ok": true,
+      "label": "Opening the source aperture portals the navigator into the left host"
+    },
+    {
+      "ok": true,
+      "label": "The composition hands the source a retained lease with checkpoint and recovery observation",
+      "data": [
+        "port",
+        "targets-own",
+        "attach",
+        "checkpoint",
+        "checkpoint-taken",
+        "recovery-observed"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Focus, freeze, clock and Bimba commands reach the registered owner",
+      "data": [
+        "set-focus",
+        "freeze",
+        "explode-clock",
+        "select-bimba"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "The composition mirrors the owner's temporal state"
+    },
+    {
+      "ok": true,
+      "label": "Deregistering the source surfaces an honest alert in the composition"
+    },
+    {
+      "ok": true,
+      "label": "Re-registering the source clears the absence"
+    },
+    {
+      "ok": true,
+      "label": "An unavailable owner pauses the retained field through the lease",
+      "data": {
+        "paused": true,
+        "live": true,
+        "scheduled": false,
+        "frames": 82,
+        "presentations": [
+          {
+            "id": "k9:6e6b3a7f-07d9-4513-8945-bff94f48a94d",
+            "plane": "ambient"
+          }
+        ],
+        "playback": null
+      }
+    },
+    {
+      "ok": true,
+      "label": "A returned owner resumes the retained field"
+    },
+    {
+      "ok": true,
+      "label": "The instrument binding survives relaunch and re-enters privileged mode"
+    },
+    {
+      "ok": true,
+      "label": "After relaunch the absent source is named honestly",
+      "data": "Focused instrument source ql:controlled-focused is not registered."
+    },
+    {
+      "ok": true,
+      "label": "Leaving the binding removes both portals"
+    },
+    {
+      "ok": true,
+      "label": "The focused mode announcement is cleared"
+    },
+    {
+      "ok": true,
+      "label": "The source observed the lease detach"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-16T02:14:23.073Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": false,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0.5,
+      "error": "Error: Focused instrument source ql:controlled-focused is not registered"
+    },
+    {
+      "ok": true,
+      "op": "instrument.register",
+      "duration_ms": 0.1,
+      "data": {
+        "ref": "ql:controlled-focused"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.requestOpen",
+      "duration_ms": 0.2,
+      "data": {
+        "requested": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.read",
+      "duration_ms": 0.1,
+      "data": {
+        "registered": true,
+        "available": true,
+        "commands": [],
+        "lease_events": [
+          "port",
+          "targets-own",
+          "attach",
+          "checkpoint",
+          "checkpoint-taken",
+          "recovery-observed"
+        ],
+        "attached": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.read",
+      "duration_ms": 0,
+      "data": {
+        "registered": true,
+        "available": true,
+        "commands": [
+          {
+            "kind": "set-focus",
+            "focus": "m3"
+          },
+          {
+            "kind": "freeze"
+          },
+          {
+            "kind": "explode-clock",
+            "pair": null
+          },
+          {
+            "kind": "select-bimba",
+            "selection": {
+              "contract": "ql.focused-instrument-bimba-selection/v1",
+              "selection_ref": "bimba:walk:1",
+              "coordinate_ref": "#1",
+              "source_ref": "source:walk:1",
+              "source_revision": "walk:r1",
+              "disclosure_ref": "disclosure:walk:1",
+              "subject_ref": "subject:walk"
+            }
+          }
+        ],
+        "lease_events": [
+          "port",
+          "targets-own",
+          "attach",
+          "checkpoint",
+          "checkpoint-taken",
+          "recovery-observed"
+        ],
+        "attached": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.unregister",
+      "duration_ms": 0,
+      "data": {
+        "registered": false
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.register",
+      "duration_ms": 0.1,
+      "data": {
+        "ref": "ql:controlled-focused"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.drive",
+      "duration_ms": 0.1,
+      "data": {
+        "available": false
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.stage",
+      "duration_ms": 0.3,
+      "data": {
+        "paused": true,
+        "live": true,
+        "scheduled": false,
+        "frames": 82,
+        "presentations": [
+          {
+            "id": "k9:6e6b3a7f-07d9-4513-8945-bff94f48a94d",
+            "plane": "ambient"
+          }
+        ],
+        "playback": null
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.drive",
+      "duration_ms": 0,
+      "data": {
+        "available": true
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.stage",
+      "duration_ms": 0.1,
+      "data": {
+        "paused": false,
+        "live": true,
+        "scheduled": true,
+        "frames": 92,
+        "presentations": [
+          {
+            "id": "k9:6e6b3a7f-07d9-4513-8945-bff94f48a94d",
+            "plane": "ambient"
+          }
+        ],
+        "playback": null
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 157,
+      "data": {
+        "file": "instrument-instrument-focused.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-16T02:14:27.238Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.register",
+      "duration_ms": 0,
+      "data": {
+        "ref": "ql:controlled-focused"
+      }
+    },
+    {
+      "ok": true,
+      "op": "instrument.read",
+      "duration_ms": 0,
+      "data": {
+        "registered": true,
+        "available": true,
+        "commands": [],
+        "lease_events": [
+          "port",
+          "targets-own",
+          "attach",
+          "checkpoint",
+          "checkpoint-taken",
+          "recovery-observed",
+          "detach"
+        ],
+        "attached": false
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "instrument-instrument-focused.png"
+  ]
+}

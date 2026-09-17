@@ -1,0 +1,19 @@
+name: Epi UX spine and practice
+on:
+  push:
+    branches: [main, agent/epi-ux-spine-practice]
+    paths: ['docs/cradle/**', 'docs/SUITE-OPERATOR-SKILLSET.md', 'skills/cradle-execution/**', 'scripts/check-epi-ux-spine.py', '.github/workflows/epi-ux-intent.yml']
+  pull_request:
+    paths: ['docs/cradle/**', 'docs/SUITE-OPERATOR-SKILLSET.md', 'skills/cradle-execution/**', 'scripts/check-epi-ux-spine.py', '.github/workflows/epi-ux-intent.yml']
+permissions:
+  contents: read
+jobs:
+  spine:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Verify canonical spine, pending review and invalid edits
+        run: python3 scripts/check-epi-ux-spine.py --self-test
+      - name: Verify the original Cradle text is unchanged in this reconciliation
+        if: github.event.pull_request.number == 247 || github.ref == 'refs/heads/agent/epi-ux-spine-practice'
+        run: python3 scripts/check-epi-ux-spine.py --check-publication-baseline

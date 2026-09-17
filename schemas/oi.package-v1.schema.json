@@ -4,11 +4,13 @@
   "title": "O:I Package Descriptor v1",
   "description": "Suite-level installation/composition envelope around independently owned native extension contracts.",
   "type": "object",
-  "required": ["schema", "package_ref", "version", "source", "contributions"],
+  "required": ["schema", "package_ref", "version", "protocol_min", "protocol_max", "source", "contributions"],
   "properties": {
     "schema": { "const": "oi.package/v1" },
     "package_ref": { "type": "string", "minLength": 1 },
     "version": { "$ref": "#/$defs/version" },
+    "protocol_min": { "$ref": "#/$defs/version" },
+    "protocol_max": { "$ref": "#/$defs/version" },
     "source": {
       "type": "object",
       "required": ["kind", "locator", "revision"],

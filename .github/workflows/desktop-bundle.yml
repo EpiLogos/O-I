@@ -1,0 +1,136 @@
+name: O-I desktop bundle
+
+# Builds the packaged Desktop bundle on a linux runner and emits the
+# artifact in the suite-manifest asset shape (target/name/sha256), so the
+# suite manifest can record it and `oi desktop install` can adopt it.
+#
+# The first real bundle cannot be built on macOS or Windows: the AppImage
+# packaging path is linux-only. This workflow is the linux host; the
+# omarchy machine can run desktop/cradle/package-bundle.sh directly.
+
+on:
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  bundle-linux:
+    runs-on: ubuntu-latest
+    timeout-minutes: 60
+    permissions:
+      contents: read
+      id-token: write
+      attestations: write
+    steps:
+      - uses: actions/checkout@v4
+
+      # The tauri CLI pins AppImage tooling inside its own bundle
+      # (tauri-bundler downloads these exact cache paths and skips the
+      # download when a file already exists). Its pinned 2024 linuxdeploy
+      # ships a strip that cannot parse DT_RELR sections of current
+      # toolchain libraries, and its linuxdeploy-plugin-gtk.sh copies the
+      # versioned gdk-pixbuf loader directory unconditionally, which
+      # gdk-pixbuf >= 2.44 no longer ships. Refreshing the cache with the
+      # current linuxdeploy continuous build and guarding the copy is the
+      # workaround proven on the omarchy machine on 2026-09-15
+      # (campaign-evidence/2026-09-15-landing-campaign, row N1). The
+      # digest is logged, not asserted: the pin stays at the continuous
+      # channel, and a digest assertion would break on any upstream
+      # re-release.
+      - name: Refresh the pinned AppImage tooling in the tauri cache
+        run: |
+          set -euo pipefail
+          tools="${HOME}/.cache/tauri"
+          mkdir -p "${tools}"
+          curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
+            --output "${tools}/linuxdeploy-x86_64.AppImage" \
+            https://github.com/linuxdeploy/linuxdeploy/releases/download/continuous/linuxdeploy-x86_64.AppImage
+          chmod +x "${tools}/linuxdeploy-x86_64.AppImage"
+          sha256sum "${tools}/linuxdeploy-x86_64.AppImage"
+          curl --fail --location --retry 5 --retry-all-errors --silent --show-error \
+            --output "${tools}/linuxdeploy-plugin-gtk.sh" \
+            https://raw.githubusercontent.com/tauri-apps/linuxdeploy-plugin-gtk/master/linuxdeploy-plugin-gtk.sh
+          python3 - <<'PY'
+          from pathlib import Path
+          p = Path.home() / ".cache/tauri/linuxdeploy-plugin-gtk.sh"
+          text = p.read_text()
+          needle = 'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"'
+          guard = ('if [ -d "$gdk_pixbuf_binarydir" ]; then '
+                   'copy_tree "$gdk_pixbuf_binarydir" "$APPDIR/"; '
+                   'else echo "no versioned gdk-pixbuf dir (loaders built-in, '
+                   'gdk-pixbuf >= 2.44): skipping copy"; fi')
+          assert needle in text, (
+            "linuxdeploy-plugin-gtk.sh no longer matches the known "
+            "gdk-pixbuf copy line; re-check the guard before bundling"
+          )
+          p.write_text(text.replace(needle, guard))
+          print("guarded the gdk-pixbuf loader-dir copy in linuxdeploy-plugin-gtk.sh")
+          PY
+          chmod +x "${tools}/linuxdeploy-plugin-gtk.sh"
+
+      - name: Install Tauri linux system packages
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            build-essential \
+            curl \
+            wget \
+            file \
+            libxdo-dev \
+            libssl-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev
+
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          targets: x86_64-unknown-linux-gnu
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/src-tauri
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+
+      - name: Package the desktop bundle (frontend, native shell, normalized archive)
+        run: desktop/cradle/package-bundle.sh --out desktop/cradle/dist
+
+      - name: Prove the emitted asset record matches the archive bytes
+        run: |
+          python3 - <<'PY'
+          import hashlib, json, pathlib, sys
+          dist = pathlib.Path("desktop/cradle/dist")
+          assets = sorted(dist.glob("*.asset.json"))
+          archives = sorted(dist.glob("*.tar.gz"))
+          assert assets and archives, "the packaging script emitted no bundle artifacts"
+          for asset_path in assets:
+              asset = json.loads(asset_path.read_text())
+              assert asset["name"] == asset_path.name.removesuffix(".asset.json") + ".tar.gz"
+              archive = dist / asset["name"]
+              digest = hashlib.sha256(archive.read_bytes()).hexdigest()
+              assert digest == asset["sha256"], f"sha256 mismatch for {archive}: {digest} != {asset['sha256']}"
+              assert pathlib.Path(str(archive) + ".sha256").read_text().startswith(digest)
+              print(f"verified {asset['name']} sha256={digest}")
+          PY
+
+      - name: Attest the bundle archive (the same build-provenance route every release artifact carries)
+        uses: actions/attest@v4
+        with:
+          subject-path: desktop/cradle/dist/*.tar.gz
+
+      - name: Retain the bundle artifact, checksum sidecar and asset record
+        uses: actions/upload-artifact@v4
+        with:
+          name: oi-desktop-bundle-${{ github.sha }}
+          path: |
+            desktop/cradle/dist/*.tar.gz
+            desktop/cradle/dist/*.sha256
+            desktop/cradle/dist/*.asset.json
+          if-no-files-found: error

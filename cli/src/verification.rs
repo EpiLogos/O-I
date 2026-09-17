@@ -234,7 +234,7 @@ fn prelocal_catalog() -> Result<PrelocalCatalog, String> {
             )
         })?
     } else {
-        CATALOG_JSON.to_owned()
+        crate::catalog_source::resolve()?.json
     };
     let catalog: PrelocalCatalog = serde_json::from_str(&source)
         .map_err(|error| format!("embedded surface verification descriptors are invalid: {error}"))?;
@@ -1166,7 +1166,7 @@ fn prelocal_now_ms() -> Result<u128, String> {
 }
 
 fn print_verification_report(report: &VerificationReport, receipt: Option<&Path>) {
-    println!("O:I pre-local verification: {}", report.result);
+    println!("verification: {}", report.result);
     println!("Snapshot: {}", report.snapshot.completeness);
     println!();
     println!("{:<20} {:<24} Revision", "Surface", "Status");

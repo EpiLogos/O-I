@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-expression-walk-observation"
+description = "Enables the expression_walk_observation command without any pre-configured scope."
+commands.allow = ["expression_walk_observation"]
+
+[[permission]]
+identifier = "deny-expression-walk-observation"
+description = "Denies the expression_walk_observation command without any pre-configured scope."
+commands.deny = ["expression_walk_observation"]

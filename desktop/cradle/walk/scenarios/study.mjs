@@ -1,0 +1,46 @@
+// Interaction tests for the explicitly authorized UI study, not owner integration claims.
+export default async function run({page,baseUrl,check,shot}) {
+ const errors=[]; page.on('pageerror',e=>errors.push(e.message));
+ await page.goto(`${baseUrl}/?study`);
+ const button=name=>page.getByRole('button',{name,exact:true});
+ await page.getByLabel('Operative wiki graph').waitFor();
+ check(await page.getByRole('navigation',{name:'Global navigation'}).isVisible(),'Persistent global rail is available');
+ check(await page.getByRole('complementary',{name:'World navigator'}).isVisible() && await page.getByRole('main',{name:'Canvas'}).isVisible() && await page.getByRole('complementary',{name:'Situated agency'}).isVisible(),'Three spatial regions are visible together');
+ await button('Select Design guidance').click();
+ check(await page.getByRole('heading',{name:'Design guidance',exact:true}).isVisible(),'Pointer selection binds the adjacent subject context');
+ await button('Open subject beside wiki').click();
+ check(await page.locator('.s-split-source h2').textContent()==='Design guidance','Open beside retains the selected source and wiki together');
+ await button('Close split').click();
+ await button('Expand agent').click();
+ check(!await page.getByRole('main',{name:'Canvas'}).isVisible() && await page.getByRole('navigation',{name:'Global navigation'}).isVisible(),'Full agency masks canvas while keeping the global rail');
+ await page.keyboard.press('Escape');
+ check(await page.getByRole('main',{name:'Canvas'}).isVisible() && await page.getByRole('heading',{name:'Design guidance',exact:true}).isVisible(),'Escape restores the canvas without losing subject');
+ await page.getByRole('separator',{name:'Resize agent panel'}).focus();await page.keyboard.press('ArrowLeft');
+ check(await page.getByRole('separator',{name:'Resize agent panel'}).getAttribute('aria-valuenow')==='320','Panel resize works from keyboard');
+ await button('Find in your world ⌘ K').click();await page.getByLabel('Search query').fill('Skills');
+ check(await page.getByRole('dialog',{name:'Search world'}).getByRole('button').count()===2,'Search filters actual study subjects');
+ await page.getByRole('dialog',{name:'Search world'}).getByRole('button',{name:/Skills/}).click();
+ check(await page.getByRole('heading',{name:'Skills',exact:true}).isVisible(),'Search opens the same subject context as the graph');
+ await button('Flow').click();const flow=page.getByLabel('Flow writing');await flow.fill('A thought that must survive workspace changes.');
+ await flow.focus(); await page.keyboard.press('Meta+a');
+ await button('Preview handoff').click();
+ check(await page.locator('.s-commission blockquote').textContent()==='A thought that must survive workspace changes.','Handoff preview carries the selected Flow text');
+ check(await flow.inputValue()==='A thought that must survive workspace changes.','Routing leaves original writing intact');
+ await page.getByLabel('Workspace',{exact:true}).selectOption('Research');
+ await button('Flow').click();check((await flow.inputValue())!=='A thought that must survive workspace changes.','Workspaces keep independent writing');
+ await page.getByLabel('Workspace',{exact:true}).selectOption('My world');
+ check(await flow.inputValue()==='A thought that must survive workspace changes.','Returning restores the original workspace surface and writing');
+ await page.reload();await page.getByLabel('Flow writing').waitFor();
+ check(await page.getByLabel('Flow writing').inputValue()==='A thought that must survive workspace changes.','Reload restores locally saved Flow writing');
+ await button('New workspace').click();await button('Rename workspace').click();await page.getByLabel('Workspace name',{exact:true}).fill('Studio');await button('Save name').click();
+ check(await page.getByLabel('Workspace',{exact:true}).inputValue()==='Studio','A freeform workspace can be created and named');
+ await button('Wiki').click();await page.locator('.s-segments').getByRole('button',{name:'Shared',exact:true}).click();await button('Select Shared field').click();await button('Inspect').click();
+ check((await page.locator('.s-provenance').innerText()).includes('SpaceTimeDB projection seam · not connected'),'Shared projection discloses its transport seam honestly');
+ await button('Open System').click();
+ check(await page.locator('.s-system>button').count()===6,'System exposes the six product boundaries');
+ await page.getByLabel('Workspace',{exact:true}).selectOption('My world');await button('Wiki').click();await page.locator('.s-segments').getByRole('button',{name:'World',exact:true}).click();await button('Select O-I').click();
+ await shot('wiki');
+ await page.setViewportSize({width:1024,height:768});
+ check(await page.evaluate(()=>document.documentElement.scrollWidth<=innerWidth),'Desktop fits a smaller laptop viewport without page overflow');
+ check(errors.length===0,`No renderer errors (${errors.join('; ')})`);
+}

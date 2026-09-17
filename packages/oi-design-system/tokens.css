@@ -1,9 +1,9 @@
 /*
  * O:I design-system tokens — the house visual vocabulary.
  *
- * Every value is extracted from the live production language in `site/src`
+ * The original vocabulary is extracted from the live production language in `site/src`
  * (#25 extraction list; wayfinder D9 + law 11: tokens precede components,
- * the host themes). No value is invented here. Consumers use `var(--oi-*)`
+ * the host themes). The dated desktop extension records later owner direction. Consumers use `var(--oi-*)`
  * only — never raw colours, spacing, type, radii, z-layers, durations, or
  * focus values. Hosts theme by overriding these tokens; composable and
  * agent-native bodies never self-chrome.
@@ -21,6 +21,13 @@
   --oi-paper: #ffffff;
   --oi-ink: #0a0a0a;
   --oi-gold: #a8873f;
+  /* Canonical desktop ground / ink pairs also serve the deliberate inverse
+   * opening. One authority prevents the prepaint fallback drifting from the
+   * engine's palette or changing the person's saved appearance preference. */
+  --oi-canonical-light-canvas-ground: #fbfbf9;
+  --oi-canonical-light-foreground: #161614;
+  --oi-canonical-dark-canvas-ground: #121211;
+  --oi-canonical-dark-foreground: #e9e9e4;
 
   /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
   --oi-surface: var(--oi-paper);
@@ -38,6 +45,9 @@
    * the paper/ink foundation. */
   --oi-world-surface: var(--oi-paper);
   --oi-world-foreground: var(--oi-ink);
+  /* World rule and muted: the same host hooks for hairlines and secondary text. */
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
 
   /* ===== section: spacing / rhythm ===== */
   --oi-space-1: 0.5rem;
@@ -84,6 +94,16 @@
   --oi-z-drawer: 60;
   --oi-z-popover: 80;
   --oi-z-notice: 90;
+  /* Decorative expression fields ride with content (0–5 local band):
+   * particles are ink on the planes, never above dialogs or menus. */
+  --oi-z-expression: 1;
+  /* The Global Expression Stage planes (desktop): overlay expressions
+   * float over ordinary chrome but under every dialog, menu or popover;
+   * frontstate is the opening/welcome ground that may become the
+   * foreground experience. Consent and security surfaces stay above both
+   * (they ride above every token here). */
+  --oi-z-stage-overlay: 65;
+  --oi-z-stage-frontstate: 75;
 
   /* ===== section: motion ===== */
   --oi-motion-fast: 160ms;
@@ -132,3 +152,231 @@
     --oi-motion-normal: 0.01ms;
   }
 }
+
+/* Desktop ground — owner ruling 2026-09-15. The desktop host opts in with
+ * `.oi-desktop`; its canonical appearance is neutral LIGHT (this block) and
+ * neutral DARK (`.oi-desktop[data-theme="dark"]` below). The dated
+ * grey-yellow-green/olive extension of 2026-09-06 is superseded — the
+ * returned application experience (the Expression language: quiet light
+ * ground and ink, controlled contrast, fine hairlines, restrained depth) is
+ * the canonical desktop ground now; see DESKTOP-LANGUAGE.md for the
+ * provenance. Role names are unchanged: every consumer keeps its meaning.
+ * `system` is a preference that resolves into one of these two; it is not
+ * a third appearance. */
+.oi-desktop {
+  color-scheme: light;
+  --oi-paper: #f7f7f4;
+  --oi-ink: var(--oi-canonical-light-foreground);
+  --oi-surface: #fbfbf9;
+  --oi-inspector-ground: #f1f1ee;
+  --oi-composer-ground: #ffffff;
+  --oi-composer-rule: #d8d8d3;
+  --oi-message-ground: #f1f1ee;
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: #6a6a66;
+  --oi-rule: #dededa;
+  --oi-focus: #161614;
+  --oi-relation: #8a8a84;
+  --oi-projection: #7c7c77;
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
+  /* Content marks — the editor's highlight commands ("Highlight yellow" …)
+   * colour a person's own text, never chrome. Translucent so the ink
+   * beneath stays legible; re-grounded for the dark appearance below. */
+  --oi-mark-yellow: rgba(233, 197, 75, 0.36);
+  --oi-mark-green: rgba(128, 184, 140, 0.36);
+  --oi-mark-blue: rgba(117, 174, 228, 0.36);
+  --oi-mark-rose: rgba(215, 140, 170, 0.36);
+}
+
+/* Source syntax inhabits the host appearance. Separate semantic roles keep
+ * language distinctions addressable without importing a light-only editor
+ * palette or spending the scarce meta-relation gold on routine source text. */
+:root, .oi-desktop, .oi-surface-light, .oi-surface-dark {
+  --oi-syntax-meta: var(--oi-muted);
+  --oi-syntax-link: var(--oi-focus);
+  --oi-syntax-heading: var(--oi-foreground);
+  --oi-syntax-keyword: var(--oi-focus);
+  --oi-syntax-atom: var(--oi-foreground);
+  --oi-syntax-literal: var(--oi-foreground);
+  --oi-syntax-string: var(--oi-foreground);
+  --oi-syntax-special: var(--oi-focus);
+  --oi-syntax-definition: var(--oi-focus);
+  --oi-syntax-variable: var(--oi-foreground);
+  --oi-syntax-type: var(--oi-focus);
+  --oi-syntax-comment: var(--oi-muted);
+  --oi-syntax-invalid: var(--oi-focus);
+}
+
+:root {
+  /* ===== section: semantic tokens — surface / text / muted / rule roles ===== */
+  --oi-accent-ink: var(--oi-focus);
+  --oi-accent-ground: var(--oi-surface);
+  /* ===== section: spacing / rhythm ===== */
+  --oi-desktop-gap-xs: 4px;
+  --oi-desktop-gap-sm: 8px;
+  --oi-desktop-gap: 12px;
+  --oi-desktop-gap-lg: 20px;
+  --oi-desktop-bar: 34px;
+  --oi-desktop-row: 30px;
+  --oi-desktop-hit-target: 28px;
+  --oi-desktop-rule: 1px;
+  --oi-reading-width: 660px;
+  --oi-dialog-width: calc(480px + var(--oi-space-6) + var(--oi-space-6));
+  --oi-spatial-min-height: 240px;
+  --oi-graph-point-min-radius: 0.45px;
+  --oi-graph-edge-width: 0.4px;
+  /* ===== section: typography ===== */
+  --oi-desktop-type-caption: 11px;
+  --oi-desktop-type-body: 13px;
+  --oi-desktop-type-title: 16px;
+  /* ===== section: motion ===== */
+}
+
+
+/* Shell vocabulary — the three regions float as distinct planes on one
+ * shell ground: a slightly lighter sidebar, paper panes in a slightly
+ * darker gutter, and the agent layer on its own ground. Hairlines
+ * separate; gutters give the thin offsetting margin that lets the sidebar
+ * and each pane read as a card. (FND-01/02 foundation round, 2026-09-08;
+ * re-grounded to the neutral light appearance 2026-09-15 — geometry, type
+ * and motion values unchanged.) Additive: every existing role keeps its
+ * meaning. The accent is ink, not a hue: selection, the send control and
+ * the focus ring are drawn in foreground strength, and colour is reserved
+ * for the scarce meta-relation role. */
+.oi-desktop {
+  /* grounds */
+  --oi-shell-ground: #e9e9e5;          /* window ground behind every plane; pane gutter */
+  --oi-sidebar-ground: #f3f3f0;        /* left plane, lighter than the gutter */
+  --oi-sidebar-ground-glass: rgba(243, 243, 240, 0.92);
+  --oi-canvas-ground: var(--oi-canonical-light-canvas-ground); /* pane body paper */
+  --oi-inverse-canvas-ground: var(--oi-canonical-dark-canvas-ground);
+  --oi-inverse-foreground: var(--oi-canonical-dark-foreground);
+  --oi-pane-bar-ground: #f5f5f2;       /* pane tab bar */
+  --oi-agent-ground: #f1f1ee;          /* right accompanying-agent plane */
+  --oi-wash: #ecece8;                  /* current row / hover wash */
+  --oi-wash-strong: #e2e2dd;
+  --oi-hairline: #d8d8d3;              /* card edge */
+  --oi-hairline-soft: #e5e5e0;         /* tab separators, inner rules */
+  --oi-accent: #2a2a27;                /* ink accent: selected underline, send, focus ring */
+  --oi-accent-ink: #1c1c1a;
+  --oi-accent-soft: #9a9a94;           /* pane focus highlight */
+  --oi-composer-ground: #ffffff;
+  --oi-composer-rule: #d8d8d3;
+  --oi-message-ground: #f1f1ee;
+  --oi-inspector-ground: var(--oi-agent-ground);
+  --oi-accent-ground: var(--oi-surface);
+  --oi-muted-2: #8b8b86;               /* meta labels, eyebrows */
+  --oi-muted-3: #adada8;               /* placeholders, tertiary */
+  /* geometry */
+  --oi-shell-gutter: 4px;              /* the thin offsetting margin between planes */
+  --oi-shell-edge: 1px;
+  --oi-shell-radius: 6px;              /* plane corner */
+  --oi-shell-bar: 35px;                /* workbench bar */
+  --oi-shell-tabbar: 32px;             /* pane tab bar */
+  --oi-shell-row: 30px;                /* nav row */
+  --oi-shell-row-lg: 32px;             /* project row */
+  --oi-shell-control: 26px;            /* icon control body */
+  --oi-shell-hit: 28px;                /* minimum hit target */
+  --oi-footer-edge: 3px;               /* the collapsed workspace footer's reveal strip */
+  --oi-footer-approach: 6px;           /* pointer approach zone that opens the footer */
+  --oi-footer-height: 24px;            /* the revealed / pinned status row */
+  --oi-sidebar-width: 240px;
+  --oi-sidebar-min: 200px;
+  --oi-sidebar-max: 330px;
+  --oi-agent-width: 300px;
+  --oi-agent-min: 260px;
+  --oi-agent-max: 520px;
+  /* type */
+  --oi-shell-type-eyebrow: 8px;        /* tracked uppercase */
+  --oi-shell-type-meta: 9px;
+  --oi-shell-type-ui: 10px;
+  --oi-shell-type-nav: 11px;
+  --oi-shell-type-body: 12px;
+  --oi-shell-type-prose: 13px;
+  --oi-shell-type-heading: 15px;
+  --oi-shell-type-title: 18px;
+  --oi-shell-tracking: 1.2px;
+  /* elevation */
+  --oi-shadow-plane: 0 1px 2px rgba(22, 22, 20, 0.05);
+  --oi-shadow-menu: 0 10px 40px rgba(22, 22, 20, 0.12), 0 1px 2px rgba(22, 22, 20, 0.08);
+  --oi-shadow-overlay: 0 20px 70px rgba(22, 22, 20, 0.14);
+  --oi-shadow-drawer: -10px 0 25px rgba(22, 22, 20, 0.07);
+  /* motion */
+  --oi-motion-plane: 200ms;            /* sidebar/agent width, maximize */
+  --oi-motion-ui: 120ms;               /* hover, selection, menu */
+  --oi-motion-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
+  --oi-motion-ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+}
+@media (prefers-reduced-motion: reduce) {
+  .oi-desktop { --oi-motion-plane: 0.01ms; --oi-motion-ui: 0.01ms; }
+}
+
+/* The canonical DARK appearance — the inverse of the light ground above:
+ * ink becomes the ground, paper the ink, with the same restraint. Selected
+ * by the host setting data-theme="dark" on the oi-desktop body (Visuals →
+ * Themes; "system" resolves there, before first paint). Role names never
+ * change between themes (law 11): every shell token above is re-grounded,
+ * nothing is left to the light values by accident. Gold keeps its one
+ * value in both appearances. */
+.oi-desktop[data-theme="dark"] {
+  color-scheme: dark;
+  --oi-paper: #121211;
+  --oi-ink: var(--oi-canonical-dark-foreground);
+  --oi-surface: #161615;
+  --oi-inspector-ground: #141413;
+  --oi-composer-ground: #1c1c1a;
+  --oi-composer-rule: #34342f;
+  --oi-message-ground: #1a1a18;
+  --oi-foreground: var(--oi-ink);
+  --oi-muted: #a2a29c;
+  --oi-rule: #2b2b28;
+  --oi-focus: #eeeee8;
+  --oi-relation: #7d7d77;
+  --oi-projection: #8c8c86;
+  --oi-world-surface: var(--oi-paper);
+  --oi-world-foreground: var(--oi-ink);
+  --oi-world-rule: var(--oi-rule);
+  --oi-world-muted: var(--oi-muted);
+  /* shell vocabulary */
+  --oi-shell-ground: #0b0b0a;
+  --oi-sidebar-ground: #151514;
+  --oi-sidebar-ground-glass: rgba(21, 21, 20, 0.92);
+  --oi-canvas-ground: var(--oi-canonical-dark-canvas-ground);
+  --oi-inverse-canvas-ground: var(--oi-canonical-light-canvas-ground);
+  --oi-inverse-foreground: var(--oi-canonical-light-foreground);
+  --oi-pane-bar-ground: #181817;
+  --oi-agent-ground: #141413;
+  --oi-wash: #1f1f1d;
+  --oi-wash-strong: #282826;
+  --oi-hairline: #2c2c29;
+  --oi-hairline-soft: #242422;
+  --oi-accent: #dcdcd6;
+  --oi-accent-ink: #f0f0eb;
+  --oi-accent-soft: #55554f;
+  --oi-muted-2: #83837d;
+  --oi-muted-3: #5b5b56;
+  --oi-shadow-plane: 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oi-shadow-menu: 0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
+  --oi-shadow-overlay: 0 20px 70px rgba(0, 0, 0, 0.55);
+  --oi-shadow-drawer: -10px 0 25px rgba(0, 0, 0, 0.35);
+  --oi-accent-ground: var(--oi-surface);
+  --oi-mark-yellow: rgba(233, 197, 75, 0.3);
+  --oi-mark-green: rgba(128, 184, 140, 0.3);
+  --oi-mark-blue: rgba(117, 174, 228, 0.3);
+  --oi-mark-rose: rgba(215, 140, 170, 0.3);
+}
+
+/* Semantic cue lease, gesture duration and target geometry. */
+:root {
+  --oi-gesture-duration: 600ms;
+  --oi-expression-lease: 30000ms;
+  --oi-expression-field-width: 44px;
+  --oi-expression-field-height: 28px;
+}
+/* Walk hardening surfaces; these do not register product theme choices. */
+.oi-surface-warm-dark { --oi-surface: #292622; --oi-foreground: #e8dfd0; }
+
+.oi-surface-contrast { --oi-surface: #fff; --oi-foreground: #252525; }

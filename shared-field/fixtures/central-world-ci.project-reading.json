@@ -1,0 +1,69 @@
+{
+  "schema": "central.wiki-reading/v1",
+  "register": "project",
+  "project": "Fixture",
+  "world_ref": "project:Fixture",
+  "profile": "okf-wiki/v1",
+  "automatic_agent_or_model_invocation": false,
+  "counts": {
+    "edges": 3,
+    "nodes": 1,
+    "objects": 2,
+    "other_objects": 0,
+    "spaces": 1
+  },
+  "source": {
+    "path": "ProjectCentral/agents/wiki/wiki.json",
+    "ref": "central:source:project:Fixture:ProjectCentral/agents/wiki/wiki.json",
+    "revision": "central.content-fnv1a64/v1:837:ci-project-1"
+  },
+  "spaces": [
+    {
+      "ref": "central:wiki:project:Fixture",
+      "title": "Fixture",
+      "revision": 1,
+      "anchor_ref": "wiki:node:project-root/fixture",
+      "parent_space_refs": [
+        "central:wiki:root"
+      ],
+      "child_space_refs": [],
+      "node_refs": [
+        "wiki:node:project-root/fixture"
+      ]
+    }
+  ],
+  "nodes": [
+    {
+      "ref": "wiki:node:project-root/fixture",
+      "title": "Fixture",
+      "node_type": "project-root",
+      "revision": 1,
+      "space_refs": [
+        "central:wiki:project:Fixture"
+      ],
+      "source_refs": [
+        "ProjectCentral/project.json"
+      ],
+      "provenance_source_refs": [
+        "ProjectCentral/project.json"
+      ]
+    }
+  ],
+  "relations": [
+    {
+      "from_ref": "wiki:node:project-root/fixture",
+      "kind": "node-source",
+      "to_ref": "ProjectCentral/project.json"
+    },
+    {
+      "from_ref": "wiki:node:project-root/fixture",
+      "kind": "node-space",
+      "to_ref": "central:wiki:project:Fixture"
+    },
+    {
+      "from_ref": "central:wiki:project:Fixture",
+      "kind": "space-node",
+      "to_ref": "wiki:node:project-root/fixture"
+    }
+  ]
+}

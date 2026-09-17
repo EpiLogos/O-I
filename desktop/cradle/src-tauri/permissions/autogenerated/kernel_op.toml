@@ -1,0 +1,11 @@
+# Automatically generated - DO NOT EDIT!
+
+[[permission]]
+identifier = "allow-kernel-op"
+description = "Enables the kernel_op command without any pre-configured scope."
+commands.allow = ["kernel_op"]
+
+[[permission]]
+identifier = "deny-kernel-op"
+description = "Denies the kernel_op command without any pre-configured scope."
+commands.deny = ["kernel_op"]

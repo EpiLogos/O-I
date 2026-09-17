@@ -4,36 +4,44 @@
   "version": "0.1.0",
   "identifier": "org.epilogos.oi.cradle",
   "build": {
-    "beforeDevCommand": "npm --prefix .. run dev",
+    "beforeDevCommand": "npm run dev",
     "devUrl": "http://localhost:1421",
-    "beforeBuildCommand": "npm --prefix .. run build",
+    "beforeBuildCommand": "npm run build",
     "frontendDist": "../dist"
   },
   "bundle": {
-    "icon": ["icons/icon.png"]
+    "active": true,
+    "targets": ["appimage"],
+    "icon": [
+      "icons/icon.png"
+    ]
   },
   "app": {
     "windows": [
       {
         "label": "main",
-        "title": "O:I",
+        "title": "O-I",
+        "titleBarStyle": "Overlay",
+        "hiddenTitle": true,
         "width": 1280,
         "height": 820,
-        "minWidth": 760,
+        "minWidth": 360,
         "minHeight": 560,
         "resizable": true
       }
     ],
     "security": {
-      "capabilities": ["main-window"],
+      "capabilities": [
+        "main-window"
+      ],
       "csp": {
-        "default-src": "'self' customprotocol: asset:",
+        "default-src": "'self' customprotocol: oi-material:",
         "connect-src": "ipc: http://ipc.localhost",
-        "img-src": "'self' asset: http://asset.localhost data: blob:",
+        "img-src": "'self' oi-material: data: blob:",
         "style-src": "'self' 'unsafe-inline'",
-        "script-src": "'self'",
+        "script-src": "'self' 'sha256-bMAt1VMNSgep/lqrOnkOTbY29GqSzOytkZLkzY0Zxvk='",
         "object-src": "'none'",
-        "frame-src": "'none'",
+        "frame-src": "oi-material:",
         "base-uri": "'none'"
       }
     }

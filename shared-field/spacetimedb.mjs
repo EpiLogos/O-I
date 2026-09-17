@@ -34,6 +34,16 @@ function implementationRow(row, semanticRef) {
   return { row_id: String(row.rowId), semantic_ref: semanticRef };
 }
 
+function relationFailure(error) {
+  const message = String(error?.message ?? error);
+  if (message.startsWith('hosted Explore relation requires')) return 'The source relation has no explicit or provenance semantic ref.';
+  if (message.includes('does not match canonical contract')) return 'The indexed relation identity or endpoints disagree with the source contract.';
+  if (message.startsWith('Unknown relation source:')) return 'The source endpoint is unavailable in the current reading.';
+  if (message.startsWith('Unknown relation target:')) return 'The target endpoint is unavailable in the current reading.';
+  // JSON parse errors can quote raw body bytes; retain no such excerpt.
+  return 'The source relation does not satisfy the Explore relation contract.';
+}
+
 export function projectionStorageKey(projectionRef, projectionRevision) {
   requireString(projectionRef, 'projection ref');
   if (!Number.isInteger(projectionRevision) || projectionRevision < 1) {
@@ -66,6 +76,7 @@ export function hostedSnapshotFromRows(rows = {}) {
   const projections = [];
   const entries = [];
   const relations = [];
+  const relationErrors = [];
   const implementation = {
     fields: [],
     participants: [],
@@ -115,15 +126,34 @@ export function hostedSnapshotFromRows(rows = {}) {
     implementation.entries.push(implementationRow(row, entry.ref));
   }
 
+  const entryByRef = new Map(entries.map(entry => [entry.ref, entry]));
   for (const row of rows.exploreRelations ?? []) {
-    const relation = parseContractJson(row.relationJson, 'Explore relationJson');
-    requireEqual(row.relationRef, relationStorageRef(relation), 'Explore relationRef');
-    requireEqual(row.fromRef, relation.from, 'Explore relation fromRef');
-    requireEqual(row.toRef, relation.to, 'Explore relation toRef');
-    requireEqual(row.relation, relation.relation, 'Explore relation type');
-    requireEqual(row.origin, relation.origin, 'Explore relation origin');
-    relations.push(relation);
-    implementation.relations.push(implementationRow(row, row.relationRef));
+    try {
+      const relation = parseContractJson(row.relationJson, 'Explore relationJson');
+      requireEqual(row.relationRef, relationStorageRef(relation), 'Explore relationRef');
+      requireEqual(row.fromRef, relation.from, 'Explore relation fromRef');
+      requireEqual(row.toRef, relation.to, 'Explore relation toRef');
+      requireEqual(row.relation, relation.relation, 'Explore relation type');
+      requireEqual(row.origin, relation.origin, 'Explore relation origin');
+      // Validate this edge and its currently visible endpoints independently.
+      // A malformed or unavailable edge cannot invalidate unrelated worlds.
+      const endpoints = [...new Set([relation.from, relation.to])]
+        .map(ref => entryByRef.get(ref)).filter(Boolean);
+      createExploreApplication({ entries: endpoints, relations: [relation] });
+      const indexed = implementationRow(row, row.relationRef);
+      relations.push(relation);
+      implementation.relations.push(indexed);
+    } catch (error) {
+      // These are rejected provider-row coordinates, never admitted semantic
+      // relations. Do not echo the raw JSON/body in diagnostics.
+      relationErrors.push({
+        field_ref: row.fieldRef ?? null,
+        relation_ref: row.relationRef ?? null,
+        from: row.fromRef ?? null,
+        to: row.toRef ?? null,
+        detail: relationFailure(error),
+      });
+    }
   }
 
   createExploreApplication({ entries, relations });
@@ -134,6 +164,7 @@ export function hostedSnapshotFromRows(rows = {}) {
     projections: projections.map(clone),
     entries: entries.map(clone),
     relations: relations.map(clone),
+    relation_errors: clone(relationErrors),
     implementation: clone(implementation),
   };
 }
@@ -154,7 +185,7 @@ export function rowsFromSpacetimeDb(db) {
   };
 }
 
-export function createSpacetimeExploreSource(db) {
+export function createSpacetimeExploreSource(db, lifecycle) {
   const tables = Object.freeze([
     ['sharedField', 'shared-field'],
     ['participant', 'participant'],
@@ -170,6 +201,7 @@ export function createSpacetimeExploreSource(db) {
   function subscribe(listener) {
     if (typeof listener !== 'function') throw new TypeError('SpaceTimeDB source listener must be a function');
     const removers = [];
+    if (lifecycle) removers.push(lifecycle.subscribe(listener));
 
     for (const [property, table] of tables) {
       const handle = db[property];
@@ -202,7 +234,7 @@ export function createSpacetimeExploreSource(db) {
     };
   }
 
-  return Object.freeze({ snapshot, subscribe });
+  return Object.freeze({ snapshot, subscribe, status: () => lifecycle?.status() ?? { state: "unknown" } });
 }
 
 /**
@@ -221,6 +253,8 @@ export function createLiveExploreApplication(source) {
   let hostedSnapshot;
   let revision = 0;
   let lastError;
+  let lastGoodAt;
+  let disposed = false;
   const listeners = new Set();
 
   function rebuild(cause = { type: 'initial' }) {
@@ -231,6 +265,7 @@ export function createLiveExploreApplication(source) {
         relations: nextSnapshot.relations,
       });
       hostedSnapshot = nextSnapshot;
+      lastGoodAt = new Date().toISOString();
       application = nextApplication;
       revision += 1;
       lastError = undefined;
@@ -247,14 +282,24 @@ export function createLiveExploreApplication(source) {
   }
 
   rebuild();
-  const unsubscribeSource = source.subscribe((event) => rebuild(event));
+  const unsubscribeSource = source.subscribe((event) => {
+    if (event.type === 'transport') {
+      for (const listener of listeners) listener({ type: 'availability', status: status() });
+    } else rebuild(event);
+  });
 
   const call = (name) => (...args) => application[name](...args);
 
   function status() {
+    const transport = disposed ? { state: 'disposed' } : (source.status?.() ?? { state: 'unknown' });
+    const unavailableRelations = hostedSnapshot?.relation_errors ?? [];
     return {
       revision,
-      healthy: lastError === undefined,
+      healthy: lastError === undefined && unavailableRelations.length === 0 && transport.state === "available",
+      material_valid: lastError === undefined && unavailableRelations.length === 0,
+      material: { state: lastError ? 'last-good' : unavailableRelations.length ? 'degraded' : 'validated', observed_at: lastGoodAt, age_ms: Math.max(0, Date.now() - Date.parse(lastGoodAt)) },
+      transport,
+      relation_errors: clone(unavailableRelations),
       ...(lastError ? { error: lastError.message } : {}),
     };
   }
@@ -270,7 +315,9 @@ export function createLiveExploreApplication(source) {
   }
 
   function dispose() {
+    disposed = true;
     unsubscribeSource?.();
+    for (const listener of listeners) listener({ type: "availability", status: status() });
     listeners.clear();
   }
 

@@ -74,4 +74,19 @@ test('language-neutral Explore schema names the versioned cross-client contracts
   assert.ok(schema.$defs.sourceView);
   assert.ok(schema.$defs.explainView);
   assert.ok(schema.$defs.surfaceView);
+  assert.equal(schema.$defs.subjectPresentations.properties.schema.const, 'oi.subject-presentations/v1');
+  assert.equal(schema.$defs.discoveryView.properties.schema.const, 'oi.explore-discovery/v1');
+  assert.ok(schema.$defs.searchResult.properties.presentations, 'search results carry the compact presentation reveal');
+  assert.ok(schema.$defs.openView.properties.presentations, 'open carries the full presentation reading');
+});
+
+
+test('Explore carries disclosed semantic relation identity through every surface', () => {
+  const source={kind:'wiki-relation',ref:'relation:canonical',source_system:'central',revision:'source-r17'};
+  const entry=ref=>({ref,kind:'wiki-node',world_ref:'world:relation-id',label:ref,revision:'node-r3',provenance:[source]});
+  const relation={relation_ref:'relation:canonical',from:'wiki:a',to:'wiki:b',relation:'wiki.contains',origin:'wiki',provenance:[source]};
+  const app=createExploreApplication({entries:[entry('wiki:a'),entry('wiki:b')],relations:[relation]});
+  for(const name of ['browser','desktop','agent'])assert.equal(app.surface(name,'wiki:a').read_model.relations.edges[0].relation_ref,relation.relation_ref);
+  assert.equal(app.open('wiki:a').relations.edges[0].provenance[0].revision,'source-r17');
+  assert.throws(()=>createExploreApplication({entries:[entry('wiki:a')],relations:[{...relation,relation_ref:''}]}),/relation_ref/);
 });

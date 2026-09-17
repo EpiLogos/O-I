@@ -16,6 +16,14 @@ for p in $(
   case "$p" in
     desktop/cradle*) continue ;; # created by execution (U0.3)
     desktop/ui*)     continue ;; # removed by execution (U0.7) — absence is fine
+    docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md)
+      # This citation belongs to QL-MEF, as the Skill states. Resolve it
+      # against an explicitly selected owner checkout, never an O:I copy.
+      if [ -z "${OI_QL_SOURCE_ROOT:-}" ] || [ ! -f "$OI_QL_SOURCE_ROOT/$p" ]; then
+        echo "MISSING QL SOURCE: $p — set OI_QL_SOURCE_ROOT to the accepted QL-MEF checkout"
+        missing=1
+      fi
+      continue ;;
   esac
   [ -e "$p" ] || { echo "MISSING: $p"; missing=1; }
 done
@@ -31,14 +39,24 @@ fi
 surface_fail=0
 for spec in "aikit compose --help" "aikit client --help" "ctrl actions --json"; do
   bin=${spec%% *}
-  if ! command -v "$bin" >/dev/null 2>&1; then
-    echo "MISSING BIN: $bin (build and install the product's release binary)"
+  case "$bin" in
+    aikit) executable=${OI_AIKIT_BIN:-aikit} ;;
+    ctrl) executable=${OI_CENTRAL_CTRL_BIN:-ctrl} ;;
+  esac
+  if ! command -v "$executable" >/dev/null 2>&1; then
+    echo "MISSING BIN: $executable (build and bind the product's executable)"
     surface_fail=1
     continue
   fi
-  # Intentional word-splitting: each spec is a fixed, known-good invocation.
-  if ! $spec >/dev/null 2>&1; then
-    echo "MISSING SURFACE: $spec — installed binary predates cited source; rebuild + reinstall"
+  # Keep the selected executable whole, including paths containing spaces.
+  result=0
+  case "$spec" in
+    "aikit compose --help") "$executable" compose --help >/dev/null 2>&1 || result=$? ;;
+    "aikit client --help") "$executable" client --help >/dev/null 2>&1 || result=$? ;;
+    "ctrl actions --json") "$executable" actions --json >/dev/null 2>&1 || result=$? ;;
+  esac
+  if [ "$result" -ne 0 ]; then
+    echo "MISSING SURFACE: $spec via $executable — verify the selected owner build"
     surface_fail=1
   fi
 done
@@ -51,7 +69,17 @@ fi
 # (gate work happens there legitimately); violations on any other branch do.
 branch=$(git branch --show-current)
 extra_worktrees=$(git worktree list | tail -n +2)
-if [ -n "$extra_worktrees" ]; then
+if [ -n "$extra_worktrees" ] && [ -n "${CRADLE_PARALLEL_BASE:-}" ]; then
+  # #306 explicitly commissions parallel consumers after EX1. The caller
+  # supplies the published base; each isolated lane must actually contain it.
+  if [ "$branch" = "main" ] || [ -z "$branch" ] ||
+     [ ! -f docs/contracts/EXPRESSION-APPLICATION-V1.md ] ||
+     ! git merge-base --is-ancestor "$CRADLE_PARALLEL_BASE" HEAD; then
+    echo "GIT GROUND: parallel lane must be a named branch containing the published Expression base"
+    exit 1
+  fi
+  echo "GIT GROUND: commissioned parallel lane $branch contains $CRADLE_PARALLEL_BASE"
+elif [ -n "$extra_worktrees" ]; then
   echo "GIT GROUND: stray worktree(s) present — stop and report (law 13):"
   echo "$extra_worktrees"
   exit 1

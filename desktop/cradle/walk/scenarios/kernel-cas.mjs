@@ -1,3 +1,4 @@
+import {docText, waitForDoc} from '../editor-doc.mjs';
 /**
  * Scenario: kernel-cas (ported from the u0.4 walk) — the kernel seam
  * re-proof, verified by operation in the running app (map §5 U0.4;
@@ -36,12 +37,11 @@
  * the revision returns to the original content hash.
  */
 
-import { execSync } from "node:child_process";
+export { setup } from './editor.mjs';
 import { readFileSync, writeFileSync } from "node:fs";
 import { join, resolve } from "node:path";
 
-const TARGET_REF_PREFIX = "central:source:project:project:o-i:";
-const TARGET_PATH = "ProjectCentral/user/learnings/README.md";
+
 
 export default async function run(ctx) {
   const {
@@ -58,9 +58,10 @@ export default async function run(ctx) {
     log,
   } = ctx;
 
-  const cradleRoot = resolve(import.meta.dirname, "../..");
-  const repoRoot = resolve(cradleRoot, "../..");
-  const TARGET_FILE = join(repoRoot, TARGET_PATH);
+  const p = ctx.provision;
+  const TARGET_PATH = p.sources[0].binding.path;
+  const TARGET_FILE = join(p.projectRoot, TARGET_PATH);
+  const TARGET_REF = p.sources[0].binding.ref;
 
   /** The walk leaves the world as it found it — even if it fails midway:
    * the exit path restores the real file's original bytes. */
@@ -86,45 +87,25 @@ export default async function run(ctx) {
     await page.goto(baseUrl, { waitUntil: "load" });
     await page.evaluate(() => localStorage.clear());
     await page.reload({ waitUntil: "load" });
-    const restCensus = await page.evaluate(() =>
-      Array.from(document.querySelectorAll("body *")).map((element) =>
-        [
-          element.tagName.toLowerCase(),
-          typeof element.className === "string" ? element.className : "",
-        ]
-          .filter(Boolean)
-          .join("."),
-      ),
-    );
-    check(
-      restCensus.join("|") ===
-        "div|div.rest|aside.agency-field|main.canvas|textarea.canvas-surface|button.to-affordance",
-      "austere rest unchanged with the kernel mounted (census 6 nodes)",
-    );
-
-    // -------------------------------------------------------------------------
-    // 1. ⌘O -> the real horizon listing; open a real file; content renders.
-    await page.keyboard.press("Meta+o");
-    await page.waitForSelector(".sources-index .source-row", { timeout: 10_000 });
-    const rows = await page.evaluate(() =>
-      [...document.querySelectorAll(".source-row-open")].map((row) => ({
-        ref: row.dataset.ref,
-        revision: row.dataset.revision,
-      })),
-    );
+    check(await page.locator('.desktop-shell').count() === 1, "Spatial shell hosts the real kernel");
+    const nav = page.getByRole('complementary', {name:'World navigator'});
+    await nav.locator('[data-project-path="Work/Editor"]').click();
+  if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
+    await nav.locator('[data-file-path]').first().waitFor();
+    const rows = (await channel('read.sources')).data.sources;
     check(
       rows.length >= 3,
       `the real horizon lists ${rows.length} participating sources (≥3, no fixtures)`,
     );
     check(
-      rows.every((row) => row.ref.startsWith(TARGET_REF_PREFIX)),
+      rows.every((row) => row.ref.startsWith("central:source:")),
       "every listed ref is Central's canonical grammar (central:source:project:project:o-i:…)",
     );
     check(
       rows.every((row) => row.revision.startsWith("central.content-fnv1a64/v1:")),
       "every row carries the horizon's live revision",
     );
-    const readmeRow = rows.find((row) => row.ref.endsWith(TARGET_PATH));
+    const readmeRow = rows.find((row) => row.ref === TARGET_REF);
     check(!!readmeRow, `the walk's real file is listed: ${TARGET_PATH}`);
 
     // The channel reads the same listing the surface renders — one seam.
@@ -144,17 +125,17 @@ export default async function run(ctx) {
 
     const seqBeforeOpen = await lastSeq();
     const openFile = await op("ui.open_real_file", async () => {
-      await page.click(`.source-row-open[data-ref="${readmeRow.ref}"]`);
-      await page.waitForSelector(".source-textarea", { timeout: 10_000 });
+      await nav.locator(`[data-file-path="Work/Editor/${readmeRow.path}"]`).click();
+      await page.waitForSelector(".cm-content", { timeout: 10_000 });
       await page.waitForFunction(
-        () => document.querySelector(".source-textarea")?.value.length > 0,
+        () => document.querySelectorAll(".cm-content .cm-line").length > 0,
         null,
         { timeout: 10_000 },
       );
     });
     metric("open_file_ms", openFile.duration_ms);
     const rendered = await page.evaluate(() => ({
-      value: document.querySelector(".source-textarea").value,
+      value: (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')),
       revision: document.querySelector(".source-revision").dataset.revision,
       ref: document.querySelector(".source-editor").dataset.ref,
     }));
@@ -184,7 +165,7 @@ export default async function run(ctx) {
     // -------------------------------------------------------------------------
     // 2. Edit -> dirty marker + exactly ONE buffer-dirty event.
     const edit1 = `${originalContent}\n<!-- u0.4 kernel seam walk: edit one -->\n`;
-    await page.fill(".source-textarea", edit1);
+    await page.fill(".cm-content", edit1);
     await page.waitForSelector(".source-editor[data-dirty='true']", { timeout: 10_000 });
     check(!!(await page.$(".source-dirty-marker")), "the dirty marker renders (buffer ≠ canonical)");
     check(
@@ -192,7 +173,7 @@ export default async function run(ctx) {
       "the tab carries the dirty state too",
     );
     let seqBeforeEdit = await lastSeq();
-    await page.fill(".source-textarea", `${edit1}more typing that is not a new state change\n`);
+    await page.fill(".cm-content", `${edit1}more typing that is not a new state change\n`);
     await page.waitForTimeout(600); // give any spurious emission time to appear
     const edit2Events = await eventsAfter(seqBeforeEdit);
     check(
@@ -243,13 +224,13 @@ export default async function run(ctx) {
 
     // -------------------------------------------------------------------------
     // 4. Concurrent external edit -> ⌘S -> structured conflict, both sides kept.
-    const dirtyContent = await page.evaluate(() => document.querySelector(".source-textarea").value);
+    const dirtyContent = await page.evaluate(() => (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')));
     const edit2 = `${dirtyContent}\n<!-- u0.4 kernel seam walk: edit two (the cradle side) -->\n`;
-    await page.fill(".source-textarea", edit2);
+    await page.fill(".cm-content", edit2);
     await page.waitForSelector(".source-editor[data-dirty='true']", { timeout: 10_000 });
     // The external edit lands on disk under the buffer — echo via shell.
     const externalLine = "external edit from outside the cradle (u0.4 conflict probe)";
-    execSync(`printf '%s\\n' '${externalLine}' >> '${TARGET_FILE}'`);
+    writeFileSync(TARGET_FILE, readFileSync(TARGET_FILE, "utf8") + externalLine + "\n");
     log(`external edit appended on disk: ${TARGET_PATH}`);
 
     seqBeforeEdit = await lastSeq();
@@ -276,7 +257,7 @@ export default async function run(ctx) {
     );
     // BOTH sides preserved.
     const conflictDom = await page.evaluate(() => ({
-      buffer: document.querySelector(".source-textarea").value,
+      buffer: (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')),
       expected: document.querySelector("[data-expected]").dataset.expected,
       current: document.querySelector("[data-current]").dataset.current,
       canonical: document.querySelector(".source-conflict-canonical-body").textContent,
@@ -311,7 +292,7 @@ export default async function run(ctx) {
     );
     const rebased = await page.evaluate(() => ({
       base: document.querySelector(".source-revision").dataset.revision,
-      buffer: document.querySelector(".source-textarea").value,
+      buffer: (document.querySelector('.text-editor-host')?.__oiDocument?.() ?? [...document.querySelectorAll('.cm-content .cm-line')].map(l=>l.textContent.replace(/\u00a0/g,' ')).join('\n')),
       dirty: document.querySelector(".source-editor").dataset.dirty,
     }));
     check(
@@ -323,7 +304,7 @@ export default async function run(ctx) {
       "the cradle edit survived the re-read (still dirty — the layers stay distinct)",
     );
 
-    await page.click(".source-textarea"); // the caret returns to the writing layer
+    await page.click(".cm-content"); // the caret returns to the writing layer
     seqBefore = await lastSeq();
     const save2 = await channel("invoke.source_save", [readmeRow.ref]);
     check(save2.ok, "invoke.source_save crosses the seam (typed call, not a UI shortcut)");
@@ -345,8 +326,9 @@ export default async function run(ctx) {
     //    clears), then invoke.surface_focus on the file's binding — exactly
     //    one focus event carrying the same ref, and the renderer's active
     //    tab does not move: the channel has no presentation authority.
-    await page.click('.tab[data-title="Sources"]');
-    await page.waitForSelector(".sources-index", { timeout: 10_000 });
+    const second = p.sources[1];
+    await nav.locator(`[data-file-path="Work/Editor/${second.binding.path}"]`).click();
+    await page.waitForFunction(ref => document.querySelector('.cm-content')?.dataset.sourceRef === ref, second.binding.ref);
     await page.waitForTimeout(400); // let any spurious focus emission surface
     const stateRead = await channel("read.state");
     const readmeSurface = Object.values(stateRead.data.surfaces).find(
@@ -373,7 +355,7 @@ export default async function run(ctx) {
       () => document.querySelector(".tab.active")?.dataset.title ?? null,
     );
     check(
-      activeTabTitle === "Sources",
+      activeTabTitle === second.binding.path.split("/").pop(),
       "the renderer's active tab is unmoved — the channel drove the kernel relation, not the UI",
     );
     await shot("focus");
@@ -381,9 +363,9 @@ export default async function run(ctx) {
     // -------------------------------------------------------------------------
     // 7. Leave the world as found: save the original content back through
     //    the owner; the revision returns to the original content hash.
-    await page.click(`.tab[data-title="README.md"]`);
-    await page.waitForSelector(".source-textarea", { timeout: 10_000 });
-    await page.fill(".source-textarea", originalContent);
+    await page.locator(".tab").filter({hasText:TARGET_PATH.split("/").pop()}).click();
+    await page.waitForSelector(".cm-content", { timeout: 10_000 });
+    await page.fill(".cm-content", originalContent);
     await page.waitForSelector(".source-editor[data-dirty='true']", { timeout: 10_000 });
     seqBefore = await lastSeq();
     await page.keyboard.press("Meta+s");

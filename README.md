@@ -227,6 +227,8 @@ oi products [--json]
 
 The command namespace is composition convenience, not semantic ownership. All six product commands are declared `"command_standing": "accepted-main"` in `surfaces.json`. Source-level standing does not imply physical #97 acceptance; see `suite/mainline.json` for the standing qualifications.
 
+`oi prove factory` exercises Factory's accepted self-hosting Commission through the real native Factory CLI and preserves its public Project, Journey, Run, and workflow-unit reads. Its snapshot keeps deterministic, conformance, provider, material, and human Recognition grades independent. Provider or material standing moves only when an exact owner revision, schema, and real receipt are supplied; correlation never becomes Factory execution ancestry. See [`docs/FACTORY-PROVING-FLOOR.md`](docs/FACTORY-PROVING-FLOOR.md).
+
 ## Operating Infrastructure
 
 The acronym holds both poles of one field: **Operating Infrastructure** is the engineering face; **Objective Internality** is the same field from the actor's side.
@@ -252,6 +254,7 @@ Claims live at different altitudes. Start where the kind of claim you need lives
 | Surfaces | [`docs/SURFACES.md`](docs/SURFACES.md) |
 | Research programme | [`docs/RESEARCH.md`](docs/RESEARCH.md) |
 | Current installation (temporal) | [`docs/INSTALL.md`](docs/INSTALL.md) |
+| CI — what gates a change, and where sibling checks run | [`docs/CI.md`](docs/CI.md) |
 
 ### Current state (temporal)
 

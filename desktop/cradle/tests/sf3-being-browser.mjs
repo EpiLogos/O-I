@@ -1,0 +1,39 @@
+/** End-to-end hosted/native SF3 acceptance. The caller supplies an official
+ * ACP-backed AIKit Encounter owner through OI_SHARED_AGENT_CONTROLLER. */
+import assert from 'node:assert/strict';
+import {spawn} from 'node:child_process';
+import {chromium} from 'playwright';
+import {bindDefaultCentral} from '../walk/editor-doc.mjs';
+import {fileURLToPath} from 'node:url';
+const repoRoot=fileURLToPath(new URL('../../../',import.meta.url));
+const cradleRoot=fileURLToPath(new URL('../',import.meta.url));
+const bridgePort=Number(process.env.OI_SF3_BRIDGE_PORT??4283),appPort=Number(process.env.OI_SF3_APP_PORT??4273);
+const bridge=`http://127.0.0.1:${bridgePort}`,app=`http://127.0.0.1:${appPort}`,children=[];
+const target=process.env.OI_SHARED_FIELD_TARGET,sourceWorld=process.env.OI_SF3_SOURCE_WORLD,cargoTarget=process.env.OI_SF3_CARGO_TARGET_DIR;
+if(!target)throw new Error('OI_SHARED_FIELD_TARGET is required');if(!sourceWorld)throw new Error('OI_SF3_SOURCE_WORLD must name a disposable run-scoped source world');if(!cargoTarget)throw new Error('OI_SF3_CARGO_TARGET_DIR must name an isolated run-scoped Cargo target');
+const delay=ms=>new Promise(resolve=>setTimeout(resolve,ms));
+const free=async url=>{try{await fetch(url);throw new Error(`SF3 requires an unused owned endpoint: ${url}`);}catch(error){if(String(error).includes('requires an unused'))throw error;}};
+const start=(cmd,args,{cwd=cradleRoot,env={}}={})=>{const child=spawn(cmd,args,{cwd,env:{...process.env,...env},stdio:['ignore','pipe','pipe']});child.stderr.on('data',chunk=>process.stderr.write(chunk));children.push(child);return child;};
+const waitOwned=async(child,url)=>{const until=Date.now()+180000;while(Date.now()<until){if(child.exitCode!==null)throw new Error(`owned process exited ${child.exitCode} before ${url}`);try{if((await fetch(url)).ok)return;}catch{}await delay(250);}throw new Error(`Timed out waiting for owned ${url}`);};
+const run=(cmd,args,{cwd=repoRoot,env={}}={})=>new Promise((resolve,reject)=>{const child=spawn(cmd,args,{cwd,env:{...process.env,...env},stdio:['ignore','pipe','pipe']});let out='',err='';child.stdout.on('data',c=>out+=c);child.stderr.on('data',c=>err+=c);child.on('error',reject);child.on('close',code=>code===0?resolve(out):reject(new Error(`${cmd} exited ${code}: ${err}`)));});
+const jsonLine=text=>{const line=text.trim().split('\n').reverse().find(row=>row.trim().startsWith('{'));if(!line)throw new Error(`No JSON result in: ${text}`);return JSON.parse(line);};
+const op=request=>fetch(`${bridge}/op`,{method:'POST',headers:{'content-type':'application/json'},body:JSON.stringify(request)}).then(r=>r.json());
+let browser;
+try{
+ await Promise.all([free(`${bridge}/state`),free(app)]);
+ const bridgeChild=start('cargo',['run','--quiet','--manifest-path','kernel/Cargo.toml','--bin','walk-bridge','--',`127.0.0.1:${bridgePort}`],{env:{CARGO_TARGET_DIR:cargoTarget,OI_REPO_ROOT:repoRoot}});
+ const appChild=start('./node_modules/.bin/vite',['--host','127.0.0.1','--port',String(appPort),'--strictPort'],{env:{VITE_KERNEL_BRIDGE:bridge}});
+ await Promise.all([waitOwned(bridgeChild,`${bridge}/state`),waitOwned(appChild,app)]);
+ assert.equal(bridgeChild.exitCode,null);assert.equal(appChild.exitCode,null);
+ const provision=jsonLine(await run('./shared-field/spacetimedb/node_modules/.bin/tsx',['shared-field/spacetimedb/sf3-being-hosted-provision.ts'],{env:{OI_SF3_BRIDGE_URL:bridge}}));
+ const {run:runRef,agentP:participantRef,expr:expressionRef}=provision;
+ browser=await chromium.launch({headless:true,channel:'chrome'});const page=await browser.newPage({viewport:{width:1440,height:1000}}),ops=[];page.on('request',request=>{if(request.url().endsWith('/op')&&request.method()==='POST')ops.push(request.postDataJSON());});
+ const openBeing=async()=>{await page.goto(app);await page.locator('.oi-welcome-enter').click().catch(()=>{});const chooser=page.getByRole('region',{name:'Central location'});if(await chooser.isVisible().catch(()=>false))await bindDefaultCentral(page,sourceWorld);await page.getByRole('button',{name:'Open Explore',exact:true}).click();const explore=page.getByRole('region',{name:'Explore'}),node=explore.locator(`.explore-node--being[data-explore-ref="${participantRef}"]`);const until=Date.now()+90000;while(await node.count()===0&&Date.now()<until){await page.waitForTimeout(1000);await page.reload();await page.getByRole('button',{name:'Open Explore',exact:true}).click().catch(()=>{});}if(await node.count()===0)throw new Error(`Hosted Being ${participantRef} did not appear: ${(await explore.innerText()).slice(-1200)}`);await node.focus();await node.press('Enter');const being=explore.locator('.being-encounter');await being.waitFor();return being;};
+ const instruction=revision=>`Return JSON only with schema oi.expression-refinement/v1, expression_ref ${expressionRef}, expected_revision ${revision}, a nonempty summary, one changes item {"change":"entity_add","scene_ref":"${expressionRef}:scene:main","entity_ref":"${expressionRef}:entity:model","title":"Model perspective"}, empty method_refs, and empty evidence_refs because this native Expression discloses no source reading.`;
+ let being=await openBeing();assert.equal(ops.filter(row=>row.op==='encounter').length,0);await being.getByRole('textbox',{name:/Request for/}).fill(instruction(1));await being.getByRole('button',{name:'Invoke Agent'}).click();await being.getByRole('button',{name:'Reject Agent refinement'}).waitFor({timeout:150000});const rejectedProposal=await being.locator('.being-review').innerText();assert.match(rejectedProposal,/entity_add/);await being.getByRole('button',{name:'Reject Agent refinement'}).click();
+ const rejected=(await op({op:'expression',request:{operation:'inspect',expression_ref:expressionRef}})).outcome.data.document;assert.equal(rejected.revision,3);assert.equal(rejected.refinements.length,1);assert.equal(rejected.refinements[0].decision.state,'rejected');assert.deepEqual(rejected.entities,{});
+ await run('./shared-field/spacetimedb/node_modules/.bin/tsx',['shared-field/spacetimedb/sf3-being-hosted-reproject.ts'],{env:{OI_SF3_BRIDGE_URL:bridge,OI_SF3_RUN_REF:runRef}});
+ being=await openBeing();await being.getByRole('textbox',{name:/Request for/}).fill(instruction(3));await being.getByRole('button',{name:'Invoke Agent'}).click();await being.getByRole('button',{name:'Accept Agent refinement'}).waitFor({timeout:150000});const acceptedProposal=await being.locator('.being-review').innerText();assert.match(acceptedProposal,/entity_add/);await being.getByRole('button',{name:'Accept Agent refinement'}).click();
+ const accepted=(await op({op:'expression',request:{operation:'inspect',expression_ref:expressionRef}})).outcome.data.document;assert.equal(accepted.revision,5);assert.equal(accepted.refinements[1].decision.state,'accepted');assert.equal(accepted.refinements[1].continues_proposal_ref,accepted.refinements[0].proposal_ref);assert.ok(accepted.entities[`${expressionRef}:entity:model`]);assert.equal(ops.filter(row=>row.op==='encounter').length,0);assert.equal(ops.filter(row=>row.op==='being_encounter'&&row.request.operation==='invoke').length,2);
+ console.log(JSON.stringify({schema:'oi.sf3-browser-receipt/v1',run_ref:runRef,participant_ref:participantRef,expression_ref:expressionRef,rejected:{revision:3,proposal_ref:accepted.refinements[0].proposal_ref,delivery_ref:accepted.refinements[0].activity_ref,decision:'rejected'},accepted:{revision:5,proposal_ref:accepted.refinements[1].proposal_ref,delivery_ref:accepted.refinements[1].activity_ref,continues_proposal_ref:accepted.refinements[1].continues_proposal_ref,decision:'accepted'},visible_change:accepted.refinements[1].changes[0],personal_agent_encounter_operations:0}));
+}finally{await browser?.close();for(const child of children.reverse()){if(child.exitCode===null)child.kill('SIGTERM');}}

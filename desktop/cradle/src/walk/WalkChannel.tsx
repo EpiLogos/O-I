@@ -14,14 +14,16 @@
 
 import { useEffect } from "react";
 import { useKernel } from "../kernel/KernelProvider";
+import { useExpressionStage } from "../stage/ExpressionStage";
 import { bindWalkChannel } from "../../walk/client";
 
-export function WalkChannel() {
+export function WalkChannel({layout}:{layout:import("../surface/types").LayoutState}) {
   const kernel = useKernel();
+  const stage = useExpressionStage();
   useEffect(() => {
-    // Re-bind as the provider's memoised API is recreated; the channel
-    // always speaks to the one live kernel.
-    bindWalkChannel(kernel);
-  }, [kernel]);
+    // Re-bind as the provider's memoised APIs are recreated; the channel
+    // always speaks to the one live kernel and stage.
+    bindWalkChannel(kernel,()=>layout,stage);
+  }, [kernel,layout,stage]);
   return null;
 }

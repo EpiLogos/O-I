@@ -1,0 +1,84 @@
+{
+  "fixture": "changeset-idempotent-replay",
+  "kind": "changeset",
+  "case": "idempotent-replay",
+  "changeset_id": "cs-fixture-idempotent-1",
+  "lifecycle": [
+    {
+      "stage": "executed",
+      "changeset": {
+        "schema": "oi.config-changeset/v1",
+        "changeset_id": "cs-fixture-idempotent-1",
+        "created_at_unix_ms": 0,
+        "profile_ref": "development",
+        "requested": [
+          {
+            "setting_ref": "ai-kit:session:session.provider",
+            "scope": { "scope_kind": "world", "scope_ref": null },
+            "value": "herdr"
+          }
+        ],
+        "operations": [
+          {
+            "op_id": "op-1",
+            "depends_on": [],
+            "owner_ref": "ai-kit",
+            "setting_ref": "ai-kit:session:session.provider",
+            "scope": { "scope_kind": "world", "scope_ref": null },
+            "kind": "apply",
+            "plan_digest": "9ce44a",
+            "status": "verified",
+            "receipt_ref": "aikit-receipt-3",
+            "error": null
+          }
+        ],
+        "verification": {
+          "reading_digest": "e5f10a",
+          "observed_at_unix_ms": 0,
+          "reconciliations": [
+            { "setting_ref": "ai-kit:session:session.provider", "status": "satisfied" }
+          ]
+        },
+        "status": "verified"
+      }
+    }
+  ],
+  "receipt": {
+    "schema": "oi.config-receipt/v1",
+    "receipt_id": "aikit-receipt-3",
+    "owner_ref": "ai-kit",
+    "changeset_id": "cs-fixture-idempotent-1",
+    "plan_digest": "9ce44a",
+    "setting_ref": "ai-kit:session:session.provider",
+    "scope": { "scope_kind": "world", "scope_ref": null },
+    "operation": "apply",
+    "outcome": "applied",
+    "applied_at_unix_ms": 0,
+    "native_ref": "aikit:history:session.provider:3",
+    "expected_effect": { "kind": "session-restart-required", "summary": null, "ref": null },
+    "original_receipt_id": null,
+    "error": null
+  },
+  "replay_receipt": {
+    "schema": "oi.config-receipt/v1",
+    "receipt_id": "aikit-receipt-3-replay",
+    "owner_ref": "ai-kit",
+    "changeset_id": "cs-fixture-idempotent-1",
+    "plan_digest": "9ce44a",
+    "setting_ref": "ai-kit:session:session.provider",
+    "scope": { "scope_kind": "world", "scope_ref": null },
+    "operation": "apply",
+    "outcome": "no_op",
+    "applied_at_unix_ms": 0,
+    "native_ref": "aikit:history:session.provider:3",
+    "expected_effect": { "kind": "session-restart-required", "summary": null, "ref": null },
+    "original_receipt_id": "aikit-receipt-3",
+    "error": null
+  },
+  "expect": {
+    "replay_outcome": "no_op",
+    "replay_names_original_receipt": "aikit-receipt-3",
+    "idempotency_key": ["owner_ref", "changeset_id", "setting_ref", "scope", "plan_digest"],
+    "owner_did_not_reexecute": true
+  }
+}

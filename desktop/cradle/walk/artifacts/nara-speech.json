@@ -1,0 +1,496 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "nara-speech",
+  "generated_at": "2026-09-17T04:39:31.198Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience",
+      "repository_head": "25e25ab591ae95ed38e0f77f6e166cfa50bfd514",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/nara-speech-failure.png"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 369,
+  "checks": [
+    {
+      "ok": true,
+      "label": "[chain] Expression world created through the real kernel seam",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Pointing committed: the application owns the exact ref",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Canonical Nara attaches to the resolved text-capable body (honest constitution)",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Exact point resolves: the ref enters the bounded turn context",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] A deixis request on a moved Expression revision is refused (stale basis)",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Nara's turn runs on the text path; the phase machine discloses it",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] A ref that was never disclosed, selected or structural is not admitted",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Nara-returned focus action landed as a real kernel Expression edit",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Body change recorded without reminting Nara; new capabilities disclosed",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Interrupt cancels speech AND holds/cancels the choreography together; the session survives",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Checkpoint restore refuses while the live Expression has moved past the authored checkpoint",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Speech tool request REFUSED before effect; no dispatch followed",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Authorised tool request executed as a real dispatch with its own receipt",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Delegation handed exactly the admitted scope; Nara stays foreground",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Epii enrichment arrived basis-bound, retained-not-applied (a proposal)",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Stale Epii enrichment refuses auto-application after the world moved",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "The page reads the same Expression through the same kernel seam",
+      "data": {
+        "revision": 7,
+        "page_revision": 7,
+        "chain_revision": "latest"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The Nara presence surface binding opens through the kernel seam"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0.1,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-17T04:39:31.487Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 1.1,
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {
+                "expression:nara-walk-1789619971319:entity:earth": {
+                  "entity_ref": "expression:nara-walk-1789619971319:entity:earth",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "O"
+                    }
+                  },
+                  "revision": 2,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [
+                      {
+                        "availability": "available",
+                        "ref": "source:ql/ql-nara-focus-m4-earth-body",
+                        "revision": "1"
+                      }
+                    ],
+                    "subject_ref": "ql:nara:focus:m4:earth-body"
+                  },
+                  "title": "EarthBody"
+                },
+                "expression:nara-walk-1789619971319:entity:person": {
+                  "entity_ref": "expression:nara-walk-1789619971319:entity:person",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "O"
+                    }
+                  },
+                  "revision": 2,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [
+                      {
+                        "availability": "available",
+                        "ref": "source:ql/bimba--4",
+                        "revision": "1"
+                      }
+                    ],
+                    "subject_ref": "bimba:#4"
+                  },
+                  "title": "Person locus"
+                },
+                "expression:nara-walk-1789619971319:entity:relation": {
+                  "entity_ref": "expression:nara-walk-1789619971319:entity:relation",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "O"
+                    }
+                  },
+                  "revision": 2,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "ql",
+                    "presentation_role": "thing",
+                    "readings": [],
+                    "sources": [
+                      {
+                        "availability": "available",
+                        "ref": "source:ql/bimba-relation-1",
+                        "revision": "1"
+                      }
+                    ],
+                    "subject_ref": "bimba:relation:1"
+                  },
+                  "title": "Pointed relation"
+                }
+              },
+              "expression_ref": "expression:nara-walk-1789619971319",
+              "provenance": [],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 7,
+              "scenes": [
+                {
+                  "entity_refs": [
+                    "expression:nara-walk-1789619971319:entity:person",
+                    "expression:nara-walk-1789619971319:entity:relation",
+                    "expression:nara-walk-1789619971319:entity:earth"
+                  ],
+                  "revision": 2,
+                  "scene_ref": "expression:nara-walk-1789619971319:scene:main",
+                  "title": "Main"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": "expression:nara-walk-1789619971319:entity:person",
+                "scene_ref": "expression:nara-walk-1789619971319:scene:main"
+              },
+              "title": "Nara speech walk"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.surface_open",
+      "duration_ms": 1.1,
+      "seq_range": {
+        "from": 14,
+        "to": 14
+      },
+      "data": {
+        "outcome": {
+          "result": "surface_opened",
+          "snapshot": {
+            "buffers": {},
+            "focus": {
+              "subject": {
+                "kind": "subject",
+                "native_owner": "ql",
+                "provenance": {
+                  "revision": "7",
+                  "source": "expression:nara-walk-1789619971319"
+                },
+                "ref": "bimba:#4"
+              }
+            },
+            "navigator": {
+              "error": null,
+              "project": null,
+              "project_ref": null,
+              "root": {
+                "control": {
+                  "agent_expressions": {
+                    "exists": false,
+                    "path": "Control/agents/expressions",
+                    "sources": 0
+                  },
+                  "agent_governance": {
+                    "exists": true,
+                    "path": "Control/agents/governance",
+                    "sources": 0
+                  },
+                  "agent_wiki": {
+                    "exists": true,
+                    "path": "Control/agents/wiki",
+                    "sources": 1,
+                    "wiki": {
+                      "child_space_refs": [
+                        "central:wiki:project:editor-walk"
+                      ],
+                      "dangling_child_space_refs": [],
+                      "path": "Control/agents/wiki/wiki.json",
+                      "present": true,
+                      "revision": 2,
+                      "space_ref": "central:wiki:root"
+                    }
+                  },
+                  "identity": {
+                    "error": "identity manifest cannot be read: manifest file is absent",
+                    "manifest_path": "Control/user/identity/manifest.json",
+                    "present": false,
+                    "sourced_files": []
+                  },
+                  "machines": {
+                    "exists": true,
+                    "path": "Control/machines",
+                    "sources": 0
+                  },
+                  "path": "Control",
+                  "relations": {
+                    "declared_overrides": 0,
+                    "path": "Control/relations/source-relations.json",
+                    "present": false
+                  },
+                  "source_bindings": 1,
+                  "unresolved_provenance_sources": 0,
+                  "user": {
+                    "exists": true,
+                    "path": "Control/user",
+                    "sources": 0
+                  }
+                },
+                "ground_state": "healthy",
+                "mixed_root": {
+                  "detected": false,
+                  "signals": []
+                },
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-L4zqtI",
+                "root_state": "directory",
+                "schema": "central.world-map/v1",
+                "valid": true,
+                "work": {
+                  "exists": true,
+                  "loose_files": 0,
+                  "path": "Work",
+                  "projects": [
+                    {
+                      "name": "Editor",
+                      "path": "Work/Editor",
+                      "projectcentral": {
+                        "agent_governance": {
+                          "exists": true,
+                          "path": "Work/Editor/ProjectCentral/agents/governance",
+                          "sources": 0
+                        },
+                        "agent_wiki": {
+                          "exists": true,
+                          "path": "Work/Editor/ProjectCentral/agents/wiki",
+                          "sources": 1,
+                          "wiki": {
+                            "child_space_refs": [],
+                            "dangling_child_space_refs": [],
+                            "path": "Work/Editor/ProjectCentral/agents/wiki/wiki.json",
+                            "present": true,
+                            "revision": 1,
+                            "space_ref": "central:wiki:project:editor-walk"
+                          }
+                        },
+                        "flows": {
+                          "active": 0,
+                          "flows": [],
+                          "history": ".central/flow-revisions",
+                          "present": false,
+                          "registry": ".central/flows.json"
+                        },
+                        "manifest_errors": [],
+                        "now": {
+                          "active_items": 0,
+                          "day_records": 0,
+                          "human_scratch": 0,
+                          "inactive_items": 0,
+                          "invalid_items": 0,
+                          "open_questions": 0,
+                          "path": "Work/Editor/ProjectCentral/now",
+                          "present": false,
+                          "promotions": 0
+                        },
+                        "outcome": "already_conformant",
+                        "path": "Work/Editor/ProjectCentral",
+                        "reason": "ProjectCentral human-source and Agent-Wiki fractal is present and readable.",
+                        "relations": {
+                          "declared_overrides": 0,
+                          "path": "Work/Editor/ProjectCentral/relations/source-relations.json",
+                          "present": false
+                        },
+                        "state": "healthy",
+                        "user": {
+                          "exists": true,
+                          "path": "Work/Editor/ProjectCentral/user",
+                          "sources": 10
+                        },
+                        "wiki_candidates": [
+                          {
+                            "source": "ProjectCentral/agents/wiki/wiki.json",
+                            "space_ref": "central:wiki:project:editor-walk"
+                          }
+                        ]
+                      },
+                      "source_files": 0
+                    },
+                    {
+                      "name": "Other",
+                      "path": "Work/Other",
+                      "projectcentral": {
+                        "agent_governance": {
+                          "exists": false,
+                          "path": "Work/Other/ProjectCentral/agents/governance",
+                          "sources": 0
+                        },
+                        "agent_wiki": {
+                          "exists": false,
+                          "path": "Work/Other/ProjectCentral/agents/wiki",
+                          "sources": 0,
+                          "wiki": {
+                            "child_space_refs": [],
+                            "dangling_child_space_refs": [],
+                            "path": "Work/Other/ProjectCentral/agents/wiki/wiki.json",
+                            "present": false
+                          }
+                        },
+                        "flows": {
+                          "active": 0,
+                          "flows": [],
+                          "history": ".central/flow-revisions",
+                          "present": false,
+                          "registry": ".central/flows.json"
+                        },
+                        "now": {
+                          "active_items": 0,
+                          "day_records": 0,
+                          "human_scratch": 0,
+                          "inactive_items": 0,
+                          "invalid_items": 0,
+                          "open_questions": 0,
+                          "path": "Work/Other/ProjectCentral/now",
+                          "present": false,
+                          "promotions": 0
+                        },
+                        "path": "Work/Other/ProjectCentral",
+                        "relations": {
+                          "declared_overrides": 0,
+                          "path": "Work/Other/ProjectCentral/relations/source-relations.json",
+                          "present": false
+                        },
+                        "state": "absent",
+                        "user": {
+                          "exists": false,
+                          "path": "Work/Other/ProjectCentral/user",
+                          "sources": 0
+                        }
+                      },
+                      "source_files": 0
+                    }
+                  ]
+                }
+              },
+              "sources": null
+            },
+            "surfaces": {
+              "nara-walk": {
+                "kind": "nara",
+                "surface_id": "nara-walk",
+                "title": "Nara"
+              }
+            }
+          }
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 24,
+      "data": {
+        "file": "nara-speech-nara-joined-world.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "nara-speech-nara-joined-world.png"
+  ]
+}

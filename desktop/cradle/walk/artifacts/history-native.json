@@ -1,0 +1,66 @@
+{
+  "unit": "U1.3",
+  "observed_at": "2026-09-05T23:34:57.947380+00:00",
+  "application": "O-I.app",
+  "central_revision": "832f2e5508cec43fed2b7599ddab2b4bd29b7653",
+  "ground": "temporary real Central root, initialized by pinned ctrl; removed after walk",
+  "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+  "operations": [
+    "Open actual source from World",
+    "Edit local buffer",
+    "External file write in isolated ground",
+    "Cmd+S produces conflict with both exact sides",
+    "Explicitly combine both contributions, reread, pointer Save",
+    "History shows external unattributed change and human:desktop saved change"
+  ],
+  "saved_revision": "central.content-fnv1a64/v1:57:a7e5d5ca93b2fd7b",
+  "changes": [
+    {
+      "after_revision": "central.content-fnv1a64/v1:30:2d3539346a0cb79d",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:19624:c2f0d7be954a87dd",
+      "change_ref": "central:change:project:editor-walk:1",
+      "cursor": 1,
+      "kind": "modified",
+      "observed_at_unix_seconds": 1788650990,
+      "provenance": "unresolved",
+      "provider": "central.filesystem-reconcile/v1",
+      "schema": "central.source-change/v1",
+      "source_path": "ProjectCentral/user/00 01-DESIGN.md",
+      "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "world_ref": "project:editor-walk"
+    },
+    {
+      "actor": "human:desktop",
+      "actor_kind": "human",
+      "after_revision": "central.content-fnv1a64/v1:57:a7e5d5ca93b2fd7b",
+      "agent_retrieval_allowed": true,
+      "before_revision": "central.content-fnv1a64/v1:30:2d3539346a0cb79d",
+      "change_ref": "central:change:project:editor-walk:2",
+      "cursor": 2,
+      "kind": "modified",
+      "observed_at_unix_seconds": 1788651043,
+      "provenance": "unresolved",
+      "provider": "central.filesystem-reconcile/v1",
+      "schema": "central.source-change/v1",
+      "source_path": "ProjectCentral/user/00 01-DESIGN.md",
+      "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
+      "source_roles": [
+        "project-human-source-aperture"
+      ],
+      "standing": "unspecified",
+      "treatment": "projectcentral-user",
+      "world_ref": "project:editor-walk"
+    }
+  ],
+  "screenshots": [
+    "history-native-conflict.png",
+    "history-native-resolved.png"
+  ],
+  "limitation": "Owner redirected work to spatial/workspace foundation before further history enhancements."
+}

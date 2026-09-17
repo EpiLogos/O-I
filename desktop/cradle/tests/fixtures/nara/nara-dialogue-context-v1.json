@@ -1,0 +1,54 @@
+{
+  "schema": "ql.nara-dialogue-context/v1",
+  "context_ref": "dialogue-context:fixture-1",
+  "nara_ref": "nara:fixture-a",
+  "subject_ref": "subject:fixture-person",
+  "agent_session_ref": "session:fixture-1",
+  "m4_branch": "embodied",
+  "coordinate_ref": "M4.1.1",
+  "bimba": {
+    "owner_contract_ref": "ql.aw1-rooted-m-world/v1",
+    "registry_revision": "registry:fixture-r7",
+    "selected_source_ref": "bimba:source:M4.1",
+    "direct_canonical_ref": "bimba:#4",
+    "conjugate_canonical_ref": "pratibimba:#4"
+  },
+  "expression_ref": "expression:fixture-1",
+  "expression_revision": "rev-7",
+  "profile_ref": "profile:M4.1",
+  "profile_revision": "prof-2",
+  "scene_ref": "scene:fixture-1",
+  "active_m_focus": "m4",
+  "pointed_ref": "bimba:relation:1",
+  "hovered_ref": null,
+  "pinned_refs": ["bimba:source:M4.1"],
+  "occasion": {
+    "day_ref": "central:day:2026-09-17",
+    "day_revision": "d7",
+    "now_ref": "central:now:fixture",
+    "now_revision": "n3",
+    "admitted_via_ref": "consent:fixture-1"
+  },
+  "disclosed": [
+    {
+      "ref_id": "source:fixture-disclosed-1",
+      "revision": "r1",
+      "standing": "source",
+      "disclosure": "hen-disclosure",
+      "disclosed_via_ref": "hen:disclosure:fixture-1"
+    }
+  ],
+  "available_action_refs": ["action:expression.focus"],
+  "c_prime": {
+    "composition_ref": "composition:fixture-1",
+    "composition_revision": "c1",
+    "participation": "dialogical",
+    "content_type": "CT4b'",
+    "position": "4.4",
+    "frame": "psyche",
+    "thread_form": "CFP0",
+    "sequence": "CS4"
+  },
+  "shared_field": null,
+  "expressive_act": null
+}

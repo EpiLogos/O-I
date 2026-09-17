@@ -1,0 +1,26 @@
+/* Native Expression is window-owned. No CSS clouds, masks or loading clocks. */
+.oi-expression-surface {
+  position: fixed;
+  inset: 0;
+  inline-size: 100vw;
+  block-size: 100vh;
+  z-index: var(--oi-z-expression);
+  pointer-events: none;
+  -webkit-user-select: none;
+  user-select: none;
+}
+.oi-expression-surface[data-oi-stage-live="false"] { visibility: hidden; }
+
+/* Pending operations retain honest, accessible text while the application loads. */
+.oi-loading {
+  display: grid;
+  align-content: center;
+  gap: var(--oi-desktop-gap-sm);
+  padding: var(--oi-desktop-gap-lg);
+  color: var(--oi-foreground);
+  font-family: var(--oi-font-sans);
+}
+.oi-loading[hidden] { display: none; }
+.oi-loading-copy { display: grid; gap: var(--oi-desktop-gap-sm); }
+.oi-loading-label { margin: 0; font-size: var(--oi-desktop-type-body); font-weight: 500; }
+.oi-loading-detail { margin: 0; font-size: var(--oi-desktop-type-caption); color: var(--oi-muted); }

@@ -5,6 +5,16 @@ pub fn cli_main() -> ExitCode {
         return match print_suite_v2_help().and_then(|_| print_product_command_help()) {
             Ok(()) => {
                 println!();
+                println!("  oi capabilities --json        derived child capability records with source hashes; not installed availability");
+                println!("  oi config --help              the configuration plane: list/show/get/set/reset/diff/plan/apply/doctor over the shared registry and owner-native operations");
+                println!("  oi profile --help             sparse O:I World profiles: list/show/create/use/diff/clone/export/import");
+                println!("  oi <namespace> config-contribution --json");
+                println!("                                an owner's configuration contribution through the dispatcher, like `system --json`");
+                println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
+                println!("  oi aikit-session-space ...    AIKit companion protocol (native arguments preserved)");
+                println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
+                println!("  oi mode list|set <frame>|clear [--json]");
+                println!("                                state which install mode (#268) you are adopting; the Context Frames organise the six modes");
                 println!("Current world:");
                 println!("  oi current-world [--json]      disclose the situated six-product composition and current machine/Workcell relation");
                 println!();
@@ -17,6 +27,9 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev test [PRODUCT]          test current local source through native product test contract");
                 println!("  oi dev install [PRODUCT]       install/register native commands only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
+                println!("  oi dev gate PRODUCT [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
+                println!("  oi prove factory --factory PATH --factory-source PATH --request PATH --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH] [--workcell-source PATH --workcell-usage PATH] [--actuation-source PATH --actuation-usage PATH --actuation-usage-replay PATH]");
+                println!("                                exercise Factory's accepted Commission path and retain evidence grades without claiming provider/material execution");
                 println!();
                 println!("Existing-world recognition / adoption:");
                 println!("  oi adopt PATH [--json]         inspect the existing World through the shared recognition engine and return owner handoffs without mutation");
@@ -43,6 +56,36 @@ pub fn cli_main() -> ExitCode {
             }
         };
     }
+    if command == Some("ground") {
+        return match command_ground_binding(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("mode") {
+        return match command_mode(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("config") {
+        return match command_config(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("profile") {
+        return match command_profile(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("update") {
+        return match command_update_flow(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
     if let Some(result) = product_command_route(&args) {
         return match result {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
@@ -50,6 +93,21 @@ pub fn cli_main() -> ExitCode {
                 eprintln!("oi: {message}");
                 ExitCode::from(2)
             }
+        };
+    }
+    if command == Some("prove") && args.get(1).and_then(|value| value.to_str()) == Some("factory") {
+        return match command_factory_proving(args.get(2..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => {
+                eprintln!("oi: {message}");
+                ExitCode::from(2)
+            }
+        };
+    }
+    if command == Some("dev") && args.get(1).and_then(|value| value.to_str()) == Some("gate") {
+        return match command_rolling_dev_gate(args.get(2..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };
     }
     if command == Some("dev")

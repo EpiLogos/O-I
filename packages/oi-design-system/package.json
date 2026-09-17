@@ -2,14 +2,45 @@
   "name": "@epilogos/oi-design-system",
   "version": "0.1.0",
   "private": true,
-  "files": ["tokens.css", "assets"],
+  "files": [
+    "search.css",
+    "tokens.css",
+    "desktop.css",
+    "assets",
+    "point-cloud.css",
+    "loading.mjs",
+    "DESKTOP-LANGUAGE.md",
+    "expression.mjs",
+    "expression.css",
+    "techne.css",
+    "src",
+    "point-cloud"
+  ],
   "exports": {
+    "./search.css": "./search.css",
     "./tokens.css": "./tokens.css",
     "./assets/oi-mark.svg": "./assets/oi-mark.svg",
     "./assets/oi-glyph.svg": "./assets/oi-glyph.svg",
-    "./assets/oi-cube.svg": "./assets/oi-cube.svg"
+    "./assets/oi-cube.svg": "./assets/oi-cube.svg",
+    "./point-cloud.css": "./point-cloud.css",
+    "./loading": "./loading.mjs",
+    "./expression": "./expression.mjs",
+    "./expression.css": "./expression.css",
+    "./techne.css": "./techne.css",
+    "./techne-theme": "./src/techne-theme.mjs",
+    "./techne-surface-lifecycle": "./src/techne-surface-lifecycle.mjs",
+    "./point-cloud/config": "./point-cloud/config.mjs",
+    "./point-cloud/presets": "./point-cloud/presets.mjs",
+    "./expressions-engine/*": "./expressions-engine/*",
+    "./desktop.css": "./desktop.css"
+  },
+  "peerDependencies": {
+    "three": ">= 0.160"
   },
   "scripts": {
-    "verify": "node checks/verify.mjs"
+    "verify": "node checks/verify.mjs && node checks/techne.mjs",
+    "verify:browser": "node checks/browser.mjs",
+    "verify:techne": "node checks/techne.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\""
   }
 }

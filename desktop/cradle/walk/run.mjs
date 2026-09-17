@@ -20,8 +20,9 @@
  * Scenarios: rest (u0.3) · surfaces (u0.3b) · kernel-cas (u0.4) · all
  */
 
-import { spawn } from "node:child_process";
-import { mkdirSync, writeFileSync } from "node:fs";
+import { spawn, execFileSync } from "node:child_process";
+import { mkdirSync, writeFileSync, readFileSync, realpathSync } from "node:fs";
+import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
@@ -29,14 +30,94 @@ import { chromium } from "playwright";
 const here = dirname(fileURLToPath(import.meta.url));
 const cradleRoot = resolve(here, "..");
 const artifactsDir = join(here, "artifacts");
-const PREVIEW_PORT = 4173;
-const BRIDGE_PORT = 4179;
+// A borrowed node_modules can redirect a workspace package into another
+// checkout. Prove the engine dependency belongs to this exact worktree before
+// building or recording a native/browser acceptance receipt.
+const repositoryRoot = resolve(cradleRoot, "../..");
+const expectedEngineProvenance = realpathSync(join(repositoryRoot, "packages/oi-design-system/expressions-engine/PROVENANCE.json"));
+const loadedEngineProvenance = realpathSync(createRequire(import.meta.url).resolve("@epilogos/oi-design-system/expressions-engine/PROVENANCE.json"));
+if (loadedEngineProvenance !== expectedEngineProvenance) {
+  throw new Error(`The walk's engine dependency resolves outside its checkout: ${loadedEngineProvenance}. Run npm ci inside this checkout's desktop/cradle; do not borrow another checkout's node_modules.`);
+}
+const engineProvenance = JSON.parse(readFileSync(loadedEngineProvenance, "utf8"));
+const sourceContext = {
+  repository_root: repositoryRoot,
+  repository_head: execFileSync("git", ["rev-parse", "HEAD"], {cwd:repositoryRoot, encoding:"utf8"}).trim(),
+  tracked_changes: execFileSync("git", ["diff", "--name-only", "HEAD"], {cwd:repositoryRoot, encoding:"utf8"}).trim().split("\n").filter(Boolean),
+  engine_provenance_path: loadedEngineProvenance,
+  engine_source: engineProvenance.source,
+  engine_revision: engineProvenance.sha,
+};
+
+const PREVIEW_PORT = Number(process.env.WALK_PREVIEW_PORT ?? 4173);
+if (!Number.isInteger(PREVIEW_PORT) || PREVIEW_PORT < 1024 || PREVIEW_PORT > 65535) throw new Error("WALK_PREVIEW_PORT must be a port from 1024 to 65535");
+const BRIDGE_PORT = Number(process.env.WALK_BRIDGE_PORT ?? 4179);
+if (!Number.isInteger(BRIDGE_PORT) || BRIDGE_PORT < 1024 || BRIDGE_PORT > 65535) throw new Error("WALK_BRIDGE_PORT must be a port from 1024 to 65535");
 const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 
 const SCENARIOS = {
+  "expression-controls": {module:"scenarios/expression-controls.mjs",kernel:true,aliases:[]},
+  "expression-page": {module:"scenarios/expression-page.mjs",kernel:true,aliases:["ex5"]},
+  refinement:{module:"scenarios/refinement.mjs",kernel:true,aliases:[]},
+  "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
+  ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},
+  recovery:{module:"scenarios/recovery.mjs",kernel:false,aliases:[]},
   rest: { module: "scenarios/rest.mjs", kernel: false, aliases: ["u0.3"] },
+  welcome: { module: "scenarios/welcome.mjs", kernel: true, aliases: [] },
+  instrument: { module: "scenarios/instrument.mjs", kernel: true, aliases: ["k9"] },
+  "instrument-host": { module: "scenarios/instrument-host.mjs", kernel: true, aliases: ["k9-host"] },
+  "instrument-native-host": { module: "scenarios/instrument-native-host.mjs", kernel: true, aliases: ["k9-native"] },
+  "sf5-protected-nara": { module: "scenarios/sf5-protected-nara.mjs", kernel: true, aliases: ["sf5"] },
+  "sf6-joined-two-worlds": { module: "scenarios/sf6-joined-two-worlds.mjs", kernel: true, aliases: ["sf6"] },
+  "nara-speech": { module: "scenarios/nara-speech.mjs", kernel: true, aliases: ["nara"] },
+  visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   "kernel-cas": { module: "scenarios/kernel-cas.mjs", kernel: true, aliases: ["u0.4"] },
+  system: {module:"scenarios/system.mjs",kernel:true,aliases:[]},
+  "system-settings": {module:"scenarios/system-settings.mjs",kernel:true,aliases:[]},
+  configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
+  permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
+  encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
+  "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
+  "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
+  "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},
+  "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
+  "send-group-reconnect": {module:"scenarios/send-group-reconnect.mjs",kernel:true,aliases:["6b2"]},
+  "receive-include": {module:"scenarios/receive-include.mjs",kernel:true,aliases:["6e"]},
+  "receive-recover": {module:"scenarios/receive-recover.mjs",kernel:true,aliases:["6e2"]},
+  "first-vertical": {module:"scenarios/first-vertical.mjs",kernel:true,aliases:["vertical"]},
+  "shared-field-return": {module:"scenarios/shared-field-return.mjs",kernel:true,aliases:["7"]},
+  "contribution-return-sf4": {module:"scenarios/contribution-return-sf4.mjs",kernel:true,aliases:["sf4"]},
+  "shared-field-hosted": {module:"scenarios/shared-field-hosted.mjs",kernel:true,aliases:["lane-c5","u-sf1"]},
+  "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
+  "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},
+  "workspace-continuity": {module:"scenarios/workspace-continuity.mjs",kernel:true,aliases:["ws-continuity"]},
+  "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
+  "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
+  "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},
+  "leave-reenter": {module:"scenarios/leave-reenter.mjs",kernel:true,aliases:["6f"]},
+  "day-edit": {module:"scenarios/day-edit.mjs",kernel:true,aliases:["6f2"]},
+  "now-relations": {module:"scenarios/now-relations.mjs",kernel:true,aliases:["now"]},
+  "task-basis": {module:"scenarios/task-basis.mjs",kernel:true,aliases:["6b3"]},
+  "factory-development": {module:"scenarios/factory-development.mjs",kernel:true,aliases:["6d"]},
+  "agency-planes": {module:"scenarios/agency-planes.mjs",kernel:true,aliases:["6c"]},
+  "file-edit": {module:"scenarios/file-edit.mjs",kernel:true,aliases:[]},
+  files: { module: "scenarios/files.mjs", kernel: true, aliases: [] },
+  "rendering-quality": {module:"scenarios/rendering-quality.mjs",kernel:true,aliases:[]},
+  "page-context": { module: "scenarios/page-context.mjs", kernel: true },
+  material: { module: "scenarios/material.mjs", kernel: true, aliases: ["fnd-04"] },
+  bootstrap: { module: "scenarios/bootstrap.mjs", kernel: true, aliases: ["fnd-05"] },
+  resources: { module: "scenarios/resources.mjs", kernel: true, aliases: ["fnd-06"] },
+  navigator: { module: "scenarios/navigator.mjs", kernel: true, aliases: ["u1.1"] },
+  editor: { module: "scenarios/editor.mjs", kernel: true, aliases: ["u1.2"] },
+  knowledge: { module: "scenarios/knowledge.mjs", kernel: true, aliases: ["u3.1", "u3.4"] },
+  "knowledge-expression": { module: "scenarios/knowledge-expression.mjs", kernel: true, aliases: ["ex3"] },
+  history: { module: "scenarios/history.mjs", kernel: true, aliases: ["u1.3"] },
+  spatial: { module: "scenarios/spatial.mjs", kernel: true, aliases: ["shell"] },
+  companions: { module: "scenarios/companions.mjs", kernel: false, aliases: ["round2"] },
+  study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
+  native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
+  "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
 };
 
 // ---------------------------------------------------------------------------
@@ -143,6 +224,7 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
       bundle: "walk (WALK=1) served by vite preview",
       node: process.version,
       platform: process.platform,
+      source: sourceContext,
     },
     passed: true,
     error: null,
@@ -278,6 +360,8 @@ async function runScenario(name, { baseUrl }) {
   console.log(`\n=== scenario: ${name} ===`);
   mkdirSync(artifactsDir, { recursive: true });
 
+  const scenario = await import(`${fileURLToPath(new URL(spec.module, import.meta.url))}`);
+  const provision = await scenario.setup?.({ cradleRoot });
   let bridgeUrl = null;
   let bridgeService = null;
   if (spec.kernel) {
@@ -294,22 +378,35 @@ async function runScenario(name, { baseUrl }) {
         "--",
         `127.0.0.1:${BRIDGE_PORT}`,
       ],
+      { env: { ...process.env, ...provision?.env } },
     );
     await waitForHttp(`${BRIDGE_URL}/state`, "the walk bridge", 180_000);
     console.log(`  walk bridge up: ${BRIDGE_URL} (fresh kernel, seq from 1)`);
     bridgeUrl = BRIDGE_URL;
   }
 
-  const browser = await chromium.launch();
-  const page = await browser.newPage({ viewport: { width: 1280, height: 820 } });
+  const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
+  // An explicit context: leave/re-enter scenarios open a second page in the
+  // SAME context (shared storage = the restored frame), which the implicit
+  // browser.newPage() context refuses.
+  const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
+  const page = await context.newPage();
   if (bridgeUrl) {
     await page.addInitScript((url) => {
       window.__OI_KERNEL_BRIDGE__ = url;
     }, bridgeUrl);
   }
+  // Walks exercise the continuing app, so the welcome frontstate stands
+  // down for them — except when a scenario explicitly asks for it via
+  // ?frontstate (the welcome scenario runs the real first-open path).
+  await page.addInitScript(() => {
+    if (!new URLSearchParams(location.search).has("frontstate")) {
+      sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+    }
+  });
 
   const ctx = makeHarness({ scenario: name, page, baseUrl, bridgeUrl, kernelScenario: spec.kernel });
-  const scenario = await import(`${fileURLToPath(new URL(spec.module, import.meta.url))}`);
+  ctx.provision = provision;
   let receipt;
   try {
     await scenario.default(ctx);
@@ -318,9 +415,11 @@ async function runScenario(name, { baseUrl }) {
     receipt = ctx.finish();
     receipt.passed = false;
     receipt.error = String(error?.stack ?? error);
+    await page.screenshot({path:join(here,"artifacts",`${name}-failure.png`)}).catch(()=>{});
     console.error(`  SCENARIO ERROR: ${receipt.error}`);
   } finally {
     await browser.close();
+    provision?.cleanup?.();
   }
 
   // A fresh bridge per kernel scenario: stop just the bridge (the preview
@@ -376,7 +475,10 @@ try {
     );
   }
   if (needsPreview) {
-    spawnService("preview", "npm", ["run", "preview"]);
+    // Spawn vite directly: the npm indirection re-appends the script's own
+    // --port/--strictPort, and duplicated flags have produced servers that
+    // bind one port while reporting another.
+    spawnService("preview", "node", ["node_modules/.bin/vite", "preview", "--port", String(PREVIEW_PORT), "--strictPort"]);
     await waitForHttp(baseUrl, "the preview server", 60_000);
   }
   console.log(`serving the cradle at ${baseUrl}${externalUrl ? " (external)" : ""}`);

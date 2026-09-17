@@ -1,0 +1,14 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788868727680349000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "codex-cradle-recovery-20260908",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788868727,
+  "subject": "Cradle shell recovery active; original WIP safely pushed",
+  "result": "Checkpoint 79a446d pushed to origin/cradle-p1. Recovery edits ongoing in desktop/cradle: footer, responsive Central overlay, project-row pointer regression, Escape precedence, file caret, material binary detach, shared point feedback. Functional browser walks largely pass; native build and full agency/resource verification pending. Current owner processes preserved. Evidence under desktop/cradle/walk/artifacts; no foundation gate acceptance yet.",
+  "status": "resolved",
+  "preserve_refs": [
+    "ProjectCentral/now/agents/handoff-1788871726370398000.json"
+  ]
+}

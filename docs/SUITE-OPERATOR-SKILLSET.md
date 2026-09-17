@@ -4,12 +4,13 @@ O:I composes and explains source-owned procedural competence; it does not become
 
 ## What O:I ships
 
-The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and two Skills — O:I's own guardian pair:
+The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and three Skills — O:I's own guardian set:
 
 ```text
 oi:skillset:base-guardian
-  oi:skill:operate-suite    (skills/oi/SKILL.md)
-  oi:skill:suite-operator   (skills/suite-operator/SKILL.md)
+  oi:skill:operate-suite          (skills/oi/SKILL.md)
+  oi:skill:suite-operator         (skills/suite-operator/SKILL.md)
+  oi:skill:central-session-strap  (skills/central-session-strap/SKILL.md)
 ```
 
 Both entries carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
@@ -41,3 +42,27 @@ native repository authoritative Skill source
 ## Fallback
 
 Without AIKit, direct projection remains limited in code to O:I/Central Skills. Foreign source-owned Skill bodies are never copied into O:I as a convenience path.
+
+## Epi experience practices — pending H review
+
+**Publication authorised; H ratification pending (Satya).** This new domain
+practice guidance is available for review and provisional use against current
+native contracts. Its publication does not ratify it or change the preceding
+owner/resolver boundaries.
+
+QL-MEF owns its foundations, bounded provider Method, evidence-report Skill,
+experience-preparation and experience-walk Methods. Resolve those native files
+through AIKit; no foreign membership is added to O:I's shipped manifest.
+Their source/discovery/projection/loading/use distinction is specified in
+[QL's pending practice account](https://github.com/EpiLogos/QL-MEF/blob/main/docs/kernel-rebuild/AGENT-PRACTICE-AND-BOOTSTRAP.md).
+
+The actual installed AIKit command owns its materialisation format. Spec III
+§§1–1.2 defines sets as folders with optional manifests. The source-pinned
+projection probe uses a writable folder set with `members` created by native
+`set create`; this need not be another hand-maintained TOML manifest. This
+clarifies the format shorthand above without moving registration into O:I.
+Membership does not enable a capability; explicit scope resolution governs
+actual projection. Current-generation read-back proves delivery, not model
+loading or successful use. The fresh-agent UX01/UX06 walks exercise those later
+steps through the native host route; pending walk definitions do not claim
+those steps have been exercised.

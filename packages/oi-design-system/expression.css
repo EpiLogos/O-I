@@ -1,0 +1,2 @@
+/* A semantic target for the window-owned native field; no local renderer. */
+.oi-expression-anchor { display:inline-block; width:var(--oi-expression-field-width); height:var(--oi-expression-field-height); flex:none; pointer-events:none; }

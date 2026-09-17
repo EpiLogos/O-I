@@ -9,7 +9,6 @@ use std::path::{Path, PathBuf};
 use std::process::{Command, ExitCode, Stdio};
 use std::time::{SystemTime, UNIX_EPOCH};
 
-const CATALOG_JSON: &str = include_str!("../../surfaces.json");
 const OI_REPOSITORY: &str = "https://github.com/EpiLogos/O-I";
 const STATE_SCHEMA: u32 = 1;
 
@@ -58,19 +57,44 @@ struct InstallSurface {
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct Composition {
+    #[serde(skip)]
+    loaded_basis: std::cell::RefCell<Option<Vec<u8>>>,
     schema: u32,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     personal_ground: Option<String>,
     #[serde(default)]
     modules: BTreeMap<String, Registration>,
+    /// The person's own statement of which install mode (#268) they are
+    /// adopting — recorded only through `oi mode set`, never inferred from
+    /// presence. `None` until stated; disclosure resolves the mode from
+    /// effective presence when no statement exists.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    requested_mode: Option<RequestedMode>,
+    /// The explicitly selected active O:I profile (09 §12 of the
+    /// configuration-plane contract). Written only by the explicit
+    /// use/clear operation (`set_active_profile`) — never inferred from
+    /// presence, never auto-switched. `None` until stated.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    active_profile: Option<String>,
+}
+
+/// One recorded mode statement (#268). The frame notation is the mode id.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub(crate) struct RequestedMode {
+    pub frame: String,
+    pub set_at_unix_seconds: u64,
+    pub set_by: String,
 }
 
 impl Default for Composition {
     fn default() -> Self {
         Self {
             schema: STATE_SCHEMA,
+            loaded_basis: std::cell::RefCell::new(None),
             personal_ground: None,
             modules: BTreeMap::new(),
+            requested_mode: None,
+            active_profile: None,
         }
     }
 }
@@ -165,8 +189,13 @@ fn run(args: &[OsString]) -> Result<i32, String> {
         "install" => command_install(&catalog, &args[1..]),
         "docs" => command_docs(&catalog, &args[1..]),
         "migrate" => command_migrate(&catalog, &args[1..]),
+        "catalogue" => command_catalogue(&args[1..]),
         "version" | "--version" | "-V" => {
-            println!("oi {}", env!("CARGO_PKG_VERSION"));
+            println!(
+                "oi {} ({})",
+                env!("CARGO_PKG_VERSION"),
+                option_env!("SUITE_BUILD_REVISION").unwrap_or("unknown")
+            );
             Ok(0)
         }
         unknown => Err(format!(
@@ -176,8 +205,9 @@ fn run(args: &[OsString]) -> Result<i32, String> {
 }
 
 fn catalog() -> Result<Catalog, String> {
-    let catalog: Catalog = serde_json::from_str(CATALOG_JSON)
-        .map_err(|error| format!("embedded surface descriptors are invalid: {error}"))?;
+    let resolved = crate::catalog_source::resolve()?;
+    let catalog: Catalog = serde_json::from_str(&resolved.json)
+        .map_err(|error| format!("surface descriptors ({}) are invalid: {error}", resolved.origin))?;
     if catalog.schema != 1 {
         return Err(format!(
             "unsupported surface descriptor schema {}",
@@ -205,6 +235,8 @@ fn print_help(catalog: &Catalog) {
     println!("  oi register <module> [--executable PATH] [--root PATH] [--version TEXT]");
     println!("  oi install <module>");
     println!("  oi docs [topic|module]");
+    println!("  oi catalogue show [--json]");
+    println!("  oi catalogue adopt <surfaces.json>");
     println!("  oi migrate <path>");
     println!("  oi <alias> [native arguments...]");
     println!();
@@ -221,6 +253,71 @@ fn print_help(catalog: &Catalog) {
     println!();
     println!("The wrapper owns setup, discovery, documentation, registration and handoff only.");
     println!("Product behaviour remains in the native product surfaces.");
+}
+
+fn command_catalogue(args: &[OsString]) -> Result<i32, String> {
+    let sub = args.first().and_then(|value| value.to_str()).unwrap_or("show");
+    match sub {
+        "show" => {
+            let resolved = crate::catalog_source::resolve()?;
+            let value: serde_json::Value = serde_json::from_str(&resolved.json)
+                .map_err(|error| format!("catalogue ({}) is invalid: {error}", resolved.origin))?;
+            let verified_at = value["verified_at"].as_str().unwrap_or("(unrecorded)");
+            let surfaces = value["surfaces"].as_array().map(Vec::len).unwrap_or(0);
+            let json_mode = args.iter().any(|one| one == "--json");
+            if json_mode {
+                println!(
+                    "{}",
+                    serde_json::json!({
+                        "origin": resolved.origin,
+                        "path": resolved.path.as_ref().map(|path| path.display().to_string()),
+                        "verified_at": verified_at,
+                        "surfaces": surfaces,
+                    })
+                );
+                return Ok(0);
+            }
+            match &resolved.path {
+                Some(path) => println!("O:I catalogue: runtime ({})", path.display()),
+                None => println!("O:I catalogue: embedded snapshot (bootstrap fallback)"),
+            }
+            println!("verified_at {verified_at} · {surfaces} surfaces");
+            println!("adopt a live catalogue with: oi catalogue adopt <surfaces.json>");
+            Ok(0)
+        }
+        "adopt" => {
+            let source = args
+                .get(1)
+                .map(PathBuf::from)
+                .ok_or_else(|| "usage: oi catalogue adopt <surfaces.json>".to_owned())?;
+            let json = fs::read_to_string(&source)
+                .map_err(|error| format!("cannot read {}: {error}", source.display()))?;
+            crate::catalog_source::validate(&json, &source.display().to_string())?;
+            let value: serde_json::Value = serde_json::from_str(&json)
+                .map_err(|error| format!("catalogue {} is invalid: {error}", source.display()))?;
+            let verified_at = value["verified_at"].as_str().unwrap_or("(unrecorded)");
+            let destination = crate::catalog_source::state_catalogue_path()?;
+            let parent = destination
+                .parent()
+                .ok_or_else(|| "catalogue state path has no parent".to_owned())?;
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
+            let temporary = parent.join("catalogue.json.tmp");
+            fs::write(&temporary, &json)
+                .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
+            fs::rename(&temporary, &destination)
+                .map_err(|error| format!("cannot replace {}: {error}", destination.display()))?;
+            println!(
+                "Catalogue adopted: {} -> {} (verified_at {verified_at})",
+                source.display(),
+                destination.display()
+            );
+            Ok(0)
+        }
+        other => Err(format!(
+            "unknown catalogue command '{other}'; expected show or adopt"
+        )),
+    }
 }
 
 fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
@@ -245,7 +342,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
         return Ok(0);
     }
 
-    println!("{:<20} {:<11} {:<16} Native", "Surface", "State", "Alias");
+    println!("{:<20} {:<19} {:<16} Native", "Surface", "State", "Alias");
     for row in &rows {
         let alias = row
             .alias
@@ -254,7 +351,7 @@ fn command_status(catalog: &Catalog, args: &[OsString]) -> Result<i32, String> {
             .unwrap_or_else(|| "—".to_owned());
         let native = row.resolved.clone().unwrap_or_else(|| row.native.clone());
         println!(
-            "{:<20} {:<11} {:<16} {}",
+            "{:<20} {:<19} {:<16} {}",
             row.name, row.state, alias, native
         );
         if let Some(detail) = &row.detail {
@@ -305,6 +402,30 @@ fn status_rows(catalog: &Catalog, composition: &Composition) -> Vec<StatusRow> {
                         Some(path) => {
                             row.state = "registered".to_owned();
                             row.resolved = Some(path.display().to_string());
+                        }
+                        // No command was recorded as part of this install
+                        // (component install): the recorded material root is
+                        // what the product installed here. Present material
+                        // is an installed component, not a broken one.
+                        None if registration.native_executable.is_none() => {
+                            match registration.root.as_deref().map(Path::new) {
+                                Some(root) if root.is_dir() => {
+                                    row.state = "installed_component".to_owned();
+                                    row.resolved = Some(root.display().to_string());
+                                    row.detail = Some(format!(
+                                        "installed as component material at {}; no native {} command is part of this install",
+                                        root.display(),
+                                        surface.native.entry
+                                    ));
+                                }
+                                _ => {
+                                    row.state = "broken".to_owned();
+                                    row.detail = Some(
+                                        "this install recorded no native command and its component material root is missing"
+                                            .to_owned(),
+                                    );
+                                }
+                            }
                         }
                         None => {
                             row.state = "broken".to_owned();
@@ -894,11 +1015,9 @@ fn oi_doc_topic(topic: &str) -> Option<&'static str> {
 
 fn load_composition() -> Result<Composition, String> {
     let path = state_path()?;
-    if !path.exists() {
+    let Some(bytes) = composition_read_bytes(&path)? else {
         return Ok(Composition::default());
-    }
-    let bytes = fs::read(&path)
-        .map_err(|error| format!("cannot read composition state {}: {error}", path.display()))?;
+    };
     let composition: Composition = serde_json::from_slice(&bytes)
         .map_err(|error| format!("invalid composition state {}: {error}", path.display()))?;
     if composition.schema != STATE_SCHEMA {
@@ -908,23 +1027,44 @@ fn load_composition() -> Result<Composition, String> {
             path.display()
         ));
     }
+    *composition.loaded_basis.borrow_mut() = Some(bytes);
     Ok(composition)
 }
 
 fn save_composition(composition: &Composition) -> Result<(), String> {
-    let path = state_path()?;
-    let parent = path
-        .parent()
-        .ok_or_else(|| "composition state path has no parent".to_owned())?;
-    fs::create_dir_all(parent)
-        .map_err(|error| format!("cannot create {}: {error}", parent.display()))?;
-    let temporary = parent.join("composition.json.tmp");
-    let bytes = serde_json::to_vec_pretty(composition).map_err(|error| error.to_string())?;
-    fs::write(&temporary, bytes)
-        .map_err(|error| format!("cannot write {}: {error}", temporary.display()))?;
-    fs::rename(&temporary, &path)
-        .map_err(|error| format!("cannot replace {}: {error}", path.display()))?;
-    Ok(())
+    composition_save_cas(composition)
+}
+
+/// The explicitly selected active O:I profile (09 §12): `None` until an
+/// explicit `use` selects one. Reading never selects.
+// Consumed by the `oi profile` surface (C5) and the tests below until then.
+#[allow(dead_code)]
+pub(crate) fn active_profile() -> Result<Option<String>, String> {
+    Ok(load_composition()?.active_profile)
+}
+
+/// The backend of the explicit `oi profile use` / clear operation
+/// (09 §12): selecting a profile requires it to exist in the profile
+/// store and validate; clearing is equally explicit. Nothing infers or
+/// auto-switches the selection, and nothing native changes through it —
+/// this writes the composition mark only.
+// Consumed by the `oi profile use` surface (C5) and the tests below until
+// then.
+#[allow(dead_code)]
+pub(crate) fn set_active_profile(profile_ref: Option<&str>) -> Result<(), String> {
+    let mut composition = load_composition()?;
+    composition.active_profile = match profile_ref {
+        Some(reference) => {
+            use oi_cli::configuration::profile_store::ProfileStore;
+            let store = ProfileStore::open().map_err(|error| error.message())?;
+            store.load(reference).map_err(|error| {
+                format!("cannot use profile `{reference}`: {}", error.message())
+            })?;
+            Some(reference.to_owned())
+        }
+        None => None,
+    };
+    save_composition(&composition)
 }
 
 fn state_path() -> Result<PathBuf, String> {
@@ -1028,4 +1168,73 @@ fn default_cargo_aikit() -> Option<PathBuf> {
         let candidate = PathBuf::from(home).join(".cargo/bin/aikit");
         is_executable(&candidate).then_some(candidate)
     })
+}
+
+#[cfg(test)]
+mod profile_selection_tests {
+    use super::*;
+    use oi_cli::configuration::Profile;
+
+    /// The active-profile mark (09 §12) is written only by the explicit
+    /// use/clear operation, survives the CAS save with unknown fields
+    /// intact, and refuses a use of a profile the store does not hold.
+    /// Runs as a child process so OI_HOME is real for the composition and
+    /// profile-store state (the house pattern from ground_binding tests).
+    #[test]
+    fn active_profile_selection_is_explicit_and_round_trips() {
+        let home = tempfile::tempdir().unwrap();
+        if env::var_os("OI_PROFILE_USE_TEST_CHILD").is_none() {
+            let status = Command::new(env::current_exe().unwrap())
+                .args([
+                    "--exact",
+                    "composition::profile_selection_tests::active_profile_selection_is_explicit_and_round_trips",
+                    "--test-threads=1",
+                ])
+                .env("OI_PROFILE_USE_TEST_CHILD", "1")
+                .env("OI_HOME", home.path())
+                .status()
+                .unwrap();
+            assert!(status.success());
+            return;
+        }
+
+        // Nothing is selected on a fresh composition.
+        assert_eq!(active_profile().unwrap(), None);
+
+        // Using a profile the store does not hold is refused and records
+        // nothing.
+        assert!(set_active_profile(Some("development")).is_err());
+        assert_eq!(active_profile().unwrap(), None);
+
+        // Store the frozen fixture profile, then select it explicitly.
+        let fixture_path = PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+            .join("../suite/configuration/cases/profile-development.json");
+        let fixture: serde_json::Value = serde_json::from_str(
+            &fs::read_to_string(&fixture_path).unwrap(),
+        )
+        .unwrap();
+        let profile: Profile = serde_json::from_value(fixture["profile"].clone()).unwrap();
+        use oi_cli::configuration::profile_store::ProfileStore;
+        ProfileStore::open().unwrap().save(&profile).unwrap();
+
+        set_active_profile(Some("development")).unwrap();
+        assert_eq!(
+            active_profile().unwrap(),
+            Some("development".to_owned()),
+            "the explicit use records the selection"
+        );
+        let value: serde_json::Value =
+            serde_json::from_slice(&fs::read(state_path().unwrap()).unwrap()).unwrap();
+        assert_eq!(value["active_profile"], "development");
+
+        // Clearing is explicit too, and leaves no mark behind.
+        set_active_profile(None).unwrap();
+        assert_eq!(active_profile().unwrap(), None);
+        let value: serde_json::Value =
+            serde_json::from_slice(&fs::read(state_path().unwrap()).unwrap()).unwrap();
+        assert!(
+            value.get("active_profile").is_none(),
+            "a cleared selection leaves no active_profile key"
+        );
+    }
 }

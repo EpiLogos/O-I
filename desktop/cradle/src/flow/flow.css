@@ -1,0 +1,29 @@
+.fresh-surface{height:100%;display:grid;place-items:center;padding:32px;background:var(--oi-canvas-ground)}.fresh-surface>div{max-width:440px}.fresh-surface h2{font-size:20px;font-weight:500}.fresh-surface>div>button,.fresh-surface>div>nav>button{display:block;margin:10px 0;padding:8px 12px;background:transparent;border:1px solid var(--oi-hairline-soft);border-radius:5px;color:inherit;font:inherit}.fresh-provenance{font-size:11px;line-height:1.6;opacity:.65;margin-top:28px}.flow-surface{display:flex;flex-direction:column;min-height:0;height:100%;background:var(--oi-canvas-ground)}.flow-writing{flex:1;min-height:0;resize:none;background:transparent;color:inherit;border:0;outline:none;padding:24px 30px;font:15px/1.7 var(--oi-font-sans)}.flow-error{margin:0;padding:8px 30px;border-bottom:1px solid var(--oi-hairline-soft);color:var(--oi-accent-ink);font-size:var(--oi-shell-type-ui)}
+
+.fresh-surface {background:var(--oi-canvas-ground);padding:32px 24px}
+.fresh-surface>div {width:min(100%,440px);display:flex;flex-wrap:wrap;gap:12px}
+.fresh-surface .welcome-prompt {width:100%;margin-bottom:12px}
+.fresh-surface>div>label {width:100%;display:flex;align-items:center;gap:12px;font-size:12px;color:var(--oi-muted-2);margin-bottom:20px}
+.fresh-surface select {border:0;border-bottom:1px solid var(--oi-hairline-soft);background:transparent;color:var(--oi-foreground);font:inherit;padding:6px}
+.desktop-shell .fresh-surface>div>button, .desktop-shell .fresh-surface>div>nav>button {flex:1;margin:0;padding:12px 16px;border:1px solid var(--oi-hairline-soft);border-radius:5px;font-size:13px;text-align:center}
+.fresh-surface>div>button:hover, .fresh-surface>div>nav>button:hover {background:var(--oi-wash)}
+.fresh-surface>div>nav {width:100%;display:flex;flex-wrap:wrap;gap:12px}
+.fresh-surface>div>nav>button {display:flex;align-items:center;justify-content:center;gap:8px}
+.fresh-surface>div>nav>button kbd {font:inherit;font-size:11px;color:var(--oi-muted-2)}
+.fresh-surface>div>nav>button svg {flex:none}
+.fresh-surface .fresh-docforms {width:100%;display:flex;gap:12px;margin-bottom:8px}
+.fresh-surface .fresh-docforms button {flex:1;display:grid;justify-items:center;row-gap:3px;padding:14px 12px;border:1px solid var(--oi-hairline-soft);border-radius:5px}
+.fresh-surface .fresh-docforms button b {font-size:15px;font-weight:600}
+.fresh-surface .fresh-docforms button span {font-size:11px;color:var(--oi-muted-2)}
+.fresh-surface .fresh-refusal {width:100%;margin:0;font-size:12px;line-height:1.6;color:var(--oi-accent-ink)}
+.draft-surface .draft-register {display:flex;align-items:center;flex:none}
+.draft-surface .draft-register select {border:0;border-bottom:1px solid var(--oi-hairline-soft);background:transparent;color:var(--oi-accent-ink);font:inherit;padding:1px 4px}
+.flow-cognition{border-top:1px solid var(--oi-rule);margin-top:10px;padding-top:10px;font-size:12px}
+.flow-cognition summary{cursor:pointer;font-weight:500}
+.flow-cognition-law{font-size:10px;opacity:.7;line-height:1.5;margin:4px 0}
+.flow-cognition-answer{margin:8px 0}
+.flow-cognition-label{font-weight:500;opacity:.8}
+.flow-cognition-answer pre,.flow-changed-reading pre{white-space:pre-wrap;max-height:34vh;overflow:auto;border:1px solid var(--oi-rule);border-radius:4px;padding:8px;font-size:10px;background:transparent}
+.flow-origin{overflow-wrap:anywhere;font-size:11px;opacity:.85}
+.flow-changed{margin-top:8px;border-top:1px dashed var(--oi-rule);padding-top:8px}
+.flow-changed-title{font-weight:500}

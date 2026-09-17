@@ -1,0 +1,11 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "handoff-1788860596135982000",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "claude-fable-5.1",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1788860596,
+  "subject": "FND-02 D11: System canvas surface renders SystemPanel (Workbench SurfaceBody system branch verified)",
+  "result": "Workbench.tsx SurfaceBody already carried the kind===system branch and SystemPanel import in the uncommitted tree; nothing further to add. Verified: npm run build (tsc+vite) clean; walk scenario system PASS 4/4 on a fresh bridge with OI_BIN=cli/target/debug/oi (receipt desktop/cradle/walk/artifacts/system.json + system-native-six-owner-composition.png); manual check in browser against own vite dev (1424) + own walk bridge (4199): sidebar System opens a System tab whose body is region System composition with six discovered positions, Refresh, Read owner capabilities producing Owner capabilities and effective context (oi.desktop-composition-disclosure/v1). Learnings: (1) the installed ~/.local/bin/oi (0.1.0) rejects --owners, so the walk and any bridge must run with OI_BIN pointing at the repo candidate cli/target/debug/oi or the owners read fails and the system walk times out at step 3; (2) ports 4179/4173/1423 are contended by concurrent sessions (a foreign bridge was baked into the 1423 dev server at 4189; my 4179 bridge was SIGTERMed by another actor) so walks should be run only when lsof shows 4179 and 4173 free, and manual checks should use private ports. Open: whether the walk runner should default OI_BIN to the repo candidate; the FND-02 tree is still uncommitted (Cradle.tsx, Workbench.tsx, persist.ts, registry.ts, types.ts, SystemPanel.tsx).",
+  "status": "active"
+}

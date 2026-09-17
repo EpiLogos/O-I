@@ -1,0 +1,503 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "expression-page",
+  "generated_at": "2026-09-15T15:28:17.719Z",
+  "environment": {
+    "base_url": "http://127.0.0.1:4321",
+    "bridge_url": "http://127.0.0.1:4330",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence",
+      "repository_head": "4032740d6bcb16d09a2d9f253fbde2cca9a20f78",
+      "tracked_changes": [
+        "desktop/cradle/tests/welcome-lifecycle.mjs",
+        "desktop/cradle/tests/welcome-page.tsx"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.aikit/tasks/ui-expression-convergence/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 11956,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The exact hosted live lease suppresses the iframe's standalone fallback so the page presents one coherent Expression body"
+    },
+    {
+      "ok": true,
+      "label": "A mismatched Expression ref cannot alter the hosted frame view"
+    },
+    {
+      "ok": true,
+      "label": "The same authored HTML keeps its explicit Expression fallback when opened standalone without a host lease"
+    },
+    {
+      "ok": true,
+      "label": "Editing the iframe invalidates the exact hosted lease, restores fallback, and releases the old live presentation"
+    },
+    {
+      "ok": true,
+      "label": "Iframe editing does not mutate the owner-backed page source"
+    },
+    {
+      "ok": true,
+      "label": "Rereading the exact unchanged owner revision re-admits its live Expression body"
+    },
+    {
+      "ok": true,
+      "label": "Beings page embeds the exact native Expression ref"
+    },
+    {
+      "ok": true,
+      "label": "Page and native Being keep the same subject ref"
+    },
+    {
+      "ok": true,
+      "label": "Focus moves the same renderer canvas without an identity fork"
+    },
+    {
+      "ok": true,
+      "label": "An unrelated Expression event keeps the focused canvas, context and presentation mounted"
+    },
+    {
+      "ok": true,
+      "label": "Escape returns the same renderer canvas to the same page"
+    },
+    {
+      "ok": true,
+      "label": "Renderer identity marker remained stable"
+    },
+    {
+      "ok": true,
+      "label": "Existing engine capture returns a rendered nonuniform PNG"
+    },
+    {
+      "ok": true,
+      "label": "A native Expression advance freezes the page instead of relabelling stale pixels as current"
+    },
+    {
+      "ok": true,
+      "label": "Losing the exact live lease restores the authored page's explicit fallback"
+    },
+    {
+      "ok": true,
+      "label": "Unavailable live renderer releases the stage and the page uses its explicit capture fallback"
+    },
+    {
+      "ok": true,
+      "label": "A page-basis change revokes the prior page-local capture instead of relabelling it"
+    },
+    {
+      "ok": true,
+      "label": "A newly read exact page revision re-enters the same native Expression identity"
+    },
+    {
+      "ok": true,
+      "label": "Restored page waits for the opening's one healthy production field without allocating an inline renderer"
+    },
+    {
+      "ok": true,
+      "label": "Temporary frontstate ownership keeps the real page host mounted, covered and disabled without a sticky error",
+      "data": {
+        "canvasCount": 1,
+        "inlineCanvas": 0,
+        "alerts": 0,
+        "disabled": true,
+        "covered": true,
+        "liveContext": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "The restored iframe retains its honest fallback until the native page presentation is actually ready"
+    },
+    {
+      "ok": true,
+      "label": "Completing the opening returns the same production canvas and context to the restored page's actual inline body",
+      "data": {
+        "sameCanvas": true,
+        "sameContext": true,
+        "healthy": true,
+        "canvasCount": 1,
+        "inline": true,
+        "fits": true,
+        "alerts": 0,
+        "expressionRef": "expression:page-ada",
+        "expressionRevision": "4",
+        "subjectRef": "central:being:ada"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The restored live page keeps its exact Expression revision and subject without an admission error"
+    },
+    {
+      "ok": true,
+      "label": "The restored page can focus the same field after frontstate release"
+    },
+    {
+      "ok": true,
+      "label": "Leaving restored-page focus returns the same field inline"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-15T15:28:18.408Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4330"
+        },
+        "url": "http://127.0.0.1:4321/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 5.8,
+      "seq_range": {
+        "from": 2,
+        "to": 2
+      },
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {},
+              "expression_ref": "expression:page-ada",
+              "provenance": [],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 1,
+              "scenes": [
+                {
+                  "entity_refs": [],
+                  "revision": 1,
+                  "scene_ref": "expression:page-ada:scene:main",
+                  "title": "Main"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": null,
+                "scene_ref": "expression:page-ada:scene:main"
+              },
+              "title": "Ada page Expression"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 5.2,
+      "seq_range": {
+        "from": 3,
+        "to": 3
+      },
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {
+                "expression:page-ada:entity:ada": {
+                  "entity_ref": "expression:page-ada:entity:ada",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "O"
+                    }
+                  },
+                  "revision": 2,
+                  "subject": null,
+                  "title": "Ada"
+                }
+              },
+              "expression_ref": "expression:page-ada",
+              "provenance": [],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 2,
+              "scenes": [
+                {
+                  "entity_refs": [
+                    "expression:page-ada:entity:ada"
+                  ],
+                  "revision": 2,
+                  "scene_ref": "expression:page-ada:scene:main",
+                  "title": "Main"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": null,
+                "scene_ref": "expression:page-ada:scene:main"
+              },
+              "title": "Ada page Expression"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 3,
+      "seq_range": {
+        "from": 4,
+        "to": 4
+      },
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {
+                "expression:page-ada:entity:ada": {
+                  "entity_ref": "expression:page-ada:entity:ada",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "O"
+                    }
+                  },
+                  "revision": 3,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "central",
+                    "presentation_role": "being",
+                    "readings": [],
+                    "sources": [
+                      {
+                        "availability": "available",
+                        "ref": "source:being:ada",
+                        "revision": "source@1"
+                      }
+                    ],
+                    "subject_ref": "central:being:ada"
+                  },
+                  "title": "Ada"
+                }
+              },
+              "expression_ref": "expression:page-ada",
+              "provenance": [],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 3,
+              "scenes": [
+                {
+                  "entity_refs": [
+                    "expression:page-ada:entity:ada"
+                  ],
+                  "revision": 2,
+                  "scene_ref": "expression:page-ada:scene:main",
+                  "title": "Main"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": null,
+                "scene_ref": "expression:page-ada:scene:main"
+              },
+              "title": "Ada page Expression"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 3.4,
+      "seq_range": {
+        "from": 8,
+        "to": 8
+      },
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {},
+              "expression_ref": "expression:unrelated",
+              "provenance": [],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 1,
+              "scenes": [
+                {
+                  "entity_refs": [],
+                  "revision": 1,
+                  "scene_ref": "expression:unrelated:scene:main",
+                  "title": "Main"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": null,
+                "scene_ref": "expression:unrelated:scene:main"
+              },
+              "title": "Unrelated Expression"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 238,
+      "data": {
+        "file": "expression-page-live-return-capture.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "invoke.expression",
+      "duration_ms": 9,
+      "seq_range": {
+        "from": 9,
+        "to": 9
+      },
+      "data": {
+        "outcome": {
+          "data": {
+            "dirty": true,
+            "document": {
+              "entities": {
+                "expression:page-ada:entity:ada": {
+                  "entity_ref": "expression:page-ada:entity:ada",
+                  "parameters": {
+                    "glyph": {
+                      "automation": null,
+                      "value": "O"
+                    },
+                    "scale": {
+                      "automation": null,
+                      "value": 1.2
+                    }
+                  },
+                  "revision": 4,
+                  "subject": {
+                    "actions": [],
+                    "native_owner": "central",
+                    "presentation_role": "being",
+                    "readings": [],
+                    "sources": [
+                      {
+                        "availability": "available",
+                        "ref": "source:being:ada",
+                        "revision": "source@1"
+                      }
+                    ],
+                    "subject_ref": "central:being:ada"
+                  },
+                  "title": "Ada"
+                }
+              },
+              "expression_ref": "expression:page-ada",
+              "provenance": [],
+              "refinements": [],
+              "relations": {},
+              "representations": [],
+              "revision": 4,
+              "scenes": [
+                {
+                  "entity_refs": [
+                    "expression:page-ada:entity:ada"
+                  ],
+                  "revision": 2,
+                  "scene_ref": "expression:page-ada:scene:main",
+                  "title": "Main"
+                }
+              ],
+              "schema": "oi.expression/v1",
+              "selection": {
+                "entity_ref": null,
+                "scene_ref": "expression:page-ada:scene:main"
+              },
+              "title": "Ada page Expression"
+            },
+            "dynamic_state": "not_restored",
+            "file": null,
+            "saved_revision": null,
+            "state": "ready"
+          },
+          "result": "expression"
+        }
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 82,
+      "data": {
+        "file": "expression-page-captured-fallback-page.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 134,
+      "data": {
+        "file": "expression-page-live-reentry.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 87,
+      "data": {
+        "file": "expression-page-restored-opening-inline.png"
+      }
+    }
+  ],
+  "metrics": {
+    "capture_width": 1280,
+    "capture_height": 785,
+    "capture_distinct_sampled_colours": 61
+  },
+  "screenshots": [
+    "expression-page-live-return-capture.png",
+    "expression-page-captured-fallback-page.png",
+    "expression-page-live-reentry.png",
+    "expression-page-restored-opening-inline.png"
+  ]
+}

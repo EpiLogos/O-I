@@ -7,6 +7,11 @@
 # to pin every product's skills here (owner, path, exact revision); that was
 # a second skill registry in a second format, and it drifted the moment a
 # product moved its files. Registration is AIKit functionality.
+#
+# The Central session strap used to ship here too, as a frozen copy claiming
+# local authority; it forked from its Control source and resurrected retired
+# procedure. It is Central ground: a ground receives it through AIKit's
+# Central binding, never through this binary.
 schema = "oi.suite-skillset/v1"
 
 [[profiles]]
