@@ -90,12 +90,20 @@ impl ProductCommandCatalogue {
 
 pub fn product_command_catalogue() -> Result<ProductCommandCatalogue, String> {
     let resolved = crate::catalog_source::resolve()?;
-    let source: SurfaceCatalogSource = serde_json::from_str(&resolved.json).map_err(|error| {
-        format!(
-            "O:I surface catalogue ({}) is invalid: {error}",
-            resolved.origin
-        )
-    })?;
+    product_command_catalogue_from_json(&resolved.json, resolved.origin)
+}
+
+/// The catalogue constructor over one explicit catalogue document. The
+/// runtime entry above is this plus the live resolution order (`$OI_CATALOG`,
+/// the adopted `<state>/catalogue.json`, the embedded snapshot). Hermetic
+/// tests pin the document — a machine-adopted catalogue must never move a
+/// unit-test floor.
+pub fn product_command_catalogue_from_json(
+    json: &str,
+    origin: &str,
+) -> Result<ProductCommandCatalogue, String> {
+    let source: SurfaceCatalogSource = serde_json::from_str(json)
+        .map_err(|error| format!("O:I surface catalogue ({origin}) is invalid: {error}"))?;
     if source.schema != 1 {
         return Err(format!(
             "unsupported O:I surface catalogue schema {}",
