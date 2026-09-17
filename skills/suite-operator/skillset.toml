@@ -1,5 +1,6 @@
 # The O:I guardian SkillSet — the one SkillSet the bootstrap projects onto a
-# fresh personal ground: the `oi` router and the suite operator.
+# fresh personal ground: the `oi` router, the suite operator, and the Central
+# session strap.
 #
 # O:I declares only what it owns. Every other product's skills stay
 # authoritative in their own repository and are composed, reviewed and
@@ -8,15 +9,18 @@
 # a second skill registry in a second format, and it drifted the moment a
 # product moved its files. Registration is AIKit functionality.
 #
-# The Central session strap used to ship here too, as a frozen copy claiming
-# local authority; it forked from its Control source and resurrected retired
-# procedure. It is Central ground: a ground receives it through AIKit's
-# Central binding, never through this binary.
+# The Central session strap ships here again (owner ruling 2026-09-17: "oi
+# holds and projects the strap itself and the skill"). Its earlier withdrawal
+# followed a fork between a frozen shipment copy and the Central repertoire;
+# the reconciliation is that THIS file is the strap's held source — its
+# authoritative text lives at skills/central-session-strap/SKILL.md and every
+# projection is a receipt-gated derived copy. Owner-ratified edits happen
+# here, not in projections.
 schema = "oi.suite-skillset/v1"
 
 [[profiles]]
 profile_ref = "oi:skillset:base-guardian"
-purpose = "Default shipped SkillSet for a fresh personal ground: the O:I guardian Skills projected into harnesses at the Central root — suite routing through the oi CLI and AIKit-first world navigation and augmentation. Procedural composition only; grants no authority."
+purpose = "Default shipped SkillSet for a fresh personal ground: the O:I guardian Skills projected into harnesses at the Central root — suite routing through the oi CLI, AIKit-first world navigation and augmentation, and the Central session strap. Procedural composition only; grants no authority."
 scope = "ordinary"
 inherits = []
 
@@ -26,6 +30,10 @@ requiredness = "required"
 
 [[profiles.members]]
 skill_ref = "oi:skill:suite-operator"
+requiredness = "required"
+
+[[profiles.members]]
+skill_ref = "oi:skill:central-session-strap"
 requiredness = "required"
 
 [[skills]]
@@ -48,4 +56,15 @@ compatibility = []
 required_actions = []
 required_capabilities = []
 risk_class = "suite-operation"
+permission_requirements = []
+
+[[skills]]
+skill_ref = "oi:skill:central-session-strap"
+owner_product = "O:I"
+purpose = "Orient a session entering, resuming or re-scoping work in the Central ground: resolve World, governing intent, NOW and practices before allocating task scratch."
+source = { repository = "EpiLogos/O-I", path = "skills/central-session-strap/SKILL.md", revision_policy = "resolve_authoritative_installed_revision" }
+compatibility = []
+required_actions = []
+required_capabilities = []
+risk_class = "session-orientation"
 permission_requirements = []
