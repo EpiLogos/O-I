@@ -1,5 +1,13 @@
 # Use the system in an existing life and working setup
 
+## Current Factory / Agency UI integration — 17 September 2026
+
+Continue the already-running UI refinement with [FACTORY-UI-INTEGRATION-HANDOFF.md](FACTORY-UI-INTEGRATION-HANDOFF.md). It joins [NOW/Paradigm/Return](NOW-PARADIGM-RETURN.md), claim reception, native telemetry/search/Git, the right inspection/result desk, intent-led Agent creation and AIKit Skill assignment. The six existing Product Guardians steward accumulating native product-operating repertoires; `oi` centralises/routes and product practice specialises. This does not redesign `oi`/`suite-operator` or revive the frozen Central bootstrap strap.
+
+**DeepSeek Harness is interaction inspiration only.** This Factory UI works without DSH installed, embedded or running. Adapter work is independent. Preserve the current six app entrances and Expressions-led visual refinement from #375's latest amendment, accepted left-files interaction, single conversation and native pane/source identities. Do not restart discovery, require a preliminary branch merge or delay component work on a new documentation gate.
+
+The existing [factory-agency.json](factory-agency.json) retains all fourteen obligation IDs, original stories/requirements/evidence grades and adds the detailed new branches. Its existing `document_operations_source` includes the full handoff in the compiler's source/digest reading. Source integration is not runtime or human acceptance. #220 supplies native joins; #289/#292/#375 supplies UI; #201–#205 proves the joined path. The [campaign Skill](../../skills/experience-campaign/SKILL.md) retains the Day/NOW foundation-first requirement for the broad fan-out while this bounded UI/native work continues.
+
 ## 0 — Why this campaign exists
 
 **One campaign owner: [O:I #65](https://github.com/EpiLogos/O-I/issues/65).** This is its current mainline Wayfinder, not a replacement for native product implementation maps or evidence stores. It gathers the original #97 developer/physical proving, #65 A–I, CAW, terminal/desktop, gateway, knowledge, document, SDK and complete QL obligations.
@@ -72,7 +80,7 @@ The compiler preserves whole source prose and unknown metadata, per-file digests
 
 #65 A–I is still the umbrella. CAW P01–P28 and every named subcase stay in `tests/continuous-work/cases.json` and their existing campaign. QL retains its native trace, preparation and engine/source checks. #97's historical accepted receipts remain valid for their own cut; they neither certify today's installation nor require a repeat of completed branch cleanup before every small operation.
 
-The developer field includes actual bare/current-terminal work, direct mux work, SessionSpace close/reopen, Herdr's richer agent facilities, parallel Factory/direct/external actors, Workcell census, exact worktrees, persistent gateway, credentials and repair, graph across hosts, narrow/medium/wide controls, keyboard/pointer and terminal restore/panic/resize. A tmux success does not certify cmux. A labelled Herdr pane is not proof of Herdr agent automation. Test each selected platform/version through its real native capability.
+The developer field includes actual bare/current-terminal work, direct mux work, SessionSpace close/reopen, Herdr's richer agent facilities, parallel Factory/direct/external actors, Workcell census, exact worktrees, persistent gateway, credentials and repair, graph/open elsewhere and actual keyboard/pointer/narrow/resize/restore behaviour. A tmux success does not certify cmux. A labelled Herdr pane is not proof of Herdr agent automation. Test each selected platform/version through its real native capability.
 
 The #97 reference-machine amendment is also retained: the richer second-machine Omarchy/Herdr/Hyprland/Quickshell/DSH/Pi arrangement where still adopted, with nested disposable environments when useful, not a silent return to the older Ubuntu-only example. Current actual machine intent determines the selected specimen. The ordinary local machine remains usable without that richer setup; the second machine's existence is not permission for destructive tests.
 
