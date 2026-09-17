@@ -238,7 +238,11 @@ export type KernelOp =
       title: string;
     }
   | { op: "surface_close"; surface_id: string }
-  | { op: "surface_focus"; surface_id: string };
+  | { op: "surface_focus"; surface_id: string }
+  // ES1/ES4 expression-world operations (kernel `expression_world.rs`):
+  // shared selection/deictic context, Surface portals, ExpressiveActs and
+  // bounded local-whole bindings over exact native refs.
+  | { op: "expression_world"; request: import("../expression/world").WorldRequest };
 
 /** The outcome payloads (the Rust `KernelOpResult`, tagged snake_case).
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
@@ -311,7 +315,8 @@ export type KernelOpResult =
   | { result: "source_reread"; buffer: SourceBufferState }
   | { result: "surface_opened"; snapshot: KernelSnapshotState }
   | { result: "surface_closed"; snapshot: KernelSnapshotState }
-  | { result: "surface_focused"; snapshot: KernelSnapshotState };
+  | { result: "surface_focused"; snapshot: KernelSnapshotState }
+  | { result: "expression_world"; data: unknown };
 
 /** One operation's outcome: the flattened result beside its receipts
  * (receipts are omitted on the wire when empty — an operation that
