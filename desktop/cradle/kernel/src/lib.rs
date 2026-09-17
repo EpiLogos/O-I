@@ -54,6 +54,10 @@ pub mod refs;
 pub mod world;
 pub mod commission;
 pub mod flow_cognition;
+// --- expression_world (ES1 knowledge side + ES4 joint focus/deixis/portals),
+// lane aikit/es-one-state-relation: the shared selection relation, Surface
+// portals, ExpressiveAct and bounded local-whole bindings over exact refs.
+pub mod expression_world;
 
 pub use flow::{CentralClient, OwnerCallError};
 
@@ -151,6 +155,9 @@ pub struct Kernel {
     agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
+    // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation): the
+    // one shared selection relation, portal/act/local-whole records.
+    world: expression_world::WorldState,
     log: KernelEventLog,
     surfaces: BTreeMap<String, SurfaceState>,
     buffers: BTreeMap<String, SourceBuffer>,
@@ -384,6 +391,12 @@ pub enum KernelOp {
     /// Make a surface's ref the one current focus subject. Emits
     /// `focus_changed` only when the relation actually moved.
     SurfaceFocus { surface_id: String },
+    // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation): the
+    // generic world operations — shared selection/deictic context,
+    // SurfacePortal inspect/open/close/redock, ExpressiveAct
+    // perform/interrupt/checkpoint/restore and bounded local-whole
+    // bind/inspect/rebase over exact native refs. See expression_world.rs.
+    ExpressionWorld { request: expression_world::Request },
 }
 
 /// What an operation produced: its payload plus the receipts of the state
@@ -506,6 +519,8 @@ pub enum KernelOpResult {
     SurfaceOpened { snapshot: KernelSnapshot },
     SurfaceClosed { snapshot: KernelSnapshot },
     SurfaceFocused { snapshot: KernelSnapshot },
+    // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation).
+    ExpressionWorld { data: serde_json::Value },
 }
 
 impl Kernel {
@@ -519,6 +534,7 @@ impl Kernel {
             agency,
             expressions: expression::Application::default(),
             focus: GlobalFocus::unfocused(),
+            world: expression_world::WorldState::default(),
             log: KernelEventLog::new(),
             surfaces: BTreeMap::new(),
             buffers: BTreeMap::new(),
@@ -565,10 +581,21 @@ impl Kernel {
                     receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor, activity_ref: change.activity_ref }));
                 }
                 if data["state"] == "ready" {
-                    if let Some(subject) = focus_ref.as_deref().and_then(|r| self.expressions.selected_subject(r)) {
-                        let before = self.focus.clone();
-                        self.focus.focus_subject(subject).map_err(|e| e.to_string())?;
-                        if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() })); }
+                    if let Some(expression_ref) = focus_ref.as_deref() {
+                        if let Some(subject) = self.expressions.selected_subject(expression_ref) {
+                            let before = self.focus.clone();
+                            self.focus.focus_subject(subject.clone()).map_err(|e| e.to_string())?;
+                            if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() })); }
+                            // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation):
+                            // an Expression focus edit IS the shared selection relation
+                            // moving. The graph, Wiki and constellation presentations
+                            // read and write this same deictic context over the exact
+                            // same native ref (one canonical bounded selection state;
+                            // every depth is a presentation over it). No separate
+                            // event: the move already emitted FocusChanged when the
+                            // relation changed, and `selection_read` is the pull.
+                            self.world.record_expression_selection(expression_ref, &subject);
+                        }
                     }
                 }
                 Ok(KernelOpOutcome { receipts, result: KernelOpResult::Expression { data } })
@@ -984,6 +1011,8 @@ impl Kernel {
             } => self.surface_open(surface_id, kind, source_ref, title),
             KernelOp::SurfaceClose { surface_id } => self.surface_close(surface_id),
             KernelOp::SurfaceFocus { surface_id } => self.surface_focus(surface_id),
+            // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation).
+            KernelOp::ExpressionWorld { request } => self.expression_world(request),
         }
     }
 
