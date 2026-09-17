@@ -37,6 +37,7 @@ const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=
 const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((module)=>({default:module.KnowledgeSurface})));
 const FactoryDevelopmentSurface=lazy(()=>import("../contributions/factory/FactoryDevelopmentSurface").then((module)=>({default:module.FactoryDevelopmentSurface})));
 const SystemPanel=lazy(()=>import("../workspace/SystemPanel").then((module)=>({default:module.SystemPanel})));
+const NaraSurface=lazy(()=>import("../nara/NaraSurface").then((module)=>({default:module.NaraSurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 
 export interface WorkbenchProps {
@@ -332,6 +333,7 @@ function SurfaceBodyImpl({
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "factory") return <FactoryDevelopmentSurface />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
+  if (binding.kind === "nara") return <NaraSurface key={binding.id} binding={binding} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;
   }
@@ -370,6 +372,7 @@ const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings" | "field"
   system: "settings",
   explore: "search",
   presentation: "field",
+  nara: "chat",
 };
 
 function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
