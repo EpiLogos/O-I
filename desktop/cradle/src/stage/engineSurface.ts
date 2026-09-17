@@ -27,6 +27,16 @@
  * K8 may own the attraction targets of this same production field while O:I
  * keeps the canvas, renderer, physics clock and lifecycle. Context return then
  * restores the acknowledged resident GPU checkpoint instead of reseeding.
+ *
+ * ES5 lifecycle convergence: a contained renderer that leaves the viewport
+ * suspends exactly as a hidden document does — the clock stops, no frame is
+ * scheduled, and re-entry resumes the same field on the same context. A WebGL
+ * context loss is a lifecycle boundary, not a stage failure: the loss is
+ * marked (no frame is attempted, commands are deferred), and the browser's
+ * `webglcontextrestored` rebuilds the production field through the adapter's
+ * own recover-context path. Live simulation state does not survive the loss —
+ * the engine reseeds — and that honesty is the receipt, never a claim of
+ * continuity.
  */
 import { ProductionAdapter, type RetainedTargetPort } from "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs";
 import { nativeSnapshotToJourney, type NativeConfig, type StageScene } from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
@@ -135,6 +145,13 @@ export class EngineSurface {
   private onError: (message: string) => void;
   private retainedLeaseOwner: string | null = null;
   private retainedLeaseIdentity: symbol | null = null;
+  /** ES5: the contained renderer's viewport membership. A moved-out-of-view
+   * container suspends its clock exactly like a hidden document. */
+  private offscreen = false;
+  private offscreenObserver: IntersectionObserver | null = null;
+  /** ES5: honest WebGL context-loss lifecycle (marked, deferred, recovered). */
+  private contextLost = false;
+  private recovery: { phase: "lost" | "restored"; atFrame: number; restores: number } | null = null;
   private readonly home: HTMLElement;
   private readonly homeElement: HTMLElement | null;
   private readonly homeStyle: string;
@@ -173,9 +190,24 @@ export class EngineSurface {
     if (element) {
       this.observer = new ResizeObserver(this.viewportChanged);
       this.observer.observe(element);
+      // A contained renderer that scrolls or collapses out of the viewport
+      // suspends; re-entry resumes the same field. The window surface needs
+      // no observer — document visibility already governs it.
+      this.offscreenObserver = new IntersectionObserver((entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting);
+        if (visible === !this.offscreen) return;
+        this.offscreen = !visible;
+        if (visible) delete this.canvas.dataset.oiStageSuspended;
+        else this.canvas.dataset.oiStageSuspended = "true";
+        if (visible) this.wake();
+        else this.sleep();
+      });
+      this.offscreenObserver.observe(element);
     }
     document.addEventListener("visibilitychange", this.visibilityChanged);
     window.addEventListener("resize", this.viewportChanged);
+    this.canvas.addEventListener("webglcontextlost", this.contextLosted);
+    this.canvas.addEventListener("webglcontextrestored", this.contextRestored);
     this.reduced.addEventListener("change", this.motionChanged);
     // Recipes and opted-in document projections follow the host appearance:
     // when the theme flips, the same scene is re-grounded (revision bump, no reseed) so
@@ -256,6 +288,10 @@ export class EngineSurface {
     if (this.element === (container ?? this.homeElement)) return;
     this.observer?.disconnect();
     this.observer = null;
+    this.offscreenObserver?.disconnect();
+    this.offscreenObserver = null;
+    this.offscreen = false;
+    delete this.canvas.dataset.oiStageSuspended;
     this.element = container ?? this.homeElement;
     this.canvas.style.cssText = this.homeStyle;
     this.paintedBackground = null;
@@ -264,6 +300,16 @@ export class EngineSurface {
       container.append(this.canvas);
       this.observer = new ResizeObserver(this.viewportChanged);
       this.observer.observe(container);
+      this.offscreenObserver = new IntersectionObserver((entries) => {
+        const visible = entries.some((entry) => entry.isIntersecting);
+        if (visible === !this.offscreen) return;
+        this.offscreen = !visible;
+        if (visible) delete this.canvas.dataset.oiStageSuspended;
+        else this.canvas.dataset.oiStageSuspended = "true";
+        if (visible) this.wake();
+        else this.sleep();
+      });
+      this.offscreenObserver.observe(container);
     } else {
       this.home.append(this.canvas);
       if (this.homeElement) {
@@ -409,7 +455,7 @@ export class EngineSurface {
 
   command(command: EngineCommand) {
     if (!this.live || !this.active) throw new Error("The engine surface has no live presentation to command.");
-    if (document.hidden) { this.pendingCommands.push(command); return; }
+    if (document.hidden || this.contextLost) { this.pendingCommands.push(command); return; }
     // A command may arrive before the first frame (a sequence step fired
     // while the document was hidden, or straight after present()). The
     // engine materialises on its first render; give it that frame rather
@@ -447,6 +493,14 @@ export class EngineSurface {
   get isScheduled() { return this.raf !== 0; }
   /** Frames rendered since creation — the honest activity counter. */
   get frameCount() { return this.frames; }
+  /** ES5: whether the contained renderer is currently out of the viewport
+   * (clock suspended; window surfaces are never offscreen). */
+  get isSuspended() { return this.offscreen; }
+  /** ES5: whether the WebGL context is currently lost (no frame attempted,
+   * commands deferred until the browser restores). */
+  get isContextLost() { return this.contextLost; }
+  /** ES5: the last context-loss lifecycle receipt, if any. */
+  get contextRecovery() { return this.recovery; }
   setForceMotion(force: boolean) { this.forceMotion = force; this.motionChanged(); }
   telemetry(): unknown { try { return this.adapter.telemetry?.() ?? null; } catch { return null; } }
   capabilities() { return this.adapter.capabilities; }
@@ -457,8 +511,12 @@ export class EngineSurface {
     this.sleep();
     this.observer?.disconnect();
     this.observer = null;
+    this.offscreenObserver?.disconnect();
+    this.offscreenObserver = null;
     document.removeEventListener("visibilitychange", this.visibilityChanged);
     window.removeEventListener("resize", this.viewportChanged);
+    this.canvas.removeEventListener("webglcontextlost", this.contextLosted);
+    this.canvas.removeEventListener("webglcontextrestored", this.contextRestored);
     this.reduced.removeEventListener("change", this.motionChanged);
     this.themeObserver?.disconnect();
     this.themeObserver = null;
@@ -562,7 +620,7 @@ export class EngineSurface {
     }
   }
   private wake = () => {
-    if (this.raf || !this.active || document.hidden) return;
+    if (this.raf || !this.active || document.hidden || this.offscreen || this.contextLost) return;
     if (!this.live) return;
     if (this.paused) {
       if (this.renderedRevision !== this.active.revision) this.renderFrame(0);
@@ -580,13 +638,36 @@ export class EngineSurface {
     else if (this.paused && this.live && this.active?.hostMaterial) this.renderFrame(0);
     else this.wake();
   };
+  /** ES5: a lost WebGL context stops the clock before anything can attempt a
+   * frame against it. The adapter has already preventDefault()ed, so the
+   * browser may restore; nothing here claims continuity of live state. */
+  private contextLosted = (event: Event) => {
+    event.preventDefault();
+    if (this.contextLost) return;
+    this.contextLost = true;
+    this.recovery = { phase: "lost", atFrame: this.frames, restores: this.recovery?.restores ?? 0 };
+    this.canvas.dataset.oiStageContext = "lost";
+    this.sleep();
+  };
+  /** ES5: recovery rebuilds the production field through the adapter's own
+   * recover-context path and re-materialises the standing presentation. The
+   * engine reseeds — live simulation state is honestly gone. */
+  private contextRestored = () => {
+    if (!this.contextLost) return;
+    this.contextLost = false;
+    this.recovery = { phase: "restored", atFrame: this.frames, restores: (this.recovery?.restores ?? 0) + 1 };
+    this.canvas.dataset.oiStageContext = "restored";
+    try { this.adapter.command({ type: "recover-context" }); } catch { /* the next render rebuilds the field anyway */ }
+    if (this.active && this.live && !document.hidden && !this.offscreen) this.renderFrame(0);
+    this.wake();
+  };
   private sleep() { if (this.raf) cancelAnimationFrame(this.raf); this.raf = 0; }
   private frame = (now: number) => {
     this.raf = 0;
     if (!this.active || !this.live || this.paused) return;
-    // A hidden document draws nothing and schedules nothing; the
-    // visibilitychange wake resumes a live field when it returns.
-    if (document.hidden) { this.last = now; return; }
+    // A hidden document or a moved-out-of-view container draws nothing and
+    // schedules nothing; its wake (visibility/intersection) resumes the field.
+    if (document.hidden || this.offscreen || this.contextLost) { this.last = now; return; }
     const animate = this.forceMotion || !this.reduced.matches;
     // Media queries can reflect the new preference before their change
     // event is delivered. Normalize at the drawing boundary as well.
@@ -602,7 +683,7 @@ export class EngineSurface {
     if (animate && this.active && !this.paused && this.live) this.raf = requestAnimationFrame(this.frame);
   };
   private renderFrame(delta: number): boolean {
-    if (!this.active || !this.live || document.hidden) return false;
+    if (!this.active || !this.live || this.contextLost || document.hidden) return false;
     const element = this.element;
     let width: number, height: number;
     if (element) {
