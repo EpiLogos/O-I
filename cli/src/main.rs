@@ -37,3 +37,27 @@ mod composition {
 fn main() -> std::process::ExitCode {
     composition::cli_main()
 }
+
+#[cfg(test)]
+pub(crate) mod test_support {
+    use std::sync::{Mutex, MutexGuard, OnceLock};
+
+    fn env_mutex() -> &'static Mutex<()> {
+        static LOCK: OnceLock<Mutex<()>> = OnceLock::new();
+        LOCK.get_or_init(|| Mutex::new(()))
+    }
+
+    /// Serialises every test that mutates process-global environment state.
+    /// `env::set_var`/`remove_var` are process-global and unsynchronised:
+    /// cargo runs one test target's tests on many threads, so two mutating
+    /// tests corrupt each other's windows and any concurrent reader can
+    /// observe a foreign fixture state mid-flight. Hold this guard for the
+    /// whole body of a test that sets or clears an environment variable.
+    /// Hermetic tests — pure functions over pinned bytes — never read the
+    /// environment and stay parallel without it.
+    pub(crate) fn env_lock() -> MutexGuard<'static, ()> {
+        env_mutex()
+            .lock()
+            .unwrap_or_else(|poisoned| poisoned.into_inner())
+    }
+}

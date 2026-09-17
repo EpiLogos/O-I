@@ -954,11 +954,11 @@ mod update_flow_tests {
         let repo = temp.path().join("tool");
         fs::create_dir_all(&repo).unwrap();
         git(&repo, &["init", "-b", "main"]);
-        fs::write(repo.join("Cargo.toml"), "[package]\nname = \"tool\"\nversion = \"0.1.0\"\n");
+        fs::write(repo.join("Cargo.toml"), "[package]\nname = \"tool\"\nversion = \"0.1.0\"\n").unwrap();
         let revision = commit_all(&repo, "cut one");
         let tree = git(&repo, &["rev-parse", "HEAD^{tree}"]);
         // Live work happens on top; the cut is what is committed.
-        fs::write(repo.join("Cargo.toml"), "live uncommitted work\n");
+        fs::write(repo.join("Cargo.toml"), "live uncommitted work\n").unwrap();
         let cut = resolve_desired_cut("tool", &repo).unwrap().unwrap();
         assert_eq!(cut.revision, revision);
         assert_eq!(cut.tree, tree);

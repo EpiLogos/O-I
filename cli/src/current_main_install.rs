@@ -1,11 +1,24 @@
 fn current_main_source_install(
     id: &str,
 ) -> Result<oi_cli::product_command::SourceInstallDescriptor, String> {
-    oi_cli::product_command::product_command_catalogue()?
+    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    current_main_source_install_from_catalogue(&catalogue, id)
+}
+
+/// The extraction law over one explicit catalogue: the current-main install
+/// path publishes exactly the descriptor the catalogue carries — it never
+/// overrides an owner's build or entry. Split from the runtime entry above so
+/// hermetic tests can pin the checked-in snapshot instead of whatever
+/// catalogue the running machine has adopted.
+fn current_main_source_install_from_catalogue(
+    catalogue: &oi_cli::product_command::ProductCommandCatalogue,
+    id: &str,
+) -> Result<oi_cli::product_command::SourceInstallDescriptor, String> {
+    catalogue
         .products
-        .into_iter()
+        .iter()
         .find(|product| product.id == id)
-        .map(|product| product.source_install)
+        .map(|product| product.source_install.clone())
         .ok_or_else(|| format!("missing current-main command descriptor for {id}"))
 }
 
@@ -165,8 +178,20 @@ fn post_install_scan_target<'a>(
 mod current_main_install_tests {
     use super::*;
 
+    /// The catalogue document both hermetic tests below validate against:
+    /// the checked-in snapshot, never a machine-adopted catalogue and never
+    /// an `OI_HOME` another test is concurrently isolating.
+    fn pinned_catalogue() -> oi_cli::product_command::ProductCommandCatalogue {
+        oi_cli::product_command::product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "embedded-snapshot",
+        )
+        .unwrap()
+    }
+
     #[test]
     fn every_product_has_a_current_main_native_source_install() {
+        let catalogue = pinned_catalogue();
         for id in [
             "central",
             "actuation",
@@ -175,17 +200,22 @@ mod current_main_install_tests {
             "workcell",
             "quaternal-logic",
         ] {
-            let spec = current_main_source_install(id).unwrap();
+            let spec = current_main_source_install_from_catalogue(&catalogue, id).unwrap();
             assert!(!spec.executable_path.is_empty(), "{id}");
         }
     }
 
     #[test]
     fn native_source_installs_preserve_each_published_descriptor() {
-        let catalogue = oi_cli::product_command::product_command_catalogue().unwrap();
-        for product in catalogue.products {
+        // Hermetic by construction: both sides read the checked-in snapshot,
+        // so a machine-adopted catalogue or a concurrently-isolated OI_HOME
+        // cannot flip one resolution mid-test. The production entry
+        // (`current_main_source_install`) differs only by
+        // `catalog_source::resolve()`.
+        let catalogue = pinned_catalogue();
+        for product in &catalogue.products {
             assert_eq!(
-                current_main_source_install(&product.id).unwrap(),
+                current_main_source_install_from_catalogue(&catalogue, &product.id).unwrap(),
                 product.source_install,
                 "{} must retain its owner's build and entry, regardless of language",
                 product.id
