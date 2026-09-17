@@ -1,0 +1,33 @@
+{
+  "name": "text-capable cascade body (the honest fallback body)",
+  "resolution": {
+    "version": "7",
+    "harness": "harness:nara-conversation",
+    "harness_composition_fingerprint": "fp-text-cascade",
+    "relation": {
+      "model": {"model": "model:desktop-text", "variant": "chat"},
+      "engine": {"engine": "engine:desktop-text", "provider": "provider:ai-kit", "form": "managed-service", "revision": "r1"},
+      "materialisation": {"binding_ref": "material:desktop-text", "placement": "local", "endpoint": null},
+      "change_application": "live",
+      "model_surface": {
+        "contract": "contract:desktop-text", "protocol": "http", "capabilities": ["text"],
+        "access": {
+          "inference": {"state": "available", "capabilities": ["text-generation"]},
+          "material_control": {"state": "unavailable", "reason": "hosted"},
+          "interior": {"state": "unavailable", "reason": "opaque"}
+        },
+        "modality": {
+          "schema": "aikit.model-modality/v1",
+          "input_modalities": ["text"], "output_modalities": ["text"],
+          "transforms": {}, "interaction": ["request-response", "final-transcripts"],
+          "degraded_interaction": {},
+          "transport": "http", "connection": {"kind": "stateless"},
+          "credential_scope": "bearer", "availability": "available",
+          "provider": "provider:ai-kit", "provider_native_surface": "desktop-text", "provider_revision": "r1",
+          "credential": {"state": "declared", "scope": "bearer"}, "constraints": {}, "provenance": ["walk-fixture"]
+        }
+      }
+    },
+    "components": [], "contracts": [], "surfaces": [], "unavailable": []
+  }
+}
