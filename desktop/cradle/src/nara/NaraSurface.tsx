@@ -117,6 +117,12 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   if(!document)throw new Error("The Expression document is unavailable; the dialogue context names a live Expression");
   const previous=current.contextNow;
   const selected=document.selection.entity_ref?document.entities[document.selection.entity_ref]:null;
+  // Coherence: an act whose basis is no longer the live revision cannot ride
+  // the next turn's context (the QL law refuses it) — it is released here,
+  // named in the notice, never silently.
+  const act=previous.expressive_act;
+  const releasedAct=act&&act.basis_expression_revision!==String(document.revision)?act:null;
+  if(releasedAct)setNotice(`ExpressiveAct ${releasedAct.expressive_act_ref} released: the live Expression moved past its basis ${releasedAct.basis_expression_revision}`);
   const next=buildDialogueContext({
    context_ref:previous.context_ref,
    nara_ref:previous.nara_ref,
@@ -139,7 +145,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    available_action_refs:collectAvailableActions(document),
    c_prime:previous.c_prime,
    shared_field:previous.shared_field,
-   expressive_act:previous.expressive_act,
+   expressive_act:releasedAct?null:previous.expressive_act,
   });
   current.updateContext(next);
   renderFrom();
@@ -212,7 +218,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    const change=current.reconnect({
     change_ref:`speech-constitution-change:${crypto.randomUUID()}`,
     next_constitution:next,
-    next_context:context,
+    next_context:{...context,agent_session_ref:next.agent_session_ref},
     reason:"body re-resolved; the canonical Nara and its dialogue continue",
     evidence_refs:[`aikit:model-runtime:${before.harness_composition_ref??before.body_ref}@reconnect`],
     at:new Date().toISOString(),
@@ -354,7 +360,10 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   stream.current?.getTracks().forEach(track=>track.stop());
   stream.current=null;
   setMic("idle");
- },[]);
+  const current=client.current;
+  if(current&&current.phaseNow==="listening")current.endListening();
+  renderFrom();
+ },[renderFrom]);
 
  /** Interrupt: the Actuation receipt drives BOTH the speech stop and the
   * choreography hold/cancel; session and identity survive. */
@@ -627,6 +636,9 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    </ul>}
   </section>
   {highlight&&<p className="oi-note" data-nara-highlight>Nara {highlight.action}: <span className="oi-ref">{highlight.ref}</span></p>}
+  <details className="oi-disclosure nara-next-body"><summary>Next body resolution <span className="oi-state">consumed by Reconnect</span></summary>
+   <label className="oi-field">AIKit resolution read model<textarea className="oi-input nara-resolution" aria-label="Next body resolution" spellCheck={false} value={resolutionText} onChange={e=>setResolutionText(e.target.value)}/></label>
+  </details>
   <details className="oi-disclosure nara-authority"><summary>Authority proofs <span className="oi-state">{toolReceipt?toolReceipt.decision.resolution.resolution:"none run"}</span></summary>
    <p className="oi-note">A speech tool request is a request, never a canonical Action: refusal happens before any effect; authorisation and execution are separate receipts.</p>
    <div className="oi-action-group">
@@ -677,13 +689,21 @@ function speechCapableWord(constitution:SpeechConstitutionFacts):string {
 function bodyRefOf(resolution:unknown):string {
  const document=(resolution??{}) as Record<string,unknown>;
  if(document["relation"]){
-  const surface=(document["relation"] as Record<string,unknown>)["model_surface"] as Record<string,unknown>|undefined;
+  const relation=document["relation"] as Record<string,unknown>;
+  const surface=relation["model_surface"] as Record<string,unknown>|undefined;
   if(surface&&typeof surface["surface"]==="string")return surface["surface"];
+  const model=relation["model"] as Record<string,unknown>|undefined;
+  if(model&&typeof model["model"]==="string")return model["model"];
  }
  if(Array.isArray(document["stages"])&&document["stages"].length){
   const stages=document["stages"] as Record<string,unknown>[];
   const last=stages[stages.length-1];
   if(last&&typeof last["component"]==="string")return String(last["component"]);
+ }
+ if(Array.isArray(document["surfaces"])&&document["surfaces"].length){
+  const surfaces=document["surfaces"] as Record<string,unknown>[];
+  const last=surfaces[surfaces.length-1];
+  if(last&&typeof last["surface"]==="string")return String(last["surface"]);
  }
  throw new Error("The resolution carries no body surface ref; the desktop invents none");
 }

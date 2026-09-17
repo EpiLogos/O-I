@@ -190,6 +190,13 @@ export class NaraSpeechBinding {
     this.phase="listening";
   }
 
+  /** Manual turn-end for the push-to-talk path: where the body does not run
+   * VAD turn detection, the person's own release ends the input. */
+  endListening():void {
+    if(this.phase!=="listening")throw new Error(`phase ${this.phase} cannot end listening`);
+    this.phase="idle";
+  }
+
   beginResponse(responseRef:string):void {
     if(this.phase!=="listening"&&this.phase!=="idle"&&this.phase!=="completed"&&this.phase!=="interrupted")throw new Error(`phase ${this.phase} cannot begin a response`);
     this.inFlight=wireText(responseRef,"response ref");
