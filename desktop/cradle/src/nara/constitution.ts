@@ -235,15 +235,30 @@ interface AikitComposedModality {
  * proven-absent and unproven stay distinct facts. */
 export function constitutionFromAikitResolution(identities:ConstitutionIdentities,resolution:unknown,resolvedAt:string):SpeechConstitutionFacts {
   const document=requireObject(resolution,"AIKit model runtime read model");
-  const staged=requireObject(document["composed_modality"],"composed_modality") as unknown as AikitComposedModality;
   const relation=document["relation"]!=null?requireObject(document["relation"],"model_relation"):null;
   const surface=relation?requireObject(relation["model_surface"],"model_surface"):null;
   const contract=(surface?surface["modality"]:null) as AikitModalityContract|null;
+  // Two body shapes, one derivation: a single-model read model has no
+  // composed view of its own — the declared contract IS the composed body
+  // (first stage's inputs, last stage's outputs, same map). A cascade read
+  // model supplies `composed_modality` directly.
+  const staged:AikitComposedModality=document["composed_modality"]!=null
+    ?requireObject(document["composed_modality"],"composed_modality") as unknown as AikitComposedModality
+    :contract
+      ?{input_modalities:contract.input_modalities,output_modalities:contract.output_modalities,
+        transforms:contract.transforms as Record<string,unknown>|undefined,
+        interaction:contract.interaction as Record<string,unknown>|undefined,
+        degraded_interaction:contract.degraded_interaction,
+        complete:true,basis:contract.provenance??[]}
+      :{input_modalities:[],output_modalities:[],complete:false,basis:[]};
   const complete=staged["complete"]!==false;
+  // A supplied composed view is authoritative for body-level claims: a
+  // single stage's fuller contract must not leak into the derived body.
+  const stagedSupplied=document["composed_modality"]!=null;
   const unavailable=requireObject(document,"read model").hasOwnProperty("unavailable")?document["unavailable"]:[];
   const input=listStrings(staged["input_modalities"],"composed input_modalities");
   const output=listStrings(staged["output_modalities"],"composed output_modalities");
-  const transformEntries=Object.entries(stagedCompletion(staged,contract,"transforms"));
+  const transformEntries=Object.entries(stagedCompletion(staged,contract,"transforms",stagedSupplied));
   const transforms:Record<string,SpeechSupport>={};
   const acousticIn=input.some(m=>m==="audio"||m==="speech");
   const acousticOut=output.some(m=>m==="audio"||m==="speech");
@@ -256,7 +271,7 @@ export function constitutionFromAikitResolution(identities:ConstitutionIdentitie
     transforms[name]=declaredSupport(declared,name,complete);
   }
   const interaction:Record<string,SpeechSupport>={};
-  const declaredInteractions=Object.keys(stagedCompletion(staged,contract,"interaction"));
+  const declaredInteractions=Object.keys(stagedCompletion(staged,contract,"interaction",stagedSupplied));
   const degradedInteraction={...staged["degraded_interaction"]??{},...(contract?.degraded_interaction??{})};
   for(const name of INTERACTIONS){
     if(name==="request-response"&&(input.includes("text")&&output.includes("text"))&&!declaredInteractions.includes(name)){
@@ -269,7 +284,7 @@ export function constitutionFromAikitResolution(identities:ConstitutionIdentitie
       interaction[name]=complete?unsupported(`the resolved body's declaration does not carry ${name}`):unknown(`no modality contract declared ${name}; the body's declaration is incomplete`);
       continue;
     }
-    const raw=findDeclared(staged,contract,"interaction",name);
+    const raw=findDeclared(staged,contract,"interaction",name,stagedSupplied);
     interaction[name]=declaredSupport(raw,name,complete);
   }
   const transportValue=(contract?.transport??stagedTransportFallback(document))??unknownTransport(document);
@@ -291,8 +306,8 @@ export function constitutionFromAikitResolution(identities:ConstitutionIdentitie
   const constitution:SpeechConstitutionFacts={
     schema:SPEECH_CONSTITUTION_VERSION,
     ...identities,
-    model_relation:relation??{schema:"aikit.staged-model-runtime/v1",basis:staged["basis"]??[]},
-    access_profile:{schema:"aikit.model-access/v1",derived:true},
+    model_relation:reduceModelRelation(document,relation,staged),
+    access_profile:reduceAccessProfile(relation),
     input_modalities:input,output_modalities:output,
     transforms:Object.keys(transforms).length?transforms:undefined,
     interaction,
@@ -324,6 +339,71 @@ export function aikitResolutionRef(readModelRef:string,revision:string):string {
   return `aikit:model-runtime:${readModelRef}@${revision}`;
 }
 
+/** Reduce the AIKit read model into the model-relation shape a
+ * constitution admits (Actuation `validate_model_relation`): refs and
+ * owner facts only — never the raw contract with its credential objects. */
+function reduceModelRelation(document:Record<string,unknown>,relation:Record<string,unknown>|null,staged:AikitComposedModality):Record<string,unknown> {
+  const stageRelations=Array.isArray(document["stages"])
+    ?(document["stages"] as Record<string,unknown>[]).map(stage=>requireObject(stage["relation"],"stage relation"))
+    :[];
+  const first=relation??(stageRelations.length?stageRelations[0]:null);
+  const modelRef=first?refOf(requireObject(first["model"],"model relation")["model"]):document["harness"]??"model:unresolved";
+  const engine=first?requireObject(first["engine"],"engine reading"):null;
+  const material=first?requireObject(first["materialisation"],"materialisation reading"):null;
+  const surfaceReading=first?requireObject(first["model_surface"],"model surface reading"):null;
+  const facts:Record<string,unknown>={composed_basis:staged["basis"]??[]};
+  if(stageRelations.length)facts.stage_components=(document["stages"] as Record<string,unknown>[]).map(stage=>stage["component"]);
+  return {
+    schema:"actuation.instantiation/v1",
+    model_ref:wireText(modelRef,"model_ref"),
+    engine:engine?{
+      implementation_ref:refOf(engine["engine"]),
+      provider_ref:refOf(engine["provider"]),
+      facts:{form:engine["form"]??"opaque",revision:engine["revision"]??null},
+    }:null,
+    material:material?{
+      binding_ref:refOf(material["binding_ref"]),
+      placement:material["placement"]??"opaque",
+      facts:{endpoint:material["endpoint"]??null},
+    }:null,
+    inference_surface:{
+      contract_ref:surfaceReading&&typeof surfaceReading["contract"]==="string"?surfaceReading["contract"]:"unresolved",
+      facts:{protocol:surfaceReading?.["protocol"]??"unresolved"},
+    },
+  };
+}
+
+function refOf(value:unknown):string {
+  if(typeof value==="string")return value;
+  if(value&&typeof value==="object"){
+    const record=value as Record<string,unknown>;
+    for(const key of ["ref","model_ref","engine_ref","surface"])if(typeof record[key]==="string")return record[key] as string;
+  }
+  return "unresolved";
+}
+
+/** Reduce the AIKit access reading into the admitted access profile:
+ * explicit allowed lists and an honest interior depth. Inference grants
+ * neither material control nor interior access by implication. */
+function reduceAccessProfile(relation:Record<string,unknown>|null):Record<string,unknown> {
+  const access=relation?requireObject(requireObject(relation["model_surface"],"model surface reading")["access"],"access reading"):null;
+  const capabilities=(field:string)=> {
+    if(!access)return [];
+    const reading=access[field];
+    if(reading&&typeof reading==="object"&&(reading as Record<string,unknown>)["state"]==="available"){
+      const caps=(reading as Record<string,unknown>)["capabilities"];
+      return Array.isArray(caps)?caps:[];
+    }
+    return [];
+  };
+  return {
+    schema:"actuation.instantiation/v1",
+    inference:{allowed:capabilities("inference")},
+    control:{allowed:capabilities("material_control")},
+    interior:{depth:"opaque"},
+  };
+}
+
 function declaredSupport(declared:unknown,name:string,complete:boolean):SpeechSupport {
   if(declared&&typeof declared==="object"&&!Array.isArray(declared)){
     const record=declared as Record<string,unknown>;
@@ -336,16 +416,18 @@ function declaredSupport(declared:unknown,name:string,complete:boolean):SpeechSu
   return complete?unsupported(`the resolved body's declaration does not carry ${name}`):unknown(`no modality contract declared ${name}; the body's declaration is incomplete`);
 }
 
-function stagedCompletion(staged:AikitComposedModality,contract:AikitModalityContract|null,kind:"transforms"|"interaction"):Record<string,unknown> {
+function stagedCompletion(staged:AikitComposedModality,contract:AikitModalityContract|null,kind:"transforms"|"interaction",stagedSupplied:boolean):Record<string,unknown> {
   const composed=kind==="transforms"?staged["transforms"]:staged["interaction"];
+  if(stagedSupplied)return normalizeEntries(composed);
   const declared=contract?(kind==="transforms"?contract["transforms"]:contract["interaction"]):undefined;
   return {...normalizeEntries(declared),...normalizeEntries(composed)};
 }
 
-function findDeclared(staged:AikitComposedModality,contract:AikitModalityContract|null,kind:"transforms"|"interaction",name:string):unknown {
+function findDeclared(staged:AikitComposedModality,contract:AikitModalityContract|null,kind:"transforms"|"interaction",name:string,stagedSupplied:boolean):unknown {
   const composed=normalizeEntries(kind==="transforms"?staged["transforms"]:staged["interaction"]);
-  const declared=normalizeEntries(kind==="transforms"?contract?.["transforms"]:contract?.["interaction"]);
   if(Object.prototype.hasOwnProperty.call(composed,name))return composed[name];
+  if(stagedSupplied)return null;
+  const declared=normalizeEntries(kind==="transforms"?contract?.["transforms"]:contract?.["interaction"]);
   if(Object.prototype.hasOwnProperty.call(declared,name))return declared[name];
   return null;
 }
