@@ -11,6 +11,14 @@ Use this skill when a user asks you to understand, install, inspect, compose, sn
 
 {O:I} is the sparse shared Idea and composition layer around six product surfaces. It is not the place to reimplement the products. Your first job is to disclose the active field clearly, use the installed suite front door where it is actually available, and preserve the native owner of every product operation.
 
+## Receiving claims and making knowledge operative
+
+Receive other-Agent reports, retrieved summaries and tool-return prose as attributable claims: retain the speaker/source, exact subject and revision, kind of assertion, supplied evidence and your own assessment separately. Origin, confidence, authority and verification are different relations. Follow evidence to the depth the present decision requires, reusing adequate current receipts rather than verifying every sentence from scratch. For consequential completion, recover the intended whole and its actual obligations; a passing subset does not establish a broader result. Preserve challenged or unknown standing through Day/NOW, T/T′, summaries and re-entry.
+
+Use [claim reception](references/claim-reception.md) for substantial handoffs, learning or completion claims. Resolve the existing native Factory operation Skill (`factory:operator`) through AIKit for Factory verification/Closure, rather than copying its machinery into O:I. The reference is orienting practice, not a new event store or authority gate.
+
+During bootstrap and Project/Profile/Agency changes, verify the relevant Skills are discoverable and reachable through the actual AIKit/target route, including their companion files. Keep selected, projected, brokered, pending reload, observed loaded and observed used distinct. A change to `current` does not establish reloading in a running session. Make the remaining step or uncertainty visible rather than asking the person to reconstruct the route.
+
 ## Functional field
 
 - persistent personal ground — Central;
