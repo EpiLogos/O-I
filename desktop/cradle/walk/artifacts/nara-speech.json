@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "nara-speech",
-  "generated_at": "2026-09-17T04:23:14.631Z",
+  "generated_at": "2026-09-17T04:39:31.198Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,9 +11,9 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience",
-      "repository_head": "a19cdd497455f2ef1693083c9a1cdd7b75d6d635",
+      "repository_head": "25e25ab591ae95ed38e0f77f6e166cfa50bfd514",
       "tracked_changes": [
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/nara-speech-failure.png"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -22,7 +22,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 377,
+  "duration_ms": 369,
   "checks": [
     {
       "ok": true,
@@ -125,7 +125,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-17T04:23:14.919Z",
+        "mounted_at": "2026-09-17T04:39:31.487Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -143,8 +143,8 @@
             "dirty": true,
             "document": {
               "entities": {
-                "expression:nara-walk-1789618994754:entity:earth": {
-                  "entity_ref": "expression:nara-walk-1789618994754:entity:earth",
+                "expression:nara-walk-1789619971319:entity:earth": {
+                  "entity_ref": "expression:nara-walk-1789619971319:entity:earth",
                   "parameters": {
                     "glyph": {
                       "automation": null,
@@ -168,8 +168,8 @@
                   },
                   "title": "EarthBody"
                 },
-                "expression:nara-walk-1789618994754:entity:person": {
-                  "entity_ref": "expression:nara-walk-1789618994754:entity:person",
+                "expression:nara-walk-1789619971319:entity:person": {
+                  "entity_ref": "expression:nara-walk-1789619971319:entity:person",
                   "parameters": {
                     "glyph": {
                       "automation": null,
@@ -193,8 +193,8 @@
                   },
                   "title": "Person locus"
                 },
-                "expression:nara-walk-1789618994754:entity:relation": {
-                  "entity_ref": "expression:nara-walk-1789618994754:entity:relation",
+                "expression:nara-walk-1789619971319:entity:relation": {
+                  "entity_ref": "expression:nara-walk-1789619971319:entity:relation",
                   "parameters": {
                     "glyph": {
                       "automation": null,
@@ -219,7 +219,7 @@
                   "title": "Pointed relation"
                 }
               },
-              "expression_ref": "expression:nara-walk-1789618994754",
+              "expression_ref": "expression:nara-walk-1789619971319",
               "provenance": [],
               "refinements": [],
               "relations": {},
@@ -228,19 +228,19 @@
               "scenes": [
                 {
                   "entity_refs": [
-                    "expression:nara-walk-1789618994754:entity:person",
-                    "expression:nara-walk-1789618994754:entity:relation",
-                    "expression:nara-walk-1789618994754:entity:earth"
+                    "expression:nara-walk-1789619971319:entity:person",
+                    "expression:nara-walk-1789619971319:entity:relation",
+                    "expression:nara-walk-1789619971319:entity:earth"
                   ],
                   "revision": 2,
-                  "scene_ref": "expression:nara-walk-1789618994754:scene:main",
+                  "scene_ref": "expression:nara-walk-1789619971319:scene:main",
                   "title": "Main"
                 }
               ],
               "schema": "oi.expression/v1",
               "selection": {
-                "entity_ref": "expression:nara-walk-1789618994754:entity:person",
-                "scene_ref": "expression:nara-walk-1789618994754:scene:main"
+                "entity_ref": "expression:nara-walk-1789619971319:entity:person",
+                "scene_ref": "expression:nara-walk-1789619971319:scene:main"
               },
               "title": "Nara speech walk"
             },
@@ -256,7 +256,7 @@
     {
       "ok": true,
       "op": "invoke.surface_open",
-      "duration_ms": 0.9,
+      "duration_ms": 1.1,
       "seq_range": {
         "from": 14,
         "to": 14
@@ -272,7 +272,7 @@
                 "native_owner": "ql",
                 "provenance": {
                   "revision": "7",
-                  "source": "expression:nara-walk-1789618994754"
+                  "source": "expression:nara-walk-1789619971319"
                 },
                 "ref": "bimba:#4"
               }
@@ -338,7 +338,7 @@
                   "detected": false,
                   "signals": []
                 },
-                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-L0hua7",
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-L4zqtI",
                 "root_state": "directory",
                 "schema": "central.world-map/v1",
                 "valid": true,
@@ -483,7 +483,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 24,
       "data": {
         "file": "nara-speech-nara-joined-world.png"
       }
