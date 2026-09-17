@@ -28,7 +28,11 @@
 
 pub mod events;
 pub mod expression;
+pub mod expression_asset;
+pub mod expression_carrier;
+pub mod expression_profile;
 pub mod expression_transport;
+pub mod expression_trigger;
 pub mod flow;
 pub mod history;
 pub mod knowledge;

@@ -6,8 +6,8 @@ use serde_json::{json, Value};
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const SCHEMA: &str = "oi.expression/v1";
-const LIMIT: usize = 256;
-const MAX_REVISION: u64 = 9_007_199_254_740_991;
+pub(crate) const LIMIT: usize = 256;
+pub(crate) const MAX_REVISION: u64 = 9_007_199_254_740_991;
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -85,6 +85,14 @@ pub struct Scene {
     pub revision: u64,
     pub title: String,
     pub entity_refs: Vec<String>,
+    /// ES1A scene-body native carrier: the scene's primary body may come from
+    /// an admitted native carrier instead of only the engine composition.
+    /// Absent means the live engine composition (current default).
+    #[serde(default)]
+    pub body: Option<crate::expression_carrier::SceneBody>,
+    /// ES1B declarative triggers (no executable script bodies, ever).
+    #[serde(default)]
+    pub triggers: Vec<crate::expression_trigger::SceneTrigger>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
@@ -169,6 +177,14 @@ pub struct Document {
     pub representations: Vec<Representation>,
     #[serde(default)]
     pub refinements: Vec<Refinement>,
+    /// ES3 Library-as-view: collection/index memberships over this Expression
+    /// ref. The current Library is one such collection, not the identity
+    /// boundary; Expressions stay addressable through their refs.
+    #[serde(default)]
+    pub collections: Vec<String>,
+    /// ES3 recorded profile instantiations with explicit, legible overrides.
+    #[serde(default)]
+    pub profiles: Vec<crate::expression_profile::ProfileAdoption>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "change", rename_all = "snake_case", deny_unknown_fields)]
@@ -225,6 +241,33 @@ pub enum Change {
     },
     RepresentationBind {
         binding: Representation,
+    },
+    // ——— Substrate changes (O:I #352): ES1A scene-body carriers, ES1B
+    // declarative triggers, ES3 profile adoption and collection indexing.
+    // Kept as one contiguous block so the ES4 world-operations lane can merge
+    // its variants immediately after this comment. ———
+    SceneBodySet {
+        scene_ref: String,
+        body: crate::expression_carrier::SceneBody,
+    },
+    SceneBodyClear {
+        scene_ref: String,
+    },
+    SceneTriggerAttach {
+        scene_ref: String,
+        trigger: crate::expression_trigger::SceneTrigger,
+    },
+    SceneTriggerDetach {
+        trigger_ref: String,
+    },
+    ProfileAdopt {
+        adoption: crate::expression_profile::ProfileAdoption,
+    },
+    ProfileRelease {
+        profile_ref: String,
+    },
+    CollectionsSet {
+        collections: Vec<String>,
     },
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
@@ -304,6 +347,41 @@ pub enum Request {
         input: Option<Value>,
         project: Option<String>,
     },
+    // ——— Substrate requests (O:I #352): ES3 profiles/editions/collection
+    // index and ES3A asset admission/occurrence traversal. Contiguous block;
+    // the ES4 world-operations lane adds its portal/selection/ExpressiveAct
+    // variants immediately after this comment. ———
+    ProfileDefine {
+        profile: crate::expression_profile::ExpressionProfile,
+        actor: String,
+    },
+    ProfileInspect {
+        profile_ref: String,
+    },
+    ProfileResolve {
+        native_owner: String,
+        carrier: crate::expression_carrier::CarrierKind,
+    },
+    EditionCreate {
+        edition: crate::expression_profile::ExpressionEdition,
+        actor: String,
+    },
+    EditionInspect {
+        edition_ref: String,
+    },
+    /// Library-as-view: one index reading over the same Expression refs the
+    /// Library UI reads — refs, revisions, collections and profile adoptions.
+    Index,
+    AssetAdmit {
+        asset: crate::expression_asset::AdmittedAsset,
+        actor: String,
+    },
+    AssetTraverse {
+        asset_ref: String,
+    },
+    AssetSubject {
+        subject_ref: String,
+    },
 }
 #[derive(Clone, Debug, Serialize)]
 pub struct Changed {
@@ -317,29 +395,51 @@ pub struct Application {
     documents: BTreeMap<String, Document>,
     saved: BTreeMap<String, u64>,
     file_bindings: BTreeMap<String, Value>,
+    /// ES3 reusable presentation profiles, keyed by profile_ref.
+    profiles: BTreeMap<String, crate::expression_profile::ExpressionProfile>,
+    /// ES3 portable editions, keyed by edition_ref.
+    editions: BTreeMap<String, crate::expression_profile::ExpressionEdition>,
+    /// ES3A admission + occurrence index over real asset use.
+    assets: crate::expression_asset::AssetIndex,
 }
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","invoke"],
-        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","parameter_set","parameter_automate","parameter_manual","representation_bind"],
+        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","invoke",
+            "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
+        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+            "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
         "parameters":{"glyph":{"type":"string","max_length":128},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
+        "scene_body":{"carriers":["engine_composition","text_source","glyph_form","image_media","file_thing","knowledge_whole","html_surface","agent_surface","expression_ref"],
+            "presentations":["live","inline","preview","degraded"],
+            "law":"scene bodies reference native subjects through existing refs/adapters, never copied semantic objects; unsupported types degrade honestly to a bound Thing/preview carrying the real native open Action; no bespoke renderer per format",
+            "live_render_admitted":["engine_composition"]},
+        "triggers":{"occasions":["scene_enter","scene_leave","activate","select","sequence_transition"],
+            "targets":["expression_operation","portal","native_action","navigate"],
+            "expression_operations":["inspect","list","export"],
+            "portal_placements":["preview","overlay","beside","full","detached","re-dock"],
+            "script_bodies":"refused"},
+        "profiles":{"ref_prefix":"profile:","lineage":"parents must be defined first; defaults resolve parents-first and overrides stay legible","budget":64},
+        "editions":{"ref_prefix":"edition:","law":"an edition re-opens as a reading; it never opens or rewrites the Expression","budget":64},
+        "assets":{"ref_prefix":"asset:","law":"admission + occurrence index over real use, not an advance procurement catalogue or a second semantic store","traversals":["asset_ref→uses","subject_ref→assets"],"budget":256},
+        "collections":{"law":"Library-as-view: Expressions stay addressable by ref; the Library is one collection/index reading over the same refs"},
         "refinement":{"review_required":true,"decisions":["accepted","rejected"],"activity_ref_authenticates":false,"retained_on_export":true},
         "pedagogy":{"material":["scenes","source-bearing entities","movement","optional text","methods","evidence"],"chat_only":false},
         "save_owner":"central.files.write", "source_mutation":false, "attribution_is_authentication":false,
         "export_audience":"local_private", "dynamic_checkpoint":false,
-        "unsupported":["capture","page_embed","projection_publish","domain_state_write","knowledge_query"],
+        "unsupported":["capture","page_embed","projection_publish","domain_state_write","knowledge_query",
+            "portal_runtime_open_close","scene_body_live_render_beyond_engine_composition","asset_binary_storage"],
         "contract":"docs/contracts/EXPRESSION-APPLICATION-V1.md"})
 }
-fn text(value: &str) -> Result<(), String> {
+pub(crate) fn text(value: &str) -> Result<(), String> {
     if value.trim().is_empty() || value.len() > 4096 || value.chars().any(char::is_control) {
         Err("Expected bounded nonempty text without control characters".into())
     } else {
         Ok(())
     }
 }
-fn id(value: &str, prefix: &str) -> Result<(), String> {
+pub(crate) fn id(value: &str, prefix: &str) -> Result<(), String> {
     let suffix = value
         .strip_prefix(prefix)
         .ok_or("Ref is outside this Expression")?;
@@ -357,7 +457,7 @@ fn reading(r: &ReadingRef) -> Result<(), String> {
     text(&r.r#ref)?;
     text(&r.revision)
 }
-fn readings(rs: &[ReadingRef]) -> Result<(), String> {
+pub(crate) fn readings(rs: &[ReadingRef]) -> Result<(), String> {
     if rs.len() > LIMIT {
         return Err("Reading budget exceeded".into());
     }
@@ -366,7 +466,7 @@ fn readings(rs: &[ReadingRef]) -> Result<(), String> {
     }
     Ok(())
 }
-fn bounds(key: &str) -> Option<(f64, f64)> {
+pub(crate) fn bounds(key: &str) -> Option<(f64, f64)> {
     match key {
         "x" | "y" | "z" => Some((-1600., 1600.)),
         "scale" => Some((0.05, 4.)),
@@ -374,7 +474,7 @@ fn bounds(key: &str) -> Option<(f64, f64)> {
         _ => None,
     }
 }
-fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
+pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
     if key == "glyph" {
         if !p
             .value
@@ -443,6 +543,32 @@ impl Document {
             {
                 return Err("Scene contains duplicate, missing or too many entities".into());
             }
+            if let Some(body) = &s.body {
+                crate::expression_carrier::validate_body(body, &self.expression_ref)?;
+            }
+        }
+        crate::expression_trigger::validate_document_triggers(self)?;
+        if self.collections.len() > 16 {
+            return Err("Collection budget exceeded".into());
+        }
+        for collection in &self.collections {
+            let trimmed = collection.trim();
+            if trimmed.is_empty()
+                || trimmed != collection
+                || collection.len() > 64
+                || collection.chars().any(char::is_control)
+            {
+                return Err("Collection names are bounded, trimmed text".into());
+            }
+        }
+        if self.collections.iter().collect::<BTreeSet<_>>().len() != self.collections.len() {
+            return Err("Duplicate collection membership".into());
+        }
+        if self.profiles.len() > 4 {
+            return Err("Profile adoption budget exceeded".into());
+        }
+        for adoption in &self.profiles {
+            adoption.validate()?;
         }
         for (key, e) in &self.entities {
             id(&e.entity_ref, &format!("{}:entity:", self.expression_ref))?;
@@ -576,6 +702,8 @@ impl Document {
                     revision: self.revision,
                     title,
                     entity_refs: vec![],
+                    body: None,
+                    triggers: vec![],
                 });
             }
             Change::SceneReorder { scene_refs } => {
@@ -707,6 +835,54 @@ impl Document {
                     .retain(|r| r.representation.r#ref != binding.representation.r#ref);
                 self.representations.push(binding);
             }
+            // ——— Substrate changes (O:I #352) ———
+            Change::SceneBodySet { scene_ref, body } => {
+                crate::expression_carrier::validate_body(&body, &self.expression_ref)?;
+                self.scene(&scene_ref)?.body = Some(body);
+            }
+            Change::SceneBodyClear { scene_ref } => self.scene(&scene_ref)?.body = None,
+            Change::SceneTriggerAttach { scene_ref, trigger } => {
+                {
+                    let scene = self.scene(&scene_ref)?;
+                    if scene.triggers.iter().any(|t| t.trigger_ref == trigger.trigger_ref) {
+                        return Err("Scene trigger already exists".into());
+                    }
+                    if scene.triggers.len()
+                        >= crate::expression_trigger::MAX_TRIGGERS_PER_SCENE
+                    {
+                        return Err("Scene trigger budget exceeded".into());
+                    }
+                    scene.triggers.push(trigger);
+                }
+                // Triggers must point at disclosed subjects/Actions and exact
+                // refs; validate the whole relation now for a precise refusal.
+                crate::expression_trigger::validate_document_triggers(self)?;
+            }
+            Change::SceneTriggerDetach { trigger_ref } => {
+                let mut removed = false;
+                for scene in &mut self.scenes {
+                    let before = scene.triggers.len();
+                    scene.triggers.retain(|t| t.trigger_ref != trigger_ref);
+                    removed |= scene.triggers.len() != before;
+                }
+                if !removed {
+                    return Err("Scene trigger is absent".into());
+                }
+            }
+            Change::ProfileAdopt { adoption } => {
+                adoption.validate()?;
+                self.profiles.retain(|p| p.profile_ref != adoption.profile_ref);
+                self.profiles.push(adoption);
+            }
+            Change::ProfileRelease { profile_ref } => {
+                if !self.profiles.iter().any(|p| p.profile_ref == profile_ref) {
+                    return Err("Profile adoption is absent".into());
+                }
+                self.profiles.retain(|p| p.profile_ref != profile_ref);
+            }
+            Change::CollectionsSet { collections } => {
+                self.collections = collections;
+            }
         }
         Ok(())
     }
@@ -782,6 +958,8 @@ impl Application {
                         revision: 1,
                         title: "Main".into(),
                         entity_refs: vec![],
+                        body: None,
+                        triggers: vec![],
                     }],
                     entities: BTreeMap::new(),
                     relations: BTreeMap::new(),
@@ -792,6 +970,8 @@ impl Application {
                     provenance: vec![],
                     representations: vec![],
                     refinements: vec![],
+                    collections: vec![],
+                    profiles: vec![],
                 };
                 return self.open(d, actor);
             }
@@ -825,6 +1005,12 @@ impl Application {
                 id(&new_expression_ref, "expression:")?;
                 let mut d = self.document(&expression_ref)?.clone();
                 let map = |r: &str| format!("{}{}", new_expression_ref, &r[expression_ref.len()..]);
+                // Remap only Expression-local refs; native subjects/Actions and
+                // refs to *other* Expressions keep their exact identity.
+                let local = |r: &str| -> Option<String> {
+                    (r == expression_ref || r.starts_with(&format!("{expression_ref}:")))
+                        .then(|| map(r))
+                };
                 d.provenance.push(ReadingRef {
                     r#ref: expression_ref.clone(),
                     revision: d.revision.to_string(),
@@ -836,6 +1022,50 @@ impl Application {
                     s.scene_ref = map(&s.scene_ref);
                     s.revision = 1;
                     s.entity_refs = s.entity_refs.iter().map(|r| map(r)).collect();
+                    if let Some(body) = &mut s.body {
+                        if let Some(recursion) = &mut body.recursion {
+                            recursion.host_expression_ref = map(&recursion.host_expression_ref);
+                        }
+                        if body.carrier == crate::expression_carrier::CarrierKind::ExpressionRef {
+                            if let Some(remapped) = local(&body.subject_ref) {
+                                body.subject_ref = remapped;
+                            }
+                        }
+                    }
+                    for t in &mut s.triggers {
+                        t.trigger_ref = map(&t.trigger_ref);
+                        match &mut t.target {
+                            crate::expression_trigger::TriggerTarget::ExpressionOperation { expression_ref: referenced, .. } => {
+                                if let Some(remapped) = local(referenced) {
+                                    *referenced = remapped;
+                                }
+                            }
+                            crate::expression_trigger::TriggerTarget::Portal { subject_ref, scene_ref, .. } => {
+                                if let Some(remapped) = local(subject_ref) {
+                                    *subject_ref = remapped;
+                                }
+                                if let Some(scene) = scene_ref {
+                                    if let Some(remapped) = local(scene) {
+                                        *scene = remapped;
+                                    }
+                                }
+                            }
+                            crate::expression_trigger::TriggerTarget::Navigate { scene_ref, entity_ref } => {
+                                if let Some(scene) = scene_ref {
+                                    if let Some(remapped) = local(scene) {
+                                        *scene = remapped;
+                                    }
+                                }
+                                if let Some(entity) = entity_ref {
+                                    if let Some(remapped) = local(entity) {
+                                        *entity = remapped;
+                                    }
+                                }
+                            }
+                            // Canonical native ActionRefs are never remapped.
+                            crate::expression_trigger::TriggerTarget::NativeAction { .. } => {}
+                        }
+                    }
                 }
                 d.entities = d
                     .entities
@@ -1193,6 +1423,124 @@ impl Application {
                 );
                 json!({"state":"action_result","action_ref":action_ref,"target_ref":binding.subject_ref,"dispatch":dispatch})
             }
+            // ——— Substrate requests (O:I #352). Registry operations over
+            // profiles/editions/assets: they return their full resulting
+            // state and emit no expression_changed receipt, because they
+            // never change an Expression document. ———
+            Request::ProfileDefine { profile, actor } => {
+                text(&actor)?;
+                profile.validate()?;
+                for parent in &profile.parent_profile_refs {
+                    if !self.profiles.contains_key(parent) {
+                        return Err(format!("Parent profile {parent} is not defined"));
+                    }
+                }
+                if let Some(existing) = self.profiles.get(&profile.profile_ref) {
+                    if profile.revision < existing.revision {
+                        return Err("Profile revisions are monotonic per ref".into());
+                    }
+                } else if self.profiles.len() >= 64 {
+                    return Err("Profile budget exceeded".into());
+                }
+                self.profiles.insert(profile.profile_ref.clone(), profile.clone());
+                let resolved = crate::expression_profile::resolve_lineage(
+                    &self.profiles,
+                    &profile.profile_ref,
+                )?;
+                json!({"state":"profile","profile":profile,"resolved_defaults":resolved})
+            }
+            Request::ProfileInspect { profile_ref } => {
+                let profile = self
+                    .profiles
+                    .get(&profile_ref)
+                    .ok_or("Profile is not defined")?;
+                let resolved = crate::expression_profile::resolve_lineage(
+                    &self.profiles,
+                    &profile_ref,
+                )?;
+                json!({"state":"profile","profile":profile,"resolved_defaults":resolved})
+            }
+            Request::ProfileResolve { native_owner, carrier } => {
+                text(&native_owner)?;
+                let admitted = self
+                    .profiles
+                    .values()
+                    .find(|p| p.admits(&native_owner, carrier));
+                match admitted {
+                    Some(profile) => json!({"state":"resolved","profile_ref":profile.profile_ref,"revision":profile.revision}),
+                    None => json!({"state":"unresolved","detail":"No defined profile admits this subject kind"}),
+                }
+            }
+            Request::EditionCreate { edition, actor } => {
+                text(&actor)?;
+                edition.validate()?;
+                // The edition names an open Expression's current revision, so
+                // the portable relation is truthful at creation.
+                let current = self.document(&edition.expression_ref)?.revision;
+                if current != edition.expression_revision {
+                    return Err("An edition must name the current revision of an open Expression".into());
+                }
+                if let Some(profile_ref) = &edition.profile_ref {
+                    let profile = self
+                        .profiles
+                        .get(profile_ref)
+                        .ok_or("Edition names an undefined profile")?;
+                    if Some(profile.revision) != edition.profile_revision {
+                        return Err("Edition must record the profile's current revision".into());
+                    }
+                }
+                if let Some(existing) = self.editions.get(&edition.edition_ref) {
+                    if edition.revision < existing.revision {
+                        return Err("Edition revisions are monotonic per ref".into());
+                    }
+                } else if self.editions.len() >= 64 {
+                    return Err("Edition budget exceeded".into());
+                }
+                self.editions.insert(edition.edition_ref.clone(), edition.clone());
+                json!({"state":"edition","edition":edition,"expression_opened":false})
+            }
+            Request::EditionInspect { edition_ref } => {
+                let edition = self
+                    .editions
+                    .get(&edition_ref)
+                    .ok_or("Edition is not defined")?;
+                // Re-opening an edition never opens or rewrites the Expression.
+                json!({"state":"edition","edition":edition,"expression_opened":false})
+            }
+            Request::Index => {
+                let mut collections: BTreeMap<String, Vec<String>> = BTreeMap::new();
+                for d in self.documents.values() {
+                    for collection in &d.collections {
+                        collections
+                            .entry(collection.clone())
+                            .or_default()
+                            .push(d.expression_ref.clone());
+                    }
+                }
+                json!({
+                    "schema":"oi.expression-index/v1",
+                    "expressions":self.documents.values().map(|d|json!({
+                        "expression_ref":d.expression_ref,
+                        "revision":d.revision,
+                        "title":d.title,
+                        "collections":d.collections,
+                        "profiles":d.profiles.iter().map(|p|json!({"profile_ref":p.profile_ref,"revision":p.revision})).collect::<Vec<_>>(),
+                    })).collect::<Vec<_>>(),
+                    "collections":collections,
+                    "profiles":self.profiles.values().map(|p|json!({"profile_ref":p.profile_ref,"revision":p.revision,"title":p.title})).collect::<Vec<_>>(),
+                    "editions":self.editions.values().map(|e|json!({"edition_ref":e.edition_ref,"revision":e.revision,"expression_ref":e.expression_ref,"expression_revision":e.expression_revision})).collect::<Vec<_>>(),
+                })
+            }
+            Request::AssetAdmit { asset, actor } => {
+                let open_revisions: BTreeMap<String, u64> = self
+                    .documents
+                    .iter()
+                    .map(|(r, d)| (r.clone(), d.revision))
+                    .collect();
+                self.assets.admit(asset, &open_revisions, &actor)?
+            }
+            Request::AssetTraverse { asset_ref } => self.assets.traverse(&asset_ref)?,
+            Request::AssetSubject { subject_ref } => self.assets.for_subject(&subject_ref),
         };
         Ok((result, changed))
     }
