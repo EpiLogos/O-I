@@ -1403,6 +1403,8 @@ mod tests {
             provenance: vec![],
             representations: vec![],
             refinements: vec![],
+            collections: Vec::new(),
+            profiles: Vec::new(),
         };
         let changes_a =
             presentation_changes(&doc, &w, &layout_a, "expression:test:scene:constellation")
@@ -1459,6 +1461,8 @@ mod tests {
             provenance: vec![],
             representations: vec![],
             refinements: vec![],
+            collections: Vec::new(),
+            profiles: Vec::new(),
         };
         let w = whole();
         let changes = presentation_changes(

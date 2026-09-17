@@ -347,7 +347,6 @@ pub enum Request {
         input: Option<Value>,
         project: Option<String>,
     },
-<<<<<<< HEAD
     // ——— Substrate requests (O:I #352): ES3 profiles/editions/collection
     // index and ES3A asset admission/occurrence traversal. Contiguous block;
     // the ES4 world-operations lane adds its portal/selection/ExpressiveAct
@@ -395,7 +394,6 @@ pub enum Request {
         document: Document,
         actor: String,
     },
->>>>>>> aikit/es-one-state-relation
 }
 #[derive(Clone, Debug, Serialize)]
 pub struct Changed {
@@ -1437,7 +1435,6 @@ impl Application {
                 );
                 json!({"state":"action_result","action_ref":action_ref,"target_ref":binding.subject_ref,"dispatch":dispatch})
             }
-<<<<<<< HEAD
             // ——— Substrate requests (O:I #352). Registry operations over
             // profiles/editions/assets: they return their full resulting
             // state and emit no expression_changed receipt, because they
