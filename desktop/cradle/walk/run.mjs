@@ -58,6 +58,7 @@ const BRIDGE_URL = `http://127.0.0.1:${BRIDGE_PORT}`;
 const SCENARIOS = {
   "expression-controls": {module:"scenarios/expression-controls.mjs",kernel:true,aliases:[]},
   "expression-page": {module:"scenarios/expression-page.mjs",kernel:true,aliases:["ex5"]},
+  "expression-world-join": {module:"scenarios/expression-world-join.mjs",kernel:true,aliases:["join"]},
   refinement:{module:"scenarios/refinement.mjs",kernel:true,aliases:[]},
   "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},

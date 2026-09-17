@@ -1,0 +1,330 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "expression-world-join",
+  "generated_at": "2026-09-17T02:12:34.483Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "b11da2431cd008bfb178b9abf9c7b030a66eaf74",
+      "tracked_changes": [
+        "ProjectCentral/now/agents/agency-gateway-awareness-brief-interjected-for-2026-09-06.json",
+        "ProjectCentral/now/agents/cradle-final-sidebar-agent-polish-2026-09-08.json",
+        "ProjectCentral/now/agents/cradle-mode-context-corner-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/editor-suite-and-crosspane-context-attachment-2026-09-08.json",
+        "ProjectCentral/now/agents/expression-overlay-steps-onto-the-wayfinder-2026-09-08.json",
+        "ProjectCentral/now/agents/fnd0006-foundation-execution-round-lead-2026-09-08.json",
+        "ProjectCentral/now/agents/fnd02-d11-system-canvas-surface-renders-2026-09-08.json",
+        "ProjectCentral/now/agents/foundation-ux-specification-completed-with-pane-2026-09-08.json",
+        "ProjectCentral/now/agents/gateway-bootstrap-fold-landed-in-aikit-2026-09-06.json",
+        "ProjectCentral/now/agents/guardian-skillset-extended-centralsessionstrap-2026-09-06.json",
+        "ProjectCentral/now/agents/handoff-1788870232874808000.json",
+        "ProjectCentral/now/agents/handoff-1788870267456874000.json",
+        "ProjectCentral/now/agents/handoff-1788871222533209000.json",
+        "ProjectCentral/now/agents/handoff-1788874734956344000.json",
+        "ProjectCentral/now/agents/handoff-1788896960839895000.json",
+        "ProjectCentral/now/agents/handoff-1789213962.json",
+        "ProjectCentral/now/agents/native-browser-panes-and-refined-shell-2026-09-08.json",
+        "ProjectCentral/now/agents/oi-multimatrix-product-capability-collation-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerdomain-integration-checkpoint-f84bd61-2026-09-08.json",
+        "ProjectCentral/now/agents/ownerled-editor-and-chrome-refinement-2026-09-08.json",
+        "ProjectCentral/now/agents/p1-expression-native-foundation-integration-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-2-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-review-artifact-revision-3-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-elements-revision-4-expression-2026-09-08.json",
+        "ProjectCentral/now/agents/pointcloud-study-rev-6-honed-fnd07-2026-09-08.json",
+        "ProjectCentral/now/agents/pr-199-acceptedmain-honesty-repair-pushed-2026-09-08.json",
+        "ProjectCentral/now/agents/refresh-desktop-foundations-against-current-2026-09-08.json",
+        "ProjectCentral/now/agents/resume-whole-desktop-execution-programme-2026-09-06.json",
+        "ProjectCentral/now/agents/s-cli-and-mprime-desktop-capability-2026-09-06.json",
+        "ProjectCentral/now/agents/selfother-ux-corrected-and-current-owners-2026-09-08.json",
+        "ProjectCentral/now/agents/september-8-desktop-productfoundation-map-2026-09-08.json",
+        "ProjectCentral/now/agents/shared-field-original-planning-recovered-2026-09-08.json",
+        "ProjectCentral/now/agents/terminal-flow-editor-context-and-final-2026-09-08.json",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
+        "desktop/cradle/walk/artifacts/expression-controls.json",
+        "desktop/cradle/walk/artifacts/expression-page-captured-fallback-page.png",
+        "desktop/cradle/walk/artifacts/expression-page-live-reentry.png",
+        "desktop/cradle/walk/artifacts/expression-page-live-return-capture.png",
+        "desktop/cradle/walk/artifacts/expression-page-restored-opening-inline.png",
+        "desktop/cradle/walk/artifacts/expression-page.json",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-light.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-context-narrow.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-graph-expression-dark.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression-knowledge-expression-local-whole.png",
+        "desktop/cradle/walk/artifacts/knowledge-expression.json",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/footer-keyboard-light.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-light-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-dark.png",
+        "desktop/cradle/walk/artifacts/ui-convergence/workspace-narrow-light.png",
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 2577,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The generated Bimba artifact imports as an ordinary oi.expression/v1 document",
+      "data": {
+        "schema": "oi.expression/v1",
+        "entities": 4
+      }
+    },
+    {
+      "ok": true,
+      "label": "The opened document keeps the artifact's exact identity and revision"
+    },
+    {
+      "ok": true,
+      "label": "A graph-origin selection focuses the exact bound entity through the shared refs",
+      "data": {
+        "expression": {
+          "entity_ref": "expression:join-bimba:entity:bimba-glyph-m2",
+          "expression_ref": "expression:join-bimba",
+          "revision": 2,
+          "state": "focused"
+        },
+        "selection": {
+          "entity_ref": "expression:join-bimba:entity:bimba-glyph-m2",
+          "expression_ref": "expression:join-bimba",
+          "kind": "project",
+          "native_owner": "central",
+          "origin": "graph",
+          "revision": "source@1",
+          "subject_ref": "central:project:ExpressionPage"
+        },
+        "state": "selected"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The shared selection moves the one global focus to the same native subject",
+      "data": [
+        "expression_changed",
+        "focus_changed"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "An Expression focus edit updates the same shared selection",
+      "data": {
+        "selection": {
+          "expression_ref": "expression:join-bimba",
+          "kind": "expression",
+          "native_owner": "oi",
+          "origin": "expression",
+          "revision": "3",
+          "subject_ref": "expression:join-bimba"
+        },
+        "state": "selected"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A portal over an unavailable target names the host's own refusal instead of fabricating a surface",
+      "data": {
+        "detail": "File must be read successfully through Central before opening its surface",
+        "placement": "overlay",
+        "state": "unavailable_surface",
+        "surface_kind": "file",
+        "target_ref": "central:source:work/expression-page"
+      }
+    },
+    {
+      "ok": true,
+      "label": "A portal opens detached through the existing kernel Surface host with the exact target ref",
+      "data": {
+        "placement": {
+          "current": "detached",
+          "redock": "portal_redock"
+        },
+        "portal": {
+          "opened_by": "agent:join-walk",
+          "placement": "detached",
+          "portal_ref": "portal:join-1",
+          "surface_id": "surface:join-1",
+          "surface_kind": "source",
+          "target_ref": "central:source:work/expression-page",
+          "title": "project source"
+        },
+        "state": "portal_open"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Portal inspect lists the live portal over the same ref"
+    },
+    {
+      "ok": true,
+      "label": "A detached portal re-docks back into the frame with the same binding"
+    },
+    {
+      "ok": true,
+      "label": "Portal close releases the binding through the same host"
+    },
+    {
+      "ok": true,
+      "label": "A structured act performs as one atomic edit over the exact basis revision",
+      "data": {
+        "act": {
+          "act_ref": "act:join-1",
+          "activity_ref": "activity:join-1",
+          "actor": "agent:join-walk",
+          "basis_revision": 3,
+          "expression_ref": "expression:join-bimba",
+          "state": "running",
+          "summary": "foreground the still centre"
+        },
+        "state": "act_running"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Human interruption holds the act without reverting or advancing it"
+    },
+    {
+      "ok": true,
+      "label": "Checkpoint restore returns the exact document through a revision advance",
+      "data": {
+        "scale": 1.4,
+        "revision": 6
+      }
+    },
+    {
+      "ok": true,
+      "label": "The compose surface addresses the imported artifact by its exact ref"
+    },
+    {
+      "ok": true,
+      "label": "The generated artifact presents through the one Global Expression Stage",
+      "data": [
+        "expression-application"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "Flip presents the verso over the same Expression identity"
+    },
+    {
+      "ok": true,
+      "label": "The verso names the exact expression ref"
+    },
+    {
+      "ok": true,
+      "label": "The verso reads the same bound subject with its native ref"
+    },
+    {
+      "ok": true,
+      "label": "The verso discloses the exact source ref and availability"
+    },
+    {
+      "ok": true,
+      "label": "Flipping to the verso does not release the stage presentation"
+    },
+    {
+      "ok": true,
+      "label": "Returning to the front restores the living body"
+    },
+    {
+      "ok": true,
+      "label": "Front/verso transitions reuse the same renderer canvas — no engine fork"
+    },
+    {
+      "ok": true,
+      "label": "Capabilities disclose the carrier range and refuse script bodies",
+      "data": {
+        "carriers": 9
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-17T02:12:35.046Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4179"
+        },
+        "url": "http://localhost:4173/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.stage",
+      "duration_ms": 0.1,
+      "data": {
+        "paused": false,
+        "live": true,
+        "scheduled": true,
+        "frames": 6,
+        "presentations": [
+          {
+            "id": "expression-application",
+            "plane": "overlay"
+          }
+        ],
+        "playback": null
+      }
+    },
+    {
+      "ok": true,
+      "op": "read.stage",
+      "duration_ms": 0,
+      "data": {
+        "paused": false,
+        "live": true,
+        "scheduled": false,
+        "frames": 12,
+        "presentations": [
+          {
+            "id": "expression-application",
+            "plane": "overlay"
+          }
+        ],
+        "playback": null
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 73,
+      "data": {
+        "file": "expression-world-join-join-verso.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 28,
+      "data": {
+        "file": "expression-world-join-join-front.png"
+      }
+    }
+  ],
+  "metrics": {
+    "artifact_scenes": 2,
+    "subject": 1
+  },
+  "screenshots": [
+    "expression-world-join-join-verso.png",
+    "expression-world-join-join-front.png"
+  ]
+}
