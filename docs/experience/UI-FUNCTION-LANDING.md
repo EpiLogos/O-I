@@ -53,6 +53,8 @@ PR #370 is the owner's to land.
 - The captured `factory-ui` demo as the Factory centre (per the 2026-09-18
   commission): every depth now binds the owner's real readings.
 
+| M1 · Tested migration of old persisted workspace state (§7) | `workspace/store.ts` legacy adoption + `surface/persist.ts` lenient codec (pre-existing) | localStorage `oi-cradle.layout.v1` → v2 book | the legacy top-level pin state upgrades to per-pane presentations at adoption | lenient decode drops foreign/invalid parts without crashing the shell | `walk/persist-migration-probe.mjs` (legacy draft restores, "list" → pinned-vertical in the base tree, foreign fields drop, closed stack valid, no errors) | **verified 2026-09-18** |
+
 ## Pre-existing findings (named, not introduced by this landing)
 
 - `walk/tab-pane-probe.mjs`'s orient-tool "intercept" was probe drift, not a
