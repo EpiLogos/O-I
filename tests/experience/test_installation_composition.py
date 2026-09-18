@@ -92,7 +92,7 @@ class InstallationCompositionSourceTests(unittest.TestCase):
     def test_operator_source_is_loaded_and_carries_the_full_sandbox_protocol(self):
         path = self.config["operator_source"]
         # Full prose is retained by the existing compiler, not a new summary store.
-        document = self.reading["sources"][path]
+        document = self.reading["source_documents"][path]
         text = document["text"]
         for phrase in [
             "## 2.1 Omarchy sandbox proving", "owner reports", "clean browser",
