@@ -102,16 +102,16 @@ function disclosureLine(disclosure: TechneDisclosureState): string {
   }
 }
 
-export function TechneSurface({binding}: {binding: SurfaceBinding}) {
+export function TechneSurface({binding, subject}: {binding: SurfaceBinding; subject?: {ref?: string; kind?: string; title: string; project?: string}}) {
   const sceneId = binding.id;
   const uid = useId();
   const rail = useInstrumentRail();
-  // The reading is requested for the arrangement's selected subject. The
-  // frame does not yet pass the workspace world-context subject into a mode
-  // centre surface — no prop or event seam exists — so the arrangement
-  // honestly stands on "no subject selected" until that join lands, and the
-  // provider registry (techneReading.ts) is the QL-side join.
-  const disclosure = useTechneDisclosure(undefined);
+  // The reading is requested for the arrangement's selected subject — the
+  // workspace world-context subject the frame now passes through the
+  // Workbench (the same one the panel planes receive). Without one the
+  // arrangement honestly stands on "no subject selected"; the provider
+  // registry (techneReading.ts) is the QL-side join.
+  const disclosure = useTechneDisclosure(subject);
   const instruments = useFocusedInstrumentReadings();
   const active = deepInstrument(rail.active) ?? GROUND_INSTRUMENT;
   const surface = useRef<HTMLElement>(null);

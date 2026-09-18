@@ -1,6 +1,5 @@
 import {EncounterSurface} from "../encounter/EncounterSurface";
-import {lazy,Suspense} from "react";
-import {requestResizeExpression} from "../shared/Expression";
+import {lazy,Suspense,type ReactNode} from "react";
 import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
 /**
  * The Workbench (U0.3b) — the OS frame that exists ONLY while ≥1 surface is
@@ -16,8 +15,7 @@ import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
  *   absence: no encounters are fabricated before the agency vertical mounts.
  */
 
-import { Glyph } from "../workspace/Glyph";
-import { Fragment, useEffect, useLayoutEffect } from "react";
+import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState } from "react";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
 import { FileSurface } from "../files/FileSurface";
@@ -35,9 +33,16 @@ const ExploreSurface=lazy(()=>import("../explore/ExploreSurface").then((module)=
 const TerminalSurface=lazy(()=>import("../terminal/TerminalSurface").then((module)=>({default:module.TerminalSurface})));
 const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=>({default:module.BrowserSurface})));
 const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((module)=>({default:module.KnowledgeSurface})));
-const FactoryDevelopmentSurface=lazy(()=>import("../contributions/factory/FactoryDevelopmentSurface").then((module)=>({default:module.FactoryDevelopmentSurface})));
+const FactoryCentre=lazy(()=>import("../contributions/factory/FactoryCentre").then((module)=>({default:module.FactoryCentre})));
 const SystemPanel=lazy(()=>import("../workspace/SystemPanel").then((module)=>({default:module.SystemPanel})));
+// The mode centre surfaces (workspace/mode.ts) are ordinary bindings in this
+// pane system; each loads with its mode, never at startup.
+const ExpressionsSurface=lazy(()=>import("../expressions/ExpressionsSurface").then((module)=>({default:module.ExpressionsSurface})));
+const TechneSurface=lazy(()=>import("../techne/TechneSurface").then((module)=>({default:module.TechneSurface})));
+const EpiLogosSurface=lazy(()=>import("../epilogos/EpiLogosSurface").then((module)=>({default:module.EpiLogosSurface})));
+const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
+import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN } from "../workspace/mode";
 
 export interface WorkbenchProps {
   workspaceName: string;
@@ -54,6 +59,27 @@ export interface WorkbenchProps {
   /** SF1: pin a projected subject as its own Surface / hand Explore a subject. */
   openPresentation?: ExploreSurfaceProps["onOpenPresentation"];
   openExplore?: ExploreSurfaceProps["onOpenExplore"];
+  /** Factory's centre lists the project's conversations; opening one is the
+   * frame's ordinary encounter open (CradleFrame.openEncounter). */
+  openEncounter?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
+  /** The frame-built centre Chat (the shared AgentChat) — Factory's centre
+   * mounts it; the frame owns the session observer and the choose pair. */
+  factoryCentre?: ReactNode;
+  /** The Factory centre's Desk/Tasks context (CradleFrame.factoryCentreProps):
+   * the browsed project, the bound conversation, the one task-open path and
+   * the message sink — carried verbatim into FactoryCentre wherever its
+   * binding renders. */
+  factoryTasks?: {
+    project?: string;
+    accompanying?: {ref: string; project: string; space: string};
+    onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
+    onMessage?: (message: string) => void;
+  };
+  /** The workspace world-context subject (the person's selected subject,
+   * the same one the panel planes receive): the frame passes it so a mode
+   * centre surface — Technè's instrument disclosure — can request its
+   * reading for the actual subject instead of standing on "no subject". */
+  subject?: {ref?: string; kind?: string; title: string; project?: string};
 }
 
 export function Workbench(props: WorkbenchProps) {
@@ -171,12 +197,11 @@ function PaneNode(props: PaneProps) {
               const arrows = pane.dir === "h" ? ["ArrowLeft", "ArrowRight"] : ["ArrowUp", "ArrowDown"];
               if (![...arrows, "Home", "End", "Enter"].includes(e.key) || e.altKey || e.metaKey || e.ctrlKey) return;
               e.preventDefault(); e.stopPropagation();
-              const priorRect=e.currentTarget.getBoundingClientRect();
-              const weights = pane.children.map((_,i) => pane.weights?.[i] ?? 1); const pair = weights[index]+weights[index+1];
+              const weights = pane.children.map((_, i) => pane.weights?.[i] ?? 1);
+              const pair = weights[index]+weights[index+1];
               const desired = e.key === "Home" ? pair * .15 : e.key === "End" ? pair * .85 : e.key === "Enter" ? pair / 2 : weights[index] + pair * (e.shiftKey ? .1 : .05) * (e.key === arrows[1] ? 1 : -1);
               weights[index] = Math.max(pair*.15, Math.min(pair*.85, desired)); weights[index+1]=pair-weights[index];
               props.execute("surface.resize-split", { splitId: pane.id, weights });
-              requestResizeExpression(e.currentTarget,priorRect);
             }} />}
         </Fragment>)}
       </div>
@@ -187,10 +212,24 @@ function PaneNode(props: PaneProps) {
 function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> }) {
   const { group, state, execute, openBindingMenu, openFrameMenu } = props;
   const focused = state.focusedGroupId === group.id;
+  // The pane's footer follows focus by default (unfocused up; on focus it
+  // drops). The corner dot pins THIS pane's footer up, overriding focus,
+  // until released.
+  const [footerUp, setFooterUp] = useState(false);
   const tabs = renderOrder(group);
   const active = group.active ?? group.tabs[0];
   const activeBinding = active ? state.surfaces[active] : undefined;
-  const toggleMaximized = () => execute("surface.maximize", { surfaceId: active });
+  // The pin model (workspace/mode.ts): pinned horizontal, pinned vertical, or
+  // unpinned. An unpinned pane folds its tabs to a slim reveal edge and keeps
+  // the geometry it was last pinned in (tabPinOrientation) — that geometry is
+  // also what pins record when set. ONE control in the pane tools walks the
+  // pin states; ⌘⌥\ cycles the same way (frame.tabs-cycle).
+  const tabPresentation = group.tabPresentation ?? "pinned-horizontal";
+  const pinOrientation = group.tabPinOrientation ?? "horizontal";
+  const unpinned = tabPresentation === "unpinned";
+  const verticalTabs = tabPresentation === "pinned-vertical" || (unpinned && pinOrientation === "vertical");
+  const presentationTitle = {unpinned: "unpinned — tabs hide until you reveal them", "pinned-horizontal": "pinned horizontally", "pinned-vertical": "pinned vertically"} as const;
+  const tabListWidth = state.tabListWidth;
 
   return (
     <section
@@ -200,9 +239,16 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
       data-window-corner={groupsOf(state.root).filter(g=>!state.maximizedGroupId||g.id===state.maximizedGroupId)[0]?.id===group.id}
       data-focused={focused}
       data-tab-focus={!!active&&state.focusedTabId===active}
+      data-tab-presentation={tabPresentation}
+      data-tab-orientation={unpinned ? pinOrientation : undefined}
       data-maximized={state.maximizedGroupId === group.id}
+      data-footer-up={footerUp || undefined}
       aria-label="Surface group"
-      style={{ flexGrow: props.weight ?? 1, display: state.maximizedGroupId && state.maximizedGroupId !== group.id ? "none" : undefined }}
+      style={{
+        flexGrow: props.weight ?? 1,
+        display: state.maximizedGroupId && state.maximizedGroupId !== group.id ? "none" : undefined,
+        ...(verticalTabs && tabListWidth !== undefined ? {"--tab-list-width": `${tabListWidth}px`} : {}),
+      } as import("react").CSSProperties}
       onFocusCapture={() => {
         if (!focused) execute("surface.focus-group", { groupId: group.id });
       }}
@@ -210,7 +256,14 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         if (!focused) execute("surface.focus-group", { groupId: group.id });
       }}
     >
-      {active&&state.focusedTabId===active&&<button className="tab-focus-reveal" aria-label="Show tab bar" onClick={()=>execute("surface.focus-tab",{surfaceId:active})}>⌄</button>}
+      {/* ONE hiding law: an unpinned pane folds its tabs to a slim reveal edge
+        * that opens in flow on hover or focus-within — the workspace footer's
+        * reveal grammar (cradle.css). The old data-tab-focus fold is gone; the
+        * attribute only marks the frame's tab focus and hides nothing. The
+        * reveal zone is generous exactly where the tab icons live: the full
+        * top edge with extra depth over the pane tools (horizontal), the
+        * bottom of the strip region (vertical). */}
+      {unpinned && <div className="tab-reveal-zone" aria-hidden="true" data-orientation={pinOrientation} />}
       <div
         className="tab-strip"
         onContextMenu={(e) => {
@@ -230,7 +283,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           if (id) execute("surface.drop", { surfaceId: id, groupId: group.id });
         }}
       >
-        <div className="tab-scroll" role="tablist" aria-label="Open surfaces">
+        <div className="tab-scroll" role="tablist" aria-label="Open surfaces" aria-orientation={verticalTabs?"vertical":"horizontal"}>
         {tabs.map((id) => (
           <Tab
             key={id}
@@ -241,6 +294,7 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
             pinned={group.pinned.includes(id)}
             dirty={props.kernelDirty(state.surfaces[id].ref)}
             groupId={group.id}
+            vertical={verticalTabs}
             execute={execute}
             openBindingMenu={openBindingMenu}
           />
@@ -248,11 +302,23 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         </div>
         <div className="pane-tools">
           {group.emptySlot && <button type="button" className="pane-tool-menu" aria-label="Close empty pane" title="Close empty pane (⌘W)" onClick={() => execute("surface.close-empty-pane", { groupId: group.id })}><Glyph name="close" size={13} /></button>}
-          <button type="button" className="pane-tool-menu"
-            aria-label={state.maximizedGroupId === group.id ? "Restore pane arrangement" : "Maximize this pane"}
-            title="Maximize / restore this pane (⌘⌥Enter)"
-            onClick={toggleMaximized}>
-            <Glyph name={state.maximizedGroupId === group.id ? "restore" : "expand"} size={13} />
+          {/* Owner ruling 2026-09-17: the pin only pins or unpins the current
+           * orientation; orientation is the neighbouring control's job. The
+           * pane size toggle left the strip — panes present at their larger
+           * size, and maximize stays with the arrangement actions (⌘⌥Enter). */}
+          <button type="button" className="pane-tool-menu pane-tool-orient"
+            aria-label={verticalTabs ? "Show tabs horizontally" : "Show tabs vertically"}
+            title={verticalTabs ? "Tabs are vertical — show horizontally" : "Tabs are horizontal — show vertically"}
+            onClick={() => execute("frame.tabs-orient", { groupId: group.id })}>
+            <Glyph name={verticalTabs ? "rows" : "columns"} size={13} />
+          </button>
+          <button type="button" className="pane-tool-menu pane-tool-pin"
+            aria-label={unpinned ? "Pin tabs" : "Unpin tabs"}
+            title={`Tabs are ${presentationTitle[tabPresentation]} — ${unpinned ? "Pin tabs" : "Unpin tabs"} (⌘⌥\\)`}
+            data-pin-target={unpinned ? `pinned-${pinOrientation}` : "unpinned"}
+            data-tab-presentation={tabPresentation}
+            onClick={() => execute("frame.tabs-pin", { groupId: group.id })}>
+            <Glyph name="pin" size={13} />
           </button>
           <button
             type="button"
@@ -281,6 +347,38 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           </button>
         </div>
       </div>
+      {/* The pinned-vertical list's width: a separator on the strip's inner
+        * edge, drag or arrow-key resizable (the .region-resizer grammar),
+        * persisted as LayoutState.tabListWidth through frame.tabs-width. */}
+      {tabPresentation === "pinned-vertical" && (
+        <div
+          className="tab-list-resizer"
+          role="separator"
+          aria-label="Tab list width"
+          aria-orientation="vertical"
+          tabIndex={0}
+          aria-valuemin={TAB_LIST_WIDTH_MIN}
+          aria-valuemax={TAB_LIST_WIDTH_MAX}
+          aria-valuenow={tabListWidth}
+          title="Drag to resize the tab list; arrow keys adjust; Home/End to the bounds"
+          onPointerDown={(e) => { e.preventDefault(); e.currentTarget.focus(); e.currentTarget.setPointerCapture(e.pointerId); }}
+          onPointerMove={(e) => {
+            if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
+            const left = e.currentTarget.parentElement!.getBoundingClientRect().left;
+            execute("frame.tabs-width", { n: Math.round(e.clientX - left) });
+          }}
+          onPointerUp={(e) => { if (e.currentTarget.hasPointerCapture(e.pointerId)) e.currentTarget.releasePointerCapture(e.pointerId); }}
+          onKeyDown={(e) => {
+            if (e.altKey || e.metaKey || e.ctrlKey) return;
+            const width = Math.round(e.currentTarget.parentElement?.querySelector<HTMLElement>(".tab-strip")?.getBoundingClientRect().width ?? 208);
+            const step = e.shiftKey ? 32 : 16;
+            if (e.key === "ArrowLeft") { e.preventDefault(); execute("frame.tabs-width", { n: width - step }); }
+            else if (e.key === "ArrowRight") { e.preventDefault(); execute("frame.tabs-width", { n: width + step }); }
+            else if (e.key === "Home") { e.preventDefault(); execute("frame.tabs-width", { n: TAB_LIST_WIDTH_MIN }); }
+            else if (e.key === "End") { e.preventDefault(); execute("frame.tabs-width", { n: TAB_LIST_WIDTH_MAX }); }
+          }}
+        />
+      )}
       <div
         className="surface-body"
         data-binding-id={active}
@@ -298,8 +396,14 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
+      <button type="button" className="pane-footer-dot" data-pane-footer-dot
+        aria-pressed={footerUp}
+        aria-label={footerUp ? "Release this pane's footer — it follows focus again" : "Keep this pane's footer up"}
+        title={footerUp ? "Release the footer — it follows focus again" : "Keep this pane's footer up"}
+        onClick={() => setFooterUp(v => !v)}
+      />
       <footer className="pane-status pane-footer" aria-label={focused ? "Active pane" : "Pane status"} />
     </section>
   );
@@ -307,12 +411,13 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
-function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
+export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
   return <Suspense fallback={null}><SurfaceBodyImpl {...props}/></Suspense>;
 }
 function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
+  factoryCentre, factoryTasks, subject,
 }: {
   binding: import("./types").SurfaceBinding;
   onView:WorkbenchProps["onView"];
@@ -320,6 +425,12 @@ function SurfaceBodyImpl({
   openSource: (source: ListedSource) => void;
   openPresentation?: WorkbenchProps["openPresentation"];
   openExplore?: WorkbenchProps["openExplore"];
+  factoryCentre?: WorkbenchProps["factoryCentre"];
+  factoryTasks?: WorkbenchProps["factoryTasks"];
+  /** The workspace world-context subject — the person's selected subject,
+   * shared with the panel planes; the Technè arrangement's instrument
+   * disclosure is requested for it. */
+  subject?: WorkbenchProps["subject"];
 }) {
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
@@ -330,7 +441,21 @@ function SurfaceBodyImpl({
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
-  if (binding.kind === "factory") return <FactoryDevelopmentSurface />;
+  // Factory's centre home (handoff §11, 2026-09-18): Desk whole-Run-first,
+  // Tasks the full-size chat — one shared presentation, wherever the binding
+  // renders. The imported development console renders only behind the dev
+  // debug disclosure inside FactoryCentre — never as the ordinary experience.
+  if (binding.kind === "factory") return (
+    <Suspense fallback={null}>
+      <FactoryCentre key={binding.id} chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>
+    </Suspense>
+  );
+  if (binding.kind === "expressions") return <ExpressionsSurface binding={binding} />;
+  if (binding.kind === "techne") return <TechneSurface binding={binding} subject={subject} />;
+  if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding} />;
+  // Agency manages purpose and usable repertoire; System settings manages the
+  // infrastructure — the surface links across, it never duplicates the forms.
+  if (binding.kind === "agency") return <AgencySurface project={binding.project} onMessage={message=>window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message}}))} onOpenSettings={()=>window.dispatchEvent(new CustomEvent("oi:open-settings"))} />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;
@@ -354,6 +479,8 @@ interface TabProps {
   /** The two-layer dirty state shows on the binding itself (U0.4). */
   dirty: boolean;
   groupId: string;
+  /** The vertical-list presentation: ↑/↓ walk the list as ←/→ walk the strip. */
+  vertical?: boolean;
   execute: (ref: string, arg?: ActionArg) => void;
   openBindingMenu: (surfaceId: SurfaceId, x: number, y: number) => void;
 }
@@ -361,7 +488,7 @@ interface TabProps {
 /** Tab kind → the study's kind glyph (brief FND-01: encounter chat, knowledge
  * wiki, file/source/sources file, system settings). Unknown kinds fall back
  * to 'file' rather than rendering nothing. */
-const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings" | "field" | "search"> = {
+const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
   encounter: "chat",
   knowledge: "wiki",
   file: "file",
@@ -370,9 +497,16 @@ const KIND_GLYPH: Record<string, "chat" | "wiki" | "file" | "settings" | "field"
   system: "settings",
   explore: "search",
   presentation: "field",
+  terminal: "terminal",
+  factory: "factory",
+  expressions: "field",
+  techne: "instrument",
+  "epi-logos": "wiki",
+  agency: "agent",
+  instrument: "instrument",
 };
 
-function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBindingMenu }: TabProps) {
+function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execute, openBindingMenu }: TabProps) {
   return (
     <div className="tab-entry" role="presentation">
     <button
@@ -417,10 +551,10 @@ function Tab({ id, title, kind, active, pinned, dirty, groupId, execute, openBin
         } else if (e.key === "Delete" || e.key === "Backspace") {
           e.preventDefault();
           execute("surface.close", { surfaceId: id });
-        } else if (e.key === "ArrowLeft") {
+        } else if (e.key === (vertical ? "ArrowUp" : "ArrowLeft")) {
           e.preventDefault();
           execute("surface.tab-prev");
-        } else if (e.key === "ArrowRight") {
+        } else if (e.key === (vertical ? "ArrowDown" : "ArrowRight")) {
           e.preventDefault();
           execute("surface.tab-next");
         }

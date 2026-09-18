@@ -7,6 +7,8 @@ import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
 import {encounter} from "./encounter/client";
+import {useEncounterSession} from "./encounter/session";
+import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
@@ -14,6 +16,7 @@ import {MODE_CURATION,isWorkspaceMode,type WorkspaceMode} from "./workspace/mode
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {ModeLeftBody,modeExtraPlanes} from "./workspace/modeBodies";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
+import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -509,17 +512,16 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     // layout binding: an awaited owner call here could resolve after a further
     // switch and land this mode's surface in another mode's tree. The kernel
     // learns of the binding through the ordinary mount reconciliation.
-    const title={factory:"Factory development",expressions:"Expressions",techne:"Technè","epi-logos":"Epi-Logos",system:"Settings"}[centre];
-    const first=!Object.values(stateRef.current.surfaces).some(binding=>binding.kind===centre&&groupsOf(stateRef.current.root).some(group=>group.tabs.includes(binding.id)));
+    const title={factory:"Factory",expressions:"Expressions",techne:"Technè","epi-logos":"Epi-Logos",system:"Settings"}[centre];
     setState(s=>{
       const existing=Object.values(s.surfaces).find(binding=>binding.kind===centre);
       const binding=existing??{id:crypto.randomUUID(),kind:centre,title};
       return groupsOf(s.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(s,"surface.activate",{surfaceId:binding.id}):openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding);
     });
-    // Factory's conversation relocation does need the owner (encounter
-    // start/read); it only proceeds while Factory is still the active mode.
-    const accompanying=stateRef.current.accompanying;
-    if(centre==="factory"&&accompanying&&first)void openConversationInCentre(accompanying,true,()=>(stateRef.current.mode??"base")==="factory").catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));
+    // Factory's centre is Desk/Tasks (handoff §11): the mode surface mounts
+    // whichever presentation the left navigator's entries choose — the chat
+    // (Tasks) is the shared AgentChat bound to the accompanying conversation,
+    // so no encounter-tab relocation happens here.
   };
   const enterModeRef=useRef(enterMode);enterModeRef.current=enterMode;
   // WORLD CONTEXT — drill-throughs leave a route back. A traversal out of a
@@ -960,6 +962,46 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const subjectTitle=subjectBinding?.title ?? "Context";
   const subjectHistory=subjectRef && subjectBuffer ? <SourceHistory key={subjectRef} sourceRef={subjectRef} revision={subjectBuffer.base_revision}/> : subjectBinding?.location ? <FileHistory key={subjectRef} location={subjectBinding.location}/> : undefined;
   const subjectHistoryAvailable=subjectBinding?.kind==="source" || subjectBinding?.kind==="file";
+  // Factory centre Chat (handoff §9/§10): the SAME AgentChat the base-mode
+  // panel mounts, bound to the mode's accompanying conversation. The session
+  // observer is the one shared instance (encounter/session.ts); choosing a
+  // conversation is the ordinary start/read pair, then the binding — the
+  // centre IS the chat, no encounter tab, no second presenter.
+  const factoryChatSession=useEncounterSession(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined);
+  const [factoryChoosing,setFactoryChoosing]=useState(false);
+  const factoryChoose=async(row:EncounterRow)=>{
+    setFactoryChoosing(true);
+    try{
+      await encounter(kernel.transport,row.project,{action:"start"});
+      await encounter(kernel.transport,row.project,{action:"read",agent_session:row.ref,after:0,limit:1});
+      setState(s=>({...s,accompanying:{ref:row.ref,project:row.project,space:row.space}}));
+      // Opening a task moves the centre to Tasks with exactly that
+      // conversation selected — the one task-open path, from the navigator,
+      // the Run detail's carried conversations, or the chat's own chooser.
+      publishCentreView("tasks");
+    }catch(error){setWindowError(String(error));}
+    finally{setFactoryChoosing(false);}
+  };
+  const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onMessage:(message:string)=>void}={
+    project:workspace.current.project??state.accompanying?.project,
+    accompanying:state.accompanying??undefined,
+    onOpenTask:row=>factoryChoose(row),
+    onMessage:message=>setWindowError(message),
+  };
+  const factoryCentre=
+    <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
+      project={workspace.current.project??state.accompanying?.project}
+      agentName="Factory agent"
+      situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
+      choosing={factoryChoosing}
+      variant="centre"
+      onInsideOut={()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth}))}
+      full={false}
+      onFull={()=>setState(s=>({...s,rightDepth:"full"}))}
+      subject={{title:subjectTitle,location:subjectBinding?.location}}
+      onMessage={message=>setWindowError(message)}
+      onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
+      onChoose={row=>factoryChoose(row)}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface
   // reads as selected — `subjectBinding` above is already that binding.
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
@@ -992,31 +1034,52 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // Factory's sidebar host (handoff §4/§9): the real shell ways a sidebar
   // control reaches the rest of the app — focus the centre's full run view,
   // switch its own top-level plane, open a conversation as the centre Chat.
-  const factoryPanelHost:FactoryPanelHost={onOpenFullRun:()=>{const held=Object.values(stateRef.current.surfaces).find(binding=>binding.kind==="factory");if(held)execute("surface.activate",{surfaceId:held.id});},
+  // Factory's sidebar host (handoff §4/§9): the real shell ways a sidebar
+  // control reaches the rest of the app — take the panel to full depth with
+  // the Run plane forward (the fuller multi-lane monitor lives there, not on
+  // a centre page), switch its own top-level plane, open a conversation as
+  // the centre Chat.
+  // The Epi-Logos world entrance (#375 amendment): entering binds the world
+  // context (corpus/profile/navigation basis — the context every arrangement
+  // then retains, with its return trail) and opens the curated Epi surface as
+  // the mode centre; leaving is the explicit act that clears it. The footer
+  // state follows the world context, so the two can never disagree.
+  const epiWorldActive=()=>workspaceRef.current.current.context?.world==="epi-logos";
+  const enterEpiWorld=()=>{
+    workspaceRef.current.setContext(context=>({...context,world:"epi-logos"}));
+    setState(s=>({...s,epiLogos:true}));
+    void openModeSurface("epi-logos").catch(report);
+  };
+  const leaveEpiWorld=()=>{
+    workspaceRef.current.setContext(context=>({...context,world:undefined}));
+    setState(s=>({...s,epiLogos:undefined}));
+  };
+  const factoryPanelHost:FactoryPanelHost={onOpenFullRun:()=>{setState(s=>{const plane=s.panelPlanes?.factory==="run"?s:{...s,panelPlanes:{...s.panelPlanes,factory:"run"}};return s.rightDepth==="full"?plane:{...plane,rightDepth:"full"};});},
+    onExpandPanel:()=>setState(s=>s.rightDepth==="full"?s:{...s,rightDepth:"full"}),
     onOpenPlane:plane=>setState(s=>s.panelPlanes?.factory===plane?s:{...s,panelPlanes:{...s.panelPlanes,factory:plane}}),
     onOpenEncounterRow:(row:EncounterRow)=>void openEncounter(row).catch(report)};
-  const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost)} onError={report}
+  const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full")} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
     resolveSurface={id=>stateRef.current.surfaces[id]??Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces))[id]}
     project={workspace.current.project} subject={{ref:subjectRef,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location,dirty:subjectBuffer?.dirty,revision:subjectBuffer?.base_revision}} history={subjectHistory} historyAvailable={subjectHistoryAvailable} accompanying={state.accompanying} onAccompanying={value=>setState(s=>({...s,accompanying:value}))}
-    full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))} onClose={()=>setState(s=>({...s,rightDepth:"collapsed"}))}/>;
+    full={state.rightDepth==="full"} onFull={()=>setState(s=>({...s,rightDepth:s.rightDepth==="full"?"panel":"full"}))}/>;
   const worldNavigator=(workspaceSelector:ReactNode)=><WorldNavigator onAgent={summonAgent} onMessage={message=>setWindowError(message)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} mode={mode} onMode={enterMode} onOpenEncounter={openEncounter} centralFiles={workspace.current.centralFiles??false} onCentralFilesChange={workspace.setCentralFiles} workspaceSelector={workspaceSelector} searchShortcut={leader.label} key={workspace.current.id} projectNavigation={workspace.current.projectNavigation ?? {}} onNavigationChange={(ref,change)=>workspace.setProjectNavigation(ref,change,workspace.current.id)} onOpenFile={openFile} onProjectChange={workspace.browse} onOpenToday={openToday} onOpenWiki={(ref,title,project)=>openKnowledge({kind:"wiki",value:ref},title,project)} onSearch={()=>setSearchOpen(true)} activeEncounterRef={activeEncounterRef} onOpenFlowInstance={row=>openFlowInstance(row)} onNewFlow={()=>startWriting()} />;
 
   return (
     <>
       <ExpressionLayout layout={state}/>
-      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={()=>workspace.setContext(context=>({...context,world:undefined}))} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
-        epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>setState(s=>({...s,epiLogos:!(s.epiLogos===true)}))}
+        epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {state.root && modeCentreBinding ? (
         <div className="mode-stage" data-mode={mode} data-window-corner="true">
-          <SurfaceBody binding={modeCentreBinding} onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)} openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore} />
+          <SurfaceBody binding={modeCentreBinding} onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)} openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} subject={workspace.current.context?.subject} />
         </div>
       ) : state.root ? (
         <Workbench
@@ -1032,6 +1095,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           openPresentation={openPresentation}
           openExplore={openExplore}
           openEncounter={row=>openEncounter(row).catch(report)}
+          factoryCentre={factoryCentre}
+          factoryTasks={factoryCentreProps}
+          subject={workspace.current.context?.subject}
           nativeWindows={kernel.transport.kind==="tauri"}
         />
       ) : (
