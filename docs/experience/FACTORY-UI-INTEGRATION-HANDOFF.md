@@ -3,169 +3,166 @@ Register: design
 Standing: design-commitment
 ---
 
-# Factory UI integration — work, warranted claims and Guardian praxis
+# Factory UI handoff — Run / Agents / Context
 
-**Owner commission, 17 September 2026:** integrate the existing NOW/Day, claim-reception, telemetry/search/Git and Agency work into the running parallel UI refinement; publish and merge the planning; make the six existing Product Guardians the persistent stewardship locations for product-operating repertoires. `oi` routes and centralises entry; native product practice specialises. DeepSeek Harness (DSH) supplies interaction inspiration only.
+**Current owner direction, 18 September 2026:** build the parallel Factory sidebar around three clear jobs: **Run, Agents, Context**. The centre switches between the selected Agent/team conversation and the existing full SSSF multi-lane Run view. Inspecting a thing, assessing a claim and opening a result are interactions with that work, not reasons for more top-level sidebar categories.
 
-**Standing:** the owner's stated direction governs this scoped amendment. Concrete control/default details below are implementation-facing design determinations to verify in the app, not a claim of installed functionality or human acceptance. Earlier source audits describe their inspected cuts; the developed local Day/NOW/native line may already have repaired them.
+**This supersedes the six-tab navigation in PR #373 and earlier versions of this handoff**, including Trajectory / Context / Skills & tools / Claims & evidence / Results / Inspect as peer destinations. Retain their actual functions in the locations below. Historical issue comments, downloaded handoffs and existing source references are not instructions to restore that taxonomy. Short labels describe user jobs; native identities/authority do not change.
 
-**Continue, do not restart.** This is an amendment inside #289/#292 and #375, with #220 supplying native joins and #65/#201–#205 supplying joined proof. Continue current CSS/components immediately; read relevant source alongside implementation. Preserve current writable-file ownership and unpublished refinements. No new preliminary audit, mandatory contract-writing round, installer, shell, Agent runtime or broad fan-out is commissioned by this UI handoff.
+**Standing and execution:** this is the owner's selected layout for immediate experimentation in the already-running UI-refinement branch, not an assertion of tested usability or a permanent design freeze. Continue components/CSS and try interactions now. Preserve unpublished work and current shared-file ownership. No full census, preliminary branch merge, new architecture, mandatory documentation round or native implementation completion is a prerequisite for useful UI experiments. #289/#292/#375 remains the UI track; #220 supplies native integration; #65/#201–#205 retains joined proof.
 
-## 1. Current application and source entry
+## 1. One workbench and the retained sources
 
-Keep the six entrances already commissioned in #375's September-17 amendment: **Base / Desktop, Factory, Expressions, Technè, O:I Web, Epi-Logos**. Keep world/paradigm/corpus context independent of arrangement. This amendment concentrates on Factory and the shared Agency companion; it does not reset the selector to four entries or disturb the other entrances.
+Preserve the six existing entrances: Base / Desktop, Factory, Expressions, Technè, O:I Web, Epi-Logos. World/paradigm/corpus context remains separate from arrangement. Use the current Expressions-led design and the owner's actual local reference, not a new visual system. Preserve the accepted left-files interaction, current neutral light/dark styling, quiet revealable footer and existing pane/window/popout capabilities.
 
-The current Expressions interface and the owner's actual local `/documents/fluid-dynamic-typographic-point-cloud-engine` reference lead visual refinement. Preserve its menus, floating controls, Studio, scene tools and current light/dark treatment. The left filesystem interaction is already accepted: visual refinement only. Use existing panes, Surface bindings, tabs, source buffers and focus/restoration. This document provides meaning and receiving states, not a new application aesthetic.
+The source basis is [Founding Positions](../positions/FOUNDING-POSITIONS.md), [FACTORY-AGENCY.md](FACTORY-AGENCY.md), [NOW-PARADIGM-RETURN.md](NOW-PARADIGM-RETURN.md), [WORKCELL-NOW-TEMPORAL-FIELD.md](WORKCELL-NOW-TEMPORAL-FIELD.md), [claim reception](../../skills/oi/references/claim-reception.md) and [native configuration](../cradle/09-CONFIGURATION-PLANE.md). Original responsibilities and proof obligations remain; this handoff determines their current sidebar placement.
 
-Read the smallest relevant parts of:
+The retained external influences are source-qualified **existing O:I design inputs**, not claims about latest upstream releases:
 
-- [Founding positions](../positions/FOUNDING-POSITIONS.md), [Factory/Agency design](FACTORY-AGENCY.md), [NOW/Paradigm/Return](NOW-PARADIGM-RETURN.md) and [Workcell temporal field](WORKCELL-NOW-TEMPORAL-FIELD.md).
-- [Claim reception](../../skills/oi/references/claim-reception.md), originating in Factory Primitive Relations §§7.2–7.5 and `factory:operator` at `EpiLogos/Factory/skills/factory-operation/SKILL.md`.
-- [Operative front door §§5–8](../OI-OPERATIVE-FRONTDOOR-WAYFINDER.md): Method-first practice, one resolver and the six persistent Product Guardians.
-- [Native configuration plane](../cradle/09-CONFIGURATION-PLANE.md) and its existing settings/verification companions; current native capability matrices and owner operations.
-- #375's latest amendments, #289/#292, #220, Factory #222; AIKit #34/#118/#122 search, #137 Git and current context/praxis/session successors. Follow live source, not historical absence claims.
+- [O:I #166](https://github.com/EpiLogos/O-I/issues/166), Grok Bot case study: durable named workers, simple Agent/Team creation, shared working computer with independently scoped access, Skills and proven recurring work, direct collaboration, approvals and clear responsibility for an outcome.
+- [O:I #155](https://github.com/EpiLogos/O-I/issues/155), Buzz-derived interaction commitments: inline To:/@ with keyboard behaviour, one open-Agent-activity operation from anywhere, coalesced semantic activity, permission-to-resolution correlation, native session continuity and Activity versus Notification versus Attention.
+- [Factory #195](https://github.com/EpiLogos/Factory/issues/195): SSSF semantic/cognitive/live/trajectory depth, actual fork/barrier/convergence, bounded children, independent verification, candidate comparison, recurrence and exact temporal/material correlation. A sidebar timeline must not replace that richer central Run view.
 
-The original Day/Flow HTML remains `desktop/cradle/documents/ql-daily-die.html` and `ql-dialogue-flow.html`, with intake provenance and native file-opening code already present. Preserve all original CT4b fields/body fixtures, rich material and human authorship. Use the developed dated-Day integration; do not recreate its forms.
+DSH remains interaction inspiration only: direct tool detail, timing, stable historical reading and dockable views. Do not install/embed/launch DSH or require its adapter or a DeepSeek model. Generic UI acceptance includes DSH absent.
 
-## 2. The six Guardians are where product competence develops
+## 2. Six Guardians and product competence
 
-The six **existing** Product Guardians steward Central, Actuation, AIKit, Software Factory, Workcell and Quaternal Logic. Resolve their actual durable Agent/Agency identities, names, product Focus and World bindings from current native source. These product labels identify responsibilities, not replacement names or permission to mint six fresh Agents. Preserve any explicit canonical Epi mapping where the actual source supplies it; do not derive identity merely from six matching positions.
+Under **Agents**, resolve and display the six existing Product Guardians for Central, Actuation, AIKit, Software Factory, Workcell and Quaternal Logic. Use their actual native names, identities, source and World bindings; these product labels are responsibilities, not replacement Agent names. Do not create six new records from a remembered list.
 
-Each Guardian should expose a maintained product-operating repertoire through the existing AIKit SkillSet/Profile/Method machinery: current native operator/developer practices, relevant knowledge and commands, contextual overlays, known failure/recovery patterns, and evidence-backed improvements. The same tools are available across the field; product stewardship is neither exclusive tool ownership nor six isolated copied inventories.
+Each Guardian stewards a maintained product-operating repertoire using existing native SkillSet/Profile/Method machinery. Skill bodies remain at their source owners; AIKit resolves versions, selections, overlays and projections; Central retains durable source/Agent relationships; Factory carries development and proof. The team/Guardian UI is a view over these, not another skill registry or exclusive tool inventory.
 
-Canonical Skill bodies remain at their native product/source owners. A Guardian is the stewardship and accumulation locus, while AIKit resolves versions, sets, selections and projection; Central preserves durable Agent/source relationships; Factory carries warranted development and verification. Do not invent a Guardian-specific Skill database or imply successful use mutates an authored Skill automatically.
+Particular task/NOW and evidence → product-relative finding → practice proposal with applicability/regression → authorised native refinement → independent fresh useful reuse → maintained product repertoire. Only warranted cross-product generalisation returns upward to O:I routing/orchestration. Keep rejected proposals, contradictory evidence and superseded versions. Do not auto-promote a successful task into governance.
 
-The operational learning loop is:
+`oi` and `suite-operator` retain their current roles. Their two-member bootstrap SkillSet is not the six-Agent roster. Do not revive the frozen Central strap or rewrite private practice. Existing companion-file shipment and real loading/use are bounded native checks, not a UI redesign prerequisite.
 
-```text
-particular task/NOW + explicit claim/evidence/Return
-→ product Guardian receives a finding against its operative repertoire
-→ source-linked practice proposal, applicability and regression
-→ authorised native source/SkillSet refinement
-→ independent useful reuse on a fresh relevant occasion
-→ versioned product practice and updated effective composition
-→ where genuinely cross-product, an explicit suite routing/orchestration proposal
-```
+## 3. Agents: intent, organisation and usable repertoire
 
-The O:I level receives the smallest warranted generalisation and routes to the specialised source. It must not accumulate six copied manuals or promote every local workaround into universal governance. Preserve origin, scope, counterexamples, rejected proposals and superseded versions. Changes to human-authored ground retain its actual acceptance boundary.
+The **Agents** tab is a working roster, not just active-session names. Offer immediately usable **New Agent**, **New Team**, search and access to existing Project/personal Agents. Group by participation/team and keep broader Project/personal scope reachable. Show name, purpose, current assignment, availability and any genuine need for input. Missing/offline team members remain identifiable.
 
-**Keep `oi` and `suite-operator` in their established roles.** This UI commission does not redesign their bodies, add the retired frozen Central strap, or equate the two-member bootstrap SkillSet with the six Product Guardians. Companion-file shipment and current native repertoire loading remain bounded implementation checks under #220, not a reason to restart bootstrap or overwrite private practice.
+Selecting a row opens its local detail with a back route, not five new global tabs. The short section label is **Skills**; it includes native Methods and sets. **Capabilities** describes tools/powers, with permission and target availability distinguished from skill selection. Other compact sections expose purpose, team/members, current work/conversations, knowledge/context links, routines and setup/history. Use progressive disclosure rather than all forms at once.
 
-## 3. Intent-led minting and Skill assignment
+Creation begins with the exact human **intent-expression**, optional name and persistence scope. Existing-Agent Continue remains faster than recreation. Durable Agent, reusable team and bounded temporary helper retain their existing native meanings. `Keep as Agent` crosses the actual source-adoption boundary; saving a definition does not start a session.
 
-Agency opens as a useful roster and current work, not a raw record form. Selecting an existing Agent gives Purpose, Skills & tools, Sessions, Knowledge and History/learning depth. Product Guardians additionally expose their stewarded repertoire, pending practice proposals and verified changes through these same views. Starting with an existing suitable Agent and continuing its session remains the fastest route.
+**Suggest skills** is an explicit optional action: AIKit searches eligible Methods/Skills/SkillSets and Guardian repertoires first; a small bounded inference compares the intent to those candidates and proposes a setup. Show concise reasons, source/revision, relevant scope, prerequisites, optional support, conflicts and uncovered needs. Manual search/select works without a model. No inference on keystrokes, catalogue refresh or panel open, invented Skills or automatic external installation.
 
-For creation, begin with **what this agency should take care of**, optional name, and where to keep it. Retain the person's exact intent-expression as source. Durable Agent, reusable team and bounded temporary help use existing native distinctions; a temporary participant need not become a durable profile. `Keep as Agent` remains an explicit native durable-source operation.
+The person can include/exclude a suggestion, inspect its source, choose a maintained set and preview/apply through native operations. Intent/source/target/authority changes invalidate stale suggestions. Keep Project/Profile inheritance, team defaults, per-member exceptions and task overlays visible without silently changing another scope. A team selection is not an automatic union of all member privileges. A generated projection never becomes authored source.
 
-Offer an explicit **Find suitable skills** / **Review suggested setup** action beside ordinary manual search. Its operation is:
+Organising teams must include selecting/adding/removing actual members, purpose and lead/outcome responsibility, and seeing their assignments. Distinguish **add to team**, **address/invite into conversation**, **assign work**, and **delegate a bounded task** through context-appropriate actions. Selecting a row or dragging it into a visual group does not silently dispatch work. Preserve separate members rather than synthesising one super-Agent.
+
+The selected Agent's setup gives compact native controls for model/selection policy, harness, permissions and working environment/host, with Open conversation / Open activity / Open computer or terminal where available. This preserves the shared-computer precedent without a mandatory shared machine or isolation assumption. Explain future/default versus active-session values and next-turn/reload/new-session effects. Retire/remove source membership is distinct from cancelling ongoing work or deleting history.
+
+**Routines live with the responsible Agent/team**, showing purpose, trigger, enabled state, next occurrence where supplied and last result. Create from a suitably proven practice, configure/pause/resume through native proof/authority operations, and open an occurrence as its actual work in Run/Context. Disabling future triggers does not cancel an in-flight occurrence. Knowledge/remember-this routes to permitted World/Project source in Context, not a new opaque memory bucket.
+
+## 4. Factory geometry and Run
 
 ```text
-intent-expression + selected Project/Profile/Agency scope + actual target constraints
-→ AIKit searches current eligible Methods/Skills/SkillSets and Guardian repertoires
-→ a small bounded inference compares that intent with the returned candidates
-→ a reviewable proposed setup
-→ native re-resolution / validation / plan
-→ authorised source creation or scoped selection / apply
-→ target projection or brokered availability
-→ truthful activation and subsequent use readback
+LEFT                        CENTRE                         RIGHT
+existing Project/files      Chat  |  Run view              Run | Agents | Context
+                            selected Agent/team chat       selected tab's useful body
+                            or full SSSF multi-lane view
+
+quiet footer → same sessions, Activity and genuine Attention
 ```
 
-Search and deterministic eligibility precede inference. Use the existing selected model/session/authority route; never a hard-coded recommendation model, new runtime or root privilege. Bound candidate count, source retrieval, time and spend. Do not run inference on every keystroke, on opening a roster, or during background catalogue refresh. Manual search/selection remains complete when inference is unavailable.
+**Exactly three top-level Factory sidebar tabs:** Run, Agents, Context. Do not recreate the six removed tabs in an overflow menu as permanent peer destinations. Object details, actual material tabs, source editors and expanded inspectors can still open as normal panes/windows/popouts.
 
-For each suggestion show its source/Guardian stewardship, exact revision, concise relationship to the intent, prerequisites/tools, target compatibility and proposed scope. Separate required-for-the-proposed-approach from optional support and actual missing capabilities. Return conflicts, duplicates and coverage gaps; never invent a Skill or silently install an external candidate. A suggestion is an attributable proposal, not evidence that the practice works or that permission exists.
+The centre's **Chat / Run view** changes presentation of the same selected work, not runtime identity. Chat can be an individual Agent or actual team conversation with To:/@ addressing and attachments. Keep the full SSSF multi-lane map, dependency/frontier, independent legs and convergence in the centre. Clicking an Agent/step can open its actual conversation and back; neither every visual lane nor a team label implies a distinct Agent or session. Allow useful side-by-side panes through existing commands without mounting duplicate composers.
 
-The person can inspect/open/edit the native source where authorised, include/exclude candidates, select a maintained set, or change the intent. Editing intent, catalogue/source revision, target or permission invalidates a stale proposal. Re-run native validation before apply. Preserve task overlays and inherited selections without silently rewriting a shared Guardian repertoire or another Project's defaults.
+The sidebar **Run** is the compact control and inspection surface for the selected work. Put the current Run/Journey selector, purpose/outcome, owner/team, state and pending human decision in a compact header. Provide New/choose/continue work from native entry points. With no selected Run, offer a useful next action; Agents and Context remain usable without a conversation or Run loaded. Direct work stays Direct, with its activity honestly labelled and no synthetic Factory ancestry.
 
-Keep these visibly separate: saving the Agent definition; applying a Project/Profile repertoire; starting work; changing a resident session; granting authority. Explain whether a change applies to future work, next turn, reload or a new session. Selected, projected, brokered, observed effective, adapter-inferred, unknown, withheld and pending reload are truthful states, not interchangeable green badges.
+Run's body should expose current steps/lanes, assigned work, waiting dependencies/barriers, failed or missing verification legs, bounded children, retries and history. Selecting a step opens the relevant detail; Open full run focuses the existing central SSSF view rather than rendering a miniature replacement graph in the sidebar.
 
-## 4. Factory's right desk and DSH-inspired interaction
+Put **trajectory** here as a timeline/list with filters by step, Agent, attempt and time. Start with coalesced verb/object activity. Expand exact tool input/output, nested work, errors, permissions, evidence and raw structured detail on demand. Keep questions/findings/Run Thought reachable on their work where supplied. Model/tool/resource timing and usage, estimates with their basis, and unavailable data are inspection depth here; compare attempts or open a substantial analysis as an ordinary report in Context.
 
-**DSH is UI/UX inspiration only.** Do not install, embed, launch or require DeepSeek Harness or a DeepSeek model for this work. DSH adapter development may proceed separately; it is not a dependency or acceptance prerequisite for these panels. The full generic desk must work with DSH absent and an ordinary supported native harness. Prior references to testing DSH itself apply only to a separately selected provider test.
+Controls must lead to actual outcomes: start/continue; inspect a blocker; respond to a permission; interrupt or cancel the appropriate scope; retry/replan from a known state; request evidence or changes; compare Candidates; record an authorised recognition/integration action when appropriate. Expose native-supported operations with their real states. Pause orchestration, interrupt a turn, cancel work and observed quiescence are not one fictional stop toggle. Unknown/late effects require reconciliation before consequential retry. Failed required legs never disappear into a green aggregate.
 
-Borrow the desired interaction principles: direct turn/step/tool inspection, a timing overview, nested details, stable historical reading with resumable live following, and compact dockable resource tabs. Implement them using O:I Surfaces and native records. Do not copy an upstream provider schema or its branding into domain truth. Preserve the SSSF Run Map/Live/Trajectory developmental reading; a tool transcript does not replace it.
+**Scope behaviour:** keep selected Run, inspected step, roster selection and chat recipient distinct. Opening an Agent chat within a Run does not silently change the whole sidebar to that Agent's unrelated work. All-work versus selected-step/Agent filtering is explicit; pin/hold is visible. Changing Run deliberately changes its related field while preserving other drafts and reviewed material in their own tabs.
 
-```text
-LEFT                         CENTRE                         RIGHT
-existing Project/files       conversation / Run / work      selected depth or actual result
+**General companion reuse:** Agents and Context, object inspectors, semantic activity and addressing are shared components, not a second Factory-only management app. Outside Factory, preserve the docked conversation whenever it is the sole chat surface; promoting it relocates that same conversation. Run inspection is reachable for actual related work, and Direct activity is not reclassified as a Run. This refinement does not remove normal text/voice/attachment controls or force Factory onto ordinary/Epi/Nara work.
 
-quiet revealable footer → exact session / attention / Observatory
-```
+## 5. Context: what the work draws on and what it produces
 
-Keep ordinary **Conversation / Activity / Context / Inspect** accompaniment. When conversation is central, the right does not render a duplicate transcript/composer. In Factory, provide the following summonable tab repertoire through the current pane/tab system:
+The **Context** tab is the scoped material field beside the Run: sources going in and work coming back. Use two readable groups, **Sources** and **Produced**, with a small **Needs you** subset/marker for genuine actionable Returns. These are groups in one tab, not new required global tabs. Keep the most useful material directly openable in the right pane, with a back route to its list and normal pane promotion/split/window/popout.
 
-| Tab/depth | Useful body |
+**Sources:** add native files, folders where supported, passages, links, Wiki/SourcePool material and prior results by reference. Provide AIKit search, file picking, drag/drop and a keyboard equivalent, include/exclude/unlink, source open/preview, permissions and exact revision. Existing attached files remain useful without mandatory Wiki conversion or copying into a new physical pool.
+
+SourcePool availability, selected material and what actually entered a particular Agent's context remain different. Show a concise actual state and expandable historical disclosure per act; adding a source must not silently distribute it to all team members. Current Run sources and a held past act's context use explicit bases. Removing a reference is not deleting the original file; changing selection is not a grant or disclosure. Private sibling material must be excluded before retrieval, not only hidden from results.
+
+**Produced:** actual documents, code/diffs, previews, reports, checks, research, handoffs and other artifacts, including partial work and separate Candidates. Every row opens the actual content rather than another metadata-only card. Show producing step/Agent, version and appropriate draft/ready/failed/checking status. Native claim/evidence/assessment is available inline with its relevant result or Run event: assertion → supporting/challenging basis → exact tested state → remaining obligations. **Inspect** becomes an item action/detail view, not a top-level category. **Results** is the material itself, not another competing catalogue.
+
+**Returns and the human Inbox:** preserve the owner's intended receiving path. A result explicitly addressed/routed to the person can appear beside its Run and in the native NOW/Day/Inbox through the same reference. Show delivered/pending review/included or other actual native states, and the correct response action. An ordinary intermediate artifact or progress event is not automatically an Inbox item. Delivery, acknowledgment, accepting a proposal, including text in the human Day, recognising a Candidate and Git integration are separate acts. Do not turn every Day entry into an Agent task.
+
+**Needs you** items include reviewable output/source proposals; Run permissions/blockers remain anchored to their operation with a linked attention cue. A small badge or cue on the relevant tab/Agent plus the existing footer exposes attention even while another tab is open. One native attention item can appear in several views without duplicate notification or independently diverging resolution. Resolving it updates all views. No extra global Attention/Inbox tab or permanent activity banner is required for this layout.
+
+A produced artifact can be deliberately reused as a later input, with a new reference/selection relation. Production does not automatically load it into every current Agent, promote it to accepted knowledge or publish it. Shared/public export remains audience-scoped and separate from native pane opening.
+
+Git detail belongs with the source/result: real repository/worktree, original basis A, current target B, Candidate C, committed/staged/dirty/untracked state, diff/history and exact tested material. Later edits expose stale checks. Preserve human work and reconcile external Git use; author metadata alone is not authenticated Agent attribution. Day/Flow/T/T-prime and non-Git material retain their native source history.
+
+**Discuss this / Request changes / Investigate** carries the exact item/event/rule and revision into the existing conversation or an explicitly scoped task. Preserve the person's concern and current draft. Broader Day-wide inquiry is explicit. Sender claim, source, evidence and receiver assessment remain distinct through summaries, delegation, T/T-prime, search and resumed work; repeated-origin reports are not independent proof. Reuse adequate evidence and seek new proof proportionately. A finding can feed Guardian practice refinement without automatic governance mutation.
+
+Preserve all supplied Day/Flow HTML and shared returned-document templates. `ql-daily-die.html` and `ql-dialogue-flow.html` under `desktop/cradle/documents/` are existing source, with original CT4b fields/body/unknown data and human writing intact. Opening an existing form is not spawning a dated Day or running a model.
+
+## 6. Search, telemetry and native receiving seams
+
+Keep semantic/domain identities at their current owners: Central source/temporal/receiving; AIKit search/praxis/session/Git/context; Actuation authority/Activity/Return; Factory developmental work/evidence; Workcell material; O:I presentation. The redesign changes entry points, not protocols or stores.
+
+Context searches source and produced material through AIKit; Agents searches actual Agents/repertoires through its native discovery; Run filters/queries correlated execution through Factory and the same search provider where content is needed. Retain the ripgrep direct-search path and indexed/deeper search where provided, bounded scope/history, exact source matches and honest partial/stale/unavailable/truncated results. Search relevance is not verification. No UI or Factory-private Markdown parser/backlink index.
+
+Factory CLI status/watch/inspect/search/stats/compare/export/doctor requirements remain at the current native application seam; earlier command spellings remain proposed until actually published. UI and Agent clients use those structured capabilities, never scrape human CLI output. Optional bounded analytical reports/JSONL/CSV/Parquet, DuckDB and OpenTelemetry exporters remain derived provider facilities. Neither they nor DSH are required for local inspection or UI refinement.
+
+Run uses shared native event/cursor subscriptions, batching, deduplication and bounded buffers. Virtualise/lazily load history; coalesce repeated updates; pause auto-follow when the person inspects the past and provide a clear Resume live action. Retain stable row/scroll/selection and explicit gaps/coverage, occurrence versus receipt time, late returns and index lag. Do not poll each tab independently, durably record every token by default or invoke a model per event. Keep essential evidence, sampled diagnostics and human Day writing distinct.
+
+Retain measured throughput/resource budgets, cold/warm queries and concurrent-write tests from #222/#65. A quiet panel should not consume a permanently busy renderer. Failed/offline native reads retain usable unrelated tabs and actionable recovery; they are not empty success.
+
+## 7. Settings, continuity and object inspection
+
+Global System settings configures native sources/providers, credential references, projection/index/collector health, retention, optional export and service lifecycle. Agent-local setup belongs in Agents; a Run's actual execution conditions and budgets belong in Run; a source/result's metadata and history belong with that item in Context. Open deeper System configuration by link when the issue is genuinely global. Do not send routine skill assignment or Run approval away to System.
+
+Use the existing config-contribution → validate → plan → apply/reset → receipt/effective-state contract. Scope/inheritance, desired versus active values, drift and restart/reindex/reload implications remain truthful. Source collection, Agent disclosure, execution permission and outward publication are separate controls.
+
+Every material and meaningful work detail can use the current Open here / beside / in pane / popout path. Prefer the user's chosen placement, not hard-coded new windows. Preserve dirty edits, held revisions, context history, single conversation, drafts, focus, back/forward and redocking across centre Chat/Run changes. Closing a view does not stop work, delete a result or accept it. Remote open/focus is different from moving execution to another Workcell.
+
+Historical session, resume, rehydration, credentials/service failure and exact terminal/computer access remain available through the appropriate Agent or Run object detail. Preserve accessible keyboard/pointer/touch equivalents, narrow drawers, reduced motion and native menus. Keep the footer reveal/pin law. Do not promise unimplemented process or GPU continuity simply because a Surface moved.
+
+## 8. Function coverage and actual UI experiments
+
+The existing fourteen Factory/Agency obligations retain their IDs, story bindings and evidence grades. Their **presentation requirements** now follow this three-tab resolution; keeping an obsolete six-tab requirement is not functional preservation. The full source remains in the existing compiler via `document_operations_source`; no new story family or acceptance store.
+
+| Retained function/source | Current place and user act |
 |---|---|
-| Trajectory | Actual turn/step/tool/subwork ledger, timing and failure/permission detail; Activity is its compact summary, not another log |
-| Context | Original purpose, Day/NOW scope, source/paradigm/governance and the context that carried the selected act |
-| Skills & tools | Effective historical or current repertoire; source/overlay/Generation, target delivery, capability and activation; explicit route to manage future setup |
-| Claims & evidence | Sender's assertion, evidence, receiver's assessment, challenge/support relations, exact subject state and remaining obligations |
-| Results | Actual Diff, Preview, Tests, Report, Artifact and Handoff surfaces; selected material dominates |
-| Inspect | Real Agent/session/model/harness/authority/environment/Workcell and supported operations |
+| Grok simple durable worker/team, outcome owner (#166) | Agents → New Agent/New Team; choose responsibility/member; select assignment; open conversation |
+| Grok learned practice and proven routine (#166; current native Routine law) | Agents → Skills and Routines; propose/verify/apply repertoire; enable/pause future recurrence; Run opens actual occurrence |
+| Grok computer, files and approvals (#166) | Agents setup opens actual environment; Context opens sources; Run responds to the exact permission |
+| Buzz To:/@ and audience controls (#155 D4) | Central chat composer uses recipient picker/chips and send-time eligibility; team membership is separate |
+| Buzz open activity anywhere and semantic coalescing (#155 D5/D7) | Agent avatar/row, Run step or footer opens the same real activity in Run or native Surface; raw detail remains local depth |
+| Buzz Notification/Attention (#155 D6) | Relevant item/tab/Agent cue and existing footer; actionable state resolves consistently in Run and native Inbox |
+| SSSF fork/barrier/convergence and Run cognition (Factory #195) | Central full Run view; Run sidebar exposes selected work/attempt, missing legs, verification and control |
+| Historical context and Skill delivery (#373/AIKit) | Context → selected act's Sources; Agents → Skills/setup; Run event deep-links exact past activation |
+| Claims/evidence and incomplete completion (#373/Factory primitives) | Run step/check details and Context's produced document; request evidence or challenge beside the claim |
+| Git, Candidate comparison, stale tests (#137/#222) | Context → exact source/diff/check; Run comparison/gate opens those same Candidates and missing proof |
+| Day/NOW/Flow and human receiving (#220/#222) | Context → Sources/Produced/Needs you; open actual Day, task NOW and addressed Return/Inbox; receiving does not copy or auto-accept |
+| Guardian repertoire and upward learning (#373) | Agents → existing Guardian Skills/history/proposals; verify scoped reuse, then propose warranted suite-level refinement |
+| Native search/telemetry/analysis/config (#222/#299) | Run metrics/query, Agents discovery, Context source search; global provider configuration stays in System |
+| Pane/window/popout continuity (#375) | Open real material/inspector using existing placement; retain identity/edits/review/focus and return path |
 
-These are accessible views, not six permanently populated panels or a new mandatory nested tab bar. Reuse current tab groups/overflow, contextual opening, promotion/split/detach/redock and result tabs. Remember the person's placement. Empty optional tabs need not occupy the strip; required unavailable evidence stays visible from its affected work. The tab strip is compact; avoid redundant page banners and stacked headings.
+Build and expose these **interactive scenarios in the existing UI dev fixture/gallery**, clearly labelled and outside production truth. They must be directly reachable without first loading a live chat:
 
-Trajectory needs expandable exact input/output/code/structured data/errors, nested work with attributable parentage, lazy pages and virtual rows, a paused-follow state while inspecting history, a clear unread/new-activity cue and explicit Resume live. New output must not move a held row, replace a reviewed artifact or wipe an unsent draft. Keep scroll/selection across updates and return navigation; collapsed panes reclaim space; maximise/fullscreen preserves mounted state where the existing host supports it. Do not promise impossible cross-window process/GPU continuity.
+1. **Empty → organised:** no Run or conversation. Open Agents, create a proposed worker/team, search/manual-select Skills and use Suggest skills; source/authority drift or inference cancellation leaves an editable proposal. Add files under Context. Both tabs were usable from entry.
+2. **Work → collaborate:** select a Run with several real-shaped independent lanes and a named outcome owner. Switch central Chat/Run, address one Agent/team, inspect its activity and delegate with bounds. Grouping or @mention alone dispatches nothing. Roster/step selection does not redirect a draft.
+3. **Blocked → resolved:** a child awaits permission, another required leg fails and a third finishes. Run shows the true barrier and scoped actions; the right cue/footer reaches the same unresolved item. Resolve/refuse, retry only with reconciled effects, and keep late results explicit.
+4. **Inputs → outputs → human response:** add an eligible source, inspect actual loading per Agent, receive a partial artifact then a final addressed Return. Open the artifact body, compare two Candidates/checks, request changes and receive through the existing Day/Inbox relation. Ordinary progress remains out of Inbox.
+5. **Inspect without losing place:** pause live-follow on a past tool/claim, open evidence → exact Git/source → context/Skill → return. New events and a newer result do not move the held view. Pop out/redock while the centre switches modes; draft and unsaved material survive.
+6. **Learn and repeat:** from a poor result, bound an inquiry, retain adequate and contradictory evidence, propose a Guardian practice improvement, inspect native apply/reload, and reopen a proven routine occurrence. Proposals/repeated summaries do not auto-become law.
+7. **Degraded and ordinary:** unavailable model/provider/host, missing Skill companion, revoked permission, partial search/index lag, stale checks and lost stream each have useful states. Direct work and DSH-absent operation remain valid; no ghost Run or silent empty-success.
 
-## 5. Shared focus, NOW, claims and Git
+These are coverage scenarios, not a requirement for seven duplicate demos or a new framework. Use a representative integrated scenario and alternate states. Test click/keyboard behaviour and real callback/readback contracts, not screenshot labels alone. A deliberately disconnected native handler must fail integrated tests even when fixture interaction looks convincing.
 
-Use one current semantic selection/binding grammar. The following are required relations to bind, **not invented API field names**: subject and exact revision; selected task/attempt/act; Day and root/child NOW; Agent/session/Agency; Run/Journey when real; historical context/praxis/authority; source/Git comparison; evidence and Return; native owner/cursor and reading coverage. Inspect current schemas and name actual missing producer fields in #220.
+For this **parallel UI-preparation** stage, coherent components, real existing handlers and clearly labelled typed fixture paths for pending joins are useful completion. Native producer, installed provider/material and human-experience proof remain distinct later outcomes at existing owners; missing producers do not prohibit visible experimentation or become fictional success. Keep the prior foundation-first rule for the broad campaign, not as a new pause for this UI lane.
 
-Expose a compact readable work scope. It can lead from Day → child NOW → task/session → selected act → historical context/Skill → claim/evidence → exact result/Git basis and back. Changing UI selection never means disclosing that source, redirecting an Agent, changing scope or refreshing a held historical receipt. Current setup and what carried a past act have distinct modes/bases.
+## 9. Immediate instruction to the UI thread
 
-Preserve sender claim, supplied basis and receiving assessment throughout delegation, tools, Day contributions, T/T′, summaries, search and analytical exports. Authentication establishes sender identity, not truth. Repeated reports from one origin do not become independent confirmations. Reuse adequate current evidence; request new independent proof when the actual obligation requires it. A changed subject can make earlier evidence inapplicable without erasing its historical validity. A supplied instruction cannot grant itself authority.
+Continue your current UI-refinement branch. Replace the prior six-top-level-tab sidebar with **Run / Agents / Context**. Centre remains selected Agent/team Chat ↔ full SSSF multi-lane Run view. Run contains status/control/trajectory/checks/metrics; Agents contains creation/teams/assignment/Skills/Capabilities/routines/setup; Context contains Sources and Produced material, including addressed Returns and their native Day/NOW/Inbox state. Details and claim/evidence inspection attach to those objects. All material remains openable through native panes/windows/popouts.
 
-Claims & evidence should answer: what is being asserted; about which state; by whom; on what basis; what supports/challenges it; what remains open; and what next operation is warranted. Use native Claim/Evidence/Assessment/verification structures or attributable claim-bearing artifacts, not a new universal score. Ordinary human prose is not forced into a Claim per sentence; Direct work receives no fabricated Factory ancestry.
+Preserve six app entrances, current Expressions style, accepted left-files UX, one conversation and native identities. Give the three tabs usable empty/pre-run states and directly selectable dev scenarios. Implement interactions now; do not return another static shell or wait for a loaded chat to reveal the proposed UI. Scope source browsing to the component being changed and continue existing owner coordination; no reset, new worktree requirement, mainline runtime rewrite or dependency on DSH.
 
-Git is the material comparison alongside purpose and occasion. Consume native repository/worktree/history/diff reads. Preserve original basis A, current target B and Candidate C; distinguish committed from dirty/staged/untracked state and exact tested state. A source/Skill change and a running session's effective context are different histories. A green test on an old tree does not certify edited material. Git authorship metadata does not identify a canonical Agent without invocation evidence.
-
-**Discuss/investigate this** carries the selected task/rule/evidence and revision into the existing draft or addressed interaction. Show and bound the proposed inquiry scope, including Day-wide expansion. Return an actual source-backed report into the result desk. Preserve the original concern and failed occasion; authorised repair or praxis proposal, verification, human-source acceptance, Git integration and installation remain distinct. The UI must offer usable actions, not merely display provenance nouns.
-
-## 6. Search, telemetry and analysis receiving contract
-
-Use the developed native integration from #220/Factory #222. AIKit owns permission-aware discovery and content search, including the planned ripgrep direct-search provider; Factory correlates genuine developmental subjects. The UI owns no independent parser, backlink index or search warehouse.
-
-Provide fast exact/literal search first, explicit regex/deeper search where supported, task/Day/Agent/Project/Workcell/time filters, bounded active versus archived scope and drill-through to actual source revisions. Show partial coverage, stale indexes, unavailable remote hosts and truncated results differently from no matches. Authorise scope before retrieval. Search ranking is not evidential standing. A small inference for setup or investigation is an explicit separate act, not the search implementation.
-
-Preserve the requested native CLI operability: status/watch/inspect/search/stats/compare/export/doctor through the current Factory command/application surface. Command spellings in earlier handoffs remain proposed until implementation publishes actual help/contracts. O:I routes to those owners; Agent and UI consumers use the same structured operations. Do not scrape human CLI tables.
-
-Keep essential task/effect/evidence records distinct from diagnostic/resource telemetry and human Day presentation. Consume shared native event subscriptions/cursors with bounded UI buffers, batching, deduplication, lazy detail, virtual history and cancellation; avoid per-tab polling and model calls per event. Occurrence/receipt time, causal ordering, late Returns, queue/index lag, missing data and sampled/dropped diagnostics remain legible. Zero is not unavailable.
-
-Use the existing analytical projection or bounded JSONL/CSV/Parquet export. Optional DuckDB analysis and OpenTelemetry/OTLP trace/metric export stay provider-backed derived facilities, not canonical truth or required UI dependencies. Saved comparisons should preserve cohort/denominator, exact basis, coverage, measurement provenance and supporting episodes. Local inspection/search must remain useful with optional analysis/export services absent. Record actual throughput/resource budgets and measured overhead; do not invent a performance success from a small fixture.
-
-## 7. Agency management versus System settings
-
-Agency answers **what this Agent is for and what it can use here**. System answers **how source/provider/projection/collection infrastructure is configured and whether it is healthy**. Link between them without duplicating the same form or inventing a UI-owned registry.
-
-Use existing native config-contribution → validate → plan → apply/reset → receipt/effective readback. Surface scope/inheritance, desired/effective/active state, drift and reload/reindex/restart implications. Preview consequential retention, disclosure, remote export or authority changes. Source availability, collection, Agent disclosure and external sharing are separate controls.
-
-Receiving depths include: native Skill sources and projection health; Guardian repertoire source/adoption; NOW/Day history/retention; search provider/index freshness; Factory telemetry coverage/buffering; optional analytical/export providers and credentials by reference; Git/source-history/checkpoint policy; and bounded inference defaults/budget through actual model/authority owners.
-
-Use current handlers now. For pending native bindings, implement the real component state and adapters using clearly labelled controlled fixtures in the existing test environment. Production shows truthful unavailable/pending states and an actionable owner route. Independent visual/component work does not wait for every native feature; it also cannot count a fixture as integrated operation.
-
-## 8. Conformance in the existing UX spine
-
-The existing `factory-agency.json` fourteen obligations retain their IDs, stories and evidence grades. Their additional branches below are specified, not executed. The module's existing `document_operations_source` loader retains this whole document and its digest; no new schema/compiler/story family is introduced.
-
-| Existing obligation | Added proving consequence |
-|---|---|
-| arrangement / visual | Conditional right desk, stable selection/live-follow, docking/restoration, one conversation, keyboard/narrow/reduced-motion; DSH absent |
-| agents / session-compose | Intent → bounded AIKit search/inference proposal → review/native apply → actual target; manual fallback, stale proposal, temporary/durable distinction |
-| praxis-context | Six existing Guardian stewardship relations, two differing Project/Profile selections, companion access, actual fresh-Agent use, brokered/unknown/reload conditions |
-| conversation / runs / handoff | Confident incomplete return and adequately evidenced return; source-aware receiving assessment, repeated-origin and contradiction, historical basis after compaction |
-| output-dynamics / templates / git | Exact claim → evidence → trajectory/NOW/context/Git/result round-trip; fixed reviewed revision, original templates, stale tests and moved target |
-| attention-gateway / temporal-routine | Same scoped work across footer/Observatory/Day/CLI; two Workcells, continued child after rollover, late Return and no automatic inference |
-| joined | Product practice improvement → independent fresh reuse → optional warranted suite routing proposal, no automatic promotion; production-handler disconnection fails proof |
-
-Also exercise missing/ineligible Skills, inference timeout/cancel/no model, no adequate Method, narrowed child authority, source change between suggestion/apply, concurrent profile edits, private sibling exclusions, unavailable activation evidence, index/service loss, telemetry gap/backpressure and retained human drafts.
-
-The six Guardians must be independently identifiable with current repertoire source/readiness; a useful product operation must demonstrate its applicable practice where testing that Guardian's competence. Do not mark six bundles operative because six labels exist. Upward suite learning requires source-qualified relevance and acceptance, not automatic copying into `oi`.
-
-A UI-preparation verdict establishes actual component/layout/state work plus named native dependencies. Integrated acceptance exercises the same controls against the current native source/build/install/running cut with required provider/material and human evidence. Preserve the established human-evidence timing law: do not demand premature ratification of deliberately intermediate construction. The #65 foundation-first gate applies to the broad launch, not a halt to this already-running bounded UI refinement.
-
-## 9. Immediate dispatch to the UI thread
-
-Continue your current UI-refinement checkout and component assignments. Do not pull/merge/reset the whole branch as a prerequisite to beginning work. Read this amendment and current #375 direction through source access; bring the relevant planning changes into your branch safely when needed without disturbing unpublished code.
-
-The main feature priority remains the shared right companion and its Factory depth/result composition. Integrate the tab repertoire, work-scope/drill-through, claims/evidence, intent-led Agent creation, searchable Skill assignment and Guardian repertoire views into the existing components. Preserve the accepted left-files interaction, six entrances, current Expressions art direction, source-backed templates and single conversation.
-
-Own presentation and receiving adapters; coordinate native API gaps through #220, AIKit and Factory #222. Do not install DSH, build a replacement resolver, create six Guardian identities, rewrite `oi`/`suite-operator`, or reopen the old Central bootstrap. Use available native paths immediately and explicit pending states for the rest. Return component paths and actual operation bindings, before/after interaction evidence, tests and remaining owner joins in the existing UI PR. Keep working; this handoff is not another documentation gate.
+This document and the existing mapping replace the old navigation instructions. Carry actual component/handler paths and remaining native bindings into the current UI PR, with before/after behaviour and tests. We are deliberately trying this clearer organisation; preserve the functions while refining the interaction from use.
