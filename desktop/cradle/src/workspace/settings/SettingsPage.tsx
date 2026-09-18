@@ -23,6 +23,7 @@ import {ProductSection} from "./ProductSection";
 import {NativeProductSection} from "./NativeProductSection";
 import {ConfigurationView} from "../../configuration/ConfigurationView";
 import {ProfilesView} from "../../configuration/ProfilesView";
+import {SettingsPageV2} from "./v2/SettingsPageV2";
 import "./settings.css";
 
 const BOOTSTRAP_STEPS:{title:string;detail:string;native:string}[] = [
@@ -32,7 +33,25 @@ const BOOTSTRAP_STEPS:{title:string;detail:string;native:string}[] = [
   {title:"First-run configuration",detail:"Only settings whose authored value is absent and whose owner marks them bootstrap-relevant surface here. Day-to-day life is the Health and Config views.",native:"See each product's own settings in the Health view"},
 ];
 
+/** Which settings page renders: the classic one or the rebuilt v2. The
+ * choice is remembered; the walk builds never set it, so the walks keep
+ * asserting the classic page. Both live side by side until one is picked. */
+const VARIANT_KEY = "oi.settings.variant";
+type SettingsVariant = "classic" | "redesign";
+function storedVariant(): SettingsVariant {
+  try {return localStorage.getItem(VARIANT_KEY) === "redesign" ? "redesign" : "classic";} catch {return "classic";}
+}
+
 export function SettingsPage() {
+  const [variant,setVariant] = useState<SettingsVariant>(storedVariant);
+  useEffect(()=>{try{localStorage.setItem(VARIANT_KEY,variant);}catch{/* private mode: choice just not remembered */}},[variant]);
+  if(variant==="redesign") return <SettingsPageV2 onChooseVariant={setVariant}/>;
+  return <SettingsPageClassic onChooseVariant={setVariant}/>;
+}
+
+/** The classic settings page, verbatim — the v2 variant lives beside it
+ * (settings/v2/) and the switch between them is one click, remembered. */
+export function SettingsPageClassic({onChooseVariant}:{onChooseVariant:(variant:SettingsVariant)=>void}) {
   const kernel = useKernel();
   const {transport} = kernel;
   const [view,setView] = useState<SettingsView>("health");
@@ -100,6 +119,9 @@ export function SettingsPage() {
   return <section className="system-panel" aria-label="System composition" aria-busy={pending}>
     <header className="settings-world-header">
       <div><h2>System</h2><p>The world read, configured, and maintained.</p></div>
+      <button type="button" className="settings-rail-switch" data-settings-variant-switch
+        title="The rebuilt settings page: one search, human wording, a pending-changes tray. Nothing changes until you pick."
+        onClick={()=>onChooseVariant("redesign")}>New settings — try it</button>
       <dl className="settings-world-facts">
         <div><dt>Ground</dt><dd>{ground===undefined?"Unavailable":ground??"No default Central bound"}</dd></div>
         <div><dt>Frame</dt><dd>{reading?frameFact(reading):"Not yet read"}</dd></div>
