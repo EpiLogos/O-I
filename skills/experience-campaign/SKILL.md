@@ -11,6 +11,30 @@ registration, trust, SkillSets and projection. Source publication does not make
 this installed or loaded. For the commissioned bootstrap, read the exact source
 explicitly and record that route; native discovery/loading remains a test.
 
+## Current hosted-learning and sandbox placement — 18 September 2026
+
+For a `5/0` learning task, use `docs/experience/INSTALLATION-VARIANTS.md`:
+clean browser → existing hosted Library → published corpus/Expression → source
+and return. The host supplies services; the visitor installs no O:I/QL/agent
+stack and need not join a live session or supply an API key to read. Preserve
+the full corpus, source/Projection identities and optional richer participation.
+This supersedes earlier mandatory local Central+QL learner-install wording.
+
+For installation, functionality, knowledge, SDK, browser, fixture or hardening
+work, Omarchy sandboxes are now owner-reported available. Read the full existing
+`docs/experience/LOCAL-CAMPAIGN.md` §2.1 at C0/C1. Verify actual provider/isolation,
+allocate bounded disjoint worlds, use real public routes and uncoached actors,
+retain failure evidence outside guest deletion, repair at the native owner,
+independently replay original/held-out cases, and verify owned cleanup. Protect
+the Omarchy host and Mac acceptance installation; guest evidence is not Mac,
+bare-metal or independent-two-machine evidence. Record actual D/C/P/M/H scope.
+
+Use the existing campaign, Workcell/Factory/AIKit capabilities and explicit
+budgets, not a new test or learning runtime. Preserve source-derived expectations
+when refining fixtures; never teach expected answers, weaken negatives or claim
+H from automation. Existing foundation sequencing below remains; independent
+bounded work continues and no premature H gate is added.
+
 ## Owner's next development/testing fan-out — foundation first (17 September 2026)
 
 **Scope:** the owner's commissioned #65 development-environment/self-inhabitation
@@ -78,8 +102,9 @@ reasoning; T-prime learning retains exact T/source lineage and candidate standin
 A Day pattern is not automatically an accepted learning or governance amendment.
 
 Reconcile the actual representations rather than assert “one model, three
-renderings” from action names. The inspected Central
-`ctrl/src/continuous_work/documents.rs` accepts day/flow/dialogue, requires a
+renderings” from action names. The inspected
+[Central native document producer](https://github.com/EpiLogos/Central/blob/main/ctrl/src/continuous_work/documents.rs)
+already accepts day/flow/dialogue, requires a
 human principal for Day creation, protects non-empty human Day bytes from implicit
 conversion, and marks native payload retention as not original-HTML fidelity.
 Its contribution text path deliberately excludes URL-bearing/media elements.
@@ -163,8 +188,8 @@ disjoint existing tracks with task/NOW/source/Return bindings from the outset.
 ## Purpose and required context
 
 The UX source is **vision-level intended experience** (Development Field tier 1),
-including the agent's experience of discovering and using its world. Capability,
-architecture, implementation/test plan and evidence are related downstream.
+including the agent's experience of discovering context, capabilities and useful work.
+Capability, architecture, implementation/test plan and evidence are related downstream.
 Tests cannot author a smaller vision simply because that is what code can pass.
 
 Begin from the actual human request, source-qualified story/parent, current
@@ -232,10 +257,12 @@ campaign or an instruction to benchmark every model before useful work begins.
    Never publish tokens or send unsolicited group messages to get proof.
 8. **Keep variants and authority honest.** #268 makes CF5 the containing material
    frame for six forms, not maximal package presence. CF6 is a lightweight
-   remote client; CF7 allows learning without agents. Minimum trials really omit
-   unselected products. Source sync, software update and machine reconnection
-   stay distinct. Actual reference-machine intent and supported provider features
-   decide applicability; the second machine is not implicitly disposable.
+   remote client; CF7 is hosted Library learning without a visitor install.
+   Installed-minimum trials really omit unselected products; visitor tests name
+   the hosted edition and clean browser separately from the server composition.
+   Source sync, software update and machine reconnection stay distinct. Actual
+   reference-machine intent and supported provider features decide applicability;
+   the second machine's host is not implicitly disposable.
 9. **Orchestrate and verify fairly.** Use separate working actors, computer-use
    driver, read-only witness, repair and independent verification roles where
    needed. Parallelise disjoint worlds/read-only work; serialize shared source,
