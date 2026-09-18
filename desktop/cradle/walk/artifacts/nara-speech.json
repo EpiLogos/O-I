@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "nara-speech",
-  "generated_at": "2026-09-18T01:59:54.252Z",
+  "generated_at": "2026-09-18T02:45:48.259Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,13 +11,16 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience",
-      "repository_head": "26bdb683a4f2345a0b4408931424e5944629d3fc",
+      "repository_head": "5ede99300aafb3164e60279859e4f7f4531cfc27",
       "tracked_changes": [
-        "desktop/cradle/walk/artifacts/nara-presence-lifecycle.png",
-        "desktop/cradle/walk/artifacts/nara-speech-nara-joined-world.png",
+        "desktop/cradle/src/nara/NaraSurface.tsx",
+        "desktop/cradle/src/nara/constitution.ts",
+        "desktop/cradle/tests/nara-presence-lifecycle.mjs",
+        "desktop/cradle/tests/nara-speech-conformance.mjs",
         "desktop/cradle/walk/artifacts/nara-speech.json",
-        "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
-        "desktop/cradle/walk/artifacts/nara-stage-focus.json"
+        "desktop/cradle/walk/fixtures/nara-joined-chain.mjs",
+        "desktop/cradle/walk/fixtures/nara/realtime-body-resolution.json",
+        "desktop/cradle/walk/fixtures/nara/text-body-resolution.json"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -26,7 +29,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 418,
+  "duration_ms": 422,
   "checks": [
     {
       "ok": true,
@@ -120,6 +123,16 @@
     },
     {
       "ok": true,
+      "label": "[chain] A credential-gated body renders as an OPTION with the gap named exactly as disclosed; no speech affordance presents as live",
+      "data": ""
+    },
+    {
+      "ok": true,
+      "label": "[chain] Swapping to the text-only body renders ABSENT with the named gap; the affordance stays honest and Nara continues",
+      "data": ""
+    },
+    {
+      "ok": true,
       "label": "The page reads the same Expression through the same kernel seam",
       "data": {
         "revision": 7,
@@ -139,7 +152,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-18T01:59:54.609Z",
+        "mounted_at": "2026-09-18T02:45:48.601Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -150,15 +163,15 @@
     {
       "ok": true,
       "op": "invoke.expression",
-      "duration_ms": 1,
+      "duration_ms": 0.9,
       "data": {
         "outcome": {
           "data": {
             "dirty": true,
             "document": {
               "entities": {
-                "expression:nara-walk-1789696794383:entity:earth": {
-                  "entity_ref": "expression:nara-walk-1789696794383:entity:earth",
+                "expression:nara-walk-1789699548384:entity:earth": {
+                  "entity_ref": "expression:nara-walk-1789699548384:entity:earth",
                   "parameters": {
                     "glyph": {
                       "automation": null,
@@ -182,8 +195,8 @@
                   },
                   "title": "EarthBody"
                 },
-                "expression:nara-walk-1789696794383:entity:person": {
-                  "entity_ref": "expression:nara-walk-1789696794383:entity:person",
+                "expression:nara-walk-1789699548384:entity:person": {
+                  "entity_ref": "expression:nara-walk-1789699548384:entity:person",
                   "parameters": {
                     "glyph": {
                       "automation": null,
@@ -207,8 +220,8 @@
                   },
                   "title": "Person locus"
                 },
-                "expression:nara-walk-1789696794383:entity:relation": {
-                  "entity_ref": "expression:nara-walk-1789696794383:entity:relation",
+                "expression:nara-walk-1789699548384:entity:relation": {
+                  "entity_ref": "expression:nara-walk-1789699548384:entity:relation",
                   "parameters": {
                     "glyph": {
                       "automation": null,
@@ -233,7 +246,7 @@
                   "title": "Pointed relation"
                 }
               },
-              "expression_ref": "expression:nara-walk-1789696794383",
+              "expression_ref": "expression:nara-walk-1789699548384",
               "provenance": [],
               "refinements": [],
               "relations": {},
@@ -242,19 +255,19 @@
               "scenes": [
                 {
                   "entity_refs": [
-                    "expression:nara-walk-1789696794383:entity:person",
-                    "expression:nara-walk-1789696794383:entity:relation",
-                    "expression:nara-walk-1789696794383:entity:earth"
+                    "expression:nara-walk-1789699548384:entity:person",
+                    "expression:nara-walk-1789699548384:entity:relation",
+                    "expression:nara-walk-1789699548384:entity:earth"
                   ],
                   "revision": 2,
-                  "scene_ref": "expression:nara-walk-1789696794383:scene:main",
+                  "scene_ref": "expression:nara-walk-1789699548384:scene:main",
                   "title": "Main"
                 }
               ],
               "schema": "oi.expression/v1",
               "selection": {
-                "entity_ref": "expression:nara-walk-1789696794383:entity:person",
-                "scene_ref": "expression:nara-walk-1789696794383:scene:main"
+                "entity_ref": "expression:nara-walk-1789699548384:entity:person",
+                "scene_ref": "expression:nara-walk-1789699548384:scene:main"
               },
               "title": "Nara speech walk"
             },
@@ -270,7 +283,7 @@
     {
       "ok": true,
       "op": "invoke.surface_open",
-      "duration_ms": 0.9,
+      "duration_ms": 1.1,
       "seq_range": {
         "from": 14,
         "to": 14
@@ -286,7 +299,7 @@
                 "native_owner": "ql",
                 "provenance": {
                   "revision": "7",
-                  "source": "expression:nara-walk-1789696794383"
+                  "source": "expression:nara-walk-1789699548384"
                 },
                 "ref": "bimba:#4"
               }
@@ -352,7 +365,7 @@
                   "detected": false,
                   "signals": []
                 },
-                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-vONcxX",
+                "root": "/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-editor-3xU6Nm",
                 "root_state": "directory",
                 "schema": "central.world-map/v1",
                 "valid": true,
@@ -497,7 +510,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 35,
       "data": {
         "file": "nara-speech-nara-joined-world.png"
       }
