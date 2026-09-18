@@ -2,6 +2,14 @@
 
 **Owner of the campaign: O:I #65.** This is the document-operation and practice integration of C0–C5, not a second sequence. Its purpose is to let a person or agent begin with what the product is meant to make possible, find the capabilities and practices needed, test them, and bring back a precise difference without losing the meaning of the original request.
 
+## Documentation delivery ends on main
+
+**Owner instruction, 18 September 2026:** commissioned documentation and planning updates must reach the owning repository's `main` before the session reports the work as delivered. A pushed docs branch, open PR, issue comment or downloadable handoff is not the completed delivery. Use a short-lived branch/PR when required, reconcile with current main, run the applicable source checks, land the authorised documentation and read back its mainline path/revision in the same session. Do not leave the human or the next implementation session to discover and merge it.
+
+A working draft can live on main while remaining explicitly a draft: publication does not adopt its proposed wording, change human-authored source, deploy public copy or certify runtime behaviour. An explicitly requested branch-only proposal or a concrete unresolved conflict, failed required check, permission or approval restriction is an exception to mainline delivery, not permission to claim completion. Name the exact blocker and preserve the work; never bypass repository protections or merge unrelated code to make documentation available. Extract independent authorised documentation from mixed implementation work where necessary, preserving its actual standing and avoiding claims of unlanded implementation.
+
+After landing, canonical links and active handoff instructions point to main or an exact landed revision. Retained branch links remain historical provenance only. The scope of publication stays with the relevant native owner; private working source and unrelated active worktrees are not swept into this rule.
+
 ## Vision remains upstream of tests
 
 The user's authorial correction for this refinement is explicit: **the UX map is at the vision level**. `STORIES.md` and `DEVELOPER-FIELD.md` are intended-experience sources. An agent's side belongs there too: what it should be able to discover, understand, select, do and continue is part of the product's intended experience, not merely a test harness configuration.
