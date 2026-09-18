@@ -1,16 +1,13 @@
-import { useEffect, useMemo, useRef, useState, type ReactNode } from 'react'
-import type { ActionInvocation, FactoryBuildView, FactoryMaterialSelection, ViewDepth } from './types'
+import { useEffect, useRef, useState, type ReactNode } from 'react'
+import type { ActionInvocation, FactoryBuildView, FactoryMaterialSelection } from './types'
 import { CandidateReading } from "./CandidateReading"
-import { SessionCards } from './components/SessionCards'
 import { SpanDetail } from './components/SpanDetail'
 import { TraceWaterfall } from './components/TraceWaterfall'
-import { chronologicalSpans } from './read-model'
 import './styles.css'
 import './build-surface.css'
 
 export interface BuildSurfaceProps {
   view: FactoryBuildView
-  initialDepth?: ViewDepth
   onAction?: (invocation: ActionInvocation) => void | Promise<void>
   onOpenWorkingSurface?: (selection: Omit<import("../../encounter/working-surface").WorkingSurfaceSelection,"project">) => Promise<void>
   /** O:I-owned controls for this selected Run, kept inside Build's existing header. */
@@ -20,13 +17,35 @@ export interface BuildSurfaceProps {
   onOpenMaterial?: (selection:FactoryMaterialSelection)=>Promise<void>
 }
 
-function Ref({ children }: { children: string }) {
-  return <code className="fb-ref" title={children}>{children}</code>
+/** The owner's frontier words with engine wrappers unwrapped — `RunMap
+ * frontier: Some(Ready)` is owner payload syntax, not reading copy. */
+function frontierSummary(summary: string): string {
+  const bare = summary.replace(/^RunMap frontier:\s*/, "").trim()
+  const wrapped = /^Some\((.*)\)$/.exec(bare)
+  const text = (wrapped ? wrapped[1] : /^None$/i.test(bare) ? "" : bare).trim()
+  return text ? text.replace(/[_-]+/g, " ") : ""
 }
 
-function frontierSummary(summary: string) {
-  const state = /^RunMap frontier: Some\(([^)]+)\)$/.exec(summary)?.[1]
-  return state ? `Frontier: ${state.replace(/[_-]+/g, " ")}` : summary
+function spokenStatus(status: string): string {
+  const clean = status.replaceAll("_", " ").trim().toLowerCase()
+  return clean ? clean.replace(/\b\w/g, letter => letter.toUpperCase()) : "Unknown"
+}
+
+/** One sentence for where the Run stands, derived only from what the Build
+ * view carries (decisions, active work, retained candidates) — never from
+ * parsing the owner's status enum beyond echoing it when nothing else is
+ * known. The kind colours a quiet stage dot; it is not an owner status. */
+function runStage(view: FactoryBuildView): {text: string; kind: "waiting" | "working" | "returned" | "finished" | "idle"} {
+  const active = activeExecutionCount(view)
+  if (view.humanRequests.length) return {text: `Waiting on you — ${view.humanRequests.length} decision${view.humanRequests.length === 1 ? "" : "s"} pending`, kind: "waiting"}
+  if (active) return {text: `Working — ${active} of ${view.executions.length} ${view.executions.length === 1 ? "execution" : "executions"} active`, kind: "working"}
+  if (view.candidates.length) return {text: `Returned — ${view.candidates.length} candidate${view.candidates.length === 1 ? "" : "s"} for review`, kind: "returned"}
+  if (view.executions.length) return {text: "Executions have finished — nothing retained for review yet", kind: "finished"}
+  return {text: `${spokenStatus(view.run.status)} — nothing has run yet`, kind: "idle"}
+}
+
+function activeExecutionCount(view: FactoryBuildView): number {
+  return view.executions.filter(execution => (execution.status ?? "").toLowerCase() === "running").length
 }
 
 function ActionButton({ actionRef, subjectRef, label, availability, unavailableReason, onAction }: {
@@ -34,7 +53,9 @@ function ActionButton({ actionRef, subjectRef, label, availability, unavailableR
 }) {
   const [busy,setBusy]=useState(false)
   const [error,setError]=useState<string>()
-  if (!onAction || availability !== "available") return <details className="fb-provenance fb-action-unavailable"><summary>{label} · unavailable</summary><p>{unavailableReason ?? "Factory has not supplied an admitted operation for this action."}</p></details>
+  // An operation Factory has not admitted is stated quietly where it stands,
+  // not presented as a collapsed pseudo-control.
+  if (!onAction || availability !== "available") return <span className="fb-action-blocked"><span>{label} — unavailable</span><small>{unavailableReason ?? "Factory has not supplied an admitted operation for this subject."}</small></span>
   async function invoke() {
     setBusy(true);setError(undefined)
     try { await onAction?.({actionRef,subjectRef}) }
@@ -44,31 +65,24 @@ function ActionButton({ actionRef, subjectRef, label, availability, unavailableR
   return <div><button type="button" className="fb-action" disabled={busy} onClick={()=>void invoke()}>{busy?"Applying…":label}</button>{error&&<p role="alert">{error}</p>}</div>
 }
 
-export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpenWorkingSurface, headerControls, runSummary, runMap, onOpenMaterial }: BuildSurfaceProps) {
-  const [depth, setDepth] = useState<ViewDepth>(initialDepth)
-  const [executionRef, setExecutionRef] = useState(view.trajectories[0]?.executionRef)
-  const trace = useMemo(() => view.trajectories.find((item) => item.executionRef === executionRef) ?? view.trajectories[0], [executionRef, view.trajectories])
-  const [spanRef, setSpanRef] = useState<string | undefined>(trace ? chronologicalSpans(trace)[0]?.spanRef : undefined)
-  const [openingExecutionRef, setOpeningExecutionRef] = useState<string>()
+/** One reading of the Run: header speaks the stage, human decisions pin to
+ * the top, the body follows what the Run actually carries (live work, then
+ * review — or review first once work has stopped), the work map folds into
+ * an orientation strip, and each execution drills into its own trace. */
+export function BuildSurface({ view, onAction, onOpenWorkingSurface, headerControls, runSummary, runMap, onOpenMaterial }: BuildSurfaceProps) {
+  const [drilledExecutionRef, setDrilledExecutionRef] = useState<string>()
+  const [spanRef, setSpanRef] = useState<string | undefined>(undefined)
   const [surfaceChoices,setSurfaceChoices]=useState<Record<string,string>>({})
   const [workingSurfaceError, setWorkingSurfaceError] = useState<{ executionRef: string; detail: string }>()
   const workingSurfaceGeneration = useRef(0)
   useEffect(() => {
     workingSurfaceGeneration.current += 1
-    const initialTrace=view.trajectories[0]
-    setExecutionRef(initialTrace?.executionRef)
-    setSpanRef(initialTrace ? chronologicalSpans(initialTrace)[0]?.spanRef : undefined)
-    setOpeningExecutionRef(undefined)
+    setDrilledExecutionRef(undefined)
+    setSpanRef(undefined)
     setSurfaceChoices({})
     setWorkingSurfaceError(undefined)
   }, [view.run.runRef])
-  const selectedSpan = trace?.spans.find((span) => span.spanRef === spanRef)
-
-  function selectExecution(ref: string) {
-    setExecutionRef(ref)
-    const next = view.trajectories.find((item) => item.executionRef === ref)
-    setSpanRef(next ? chronologicalSpans(next)[0]?.spanRef : undefined)
-  }
+  const [openingExecutionRef, setOpeningExecutionRef] = useState<string>()
 
   async function openWorkingSurface(execution: FactoryBuildView["executions"][number]) {
     const surfaces=execution.surfaceRefs??[]
@@ -88,73 +102,83 @@ export function BuildSurface({ view, initialDepth = 'semantic', onAction, onOpen
 
   const candidateActions = view.actions.filter((action) => action.subjectKinds.includes('candidate'))
   const runActions = view.actions.filter((action) => action.subjectKinds.includes('run'))
+  const frontier = view.frontier
+  const frontierText = frontierSummary(frontier.summary)
+  const activeExecutions = activeExecutionCount(view)
+  const runStageView = runStage(view)
+  const reviewLeads = view.candidates.length > 0 && activeExecutions === 0
+  // The returned-outcome summary belongs with review; it is noise before
+  // anything has run or while work is still active.
+  const showRunSummary = view.executions.length > 0 && activeExecutions === 0
+
+  const interrupts = view.humanRequests.length > 0 && <section className="fb-interrupts" aria-label="Needs your decision">
+    <div className="fb-section-head"><h2>Needs your decision</h2><span>{view.humanRequests.length} waiting</span></div>
+    {view.humanRequests.map(request => <article className="fb-interrupt" key={request.humanRequestRef}>
+      <strong>{request.question}</strong>
+      <p>{request.whyHuman}</p>
+      <div className="fb-actions">{view.actions.filter(action=>action.subjectKinds.includes('human-request')).map(action=><ActionButton key={action.actionRef} {...action} subjectRef={request.humanRequestRef} onAction={onAction}/>)}</div>
+      <p className="fb-ref-line">{request.decisionRef&&<code>decision {request.decisionRef}</code>}{request.humanRequestRef&&<code>request {request.humanRequestRef}</code>}{!!request.blockedExecutionRefs?.length&&<span title={request.blockedExecutionRefs.join(", ")}>blocking {request.blockedExecutionRefs.length} execution{request.blockedExecutionRefs.length===1?"":"s"}</span>}{!!request.evidenceRefs?.length&&request.evidenceRefs.map(ref=><code key={ref}>{ref}</code>)}</p>
+    </article>)}
+  </section>
+
+  const liveWork = <section className="fb-reading-section" aria-label="Live work">
+    <div className="fb-section-head"><h2>Live work</h2><span>{view.executions.length} {view.executions.length === 1 ? "execution" : "executions"}</span></div>
+    {view.executions.length ? <div className="fb-live-grid">
+      {view.executions.map((execution,index)=>{
+        const trajectory=view.trajectories.find(trace=>trace.executionRef===execution.executionRef)
+        const agency=view.agencies.find(row=>row.agencyRef===execution.agencyRef)
+        const surfaces=execution.surfaceRefs??[]
+        const canOpen=Boolean(onOpenWorkingSurface&&execution.agentSessionRef&&execution.sessionSpaceRef)
+        const drilled=drilledExecutionRef===execution.executionRef
+        const drilledSpan=drilled?trajectory?.spans.find(span=>span.spanRef===spanRef):undefined
+        return <article key={execution.executionRef} className="fb-live-card">
+          <div className="fb-card-top"><h3>{trajectory?.request||agency?.label||`Execution ${index+1}`}</h3><span className={`fb-status fb-status-${execution.status}`}>{execution.status}</span></div>
+          {agency?.label&&trajectory?.request&&<p>{agency.label}</p>}
+          {canOpen?<div className="fb-working-controls">
+            {surfaces.length>1&&<label>Working surface<select aria-label={`Working surface for execution ${index+1}`} value={surfaces.includes(surfaceChoices[execution.executionRef])?surfaceChoices[execution.executionRef]:""} onChange={event=>setSurfaceChoices(current=>({...current,[execution.executionRef]:event.target.value}))}><option value="">Choose a persisted surface</option>{surfaces.map(ref=><option key={ref} value={ref}>{ref}</option>)}</select></label>}
+            <button type="button" disabled={Boolean(openingExecutionRef)||(surfaces.length>1&&!surfaces.includes(surfaceChoices[execution.executionRef]))} onClick={()=>void openWorkingSurface(execution)}>{openingExecutionRef===execution.executionRef?"Opening working Surface…":"Open working Surface"}</button>
+            {workingSurfaceError?.executionRef===execution.executionRef&&<p role="alert">{workingSurfaceError.detail}</p>}
+          </div>:<p className="fb-muted">A working session has not been disclosed for this execution.</p>}
+          {trajectory&&<details className="fb-trace-drill">
+            <summary>Trace this work</summary>
+            {trajectory.request&&<p className="fb-trace-request-line">{trajectory.request}</p>}
+            <TraceWaterfall trace={trajectory} selectedSpanRef={drilled?spanRef:undefined} onSelectSpan={ref=>{setDrilledExecutionRef(execution.executionRef);setSpanRef(ref)}}/>
+            {drilledSpan&&<SpanDetail span={drilledSpan} onClose={()=>setSpanRef(undefined)}/>}
+          </details>}
+          <details className="fb-provenance"><summary>Execution details</summary><dl>
+            {Object.entries({Execution:execution.executionRef,Agent:execution.agentRef,Agency:execution.agencyRef,Harness:execution.harnessRef,"Harness composition":execution.harnessCompositionRef,"Agent session":execution.agentSessionRef,"Session space":execution.sessionSpaceRef,"Working surfaces":surfaces.join(", "),"Material bindings":execution.workcellBindingRefs?.join(", ")}).filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
+          </dl></details>
+        </article>
+      })}
+    </div>:<p className="fb-empty">No execution has been recorded for this Run.</p>}
+    {!!view.agencies.length&&<section className="fb-agencies"><div className="fb-section-head"><h3>Participating agencies</h3></div><div className="fb-live-grid">{view.agencies.map(agency=><article key={agency.agencyRef} className="fb-live-card"><h3>{agency.label}</h3><p>{agency.position??'local'} agency{agency.returnState?` · Return ${agency.returnState}`:""}</p><details className="fb-provenance"><summary>Agency details</summary><dl>{Object.entries({Agency:agency.agencyRef,Agent:agency.agentRef,"Root scope":agency.rootScopeRef,Actuation:agency.actuationRef,Return:agency.returnRef,Grants:agency.metagencyGrantRefs?.join(", ")}).filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></details></article>)}</div></section>}
+  </section>
+
+  const review = <>
+    {showRunSummary&&runSummary}
+    <CandidateReading view={view} onOpenMaterial={onOpenMaterial} impliedEmpty={view.executions.length===0&&!view.claims.length&&!view.evidence.length} actions={candidate=><div className="fb-actions">{candidateActions.map(action=><ActionButton key={action.actionRef+"-"+candidate.candidateRef} {...action} subjectRef={candidate.candidateRef} onAction={onAction}/>)}</div>}/>
+  </>
 
   return <main className="fb-build-surface factory-build">
     <header className="fb-header">
-
       <div className="fb-title-row">
-        <div><h1>{view.run.label}</h1></div>
-        <div className="fb-run-state"><span className={`fb-status fb-status-${view.run.status}`}>{view.run.status}</span></div>
+        <div className="fb-heading">
+          <h1>{view.run.label}</h1>
+          <p className="fb-run-sentence"><span className={`fb-stage-dot fb-stage-${runStageView.kind}`} aria-hidden="true"/><span>{runStageView.text}</span></p>
+        </div>
         {headerControls&&<div className="fb-header-controls">{headerControls}</div>}
       </div>
-      <nav className="fb-depth-tabs" aria-label="Build view depth">
-        {(['semantic', 'live', 'trajectory'] as const).map((item) => <button key={item} type="button" className={depth === item ? 'is-selected' : ''} onClick={() => setDepth(item)}>{{semantic:'Run map',live:'Live work',trajectory:'Trajectory'}[item]}</button>)}
-      </nav>
+      <p className="fb-frontier-line"><span className="fb-kicker">{spokenStatus(frontier.mode)}</span><strong>{frontier.title}</strong>{frontierText&&<span>{frontierText}</span>}{frontier.gateState&&<span className="fb-chip">Gate: {frontier.gateState}</span>}{frontier.closureState&&<span className="fb-chip">{frontier.closureState}</span>}</p>
     </header>
-
-    {depth === 'semantic' ? <section className="fb-depth fb-semantic">
-      {runSummary}
-      <div className="fb-frontier">
-        <div><span className="fb-kicker">{view.frontier.mode}</span><h2>{view.frontier.title}</h2><p>{frontierSummary(view.frontier.summary)}</p></div>
-        <div className="fb-frontier-meta">{view.frontier.closureState&&<span>{view.frontier.closureState}</span>}{view.frontier.gateState&&<span>Gate: {view.frontier.gateState}</span>}</div>
-      </div>
-
-      {runMap}
-      <CandidateReading onOpenMaterial={onOpenMaterial} key={view.run.runRef} view={view} actions={candidate=><div className="fb-actions">{candidateActions.map(action=><ActionButton key={action.actionRef+"-"+candidate.candidateRef} {...action} subjectRef={candidate.candidateRef} onAction={onAction}/>)}</div>}/>
-      {!!view.humanRequests.length&&<section className="fb-human-requests"><div className="fb-section-head"><h3>Needs your decision</h3></div>
-        {view.humanRequests.map(request=><article className="fb-human-request" key={request.humanRequestRef}><strong>{request.question}</strong><p>{request.whyHuman}</p>
-          <div className="fb-actions">{view.actions.filter(action=>action.subjectKinds.includes('human-request')).map(action=><ActionButton key={action.actionRef} {...action} subjectRef={request.humanRequestRef} onAction={onAction}/>)}</div>
-          <details className="fb-provenance"><summary>Decision details</summary><dl><dt>Decision</dt><dd>{request.decisionRef}</dd><dt>Request</dt><dd>{request.humanRequestRef}</dd>{!!request.blockedExecutionRefs?.length&&<><dt>Blocked executions</dt><dd>{request.blockedExecutionRefs.join(", ")}</dd></>}{!!request.evidenceRefs?.length&&<><dt>Evidence</dt><dd>{request.evidenceRefs.join(", ")}</dd></>}</dl></details></article>)}
-      </section>}
+    <div className="fb-reading">
+      {interrupts}
+      {reviewLeads?<>{review}{liveWork}</>:<>{liveWork}{review}</>}
+      {runMap&&<details className="fb-workmap">
+        <summary>Work map</summary>
+        {runMap}
+      </details>}
       <div className="fb-actions fb-run-actions">{runActions.map((action) => <ActionButton key={action.actionRef+"-"+view.run.runRef} actionRef={action.actionRef} subjectRef={view.run.runRef} label={action.label} availability={action.availability} unavailableReason={action.unavailableReason} onAction={onAction} />)}</div>
-    </section> : null}
-
-    {depth === 'live' ? <section className="fb-depth">
-      <div className="fb-section-head"><h2>Live work</h2><span>{view.executions.length} executions</span></div>
-      <div className="fb-live-grid">
-        {view.executions.map((execution,index)=>{
-          const trajectory=view.trajectories.find(trace=>trace.executionRef===execution.executionRef)
-          const agency=view.agencies.find(row=>row.agencyRef===execution.agencyRef)
-          const surfaces=execution.surfaceRefs??[]
-          const canOpen=Boolean(onOpenWorkingSurface&&execution.agentSessionRef&&execution.sessionSpaceRef)
-          return <article key={execution.executionRef} className="fb-live-card">
-            <div className="fb-card-top"><h3>{trajectory?.request||agency?.label||`Execution ${index+1}`}</h3><span className={`fb-status fb-status-${execution.status}`}>{execution.status}</span></div>
-            {agency?.label&&trajectory?.request&&<p>{agency.label}</p>}
-            {canOpen?<div className="fb-working-controls">
-              {surfaces.length>1&&<label>Working surface<select aria-label={`Working surface for execution ${index+1}`} value={surfaces.includes(surfaceChoices[execution.executionRef])?surfaceChoices[execution.executionRef]:""} onChange={event=>setSurfaceChoices(current=>({...current,[execution.executionRef]:event.target.value}))}><option value="">Choose a persisted surface</option>{surfaces.map(ref=><option key={ref} value={ref}>{ref}</option>)}</select></label>}
-              <button type="button" disabled={Boolean(openingExecutionRef)||(surfaces.length>1&&!surfaces.includes(surfaceChoices[execution.executionRef]))} onClick={()=>void openWorkingSurface(execution)}>{openingExecutionRef===execution.executionRef?"Opening working Surface…":"Open working Surface"}</button>
-              {workingSurfaceError?.executionRef===execution.executionRef&&<p role="alert">{workingSurfaceError.detail}</p>}
-            </div>:<p className="fb-muted">A working session has not been disclosed for this execution.</p>}
-            <details className="fb-provenance"><summary>Execution details</summary><dl>
-              {Object.entries({Execution:execution.executionRef,Agent:execution.agentRef,Agency:execution.agencyRef,Harness:execution.harnessRef,"Harness composition":execution.harnessCompositionRef,"Agent session":execution.agentSessionRef,"Session space":execution.sessionSpaceRef,"Working surfaces":surfaces.join(", "),"Material bindings":execution.workcellBindingRefs?.join(", ")}).filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}
-            </dl></details>
-          </article>
-        })}
-      </div>
-      {!view.executions.length&&<p className="fb-empty">No execution has been recorded for this Run.</p>}
-      {!!view.agencies.length&&<section className="fb-agencies"><div className="fb-section-head"><h3>Participating agencies</h3></div><div className="fb-live-grid">{view.agencies.map(agency=><article key={agency.agencyRef} className="fb-live-card"><h3>{agency.label}</h3><p>{agency.position??'local'} agency{agency.returnState?` · Return ${agency.returnState}`:""}</p><details className="fb-provenance"><summary>Agency details</summary><dl>{Object.entries({Agency:agency.agencyRef,Agent:agency.agentRef,"Root scope":agency.rootScopeRef,Actuation:agency.actuationRef,Return:agency.returnRef,Grants:agency.metagencyGrantRefs?.join(", ")}).filter(([,value])=>value).map(([label,value])=><div key={label}><dt>{label}</dt><dd>{value}</dd></div>)}</dl></details></article>)}</div></section>}
-
-    </section> : null}
-
-    {depth === 'trajectory' ? <section className="fb-depth">
-      <div className="fb-section-head"><h2>Trajectory</h2></div>
-      <SessionCards traces={view.trajectories} selectedExecutionRef={trace?.executionRef} onSelect={selectExecution} />
-      {trace ? <>
-        <details className="fb-trace-provenance"><summary>Trajectory details</summary><Ref>{trace.executionRef}</Ref><span>{trace.harnessRef ?? 'harness unavailable'}</span>{trace.harnessCompositionFingerprint ? <span>body {trace.harnessCompositionFingerprint}</span> : null}{trace.nativeTrajectory ? <span>native {trace.nativeTrajectory.kind}: <Ref>{trace.nativeTrajectory.ref}</Ref></span> : <span>native trajectory unavailable</span>}</details>
-        <TraceWaterfall trace={trace} selectedSpanRef={spanRef} onSelectSpan={setSpanRef} />
-        {selectedSpan ? <SpanDetail span={selectedSpan} onClose={() => setSpanRef(undefined)} /> : null}
-      </> : <p className="fb-muted">No trajectory is attached to this Run.</p>}
-    </section> : null}
-    <details className="fb-provenance fb-run-provenance"><summary>Run details</summary><dl><dt>Project</dt><dd>{view.project.projectRef}</dd><dt>Run</dt><dd>{view.run.runRef}</dd><dt>Run map</dt><dd>{view.run.runMapRef}</dd><dt>Current subject</dt><dd>{view.frontier.subjectRef}</dd></dl></details>
+      <details className="fb-provenance fb-run-provenance"><summary>Run details</summary><dl><dt>Project</dt><dd>{view.project.projectRef}</dd><dt>Run</dt><dd>{view.run.runRef}</dd><dt>Run map</dt><dd>{view.run.runMapRef}</dd><dt>Current subject</dt><dd>{frontier.subjectRef}</dd></dl></details>
+    </div>
   </main>
 }

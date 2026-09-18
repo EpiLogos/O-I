@@ -90,8 +90,9 @@ try {
  await runs.getByLabel("Run ref (optional)",{exact:true}).fill(state.runRef);
  await runs.getByRole("button",{name:"Read Runs",exact:true}).click();
  await runs.locator(".fb-build-surface").waitFor({timeout:20000});
- check(await runs.getByText("No candidate has been retained for this Run.",{exact:true}).count()===1,"Initial Candidate state is owner-reported empty");
- check(await runs.getByText(/No evidence (has been retained for this Run.|recorded.)/).count()===1,"Initial Evidence state is owner-reported empty");
+ check((await runs.locator(".fb-run-sentence").innerText()).trim().length>0,"The header speaks the Run's stage as a sentence");
+ check(await runs.locator(".fb-review-card").count()===0,"Initial review fabricates no Candidate");
+ check(await runs.getByText("No execution has been recorded for this Run.",{exact:true}).count()===1,"Initial execution state is owner-reported empty");
  await page.getByRole("tab",{name:"Draft",exact:true}).click();
  const ordinaryDraft=page.locator(".cm-content"),draftText="Live Factory workflow metadata leaves ordinary work untouched.";
  await ordinaryDraft.fill(draftText);
@@ -143,9 +144,11 @@ try {
  check(hitDiagnostic.buttonOwnsHit,"Open Run button owns its center hit target");
  await openRun.click();
  await runs.locator(".fb-build-surface").waitFor({timeout:20000});
+ const workmap=runs.locator("details.fb-workmap");
+ if(await workmap.count()&&!(await workmap.evaluate(e=>e.open)))await workmap.locator("summary").click();
  check((await runs.locator(".factory-run-map-head").innerText()).includes(Object.keys(nativeAfter.runMap.nodes).length + " nodes"),"Explicit Run refresh renders native workflow topology");
  check(countRead("build")>beforeBuildReads,"Explicit Open Run performs native Build refresh");
- check(await runs.getByText("No candidate has been retained for this Run.",{exact:true}).count()===1,"Explicit refresh preserves actual empty Candidate state");
+ check(await runs.locator(".fb-review-card").count()===0,"Explicit refresh fabricates no Candidate");
  if(conversationMode){
   await page.getByRole("button",{name:"Conversation",exact:true}).click();
   await draft.waitFor();

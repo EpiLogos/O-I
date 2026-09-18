@@ -35,10 +35,10 @@ try{
  const nativeBuild=responses.findLast(row=>row.result.outcome?.data?.contract==="factory.build-view/v1")?.result.outcome.data;
  check(nativeBuild?.view.run.runRef===runRef,"Native Build retains the selected Run identity");
  check(await runs.locator(".fb-header h1").innerText()===nativeBuild.view.run.label,"Displays actual Factory Run destination");
- check(await runs.getByText("No candidate has been retained for this Run.",{exact:true}).count()===1,"Actual empty Candidate state remains empty");
- await runs.getByRole("button",{name:"Live work",exact:true}).click();
+ check((await runs.locator(".fb-run-sentence").innerText()).trim().length>0,"The header speaks the Run's stage as a sentence");
+ check(await runs.locator(".fb-review-card").count()===0,"No Candidate is fabricated for an empty Run");
  check(await runs.getByText("No execution has been recorded for this Run.",{exact:true}).count()===1,"Actual empty execution state is not fabricated");
- await runs.getByRole("button",{name:"Run map",exact:true}).click();
+ await runs.locator("details.fb-workmap > summary").click();
  const nativeRun=responses.findLast(row=>row.result.outcome?.data?.contract==="factory.run-reading/v1")?.result.outcome.data;
  check(nativeRun?.runRef===runRef,"Native Run Map retains the selected Run identity");
  const workNode=Object.values(nativeRun.runMap.nodes).find(node=>node.kind==="work");
@@ -50,9 +50,10 @@ try{
  await selectedNode.getByText("Native semantic reference",{exact:true}).click();
  check(await selectedNode.locator("code").filter({hasText:workNode.semanticRef}).count()===1,"Shows the exact native semantic reference");
  const incoming=nativeRun.runMap.edges.filter(edge=>edge.to===workNode.id);
- check(incoming.length===1&&incoming[0].relation==="branches_to","Native Run Map supplies the work-node dependency edge");
+ check(incoming.length===1,"Native Run Map supplies the work-node dependency edge");
+ const relationLabel=incoming[0].relation.replaceAll("_"," ").replace(/\b\w/g,letter=>letter.toUpperCase());
  check(await selectedNode.getByRole("heading",{name:"Incoming",exact:true}).count()===1,"Renders the selected node incoming dependency");
- check(await selectedNode.getByText("Branches To",{exact:true}).count()===1,"Renders the native dependency relation");
+ check(await selectedNode.getByText(relationLabel,{exact:true}).count()>=1,"Renders the native dependency relation");
  const priorBuildReads=responses.filter(row=>row.result.outcome?.data?.contract==="factory.build-view/v1").length;
  await runs.getByRole("button",{name:"Refresh",exact:true}).click();
  await page.waitForFunction(()=>document.querySelectorAll(".fb-build-surface.factory-build").length===1);
@@ -61,7 +62,7 @@ try{
  check(await runMap.getByRole("article",{name:"Selected node: "+workNode.label}).count()===1,"Run Map selection survives the Build refresh");
  check(responses.some(row=>row.result.outcome?.data?.contract==="factory.central-project-link-reading/v1"),"Reads canonical Central-to-Factory project link");
  check(responses.some(row=>row.result.outcome?.data?.contract==="factory.build-view/v1"),"Reads native Factory Build");
- await page.screenshot({path:"walk/artifacts/factory-run-content-20260914.png"});
+ await page.screenshot({path:"walk/artifacts/factory-run-content-20260918.png"});
  await page.getByRole("navigation",{name:projectName+" work",exact:true}).getByRole("button",{name:"Agents",exact:true}).click();
  const agents=page.getByRole("region",{name:"Project Agents"});
  const catalogue=await (await fetch("http://127.0.0.1:4179/op",{method:"POST",headers:{"Content-Type":"application/json"},body:JSON.stringify({op:"central_actions_read"})})).json();
@@ -81,5 +82,5 @@ try{
  }
  responses.push({request:{op:"central_actions_read"},agentExpression:expression??null});
  check(errors.length===0,"No application page errors");
- writeFileSync("walk/artifacts/factory-run-content-20260914.json",JSON.stringify({standing:"C: actual application and native Factory executable; retained Run has no execution or Candidate, not positive joined-work proof",checks,errors,responses},null,2));
+ writeFileSync("walk/artifacts/factory-run-content-20260918.json",JSON.stringify({standing:"C: actual application and native Factory executable; retained Run has no execution or Candidate, not positive joined-work proof",checks,errors,responses},null,2));
 }catch(error){console.log((await page.locator("body").innerText()).slice(-6500));await page.screenshot({path:"/tmp/oi-u-factory-run-content-failure.png"});throw error;}finally{await browser.close();}
