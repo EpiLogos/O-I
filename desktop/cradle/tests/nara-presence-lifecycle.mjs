@@ -122,6 +122,11 @@ try{
   check(talkDisabled===true,'Hold-to-talk is disabled on a body with no declared acoustic input (manual fallback, honest)');
   check(await page.locator('input[aria-label="Message Nara"]').count()===1,'The text composer is always available as the honest fallback');
 
+  // The caller-side QL dialogical floor check, computed at attach.
+  check(await capabilities('voice-floor')==='unmet','The QL dialogical floor is evaluated at attach: the text body fails it honestly');
+  await page.waitForFunction(()=>document.querySelector('[data-voice-floor-unmet]')?.textContent?.includes('duplex'),null,{timeout:15000});
+  check((await page.locator('[data-voice-floor-unmet]').innerText()).includes('context refresh'),'Every floor gap is named on the surface, not softened');
+
   // Reconnect the body: same Nara, different resolution.
   await page.locator('.nara-next-body summary').click();
   await page.locator('textarea[aria-label="Next body resolution"]').fill(JSON.stringify(realtimeResolution));
@@ -130,6 +135,9 @@ try{
   check(await capabilities('interruption')==='supported'&&await capabilities('vad')==='supported',
     'Body change disclosed: interruption and VAD now supported; Nara identity unchanged',{nara:await page.locator('[data-nara]').getAttribute('data-nara')});
   check(await page.locator('[data-change-receipt]').count()===1,'The constitution-change receipt is visible');
+  await page.waitForFunction(()=>document.querySelector('[data-voice-floor-unmet]')?.textContent?.includes('context refresh'),null,{timeout:15000});
+  check(await page.locator('[data-voice-floor-unmet]').count()===1,
+    'The floor recomputes at reconnect: every body fact passes; the push context path is the named gap');
 
   // Hold to talk: the REAL capture pipeline against the synthetic device.
   const talk=page.locator('button:has-text("Hold to talk")');
@@ -150,6 +158,14 @@ try{
   await page.locator('button:has-text("Point selection")').click();
   await page.waitForFunction(()=>document.querySelector('[data-nara-notice]')?.textContent?.includes('focused'),null,{timeout:15000});
   check(true,'Point selection crosses deixis: the exact ref enters the bounded context and Nara focuses it');
+
+  // Highlight pointing (QL hovered deixis): a pure presentation movement.
+  // This harness stands no live stage presentation, so the honesty law is
+  // exactly observable: the highlight is named, nothing is faked.
+  await page.locator('button:has-text("Highlight selection")').click();
+  await page.waitForFunction(()=>document.querySelector('[data-nara-notice]')?.textContent?.includes('no live Expression stage presentation stands'),null,{timeout:15000});
+  check(await page.locator('[data-nara-highlight]').count()===1,
+    'A highlight without a live stage presentation is named honestly; nothing was moved');
 
   // One reversible ExpressiveAct with speech; interrupt holds both together.
   await page.locator('button:has-text("Perform reversible act with speech")').click();

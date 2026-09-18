@@ -28,6 +28,7 @@ const {
   takeChoreographyStep,completeChoreographyStep,interruptChoreography,
 } = await import("../../src/nara/expressiveAct.ts");
 const {NaraSpeechBinding} = await import("../../src/nara/session.ts");
+const {voiceBodyFromConstitution,voiceBodySatisfactionReceipt,dialogicalFloor} = await import("../../src/nara/voiceBody.ts");
 
 const bridgeUrl=process.argv[2];
 if(!bridgeUrl)throw new Error("usage: nara-joined-chain.mjs <bridgeUrl>");
@@ -136,6 +137,30 @@ await check("Canonical Nara attaches to the resolved text-capable body (honest c
   return read;
 });
 
+// The caller-side satisfaction bridge (#336 follow-up): the desktop reduces
+// its own constructed speech constitution to the QL voice-body declaration
+// and evaluates the authored dialogical floor. Floor unmet is a fact, named
+// gap by gap — never softened.
+const textFloorReceipt=voiceBodySatisfactionReceipt({
+  satisfaction_ref:`voice-body-satisfaction:${crypto.randomUUID()}`,
+  nara_ref:"nara:desktop-walk",
+  reduction:voiceBodyFromConstitution({constitution:constitutionText,nara_ref:"nara:desktop-walk"}),
+  evaluated_at:new Date().toISOString(),
+});
+await check("The text body honestly fails the QL dialogical floor and every gap is named",()=>{
+  assert.equal(textFloorReceipt.satisfied,false);
+  assert.equal(textFloorReceipt.unmet.length,6,"duplex, barge-in, manual interrupt, structured channel, reconnect, context refresh");
+  assert.deepEqual(textFloorReceipt.unmet,[
+    "duplex: requires at least streamed-turn-taking, body discloses unknown",
+    "barge-in: required supported, body discloses unsupported",
+    "manual interrupt: required supported, body discloses unsupported",
+    "structured event channel: required supported, body discloses unsupported",
+    "reconnect status reporting: required supported, body discloses unsupported",
+    "context refresh: requires tool-access, body discloses push-on-change",
+  ]);
+  return textFloorReceipt;
+});
+
 // Exact point: the ref enters Nara's bounded context.
 const pointedDeixis=buildDeixisRequest({
   deixis_ref:`deixis:${crypto.randomUUID()}`,
@@ -230,6 +255,20 @@ await check("Body change recorded without reminting Nara; new capabilities discl
   assert.equal(change.agent_ref,"agent:nara");
   assert.equal(binding.read().realtime_capable,true);
   return change.delta;
+});
+const realtimeFloorReceipt=voiceBodySatisfactionReceipt({
+  satisfaction_ref:`voice-body-satisfaction:${crypto.randomUUID()}`,
+  nara_ref:"nara:desktop-walk",
+  reduction:voiceBodyFromConstitution({constitution:constitutionRealtime,nara_ref:"nara:desktop-walk"}),
+  evaluated_at:new Date().toISOString(),
+});
+await check("The realtime body meets the floor on every body fact; the push context path is the named gap",()=>{
+  assert.equal(realtimeFloorReceipt.satisfied,false,"honest against the authored floor, not engineered to pass");
+  assert.deepEqual(realtimeFloorReceipt.unmet,["context refresh: requires tool-access, body discloses push-on-change"]);
+  assert.equal(realtimeFloorReceipt.declaration.duplex,"full-duplex");
+  assert.equal(realtimeFloorReceipt.declaration.barge_in,"supported");
+  assert.equal(realtimeFloorReceipt.declaration.reconnect_status_reporting,"supported");
+  return realtimeFloorReceipt;
 });
 
 // One reversible ExpressiveAct with speech; interrupt holds both together.
