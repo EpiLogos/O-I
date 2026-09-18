@@ -22,9 +22,9 @@
           "transforms": {}, "interaction": ["request-response", "final-transcripts"],
           "degraded_interaction": {},
           "transport": "http", "connection": {"kind": "stateless"},
-          "credential_scope": "bearer", "availability": "available",
+          "credential_scope": "bearer", "availability": {"state": "available"},
           "provider": "provider:ai-kit", "provider_native_surface": "desktop-text", "provider_revision": "r1",
-          "credential": {"state": "declared", "scope": "bearer"}, "constraints": {}, "provenance": ["walk-fixture"]
+          "credential": {"condition": "not-required"}, "constraints": {}, "provenance": ["walk-fixture"]
         }
       }
     },

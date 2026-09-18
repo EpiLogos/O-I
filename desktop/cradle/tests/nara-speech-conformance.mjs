@@ -18,6 +18,7 @@ import {
   constitutionFromAikitResolution,recordConstitutionChange,constitutionDelta,validateSpeechConstitution,
   speechCapable,realtimeCapable,textPathSupport,aikitResolutionRef,
 } from "../src/nara/constitution";
+import {holdToTalkLive,holdToTalkRefusal,naraBodyState} from "../src/nara/bodyState";
 import {
   validateDialogueContext,buildDialogueContext,admitRefs,isAdmitted,turnContext,
   buildDeixisRequest,resolveDeixis,contextContinues,
@@ -216,9 +217,9 @@ const realtimeResolution={
         degraded_interaction:{},
         transport:"webrtc",
         connection:{kind:"connected",reconnect:"resumable"},
-        credential_scope:"bearer",availability:"available",
+        credential_scope:"bearer",availability:{state:"available"},
         provider:"provider:openai",provider_native_surface:"gpt-realtime",provider_revision:"r1",
-        credential:{state:"declared",scope:"bearer"},constraints:{},provenance:["fixture"],
+        credential:{condition:"satisfied",hint:"provider:openai inference credential",binding_ref:"credential-binding:conformance"},constraints:{},provenance:["fixture"],
       },
     },
   },
@@ -279,12 +280,15 @@ test("a resolution declaring a transform its modalities lack is refused, not pap
 });
 
 test("the constitution carries no secret material",()=>{
-  // The reduction strips the raw contract wholesale: an api_key on the
-  // resolution's credential object cannot travel into the constitution.
+  // The reduction strips the raw contract wholesale: an api_key riding the
+  // resolution's credential condition cannot travel into the constitution —
+  // while the condition's own ref/presence facts (state and hint) do.
   const leaky=structuredClone(realtimeResolution);
-  leaky.relation.model_surface.modality.credential={state:"declared",scope:"bearer",api_key:"sk-nothing"};
+  leaky.relation.model_surface.modality.credential={condition:"required",hint:"provider:openai inference credential",api_key:"sk-nothing"};
   const built=constitutionFromAikitResolution(identities,leaky,"2026-09-17T09:00:00Z");
   assert.ok(!JSON.stringify(built).includes("sk-nothing"),"secret material must not travel");
+  assert.equal(built.provider_binding.facts.credential_condition,"required");
+  assert.equal(built.provider_binding.facts.credential_hint,"provider:openai inference credential");
   // A hand-built constitution that carries a value-shaped key is refused.
   const carrying=structuredClone(built);
   carrying.provider_binding.facts.api_key="sk-nothing";
@@ -605,4 +609,91 @@ test("the satisfaction receipt carries the named reduction, the verdict, and no 
   assert.equal(receipt.reduction.context_refresh.disposition,"push-on-change");
   assert.match(receipt.reduction.context_refresh.note,/structured event channel/,"the verdict's basis is named, not just the verdict");
   assert.ok(receipt.declaration.observation_refs.some(ref=>ref.startsWith("aikit:model-runtime:")),"the reduction cites its resolution provenance");
+});
+
+// ---------------------------------------------------------------------------
+// Body-state vocabulary (#336 option+gap): what the surface may say
+// ---------------------------------------------------------------------------
+
+const walkFixtureRoot=fileURLToPath(new URL("../walk/fixtures/nara/",import.meta.url));
+const readResolution=name=>JSON.parse(readFileSync(`${walkFixtureRoot}${name}`,"utf8")).resolution;
+const gatedResolution=readResolution("gated-body-resolution.json");
+const textOnlyResolution=readResolution("text-body-resolution.json");
+
+test("a credential-gated body is constituted as an option: the gap and credential condition are named as disclosed",()=>{
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:gated",body_ref:"model:desktop-speech-gated"},gatedResolution,"2026-09-18T09:00:00Z");
+  // Only the body-scoped unavailability becomes a body condition; the read
+  // model's access-profile entries stay access facts, so the body is gated
+  // by exactly one named thing — the credential it does not have bound.
+  assert.deepEqual(c.conditions,[
+    {condition:"unavailable",field:"modality-credential",reason:"the surface needs a credential it does not have bound: provider:voice inference credential"},
+  ]);
+  assert.deepEqual(c.access_profile.control.allowed,[],"access facts stay in the access profile");
+  assert.equal(c.provider_binding.facts.credential_condition,"required","the credential condition travels as a scalar presence fact");
+  assert.equal(c.provider_binding.facts.credential_hint,"provider:voice inference credential");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"option");
+  assert.equal(state.usable,false);
+  assert.equal(state.text_capable,false);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),
+    ["unavailable (modality-credential): the surface needs a credential it does not have bound: provider:voice inference credential"]);
+  assert.match(state.line,/speech body present as an option \(not usable today\)/);
+  assert.equal(state.credential.condition,"required");
+  assert.equal(state.credential.line,"credential condition required — provider:voice inference credential");
+  assert.equal(speechCapable(c),false);
+  assert.equal(textPathSupport(c).state,"unsupported","the recorded-unavailable body carries no usable text path either");
+  assert.equal(holdToTalkLive(c),false,"no speech affordance presents itself as live while the body is gated");
+  assert.equal(holdToTalkRefusal(c),"This body is recorded unavailable; text is the honest path");
+});
+
+test("a no-speech-body (text-only) read model renders absent: the gap is named and the affordance never presents",()=>{
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:absent",body_ref:"model:desktop-text"},textOnlyResolution,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"absent");
+  assert.equal(state.text_capable,true,"the text-capable Nara is constituted, not broken");
+  assert.equal(state.line,"speech body absent (text-capable Nara); a speech body may be constituted or swapped later without changing Nara");
+  assert.equal(speechCapable(c),false);
+  assert.equal(holdToTalkLive(c),false);
+  assert.equal(holdToTalkRefusal(c),"This body declares no usable acoustic input; text is the honest path");
+});
+
+test("a supported body stays live: chips as usual, no body-state banner, the affordance presents",()=>{
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:live",body_ref:"surface:realtime"},realtimeResolution,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"live");
+  assert.equal(state.line,"speech body live: surface:realtime");
+  assert.equal(c.provider_binding.facts.credential_condition,"satisfied","the bound credential is a disclosed presence fact");
+  assert.equal(c.provider_binding.facts.credential_binding_ref,"credential-binding:conformance");
+  assert.equal(holdToTalkLive(c),true);
+  assert.equal(holdToTalkRefusal(c),null);
+});
+
+test("a degraded acoustic body is an option usable with its named reduction",()=>{
+  const reduced=structuredClone(realtimeResolution);
+  const modality=reduced.relation.model_surface.modality;
+  assert.ok(modality);
+  modality.availability={state:"degraded",reason:"provider turn budget is limited"};
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:degraded",body_ref:"surface:degraded"},reduced,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"option","a degraded body is an option whose reduction is named, never a silent live body");
+  assert.equal(state.usable,true);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),["degraded (modality-availability): provider turn budget is limited"]);
+  assert.match(state.line,/speech body present as an option \(usable with named reductions\)/);
+  assert.equal(holdToTalkLive(c),true,"a usable body may still present the affordance; the reduction is named beside it");
+});
+
+test("a one-sided acoustic declaration is an option naming the missing direction from the modality lists",()=>{
+  const half=structuredClone(realtimeResolution);
+  const modality=half.relation.model_surface.modality;
+  assert.ok(modality);
+  modality.output_modalities=["text"];
+  modality.transforms={"speech-to-text":{available:true}};
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:half",body_ref:"surface:hearing-only"},half,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"option");
+  assert.equal(state.usable,true);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),
+    ["unavailable (output_modalities): the constitution declares acoustic input but no acoustic output"]);
+  assert.equal(holdToTalkLive(c),false,"a body that cannot speak back does not present the speech affordance");
+  assert.equal(holdToTalkRefusal(c),"This body declares acoustic input but no acoustic output; text is the honest path");
 });
