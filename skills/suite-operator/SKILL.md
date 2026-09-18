@@ -33,13 +33,18 @@ procedural competence != permission
 successful use != automatic Skill promotion
 ```
 
-The shipped `oi:skillset:base-guardian` composes O:I's three native Skills.
-The Base-suite and Root-metagentic profiles remain resolution capabilities,
-not automatically installed named sets. Discover the actual AIKit sets before
-selecting them; never ask for an unregistered profile from remembered prose.
-An Actuation WorldBinding/root determination establishes Root Agency separately.
-AIKit owns Skill/METHOD registration, trust, composition and projection. A Method
-is the same Skill with a description beginning `METHOD:`, not another artifact.
+The shipped `oi:skillset:base-guardian` composes O:I's two native Skills —
+`oi:skill:operate-suite` (the `oi` router) and `oi:skill:suite-operator` (this
+Skill), exactly as `skills/suite-operator/skillset.toml` declares. The Central
+session strap used to ship here as a third member; it forked from its Control
+source and was removed, so Central ground receives it through AIKit's Central
+binding, not through this manifest. The Base-suite and Root-metagentic profiles
+remain resolution capabilities, not automatically installed named sets. Discover
+the actual AIKit sets before selecting them; never ask for an unregistered
+profile from remembered prose. An Actuation WorldBinding/root determination
+establishes Root Agency separately. AIKit owns Skill/METHOD registration, trust,
+composition and projection. A Method is the same Skill with a description
+beginning `METHOD:`, not another artifact.
 
 ## Ordinary operating procedure
 
@@ -51,7 +56,7 @@ is the same Skill with a description beginning `METHOD:`, not another artifact.
    presence, operative availability and authority. An absent optional product
    does not block unrelated writing or work.
 3. **Resolve the smallest repertoire.** Use the shipped guardian set for its
-   three O:I Skills. Resolve foreign native procedures through AIKit's source,
+   two O:I Skills. Resolve foreign native procedures through AIKit's source,
    trust, SkillSet and scope machinery; do not add them to another O:I registry.
    The Central#164 repertoire is an existing native composition to discover,
    not a request to copy its private bodies or invent installed membership.
