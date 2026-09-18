@@ -39,9 +39,9 @@ PR #370 is the owner's to land.
 | F6 · Tasks = the real chat in the centre | shared `AgentChat` (one conversation Surface) | encounter session; Run binding by exact agent-session ref | `FactoryCentre` Tasks view | draft survives view switches | `walk/desk-probe.mjs` 4/5 | already in tree |
 | E1 · Expressions stage owns the full surface; the Studio dock is a summoned overlay, never a flex column that shrinks the field | Expressions mode (convergence line) | stage ownership law (#375 §9); shell canvas panels already float over the fixed full-window stage | `expressions.css` + `ExpressionsSurface.tsx` — `.xp-studio` absolute overlay (right/foot) over the full-bleed `.xp-field`, shared resize handle on the overlay's leading edge | dock geometry remembered per viewer (unchanged); field width invariant under open/close | `walk/expressions-overlay-probe.mjs` (field width invariant under open/close, overlay edge alignment, handle position, arrow-key resize) + `expression-resize-integration` green | **landed 2026-09-18** |
 | T1 · Technè top-bar instrument tabs M0′–M5′ bound to `TechneReading.disclosure` | QL-MEF `main` `dbff5cc` TechneAdapter + six instruments | `ql.techne/v1` | `techne/` arrangement (`TechneSurface` rail in the shared `TabPresentation` grammar; `techneReading.ts` provider seam) | subject's disclosed constellation, never a static six; tab switching is presentation state, arrangement restores | `walk/techne-instrument-tabs-probe.mjs` (six tabs, M0′ first view, stated reasons not simulated content, state preservation across tabs and modes, pin/orient/reveal grammar, wire-contract checks) + `tsc --noEmit` | **landed 2026-09-18** — open joins: no QL reading provider registered into the cradle yet, and the frame does not yet pass the selected subject into the mode centre surface |
-| W1 · O:I Web through the one Library (subjects → presentations → return) | existing Library/Search, Beings/Things, WorldPresentation, SharedField routes | native carriers (#18/#352/#366) | `library/` scope model | identity/revision/reading position preserved | Library → page → Expression → source walk | partially in tree (scope model); walks remaining |
-| C1 · Right companion: chat face, Run\|Agents\|Context panel sides (Ta-Onta) | `agent/agent-chat-ui-2026-09-18` @ `a808da20` (owner lane — continue it there) | encounter/session planes | panel sides per mode | per-mode planes, one glass container | lane's own probes | active owner lane — not duplicated here |
-| B1 · Base files/editor/terminal/preview + Day/Flow documents | main @ `fe92e1d0` base workbench | kernel file ops; Day/Flow HTML on main | Base mode | existing left-files UX is accepted | editor/day probes | already in tree (verify joins) |
+| W1 · O:I Web through the one Library (subjects → presentations → return) | existing Library/Search, Beings/Things, WorldPresentation, SharedField routes | native carriers (#18/#352/#366); providers read `expression list`, the hosted-field read, search; worlds refuse honestly (no list-all op — the reason IS the state) | `library/` scope model (here/local/shared) | identity/revision/reading position preserved | `walk/library-join-probe.mjs` (scopes disclose; shared-unavailable honest; no errors) | **standing confirmed 2026-09-18** — the connective field works with honest degradation; the full page → Expression → exact-source → return walk remains |
+| C1 · Right companion: chat face, Run\|Agents\|Context panel sides (Ta-Onta) | `agent/agent-chat-ui-2026-09-18` — advanced from `a808da20` by the commissioned worker: `f5ac578d` (build repair — the lane tip had 17 tsc errors from snapshot fragments whose siblings lived in other lanes' trees) + `d1e2f5fd` (skill-assignment pipeline stages: real SKILL.md corpus search through the kernel files seam, bounded literal-comparison proposal with reasons/gaps/basis digest, truthful `profile_use_apply` receipt + `profile_use_plan` re-read) | files seam (`files_list`/`file_read`/`world_read`); `profile_use_plan`/`profile_use_apply`; missing named: owner mint op, work-start op | agency surface on the lane (`groundSkillSource.ts`, `MintAgent.tsx`) | uncommitted lanes preserved; fixtures dev-only | lane walk `skill-pipeline` 22/22 + tsc clean in the worktree | **advanced 2026-09-18** — remaining to the commissioned standard: native mint/validate+apply of agent definitions, the one resolved start interaction, addressing/delegation distinction, Direct start |
+| B1 · Base files/editor/terminal/preview + Day/Flow documents | main @ `fe92e1d0` base workbench | kernel file ops; Day/Flow HTML on main | Base mode | existing left-files UX is accepted | `walk/mode-sweep-probe.mjs` (every entrance in the one shell, return to Base clean, no errors) + `walk/footer-probe.mjs` (reveal law: edge 3px→24px on hover, actions summary reachable) | **verified 2026-09-18** |
 
 ### Superseded presentations (retired by name, never silently)
 
@@ -51,6 +51,23 @@ PR #370 is the owner's to land.
   Run | Agents | Context (#379); nothing here reinstates it.
 - The captured `factory-ui` demo as the Factory centre (per the 2026-09-18
   commission): every depth now binds the owner's real readings.
+
+## Pre-existing findings (named, not introduced by this landing)
+
+- `walk/tab-pane-probe.mjs` exposes a live shell defect at 1280px: the left
+  region's subtree (`div.world-system` inside `aside[data-region="left"]`)
+  intercepts pointer events on the first pane's orient tool — the pane tool
+  is visible but unclickable under it. Owner's in-flight shell geometry;
+  named for the shell's owner rather than rewritten from this landing.
+- The ephemeral-vite-server probe pattern (`createServer({configFile:false})`)
+  can no longer resolve the workspace engine deps (`three` from
+  `packages/oi-design-system/expressions-engine`) since the engine entered
+  the eager entry graph; `footer-probe` now reads the standing dev server
+  like the other walks. Any probe still spinning its own config-less server
+  will hit the same wall.
+- The `factory-development` walk scenario still drives the pre-Desk
+  development console (named in the handoff §10 known seams) — rewriting it
+  onto Desk needs the walk bridge lane.
 
 ## Protocol for subsequent increments
 
