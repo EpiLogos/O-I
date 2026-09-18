@@ -140,23 +140,42 @@ fn guardian_payload_files_ship_beside_a_manifest_skill() {
     // it beside that Skill's SKILL.md. A payload without its Skill (or a
     // Skill whose tooling never ships) is a projection fault.
     let manifest = guardian_manifest().unwrap();
-    // The list may legitimately be empty (the Central session strap retired
-    // from the guardian set); a declared payload must still sit beside a
-    // shipped guardian Skill.
+    // A declared payload must sit inside a shipped guardian Skill's source
+    // directory (beside its SKILL.md, nested reference subdirectories
+    // included), so the projection can place it with that Skill.
     for (path, _) in oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES {
-        let (directory, file) = path.rsplit_once('/').unwrap();
+        let file = path.rsplit('/').next().unwrap();
         assert!(
             !file.is_empty() && file != "SKILL.md",
             "{path} must declare a sibling payload, not the SKILL.md itself"
         );
         assert!(
-            manifest
-                .skills
-                .iter()
-                .any(|skill| skill.source.path == format!("{directory}/SKILL.md")),
-            "payload {path} does not sit beside a shipped guardian Skill"
+            manifest.skills.iter().any(|skill| {
+                skill
+                    .source
+                    .path
+                    .strip_suffix("SKILL.md")
+                    .is_some_and(|directory| path.starts_with(directory))
+            }),
+            "payload {path} does not sit inside a shipped guardian Skill directory"
         );
     }
+    // The `oi` router's claim-reception companion is required shipment: a
+    // packaged copy of the CLI carries it, so the projection can always
+    // deliver the reference its SKILL.md tells the reader to open.
+    let companion = oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES
+        .iter()
+        .find(|(path, _)| *path == "skills/oi/references/claim-reception.md")
+        .unwrap_or_else(|| {
+            panic!("packaged guardian set must ship skills/oi/references/claim-reception.md")
+        });
+    let repo_source =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../skills/oi/references/claim-reception.md");
+    assert_eq!(
+        companion.1,
+        fs::read_to_string(repo_source).unwrap(),
+        "shipped companion drifted from the repository source"
+    );
 }
 
 fn ground() -> (TempDir, PathBuf) {
@@ -212,7 +231,9 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
         }
     }
 
-    for name in ["oi", "oi-suite-operator"] {
+    // `oi` also projects its declared claim-reception sibling;
+    // `oi-suite-operator` still projects SKILL.md and its receipt only.
+    for (name, expected_entries) in [("oi", 3), ("oi-suite-operator", 2)] {
         for root in GUARDIAN_HARNESS_SKILL_ROOTS {
             let entries: Vec<_> = fs::read_dir(ground.join(root).join(name))
                 .unwrap()
@@ -220,10 +241,28 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
                 .collect();
             assert_eq!(
                 entries.len(),
-                2,
-                "{name} projects SKILL.md and its receipt only: {entries:?}"
+                expected_entries,
+                "{name} projects SKILL.md, its receipt and declared payload siblings only: {entries:?}"
             );
         }
+    }
+    // The projected companion is byte-identical with the shipped source: a
+    // payload sibling carries no derivation marker and no receipt.
+    let companion = oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES
+        .iter()
+        .find(|(path, _)| *path == "skills/oi/references/claim-reception.md")
+        .map(|(_, content)| *content)
+        .expect("the oi router ships its claim-reception companion");
+    for root in GUARDIAN_HARNESS_SKILL_ROOTS {
+        let sibling = ground
+            .join(root)
+            .join("oi")
+            .join("references/claim-reception.md");
+        assert_eq!(
+            fs::read_to_string(&sibling).unwrap(),
+            companion,
+            "{sibling:?} must be byte-identical with the shipped companion"
+        );
     }
 
     // A repeated pickup is stable: unchanged destinations, no conflicts.
@@ -263,6 +302,34 @@ fn pickup_preserves_local_edits_instead_of_clobbering() {
     assert!(report_lines(&report)
         .iter()
         .any(|line| line.contains("warning:")));
+}
+
+/// Mirror a projected Skill directory into an AIKit-style payload store:
+/// every payload file (nested layout preserved) becomes a store copy whose
+/// original position is rewired as a symlink, exactly as a real adoption
+/// relinks the tree it takes ownership of.
+#[cfg(unix)]
+fn rewire_payload_siblings_into_store(source: &Path, store: &Path, managed: &mut Vec<PathBuf>) {
+    for entry in fs::read_dir(source).unwrap().flatten() {
+        let file_name = entry.file_name();
+        if file_name == "SKILL.md" || file_name == "SKILL.md.oi-projection.json" {
+            continue;
+        }
+        let sibling = source.join(&file_name);
+        let mirrored = store.join(&file_name);
+        if entry.file_type().unwrap().is_dir() {
+            fs::create_dir_all(&mirrored).unwrap();
+            rewire_payload_siblings_into_store(&sibling, &mirrored, managed);
+            // The directory keeps whatever the rewired links inside it —
+            // an adoption relinks files, it does not prune scaffolding.
+            let _ = fs::remove_dir(&sibling);
+        } else {
+            fs::copy(&sibling, &mirrored).unwrap();
+            fs::remove_file(&sibling).unwrap();
+            std::os::unix::fs::symlink(&mirrored, &sibling).unwrap();
+            managed.push(sibling);
+        }
+    }
 }
 
 #[cfg(unix)]
@@ -477,17 +544,11 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
         std::os::unix::fs::symlink(store.join("SKILL.md.oi-projection.json"), &receipt).unwrap();
         managed_destinations.push(projected.clone());
         managed_skill_destinations.push(projected.clone());
-        for entry in fs::read_dir(projected.parent().unwrap()).unwrap().flatten() {
-            let file_name = entry.file_name();
-            if file_name == "SKILL.md" || file_name == "SKILL.md.oi-projection.json" {
-                continue;
-            }
-            let sibling = entry.path();
-            fs::copy(&sibling, store.join(&file_name)).unwrap();
-            fs::remove_file(&sibling).unwrap();
-            std::os::unix::fs::symlink(store.join(&file_name), &sibling).unwrap();
-            managed_destinations.push(sibling);
-        }
+        rewire_payload_siblings_into_store(
+            projected.parent().unwrap(),
+            &store,
+            &mut managed_destinations,
+        );
     }
 
     // A post-adoption aikit whose adopt refuses, like the real one does on a
@@ -602,12 +663,13 @@ adopt_all() {
     [ -f "$d/SKILL.md" ] || continue
     [ -L "$d/SKILL.md" ] && continue
     mkdir -p "$STORE/$name" "$ORIG/$name"
-    for f in "$d"/*; do
-      base=$(basename "$f")
-      cp "$f" "$ORIG/$name/$base"
-      cp "$f" "$STORE/$name/$base"
+    find "$d" -mindepth 1 -type f | while read -r f; do
+      rel=${f#"$d"}
+      mkdir -p "$ORIG/$name/$(dirname "$rel")" "$STORE/$name/$(dirname "$rel")"
+      cp "$f" "$ORIG/$name/$rel"
+      cp "$f" "$STORE/$name/$rel"
       rm "$f"
-      ln -s "$STORE/$name/$base" "$d/$base"
+      ln -s "$STORE/$name/$rel" "$f"
     done
   done
 }
@@ -648,9 +710,10 @@ case "${1:-}:${2:-}" in
   procedure:undo)
     for d in "$ORIG"/*/; do
       name=$(basename "$d")
-      for f in "$d"/*; do
-        base=$(basename "$f")
-        target="$G/.claude/skills/$name/$base"
+      find "$d" -mindepth 1 -type f | while read -r f; do
+        rel=${f#"$d"}
+        target="$G/.claude/skills/$name/$rel"
+        mkdir -p "$(dirname "$target")"
         [ -L "$target" ] && rm "$target"
         cp "$f" "$target"
       done
@@ -658,9 +721,7 @@ case "${1:-}:${2:-}" in
     # The real undo reverses the payload files but leaves the capsule
     # directories they were written into behind.
     if [ -z "$LEAVE_PAYLOAD_CONTENT" ]; then
-      for d in "$STORE"/*/; do
-        [ -d "$d" ] && rm -f "$d"/*
-      done
+      find "$STORE" -mindepth 2 -type f -exec rm {} +
     fi
     printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"procedure":"prc-guardian","undone":11}}'
     exit 0 ;;
