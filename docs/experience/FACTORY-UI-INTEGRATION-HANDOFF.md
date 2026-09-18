@@ -5,7 +5,7 @@ Standing: design-commitment
 
 # Factory UI handoff — Run / Agents / Context
 
-**Current owner direction, 18 September 2026:** build the parallel Factory sidebar around three clear jobs: **Run, Agents, Context**. The centre switches between the selected Agent/team conversation and the existing full SSSF multi-lane Run view. Inspecting a thing, assessing a claim and opening a result are interactions with that work, not reasons for more top-level sidebar categories.
+**Current owner direction, 18 September 2026:** build the parallel Factory sidebar around three clear jobs: **Run, Agents, Context**. The centre is **Desk / Tasks** (see §10): Desk is whole-Run-first — the live Run board, then the full SSSF multi-lane Run view of the selected Run; Tasks is chat-first — the full-size working conversation. Inspecting a thing, assessing a claim and opening a result are interactions with that work, not reasons for more top-level sidebar categories.
 
 **This supersedes the six-tab navigation in PR #373 and earlier versions of this handoff**, including Trajectory / Context / Skills & tools / Claims & evidence / Results / Inspect as peer destinations. Retain their actual functions in the locations below. Historical issue comments, downloaded handoffs and existing source references are not instructions to restore that taxonomy. Short labels describe user jobs; native identities/authority do not change.
 
@@ -57,16 +57,17 @@ The selected Agent's setup gives compact native controls for model/selection pol
 
 ```text
 LEFT                        CENTRE                         RIGHT
-existing Project/files      Chat  |  Run view              Run | Agents | Context
-                            selected Agent/team chat       selected tab's useful body
-                            or full SSSF multi-lane view
+Desk | Tasks                Desk: live Run board,          Run | Agents | Context
+project space, receiving    then the selected Run's        selected work's useful body
+                            full SSSF multi-lane view
+                            Tasks: full-size working chat
 
 quiet footer → same sessions, Activity and genuine Attention
 ```
 
 **Exactly three top-level Factory sidebar tabs:** Run, Agents, Context. Do not recreate the six removed tabs in an overflow menu as permanent peer destinations. Object details, actual material tabs, source editors and expanded inspectors can still open as normal panes/windows/popouts.
 
-The centre's **Chat / Run view** changes presentation of the same selected work, not runtime identity. Chat can be an individual Agent or actual team conversation with To:/@ addressing and attachments. Keep the full SSSF multi-lane map, dependency/frontier, independent legs and convergence in the centre. Clicking an Agent/step can open its actual conversation and back; neither every visual lane nor a team label implies a distinct Agent or session. Allow useful side-by-side panes through existing commands without mounting duplicate composers.
+The centre's **Desk / Tasks** entries change the working view of the same ongoing work, not runtime identity (§10). Tasks carries the individual Agent or actual team conversation with To:/@ addressing and attachments; Desk carries the Run board and the full SSSF multi-lane map, dependency/frontier, independent legs and convergence. Clicking an Agent/step can open its actual conversation and back; neither every visual lane nor a team label implies a distinct Agent or session. Allow useful side-by-side panes through existing commands without mounting duplicate composers.
 
 The sidebar **Run** is the compact control and inspection surface for the selected work. Put the current Run/Journey selector, purpose/outcome, owner/team, state and pending human decision in a compact header. Provide New/choose/continue work from native entry points. With no selected Run, offer a useful next action; Agents and Context remain usable without a conversation or Run loaded. Direct work stays Direct, with its activity honestly labelled and no synthetic Factory ancestry.
 
@@ -161,8 +162,23 @@ For this **parallel UI-preparation** stage, coherent components, real existing h
 
 ## 9. Immediate instruction to the UI thread
 
-Continue your current UI-refinement branch. Replace the prior six-top-level-tab sidebar with **Run / Agents / Context**. Centre remains selected Agent/team Chat ↔ full SSSF multi-lane Run view. Run contains status/control/trajectory/checks/metrics; Agents contains creation/teams/assignment/Skills/Capabilities/routines/setup; Context contains Sources and Produced material, including addressed Returns and their native Day/NOW/Inbox state. Details and claim/evidence inspection attach to those objects. All material remains openable through native panes/windows/popouts.
+Continue your current UI-refinement branch. Replace the prior six-top-level-tab sidebar with **Run / Agents / Context**. The centre is Desk / Tasks per §10: Desk holds the live Run board and the selected Run's full SSSF multi-lane view; Tasks holds the full-size working chat. Run contains status/control/trajectory/checks/metrics; Agents contains creation/teams/assignment/Skills/Capabilities/routines/setup; Context contains Sources and Produced material, including addressed Returns and their native Day/NOW/Inbox state. Details and claim/evidence inspection attach to those objects. All material remains openable through native panes/windows/popouts.
 
 Preserve six app entrances, current Expressions style, accepted left-files UX, one conversation and native identities. Give the three tabs usable empty/pre-run states and directly selectable dev scenarios. Implement interactions now; do not return another static shell or wait for a loaded chat to reveal the proposed UI. Scope source browsing to the component being changed and continue existing owner coordination; no reset, new worktree requirement, mainline runtime rewrite or dependency on DSH.
 
 This document and the existing mapping replace the old navigation instructions. Carry actual component/handler paths and remaining native bindings into the current UI PR, with before/after behaviour and tests. We are deliberately trying this clearer organisation; preserve the functions while refining the interaction from use.
+
+## 10. Desk and Tasks (owner commission, 18 September 2026)
+
+**Desk replaces the Factory-left-sidebar Inbox entry**; Tasks remains the place for task conversations. This supersedes both the undifferentiated centre Chat/Run toggle above and the later chat-only-centre instruction: **Tasks is chat-first, Desk is whole-Run-first**, chosen by the left navigator's two entries. Switching changes the working view, never execution — no Run stops, no session starts, no message sends, no open document is destroyed, and the conversation's draft survives.
+
+Implemented in the parallel UI working tree:
+
+- **Centre** (`contributions/factory/FactoryCentre.tsx` over `desk/deskModel.ts`): module stores for the centre view, the opened-Run detail and the last desk-chosen Run — display preferences, never a run database. Desk renders `desk/DeskBoard.tsx`; an opened Run renders `desk/DeskRunDetail.tsx` around the owner's own `BuildSurface`; Tasks renders the shared `AgentChat` in a full-canvas presentation (`factory-chat-full`): context strip with Project, Run link when bound and an honest Direct-conversation marker; comfortable reading measure for prose, wider lane for code; transcript dominant; composer inside the pane's own bottom layout. It is the same shared session observer, composer and draft — not the old sidebar widget in a wider div, and not a second implementation.
+- **Left navigation** (`surfaces/navigator/FactoryNavigator.tsx`): Desk | Tasks entries; the centre-view store is the one truth either side can move. The Inbox content — Returns / NOW / Remembered bands — is preserved verbatim under Desk as `DeskReceiving`; pending Returns stay reachable and open into panel Inspect exactly as before.
+- **Desk board**: one card per whole Run, keyed `statePath/projectRef/runRef` so a Run seen in several read paths never acquires two cards. Display groups Needs attention / Active / Queued / Recent derive from the native status (open human request or blocked/failed → attention; completed-awaiting-review stays findable); the original status stays on the card. Cards order by identity, never resort under the pointer, and never auto-select. Search and Project-scope filter run over one pipeline for fixture and live rows. Explicit Refresh — no invented polling. No drag-to-change-state.
+- **Cross-project scope** is a bounded aggregation over explicitly added Factory sources (developmental state path + project ref, remembered as preferences). Live reads are the owner's own `development read` (project → journey runRefs) and `build snapshot` per Run at bounded concurrency; refused or unreachable sources render as partial coverage, never an empty healthy board. The kernel carries no project listing on this cut, so the desk invents none.
+- **Run ↔ task conversations** bind by exact identity: a conversation belongs to the Run when its agent-session ref appears in the Run's own trajectories. Run detail lists those carried conversations (opening one binds it and moves to Tasks through the frame's one chooser path) above the project's full conversation list; a Run awaiting its first session shows honest absence. The sidebar's Run subject follows the work actually selected or bound: a Direct conversation clears the subject instead of inheriting an unrelated Run (`FactorySelection.origin`), and returning to Desk re-establishes the held Run.
+- **Scenario and proof**: "Desk — cross-project board" joins the labelled dev scenarios (`fixtures/desk-board.ts`): six whole Runs across two Projects, parallel work inside one Run, different participants, one permission-blocked, one returning material with recognition waiting, same-named Runs across Projects, one queued; receiving carries incoming-without-a-Run. `desktop/cradle/walk/desk-probe.mjs`, `desk-filter-probe.mjs` and `desk-dark-probe.mjs` exercise and capture board, detail, Tasks, filtering, narrow and dark.
+
+Known seams, named: the standing `factory-development` walk scenario still drives the pre-Desk development console and needs rewriting onto Desk by a lane that can run the walk bridge; live native reads share the proven `development.ts` ops but this session's visual proof ran on the labelled fixture (no kernel transport in the probe); provider keys remain the gate for streamed-chat visual proof.
