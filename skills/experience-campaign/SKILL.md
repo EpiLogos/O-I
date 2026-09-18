@@ -13,7 +13,7 @@ explicitly and record that route; native discovery/loading remains a test.
 
 ## Current hosted-learning and sandbox placement — 18 September 2026
 
-For a `5/0` learning task, use `docs/experience/INSTALLATION-VARIANTS.md`:
+For a **5/0** learning task, use `docs/experience/INSTALLATION-VARIANTS.md`:
 clean browser → existing hosted Library → published corpus/Expression → source
 and return. The host supplies services; the visitor installs no O:I/QL/agent
 stack and need not join a live session or supply an API key to read. Preserve
