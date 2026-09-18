@@ -61,7 +61,10 @@ impl Client {
             .unwrap_or_default()
             .to_owned();
         if read == "build" {
-            if schema != "factory.build-view/v1" || data.get("provider_contract").and_then(Value::as_str) != Some("factory.build-view-provider/v1") {
+            // The owner CLI serialises this field camelCase (`providerContract`);
+            // both spellings are accepted so the check never outruns the owner.
+            let provider_contract = data.get("providerContract").or_else(|| data.get("provider_contract")).and_then(Value::as_str);
+            if schema != "factory.build-view/v1" || provider_contract != Some("factory.build-view-provider/v1") {
                 return Err(incompatible("Unsupported Factory developmental Build view"));
             }
         } else if !schema.starts_with("factory.") || !schema.ends_with("-reading/v1") {
@@ -90,9 +93,14 @@ impl Client {
             "--json".into(),
         ];
         let data = invoke(&self.executable, &args, None)?;
+        // The owner CLI serialises this field camelCase (`providerContract`);
+        // both spellings are accepted so the check never outruns the owner.
+        let provider_contract = data
+            .get("providerContract")
+            .or_else(|| data.get("provider_contract"))
+            .and_then(Value::as_str);
         if data.get("contract").and_then(Value::as_str) != Some("factory.build-view/v1")
-            || data.get("provider_contract").and_then(Value::as_str)
-                != Some("factory.build-view-provider/v1")
+            || provider_contract != Some("factory.build-view-provider/v1")
         {
             return Err(incompatible("Unsupported Factory build view"));
         }
