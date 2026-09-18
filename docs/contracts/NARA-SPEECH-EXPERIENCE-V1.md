@@ -19,6 +19,9 @@ desktop/cradle/src/nara/
                          actuation.nara-interruption/v1 (session_destroyed:false),
                          actuation.speech-tool-decision/v1 (authorised != executed),
                          delegation/enrichment receipts (applied:false)
+    bodyState.ts         the three body states the surface may render (live / option / absent),
+                         derived only from the constitution's disclosed facts; the hold-to-talk
+                         affordance gate and its refusal words
     voiceBody.ts         ql.nara-voice-body/v1 mirror (verbatim, deny-unknown) + the caller-side
                          constitution→declaration reduction and QL dialogical floor satisfaction
     NaraSurface.tsx      the summoned "nara" surface: capability-adaptive presence, push-to-talk,
@@ -51,6 +54,56 @@ desktop/cradle/src/nara/
 6. **Epii stays out of the foreground.** Delegation hands exactly the admitted scope; a returned
    enrichment is presented as a proposal with `applied:false`; stale application refuses at the
    apply gate.
+7. **The speech body is an option and a gap before any key exists.** The surface renders the
+   constituted body in one of three states derived only from the constitution's disclosed facts
+   (`src/nara/bodyState.ts`); no provider or model name is ever invented, and no state is
+   rendered that the documents do not carry.
+
+## The three body states (option + gap)
+
+`naraBodyState(constitution)` derives the state; `NaraSurface` renders it
+(`data-nara-body-state`). The fields consumed are the constitution's own:
+`input_modalities` / `output_modalities`, `conditions` (each
+`condition:"degraded"|"unavailable"`, its verbatim `reason`, and the read
+model's which-seam `field` when carried), `provider_binding.facts`
+credential scalars (`credential_condition:"not-required"|"required"|"satisfied"`,
+`credential_hint`, `credential_binding_ref` — refs and presence only,
+never material), `body_ref` and `provider_binding.provider_ref`, and the
+session read's `speech_capable` / `text_capable`.
+
+- **live** — usable acoustic path both directions and no named condition.
+  The capability chips render as usual; no body-state banner appears.
+- **option** — the body declares toward speech but names why it is not
+  plainly live: a credential it does not have bound, a degraded or
+  unavailable surface, or a one-sided acoustic declaration. The body shows
+  as a visible OPTION with the gap named exactly as the document discloses
+  it — e.g. for a credential-gated body:
+  `speech body present as an option (not usable today); when the named
+  condition closes — or the body is swapped — Nara continues unchanged`,
+  the gap line
+  `unavailable (modality-credential): the surface needs a credential it
+  does not have bound: provider:voice inference credential` (the reason is
+  the AIKit read model's own wording, verbatim), and the credential fact
+  `credential condition required — provider:voice inference credential`.
+  A usable-but-degraded body renders `(usable with named reductions)` with
+  the degraded condition named beside it.
+- **absent** — no acoustic modality declared in either direction (the
+  text-capable Nara): `speech body absent (text-capable Nara); a speech
+  body may be constituted or swapped later without changing Nara`.
+
+**The affordance law.** Hold-to-talk is a speech act: it presents as live
+(`holdToTalkLive`) only on a body that can hear and speak today. Gated,
+degraded-to-unusable, one-sided and absent bodies disable it, and the
+refusal is named in the button title and notice (`holdToTalkRefusal`).
+
+**The named seam: catalogue-wide option discovery.** The surface knows only
+the constituted body's facts. Whether OTHER constitutable speech bodies
+exist — the full set of options a key could unlock — is a catalogue question
+(the AIKit model catalogue and its route/credential join), and no desktop
+read model carries that seam today. The option state above is therefore the
+constituted-but-gated body, honestly shown; a catalogue-wide option list is
+not fabricated. Wiring that discovery in would be a new read-model seam
+(AIKit catalogue → desktop), not a change to this surface's vocabulary.
 
 ## The QL voice-body floor (caller-side satisfaction)
 
@@ -85,11 +138,14 @@ recast from mechanism to capability, contract version unchanged.)
 ```bash
 cd desktop/cradle
 node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-speech-conformance.mjs
-    # 33 tests: QL fixture round-trips, admission/deixis/delegation laws, constitution + receipt shapes
+    # 38 tests: QL fixture round-trips, admission/deixis/delegation laws, constitution + receipt
+    # shapes, and the three body states (option+gap, absent, live) with the exact rendered strings
 node tests/nara-presence-lifecycle.mjs
-    # 24 checks: the real surface on a real kernel walk bridge; capture via the synthetic device
+    # 30 checks: the real surface on a real kernel walk bridge; capture via the synthetic device;
+    # the gated body rendered as an option and the text-only body as absent, in the real component
 node walk/run.mjs nara-speech
-    # 20 checks: the joined chain against the real kernel; receipt in walk/artifacts/nara-speech.json
+    # 22 checks: the joined chain against the real kernel, including the credential-gated and
+    # text-only body states; receipt in walk/artifacts/nara-speech.json
 ```
 
 ## Honest remainders (owner-visible)
@@ -98,6 +154,10 @@ node walk/run.mjs nara-speech
   resolution *document*; no provider session is opened and no audio is played. Live-mic capture
   is proven against chromium's synthetic device; a live OS-permission walk and a real
   provider body remain the owner's G3 acceptance (with ai-kit #317 and Actuation #91 joined).
+- **Catalogue-wide option discovery is a seam, not a feature.** The option state shows the
+  constituted-but-gated body because that is the only body the desktop lawfully knows. The set
+  of constitutable bodies needs the AIKit model catalogue/route join wired into a desktop read
+  model; until then the surface names the gap instead of listing options it cannot see.
 - **No transcript content is manufactured.** Turn rows carry what actually happened; response
   content rides the canonical dialogue owner (agent session) when one is joined through the
   encounter seam.
