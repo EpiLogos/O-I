@@ -1,4 +1,4 @@
-"""Source-contract regression only: this does not install or prove a composition."""
+"""Source-contract regression only: no install, sandbox, browser or human proof."""
 from __future__ import annotations
 
 import importlib.util
@@ -33,8 +33,21 @@ class InstallationCompositionSourceTests(unittest.TestCase):
         self.assertEqual(set(self.forms["CF2"]["not_required"]), {"ai-kit", "Factory", "QL-MEF"})
         self.assertEqual(self.forms["CF6"]["native_products"], ["Central", "Workcell-client"])
         self.assertEqual(set(self.forms["CF6"]["not_required_locally"]), {"Actuation", "ai-kit", "Factory", "QL-MEF"})
-        self.assertEqual(self.forms["CF7"]["native_products"], ["Central", "QL-MEF"])
-        self.assertEqual(set(self.forms["CF7"]["not_required"]), {"Actuation", "ai-kit", "Factory"})
+
+    def test_hosted_learning_has_no_visitor_install_or_session_gate(self):
+        # Owner correction 2026-09-18 replaces only the old CF7 install assertion.
+        learner = self.forms["CF7"]
+        self.assertEqual(learner["expression"], "5/0")
+        self.assertEqual(learner["entry_kind"], "hosted-browser")
+        self.assertFalse(learner["requires_local_install"])
+        self.assertEqual(learner["native_products"], [])
+        self.assertEqual(set(learner["not_required"]), {
+            "Central", "Actuation", "ai-kit", "Factory", "QL-MEF", "Workcell", "O-I Desktop"})
+        self.assertFalse(learner["visitor_agent_or_api_key_required"])
+        self.assertFalse(learner["live_shared_session_required_for_reading"])
+        self.assertIn("host", learner["native_products_scope"])
+        self.assertIn("source-bound", learner["required_observation"])
+        self.assertIn("No runtime migration", learner["implementation_followup"])
 
     def test_desktop_backing_and_ordinary_core_are_distinct(self):
         self.assertTrue(self.forms["CF1"]["backing_selection_explicit"])
@@ -62,6 +75,44 @@ class InstallationCompositionSourceTests(unittest.TestCase):
         self.assertTrue(set(self.config["setup_contexts"]).isdisjoint(self.forms))
         self.assertIn("#268", self.config["setup_context_semantics"])
         self.assertEqual(len(self.composition["cross_form_branches"]), 6)
+
+    def test_sandbox_availability_is_reported_not_fabricated_execution(self):
+        sandbox = self.config["sandbox_proving"]
+        self.assertEqual(sandbox["availability_standing"], "owner-reported-available")
+        self.assertIsNone(sandbox["provider"])
+        self.assertEqual(sandbox["execution_evidence"], [])
+        self.assertIsNone(sandbox["human_assessment"])
+        self.assertFalse(sandbox["new_runtime_or_campaign"])
+        self.assertIn("C1", sandbox["provider_readiness"])
+        self.assertIn("Day/NOW", sandbox["foundation_policy"])
+        self.assertIn("deletion", " ".join(sandbox["episode_binding"]))
+        self.assertIn("serialized", sandbox["parallelism"])
+        self.assertIn("human H/EX", sandbox["evidence_scope"])
+
+    def test_operator_source_is_loaded_and_carries_the_full_sandbox_protocol(self):
+        path = self.config["operator_source"]
+        # Full prose is retained by the existing compiler, not a new summary store.
+        document = self.reading["sources"][path]
+        text = document["text"]
+        for phrase in [
+            "## 2.1 Omarchy sandbox proving", "owner reports", "clean browser",
+            "outside the disposable world's deletion boundary", "held-out/near-miss",
+            "One computer-use driver", "two guests are two physical machines",
+            "no premature H ratification gate", "actual new build is running",
+        ]:
+            self.assertIn(phrase, text)
+        self.assertTrue(document["digest"].startswith("sha256:"))
+        method = (ROOT / "skills/experience-campaign/SKILL.md").read_text(encoding="utf-8")
+        self.assertIn('description: "METHOD:', method)
+        self.assertIn("LOCAL-CAMPAIGN.md", method)
+
+    def test_scope_stays_with_existing_native_owners(self):
+        families = {row["id"]: row for row in self.config["families"]}
+        self.assertIn("Workcell", families["WK"]["owners"])
+        self.assertEqual(self.config["existing_caw"]["required_case_ids"],
+                         [f"P{i:02}" for i in range(1, 29)])
+        self.assertEqual(self.config["delegated_ql"]["known_ids"],
+                         [f"UX{i:02}" for i in range(1, 13)])
 
     def test_source_projection_does_not_claim_installed_or_lived_use(self):
         self.assertTrue(self.reading["planning_only"])
