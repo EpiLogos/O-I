@@ -67,7 +67,7 @@ python3 scripts/caw_bind.py \
   --entry oi "$OI/cli/target/debug/oi" "$OI" \
   --entry central "$CENTRAL/target/debug/ctrl" "$CENTRAL" \
   --entry aikit "$AIKIT/target/debug/aikit" "$AIKIT" \
-  --entry aikit-session-space "$AIKIT/target/debug/aikit-session-space" "$AIKIT" \
+  --entry aikit-session-space "$AIKIT/target/debug/aikit" "$AIKIT" \
   --entry aikit-task-suite "$CAW_TASK_SUITE" "$AIKIT" \
   --entry workcell "$WORKCELL/target/debug/workcell" "$WORKCELL" \
   --entry workcell-control-service "$WORKCELL/target/debug/workcell-control-service" "$WORKCELL" \
