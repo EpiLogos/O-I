@@ -23,6 +23,7 @@ import {formatRelativeTime} from "../../../shared/relativeTime";
 import {handToPanelInspect} from "../../../agent/planes/panelInspect";
 import {receiving, type ReceivingPage, type ReturnRow} from "../../../receiving/client";
 import {buildSnapshot, buildViewOf, developmentRead} from "../development";
+import {useFactoryLive} from "../FactoryLive";
 import {publishFactorySelection} from "../sidebar/sidebarModel";
 import {ScenarioBar} from "../sidebar/ScenarioBar";
 import {
@@ -44,6 +45,7 @@ function readPrefs(): BoardPrefs { try { return JSON.parse(localStorage.getItem(
 
 export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(message:string)=>void}) {
   const kernel = useKernel();
+  const live = useFactoryLive();
   const fixtureRows = useDeskFixture();
   const [sources, setSources] = useState<DeskSource[]>(() => readDeskSources());
   const [rows, setRows] = useState<Record<string, DeskRow>>({});
@@ -80,6 +82,9 @@ export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(mes
             const view = buildViewOf(document);
             if (!view) throw new Error("The reading did not carry a build view");
             putRow({key, locator: {...source, runRef}, state: "read", view});
+            // The live field observes exactly what the Desk actually read —
+            // no poll loop anywhere (see FactoryLive.tsx).
+            live.observe({key, runRef, statePath: source.statePath, projectRef: source.projectRef, document});
           } catch (reason) {
             putRow({key, locator: {...source, runRef}, state: "refused", error: String(reason instanceof Error ? reason.message : reason)});
           }
@@ -89,7 +94,17 @@ export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(mes
     } catch (reason) {
       if (alive()) setSourceStates(existing => ({...existing, [deskRowKey(source, "")]: {source, state: "refused", detail: String(reason instanceof Error ? reason.message : reason)}}));
     }
-  }, [kernel.transport]);
+  }, [kernel.transport, live]);
+
+  // The labelled dev scenario's fixture rows run through the same live
+  // observation machinery — the scenario's own labelled data, never a native
+  // read claim behind it.
+  useEffect(() => {
+    if (!fixtureRows) return;
+    for (const row of fixtureRows) {
+      live.observe({key: deskRowKey(row.locator, row.locator.runRef), runRef: row.locator.runRef, statePath: row.locator.statePath, projectRef: row.locator.projectRef, document: row.view});
+    }
+  }, [fixtureRows, live]);
 
   const refresh = useCallback(() => {
     const gen = ++generation.current;
@@ -207,6 +222,8 @@ function BoardGroup({label, rows, onOpen}:{label:string; rows:DeskRow[]; onOpen:
 }
 
 function RunCard({row, onOpen}:{row:DeskRow; onOpen:(row:DeskRow)=>void}) {
+  const live = useFactoryLive();
+  const observation = live.observationOf(row.key);
   const view = row.view!;
   const status = view.run.status;
   const participants = [...new Set(view.agencies.map(agency => agency.label))];
@@ -241,6 +258,11 @@ function RunCard({row, onOpen}:{row:DeskRow; onOpen:(row:DeskRow)=>void}) {
       <Glyph name="verify" size={12}/>
       <p>{view.humanRequests[0].question}</p>
       {view.humanRequests.length > 1 && <small>{view.humanRequests.length - 1} more</small>}
+    </div>}
+    {observation && (observation.changed || observation.unseen.length > 0) && <div className="desk-card-live" role="status">
+      <Glyph name="activity" size={12}/>
+      <p>{observation.unseen.length > 0 ? `${observation.unseen.length} new output${observation.unseen.length === 1 ? "" : "s"} since your last review` : "Run updated since your last review"}</p>
+      <button type="button" onClick={() => live.acknowledge(observation.key, observation.revision)}>Acknowledge</button>
     </div>}
   </article>;
 }

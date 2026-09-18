@@ -79,6 +79,12 @@
 .desk-card-needs{ display: flex; align-items: baseline; gap: 6px; padding: 8px 12px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); color: var(--desk-error); font-size: var(--oi-shell-type-ui); }
 .desk-card-needs p{ margin: 0; flex: 1; }
 
+/* live observation affordance (ported FactoryLive machinery): arrival marks
+   the card; acknowledging the revision is what clears it */
+.desk-card-live{ display: flex; align-items: center; gap: 8px; padding: 7px 12px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); color: var(--desk-running); font-size: var(--oi-shell-type-ui); }
+.desk-card-live p{ margin: 0; flex: 1; }
+.desk-card-live button{ min-height: 24px; padding: 3px 9px; color: inherit; background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 6px; font: inherit; font-size: var(--oi-shell-type-ui); cursor: pointer; }
+
 .desk-board-refused{ border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-top: 10px; }
 .desk-board-refused h3{ margin: 0 0 6px; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
 .desk-board-refused p{ margin: 2px 0; font-size: var(--oi-shell-type-ui); color: var(--desk-error); }
@@ -104,6 +110,18 @@
 .desk-detail-title p{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 3px 0 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 .desk-detail-build > .fb-build-surface{ border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; overflow: hidden; }
 .desk-detail-tasks{ display: flex; flex-direction: column; gap: 8px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-top: 12px; }
+
+/* live-follow strip: one explicit read + revision acknowledge, no poll */
+.desk-detail-live{ display: flex; align-items: center; gap: 12px; flex-wrap: wrap; padding: 8px 12px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-wash); font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.desk-detail-live strong{ color: var(--desk-running); font-weight: 550; }
+.desk-detail-live-actions{ display: flex; gap: 6px; margin-left: auto; }
+.desk-detail-live[data-fixture="true"] .desk-detail-live-basis{ color: var(--desk-warn); }
+
+/* produced material + attempt handoff: the ported donor surfaces as inline
+   Desk sections in the same section grammar as Task conversations */
+.desk-detail-material, .desk-detail-handoff{ display: flex; flex-direction: column; gap: 10px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-top: 12px; }
+.desk-detail-material h2, .desk-detail-handoff h2{ display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 600; text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); }
+.desk-detail-fixture-note{ margin: 0; max-width: 620px; }
 .desk-detail-tasks h2{ display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 600; text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); }
 .desk-detail-carried{ display: flex; flex-direction: column; gap: 6px; }
 .desk-detail-tasks-list h3{ margin: 8px 0 4px; font-size: var(--oi-shell-type-ui); font-weight: 550; color: var(--oi-muted-2); }

@@ -3,6 +3,7 @@ import {FactoryDevelopmentSurface} from "./FactoryDevelopmentSurface";
 import type {EncounterRow} from "../../encounter/EncounterList";
 import {DeskBoard} from "./desk/DeskBoard";
 import {DeskRunDetail} from "./desk/DeskRunDetail";
+import {FactoryLiveProvider} from "./FactoryLive";
 import {
   closeDeskDetail, deskRowForSession, openDeskDetail, peekDeskRow, publishCentreView,
   setLastDeskRun, useCentreView, useDeskDetail, useLastDeskRun,
@@ -79,10 +80,12 @@ export function FactoryCentre({chat,project,accompanying,onOpenTask,onMessage}:F
         </header>
         <div className="factory-chat-host">{chat}</div>
       </section>
-      : detail
-        ? <DeskRunDetail locator={detail} project={project} onBack={closeDeskDetail}
-            onOpenTask={row=>void onOpenTask?.(row)}/>
-        : <DeskBoard project={project} onMessage={onMessage}/>}
+      : <FactoryLiveProvider>{/* one live observation field per visible Factory centre surface — no poll inside (see FactoryLive.tsx) */}
+        {detail
+          ? <DeskRunDetail locator={detail} project={project} onBack={closeDeskDetail}
+              onOpenTask={row=>void onOpenTask?.(row)}/>
+          : <DeskBoard project={project} onMessage={onMessage}/>}
+      </FactoryLiveProvider>}
     {import.meta.env.DEV&&view==="desk"&&!detail&&<details className="factory-centre-debug" onToggle={event=>setDebugOpen((event.target as HTMLDetailsElement).open)}>
       <summary>Debug: development console</summary>
       {debugOpen&&<FactoryDevelopmentSurface/>}

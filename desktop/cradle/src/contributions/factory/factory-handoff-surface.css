@@ -1,0 +1,50 @@
+/* The Desk's Factory attempt-handoff surface + document (ported from
+   PR #292, restated in the live shell tokens desk.css carries). */
+
+.desk-handoff-surface{ display: flex; flex-direction: column; gap: 10px; }
+.desk-handoff-toolbar button{ min-height: 27px; padding: 4px 9px; color: var(--oi-foreground); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 6px; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
+.desk-handoff-toolbar button:disabled{ opacity: .55; cursor: default; }
+.desk-handoff-error{ margin: 0; color: var(--desk-error, #a3352b); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
+.desk-handoff-unavailable{ display: grid; gap: 6px; padding: 10px 12px; border: var(--oi-shell-edge) dashed var(--oi-hairline-soft); border-radius: 10px; }
+.desk-handoff-unavailable p{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
+.desk-handoff-standing{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
+.desk-handoff-empty{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.desk-handoff-task-list{ display: grid; gap: 4px; }
+.desk-handoff-task-list > span{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); font-weight: 600; letter-spacing: var(--oi-shell-tracking, .01em); text-transform: uppercase; }
+.desk-handoff-task-list button{ min-width: 0; padding: 6px 8px; color: var(--oi-foreground); background: transparent; border: var(--oi-shell-edge) solid transparent; border-radius: 6px; text-align: left; font: inherit; cursor: pointer; overflow-wrap: anywhere; }
+.desk-handoff-task-list button:hover, .desk-handoff-task-list button[aria-pressed="true"]{ border-color: var(--oi-hairline-soft); background: var(--oi-wash); }
+
+.desk-handoff-document{ display: flex; flex-direction: column; gap: 12px; padding: 12px 14px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-wash); }
+.desk-handoff-document-head{ display: flex; flex-direction: column; gap: 3px; }
+.desk-handoff-document-head h4{ margin: 0; font-size: var(--oi-shell-type-body); font-weight: 600; }
+.desk-handoff-section{ display: flex; flex-direction: column; gap: 7px; }
+.desk-handoff-section h5{ margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 600; color: var(--oi-muted-2); }
+.desk-handoff-missing{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.desk-handoff-evidence{ display: grid; gap: 7px; margin: 0; padding: 0; list-style: none; }
+.desk-handoff-evidence li{ display: grid; gap: 4px; padding: 9px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 8px; }
+.desk-handoff-evidence li[data-standing="failed"]{ border-color: color-mix(in srgb, var(--desk-error, #a3352b) 45%, transparent); }
+.desk-handoff-evidence strong{ font-size: var(--oi-shell-type-nav); font-weight: 550; }
+.desk-handoff-evidence span{ font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.desk-handoff-evidence p{ margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.5; }
+.desk-handoff-artifacts{ display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.desk-handoff-artifacts li{ display: grid; gap: 3px; padding: 8px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 8px; }
+.desk-handoff-artifacts small{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.desk-handoff-runtime{ display: grid; gap: 8px; margin: 0; }
+.desk-handoff-runtime div{ display: grid; grid-template-columns: minmax(120px, auto) minmax(0, 1fr); gap: 8px; }
+.desk-handoff-runtime dt{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.desk-handoff-runtime dd{ margin: 0; font-size: var(--oi-shell-type-nav); overflow-wrap: anywhere; }
+.desk-handoff-runtime small{ display: block; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.desk-handoff-outstanding{ display: grid; gap: 6px; margin: 0; padding: 0; list-style: none; }
+.desk-handoff-outstanding li{ display: grid; gap: 4px; padding: 8px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 8px; }
+.desk-handoff-outstanding strong{ font-size: var(--oi-shell-type-nav); font-weight: 550; overflow-wrap: anywhere; }
+.desk-handoff-continuations{ display: grid; gap: 8px; margin: 0; padding: 0; list-style: none; }
+.desk-handoff-continuations li{ display: flex; align-items: start; justify-content: space-between; gap: 12px; }
+.desk-handoff-continuations li > div{ display: grid; gap: 3px; min-width: 0; }
+.desk-handoff-continuations small{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.desk-handoff-continuations code{ overflow-wrap: anywhere; font-size: var(--oi-shell-type-ui); }
+.desk-handoff-continuations button{ min-height: 27px; padding: 4px 9px; color: var(--oi-foreground); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 6px; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
+.desk-material-reference{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.desk-material-reference summary{ cursor: pointer; }
+.desk-material-reference ul{ margin-top: 6px; padding-left: 15px; }
+.desk-material-reference code{ overflow-wrap: anywhere; }
+@media (max-width: 640px){ .desk-handoff-continuations li{ flex-direction: column; } }

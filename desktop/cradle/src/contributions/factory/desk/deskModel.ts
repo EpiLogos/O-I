@@ -230,3 +230,27 @@ export function useDeskFixture(): DeskFixtureRun[] | undefined {
   );
 }
 export function peekDeskFixture(): DeskFixtureRun[] | undefined { return deskFixture; }
+/** The fixture row for one exact locator, when the labelled dev scenario is
+ * what carries it — how the Run detail knows its view is fixture-sourced. */
+export function deskFixtureFor(locator: DeskRunLocator): DeskFixtureRun | undefined {
+  return deskFixture?.find(row => row.locator.statePath === locator.statePath && row.locator.projectRef === locator.projectRef && row.locator.runRef === locator.runRef);
+}
+
+/** Dev-scenario only: simulate a produced-material arrival on the first
+ * fixture Run that retains candidates (revision bump + a fresh evidence
+ * entry). The same labelled-fixture law as the sidebar's "Simulate arrival":
+ * it moves the scenario's own data so the live observation machinery can be
+ * walked — it is never a native read or a native claim. */
+export function simulateDeskFixtureUpdate() {
+  if (!deskFixture) return;
+  const next = structuredClone(deskFixture);
+  const row = next.find(entry => entry.view.candidates.length > 0);
+  if (!row) return;
+  for (const candidate of row.view.candidates) candidate.revision += 1;
+  row.view.evidence = [...row.view.evidence, {
+    evidenceRef: "evidence:fixture-arrived", label: "Arrived review check (dev scenario)",
+    assessment: "simulated arrival — dev scenario only", producingExecutionRef: row.view.executions[0]?.executionRef,
+  }];
+  row.view.candidates = row.view.candidates.map(candidate => ({...candidate, evidenceRefs: [...new Set([...candidate.evidenceRefs, "evidence:fixture-arrived"])]}));
+  seedDeskFixture(next);
+}
