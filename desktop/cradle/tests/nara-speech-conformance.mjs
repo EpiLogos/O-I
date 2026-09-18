@@ -28,6 +28,11 @@ import {
   planChoreography,takeChoreographyStep,completeChoreographyStep,interruptChoreography,
 } from "../src/nara/expressiveAct";
 import {NaraSpeechBinding,validateToolRequest} from "../src/nara/session";
+import {stageFocusPlan} from "../src/nara/stageFocus";
+import {
+  NARA_VOICE_BODY_CONTRACT,bodyBindsDistinctly,dialogicalFloor,
+  validateVoiceBodyDeclaration,voiceBodyFromConstitution,voiceBodySatisfaction,voiceBodySatisfactionReceipt,
+} from "../src/nara/voiceBody";
 
 const fixturesRoot=fileURLToPath(new URL("./fixtures/nara/",import.meta.url));
 const readFixture=name=>JSON.parse(readFileSync(`${fixturesRoot}${name}`,"utf8"));
@@ -425,4 +430,151 @@ test("turn context updates keep the Nara and session identity",()=>{
   binding.updateContext({...binding.contextNow,expression_revision:"rev-8",pointed_ref:"bimba:relation:1"});
   assert.equal(binding.contextNow.expression_revision,"rev-8");
   assert.throws(()=>binding.updateContext({...binding.contextNow,nara_ref:"nara:b"}),/cannot change the Nara identity/);
+});
+
+// ---------------------------------------------------------------------------
+// ES1 stage focus: DeixisResolution focus actions drive the real stage
+// ---------------------------------------------------------------------------
+
+function focusDocument(){
+  const ref="expression:focus";
+  const entity=(entityRef,subjectRef)=>({entity_ref:entityRef,revision:1,title:entityRef.endsWith("person")?"Person":"EarthBody",subject:subjectRef?{subject_ref:subjectRef,native_owner:"ql",presentation_role:"thing",sources:[],readings:[],actions:[]}:null,parameters:{}});
+  return {
+    schema:"oi.expression/v1",expression_ref:ref,revision:7,title:"Focus",
+    scenes:[{scene_ref:`${ref}:scene:main`,revision:2,title:"Main",entity_refs:[`${ref}:entity:person`,`${ref}:entity:earth`]}],
+    entities:{
+      [`${ref}:entity:person`]:entity(`${ref}:entity:person`,"bimba:#4"),
+      [`${ref}:entity:earth`]:entity(`${ref}:entity:earth`,"ql:nara:focus:m4:earth-body"),
+    },
+    relations:{},selection:{scene_ref:`${ref}:scene:main`,entity_ref:null},provenance:[],representations:[],refinements:[],
+  };
+}
+
+function focusResolution(action,refId){
+  return {
+    schema:"ql.nara-deixis/v1",resolution_ref:"deixis:1:resolution",deixis_ref:"deixis:1",turn_ref:"turn:1",nara_ref:"nara:a",
+    outcome:{outcome:"focused",focus:[{ref_id:refId,target_kind:"subject",focus_action:action}],turn_context:{coordinate_ref:"M4.1.1",expression_ref:"expression:focus",expression_revision:"7",turn_refs:[refId]}},
+  };
+}
+
+test("a Nara select focus action plans a committed kernel edit plus the live stage movement",()=>{
+  const plan=stageFocusPlan(focusResolution("select","bimba:#4"),focusDocument());
+  assert.deepEqual(plan.operations.map(op=>op.op),["kernel-focus","stage-select"]);
+  assert.equal(plan.operations[0].entity_ref,"expression:focus:entity:person");
+  assert.equal(plan.operations[0].subject_ref,"bimba:#4");
+  assert.deepEqual(plan.unmapped,[]);
+});
+
+test("a highlight focus action moves the stage presentation without touching the document",()=>{
+  const plan=stageFocusPlan(focusResolution("highlight","ql:nara:focus:m4:earth-body"),focusDocument());
+  assert.deepEqual(plan.operations.map(op=>op.op),["stage-highlight"]);
+  assert.equal(plan.operations[0].entity_ref,"expression:focus:entity:earth");
+});
+
+test("an open focus action is named unavailable; a select is not staged in its place",()=>{
+  const plan=stageFocusPlan(focusResolution("open","bimba:#4"),focusDocument());
+  assert.equal(plan.operations.length,1);
+  assert.equal(plan.operations[0].op,"unavailable");
+  assert.equal(plan.operations[0].action,"open");
+  assert.match(plan.operations[0].reason,/portal/);
+});
+
+test("a deictic focus on a ref no bound entity carries is unmapped, never invented",()=>{
+  const plan=stageFocusPlan(focusResolution("select","bimba:#5"),focusDocument());
+  assert.deepEqual(plan.operations,[]);
+  assert.deepEqual(plan.unmapped,["bimba:#5"]);
+});
+
+test("an unresolved deixis outcome plans nothing",()=>{
+  const resolution={...focusResolution("select","bimba:#4"),outcome:{outcome:"unresolved-outside-context",ref_id:"bimba:#5"}};
+  const plan=stageFocusPlan(resolution,focusDocument());
+  assert.deepEqual(plan.operations,[]);
+  assert.deepEqual(plan.unmapped,["bimba:#5"]);
+});
+
+// ---------------------------------------------------------------------------
+// Voice-body satisfaction bridge (caller-side, QL ql.nara-voice-body/v1)
+// ---------------------------------------------------------------------------
+
+const floorDeclaration=extra=>validateVoiceBodyDeclaration({
+  binding:{schema:NARA_VOICE_BODY_CONTRACT,body_ref:"model:x",body_provenance_ref:"prov:resolved-by-aikit"},
+  duplex:"full-duplex",barge_in:"supported",manual_interrupt:"supported",
+  structured_event_channel:"supported",reconnect_status_reporting:"supported",
+  context_refresh:"tool-access",observation_refs:[],...extra,
+});
+
+test("the QL voice-body contract round-trips and the body stays distinct from Nara and session",()=>{
+  const declaration=floorDeclaration();
+  bodyBindsDistinctly(declaration.binding,"nara:a","agent-session:1");
+  assert.throws(()=>bodyBindsDistinctly(declaration.binding,"model:x","agent-session:1"),/not the Nara/);
+  assert.throws(()=>bodyBindsDistinctly(declaration.binding,"nara:a","model:x"),/not the AgentSession/);
+  assert.throws(()=>validateVoiceBodyDeclaration({...declaration,extra:1}),/unknown field/);
+  assert.throws(()=>validateVoiceBodyDeclaration({...declaration,binding:{...declaration.binding,schema:"ql.nara-voice-body/v2"}}),/unsupported Nara voice body contract/);
+});
+
+test("full duplex satisfies a streamed requirement but not the inverse, and unknown never satisfies",()=>{
+  const streamedFloor={...dialogicalFloor(),duplex:"streamed-turn-taking"};
+  const strictFloor={...dialogicalFloor(),duplex:"full-duplex"};
+  assert.deepEqual(voiceBodySatisfaction(floorDeclaration(),streamedFloor),[]);
+  assert.deepEqual(voiceBodySatisfaction(floorDeclaration({duplex:"streamed-turn-taking"}),streamedFloor),[]);
+  assert.ok(voiceBodySatisfaction(floorDeclaration({duplex:"streamed-turn-taking"}),strictFloor).some(line=>line.includes("duplex")));
+  assert.ok(voiceBodySatisfaction(floorDeclaration({duplex:"unknown"}),streamedFloor).some(line=>line.includes("duplex")),"unknown satisfies nothing");
+  assert.ok(voiceBodySatisfaction(floorDeclaration({barge_in:"unknown"}),dialogicalFloor()).some(line=>line.includes("barge-in")));
+  const gaps=voiceBodySatisfaction(floorDeclaration({duplex:"unknown",barge_in:"unknown",manual_interrupt:"unknown",structured_event_channel:"unknown",reconnect_status_reporting:"unknown",context_refresh:"none"}),dialogicalFloor());
+  assert.equal(gaps.length,6,"every unmet requirement is named, never just the first");
+});
+
+test("the text body honestly fails the QL dialogical floor and every gap is named",()=>{
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:text"},textResolution,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.declaration.duplex,"unknown");
+  assert.equal(reduction.declaration.barge_in,"unsupported");
+  assert.equal(reduction.declaration.manual_interrupt,"unsupported");
+  assert.equal(reduction.declaration.structured_event_channel,"unsupported");
+  assert.equal(reduction.declaration.reconnect_status_reporting,"unsupported");
+  assert.equal(reduction.declaration.context_refresh,"push-on-change");
+  const unmet=voiceBodySatisfaction(reduction.declaration,dialogicalFloor());
+  assert.equal(unmet.length,6);
+  for(const named of ["duplex","barge-in","manual interrupt","structured event channel","reconnect status reporting","context refresh"]){
+    assert.ok(unmet.some(line=>line.includes(named)),`${named} is named: ${unmet.join("; ")}`);
+  }
+});
+
+test("the realtime body meets the floor on every body fact; the composition's push context path is the named gap",()=>{
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},realtimeResolution,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.declaration.duplex,"full-duplex");
+  assert.equal(reduction.declaration.barge_in,"supported");
+  assert.equal(reduction.declaration.manual_interrupt,"supported");
+  assert.equal(reduction.declaration.structured_event_channel,"supported");
+  assert.equal(reduction.declaration.reconnect_status_reporting,"supported");
+  const unmet=voiceBodySatisfaction(reduction.declaration,dialogicalFloor());
+  assert.deepEqual(unmet,["context refresh: requires tool-access, body discloses push-on-change"]);
+});
+
+test("a degraded capability reduces to unknown, never to supported",()=>{
+  const degraded=structuredClone(realtimeResolution);
+  // The composed view is authoritative for body-level facts: an explicitly
+  // degraded full-duplex capability is a stated reduction, not proven support.
+  degraded.composed_modality={
+    input_modalities:["speech","text"],output_modalities:["speech","text"],
+    transforms:{},interaction:{"full-duplex-realtime":{state:"degraded",reason:"provider's turn budget is limited"}},
+    complete:true,basis:["fixture"],
+  };
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},degraded,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.duplex.disposition,"unknown");
+  assert.match(reduction.duplex.note,/degraded/);
+});
+
+test("the satisfaction receipt carries the named reduction, the verdict, and no secret material",()=>{
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},realtimeResolution,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  const receipt=voiceBodySatisfactionReceipt({satisfaction_ref:"voice-body-satisfaction:1",nara_ref:"nara:a",reduction,evaluated_at:"2026-09-17T09:00:00Z"});
+  assert.equal(receipt.schema,"oi.nara-voice-body-satisfaction/v1");
+  assert.equal(receipt.satisfied,false,"the push context path is a real gap against the authored floor");
+  assert.deepEqual(receipt.unmet,["context refresh: requires tool-access, body discloses push-on-change"]);
+  assert.equal(receipt.declaration.duplex,"full-duplex");
+  assert.equal(receipt.reduction.context_refresh.disposition,"push-on-change");
+  assert.ok(receipt.declaration.observation_refs.some(ref=>ref.startsWith("aikit:model-runtime:")),"the reduction cites its resolution provenance");
 });

@@ -246,6 +246,24 @@ export class EngineSurface {
     if (!document.hidden) this.renderFrame(0);
   }
 
+  /** Move the live presentation's engine selection — the stage's real
+   * focus/highlight decoration (the adapter applies it through
+   * `setSelection` every rendered frame). Editing decoration only: neither
+   * GPU state, nor the stored configuration, nor the scene, nor the clock is
+   * touched. The caller must name the live presentation's id. */
+  updateSelection(id: string, selectedIds: string[]) {
+    this.require(id);
+    if (!this.live) throw new Error("The Expression presentation has been released.");
+    this.selectedIds = [...selectedIds];
+    if (!document.hidden) this.renderFrame(0);
+  }
+
+  /** The live presentation's current selection, as data (bounded inspection).
+   * Empty when no live presentation stands. */
+  selectionSnapshot(): string[] {
+    return [...this.selectedIds];
+  }
+
   /** Move the same canvas/context/clock between page and focused hosts.
    * Placement never creates a production adapter or changes the scene. */
   setContainer(id: string, container: HTMLElement | null) {
