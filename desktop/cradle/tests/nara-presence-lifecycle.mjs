@@ -125,7 +125,10 @@ try{
   // The caller-side QL dialogical floor check, computed at attach.
   check(await capabilities('voice-floor')==='unmet','The QL dialogical floor is evaluated at attach: the text body fails it honestly');
   await page.waitForFunction(()=>document.querySelector('[data-voice-floor-unmet]')?.textContent?.includes('duplex'),null,{timeout:15000});
-  check((await page.locator('[data-voice-floor-unmet]').innerText()).includes('context refresh'),'Every floor gap is named on the surface, not softened');
+  const unmetNote=await page.locator('[data-voice-floor-unmet]').innerText();
+  check(['duplex','barge-in','manual interrupt','structured event channel','reconnect status reporting'].every(named=>unmetNote.includes(named))
+    &&!unmetNote.includes('context refresh'),
+    'Every body-fact gap is named on the surface; context refresh is met by the per-turn push, never named');
 
   // Reconnect the body: same Nara, different resolution.
   await page.locator('.nara-next-body summary').click();
@@ -135,9 +138,9 @@ try{
   check(await capabilities('interruption')==='supported'&&await capabilities('vad')==='supported',
     'Body change disclosed: interruption and VAD now supported; Nara identity unchanged',{nara:await page.locator('[data-nara]').getAttribute('data-nara')});
   check(await page.locator('[data-change-receipt]').count()===1,'The constitution-change receipt is visible');
-  await page.waitForFunction(()=>document.querySelector('[data-voice-floor-unmet]')?.textContent?.includes('context refresh'),null,{timeout:15000});
-  check(await page.locator('[data-voice-floor-unmet]').count()===1,
-    'The floor recomputes at reconnect: every body fact passes; the push context path is the named gap');
+  await page.waitForFunction(()=>document.querySelector('dd[data-capability="voice-floor"]')?.textContent==='met',null,{timeout:15000});
+  check(await page.locator('[data-voice-floor-unmet]').count()===0,
+    'The floor recomputes at reconnect: the realtime body meets it — context refresh met by push-on-change over the structured event channel');
 
   // Hold to talk: the REAL capture pipeline against the synthetic device.
   const talk=page.locator('button:has-text("Hold to talk")');

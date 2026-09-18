@@ -147,17 +147,21 @@ const textFloorReceipt=voiceBodySatisfactionReceipt({
   reduction:voiceBodyFromConstitution({constitution:constitutionText,nara_ref:"nara:desktop-walk"}),
   evaluated_at:new Date().toISOString(),
 });
-await check("The text body honestly fails the QL dialogical floor and every gap is named",()=>{
+await check("The text body fails the QL dialogical floor on the five body facts; per-turn context push is met",()=>{
   assert.equal(textFloorReceipt.satisfied,false);
-  assert.equal(textFloorReceipt.unmet.length,6,"duplex, barge-in, manual interrupt, structured channel, reconnect, context refresh");
+  assert.equal(textFloorReceipt.unmet.length,5,"duplex, barge-in, manual interrupt, structured channel, reconnect status reporting");
   assert.deepEqual(textFloorReceipt.unmet,[
     "duplex: requires at least streamed-turn-taking, body discloses unknown",
     "barge-in: required supported, body discloses unsupported",
     "manual interrupt: required supported, body discloses unsupported",
     "structured event channel: required supported, body discloses unsupported",
     "reconnect status reporting: required supported, body discloses unsupported",
-    "context refresh: requires tool-access, body discloses push-on-change",
   ]);
+  // The floor's refreshable requirement is met by the composition's own
+  // structural fact: the host recomposes the bounded context each turn.
+  assert.equal(textFloorReceipt.declaration.context_refresh,"push-on-change");
+  assert.equal(textFloorReceipt.reduction.context_refresh.source,"composition");
+  assert.ok(!textFloorReceipt.unmet.some(line=>line.includes("context refresh")),"context refresh is met, never named as a gap");
   return textFloorReceipt;
 });
 
@@ -262,12 +266,15 @@ const realtimeFloorReceipt=voiceBodySatisfactionReceipt({
   reduction:voiceBodyFromConstitution({constitution:constitutionRealtime,nara_ref:"nara:desktop-walk"}),
   evaluated_at:new Date().toISOString(),
 });
-await check("The realtime body meets the floor on every body fact; the push context path is the named gap",()=>{
-  assert.equal(realtimeFloorReceipt.satisfied,false,"honest against the authored floor, not engineered to pass");
-  assert.deepEqual(realtimeFloorReceipt.unmet,["context refresh: requires tool-access, body discloses push-on-change"]);
+await check("The realtime body meets the QL dialogical floor; push-on-change over the structured event channel is the named basis",()=>{
+  assert.equal(realtimeFloorReceipt.satisfied,true,"refreshable is met: host push rides the proven structured event channel");
+  assert.deepEqual(realtimeFloorReceipt.unmet,[]);
   assert.equal(realtimeFloorReceipt.declaration.duplex,"full-duplex");
   assert.equal(realtimeFloorReceipt.declaration.barge_in,"supported");
   assert.equal(realtimeFloorReceipt.declaration.reconnect_status_reporting,"supported");
+  assert.equal(realtimeFloorReceipt.declaration.context_refresh,"push-on-change");
+  assert.equal(realtimeFloorReceipt.reduction.context_refresh.source,"interaction.structured-events + interaction.tool-requests");
+  assert.match(realtimeFloorReceipt.reduction.context_refresh.note,/structured event channel/,"the verdict carries its basis, not just the verdict");
   return realtimeFloorReceipt;
 });
 

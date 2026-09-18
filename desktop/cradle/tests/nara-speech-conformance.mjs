@@ -31,7 +31,7 @@ import {NaraSpeechBinding,validateToolRequest} from "../src/nara/session";
 import {stageFocusPlan} from "../src/nara/stageFocus";
 import {
   NARA_VOICE_BODY_CONTRACT,bodyBindsDistinctly,dialogicalFloor,
-  validateVoiceBodyDeclaration,voiceBodyFromConstitution,voiceBodySatisfaction,voiceBodySatisfactionReceipt,
+  validateVoiceBodyDeclaration,validateVoiceBodyRequirements,voiceBodyFromConstitution,voiceBodySatisfaction,voiceBodySatisfactionReceipt,
 } from "../src/nara/voiceBody";
 
 const fixturesRoot=fileURLToPath(new URL("./fixtures/nara/",import.meta.url));
@@ -510,6 +510,10 @@ test("the QL voice-body contract round-trips and the body stays distinct from Na
   assert.throws(()=>bodyBindsDistinctly(declaration.binding,"nara:a","model:x"),/not the AgentSession/);
   assert.throws(()=>validateVoiceBodyDeclaration({...declaration,extra:1}),/unknown field/);
   assert.throws(()=>validateVoiceBodyDeclaration({...declaration,binding:{...declaration.binding,schema:"ql.nara-voice-body/v2"}}),/unsupported Nara voice body contract/);
+  // The requirement slot carries the requirement vocabulary; a mechanism
+  // value is refused there (QL `ContextRefreshRequirement`, deny-unknown).
+  assert.throws(()=>validateVoiceBodyRequirements({...dialogicalFloor(),context_refresh:"tool-access"}),/invalid context refresh requirement/);
+  assert.throws(()=>validateVoiceBodyRequirements({...dialogicalFloor(),context_refresh:"none"}),/invalid context refresh requirement/);
 });
 
 test("full duplex satisfies a streamed requirement but not the inverse, and unknown never satisfies",()=>{
@@ -522,9 +526,10 @@ test("full duplex satisfies a streamed requirement but not the inverse, and unkn
   assert.ok(voiceBodySatisfaction(floorDeclaration({barge_in:"unknown"}),dialogicalFloor()).some(line=>line.includes("barge-in")));
   const gaps=voiceBodySatisfaction(floorDeclaration({duplex:"unknown",barge_in:"unknown",manual_interrupt:"unknown",structured_event_channel:"unknown",reconnect_status_reporting:"unknown",context_refresh:"none"}),dialogicalFloor());
   assert.equal(gaps.length,6,"every unmet requirement is named, never just the first");
+  assert.ok(gaps.some(line=>line.includes("host-refreshable context")),"the refresh gap names the capability, not a mechanism");
 });
 
-test("the text body honestly fails the QL dialogical floor and every gap is named",()=>{
+test("the text body fails the floor on the five body facts; per-turn context push is met",()=>{
   const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:text"},textResolution,"2026-09-17T09:00:00Z");
   const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
   assert.equal(reduction.declaration.duplex,"unknown");
@@ -532,15 +537,19 @@ test("the text body honestly fails the QL dialogical floor and every gap is name
   assert.equal(reduction.declaration.manual_interrupt,"unsupported");
   assert.equal(reduction.declaration.structured_event_channel,"unsupported");
   assert.equal(reduction.declaration.reconnect_status_reporting,"unsupported");
+  // The host recomposes the bounded context each turn: the structural
+  // push-on-change disposition meets the floor's refreshable requirement.
   assert.equal(reduction.declaration.context_refresh,"push-on-change");
+  assert.equal(reduction.context_refresh.source,"composition");
   const unmet=voiceBodySatisfaction(reduction.declaration,dialogicalFloor());
-  assert.equal(unmet.length,6);
-  for(const named of ["duplex","barge-in","manual interrupt","structured event channel","reconnect status reporting","context refresh"]){
+  assert.equal(unmet.length,5);
+  for(const named of ["duplex","barge-in","manual interrupt","structured event channel","reconnect status reporting"]){
     assert.ok(unmet.some(line=>line.includes(named)),`${named} is named: ${unmet.join("; ")}`);
   }
+  assert.ok(!unmet.some(line=>line.includes("context refresh")),"context refresh is met by per-turn push, never named as a gap");
 });
 
-test("the realtime body meets the floor on every body fact; the composition's push context path is the named gap",()=>{
+test("the realtime body meets the QL dialogical floor; push-on-change over the structured event channel is the named basis",()=>{
   const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},realtimeResolution,"2026-09-17T09:00:00Z");
   const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
   assert.equal(reduction.declaration.duplex,"full-duplex");
@@ -548,8 +557,26 @@ test("the realtime body meets the floor on every body fact; the composition's pu
   assert.equal(reduction.declaration.manual_interrupt,"supported");
   assert.equal(reduction.declaration.structured_event_channel,"supported");
   assert.equal(reduction.declaration.reconnect_status_reporting,"supported");
-  const unmet=voiceBodySatisfaction(reduction.declaration,dialogicalFloor());
-  assert.deepEqual(unmet,["context refresh: requires tool-access, body discloses push-on-change"]);
+  assert.equal(reduction.declaration.context_refresh,"push-on-change");
+  assert.equal(reduction.context_refresh.source,"interaction.structured-events + interaction.tool-requests");
+  assert.match(reduction.context_refresh.note,/structured event channel/);
+  assert.deepEqual(voiceBodySatisfaction(reduction.declaration,dialogicalFloor()),[]);
+});
+
+test("a realtime body with no proven structured event channel discloses none and the floor names the gap",()=>{
+  const muteChannel=structuredClone(realtimeResolution);
+  const modality=muteChannel.relation.model_surface.modality;
+  assert.ok(modality);
+  modality.interaction=modality.interaction.filter(name=>name!=="structured-events"&&name!=="tool-requests");
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime-mute-channel"},muteChannel,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.declaration.duplex,"full-duplex","the body is still realtime");
+  assert.equal(reduction.declaration.structured_event_channel,"unsupported");
+  assert.equal(reduction.declaration.context_refresh,"none","unproven channel: the host has no push path");
+  assert.deepEqual(voiceBodySatisfaction(reduction.declaration,dialogicalFloor()),[
+    "structured event channel: required supported, body discloses unsupported",
+    "context refresh: body discloses none; the floor requires host-refreshable context",
+  ]);
 });
 
 test("a degraded capability reduces to unknown, never to supported",()=>{
@@ -572,9 +599,10 @@ test("the satisfaction receipt carries the named reduction, the verdict, and no 
   const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
   const receipt=voiceBodySatisfactionReceipt({satisfaction_ref:"voice-body-satisfaction:1",nara_ref:"nara:a",reduction,evaluated_at:"2026-09-17T09:00:00Z"});
   assert.equal(receipt.schema,"oi.nara-voice-body-satisfaction/v1");
-  assert.equal(receipt.satisfied,false,"the push context path is a real gap against the authored floor");
-  assert.deepEqual(receipt.unmet,["context refresh: requires tool-access, body discloses push-on-change"]);
+  assert.equal(receipt.satisfied,true,"the realtime body meets the floor: refreshable is met by push-on-change over the structured event channel");
+  assert.deepEqual(receipt.unmet,[]);
   assert.equal(receipt.declaration.duplex,"full-duplex");
   assert.equal(receipt.reduction.context_refresh.disposition,"push-on-change");
+  assert.match(receipt.reduction.context_refresh.note,/structured event channel/,"the verdict's basis is named, not just the verdict");
   assert.ok(receipt.declaration.observation_refs.some(ref=>ref.startsWith("aikit:model-runtime:")),"the reduction cites its resolution provenance");
 });

@@ -19,6 +19,8 @@ desktop/cradle/src/nara/
                          actuation.nara-interruption/v1 (session_destroyed:false),
                          actuation.speech-tool-decision/v1 (authorised != executed),
                          delegation/enrichment receipts (applied:false)
+    voiceBody.ts         ql.nara-voice-body/v1 mirror (verbatim, deny-unknown) + the caller-side
+                         constitution→declaration reduction and QL dialogical floor satisfaction
     NaraSurface.tsx      the summoned "nara" surface: capability-adaptive presence, push-to-talk,
                          interrupt, reconnect, transcript expansion, authority proofs, Epii panel
 ```
@@ -49,6 +51,34 @@ desktop/cradle/src/nara/
 6. **Epii stays out of the foreground.** Delegation hands exactly the admitted scope; a returned
    enrichment is presented as a proposal with `applied:false`; stale application refuses at the
    apply gate.
+
+## The QL voice-body floor (caller-side satisfaction)
+
+The desktop reduces its constructed speech constitution to the QL
+`ql.nara-voice-body/v1` declaration (`src/nara/voiceBody.ts`, mirrored
+verbatim from `ql-mef/src/nara/voice.rs`) and evaluates the dialogical floor
+at attach and at every body change. The floor's `context_refresh` slot is a
+**requirement**, not a mechanism: `not-required | refreshable` — the
+capability that the body's context can be refreshed from host truth while the
+session lives. The declaration discloses a **mechanism**:
+`push-on-change | tool-access | none`. `refreshable` is met by
+`push-on-change` or `tool-access`; `none` fails with a named gap.
+
+The desktop derives the disposition from its own composition, conservatively:
+on the text/staged turn path the host recomposes the bounded context from
+live application state each turn and pushes it — structural
+`push-on-change`; on a proven realtime body host push rides the structured
+event channel — `push-on-change` only when that channel is proven; anything
+unproven stays `none`.
+
+Rationale: the dialogical law supplies the bounded `NaraDialogueContext` from
+the caller and the host adjudicates it, so what the floor demands is that the
+body's context can be refreshed from host truth — host refresh is the floor.
+Model-initiated tool pull (`tool-access`) is an acceptable, optional-stronger
+mechanism, never the requirement. (2026-09-18 owner-commissioned correction:
+the floor originally required the `tool-access` mechanism with strict
+equality, which no host-pushed composition could satisfy; the requirement was
+recast from mechanism to capability, contract version unchanged.)
 
 ## Evidence
 
