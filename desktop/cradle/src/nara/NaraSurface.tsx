@@ -13,8 +13,14 @@
  * Capability-adaptive by law: the UI renders what the constitution
  * disclosed — manual push-to-talk/interrupt when VAD/barge-in are not
  * proven, transcript rows only for real turns, text input always available
- * as the honest fallback. Unavailable is never an error. At rest the surface
- * is summoned, never permanent: no transcript dashboard over the world.
+ * as the honest fallback. Unavailable is never an error. The speech body
+ * itself renders in one of three states derived only from the constitution's
+ * disclosed facts (src/nara/bodyState.ts): live (chips as usual), option
+ * (constituted but gated or degraded — the body shows as a visible option
+ * with the gap named exactly as the document carries it), or absent
+ * (text-capable Nara) — and hold-to-talk never presents as live on a gated
+ * or absent body. At rest the surface is summoned, never permanent: no
+ * transcript dashboard over the world.
  */
 
 import {useCallback,useEffect,useRef,useState} from "react";
@@ -38,6 +44,7 @@ import {
   type ChoreographyPlan,
 } from "./expressiveAct";
 import {stageFocusPlan} from "./stageFocus";
+import {holdToTalkLive,holdToTalkRefusal,naraBodyState} from "./bodyState";
 import {voiceBodyFromConstitution,voiceBodySatisfactionReceipt} from "./voiceBody";
 import {NaraSpeechBinding,type NaraSpeechRead,type SpeechToolDecision} from "./session";
 import {supportUsable,type SpeechSupport} from "./support";
@@ -390,12 +397,14 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   }catch(e){setError(String(e));renderFrom();}
  },[buildTurnContext,renderFrom]);
 
- /** Push-to-talk: real capture, honestly gated by the constitution. */
+ /** Push-to-talk: real capture, honestly gated by the constitution. A gated
+  * or absent body never presents the affordance as live. */
  const holdToTalk=useCallback(async()=>{
   const current=client.current;
   if(!current)return;
-  if(!speechInputDeclared(current.constitutionNow)){
-   setNotice("This body declares no usable acoustic input; text is the honest path");
+  const refusal=holdToTalkRefusal(current.constitutionNow);
+  if(refusal){
+   setNotice(refusal);
    return;
   }
   try{
@@ -655,9 +664,13 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     <small data-nara-phase={read.phase}>{PHASE_WORD[read.phase]}{mic==="live"?" · microphone live":mic==="denied"?" · microphone refused by the OS":mic==="unavailable"?" · microphone unreachable":""}</small>
    </div>
    <div className="oi-action-group">
-    <button className="oi-action" aria-pressed={mic==="live"} disabled={!speechInputDeclared(client.current.constitutionNow)}
-     onMouseDown={()=>void holdToTalk()} onMouseUp={releaseTalk} onTouchStart={()=>void holdToTalk()} onTouchEnd={releaseTalk}
-     title={speechInputDeclared(client.current.constitutionNow)?"Hold to capture audio for the constituted body":"This body declares no usable acoustic input; text is the honest path"}>Hold to talk</button>
+    {(()=>{
+     const talkLive=holdToTalkLive(client.current.constitutionNow);
+     const refusal=holdToTalkRefusal(client.current.constitutionNow);
+     return <button className="oi-action" aria-pressed={mic==="live"} disabled={!talkLive}
+      onMouseDown={()=>void holdToTalk()} onMouseUp={releaseTalk} onTouchStart={()=>void holdToTalk()} onTouchEnd={releaseTalk}
+      title={talkLive?"Hold to capture audio for the constituted body":refusal??""}>Hold to talk</button>;
+    })()}
     <button className="oi-action" onClick={interrupt} title={supportUsable(read.interruption)?"Stop speech and hold pending choreography":"This body cannot be trusted to cancel cleanly; the refusal is recorded honestly"}>Interrupt</button>
     <button className="oi-action" onClick={()=>void reconnect()} title="Change or reconnect the body without reminting Nara">Reconnect body</button>
    </div>
@@ -675,6 +688,15 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    <dt>reconnect</dt><dd data-capability="reconnect">{read.reconnect??"stateless"}</dd>
    <dt>QL dialogical floor</dt><dd data-capability="voice-floor">{floor?(floor["satisfied"]?"met":"unmet"):"—"}</dd>
   </dl>
+  {(()=>{const body=naraBodyState(client.current.constitutionNow);
+   if(body.state==="live")return null;
+   if(body.state==="absent")return <p className="oi-note" data-nara-body-state="absent">{body.line}</p>;
+   return <div className="oi-note" data-nara-body-state="option" data-nara-body-usable={body.usable?"usable":"unusable"}>
+    <p data-nara-body-state-line>{body.line}</p>
+    <ul data-nara-body-gaps>{body.gaps.map((gap,index)=><li key={index} data-nara-body-gap={gap.condition}>{gap.line}</li>)}</ul>
+    {body.credential.line&&<p data-nara-credential>{body.credential.line}</p>}
+   </div>;
+  })()}
   {floor&&!floor["satisfied"]&&<p className="oi-note" data-voice-floor-unmet>Dialogical floor unmet for {String(floor["body_ref"])}: {(floor["unmet"] as string[]).join("; ")}. The composition is honest about the gap; it does not claim foreground dialogical speech.</p>}
   <div className="nara-composer oi-action-group">
    <input ref={composer} className="oi-input" aria-label="Message Nara" placeholder="Text is always available" onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void sendText();}}}/>
@@ -737,10 +759,6 @@ function collectAvailableActions(document:ExpressionDocument):string[] {
  const refs=new Set<string>();
  for(const entity of Object.values(document.entities))for(const action of entity.subject?.actions??[])refs.add(action.action_ref);
  return [...refs];
-}
-
-function speechInputDeclared(constitution:SpeechConstitutionFacts):boolean {
- return constitution.input_modalities.some(m=>m==="audio"||m==="speech");
 }
 
 function speechCapableWord(constitution:SpeechConstitutionFacts):string {
