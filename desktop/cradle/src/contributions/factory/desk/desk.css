@@ -1,0 +1,176 @@
+/* The Desk and the Tasks chat (FACTORY-UI-INTEGRATION-HANDOFF §11).
+   Colours and type come from the shell tokens; the status hues follow the
+   host's colour scheme exactly as the captured build surface's do, scoped
+   here rather than reached into its private scope. */
+
+.factory-centre{
+  /* the old centre home's measure no longer governs: the Desk is a board,
+     Tasks a full-size workspace — both use the canvas they are given */
+  display: flex; flex-direction: column; min-height: 100%; max-width: none;
+  padding: 0; gap: 0; background: var(--oi-canvas-ground);
+}
+.factory-centre.factory-tasks{ height: 100%; }
+
+/* status hues: the same scheme-following pairs the build surface pins */
+.factory-centre{
+  --desk-ok: light-dark(#256b42, #69c489);
+  --desk-error: light-dark(#a3352b, #ef8179);
+  --desk-running: light-dark(#28619b, #79b8f3);
+  --desk-warn: light-dark(#745814, #d7b66a);
+}
+
+/* ===========================================================================
+   Desk board
+   =========================================================================== */
+
+.desk-board{ display: flex; flex-direction: column; gap: 16px; padding: 30px clamp(20px, 4vw, 56px) 46px; box-sizing: border-box; }
+.desktop-shell .mode-stage[data-window-corner="true"] .desk-board-head{ padding-left: max(0px, calc(var(--window-cutout) - clamp(20px, 4vw, 56px) + 10px)); }
+
+.desk-board-head{ display: flex; align-items: flex-end; justify-content: space-between; gap: 16px; flex-wrap: wrap; }
+.desk-board-title h1{ margin: 0; font-size: 1.35rem; letter-spacing: -.02em; }
+.desk-board-title p{ margin: 2px 0 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.desk-board-title p strong{ color: var(--desk-error); font-weight: 550; }
+.desk-board-tools{ display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+.desk-board-search{ display: flex; align-items: center; gap: 6px; padding: 4px 9px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 8px; color: var(--oi-muted-2); background: var(--oi-wash); }
+.desk-board-search input{ border: 0; background: transparent; color: var(--oi-foreground); min-width: 150px; font-size: var(--oi-shell-type-ui); outline: none; }
+.desk-board-tools select{ min-height: 27px; }
+.desk-board-empty{ margin: 4px 0 0; max-width: 620px; }
+.desk-board-fixture-note{ margin: 0; }
+
+.desk-addsource{ border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-wash); }
+.desk-addsource > summary{ padding: 8px 12px; cursor: pointer; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.desk-addsource-form{ display: flex; flex-direction: column; gap: 8px; padding: 4px 12px 12px; }
+.desk-addsource-form label{ display: flex; flex-direction: column; gap: 3px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); max-width: 460px; }
+
+.desk-source-states{ display: flex; flex-direction: column; gap: 4px; }
+.desk-source-states p{ margin: 0; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.desk-source-states p[data-source-state="refused"]{ color: var(--desk-error); }
+
+/* the board: one coherent kanban of whole Runs — the columns follow the
+   canvas the centre actually has (the right panel takes its share), so the
+   board never clips a column behind the sidebar */
+.desk-columns{ display: grid; grid-template-columns: repeat(auto-fill, minmax(228px, 1fr)); gap: 12px; align-items: start; }
+.desk-group{ display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.desk-group-head{ display: flex; align-items: baseline; gap: 6px; margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 600; letter-spacing: var(--oi-shell-tracking, .01em); text-transform: uppercase; color: var(--oi-muted-2); }
+.desk-group-head span{ font-weight: 500; }
+.desk-group-body{ display: flex; flex-direction: column; gap: 8px; }
+.desk-group-empty{ margin: 0; padding: 6px 2px; }
+
+.desk-card{ border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-wash); overflow: hidden; }
+.desk-card[data-status="running"]{ border-color: color-mix(in srgb, var(--desk-running) 38%, transparent); }
+.desk-card[data-status="blocked"], .desk-card[data-status="fail"]{ border-color: color-mix(in srgb, var(--desk-error) 45%, transparent); }
+.desk-card-open{ display: flex; flex-direction: column; gap: 6px; padding: 11px 12px 10px; width: 100%; text-align: left; border: 0; background: transparent; color: inherit; font: inherit; cursor: pointer; }
+.desk-card-open:hover{ background: var(--oi-wash-strong); }
+.desk-card-open:focus-visible{ outline: var(--oi-shell-edge) solid var(--oi-focus, currentColor); outline-offset: -2px; }
+.desk-card-top{ display: flex; align-items: center; justify-content: space-between; gap: 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); min-width: 0; }
+.desk-card-project{ overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-card-project small{ color: var(--oi-muted-2); }
+.desk-card-state{ display: inline-flex; align-items: center; gap: 4px; }
+.desk-card-state[data-status="success"]{ color: var(--desk-ok); }
+.desk-card-state[data-status="running"]{ color: var(--desk-running); }
+.desk-card-state[data-status="queued"]{ color: var(--desk-warn); }
+.desk-card-state[data-status="blocked"], .desk-card-state[data-status="fail"], .desk-card-state[data-status="cancelled"]{ color: var(--desk-error); }
+.desk-card-title{ font-weight: 550; font-size: var(--oi-shell-type-body); line-height: 1.35; }
+.desk-card-step{ font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-card-facts{ display: flex; flex-wrap: wrap; gap: 3px 10px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.desk-card-facts b{ font-weight: 600; color: var(--desk-running); }
+.desk-card-checks-attention{ color: var(--desk-warn); }
+.desk-card-agents{ font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-card-needs{ display: flex; align-items: baseline; gap: 6px; padding: 8px 12px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); color: var(--desk-error); font-size: var(--oi-shell-type-ui); }
+.desk-card-needs p{ margin: 0; flex: 1; }
+
+.desk-board-refused{ border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-top: 10px; }
+.desk-board-refused h3{ margin: 0 0 6px; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.desk-board-refused p{ margin: 2px 0; font-size: var(--oi-shell-type-ui); color: var(--desk-error); }
+
+/* receiving: what arrived for the person, Run or not */
+.desk-receiving{ display: flex; flex-direction: column; gap: 6px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-top: 14px; }
+.desk-receiving h2{ display: flex; align-items: baseline; gap: 6px; margin: 0 0 2px; font-size: var(--oi-shell-type-nav); font-weight: 600; text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); }
+.desk-receiving h2 span{ font-weight: 500; }
+.desk-receiving-row{ display: flex; align-items: center; gap: 8px; padding: 7px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 8px; background: var(--oi-wash); text-align: left; color: inherit; font: inherit; cursor: pointer; max-width: 620px; }
+.desk-receiving-row:hover{ background: var(--oi-wash-strong); }
+.desk-receiving-text{ display: flex; flex-direction: column; gap: 1px; min-width: 0; }
+.desk-receiving-text strong{ font-weight: 550; font-size: var(--oi-shell-type-nav); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.desk-receiving-text small{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+
+/* ===========================================================================
+   Desk Run detail: the full SSSF view + the Run's own conversations
+   =========================================================================== */
+
+.desk-detail{ display: flex; flex-direction: column; gap: 14px; padding: 26px clamp(20px, 3vw, 40px) 46px; box-sizing: border-box; }
+.desktop-shell .mode-stage[data-window-corner="true"] .desk-detail-head{ padding-left: max(0px, calc(var(--window-cutout) - clamp(20px, 3vw, 40px) + 10px)); }
+.desk-detail-head{ display: flex; align-items: flex-start; gap: 14px; flex-wrap: wrap; }
+.desk-detail-title h1{ margin: 0; font-size: 1.2rem; letter-spacing: -.01em; }
+.desk-detail-title p{ display: flex; align-items: center; gap: 6px; flex-wrap: wrap; margin: 3px 0 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.desk-detail-build > .fb-build-surface{ border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; overflow: hidden; }
+.desk-detail-tasks{ display: flex; flex-direction: column; gap: 8px; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-top: 12px; }
+.desk-detail-tasks h2{ display: flex; align-items: center; gap: 6px; margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 600; text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); }
+.desk-detail-carried{ display: flex; flex-direction: column; gap: 6px; }
+.desk-detail-tasks-list h3{ margin: 8px 0 4px; font-size: var(--oi-shell-type-ui); font-weight: 550; color: var(--oi-muted-2); }
+
+/* ===========================================================================
+   Tasks: the full-size working chat over the shared chat face
+   =========================================================================== */
+
+.factory-chat-full{ display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.factory-chat-context{ display: flex; align-items: center; gap: 12px; padding: 10px 22px 8px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.desktop-shell .mode-stage[data-window-corner="true"] .factory-chat-context{ padding-left: max(22px, calc(var(--window-cutout) + 10px)); }
+.factory-chat-context-project{ display: inline-flex; align-items: center; gap: 7px; font-weight: 550; color: var(--oi-foreground); }
+.factory-chat-context-mark{ width: 8px; height: 8px; border-radius: 3px; background: var(--oi-accent-soft); border: var(--oi-shell-edge) solid var(--oi-accent-ink); }
+.factory-chat-context-direct{ font-size: var(--oi-shell-type-ui); }
+.factory-chat-host{ flex: 1; min-height: 0; }
+
+/* The shared chat face, centre-size: a reading column for ordinary prose,
+   more width for code, the transcript dominant, the composer inside the
+   pane's own bottom edge. This widens the presentation; it does not fork
+   the component — every primitive below is the chat's own. */
+.factory-tasks .agent-chat{ --desk-chat-measure: min(880px, 94%); background: transparent; }
+.factory-tasks .agent-chat :is(.chat-head, .chat-session){ padding-inline: max(28px, calc((100% - var(--desk-chat-measure)) / 2)); }
+.factory-tasks .agent-chat .chat-transcript{ padding: 26px max(28px, calc((100% - var(--desk-chat-measure)) / 2)) 10px; gap: 20px; }
+/* top margin stays auto: the composer anchors to the pane's own bottom edge
+   in the fresh (unbound) state, exactly as the shared face does in the panel */
+.factory-tasks .agent-chat .chat-composer{ box-sizing: border-box; width: min(var(--desk-chat-measure), calc(100% - 56px)); margin: auto auto 22px; }
+.factory-tasks .agent-chat .chat-fresh{ box-sizing: border-box; align-self: stretch; padding: 0 max(28px, calc((100% - var(--desk-chat-measure)) / 2)); }
+/* the fresh state's welcome reads from the top of the canvas with room to breathe */
+.factory-tasks .agent-chat .chat-fresh .chat-welcome{ padding-top: 8vh; }
+/* code, tables and substantial content take the wider lane they need */
+.factory-tasks .agent-chat .chat-prose pre,
+.factory-tasks .agent-chat .chat-bubble pre{ margin-inline: min(0px, calc((var(--desk-chat-measure) - min(1240px, 96%)) / 2)); max-width: none; }
+
+/* The Desk's full Run view (DeskRunView): the operating face of one whole
+   Run — depth switcher in the shell's control grammar, each depth binding
+   the owner's own readings. The trace components keep their fb-* language
+   (the package's own styles); the Reading/Live/Map depths speak the Desk's. */
+.desk-run-view{ display: flex; flex-direction: column; gap: 12px; }
+.desk-run-depths{ display: flex; gap: 4px; flex-wrap: wrap; }
+.desk-run-depths button{ appearance: none; border: none; border-radius: 7px; padding: 5px 12px; font: inherit; font-size: var(--oi-shell-type-nav); font-weight: 550; color: var(--oi-muted-2); background: transparent; cursor: pointer; }
+.desk-run-depths button:hover{ color: var(--oi-foreground); background: var(--oi-surface-2, rgba(127,127,127,.08)); }
+.desk-run-depths button.is-selected{ color: var(--oi-foreground); background: var(--oi-accent-soft); }
+.desk-run-depth{ display: flex; flex-direction: column; gap: 14px; }
+.desk-run-ref{ font-size: .92em; color: var(--oi-muted-2); word-break: break-all; }
+.desk-run-kicker{ font-size: var(--oi-shell-type-nav); text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); }
+.desk-run-muted{ color: var(--oi-muted-2); }
+.desk-run-state{ font-size: var(--oi-shell-type-nav); font-weight: 550; }
+.desk-run-section-head{ display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.desk-run-section-head h3{ margin: 0; font-size: var(--oi-shell-type-ui); font-weight: 600; }
+.desk-run-section-head span{ font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.desk-run-frontier{ display: flex; flex-direction: column; gap: 6px; padding: 14px 16px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; }
+.desk-run-frontier h2{ margin: 0; font-size: 1.05rem; }
+.desk-run-frontier p{ margin: 0; color: var(--oi-muted-2); }
+.desk-run-frontier-meta{ display: flex; gap: 10px; flex-wrap: wrap; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.desk-run-candidates{ display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 10px; }
+.desk-run-candidates article{ display: flex; flex-direction: column; gap: 6px; padding: 12px 14px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; }
+.desk-run-candidates dl{ display: flex; flex-wrap: wrap; gap: 8px 14px; margin: 0; font-size: var(--oi-shell-type-nav); }
+.desk-run-candidates dt{ color: var(--oi-muted-2); }
+.desk-run-candidates dd{ margin: 0; display: flex; gap: 6px; flex-wrap: wrap; }
+.desk-run-candidates ul{ margin: 0; padding-left: 18px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.desk-run-two-col{ display: grid; grid-template-columns: repeat(auto-fit, minmax(300px, 1fr)); gap: 14px; }
+.desk-run-two-col section{ display: flex; flex-direction: column; gap: 8px; }
+.desk-run-claim, .desk-run-request{ display: flex; flex-direction: column; gap: 5px; padding: 10px 12px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; }
+.desk-run-claim p, .desk-run-request p{ margin: 0; }
+.desk-run-live-grid{ display: grid; grid-template-columns: repeat(auto-fill, minmax(260px, 1fr)); gap: 10px; }
+.desk-run-live-grid article{ display: flex; flex-direction: column; gap: 5px; padding: 12px 14px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; }
+.desk-run-live-grid h4{ margin: 0; font-size: var(--oi-shell-type-ui); }
+.desk-run-live-grid p{ margin: 0; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.desk-run-card-top{ display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.desk-run-map .factory-run-map{ margin: 0; }
