@@ -13,6 +13,15 @@
  *   - `satisfies()` names every unmet requirement, it never stops at the first;
  *   - full-duplex satisfies a streamed-turn-taking requirement, never the
  *     inverse;
+ *   - context refresh splits requirement from mechanism: the requirement
+ *     (`not-required | refreshable`) is the capability that the bounded
+ *     context can be refreshed from host truth while the session lives; the
+ *     declaration's mechanism (`push-on-change | tool-access | none`) is how
+ *     a body provides it. The dialogical law supplies the context from the
+ *     caller and the host adjudicates it, so the floor demands
+ *     host-refreshable context — `push-on-change` and `tool-access` both
+ *     meet it, `none` does not. Model-initiated tool pull is an acceptable
+ *     stronger mechanism, never the floor requirement;
  *   - the voice body is neither the Nara nor the AgentSession carrying the
  *     turn.
  *
@@ -42,12 +51,19 @@ export type VoiceCapabilityStatus = "supported" | "unsupported" | "unknown";
 export type VoiceDuplexDisposition = "full-duplex" | "streamed-turn-taking" | "unknown";
 
 /** How the bounded dialogue context reaches the body across a turn (QL
- * `ContextRefreshDisposition`). */
+ * `ContextRefreshDisposition` — the declaration's mechanism). */
 export type ContextRefreshDisposition = "push-on-change" | "tool-access" | "none";
+
+/** Whether a requirement demands that the body's context can be refreshed
+ * from host truth while the session lives (QL `ContextRefreshRequirement`).
+ * The requirement is the capability, never a mechanism: host push and model
+ * pull both provide `refreshable`; an absent path does not. */
+export type ContextRefreshRequirement = "not-required" | "refreshable";
 
 const CAPABILITY_STATUS: readonly VoiceCapabilityStatus[] = ["supported", "unsupported", "unknown"];
 const DUPLEX_DISPOSITIONS: readonly VoiceDuplexDisposition[] = ["full-duplex", "streamed-turn-taking", "unknown"];
 const CONTEXT_REFRESH_DISPOSITIONS: readonly ContextRefreshDisposition[] = ["push-on-change", "tool-access", "none"];
+const CONTEXT_REFRESH_REQUIREMENTS: readonly ContextRefreshRequirement[] = ["not-required", "refreshable"];
 
 export interface VoiceBodyBinding {
   schema:typeof NARA_VOICE_BODY_CONTRACT;
@@ -70,8 +86,10 @@ export interface VoiceBodyRequirements {
    * preserves the canonical Nara/Expression instead of inventing a second
    * dialogue. */
   reconnect_status_reporting:VoiceCapabilityStatus;
-  /** How the bounded context refreshes across turns. */
-  context_refresh:ContextRefreshDisposition;
+  /** Whether the body's context can be refreshed from host truth while the
+   * session lives (QL `ContextRefreshRequirement`) — the capability, not a
+   * mechanism. */
+  context_refresh:ContextRefreshRequirement;
 }
 
 export interface VoiceBodyDeclaration {
@@ -109,7 +127,7 @@ export function validateVoiceBodyRequirements(value:unknown):VoiceBodyRequiremen
   capabilityStatus(v.manual_interrupt,"manual interrupt");
   capabilityStatus(v.structured_event_channel,"structured event channel");
   capabilityStatus(v.reconnect_status_reporting,"reconnect status reporting");
-  if(typeof v.context_refresh!=="string"||!CONTEXT_REFRESH_DISPOSITIONS.includes(v.context_refresh))throw new Error("invalid context refresh disposition");
+  if(typeof v.context_refresh!=="string"||!CONTEXT_REFRESH_REQUIREMENTS.includes(v.context_refresh as ContextRefreshRequirement))throw new Error("invalid context refresh requirement");
   return v;
 }
 
@@ -136,8 +154,7 @@ export function bodyBindsDistinctly(binding:VoiceBodyBinding,naraRef:string,agen
 
 /** The floor for foreground dialogical Nara (QL `dialogical_floor`):
  * streamed interaction, disclosed barge-in, manual stop, a structured
- * channel, observable reconnect status, and a context path that is not
- * absent. */
+ * channel, observable reconnect status, and host-refreshable context. */
 export function dialogicalFloor():VoiceBodyRequirements {
   return validateVoiceBodyRequirements({
     schema:NARA_VOICE_BODY_CONTRACT,
@@ -146,7 +163,7 @@ export function dialogicalFloor():VoiceBodyRequirements {
     manual_interrupt:"supported",
     structured_event_channel:"supported",
     reconnect_status_reporting:"supported",
-    context_refresh:"tool-access",
+    context_refresh:"refreshable",
   });
 }
 
@@ -175,8 +192,13 @@ export function voiceBodySatisfaction(declaration:VoiceBodyDeclaration,requireme
       unmet.push(`${name}: required supported, body discloses ${disclosed}`);
     }
   }
-  const contextMeets=r.context_refresh==="none"?true:d.context_refresh===r.context_refresh;
-  if(!contextMeets)unmet.push(`context refresh: requires ${r.context_refresh}, body discloses ${d.context_refresh}`);
+  // The requirement is the capability (host-refreshable context while the
+  // session lives), not a mechanism: host push and tool pull both meet it,
+  // an absent path does not.
+  const contextMeets=r.context_refresh==="not-required"
+    ?true
+    :d.context_refresh==="push-on-change"||d.context_refresh==="tool-access";
+  if(!contextMeets)unmet.push(`context refresh: body discloses ${d.context_refresh}; the floor requires host-refreshable context`);
   return unmet;
 }
 
@@ -258,9 +280,11 @@ function bodyProvenanceRef(constitution:SpeechConstitutionFacts):string {
  *     body disclosing resumable/reconnect-without-session satisfies;
  *     anything else (including stateless, which discloses no reconnect)
  *     does not;
- *   - context refresh ← the composition's own fact: the desktop rebuilds the
- *     bounded context from live application state each turn and pushes it —
- *     `push-on-change`.
+ *   - context refresh ← the composition's own fact: on the text/staged turn
+ *     path the host recomposes the bounded context from live application
+ *     state each turn and pushes it (structural, `push-on-change`); a proven
+ *     realtime body carries host push over its structured event channel
+ *     (`push-on-change`); anything unproven stays `none`.
  */
 export function voiceBodyFromConstitution(input:{constitution:SpeechConstitutionFacts;nara_ref:string;observation_refs?:string[]}):VoiceBodyReduction {
   const constitution=input.constitution;
@@ -319,14 +343,24 @@ export function voiceBodyFromConstitution(input:{constitution:SpeechConstitution
     reconnect={status:"unsupported",source:"connection",note:"reconnect status reporting: stateless connection discloses no reconnect"};
   }
 
-  // The disposition is the composition's own fact, not a body disclosure:
-  // the desktop rebuilds the bounded context from live application state
-  // each turn and pushes it. The reduction names that owner honestly — it is
-  // not a claim that the composition meets any particular requirement.
-  const contextRefresh:ContextRefreshReduction={
-    disposition:"push-on-change",source:"composition",
-    note:"the desktop rebuilds the bounded context from live application state each turn and pushes it",
-  };
+  // The disposition is the composition's own fact, not a body disclosure.
+  // On the text/staged turn path the host itself is the turn channel: it
+  // rebuilds the bounded context from live application state each turn and
+  // pushes it — structural. On a proven realtime body the turn rides the
+  // provider's channel, so host push reaches the body only over the
+  // structured event channel: proven there, the disposition is
+  // `push-on-change`; without it the host has no push path and the honest
+  // disposition is `none`. The reduction names its owner — it is not a claim
+  // that the composition meets any particular requirement.
+  const realtimeProven=duplex.disposition==="full-duplex";
+  const contextRefresh:ContextRefreshReduction=!realtimeProven
+    ?{disposition:"push-on-change",source:"composition",
+      note:"the desktop rebuilds the bounded context from live application state each turn and pushes it (structural on the text/staged turn path)"}
+    :structuredChannel.status==="supported"
+      ?{disposition:"push-on-change",source:"interaction.structured-events + interaction.tool-requests",
+        note:"push-on-change over the proven structured event channel: context changes reach the realtime body as channel events"}
+      :{disposition:"none",source:"interaction.structured-events + interaction.tool-requests",
+        note:`no proven channel carries host push to the realtime body (structured event channel ${structuredChannel.status})`};
 
   const declaration=validateVoiceBodyDeclaration({
     binding,
