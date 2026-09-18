@@ -33,21 +33,13 @@ const RAIL:{id:SettingsView;label:string;hint:string}[] = [
   {id:"visuals",label:"Visuals",hint:"Appearance and expression — themes and the visual layer"},
 ];
 
-/** The switch back to the classic page — the two systems live side by
- * side until the owner picks one. */
-function ClassicSwitch({onChooseVariant}: {onChooseVariant: (variant: "classic") => void}) {
-  return <button type="button" className="settings-rail-switch" data-settings-variant-switch
-    title="Back to the current settings page"
-    onClick={() => onChooseVariant("classic")}>Classic</button>;
-}
-
 const VIEW_HEAD:Record<SettingsView,{label:string;line:string}> = {
   settings:{label:"Settings",line:"Everything the products let you change, in one place. Changes wait in the tray until you apply them."},
   system:{label:"System",line:"What is installed, what is working, and what each product is doing — read honestly, changed only through its owner."},
   visuals:{label:"Visuals",line:"Themes and the visual expression layer."},
 };
 
-export function SettingsPageV2({onChooseVariant}: {onChooseVariant: (variant: "classic" | "redesign") => void}) {
+export function SettingsPageV2() {
   const kernel = useKernel();
   const {transport} = kernel;
   const [view,setView] = useState<SettingsView>("settings");
@@ -114,7 +106,6 @@ export function SettingsPageV2({onChooseVariant}: {onChooseVariant: (variant: "c
   return <section className="system-panel" aria-label="Settings and system" aria-busy={pending}>
     <nav className="settings-rail" aria-label="Settings surfaces">
       {RAIL.map(item=><button key={item.id} aria-pressed={view===item.id} title={item.hint} onClick={()=>setView(item.id)}>{item.label}</button>)}
-      <ClassicSwitch onChooseVariant={onChooseVariant}/>
     </nav>
     <div className="settings-page-head"><h2>{head.label}</h2><p>{head.line}</p></div>
     {view==="settings"&&<SettingsHome census={reading}/>}

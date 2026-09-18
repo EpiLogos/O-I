@@ -66,15 +66,19 @@ async function loadFixtures(): Promise<{
   contributions: ContributionDocument[];
   development: ProfileDocument;
 }> {
-  const [aiKit, oi, connector, unavailable, profile] = await Promise.all([
+  const [aiKit, oi, connector, workcell, profile] = await Promise.all([
     import("../../../../suite/configuration/cases/contribution-ai-kit.json") as Promise<{ contribution: ContributionDocument }>,
     import("../../../../suite/configuration/cases/contribution-oi.json") as Promise<{ contribution: ContributionDocument }>,
     import("../../../../suite/configuration/cases/contribution-connector-fixture.json") as Promise<{ contribution: ContributionDocument }>,
-    import("../../../../suite/configuration/cases/contribution-unavailable.json") as Promise<{ contribution: ContributionDocument }>,
+    import("../../../../suite/configuration/cases/contribution-workcell.json") as Promise<{ contribution: ContributionDocument }>,
     import("../../../../suite/configuration/cases/profile-development.json") as Promise<FixtureProfile>,
   ]);
+  // Workcell contributes for real now (hosting, gateway, machine) — the
+  // old `contribution-unavailable` example left the default world; the
+  // console below can still simulate an owner going unavailable, which is
+  // where the honest-absence rendering is proven on demand.
   return {
-    contributions: [aiKit.contribution, oi.contribution, connector.contribution, unavailable.contribution],
+    contributions: [aiKit.contribution, oi.contribution, connector.contribution, workcell.contribution],
     development: profile.profile,
   };
 }
@@ -111,6 +115,18 @@ let nativeState: Record<string, SimulatedNative> = {
   "oi:composition:managed-root": { declared: "~/.oi/managed", effective: "~/.oi/managed" },
   "oi:verify:verify.before-run": { declared: true, effective: true, active: true },
   "connector/factory-actuation:authority:authority.mode": { declared: "delegated", effective: "delegated" },
+  // Workcell: hosting, gateway, machine — present and satisfied, so the
+  // group renders as the quiet, ordinary settings area it should be.
+  "workcell:hosting:hosted-vm.profile": { declared: "hosted-vm", effective: "hosted-vm" },
+  "workcell:hosting:hosted-vm.endpoint": { declared: "https://placement.omarchy.local:8443", effective: "https://placement.omarchy.local:8443" },
+  "workcell:hosting:lifecycle.server": { declared: "http://127.0.0.1:8150", effective: "http://127.0.0.1:8150" },
+  "workcell:gateway:gateway.address": { declared: "bolt://oi-omarchy:7687", effective: "bolt://oi-omarchy:7687" },
+  "workcell:gateway:gateway.token": { secret_reference: { ref: "workcell:credentials:gateway-token", present: true } },
+  "workcell:gateway:gateway.autoconnect": { declared: true, effective: true, active: true },
+  "workcell:machine:machine.name": { declared: "workcell-local", effective: "workcell-local" },
+  "workcell:machine:machine.role": { declared: "acceptance", effective: "acceptance" },
+  "workcell:machine:workcell-home": { declared: "~/.workcell", effective: "~/.workcell" },
+  "workcell:machine:sandbox.provider": { declared: "host-process", effective: "host-process" },
 };
 
 /** Subject-level degradations (07 §4.7 vocabulary): an owner can be
@@ -157,6 +173,9 @@ interface World {
   profiles: Map<string, ProfileDocument>;
   activeProfile: string | null;
   registryMode: "full" | "empty";
+  /** Simulated owner outage, so the honest-absence rendering is provable
+   * on demand without a second unavailable fixture owner. */
+  workcellAvailable: boolean;
   changesetCounter: number;
   planCounter: number;
   receiptCounter: number;
@@ -272,15 +291,15 @@ function validateValue(schema: ValueSchema, request: ChangeRequest): ConfigError
 // ---------------------------------------------------------------------------
 // the simulated world's composition (lock §5)
 
-/** The simulated world stands in the `0/1/2` operational core: AIKit
- * present, Workcell absent — the contract's own absence case, so the
- * disclosed-absent standing renders first-class. Facts a real reading
- * would carry; clearly labelled as simulation beside the data. */
+/** The simulated world stands in an explicit selection: Central, AIKit
+ * and Workcell present (the doorway connector is unpositioned by nature).
+ * Facts a real reading would carry; clearly labelled as simulation beside
+ * the data. */
 const SIMULATED_COMPOSITION: RegistryComposition = {
-  requested_mode: null,
-  install_mode: "0/1/2",
-  install_mode_basis: "effective",
-  present_positions: [0, 1, 2],
+  requested_mode: "0/1/2",
+  install_mode: null,
+  install_mode_basis: "explicit selection",
+  present_positions: [0, 2, 4],
   warnings: [],
   error: null,
 };
@@ -340,6 +359,7 @@ export function createFixtureConfigPlaneSource(): ConfigPlaneSource {
       profiles: new Map([[development.profile_ref, clone(development)], [staging.profile_ref, staging]]),
       activeProfile: development.profile_ref,
       registryMode: "full",
+      workcellAvailable: true,
       changesetCounter: 0,
       planCounter: 0,
       receiptCounter: 0,
@@ -407,7 +427,12 @@ export function createFixtureConfigPlaneSource(): ConfigPlaneSource {
       if (current.registryMode === "empty") {
         return { mounts: [], observed_at_unix_ms: Date.now(), composition: clone(SIMULATED_COMPOSITION) };
       }
-      return { mounts: clone(current.mounts), observed_at_unix_ms: Date.now(), composition: clone(SIMULATED_COMPOSITION) };
+      const mounts = clone(current.mounts);
+      if (!current.workcellAvailable) {
+        const workcell = mounts.find((mount) => mount.owner_ref === "workcell");
+        if (workcell) workcell.availability = { state: "unavailable", reason: "simulated for development — the deployed build does not answer" };
+      }
+      return { mounts, observed_at_unix_ms: Date.now(), composition: clone(SIMULATED_COMPOSITION) };
     },
 
     async readResolutions(pairs) {
@@ -683,4 +708,11 @@ export async function simulateExternalNativeEdit(source: ConfigPlaneSource, sett
  * World (bootstrap relation: an empty World is the same system, §11). */
 export function setRegistryMode(mode: "full" | "empty"): void {
   if (world) world.registryMode = mode;
+}
+
+/** Simulate one owner's outage (or its restoration): the mount reads
+ * unavailable, its controls go disclosure-only, and the reread shows the
+ * honest absence. Development proof of the degraded rendering. */
+export function setOwnerAvailability(owner_ref: string, state: "available" | "unavailable"): void {
+  if (world && owner_ref === "workcell") world.workcellAvailable = state === "available";
 }

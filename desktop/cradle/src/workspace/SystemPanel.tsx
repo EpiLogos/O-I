@@ -4,7 +4,7 @@
  * kernel/types.ts imports the type, DesktopShell/DetachedFrame/Workbench
  * mount this component, and the system walk asserts the rendered census.
  */
-import {SettingsPage} from "./settings/SettingsPage";
+import {SettingsPageV2 as SettingsPage} from "./settings/v2/SettingsPageV2";
 
 export type {CompositionReading, NativeReading} from "./settings/types";
 

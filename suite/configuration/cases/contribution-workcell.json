@@ -1,0 +1,429 @@
+{
+  "contribution": {
+    "schema": "oi.configuration-contribution/v1",
+    "contract_revision": "configuration-plane/contribution.1",
+    "owner": {
+      "owner_ref": "workcell",
+      "owner_kind": "product",
+      "owner_version": "0.1.0",
+      "contribution_command": [
+        "workcell",
+        "config-contribution",
+        "--json"
+      ],
+      "disclosed_at_unix_ms": 0,
+      "reading_digest": null,
+      "reading_digest_covers": "07 §4.5 convention"
+    },
+    "about": "Demand and placement: where remote sandboxes run, how this desktop reaches them through the gateway, and what this machine is for in the workcell.",
+    "operations": {
+      "transport": "cli/v1",
+      "validate": {
+        "availability": "disclosed",
+        "reason": null
+      },
+      "plan": {
+        "availability": "disclosed",
+        "reason": null
+      },
+      "apply": {
+        "availability": "disclosed",
+        "reason": null
+      },
+      "reset": {
+        "availability": "disclosed",
+        "reason": null
+      }
+    },
+    "availability": {
+      "state": "available",
+      "reason": null
+    },
+    "degradations": [],
+    "obligations": [
+      "The hosted-VM lifecycle (bring-up, exec, egress) is answered by the lifecycle server at the disclosed endpoint; when it does not answer, placement degrades and this page's controls stay truthful about it."
+    ],
+    "sections": [
+      {
+        "id": "hosting",
+        "title": "Remote hosting",
+        "settings": [
+          {
+            "setting_ref": "workcell:hosting:hosted-vm.profile",
+            "section_ref": "hosting",
+            "title": "Hosted VM profile",
+            "description": "Where remote sandboxes run when local placement cannot satisfy a demand. Off keeps everything on this machine.",
+            "value_schema": {
+              "type": "enum",
+              "options": [
+                {
+                  "value": "off",
+                  "title": "Off — everything local"
+                },
+                {
+                  "value": "hosted-vm",
+                  "title": "Hosted VM"
+                },
+                {
+                  "value": "dedicated-host",
+                  "title": "Dedicated host"
+                }
+              ]
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "world",
+                "scope_ref": null
+              },
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default": "off",
+            "default_semantics": "constant",
+            "effect": {
+              "kind": "provider-reconnect-required",
+              "summary": "Prepared instances keep their connection until released; new plans place against the new profile.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:hosting.profile"
+          },
+          {
+            "setting_ref": "workcell:hosting:hosted-vm.endpoint",
+            "section_ref": "hosting",
+            "title": "Hosted VM endpoint",
+            "description": "The hosted VM's lifecycle endpoint — plan, prepare, observe and collect reach the VM here.",
+            "value_schema": {
+              "type": "scalar",
+              "format": "https://host:port"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "value-change",
+              "summary": "The next lifecycle plan uses the new endpoint.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:hosting.endpoint"
+          },
+          {
+            "setting_ref": "workcell:hosting:lifecycle.server",
+            "section_ref": "hosting",
+            "title": "Lifecycle server",
+            "description": "Where the lifecycle server listens — bring-up, exec and egress for prepared instances.",
+            "value_schema": {
+              "type": "scalar",
+              "format": "http://host:port"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "value-change",
+              "summary": "The next lifecycle plan uses the new server.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:hosting.lifecycle-server"
+          }
+        ]
+      },
+      {
+        "id": "gateway",
+        "title": "Gateway",
+        "settings": [
+          {
+            "setting_ref": "workcell:gateway:gateway.address",
+            "section_ref": "gateway",
+            "title": "Gateway address",
+            "description": "The gateway desktops and agents connect through — remote placement is reached over this connection.",
+            "value_schema": {
+              "type": "scalar",
+              "format": "bolt://host:port"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "provider-reconnect-required",
+              "summary": "Open connections reconnect to the new address.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:gateway.address"
+          },
+          {
+            "setting_ref": "workcell:gateway:gateway.token",
+            "section_ref": "gateway",
+            "title": "Gateway connect token",
+            "description": "The token the gateway expects. Presence and reference only — the material never crosses into this page.",
+            "value_schema": {
+              "type": "secret"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": true,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "value-change",
+              "summary": "The next connection authenticates with the new reference.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell:credentials:gateway-token"
+          },
+          {
+            "setting_ref": "workcell:gateway:gateway.autoconnect",
+            "section_ref": "gateway",
+            "title": "Connect on start",
+            "description": "Open the gateway connection when the desktop starts, instead of on first use.",
+            "value_schema": {
+              "type": "boolean"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default": false,
+            "default_semantics": "constant",
+            "effect": {
+              "kind": "value-change",
+              "summary": null,
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:gateway.autoconnect"
+          }
+        ]
+      },
+      {
+        "id": "machine",
+        "title": "This machine",
+        "settings": [
+          {
+            "setting_ref": "workcell:machine:machine.name",
+            "section_ref": "machine",
+            "title": "Machine name",
+            "description": "This machine's name in the workcell's instance registry.",
+            "value_schema": {
+              "type": "scalar"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "value-change",
+              "summary": null,
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:machine.name"
+          },
+          {
+            "setting_ref": "workcell:machine:machine.role",
+            "section_ref": "machine",
+            "title": "What this machine is for",
+            "description": "The machine's role in the two-machine arrangement: development and reference work happens on the Linux side, acceptance on the daily-driver Mac.",
+            "value_schema": {
+              "type": "enum",
+              "options": [
+                {
+                  "value": "development",
+                  "title": "Development world"
+                },
+                {
+                  "value": "acceptance",
+                  "title": "Acceptance world"
+                },
+                {
+                  "value": "reference",
+                  "title": "Reference world"
+                }
+              ]
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": true,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "value-change",
+              "summary": "Placement policy reads the role when deciding what may run here.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:machine.role"
+          },
+          {
+            "setting_ref": "workcell:machine:workcell-home",
+            "section_ref": "machine",
+            "title": "Workcell home",
+            "description": "Where workcell state lives on this machine (WORKCELL_HOME).",
+            "value_schema": {
+              "type": "path"
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default": "~/.workcell",
+            "default_semantics": "constant",
+            "effect": {
+              "kind": "value-change",
+              "summary": null,
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:machine.home"
+          },
+          {
+            "setting_ref": "workcell:machine:sandbox.provider",
+            "section_ref": "machine",
+            "title": "Sandbox provider",
+            "description": "Which sandbox backend placement may prepare on this machine: host processes, directory sandboxes, or the OpenSandbox VM.",
+            "value_schema": {
+              "type": "enum",
+              "options": [
+                {
+                  "value": "host-process",
+                  "title": "Host process"
+                },
+                {
+                  "value": "directory",
+                  "title": "Directory"
+                },
+                {
+                  "value": "opensandbox-vm",
+                  "title": "OpenSandbox VM"
+                }
+              ]
+            },
+            "allowed_scopes": [
+              {
+                "scope_kind": "machine",
+                "scope_ref": null
+              }
+            ],
+            "writable": true,
+            "profileable": false,
+            "sensitive": false,
+            "default_semantics": "computed",
+            "effect": {
+              "kind": "material-effect",
+              "summary": "Prepared sandboxes use the new provider from the next plan; running instances are unaffected.",
+              "ref": null
+            },
+            "operations": {
+              "validate": true,
+              "plan": true,
+              "apply": true,
+              "reset": true
+            },
+            "native_ref": "workcell.toml:machine.sandbox-provider"
+          }
+        ]
+      }
+    ]
+  }
+}

@@ -543,6 +543,7 @@ function SuitePins({census}: {census?: CompositionReading}) {
 function FixtureConsole({onMutate}: {onMutate: () => void}) {
   const [externallyEdited, setExternallyEdited] = useState(false);
   const [empty, setEmpty] = useState(false);
+  const [workcellOut, setWorkcellOut] = useState(false);
   const mutate = async (action: (world: import("../../../configuration/sourceHost").FixtureWorldActions) => Promise<void> | void) => {
     const world = await fixtureWorld();
     if (!world) return;
@@ -558,6 +559,9 @@ function FixtureConsole({onMutate}: {onMutate: () => void}) {
     <button type="button" className="settings-mini"
       onClick={() => void mutate((world) => {world.setRegistryMode(empty ? "full" : "empty"); setEmpty(!empty);})}
     >{empty ? "Restore the full registry" : "Empty the registry (bootstrap world)"}</button>
+    <button type="button" className="settings-mini" data-config-workcell-outage
+      onClick={() => void mutate((world) => {world.setOwnerAvailability("workcell", workcellOut ? "available" : "unavailable"); setWorkcellOut(!workcellOut);})}
+    >{workcellOut ? "Restore Workcell (simulated outage over)" : "Simulate Workcell going unavailable"}</button>
   </details>;
 }
 
