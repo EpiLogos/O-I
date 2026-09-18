@@ -15,12 +15,16 @@
 import {useSyncExternalStore} from "react";
 import type {FactoryBuildView, Status} from "../types";
 import type {EncounterRow} from "../../../encounter/EncounterList";
+import {clearDeskFixture, seedDeskFixture} from "../desk/deskModel";
+import {deskBoardFixture} from "../fixtures/desk-board";
 
 /** What the composition root lends the Factory sidebar planes: the real ways
  * to reach the rest of the app, so a control never has to fake an outcome. */
 export interface FactoryPanelHost {
   /** Focus the centre's full SSSF multi-lane Run view (the factory surface). */
   onOpenFullRun?: () => void;
+  /** Take the panel to its full depth (the shell's right-depth full state). */
+  onExpandPanel?: () => void;
   /** Switch the Factory sidebar to another top-level plane (e.g. Context for a comparison). */
   onOpenPlane?: (plane: "run" | "agents" | "factory-context") => void;
   /** Open a conversation as the centre's Chat tab (the one open path). */
@@ -40,12 +44,27 @@ export interface FactorySelection {
   /** The owner's project reading, when the centre read one (journey registry). */
   project?: unknown;
   observedAtUnixMs?: number;
+  /** Where the selection was chosen: the Desk (board card or opened Run
+   * detail) or a Tasks conversation whose session genuinely carried the
+   * Run's work. The Run plane reads the same selection either way; the origin
+   * is what lets a Direct conversation release a desk-held Run instead of
+   * inheriting an unrelated one. */
+  origin?: "desk" | "task";
 }
 
 let selection: FactorySelection | undefined;
 const selectionListeners = new Set<() => void>();
 export function publishFactorySelection(next: FactorySelection) {
   selection = next;
+  for (const listener of [...selectionListeners]) listener();
+}
+/** Release the selection: only if it came from the named origin, or with
+ * "any" when the view itself changes (a Tasks conversation with no Run of its
+ * own clears the subject instead of inheriting an unrelated Run — the Desk
+ * re-establishes its own held Run when the person returns to it). */
+export function releaseFactorySelection(origin: "desk" | "task" | "any") {
+  if (!selection || (origin !== "any" && selection.origin !== origin)) return;
+  selection = undefined;
   for (const listener of [...selectionListeners]) listener();
 }
 export function peekFactorySelection(): FactorySelection | undefined { return selection; }
@@ -133,8 +152,9 @@ function base(scenario: string, extra: Partial<SidebarFixture>): SidebarFixture 
   };
 }
 
-/** The labelled scenarios (handoff §8). Each is a factory function: the store
- * deep-clones what it returns, so scenario controls mutate a working copy. */
+/** The labelled scenarios (handoff §8, plus the Desk board scenario §11).
+ * Each is a factory function: the store deep-clones what it returns, so
+ * scenario controls mutate a working copy. */
 export const SCENARIOS: {key: string; label: string}[] = [
   {key: "empty", label: "Empty → organised"},
   {key: "team", label: "Configured team"},
@@ -143,6 +163,7 @@ export const SCENARIOS: {key: string; label: string}[] = [
   {key: "review", label: "Produced → review"},
   {key: "history", label: "Historical + arrivals"},
   {key: "degraded", label: "Degraded states"},
+  {key: "desk", label: "Desk — cross-project board"},
 ];
 
 const WORKER: FixtureAgent = {
@@ -244,9 +265,9 @@ const SCENARIO_FACTORIES: Record<string, () => SidebarFixture> = {
     agents: [WORKER, REVIEWER, OFFLINE_MEMBER],
     teams: [deskingTeam()],
     sources: [
-      {ref: "source:fixture:handoff", kind: "file", title: "FACTORY-UI-INTEGRATION-HANDOFF.md", detail: "docs/experience · rev adbd014", included: true, loadedFor: ["agent:fixture:meredith"], body: "# Factory UI handoff — Run / Agents / Context\n\nExactly three top-level Factory sidebar tabs…"},
-      {ref: "source:fixture:desk-types", kind: "passage", title: "deskTypes.ts — the held-state store", detail: "desktop/cradle/src/agent/desk", included: true, loadedFor: [], body: "export function useDeskState…"},
-      {ref: "source:fixture:pr-379", kind: "link", title: "PR #379 — design source", detail: "EpiLogos/O-I · open", included: false, loadedFor: []},
+      {ref: "source:fixture:handoff", kind: "file", title: "FACTORY-UI-INTEGRATION-HANDOFF.md", detail: "Design handoff", included: true, loadedFor: ["agent:fixture:meredith"], body: "# Factory UI handoff — Run / Agents / Context\n\nExactly three top-level Factory sidebar tabs…"},
+      {ref: "source:fixture:desk-types", kind: "passage", title: "deskTypes.ts — the held-state store", detail: "The held-state store", included: true, loadedFor: [], body: "export function useDeskState…"},
+      {ref: "source:fixture:pr-379", kind: "link", title: "PR #379 — design source", detail: "Design source", included: false, loadedFor: []},
     ],
     returns: [],
   }),
@@ -292,7 +313,7 @@ const SCENARIO_FACTORIES: Record<string, () => SidebarFixture> = {
       teams: [deskingTeam()],
       sources: [SCENARIO_FACTORIES.team!().sources[0]],
       returns: [
-        {ref: "return:fixture:1", from: "Meredith · run:fixture:1", subject: "Sidebar slice ready for review", native: "inbox", state: "pending review", body: "The three-tab sidebar is complete on the fixture. Candidate A is ready; candidate B is held for comparison. Request changes or recognise.", runRef: "run:fixture:1"},
+        {ref: "return:fixture:1", from: "Meredith", subject: "Sidebar slice ready for review", native: "inbox", state: "pending review", body: "The three-tab sidebar is complete on the fixture. Candidate A is ready; candidate B is held for comparison. Request changes or recognise.", runRef: "run:fixture:1"},
       ],
     });
   },
@@ -336,9 +357,13 @@ function subscribeFixture(listener: () => void) {
 export function setScenario(key: string) {
   const factory = SCENARIO_FACTORIES[key];
   fixture = factory ? structuredClone(factory()) : undefined;
+  // The Desk scenario seeds the board's own fixture rows; every other
+  // scenario leaves the board to its real reads.
+  if (key === "desk") seedDeskFixture(deskBoardFixture());
+  else clearDeskFixture();
   emitFixture();
 }
-export function exitScenarios() { fixture = undefined; emitFixture(); }
+export function exitScenarios() { fixture = undefined; clearDeskFixture(); emitFixture(); }
 export function activeScenario(): string | undefined { return fixture?.scenario; }
 export function useFactoryFixture(): SidebarFixture | undefined {
   return useSyncExternalStore(subscribeFixture, () => fixture, () => fixture);
