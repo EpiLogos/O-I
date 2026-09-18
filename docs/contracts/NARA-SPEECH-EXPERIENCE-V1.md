@@ -85,11 +85,11 @@ recast from mechanism to capability, contract version unchanged.)
 ```bash
 cd desktop/cradle
 node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-speech-conformance.mjs
-    # 21 tests: QL fixture round-trips, admission/deixis/delegation laws, constitution + receipt shapes
+    # 33 tests: QL fixture round-trips, admission/deixis/delegation laws, constitution + receipt shapes
 node tests/nara-presence-lifecycle.mjs
-    # 20 checks: the real surface on a real kernel walk bridge; capture via the synthetic device
+    # 24 checks: the real surface on a real kernel walk bridge; capture via the synthetic device
 node walk/run.mjs nara-speech
-    # 18 checks: the joined chain against the real kernel; receipt in walk/artifacts/nara-speech.json
+    # 20 checks: the joined chain against the real kernel; receipt in walk/artifacts/nara-speech.json
 ```
 
 ## Honest remainders (owner-visible)
