@@ -211,7 +211,12 @@ impl ProcessTransport {
         command
             .args(&argv)
             .stdin(Stdio::piped())
-            .stdout(Stdio::piped());
+            .stdout(Stdio::piped())
+            // The wire convention is bare JSON on stdout; stderr is failure
+            // detail. Capturing it keeps an owner's own error text inside
+            // this transport's failure documents instead of leaking past
+            // them onto the terminal.
+            .stderr(Stdio::piped());
         let mut child = command.spawn().map_err(|error| {
             TransportFailure::owner_unavailable(format!(
                 "owner `{owner_ref}` executable `{}` did not start: {error}",

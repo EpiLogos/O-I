@@ -38,13 +38,26 @@ pub const PRODUCT_POSITIONS: [&str; 7] = [
 /// six products come from the deployed surface catalogue; `oi` is the
 /// running executable itself. Connector owners are registered explicitly by
 /// the caller (the connector mechanism is C4's); pass their specs alongside.
+///
+/// A product's program is the one the composition actually dispatches to:
+/// when the O:I home's `composition.json` registers a `native_executable`
+/// for the product — the same registration `oi <alias>` and
+/// `oi <namespace>` dispatch exec through — discovery consults that
+/// program, so a developer-source registration is read as the build it
+/// names. Only a product with no resolvable registration falls back to the
+/// deployed catalogue executable.
 pub fn product_position_specs() -> Result<Vec<OwnerSpec>, String> {
     let catalogue = crate::product_command::product_command_catalogue()?;
+    let home = crate::configuration::kernel::oi_home().ok();
     let mut specs = Vec::with_capacity(PRODUCT_POSITIONS.len());
     for product in &catalogue.products {
+        let program = home
+            .as_deref()
+            .and_then(|home| registered_program(home, &product.id))
+            .unwrap_or_else(|| PathBuf::from(product.executable.clone()));
         specs.push(OwnerSpec {
             owner_ref: product.id.clone(),
-            program: PathBuf::from(product.executable.clone()),
+            program,
         });
     }
     let oi = std::env::current_exe()
@@ -54,6 +67,54 @@ pub fn product_position_specs() -> Result<Vec<OwnerSpec>, String> {
         program: oi,
     });
     Ok(specs)
+}
+
+/// The composition registration's executable for one product, when the O:I
+/// home's `composition.json` names one that resolves. A missing or
+/// unshaped state file registers nothing, and an unresolvable registration
+/// is no registration: the catalogue executable answers, exactly as before.
+fn registered_program(home: &std::path::Path, product_id: &str) -> Option<PathBuf> {
+    let bytes = std::fs::read(home.join("composition.json")).ok()?;
+    let state: Value = serde_json::from_slice(&bytes).ok()?;
+    let registered = state
+        .get("modules")?
+        .get(product_id)?
+        .get("native_executable")?
+        .as_str()?;
+    resolve_executable(registered)
+}
+
+/// Path resolution as the composition dispatcher performs it: a candidate
+/// carrying a directory component or an absolute path must itself be
+/// executable; a bare name resolves through `PATH`.
+fn resolve_executable(candidate: &str) -> Option<PathBuf> {
+    let path = std::path::Path::new(candidate);
+    if path.components().count() > 1 || path.is_absolute() {
+        return is_executable(path).then(|| path.to_path_buf());
+    }
+    std::env::var_os("PATH").and_then(|paths| {
+        std::env::split_paths(&paths)
+            .map(|directory| directory.join(path))
+            .find(|path| is_executable(path))
+    })
+}
+
+fn is_executable(path: &std::path::Path) -> bool {
+    let Ok(metadata) = std::fs::metadata(path) else {
+        return false;
+    };
+    if !metadata.is_file() {
+        return false;
+    }
+    #[cfg(unix)]
+    {
+        use std::os::unix::fs::PermissionsExt;
+        metadata.permissions().mode() & 0o111 != 0
+    }
+    #[cfg(not(unix))]
+    {
+        true
+    }
 }
 
 /// An honest record of a discovery read that did not produce a usable
@@ -430,5 +491,61 @@ mod tests {
                 .unwrap()
                 == "ai-kit"
         );
+    }
+
+    #[test]
+    fn a_composition_registration_names_the_discovery_program() {
+        let home = tempfile::tempdir().expect("tempdir");
+        let program = home.path().join("registered-aikit");
+        std::fs::write(&program, "#!/bin/sh\nexit 0\n").expect("stub written");
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&program, std::fs::Permissions::from_mode(0o755))
+                .expect("stub made executable");
+        }
+        std::fs::write(
+            home.path().join("composition.json"),
+            serde_json::json!({
+                "schema": 1,
+                "modules": {
+                    "ai-kit": { "native_executable": program.to_string_lossy() }
+                }
+            })
+            .to_string(),
+        )
+        .expect("composition state written");
+
+        // The registered product resolves to its registered executable.
+        assert_eq!(
+            registered_program(home.path(), "ai-kit").as_deref(),
+            Some(program.as_path())
+        );
+        // An unregistered product names nothing.
+        assert_eq!(registered_program(home.path(), "actuation"), None);
+    }
+
+    #[test]
+    fn an_unresolvable_registration_registers_nothing() {
+        let home = tempfile::tempdir().expect("tempdir");
+        std::fs::write(
+            home.path().join("composition.json"),
+            serde_json::json!({
+                "schema": 1,
+                "modules": {
+                    "ai-kit": { "native_executable": "/nonexistent/owner/path" }
+                }
+            })
+            .to_string(),
+        )
+        .expect("composition state written");
+        assert_eq!(registered_program(home.path(), "ai-kit"), None);
+        // A state file that is not a composition state registers nothing.
+        std::fs::write(home.path().join("composition.json"), "not json")
+            .expect("broken state written");
+        assert_eq!(registered_program(home.path(), "ai-kit"), None);
+        // No state file at all registers nothing.
+        std::fs::remove_file(home.path().join("composition.json")).expect("state file removed");
+        assert_eq!(registered_program(home.path(), "ai-kit"), None);
     }
 }
