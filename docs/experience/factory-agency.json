@@ -3,7 +3,7 @@
   "story_source": "docs/experience/FACTORY-AGENCY.md",
   "document_operations_source": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
   "families": [],
-  "standing": "design-commitment; owner explicitly validated in chat on 2026-09-14 and commissioned publication",
+  "standing": "design-commitment; original design adopted 2026-09-14, owner-directed parallel-UI layout refinement 2026-09-18; no implementation or human-experience verdict",
   "design_adoption": {
     "date": "2026-09-14",
     "scope": "Factory/Agency design in FACTORY-AGENCY.md only",
@@ -16,16 +16,33 @@
       "source_ref": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
       "authority": "Owner commission to integrate and merge planning for the current parallel UI refinement; O:I #373/#375/#289/#65",
       "scope": "Guardian-stewarded product repertoires, bounded intent-led Skill suggestions, claim reception, native Day/NOW/Git/telemetry links and DSH-inspired but DSH-independent right desk",
-      "standing": "owner-commissioned design amendment; concrete presentation details remain subject to implemented visual/interaction verification",
+      "standing": "Historical layout revised on 2026-09-18; functional requirements retained",
+      "implementation_or_human_experience_accepted": false
+    },
+    {
+      "date": "2026-09-18",
+      "source_ref": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+      "authority": "Owner request to simplify the parallel Factory UI around Run, Agents and Context while preserving Factory, Grok Bot and Buzz functions",
+      "scope": "Three top-level Factory tabs; centre Agent/team Chat or full SSSF Run view; object-local inspection and material opening",
+      "standing": "Owner-selected layout for immediate parallel-branch experimentation, not final visual acceptance",
       "implementation_or_human_experience_accepted": false,
-      "preservation": "Original fourteen obligation IDs, requirements, story bindings, evidence grades and branches remain; added branches are specified, not exercised."
+      "preservation": "Fourteen obligation IDs, story bindings and evidence grades retained; obsolete presentation clauses replaced, underlying functions retained and located in executable user interactions."
     }
   ],
+  "presentation_resolution": {
+    "effective_date": "2026-09-18",
+    "source_ref": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+    "factory_sidebar_tabs": ["Run", "Agents", "Context"],
+    "centre": ["selected Agent/team conversation", "existing full SSSF multi-lane Run view"],
+    "supersedes": "Six peer sidebar destinations from PR #373: Trajectory, Context, Skills & tools, Claims & evidence, Results, Inspect. Their functions remain object-local depths, not hidden substitute top-level tabs.",
+    "ordinary_companion": "Retain docked conversation when it is the sole chat, shared Agents/Context/activity components, and Direct work without fabricated Run ancestry.",
+    "scope": "Existing parallel UI preparation; no native-runtime rewrite or dependency on DeepSeek Harness."
+  },
   "obligation_sources": {
     "factory289": {
       "source_ref": "docs/experience/FACTORY-AGENCY.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/289",
-      "policy": "Full adopted design governs these scoped episodes; source mapping is not execution or human EX. Existing native story definitions and other obligations are retained.",
+      "policy": "Original native and functional obligations remain. Current sidebar navigation is determined by the September-18 handoff; historical layout wording does not restore the superseded six-tab taxonomy. Source mapping is not execution or human EX.",
       "amendment_refs": ["docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md"]
     }
   },
@@ -34,181 +51,195 @@
   ],
   "obligations": [
     {
-      "id": "factory289:arrangement", "source": "factory289", "native_locator": "§1",
-      "requirement": "Ordinary work has the four-plane companion; Factory has centre conversation/Run/workspace and right actual artifacts. Preserve selected work/output across related tabs, explicit Run change, one visible transcript/composer, draft/focus, detach/redock, leave/re-entry and restart.",
+      "id": "factory289:arrangement", "source": "factory289", "native_locator": "§1 + current handoff §4",
+      "requirement": "Factory sidebar has Run, Agents, Context beside selected Agent/team Chat or the full SSSF Run view. Retain ordinary companion functions and actual right-hand material opening, selected work/output, one transcript/composer, drafts, focus, detach/redock, leave/re-entry and restart.",
       "story_ids": ["UI02", "UI04", "DV05", "TM02"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "Background completion never moves layout or selection.",
         "Selecting a Surface never redirects the Agent or discloses source.",
         "Ordinary centre chat returns to sidecar without duplication.",
-        "September-17 handoff §4: conditional Trajectory, Context, Skills & tools, Claims & evidence, Results and Inspect depths reuse existing Surfaces; no compulsory six-panel dashboard or duplicate conversation.",
-        "September-17 handoff §§1/4: retain all six current app entrances and world/paradigm context; the complete generic Factory desk works with DSH absent."
+        "Current handoff §4: exactly three top-level Factory tabs; trajectory is under Run, repertoire/setup under Agents, material/evidence/history under Context or the relevant Run event. Inspect is an item action, not a destination.",
+        "Retain six current app entrances, world/paradigm context and the complete generic desk with DSH absent.",
+        "No selected Run/chat leaves Agents and Context usable. Agent roster selection, chat recipient, inspected step and selected Run remain distinct; explicit filters/pins do not silently redirect work."
       ]
     },
     {
-      "id": "factory289:agents", "source": "factory289", "native_locator": "§2",
-      "requirement": "Readable Project roster, personal/Project scope, intent-first create/review/use, reusable team and temporary formation, bounded child with subject/effects/verification/return/lifecycle; Keep as Agent crosses native durable-source recognition.",
+      "id": "factory289:agents", "source": "factory289", "native_locator": "§2 + current handoff §§2–3",
+      "requirement": "Agents tab supports readable roster, personal/Project scope, intent-first create/review/use, reusable teams and organisation, actual assignment/outcome ownership, bounded helpers and native durable-source recognition for Keep as Agent.",
       "story_ids": ["AG01", "AG02", "AG05", "AG07", "AG08"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "No raw refs as ordinary create inputs.",
         "Temporary participant does not require invented durable profile.",
         "Unavailable team member remains represented.",
-        "September-17 handoff §2: resolve the six existing Product Guardian identities and expose their maintained native product repertoires and learning proposals; never remint Guardians, copy six tool inventories or reinterpret the two-member O:I bootstrap set as those six Agents.",
-        "September-17 handoff §3: retain exact intent-expression; explicit bounded AIKit search plus inference proposes a reviewable setup, while manual search and existing-Agent Continue work without inference."
+        "Resolve six existing Product Guardians and their maintained native repertoires/proposals; do not remint them, copy six inventories or confuse them with the two-member O:I bootstrap SkillSet.",
+        "Retain exact intent-expression; explicit bounded AIKit search plus inference proposes a reviewable setup, while manual search and existing-Agent Continue work without inference.",
+        "Grok/Buzz retained functions: New Agent/New Team, member organisation, named outcome owner, open conversation/activity/computer, distinct add-to-team/address/assign/delegate actions, retirement without losing historical work.",
+        "Team defaults and per-member/task exceptions remain scoped. Selecting a team does not union privileges, invoke all members or make one super-Agent identity."
       ]
     },
     {
-      "id": "factory289:session-compose", "source": "factory289", "native_locator": "§3",
-      "requirement": "One compact Direct/Factory session interaction resolving Agent, admitted harness/edition, real Model selection policy/routes, environment/worktree/host, repertoire, context and permissions together; existing Continue is immediate.",
+      "id": "factory289:session-compose", "source": "factory289", "native_locator": "§3 + current handoff §§3–4",
+      "requirement": "Compact Direct/Factory session interaction resolves Agent, harness/edition, real Model policy/routes, environment/worktree/host, repertoire, context and permissions together; existing Continue is immediate.",
       "story_ids": ["AG04", "AG06", "PX06", "TM01", "TM06"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "Changing harness/task re-resolves model and tool eligibility.",
         "Change timing is now/reconnect/new session as natively supported.",
         "Unavailable route or credential gets precise recovery, not invented World/authority.",
         "Resident selector does not stand in for full Model roster integration.",
-        "September-17 handoff §3: suggestions disclose reason, native source/revision, scope, prerequisites, gaps and target compatibility; changed intent/catalogue/permissions invalidate stale proposals before native validation/apply.",
-        "September-17 handoff §§3/7: saving an Agent, assigning a scoped repertoire, starting a session and granting authority remain separate; inference timeout/cancel/no model leaves manual operation usable."
+        "Suggestions disclose reason, native source/revision, scope, prerequisites, gaps and target compatibility; changed intent/catalogue/permissions invalidate stale proposals before validation/apply.",
+        "Saving an Agent, assigning a repertoire, starting work and granting authority remain separate. Inference timeout/cancel/no model leaves manual operation usable; panel open/keystrokes invoke no model."
       ]
     },
     {
-      "id": "factory289:praxis-context", "source": "factory289", "native_locator": "§4",
-      "requirement": "Inspect and use selected/projected/confirmed-effective/blocked/unavailable praxis and actual disclosed versus eligible context. Useful source-dependent work proves required material and capability reached the selected session.",
+      "id": "factory289:praxis-context", "source": "factory289", "native_locator": "§4 + current handoff §§3/5",
+      "requirement": "Manage Skills and Capabilities within Agents; inspect selected/projected/confirmed-effective/blocked/unavailable practice. Context Sources distinguishes available, selected and actual historical disclosure per act. Useful work proves required material and practice reached the selected session.",
       "story_ids": ["AG03", "PX01", "PX02", "PX03", "PX04", "UI04"], "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Projection-file write alone does not prove loading.",
         "Unavailable loading readback is labelled, not guessed.",
         "Method stays within current Skill identity/classification and nested SkillSets.",
         "Excluded/private material is not disclosed by selection.",
-        "September-17 handoff §§2/3/8: root and two differing Project/Profile repertoires preserve inherited and task-overridden native Skill/Method/overlay revisions; fresh Agents discover bodies and companions and use the appropriate practice without supplied oracle answers.",
-        "September-17 handoff §§3/5: brokered, observed, adapter-inferred, unknown and pending-reload states remain distinct; a new Generation does not prove a resident session reread it; past effective context remains historical.",
-        "September-17 handoff §7: Agency management and System configuration use the same native resolver/config operations and truthful effective readback, not a React Skill registry."
+        "Root and two differing Project/Profile repertoires preserve inheritance/task overrides and source/overlay revisions; fresh Agents discover bodies and companions and use them without oracle answers.",
+        "Brokered, observed, adapter-inferred, unknown and pending-reload states remain distinct; a new Generation does not prove a resident session reread it.",
+        "Agency management and System use the same native resolver/config operations, not a React registry.",
+        "Context add/search/drop/pick/unlink operates on native refs; unlink is not source deletion, SourcePool membership is not loading and team visibility is not disclosure to every member."
       ]
     },
     {
-      "id": "factory289:conversation", "source": "factory289", "native_locator": "§4",
-      "requirement": "Real multiparty To:/@ recipient interaction, attributed messages, selected attachments/skills, semantic coalesced activity, real permission/interrupt and failed-send draft recovery; address, session contribution and bounded delegation retain distinct effects.",
+      "id": "factory289:conversation", "source": "factory289", "native_locator": "§4 + current handoff §§3–5",
+      "requirement": "Central individual or actual team chat retains multiparty To:/@, attributed messages, attachments/skills, semantic coalesced activity, real permissions/interruption and failed-send draft recovery. Address, contribution and bounded delegation retain distinct effects.",
       "story_ids": ["AG07", "AG08", "AG09", "WR03", "UI04", "GW09"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "A second Agent actually acts; one model impersonating voices fails.",
         "Membership/mention does not grant invocation authority.",
         "Keyboard selection/removal/Escape/focus restoration works.",
         "Historical replay is not new live work or duplicated conversation.",
-        "September-17 handoff §5: distinguish sender claim, supplied evidence and receiver assessment; authenticated or repeatedly relayed content cannot confer truth, independent confirmation or new authority.",
-        "September-17 handoff §§5/8: Discuss/investigate this preserves exact subject/revision, visible bounded scope and draft; test confident incomplete returns alongside adequate current evidence that should be reused without ritual reruns."
+        "Sender claim, supplied evidence and receiver assessment remain separate; repeated/authenticated reports do not confer truth, independence or authority.",
+        "Discuss/investigate this preserves exact subject/revision, visible bounded scope and draft. Test incomplete confident returns and adequate current evidence reused without ritual reruns.",
+        "Centre Chat/Run switching preserves chat recipient, original conversation, draft and selected Run. It does not mint one Agent per visual lane."
       ]
     },
     {
-      "id": "factory289:output-dynamics", "source": "factory289", "native_locator": "§5",
-      "requirement": "Substantial work becomes an actual artifact discoverable from chat/work while short conversation links to it; background cue preserves chosen material, explicit show opens right, ordinary pane controls relocate the real Surface.",
+      "id": "factory289:output-dynamics", "source": "factory289", "native_locator": "§5 + current handoff §5",
+      "requirement": "Context Produced lists actual partial/final material with native provenance; short chat links open its content in the right pane or chosen placement. Background cues preserve selected work and reviewed revision.",
       "story_ids": ["WR04", "WR05", "UI02", "DV03"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "Reviewed revision remains fixed while a newer result becomes available.",
         "Switching related work tabs retains output selection.",
         "Close view retains artifact; detach/redock preserves identity.",
         "Selection or receipt never counts as human agreement.",
-        "September-17 handoff §§4/5: claim/evidence opens its original act, task NOW, historical context and exact result, then returns to the held row/material without live arrival replacing it."
+        "Claim/evidence opens original act, task NOW, historical context and exact result, then returns to the held position.",
+        "Produced artifact is not automatically an input, accepted knowledge or an Inbox item. Addressed human Returns appear by the same native ref beside the Run and in Day/NOW/Inbox with actual delivery/review state.",
+        "Request changes, respond/include/reject where natively applicable and deliberate reuse as input retain different effects and do not duplicate the document."
       ]
     },
     {
-      "id": "factory289:templates", "source": "factory289", "native_locator": "§6",
-      "requirement": "Shared structured-data HTML returned-document family: code change, verification, research/design/report, preview/media and handoff, with actual content dominant and existing specialised renderers/native actions reused.",
+      "id": "factory289:templates", "source": "factory289", "native_locator": "§6 + current handoff §5",
+      "requirement": "Open shared structured-data code, verification, report/research, preview/media and handoff bodies from Context Produced using existing native renderers; details/evidence are attached to the material, not required peer sidebar tabs.",
       "story_ids": ["WR05", "DV03", "UI02", "UI03"], "required_evidence": ["C", "M", "H"],
       "required_branches": [
-        "Agents consume the structured record, not scraped HTML.",
-        "Required missing verification is visible; optional missing metrics/tabs are absent.",
-        "Native contained HTML opening and existing Day/Dialogue/CT4b contracts are retained.",
-        "Raw-ref lists and unrelated bespoke pages do not satisfy template parity.",
-        "September-17 handoff §§1/5: reuse recovered supplied Day/Flow forms and existing result templates; preserve claim modality, source basis and open obligations through report/summary presentation without atomising ordinary human prose."
+        "Agents consume structured records, not scraped HTML.",
+        "Required missing verification stays visible; optional missing metrics do not fabricate data.",
+        "Native contained HTML and original Day/Dialogue/CT4b contracts are retained.",
+        "Metadata-only cards/ref lists do not satisfy actual content opening.",
+        "Preserve source basis, claim modality, challenge and remaining obligations in the relevant document; ordinary human writing is not forced into a proposition form."
       ]
     },
     {
-      "id": "factory289:handoff", "source": "factory289", "native_locator": "§7",
-      "requirement": "Handoff reading order: actual outcome/partial state, browsable changes/diff, verification incl outstanding, attributable runtime observations, remaining work/blocker/next step, 1–3 copyable canonical continuation prompts, collapsed provenance.",
+      "id": "factory289:handoff", "source": "factory289", "native_locator": "§7 + current handoff §5",
+      "requirement": "Context Produced/Returns opens outcome-first handoff: actual/partial state, browsable changes/diff, verification/outstanding work, attributable observations, blocker/next act, canonical continuation and expandable provenance.",
       "story_ids": ["WR05", "WR06", "AG06", "DV04"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "Opening handoff does not launch a session.",
-        "Continue uses existing session or explicit new shared start interaction.",
+        "Continue uses the existing session or explicit native new-session interaction.",
         "Queued Run with no attempt cannot yield fabricated completion.",
-        "Reported spend versus derived estimates retain their source/basis.",
-        "September-17 handoff §5: compaction, T-prime, search and resumed handoffs retain original provenance, challenges and scope; a partial completion claim cannot close the containing unverified whole."
+        "Reported spend and derived estimates retain their distinct basis.",
+        "Compaction, T-prime, search and resumed handoffs preserve original provenance/challenges/scope; partial completion cannot close a containing unmet obligation.",
+        "Delivery, acknowledgment, Day inclusion, proposal acceptance, Recognition and Git integration stay distinct and invoke their actual native actions."
       ]
     },
     {
-      "id": "factory289:runs", "source": "factory289", "native_locator": "§8",
-      "requirement": "Source-faithful SSSF Run list/Run Map/frontier, actual correlated Live work, waterfall/span/tool/process/permission/evidence trajectory and supplied Run Thought; selection opens exact environment or artifact; canonical repair/evidence/recognise/continue.",
+      "id": "factory289:runs", "source": "factory289", "native_locator": "§8 + current handoff §4",
+      "requirement": "Centre retains full SSSF multi-lane map/frontier and actual correlation; Run sidebar provides compact purpose/control, selected step/attempt, missing legs, timeline/tool/permission/evidence detail, metrics and supplied Run Thought.",
       "story_ids": ["DV01", "DV02", "DV03", "DV04", "TM03"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "Show required missing/failed verification and independent legs.",
         "Source/semantic to exact execution/evidence remains navigable.",
         "Queued Run plus unrelated chat/tmux is not Factory execution.",
         "Agent completion, human acceptance and Git integration stay separate.",
-        "September-17 handoff §§4/6: turn/step/tool detail and timing augment the SSSF developmental view; all tabs consume shared bounded native streams/cursors, with deduplication, lazy history, gap/coverage and occurrence/receipt distinctions.",
-        "September-17 handoff §§5/6: deterministic native CLI/UI inspection and scoped AIKit/ripgrep search drill to the same evidence; optional analytics/export providers do not become canonical stores or prerequisites."
+        "No miniature sidebar graph or transcript replaces central SSSF fork/barrier/convergence/Candidate functions. Run opens the full view and selected real conversations/environments.",
+        "Start/continue, permission, scoped interrupt/cancel, safe retry/replan, request evidence/changes and Candidate review use real owner states; cancellation and quiescence are not conflated and retries reconcile uncertain effects.",
+        "Timing/tool detail uses shared bounded cursors, lazy history and deduplication with causal/occurrence/receipt/coverage distinctions.",
+        "Native CLI/Agent/UI statistics, comparisons and source search drill to the same evidence; optional analytics/export providers are not canonical stores or prerequisites."
       ]
     },
     {
-      "id": "factory289:git", "source": "factory289", "native_locator": "§9",
-      "requirement": "All code-bearing session/Run/change/handoff views refer to real repository/worktree and comparison basis; statistics/diff use native reads, checks retain exact tested revision/working state, native CLI changes reconcile.",
+      "id": "factory289:git", "source": "factory289", "native_locator": "§9 + current handoff §5",
+      "requirement": "Git comparison/history is available on Context sources/results and related Run checks; actual repository/worktree and exact source/test basis are preserved and external CLI changes reconcile.",
       "story_ids": ["TM05", "DV02", "DV03", "UI04"], "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Preserve human dirty/staged/unstaged/untracked work.",
         "Committed, staged and working comparisons remain identifiable.",
-        "Later edits expose stale evidence rather than leaving green on unspecified code.",
-        "Consume existing observation and finish required public diff/history seams in AIKit#137.",
-        "September-17 handoff §5: original basis A, moved target B and Candidate C retain exact verification and task/NOW/context lineage; Git author metadata is not authenticated Agent attribution and Git history is not runtime context history."
+        "Later edits expose stale evidence instead of green on unspecified code.",
+        "Consume current AIKit Git operations and finish required public seams at their native owner.",
+        "Original basis A, moved target B and Candidate C retain verification and task/NOW/context lineage; Git author metadata is not authenticated Agent attribution or runtime context history."
       ]
     },
     {
-      "id": "factory289:attention-gateway", "source": "factory289", "native_locator": "§10",
-      "requirement": "Quiet footer to session switcher/Observatory and same-session alternate Surface; children roll up, attention deep-links exact pending act, Gateway System/Inspect depth and scoped reachability recovery retain native semantics.",
+      "id": "factory289:attention-gateway", "source": "factory289", "native_locator": "§10 + current handoff §§4–5/7",
+      "requirement": "Relevant Run/Agent/Context attention cue and quiet footer expose the same native pending item; exact activity is openable anywhere, including Observatory/alternate Surface, with local reachability recovery.",
       "story_ids": ["AG09", "UI04", "UI05", "GW05", "GW06", "GW08", "GW09"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
-        "No top Factory horizon or generic transport chrome.",
+        "No top Factory horizon, extra Attention tab or generic transport chrome is required.",
         "Progress is Activity, not Inbox flooding.",
-        "Available/working/needs-input/failure retain actual native evidence.",
-        "Supported connection recovery preserves current work; no broader authority follows visibility.",
-        "September-17 handoff §§4/5/7: footer, Observatory, Day and Factory desk address the same bounded work; configuration health is owner-backed and historical review is not displaced by progress."
+        "Available/working/needs-input/failure follows native evidence.",
+        "Visibility does not broaden permission; reachable alternate Surfaces preserve actual session continuity.",
+        "Permission/blocker stays attached to the operation and actionable even when another sidebar tab is selected. Its linked cue/Inbox/Run views resolve together, not through duplicate requests.",
+        "Buzz-derived notification projections deep-link the same semantic item; footer and historical review stay quiet and stable."
       ]
     },
     {
-      "id": "factory289:temporal-routine", "source": "factory289", "native_locator": "§11",
-      "requirement": "NOW/Inbox/DAY reference actual scratch/work/handoffs/questions/results with retained time/lineage; configure recurring Agent/developmental responsibility via current Routine proof/permission/provider contracts and actual activity/results.",
+      "id": "factory289:temporal-routine", "source": "factory289", "native_locator": "§11 + current handoff §§3/5–6",
+      "requirement": "Agents exposes recurring responsibility and proven practice setup; Run exposes actual occurrence; Context exposes output and addressed NOW/Day/Inbox Return with native time/lineage and retained human writing.",
       "story_ids": ["WR05", "WR06", "PX05", "WK05", "DV04"], "required_evidence": ["C", "P", "M"],
       "required_branches": [
-        "No duplicate Factory temporal/event database or midnight scheduling.",
+        "No duplicate Factory temporal database or midnight scheduling.",
         "Stale proof or revoked authority blocks unattended consequential effects.",
         "Duplicate trigger/restart must not duplicate effects.",
-        "Ordinary recurrence remains quiet; consequential blockage becomes attention.",
-        "September-17 handoff §§5/6/8: two Workcell-root NOWs and scoped children remain attributable through Day rollover, offline/late Return and scoped search; panel opening, indexing and roster refresh invoke no model.",
-        "September-17 handoff §6: semantic evidence, sampled diagnostics and human Day contributions retain separate retention/coverage; bounded UI buffers and unavailable optional exporters cannot counterfeit lossless records."
+        "Ordinary recurrence stays quiet; consequential blockage becomes attention.",
+        "Agent/team routine lists purpose, trigger/enabled/next/last result where known; disable future triggers does not cancel current work, and opening occurrence preserves actual Run/session identity.",
+        "Two Workcell-root NOWs and scoped children survive Day rollover/offline/late Return; panel/index refresh invokes no model.",
+        "Semantic evidence, sampled diagnostics and human Day contributions retain separate coverage/retention; optional exporter loss is not fictitious lossless data."
       ]
     },
     {
-      "id": "factory289:visual", "source": "factory289", "native_locator": "§12",
-      "requirement": "Use actual running app, current tokens and content-first surfaces; one compact control area without stacked Runs/Build headers; outcome-first handoff and artifact-first preview; useful empty/error states, keyboard/pointer, narrow widths, focus/drafts and native Linux menu.",
+      "id": "factory289:visual", "source": "factory289", "native_locator": "§12 + current handoff §§4/7–9",
+      "requirement": "Three clear Factory tabs with content-first Run, actionable Agents and Sources/Produced Context; current Expressions tokens, no stacked banners, usable empty/degraded states, real keyboard/pointer/narrow interactions and native pane/window continuity.",
       "story_ids": ["UI01", "UI02", "UI03", "UI05", "TM09"], "required_evidence": ["M", "H"],
       "required_branches": [
         "Global Expression Stage only; reduced/interrupted motion keeps interaction usable.",
-        "One pane's failure preserves unrelated usable work.",
-        "Absent controls do not silently remove required implementation obligations.",
-        "Screenshots or source tests alone do not establish human visual acceptance.",
-        "September-17 handoff §§1/4: current Expressions design leads; retain accepted left-files interaction; DSH-inspired inspection/docking needs no DSH runtime, model, embedded component or completed adapter.",
-        "September-17 handoff §4: virtualised/lazy history, explicit paused/resume-live, stable rows, space-reclaiming collapse, split/detach/redock and state-preserving maximise retain keyboard/focus/reduced-motion paths."
+        "One pane failure preserves unrelated work.",
+        "Missing production operations remain named implementation work, not silent removal or fixture success.",
+        "Source tests/screenshots alone do not supply human visual acceptance.",
+        "Retain accepted left-files interaction and DSH independence; do not restore the six-tab taxonomy through overflow.",
+        "Virtual/lazy history, paused/Resume live, stable rows/scroll, collapse, split/detach/redock and maximise preserve native state and drafts.",
+        "Current UI dev scenarios are directly openable without live chat/Run. Empty, proposed, running, blocked, reviewing and degraded states have actual interaction, not inert labels."
       ]
     },
     {
-      "id": "factory289:joined", "source": "factory289", "native_locator": "§13–14",
-      "requirement": "Run the complete connected Agent→Factory→bounded child→exact environment→Git/preview/verification/handoff→correction→restart→NOW/recurrence walk; preserve Epi/Nara/Factory and Direct/external identities; independently verify whole feature.",
+      "id": "factory289:joined", "source": "factory289", "native_locator": "§13–14 + current handoff §8",
+      "requirement": "Within the existing programme, exercise organisation/intent/skills → actual Run and chat → bounded child/permission → source/Git/result/check → human receiving/feedback → recovery → Guardian practice and recurrence, using the three-tab layout without discarding native scope.",
       "story_ids": ["DV01", "DV02", "DV03", "DV05", "DV08", "AG06", "UI02", "UI06", "TM03", "TM10"], "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
-        "Actual scoped Factory authority must cross Actuation's existing gate.",
-        "Use all available admitted harnesses with economical eligible models and actual supported faculties; record unsupported/unavailable/failure separately.",
-        "Keep exact source/build/install/running and failed evidence.",
-        "No partial smoke, prose or generated human verdict closes the whole.",
-        "September-17 handoff §§2/8: an existing Product Guardian receives a scoped finding, refines native practice through authorised review and independent fresh reuse, then proposes only warranted cross-product routing learning upward; no automatic Skill/governance promotion or six copied manuals in oi.",
-        "September-17 handoff §§7/8: CLI/config/Agent/UI readbacks agree, a disconnected production handler fails proof, and controlled UI-preparation evidence remains separate from installed integration; preserve the running UI thread and foundation-first broad-launch sequence."
+        "Actual Factory authority crosses Actuation's native gate.",
+        "Retain supported harness/provider branch coverage; DSH is not required by this generic UI and unavailable/unsupported/failure remains explicit.",
+        "Keep exact source/build/install/running and original failed evidence.",
+        "Partial smoke, prose and generated human verdict do not close the whole.",
+        "Existing Guardian receives a finding, refines native practice under review and independent fresh reuse, then proposes only warranted suite routing improvements; no automatic governance promotion or six copied manuals.",
+        "CLI/config/Agent/UI readbacks agree and a disconnected production handler fails integration tests.",
+        "Parallel UI-preparation with labelled interactive fixtures proceeds now; installed/provider/material/human acceptance stays distinct. No audit/pull/reset prerequisite and no pause of the current UI lane."
       ]
     }
   ],
-  "closure": "Each required branch remains unexercised until exact source-qualified native execution and appropriate provider/material/human evidence exist. #289 implements; #201/#202–205 prove; #65 retains whole campaign scope."
+  "closure": "Required functions and branches remain unexercised until appropriate source-qualified native/provider/material/human evidence exists. The September-18 three-tab layout supersedes earlier presentation labels but does not close broader obligations. #289/#375 implements UI, #220 native integration, #201/#202–205 proves, #65 retains the campaign."
 }
