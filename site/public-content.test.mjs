@@ -93,10 +93,29 @@ test('first-contact copy carries the world-making proposition and local-to-share
   assert.match(sectionBody('home', 'existing-world'), /principles, preferences, project purposes, rules and ways of working/i);
   assert.match(sectionBody('home', 'field'), /Minimal O:I: durable ground \+ actuated model capacity/);
   assert.match(sectionBody('home', 'centres'), /Each product develops one of these relations/);
-  assert.match(sectionBody('home', 'shared'), /Enter an Expression, change your view, follow a Scene, turn to its source/);
+  const shared = sectionBody('home', 'shared');
+  assert.match(shared, /Begin with a subject, enter its available Expression/);
+  assert.match(shared, /follow its permitted relations or source, and return to the same reading position/);
+  assert.match(shared, /without a local O:I installation or an Agent key/);
+  assert.match(shared, /not a live subscription/);
+  assert.match(shared, /Unpublished material remains unavailable rather than becoming sample content/);
   assert.match(sectionBody('oi', 'name'), /constituted means through which a Life encounters and acts within a World/);
   assert.match(sectionBody('shared-field', 'intro'), /^### \[title\] A world, defined for agents\.$/m);
   assert.match(sectionBody('shared-field', 'co-internality'), /legibility without capture/);
+});
+
+test('current six-office wording and truthful local installation do not imply publication or verification', () => {
+  const centres = sectionBody('home', 'centres');
+  for (const office of ['Meaningful continuity', 'Living articulation', 'Potency', 'Transformation', 'Situated existence', 'Transcendent Relation']) assert.ok(centres.includes(office), office);
+  assert.match(centres, /constructed paradigm within Objective Internality/);
+  assert.match(centres, /not an exhaustive definition imposed on every World/);
+  assert.match(sectionBody('products', 'central'), /root meta-project/);
+  const build = sectionBody('build', 'intro');
+  assert.match(build, /immutable released artifacts from the current native-source suite/);
+  assert.match(build, /npm registry command is not a verified distribution/);
+  assert.match(build, /oi update --check/);
+  assert.match(build, /successful build, an installed product and a verified human experience remain different claims/);
+  assert.match(sectionBody('build', 'links'), /INSTALL-UPDATE-FLOW\.md/);
 });
 
 test('Objective : Internality is the authored title form', () => {
