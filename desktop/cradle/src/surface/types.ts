@@ -45,6 +45,12 @@ export interface SurfaceBinding {
   ref?: string;
   project?: string;
   title: string;
+  /** A pending open (workspace-continuity WF2): the exact destination is
+   * acknowledged before its owner read resolved, so the tab exists at once
+   * and its ORIGIN workspace holds it while the acquisition is in flight.
+   * A pending binding carries no ref/location yet — no owner identity, the
+   * mount reconciliation skips it, and completion fills it in place. */
+  pending?: boolean;
   address?: import("../kernel/types").KnowledgeAddress;
   encounter?: {space:string};
   browser?: {url:string};
@@ -65,6 +71,13 @@ export interface TabGroupPane {
   id: string;
   /** An intentionally empty split destination, retained until filled or dismissed. */
   emptySlot?: boolean;
+  /** The pane's own tab presentation (owner ruling 2026-09-17: per pane,
+   * never global): pinned horizontal, pinned vertical, or unpinned behind
+   * its reveal edge. Absent = pinned horizontal. */
+  tabPresentation?: import("../workspace/mode").TabPresentation;
+  /** The geometry this pane's tabs are pinned in — and the geometry an
+   * unpinned pane reveals in. Absent = "horizontal". */
+  tabPinOrientation?: "horizontal" | "vertical";
   /** Ordered tab surface ids (pinned tabs render first). */
   tabs: SurfaceId[];
   /** Subset of tabs — pinned surfaces refuse close until unpinned. */
@@ -102,12 +115,36 @@ export interface LayoutState {
   detached?: {surfaceId: string; groupId: string; index: number; pinned: boolean}[];
   subjectPlanes?: Record<string,"context"|"history"|"system">;
   rightDepth?: AgencyDepth;
+  /** The right panel's own pane (the Context plane hosts it): a REAL
+   * tab group from the existing pane logic — tab strip, +, surfaces, chrome —
+   * never tiled. Pop-out moves its tabs into the centre tree. The browser/
+   * terminal reconcile's live list must include its tabs (CradleFrame). */
+  sidePane?: TabGroupPane;
   leftWidth?: number;
   rightWidth?: number;
   /** FND-02: the person's own accompanying encounter bound into the right
    * agent plane — a ref into AIKit's real agent_session grammar, never a
    * desktop-owned session record (map §2 law 7). */
   accompanying?: {ref: string; project: string; space: string};
+  /** The workspace mode (workspace/mode.ts). Absent = "base". Presentation
+   * only: it curates the left body, the mode's centre surface and the common
+   * right panel; it never closes surfaces or restarts a session. */
+  mode?: import("../workspace/mode").WorkspaceMode;
+  /** The pinned-vertical tab list's persisted width (px), shared by every
+   * vertical list, clamped by mode.ts's `clampTabListWidth` on every write
+   * and on restore. The pin state itself is per pane (TabGroupPane). */
+  tabListWidth?: number;
+  /** The right panel's remembered plane, per mode. A plane a mode no longer
+   * offers falls back to that mode's resting plane at render time. */
+  panelPlanes?: Partial<Record<import("../workspace/mode").WorkspaceMode, string>>;
+  /** Each mode remembers how its side regions were left, so returning to a
+   * mode returns to its arrangement. Widths and the pane tree are shared. */
+  modeRegions?: Partial<Record<import("../workspace/mode").WorkspaceMode, {left: AgencyDepth; right: AgencyDepth}>>;
+  /** Owner ruling 2026-09-18: Epi-Logos is a whole-app world state, not a
+   * page or a mode entry — when true, the entire system works within the
+   * Epi-Logos ground regardless of mode. Displayed and toggled in the
+   * workspace footer. */
+  epiLogos?: boolean;
 }
 
 /**

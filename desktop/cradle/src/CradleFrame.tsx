@@ -19,6 +19,7 @@ import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
+import {retainedPaneSurfaces} from "./surface/retention";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -41,11 +42,12 @@ import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
  * bundles by the build gate above.
  */
 
-import { lazy, Suspense, useCallback, useEffect, useRef, useState, type ComponentType, type ReactNode } from "react";
+import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 const LibraryBrowser=lazy(()=>import("./library/LibraryBrowser").then(module=>({default:module.LibraryBrowser})));
-import { readFile, readFileBytes } from "./files/client";
+import { readFile } from "./files/client";
+import { acquireFileReading, acquireFileBytes, applyReceipt } from "./files/resources";
 import { detectFormat } from "./material/detect";
-import type { CentralLocation } from "./kernel/types";
+import type { CentralLocation, NativeFileReading } from "./kernel/types";
 import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
 import { readDraft } from "./workspace/drafts";
 import { DesktopShell } from "./workspace/DesktopShell";
@@ -130,6 +132,22 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // renders them any more: writing is a real Flow in a NOW register now.
   const state = workspace.current.layout;
   const setState = workspace.setLayout;
+  // The retention warm set (WF4): the retained pane surfaces of the active
+  // workspace plus the recently visited ones. The workbench declares each
+  // once, so a mode swap or a workspace swap parks the body (an HTML
+  // document, an editor, an encounter view, a terminal) instead of
+  // unmounting it — returning presents the same instance.
+  const warmPaneSurfaces = useMemo(
+    () => retainedPaneSurfaces(workspace.workspaces, workspace.current.id),
+    [workspace.workspaces, workspace.current.id],
+  );
+  // Broker invalidation (WF2): kernel `file_changed` receipts drop the
+  // broker's resident readings for the changed file, so the next acquire is
+  // a real owner read while consumers keep their last reading visible.
+  // applyReceipt dedupes by its own cursor; feeding every receipt is safe.
+  useEffect(() => {
+    for (const receipt of kernel.receipts) applyReceipt(receipt);
+  }, [kernel.receipts]);
   const navigatorOpen = state.agencyDepth === "panel" || state.agencyDepth === "full";
   const setNavigatorOpen = (open: boolean) => setState(s => ({ ...s, agencyDepth: open ? "panel" : "strip" }));
   const navigatorRef = useRef(false);
@@ -204,12 +222,27 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // a kernel that is simply absent.
   const UNOWNED_SURFACE_KINDS = new Set(["draft", "blank"]);
   const mountSurface = useCallback(async (binding: SurfaceBinding) => {
-    if (UNOWNED_SURFACE_KINDS.has(binding.kind)) { pendingMount.current.delete(binding.id); return; }
+    if (UNOWNED_SURFACE_KINDS.has(binding.kind) || binding.pending) { pendingMount.current.delete(binding.id); return; }
     try {
       if(binding.kind==="encounter" && binding.ref && binding.project){await encounter(kernel.transport,binding.project,{action:"start"});await encounter(kernel.transport,binding.project,{action:"read",agent_session:binding.ref,after:0,limit:1});}
-      if (binding.kind === "file" && binding.location) await readFileBytes(kernel.transport,binding.location);
+      // The admission prerequisite shares ONE owner acquisition with the
+      // renderer through the broker (WF2): text formats read as UTF-8 (the
+      // renderer's own acquire joins the same in-flight read), binary
+      // formats read bytes. A file binding with no ref yet — a retry of a
+      // failed open — is admitted through the reading this obtains.
+      let admissionRef = binding.ref;
+      if (binding.kind === "file" && binding.location) {
+        const format = detectFormat({ path: binding.location.path });
+        if (format === "image" || format === "pdf" || format === "unsupported") {
+          const bytes = await acquireFileBytes(kernel.transport, binding.location);
+          admissionRef = bytes.location.ref;
+        } else {
+          const reading = await acquireFileReading(kernel.transport, binding.location);
+          admissionRef = reading.location.ref;
+        }
+      }
       if (binding.kind === "knowledge" && binding.address) await knowledge(kernel.transport,binding.project,{action:"read",address:binding.address});
-      const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: binding.kind, ...(binding.ref ? { source_ref: binding.ref } : {}), title: binding.title });
+      const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: binding.kind, ...(admissionRef ? { source_ref: admissionRef } : {}), title: binding.title });
       if (opened?.result !== "surface_opened") throw new Error("This surface could not be opened");
       if (binding.kind === "source" && binding.ref) {
         // For a root-register buffer (the Day, opened through the owner's Day
@@ -239,13 +272,27 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     void mountSurface(binding);
   }, [mountSurface]);
   useEffect(() => {
-    const openIds = new Set([...groupsOf(state.root).flatMap((group) => group.tabs),...workspace.workspaces.flatMap(w=>(w.layout.detached??[]).map(d=>d.surfaceId))]);
+    // Logical membership vs presentation (WF5): the kernel's surface set is
+    // the UNION of every workspace's tree tabs and detached placements, so
+    // leaving a workspace or a mode never reads as native closure and a
+    // return never re-admits what is already admitted. What MOUNTS — the
+    // owner-mediated admission reads — is only what is presented now: the
+    // active workspace's tree and detached surfaces. Saved tabs of inactive
+    // workspaces stay logically open without being eagerly read or admitted.
+    const openIds = new Set<SurfaceId>();
+    const demanded = new Set<SurfaceId>();
     const bindings={...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces} as typeof state.surfaces;
+    for (const w of workspace.workspaces) {
+      for (const group of groupsOf(w.layout.root)) for (const tab of group.tabs) openIds.add(tab);
+      for (const d of w.layout.detached ?? []) { openIds.add(d.surfaceId); demanded.add(d.surfaceId); }
+    }
+    for (const group of groupsOf(state.root)) for (const tab of group.tabs) demanded.add(tab);
     for (const surfaceId of openIds) {
       const binding = bindings[surfaceId];
-      if (!binding || (kernelSurfaces[surfaceId] && kernelSurfaces[surfaceId].source_ref === binding.ref && kernelSurfaces[surfaceId].kind === binding.kind) || pendingMount.current.has(surfaceId)) {
-        continue;
-      }
+      if (!binding || binding.pending) continue;
+      if (kernelSurfaces[surfaceId] && kernelSurfaces[surfaceId].source_ref === binding.ref && kernelSurfaces[surfaceId].kind === binding.kind) continue;
+      if (pendingMount.current.has(surfaceId)) continue;
+      if (!demanded.has(surfaceId)) continue;
       pendingMount.current.add(surfaceId);
       void mountSurface(binding);
     }
@@ -337,42 +384,58 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const openFileRef=useRef<(location:CentralLocation)=>Promise<void>>(async()=>{});
   const openFile = async (location:CentralLocation) => {
     // FND-04: a binary material format (image/pdf/an unsupported disposition)
-    // would refuse `central.files.read`'s default UTF-8 contract outright,
-    // so it is opened through the binary-safe `FileBytes` op instead of the
-    // text `FileRead` one (the pre-read extension fallback — `detect.ts`'s
-    // own documented purpose: "the pre-read decision — FileSurface must
-    // choose a renderer before any owner round trip has happened" — is
-    // exactly the tool for this choice). Either read still has to happen:
-    // the kernel's `SurfaceOpen` gate requires the ref be registered by a
-    // real owner-mediated read (`file_refs`, `kernel/src/lib.rs`) before a
-    // surface for it may open, regardless of which read resolved it.
-    // Text/HTML/Markdown keep the original owner-source dedup path
-    // unchanged (only a text `FileReading` ever carries `source`).
+    // reads through the binary-safe `FileBytes` op; text/HTML/Markdown read
+    // as UTF-8 — and BOTH reads run once, through the shared broker, with
+    // the renderer joining the same acquisition (WF2).
     const format = detectFormat({path: location.path});
     const isBinaryMaterial = format === "image" || format === "pdf" || format === "unsupported";
-    let ref = location.ref, project: string | undefined, resolvedLocation = location;
-    if (isBinaryMaterial) {
-      const read = await readFileBytes(kernel.transport,location);
-      ref = read.location.ref; resolvedLocation = read.location;
-    } else {
-      const read = await readFile(kernel.transport,location);
+    const title = location.path.split("/").pop() ?? "File";
+    // A known binding opens by activation alone — never a second read.
+    const currentAt = stateRef.current;
+    const known = location.ref ? Object.values(currentAt.surfaces).find(binding => binding.kind === "file" && binding.ref === location.ref) : undefined;
+    if (known && groupsOf(currentAt.root).some(g => g.tabs.includes(known.id))) {
+      setState(s => executeFrameAction(s, "surface.activate", { surfaceId: known.id }));
+      return;
+    }
+    if (kernel.transport.kind === "tauri" && location.ref) {
+      const {invoke} = await import("@tauri-apps/api/core");
+      if (await invoke<boolean>("window_focus_subject",{reference:location.ref}))return;
+    }
+    // The destination is acknowledged BEFORE any owner round trip (WF2): a
+    // pending binding — no owner identity yet — opens now and belongs to its
+    // ORIGIN workspace. The acquisition that follows is the one the renderer
+    // joins; completion fills the SAME tab in place, and lands in the origin
+    // workspace even if the person has moved on — a late open never steals
+    // another workspace's focus.
+    const originWorkspaceId = workspaceRef.current.current.id;
+    const id = crypto.randomUUID();
+    setState(s => openBinding({...s, closedStack: s.closedStack.filter(x => x !== id)}, {id, kind: "file", title, pending: true}));
+    try {
+      const reading = isBinaryMaterial
+        ? await acquireFileBytes(kernel.transport, location)
+        : await acquireFileReading(kernel.transport, location);
+      const textReading = isBinaryMaterial ? undefined : reading as NativeFileReading;
       // A bound source opens as a source surface whether a project scope
       // holds it or not — a root-register Day document is a source with no
-      // project, and its strips route by the ref's own register (null
-      // project = the root register's receiving field).
-      if(read.source) {openSource({...read.source,revision:read.revision},read.project?.name);return;}
-      ref = read.location.ref; project = read.project?.name; resolvedLocation = read.location;
+      // project (the open-source law). The pending file tab yields in place:
+      // same tab, now a source binding, in the origin workspace.
+      if (textReading?.source) {
+        workspace.replaceSurface(originWorkspaceId, {id, kind: "source", ref: textReading.source.ref, title: textReading.source.path.split("/").pop() ?? title, project: textReading.project?.name});
+        if (workspaceRef.current.current.id === originWorkspaceId) setState(s => executeFrameAction(s, "surface.activate", {surfaceId: id}));
+        return;
+      }
+      const ref = reading.location.ref;
+      const opened = await kernel.apply({op:"surface_open",surface_id:id,kind:"file",source_ref:ref,title});
+      if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
+      workspace.replaceSurface(originWorkspaceId, {id, kind: "file", ref, title, project: textReading?.project?.name, location: reading.location});
+      if (workspaceRef.current.current.id === originWorkspaceId) setState(s => executeFrameAction(s, "surface.activate", {surfaceId: id}));
+    } catch (error) {
+      // The pending tab becomes the failure's place (BOOT-09): the location
+      // is kept, the error overlay + Retry render where the tab is, and
+      // Retry re-acquires through the ordinary mount path.
+      setSurfaceErrors(held => ({ ...held, [id]: error instanceof Error ? error.message : String(error) }));
+      workspace.replaceSurface(originWorkspaceId, {id, kind: "file", title, location});
     }
-    if(kernel.transport.kind==="tauri") {
-      const {invoke}=await import("@tauri-apps/api/core");
-      if(await invoke<boolean>("window_focus_subject",{reference:ref}))return;
-    }
-    const current=stateRef.current;
-    const existing=Object.values(current.surfaces).find(binding=>binding.kind==="file"&&binding.ref===ref);
-    const binding=existing??{id:crypto.randomUUID(),kind:"file",ref,title:resolvedLocation.path.split("/").pop()??"File",project,location:resolvedLocation};
-    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"file",source_ref:binding.ref,title:binding.title});
-    if(opened?.result!=="surface_opened")throw new Error("Central file surface could not be opened");
-    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
   openFileRef.current=openFile;
@@ -1196,6 +1259,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           factoryTasks={factoryCentreProps}
           subject={workspace.current.context?.subject}
           nativeWindows={kernel.transport.kind==="tauri"}
+          retainedPaneSurfaces={warmPaneSurfaces}
         />
       ) : (
         <RestPane>

@@ -18,7 +18,7 @@
  *   keeps holding its centre mounted-concealed — the pane tier's own law.
  * - Parked means suspended: the park layer is `display:none`, the same
  *   off-screen observation (`IntersectionObserver`, MaterialSurface's
- *   `useSuspend` law) every viewport-gated surface already honours.
+ *   disclosure law, material/lifecycle.ts) every viewport-gated surface already honours.
  *
  * Per surface KIND (the tier law): engines and hosted applications retain —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
@@ -37,6 +37,7 @@
 import {lazy, Suspense, useEffect, useMemo, useRef, useState, type ReactNode} from "react";
 import {createPortal} from "react-dom";
 import {groupsOf} from "./engine";
+import {markPresented, markReleased, markRetained, exposeRuntimeProbe, RETAINED_VIEW_BUDGET} from "./runtime";
 import type {LayoutState, SurfaceBinding, SurfaceId} from "./types";
 import {TREE_MODES, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
@@ -52,6 +53,16 @@ const FactoryCentre = lazy(() => import("../contributions/factory/FactoryCentre"
 /** The centre kinds this tier retains (see the module law above). */
 export const RETAINED_CENTRE_KINDS = new Set(["expressions", "techne", "epi-logos", "system", "factory"]);
 export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(kind);
+
+/** The pane kinds the same park retains (workspace-continuity WF4): bodies
+ * that hold live documents, owner sessions or engine state a remount would
+ * destroy — an HTML document (the frame and its revision), an editor with a
+ * held draft and scroll, a knowledge/expression view, an AgentSession view,
+ * a terminal lease, a browser page, a pinned presentation, Explore's
+ * remembered travel. Cheap list kinds (sources, blank) release as before;
+ * explicit close releases every kind (the binding leaves the derivation). */
+export const RETAINED_PANE_KINDS = new Set(["file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore"]);
+export const isRetainedPaneKind = (kind: string) => RETAINED_PANE_KINDS.has(kind);
 
 /** Factory's Desk/Tasks context (CradleFrame.factoryCentreProps): the
  * browsed project, the bound conversation, the one task-open path and the
@@ -173,9 +184,12 @@ function RetainedCentre({binding, subject, factoryCentre, factoryTasks}: {bindin
     retained.set(binding.id, {container, adopter: null});
     const park = parkLayer();
     if (park && container.parentElement !== park) park.appendChild(container);
+    markRetained(binding.id, binding.kind);
+    exposeRuntimeProbe();
     return () => {
       const record = retained.get(binding.id);
       if (record?.container === container) retained.delete(binding.id);
+      markReleased(binding.id, binding.kind);
       container.remove();
     };
   }, [binding.id, container]);
@@ -212,7 +226,96 @@ export function CentreOutlet({binding}: {binding: SurfaceBinding}) {
     const outlet = host.current;
     if (!outlet) return;
     adopt(binding.id, outlet);
-    return () => release(binding.id, outlet);
+    markPresented(binding.id, binding.kind);
+    return () => {
+      release(binding.id, outlet);
+      markRetained(binding.id, binding.kind);
+    };
   }, [binding.id]);
   return <div className="retained-centre-outlet" ref={host} data-surface-kind={binding.kind}/>;
+}
+
+// ---------------------------------------------------------------------------
+// The pane tier of the park (workspace-continuity WF4): the same declarer/
+// outlet mechanism over pane-tab surfaces, so a MODE swap or a WORKSPACE
+// swap — which replaces whole trees — parks a file document, an editor, an
+// encounter view or a terminal instead of destroying it. The warm set spans
+// workspaces on purpose (the HTML continuity law: returning to a workspace
+// restores the same document), bounded by the runtime registry's budget and
+// ordered by recency: the active workspace's presented tree first, then its
+// waiting mode trees, then recently visited workspaces.
+
+export interface RetainedPaneRef { binding: SurfaceBinding; workspaceId: string }
+
+/** How many recently-left workspaces keep their retained surfaces warm. */
+export const WARM_WORKSPACES = 2;
+
+function treeBindingIds(layout: LayoutState): SurfaceId[] {
+  return groupsOf(layout.root).flatMap((group) => group.tabs);
+}
+
+/** The retained pane surfaces of the shell, most recently presented first,
+ * capped at the warm-set budget. Pending opens (no owner identity yet) and
+ * detached surfaces (they live in their own native windows) are not
+ * retained here. */
+export function retainedPaneSurfaces(workspaces: Workspace[], activeWorkspaceId: string): RetainedPaneRef[] {
+  const active = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
+  if (!active) return [];
+  const warm = workspaces
+    .filter((workspace) => workspace.id !== activeWorkspaceId && isRetainedPaneWorkspace(workspace))
+    .sort((a, b) => (b.lastVisitedAt ?? 0) - (a.lastVisitedAt ?? 0))
+    .slice(0, WARM_WORKSPACES);
+  const ordered: RetainedPaneRef[] = [];
+  const seen = new Set<SurfaceId>();
+  for (const workspace of [active, ...warm]) {
+    const trees = [workspace.layout, ...TREE_MODES.map((mode) => workspace.modeLayouts?.[mode]).filter((layout): layout is LayoutState => !!layout)];
+    for (const tree of trees) {
+      for (const id of treeBindingIds(tree)) {
+        if (seen.has(id)) continue;
+        const binding = tree.surfaces[id];
+        if (!binding || !isRetainedPaneKind(binding.kind) || binding.pending) continue;
+        seen.add(id);
+        ordered.push({binding, workspaceId: workspace.id});
+      }
+    }
+  }
+  return ordered.slice(0, RETAINED_VIEW_BUDGET);
+}
+
+/** A workspace contributes to the warm set only when the person has actually
+ * been there (a fresh id minted by a create never carries surfaces anyway). */
+function isRetainedPaneWorkspace(workspace: Workspace): boolean {
+  return (workspace.lastVisitedAt ?? 0) > 0;
+}
+
+function RetainedPaneSurface({binding, renderBody}: {binding: SurfaceBinding; renderBody: (binding: SurfaceBinding) => ReactNode}) {
+  const [container] = useState(() => {
+    const element = document.createElement("div");
+    element.className = "retained-pane-host";
+    element.dataset.surfaceKind = binding.kind;
+    return element;
+  });
+  useEffect(() => {
+    retained.set(binding.id, {container, adopter: null});
+    const park = parkLayer();
+    if (park && container.parentElement !== park) park.appendChild(container);
+    markRetained(binding.id, binding.kind);
+    exposeRuntimeProbe();
+    return () => {
+      const record = retained.get(binding.id);
+      if (record?.container === container) retained.delete(binding.id);
+      markReleased(binding.id, binding.kind);
+      container.remove();
+    };
+  }, [binding.id, container]);
+  return createPortal(<Suspense fallback={null}>{renderBody(binding)}</Suspense>, container);
+}
+
+/** The workbench's pane-retention layer: declares every retained pane
+ * surface of the warm set once, presenting sites adopt them through
+ * `CentreOutlet` (the same adoption law — the outlet host class is shared),
+ * and a surface that leaves the warm set (explicit close, budget cap) has
+ * its declarer unmount, which is the release. */
+export function PaneSurfaceRetention({surfaces, renderBody}: {surfaces: RetainedPaneRef[]; renderBody: (binding: SurfaceBinding) => ReactNode}) {
+  return <>{surfaces.map(({binding}) => <RetainedPaneSurface key={binding.id} binding={binding} renderBody={renderBody}/>)}</>;
 }

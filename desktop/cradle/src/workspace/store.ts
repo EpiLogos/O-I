@@ -1,4 +1,5 @@
 import {preservePresentation,latestRecovery} from "./recovery";
+import {commitCheckpoint,lastKnownGood,stageCheckpoint,decodeLayoutProgressive} from "./checkpoints";
 import { useEffect, useRef, useState, type SetStateAction } from "react";
 import { activateSurface, groupsOf, openBinding, redockBinding } from "../surface/engine";
 import { decodeLayout } from "../surface/persist";
@@ -27,6 +28,11 @@ export interface Workspace {
   /** WORLD CONTEXT — beside the per-mode trees, not inside them: what rides
    * through every mode switch and every reload. */
   context?: WorldContext;
+  /** When the person last stood in this workspace (the retention warm set's
+   * recency order — surface/retention.tsx keeps the active workspace plus
+   * the most recently visited ones warm). Presentation bookkeeping, never
+   * semantic. */
+  lastVisitedAt?: number;
 }
 /** The selected world is independent of the arrangement: entering Epi-Logos
  * selects its world, and examining one of its Expressions in Technè or opening
@@ -150,14 +156,23 @@ const initialLayout = (): LayoutState => ({ ...freshLayout(), agencyDepth: "pane
  * per-workspace quarantine law (owner-approved 2026-09-19): ONE broken
  * record never rejects the whole book — that workspace loads empty, keeps
  * its name, and the note names it (the footer message system discloses it);
- * every healthy workspace restores untouched. */
-function restoreWorkspace(w: Workspace): {workspace: Workspace; note?: string} {
+ * every healthy workspace restores untouched. BELOW the workspace grain the
+ * recovery is progressive (workspace-continuity WF1): a damaged binding or
+ * view record is dropped and named while its valid siblings restore — only
+ * a record nothing restorable survives empties the workspace and names why. */
+function restoreWorkspace(w: Workspace): {workspace: Workspace; notes: string[]} {
+  const notes: string[] = [];
   try {
     if (typeof w.id !== "string" || typeof w.name !== "string" || typeof w.writing !== "string" || (w.project !== undefined && typeof w.project !== "string")) throw new Error("Invalid workspace record");
     const restore=(raw:LayoutState):LayoutState=>{
-      const layout=decodeWorkspaceLayout(raw);
-      if(!raw || typeof raw!=="object" || !raw.surfaces || Object.keys(raw.surfaces).length!==Object.keys(layout.surfaces).length || (raw.root && !layout.root))throw new Error("Some saved surface bindings could not be restored");
-      return scopeLegacyIds(layout,w.id);
+      if(!raw || typeof raw!=="object" || !raw.surfaces)throw new Error("Invalid workspace record");
+      const progressive=decodeLayoutProgressive(raw,w.id);
+      notes.push(...progressive.notes);
+      if(!progressive.layout)throw new Error(progressive.notes.join(" ")||"No saved surface bindings could be restored");
+      // The store's own presentation upgrades (legacy pin vocabulary, width
+      // clamp) stay store-owned: progressive decode sanitized the raw
+      // record, this pass reads it exactly as a healthy record is read.
+      return scopeLegacyIds(decodeWorkspaceLayout(progressive.sanitized),w.id);
     };
     const layout=restore(w.layout);
     // A mode's waiting tree restores under the same law as the active one;
@@ -170,43 +185,62 @@ function restoreWorkspace(w: Workspace): {workspace: Workspace; note?: string} {
       if (state.mode !== undefined && !["chats", "files", "wiki"].includes(state.mode)) throw new Error("Invalid project mode");
       return [ref, { expanded: state.expanded, scroll: state.scroll, directories: state.directories, mode: state.mode ?? "files", locationPath: state.locationPath }];
     }));
-    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context) })};
+    return {workspace: carryLegacyWriting({ projectNavigation, centralFiles: w.centralFiles === true, id: w.id, name: w.name, project: w.project, writing: w.writing, writingMode: false, layout, modeLayouts, context: decodeWorldContext(w.context), lastVisitedAt: typeof w.lastVisitedAt === "number" ? w.lastVisitedAt : undefined }), notes};
   } catch (error) {
     // The record still names itself when its name is readable; its
     // identifier survives only when it is a string no healthy workspace
     // holds (a quarantined record never shadows a restored one).
     const name = typeof w?.name === "string" && w.name.trim() ? w.name.trim() : "Recovered workspace";
     const id = typeof w?.id === "string" && w.id ? w.id : crypto.randomUUID();
-    return {workspace: { id, name, writing: "", layout: initialLayout() }, note: `Workspace "${name}" could not be restored and was left empty: ${error instanceof Error ? error.message : String(error)}`};
+    return {workspace: { id, name, writing: "", layout: initialLayout() }, notes: [`Workspace "${name}" could not be restored and was left empty: ${error instanceof Error ? error.message : String(error)}`]};
   }
 }
 interface LoadedBook { book: WorkspaceBook; quarantine: string[] }
+/** The parsed book restored record by record (the per-workspace quarantine
+ * law plus the progressive notes beneath it). */
+function restoreBook(parsed: {version?: unknown; active?: unknown; workspaces?: unknown}): LoadedBook {
+  if ((parsed.version !== 1 && parsed.version !== 2) || !Array.isArray(parsed.workspaces)) throw new Error("Unrecognized workspace format");
+  const restored = (parsed.workspaces as Workspace[]).map(restoreWorkspace);
+  const quarantine = restored.flatMap(result => result.notes);
+  // Identifier uniqueness is repaired, never fatal: a colliding record
+  // (quarantined or duplicated) mints its own id so no workspace shadows
+  // another — the book still opens with everything it could restore.
+  const taken = new Set<string>();
+  const workspaces = restored.map(result => {
+    if (!taken.has(result.workspace.id)) { taken.add(result.workspace.id); return result.workspace; }
+    const renamed = { ...result.workspace, id: crypto.randomUUID() };
+    const firstNote = result.notes[0];
+    if (firstNote !== undefined) quarantine[quarantine.indexOf(firstNote)] = `${firstNote} Its saved identifier collided with another workspace; it was given its own.`;
+    else quarantine.push(`Two workspaces shared the identifier of "${result.workspace.name}"; the second was given its own.`);
+    taken.add(renamed.id);
+    return renamed;
+  });
+  // The active selection survives when its workspace restored; otherwise
+  // the first restored workspace stands in — the book still opens.
+  if (!workspaces.length) throw new Error("Invalid workspace selection");
+  const active = workspaces.some((w: Workspace) => w.id === parsed.active) ? parsed.active as string : workspaces[0].id;
+  return { book: { version: 2, active, workspaces }, quarantine };
+}
 function load(): LoadedBook {
   const raw = localStorage.getItem(KEY);
   if (raw) {
-    const parsed = JSON.parse(raw);
-    if ((parsed.version !== 1 && parsed.version !== 2) || !Array.isArray(parsed.workspaces)) throw new Error("Unrecognized workspace format");
-    // Per-workspace quarantine: a broken record empties and names itself;
-    // the book keeps every healthy workspace and never rejects wholesale.
-    const restored = (parsed.workspaces as Workspace[]).map(restoreWorkspace);
-    const quarantine = restored.flatMap(result => result.note ? [result.note] : []);
-    // Identifier uniqueness is repaired, never fatal: a colliding record
-    // (quarantined or duplicated) mints its own id so no workspace shadows
-    // another — the book still opens with everything it could restore.
-    const taken = new Set<string>();
-    const workspaces = restored.map(result => {
-      if (!taken.has(result.workspace.id)) { taken.add(result.workspace.id); return result.workspace; }
-      const renamed = { ...result.workspace, id: crypto.randomUUID() };
-      if (result.note) quarantine[quarantine.indexOf(result.note)] = `${result.note} Its saved identifier collided with another workspace; it was given its own.`;
-      else quarantine.push(`Two workspaces shared the identifier of "${result.workspace.name}"; the second was given its own.`);
-      taken.add(renamed.id);
-      return renamed;
-    });
-    // The active selection survives when its workspace restored; otherwise
-    // the first restored workspace stands in — the book still opens.
-    if (!workspaces.length) throw new Error("Invalid workspace selection");
-    const active = workspaces.some((w: Workspace) => w.id === parsed.active) ? parsed.active : workspaces[0].id;
-    return { book: { version: 2, active, workspaces }, quarantine };
+    try {
+      return restoreBook(JSON.parse(raw));
+    } catch (error) {
+      // A truncated or otherwise unreadable book never discards the last
+      // committed copy (WF1): the staged journal's previous slot opens,
+      // naming the substitution; only when no journal copy exists does the
+      // original error stand and the protected recovery path take over.
+      const good = lastKnownGood(KEY);
+      if (good) {
+        try {
+          const outcome = restoreBook(JSON.parse(good));
+          outcome.quarantine = [`The saved workspace record could not be read (${error instanceof Error ? error.message : String(error)}); the last committed copy was opened instead.`, ...outcome.quarantine];
+          return outcome;
+        } catch { /* the journal copy is no better — the original error stands */ }
+      }
+      throw error;
+    }
   }
   const legacyRaw=localStorage.getItem("oi-cradle.layout.v1");
   let legacy=initialLayout();
@@ -246,12 +280,52 @@ export function useWorkspaces() {
   // The file tree's listing cache keys on the workspace: switching releases.
   useEffect(() => { setActiveListingWorkspace(current.id); }, [current.id]);
   const held = useRef(book); held.current = book;
-  useEffect(() => {
+  // Durable persistence (workspace-continuity WF1): every change STAGES the
+  // serialized candidate, writes it, and COMMITs it into the journal's
+  // last-known-good slot — an interrupted write always leaves the previous
+  // good copy readable, and a fallback never overwrites the only copy.
+  // Writes coalesce off the hot paths (a split drag emits a book change per
+  // pointermove): one trailing write 250 ms after the first change of a
+  // burst, flushed on page lifecycle (pagehide / hidden) so a close never
+  // relies on the timer alone. The newest book always wins — the flush
+  // writes what is held now, not what scheduled it.
+  const WRITE_INTERVAL_MS = 250;
+  const dirty = useRef(false);
+  const writeTimer = useRef<number | undefined>(undefined);
+  const recoveryRef = useRef(recovery); recoveryRef.current = recovery;
+  const flushNow = () => {
+    if (writeTimer.current !== undefined) { window.clearTimeout(writeTimer.current); writeTimer.current = undefined; }
+    if (!dirty.current) return;
+    dirty.current = false;
+    const pending = held.current;
     // A corrupt store is retained for recovery, never overwritten by fallback.
-    if (book.active === "recovery" || (recovery && !recovery.key)) { setSaveError("Saved workspaces could not be restored. The original data has been retained."); return; }
-    try { localStorage.setItem(KEY, JSON.stringify(book)); setSaveError(null); }
+    if (pending.active === "recovery" || (recoveryRef.current && !recoveryRef.current.key)) { setSaveError("Saved workspaces could not be restored. The original data has been retained."); return; }
+    try {
+      const raw = JSON.stringify(pending);
+      stageCheckpoint(KEY, raw);
+      localStorage.setItem(KEY, raw);
+      commitCheckpoint(KEY);
+      setSaveError(null);
+    }
     catch { setSaveError("Workspace changes could not be saved on this device."); }
-  }, [book,recovery]);
+  };
+  useEffect(() => {
+    dirty.current = true;
+    if (writeTimer.current === undefined) writeTimer.current = window.setTimeout(flushNow, WRITE_INTERVAL_MS);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [book, recovery]);
+  useEffect(() => {
+    const onPageHide = () => flushNow();
+    const onVisibility = () => { if (document.visibilityState === "hidden") flushNow(); };
+    window.addEventListener("pagehide", onPageHide);
+    document.addEventListener("visibilitychange", onVisibility);
+    return () => {
+      window.removeEventListener("pagehide", onPageHide);
+      document.removeEventListener("visibilitychange", onVisibility);
+      if (writeTimer.current !== undefined) window.clearTimeout(writeTimer.current);
+    };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   const update = (change: (w: Workspace) => Workspace) => setBook(b => ({ ...b, workspaces: b.workspaces.map(w => w.id === b.active ? change(w) : w) }));
   const setLayout = (change: SetStateAction<LayoutState>) => update(w => ({ ...w, layout: typeof change === "function" ? change(w.layout) : change }));
   useEffect(()=>subscribeFocusedInstrumentOpen(request=>{
@@ -274,7 +348,7 @@ export function useWorkspaces() {
   }),[]);
   const setWritingMode = (writingMode: boolean) => update(w => ({ ...w, writingMode }));
   const setWriting = (writing: string) => update(w => ({ ...w, writing }));
-  const activate = (id: string) => setBook(b => b.workspaces.some(w => w.id === id) ? { ...b, active: id } : b);
+  const activate = (id: string) => setBook(b => b.workspaces.some(w => w.id === id) ? { ...b, active: id, workspaces: b.workspaces.map(w => w.id === id ? { ...w, lastVisitedAt: Date.now() } : w) } : b);
   const create = (name: string) => {
     if (!name.trim() || (recovery && !recovery.key)) return;
     setBook(b => { const w: Workspace = { id: crypto.randomUUID(), name: name.trim(), writing: "", layout: initialLayout() }; return { ...b, active: w.id, workspaces: [...b.workspaces, w] }; });
@@ -300,8 +374,10 @@ export function useWorkspaces() {
   const redock = (workspaceId:string,surfaceId:string) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId?{...w,layout:redockBinding(w.layout,surfaceId)}:w)}));
   /** One click, one reload (owner ruling 2026-09-19): retry the load from
    * the protected storage; success clears the standing message, failure
-   * re-reports through the same footer path. */
-  const reload=()=>{try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preservePresentation(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
+   * re-reports through the same footer path. Pending coalesced state is
+   * flushed FIRST — the retry must read what was actually done, not what
+   * had been written when the timer last fired. */
+  const reload=()=>{flushNow();try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preservePresentation(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
   const startFresh=()=>{if(recovery&&!recovery.key)return;setBook({version:2,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]});setRecovery(null);};
   const recoverAvailable=()=>{
     const saved=latestRecovery();if(!saved)return;
