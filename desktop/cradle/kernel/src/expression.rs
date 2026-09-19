@@ -435,7 +435,7 @@ pub fn capabilities() -> Value {
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
         "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
-        "parameters":{"glyph":{"type":"string","max_length":128},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
+        "parameters":{"glyph":{"type":"string","max_length":128},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
         "scene_body":{"carriers":["engine_composition","text_source","glyph_form","image_media","file_thing","knowledge_whole","html_surface","agent_surface","expression_ref"],
             "presentations":["live","inline","preview","degraded"],
@@ -497,7 +497,7 @@ pub(crate) fn bounds(key: &str) -> Option<(f64, f64)> {
     match key {
         "x" | "y" | "z" => Some((-1600., 1600.)),
         "scale" => Some((0.05, 4.)),
-        "share" => Some((0., 1000.)),
+        "share" => Some((0., 1.)),
         _ => None,
     }
 }

@@ -57,12 +57,13 @@ to the desktop as the whole S are replaced by this explicit S↔M′ relation.
 ### Operative contract
 
 Desktop native calls enter through `oi central`, `oi aikit`, or another declared
-S namespace. AIKit's separate SessionSpace companion is exposed explicitly as
-`oi aikit-session-space`; it retains AIKit ownership. O:I preserves native
-arguments, streams, exit results and authority; it does not reinterpret them.
-`OI_BIN` selects the exact suite executable. Existing `OI_CENTRAL_CTRL_BIN`,
-`OI_AIKIT_BIN` and `OI_AIKIT_SESSION_SPACE_BIN` select native candidate artifacts
-at the suite dispatcher. Direct explicit kernel clients remain owner-level test
+S namespace. AIKit's SessionSpace verbs live in the main aikit binary (the
+former companion is folded away, O-I #376) and are exposed explicitly as
+`oi aikit session-space`; `oi aikit-session-space` still routes to them. AIKit
+ownership is unchanged. O:I preserves native arguments, streams, exit results
+and authority; it does not reinterpret them. `OI_BIN` selects the exact suite
+executable. Existing `OI_CENTRAL_CTRL_BIN` and `OI_AIKIT_BIN` select native
+candidate artifacts at the suite dispatcher. Direct explicit kernel clients remain owner-level test
 and embedding seams; discovered application clients use the suite route.
 
 `oi desktop` exposes M′ application operations through the same kernel readers

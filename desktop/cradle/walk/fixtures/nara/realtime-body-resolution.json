@@ -1,0 +1,34 @@
+{
+  "name": "speech-capable realtime body (the reconnected body)",
+  "resolution": {
+    "version": "7",
+    "harness": "harness:nara-conversation",
+    "harness_composition_fingerprint": "fp-realtime",
+    "relation": {
+      "model": {"model": "model:desktop-realtime", "variant": "realtime"},
+      "engine": {"engine": "engine:desktop-realtime", "provider": "provider:ai-kit", "form": "managed-service", "revision": "r2"},
+      "materialisation": {"binding_ref": "material:desktop-realtime", "placement": "remote", "endpoint": "wss://realtime.example/v1"},
+      "change_application": "live",
+      "model_surface": {
+        "contract": "contract:desktop-realtime", "protocol": "realtime", "capabilities": ["speech"],
+        "access": {
+          "inference": {"state": "available", "capabilities": ["speech-generation"]},
+          "material_control": {"state": "unavailable", "reason": "hosted"},
+          "interior": {"state": "unavailable", "reason": "opaque"}
+        },
+        "modality": {
+          "schema": "aikit.model-modality/v1",
+          "input_modalities": ["speech", "text"], "output_modalities": ["speech", "text"],
+          "transforms": {"speech-to-speech": {"available": true}, "speech-to-text": {"available": true}, "text-to-speech": {"available": true}},
+          "interaction": ["full-duplex-realtime", "vad-turn-detection", "barge-in", "final-transcripts", "partial-transcripts", "tool-requests", "structured-events"],
+          "degraded_interaction": {},
+          "transport": "websocket", "connection": {"kind": "connected", "reconnect": "resumable"},
+          "credential_scope": "bearer", "availability": "available",
+          "provider": "provider:ai-kit", "provider_native_surface": "desktop-realtime", "provider_revision": "r2",
+          "credential": {"state": "declared", "scope": "bearer"}, "constraints": {}, "provenance": ["walk-fixture"]
+        }
+      }
+    },
+    "components": [], "contracts": [], "surfaces": [], "unavailable": []
+  }
+}

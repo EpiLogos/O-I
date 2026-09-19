@@ -71,10 +71,8 @@ class Routing(unittest.TestCase):
         for _, key, path in self.owners:
             self.env[key] = str(path)
             self.assertTrue(path.is_file() and os.access(path, os.X_OK), f"Build declared owner entry first: {path}")
-        self.env["OI_AIKIT_SESSION_SPACE_BIN"] = os.environ.get(
-            "OI_AIKIT_SESSION_SPACE_BIN",
-            str(Path(self.env["OI_AIKIT_BIN"]).with_name("aikit-session-space")),
-        )
+        # O-I #376 fold: the session-space verbs live in the aikit binary, so
+        # there is no separate companion executable to bind.
 
     def call(self, *args):
         return subprocess.run(
@@ -115,7 +113,7 @@ class Routing(unittest.TestCase):
 
     def test_session_space_companion_and_application_parity(self):
         args = ("-C", self.tmp.name, "discover", "--project", "project:o-i")
-        native = self.call(self.env["OI_AIKIT_SESSION_SPACE_BIN"], *args)
+        native = self.call(self.env["OI_AIKIT_BIN"], "session-space", *args)
         route = self.call(OI, "aikit-session-space", *args)
         desktop = self.call(OI, "desktop", "session-spaces", self.tmp.name, "project:o-i")
         self.assertEqual(native.returncode, 0, native.stderr.decode())

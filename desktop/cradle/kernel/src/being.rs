@@ -47,9 +47,11 @@ fn controller() -> Result<Controller, String> {
         .map_err(|error| format!("Unreadable OI_SHARED_AGENT_CONTROLLER: {error}"))
 }
 fn executable() -> PathBuf {
-    std::env::var_os("OI_AIKIT_SESSION_SPACE_BIN")
+    // The session-space verbs live in the main aikit binary (O-I #376 fold);
+    // invocations prepend the `session-space` subcommand.
+    std::env::var_os("OI_AIKIT_BIN")
         .map(PathBuf::from)
-        .unwrap_or_else(|| "aikit-session-space".into())
+        .unwrap_or_else(|| "aikit".into())
 }
 fn clean(value: &str) -> bool {
     !value.trim().is_empty()
@@ -80,6 +82,7 @@ fn refs(values: &[Value]) -> Result<Vec<String>, String> {
 }
 fn owner(controller: &Controller, request: Value) -> Result<Value, String> {
     let mut child = Command::new(executable())
+        .arg("session-space")
         .args(["-C"])
         .arg(&controller.cwd)
         .args([

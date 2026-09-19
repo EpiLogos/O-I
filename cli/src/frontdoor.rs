@@ -11,7 +11,7 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi <namespace> config-contribution --json");
                 println!("                                an owner's configuration contribution through the dispatcher, like `system --json`");
                 println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
-                println!("  oi aikit-session-space ...    AIKit companion protocol (native arguments preserved)");
+                println!("  oi aikit session-space ...    AIKit SessionSpace/encounter verbs, folded into the main aikit binary (`oi aikit-session-space` still routes to it)");
                 println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
                 println!("  oi mode list|set <frame>|clear [--json]");
                 println!("                                state which install mode (#268) you are adopting; the Context Frames organise the six modes");
@@ -76,6 +76,12 @@ pub fn cli_main() -> ExitCode {
     }
     if command == Some("profile") {
         return match command_profile(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("update") {
+        return match command_update_flow(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };
