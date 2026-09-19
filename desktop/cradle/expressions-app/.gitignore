@@ -1,0 +1,7 @@
+# Build outputs and installs — regenerated, never source.
+node_modules/
+dist/
+public/
+field-studies-journeys/build/
+field-studies-journeys/public/
+field-studies-journeys/field-studies.html

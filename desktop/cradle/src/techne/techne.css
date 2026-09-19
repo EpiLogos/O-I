@@ -253,6 +253,14 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 .wx-notice { display: flex; align-items: center; gap: 8px; margin: 0 14px 6px; }
 .wx-notices { display: flex; flex-direction: column; gap: 2px; margin: 0 14px 6px; }
 .wx-notice-line { margin: 0; color: var(--oi-muted-2); }
+/* The Epii face — instrument 0's entry view (owner direction 2026-09-19):
+   the twelve-masks expression filling the body, entered from the shell's
+   own material seam; the whole is one deliberate step in. */
+.wx-face { display: flex; flex-direction: column; flex: 1; min-block-size: 0; }
+.wx-face-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 10px 14px 8px; flex-wrap: wrap; }
+.wx-face-title { display: flex; align-items: baseline; gap: 14px; min-inline-size: 0; flex-wrap: wrap; }
+.wx-face-stage { position: relative; flex: 1; min-block-size: 0; display: flex; }
+.wx-face-frame { flex: 1; min-inline-size: 0; border: 0; background: var(--oi-surface); }
 .wx-field { position: relative; flex: 1; min-block-size: 0; display: flex; }
 .wx-stage-host { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; }
 .wx-stage-off { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; max-inline-size: 420px; margin: auto; padding: 24px; box-sizing: border-box; }

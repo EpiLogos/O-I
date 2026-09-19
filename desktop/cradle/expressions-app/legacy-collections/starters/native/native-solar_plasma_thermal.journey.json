@@ -1,0 +1,1391 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "savedScenes": {},
+  "id": "native-solar_plasma_thermal",
+  "name": "Solar Corona Thermal",
+  "description": "Incandescent plasma with kinetic velocity ignition and convective rotational sweeps around orbital attractors",
+  "loop": true,
+  "scenes": [
+    {
+      "toolbelt": [
+        {
+          "id": "speed",
+          "scope": "field",
+          "key": "timeScale"
+        },
+        {
+          "id": "spring",
+          "scope": "field",
+          "key": "recovery"
+        },
+        {
+          "id": "viscosity",
+          "scope": "field",
+          "key": "native_fluid__viscosity"
+        },
+        {
+          "id": "flow",
+          "scope": "field",
+          "key": "turbulence"
+        },
+        {
+          "id": "transition",
+          "scope": "selected",
+          "key": "sequence.transition"
+        },
+        {
+          "id": "blend",
+          "scope": "field",
+          "key": "native_morphProgress"
+        }
+      ],
+      "engine": {
+        "paletteSource": "legacy",
+        "grainProfile": false,
+        "backgroundMode": "ambientGlow",
+        "resonatorMode": "resonator",
+        "focusOrder": "listed",
+        "dotShape": "circle",
+        "autoFitSizes": true,
+        "mediumEnabled": false,
+        "collisionEnabled": false,
+        "collisionMode": "obstacle",
+        "pairwiseEnabled": false,
+        "fontFamily": "system-ui, -apple-system, sans-serif",
+        "fontWeight": 900,
+        "resonanceEnabled": false,
+        "morphEnabled": false,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine",
+        "autoOscillate": true,
+        "relationalEnabled": true,
+        "relationalMode": "orbital",
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 2.2,
+        "pointerClickRadius": 0.45,
+        "colorMode": "velocityThermal",
+        "colorEnabled": true,
+        "mediumPlane": "vertical",
+        "mediumDimension": "2D",
+        "autoSweep": false,
+        "sweepDirection": "ascent",
+        "inkMode": "whiteOnBlack",
+        "templateGeometry": "square",
+        "templateDimension": "2D",
+        "volumeEnabled": false,
+        "volumeProfile": "round",
+        "depthPerspective": false,
+        "depthOcclusion": false,
+        "vortex3d": 0,
+        "dispersion3d": 0,
+        "depthTintColor": "#101018",
+        "paletteId": "solar_plasma"
+      },
+      "id": "scene-b6609945-527c-40fa-9bbe-092fbbfb83ea",
+      "name": "Solar Corona Thermal",
+      "character": "An arrangement, waiting to happen.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#09090b",
+        "palette": [
+          "#ff2200",
+          "#ffffaa",
+          "#ff8800"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 200000,
+          "size": 4.2,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 1.3,
+          "circulation": 2.4,
+          "turbulence": 1.8,
+          "turbulenceScale": 2.2,
+          "recovery": 1.2,
+          "dispersion": 1.1,
+          "pointerStrength": 2,
+          "pointerRadius": 0.625,
+          "pointerFalloff": 2,
+          "depth": 1,
+          "grain": 0,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.57,
+          "vortexRadius": 1.125,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0,
+          "thermalJitter": 0,
+          "speedLimit": 87.5,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1125,
+          "gravityFalloff": 1.45,
+          "swirlRadius": 1.25,
+          "frequency": 396,
+          "dominance": 1,
+          "excitation": 1,
+          "native_color__fieldCenterOffset__0": 0,
+          "native_color__fieldCenterOffset__1": 0,
+          "native_relational__attractorCount": 3,
+          "native_cymatics__driveScale": 1,
+          "native_fluid__viscosity": 0.95,
+          "native_particleSize__min": 1.4,
+          "native_morphProgress": 0,
+          "native_toroidalMorph__oscillationAmplitude": 1.2,
+          "native_toroidalMorph__breathRate": 0.35,
+          "native_toroidalMorph__breathDepth": 0.35,
+          "native_toroidalMorph__fiberPhaseOffset": 0,
+          "native_toroidalMorph__chiralCoupling": 0.75,
+          "native_toroidalMorph__toroidalWinding": 3,
+          "native_toroidalMorph__poloidalWinding": 2,
+          "native_toroidalMorph__manifoldRadius": 180,
+          "native_interaction__velocityInfluence": 1,
+          "native_relational__attractorGravity": 2.5,
+          "native_relational__orbitSpeed": 1.4,
+          "native_relational__orbitRadius": 260,
+          "native_relational__relationalSpin": 2,
+          "native_relational__chaosFactor": 0.3,
+          "native_relational__wanderSpeed": 0.8,
+          "native_pairwise__radius": 2.2,
+          "native_pairwise__stiffness": 1,
+          "native_pairwise__restitution": 0.12,
+          "native_pairwise__viscosity": 0.06,
+          "native_pairwise__extent": 1400,
+          "native_color__cycleSpeed": 2,
+          "native_color__hueShiftSpeed": 0,
+          "native_color__waveFrequency": 2,
+          "native_color__angle": 90,
+          "native_color__speedReactiveIntensity": 2,
+          "native_color__turbulenceModulation": 0.55,
+          "native_color__densityWeight": 0.7,
+          "native_color__contrast": 1.3,
+          "native_backgroundGlowIntensity": 0.45,
+          "native_cymatics__dampingQFactor": 4.5,
+          "native_cymatics__transportGain": 1,
+          "native_cymatics__agitation": 0.3,
+          "native_cymatics__plateSize": 700,
+          "native_cymatics__modeCount": 64,
+          "native_cymatics__boundaryStrength": 6,
+          "native_cymatics__baseFrequency": 40,
+          "native_cymatics__sweepSpeed": 8,
+          "native_medium__pressure": 4,
+          "native_medium__coupling": 0.8,
+          "native_medium__persistence": 0.97,
+          "native_medium__iterations": 4,
+          "native_medium__gridRes": 192,
+          "native_medium__splatGain": 1,
+          "native_medium__extent": 1400,
+          "native_collision__restitution": 0.35,
+          "native_collision__friction": 0.1,
+          "native_collision__band": 40,
+          "native_collision__strength": 4,
+          "native_collision__integrity": 0.5,
+          "native_glyphVolume__depth": 90,
+          "native_glyphVolume__wallShare": 0.34,
+          "native_glyphVolume__faceBias": 0.55,
+          "native_glyphVolume__interiorFill": 0.25,
+          "native_glyphVolume__surfaceThickness": 6,
+          "native_glyphVolume__wallBand": 42,
+          "native_glyphVolume__outsideTaper": 0.6,
+          "native_glyphVolume__referenceFalloff": 1,
+          "native_glyphVolume__densityDepth": 0.35,
+          "native_glyphVolume__jitter": 2,
+          "native_depth__fov": 38,
+          "native_depth__distance": 800,
+          "native_depth__sizeAttenuation": 1,
+          "native_depth__sizeAttenuationCurve": 1,
+          "native_depth__sizeDepthBias": 0,
+          "native_depth__aerialFade": 0.55,
+          "native_depth__aerialRange": 2.2,
+          "native_depth__depthTintWeight": 0,
+          "native_composition__entityTintWeight": 0.85,
+          "native_composition__orchestration__focusTintWeight": 0.35,
+          "native_cymatics__sweep__glideS": 8
+        }
+      },
+      "entities": [
+        {
+          "id": "ent_main",
+          "name": "Main",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☉",
+          "share": 1,
+          "tint": "#22d3ee",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 2,
+            "radius": 0.55,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "links": [
+              {
+                "id": "link_mu89v50q_47m0v",
+                "shape": {
+                  "kind": "glyph",
+                  "text": "☉"
+                }
+              },
+              {
+                "id": "link_mu89v50q_48txi",
+                "shape": {
+                  "kind": "glyph",
+                  "text": "☼"
+                }
+              }
+            ],
+            "advance": "time",
+            "hold": 0.2,
+            "transition": 3.3,
+            "easing": "smoothstep",
+            "order": "pingpong",
+            "jitter": 0,
+            "impulse": 0.6,
+            "phaseOffset": 0,
+            "rateMul": 1,
+            "manual": false,
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "link_mu89v50q_47m0v",
+                "native": {
+                  "id": "link_mu89v50q_47m0v",
+                  "shape": {
+                    "kind": "glyph",
+                    "text": "☉"
+                  }
+                },
+                "holdOverride": false,
+                "transitionOverride": false,
+                "text": "☉",
+                "shape": "text",
+                "hold": 0.2,
+                "transition": 3.3,
+                "position": null
+              },
+              {
+                "id": "link_mu89v50q_48txi",
+                "native": {
+                  "id": "link_mu89v50q_48txi",
+                  "shape": {
+                    "kind": "glyph",
+                    "text": "☼"
+                  }
+                },
+                "holdOverride": false,
+                "transitionOverride": false,
+                "text": "☼",
+                "shape": "text",
+                "hold": 0.2,
+                "transition": 3.3,
+                "position": null
+              }
+            ]
+          },
+          "enabled": true,
+          "native": {
+            "id": "ent_main",
+            "name": "Main",
+            "kind": "formation",
+            "enabled": true,
+            "x": 0,
+            "y": 0,
+            "z": 0,
+            "scale": 1,
+            "share": 1,
+            "shape": {
+              "kind": "glyph",
+              "text": "☉"
+            },
+            "sequence": {
+              "links": [
+                {
+                  "id": "link_mu89v50q_47m0v",
+                  "shape": {
+                    "kind": "glyph",
+                    "text": "☉"
+                  }
+                },
+                {
+                  "id": "link_mu89v50q_48txi",
+                  "shape": {
+                    "kind": "glyph",
+                    "text": "☼"
+                  }
+                }
+              ],
+              "advance": "time",
+              "hold": 0.2,
+              "transition": 3.3,
+              "easing": "smoothstep",
+              "order": "pingpong",
+              "jitter": 0,
+              "impulse": 0.6,
+              "phaseOffset": 0,
+              "rateMul": 1
+            },
+            "forces": {
+              "mode": "none",
+              "strength": 2,
+              "radius": 220,
+              "spin": 0
+            },
+            "tint": "#22d3ee",
+            "tintWeight": 0
+          },
+          "scale": 1
+        }
+      ],
+      "text": [],
+      "composition": {
+        "layout": "Single formation",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 2.4,
+        "carryTint": true,
+        "carryStation": true,
+        "frequencyDriver": "focus",
+        "focusDwell": 1.4
+      },
+      "morph": {
+        "thetaRate": 0.8,
+        "phiRate": 0.35,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0
+      },
+      "automation": [],
+      "native": {
+        "config": {
+          "glyph": [
+            "☉",
+            "☼"
+          ],
+          "particleCount": 200000,
+          "fontFamily": "system-ui, -apple-system, sans-serif",
+          "fontWeight": 900,
+          "colorMode": "whiteOnBlack",
+          "backgroundColor": "#09090b",
+          "backgroundMode": "ambientGlow",
+          "backgroundGlowIntensity": 0.45,
+          "style": "stipple",
+          "dotShape": "circle",
+          "particleSize": {
+            "min": 1.4,
+            "max": 4.2
+          },
+          "fluid": {
+            "curlScale": 2.2,
+            "curlSpeed": 1.3,
+            "vortexStrength": 2.4,
+            "viscosity": 0.95,
+            "returnSpeed": 1.2,
+            "turbulence": 1.8,
+            "dispersion": 1.1,
+            "snapRigidity": 1,
+            "densityTether": 1,
+            "curlDepth": 0.57,
+            "vortexRadius": 450,
+            "gravityX": 0,
+            "gravityY": 0,
+            "gravityZ": 0,
+            "quadraticDrag": 0,
+            "thermalJitter": 0,
+            "maxSpeed": 35000,
+            "zConfinement": 1,
+            "timeScale": 1,
+            "vortex3d": 0,
+            "dispersion3d": 0
+          },
+          "interaction": {
+            "radius": 250,
+            "strength": 2,
+            "mode": "repel",
+            "velocityInfluence": 1,
+            "falloffPower": 2,
+            "placedPoints": []
+          },
+          "relational": {
+            "enabled": true,
+            "mode": "orbital",
+            "attractorCount": 3,
+            "attractorGravity": 2.5,
+            "orbitSpeed": 1.4,
+            "orbitRadius": 260,
+            "relationalSpin": 2,
+            "chaosFactor": 0.3,
+            "wanderSpeed": 0.8,
+            "gravitySoftening": 45,
+            "gravityFalloff": 1.45,
+            "swirlRadius": 500
+          },
+          "pairwise": {
+            "enabled": false,
+            "radius": 2.2,
+            "stiffness": 1,
+            "restitution": 0.12,
+            "viscosity": 0.06,
+            "extent": 1400
+          },
+          "chaining": {
+            "enabled": false,
+            "chain": [
+              "▲",
+              "■",
+              "⬟",
+              "⬢",
+              "⯎",
+              "◉"
+            ],
+            "mode": "loop",
+            "stepHoldDuration": 1,
+            "transitionDuration": 2.2,
+            "easing": "smoothstep",
+            "timingJitter": 0.15,
+            "disperseImpulse": 0.8,
+            "paused": false,
+            "advance": "time"
+          },
+          "color": {
+            "enabled": true,
+            "mode": "velocityThermal",
+            "primaryColor": "#ff2200",
+            "secondaryColor": "#ff8800",
+            "accentColor": "#ffffaa",
+            "cycleSpeed": 2,
+            "waveFrequency": 2,
+            "angle": 90,
+            "fieldCenterOffset": [
+              0,
+              0
+            ],
+            "turbulenceModulation": 0.55,
+            "speedReactiveIntensity": 2,
+            "densityWeight": 0.7,
+            "hueShiftSpeed": 0,
+            "contrast": 1.3,
+            "paletteId": "solar_plasma",
+            "backgroundColor": "#09090b",
+            "backgroundMode": "ambientGlow",
+            "backgroundGlowIntensity": 0.45
+          },
+          "toroidalMorph": {
+            "enabled": false,
+            "trajectory": "toroidalHopf",
+            "progress": 0.5,
+            "autoOscillate": true,
+            "oscillationSpeed": 0.8,
+            "oscillationAmplitude": 1.2,
+            "breathRate": 0.35,
+            "breathDepth": 0.35,
+            "fiberPhaseOffset": 0,
+            "toroidalWinding": 3,
+            "poloidalWinding": 2,
+            "chiralCoupling": 0.75,
+            "manifoldRadius": 180,
+            "volumetricDepthScale": 1,
+            "poloidalRate": 0.35,
+            "toroidalPhase": 0,
+            "poloidalPhase": 0,
+            "interference": "toroidalOnly",
+            "driveShape": "sine",
+            "holdRatio": 0,
+            "driveDepth": 1
+          },
+          "medium": {
+            "enabled": false,
+            "pressure": 4,
+            "coupling": 0.8,
+            "persistence": 0.97,
+            "iterations": 4,
+            "gridRes": 192,
+            "splatGain": 1,
+            "extent": 1400,
+            "plane": "compositionPlane",
+            "dimension": "2D"
+          },
+          "collision": {
+            "enabled": false,
+            "mode": "obstacle",
+            "restitution": 0.35,
+            "friction": 0.1,
+            "band": 40,
+            "strength": 4,
+            "integrity": 0.5
+          },
+          "glyphVolume": {
+            "enabled": false,
+            "depth": 90,
+            "profile": "round",
+            "referenceFalloff": 1,
+            "wallShare": 0.34,
+            "faceBias": 0.55,
+            "interiorFill": 0.25,
+            "jitter": 2,
+            "densityDepth": 0.35,
+            "surfaceThickness": 6,
+            "wallBand": 42,
+            "outsideTaper": 0.6
+          },
+          "depth": {
+            "projection": "orthographic",
+            "fov": 38,
+            "distance": 800,
+            "sizeAttenuation": 1,
+            "sizeAttenuationCurve": 1,
+            "aerialFade": 0.55,
+            "aerialRange": 2.2,
+            "sizeDepthBias": 0,
+            "depthTintWeight": 0,
+            "depthTintColor": "#101018",
+            "occlusion": false
+          },
+          "automations": [],
+          "entities": [
+            {
+              "id": "ent_main",
+              "name": "Main",
+              "kind": "formation",
+              "enabled": true,
+              "x": 0,
+              "y": 0,
+              "z": 0,
+              "scale": 1,
+              "share": 1,
+              "shape": {
+                "kind": "glyph",
+                "text": "☉"
+              },
+              "sequence": {
+                "links": [
+                  {
+                    "id": "link_mu89v50q_47m0v",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "☉"
+                    }
+                  },
+                  {
+                    "id": "link_mu89v50q_48txi",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "☼"
+                    }
+                  }
+                ],
+                "advance": "time",
+                "hold": 0.2,
+                "transition": 3.3,
+                "easing": "smoothstep",
+                "order": "pingpong",
+                "jitter": 0,
+                "impulse": 0.6,
+                "phaseOffset": 0,
+                "rateMul": 1
+              },
+              "forces": {
+                "mode": "none",
+                "strength": 2,
+                "radius": 220,
+                "spin": 0
+              },
+              "tint": "#22d3ee",
+              "tintWeight": 0
+            }
+          ],
+          "composition": {
+            "plane": "vertical",
+            "orchestration": {
+              "mode": "parallel",
+              "order": "listed",
+              "dwell": 1.4,
+              "glide": 2.4,
+              "followStation": true,
+              "focusTintWeight": 0.35
+            },
+            "entityTintWeight": 0.85,
+            "layoutName": "Single formation"
+          },
+          "cymatics": {
+            "enabled": false,
+            "engine": "resonator",
+            "plateGeometry": "square",
+            "dimension": "2D",
+            "frequencyHz": 396,
+            "autoSweep": false,
+            "sweepSpeed": 8,
+            "chaosIntensity": 1.4,
+            "nodalAttraction": 2.8,
+            "dampingQFactor": 4.5,
+            "dominance": 1,
+            "followFocus": true,
+            "plateSize": 700,
+            "baseFrequency": 40,
+            "driveStrength": 1,
+            "modeCount": 64,
+            "transportGain": 1,
+            "agitation": 0.3,
+            "boundaryStrength": 6,
+            "driveScale": 1
+          },
+          "semanticField": {
+            "enabled": false,
+            "profile": {
+              "kind": "chakra",
+              "profileId": "chakra-seven-v1"
+            },
+            "affinity": {
+              "method": "modalProjection",
+              "bandwidth": 0.14
+            },
+            "globalColorGain": 1,
+            "bindings": []
+          },
+          "morphProgress": 0,
+          "autoMorph": true,
+          "autoMorphDuration": 3.5,
+          "positioning": "absolute",
+          "spatialChakra": {
+            "enabled": false,
+            "geometryMode": "yantra",
+            "cymatics": {
+              "plateGeometry": "square",
+              "dimension": "2D",
+              "frequencyHz": 396,
+              "autoSweep": false,
+              "sweepSpeed": 8,
+              "chaosIntensity": 1.4,
+              "nodalAttraction": 2.8,
+              "dampingQFactor": 4.5,
+              "engine": "resonator",
+              "baseFrequency": 40,
+              "driveStrength": 1,
+              "transportGain": 1,
+              "agitation": 0.3,
+              "plateSize": 700,
+              "modeCount": 64,
+              "boundaryStrength": 6,
+              "driveScale": 1,
+              "sweep": {
+                "enabled": false,
+                "glideS": 3.5,
+                "dwellS": 2,
+                "direction": "ascent"
+              }
+            },
+            "playbackMode": "simultaneousBody",
+            "glyphType": "yantra",
+            "nodes": [
+              {
+                "id": "sahasrara",
+                "name": "Sahasrara (Crown)",
+                "sanskrit": "सहस्रार",
+                "seedSyllable": "ॐ",
+                "symbol": "☸",
+                "englishTitle": "Crown / Pure Consciousness",
+                "frequencyHz": 963,
+                "element": "Cosmic Spirit (Akasha)",
+                "x": 0,
+                "y": -270,
+                "scale": 0.16,
+                "color": "#ff77ff",
+                "attractorStrength": 2.2,
+                "active": true
+              },
+              {
+                "id": "ajna",
+                "name": "Ajna (Third Eye)",
+                "sanskrit": "आज्ञा",
+                "seedSyllable": "ॐ",
+                "symbol": "👁",
+                "englishTitle": "Third Eye / Intuition",
+                "frequencyHz": 852,
+                "element": "Light (Prakasha)",
+                "x": 0,
+                "y": -180,
+                "scale": 0.14,
+                "color": "#66a3ff",
+                "attractorStrength": 2,
+                "active": true
+              },
+              {
+                "id": "vishuddha",
+                "name": "Vishuddha (Throat)",
+                "sanskrit": "विशुद्ध",
+                "seedSyllable": "हं",
+                "symbol": "◯",
+                "englishTitle": "Throat / Expression",
+                "frequencyHz": 741,
+                "element": "Ether / Sound (Akasha)",
+                "x": 0,
+                "y": -90,
+                "scale": 0.14,
+                "color": "#00ffff",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "anahata",
+                "name": "Anahata (Heart)",
+                "sanskrit": "अनाहत",
+                "seedSyllable": "यं",
+                "symbol": "✡",
+                "englishTitle": "Heart / Compassion",
+                "frequencyHz": 639,
+                "element": "Air (Vayu)",
+                "x": 0,
+                "y": 0,
+                "scale": 0.15,
+                "color": "#00ff99",
+                "attractorStrength": 2.4,
+                "active": true
+              },
+              {
+                "id": "manipura",
+                "name": "Manipura (Solar Plexus)",
+                "sanskrit": "मणिपूर",
+                "seedSyllable": "रं",
+                "symbol": "▽",
+                "englishTitle": "Solar Plexus / Willpower",
+                "frequencyHz": 528,
+                "element": "Fire (Tejas)",
+                "x": 0,
+                "y": 90,
+                "scale": 0.14,
+                "color": "#ffff00",
+                "attractorStrength": 1.9,
+                "active": true
+              },
+              {
+                "id": "svadhisthana",
+                "name": "Svadhisthana (Sacral)",
+                "sanskrit": "स्वाधिष्ठान",
+                "seedSyllable": "वं",
+                "symbol": "☽",
+                "englishTitle": "Sacral / Fluid Creativity",
+                "frequencyHz": 417,
+                "element": "Water (Apas)",
+                "x": 0,
+                "y": 180,
+                "scale": 0.14,
+                "color": "#ff8800",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "muladhara",
+                "name": "Muladhara (Root)",
+                "sanskrit": "मूलाधार",
+                "seedSyllable": "लं",
+                "symbol": "🪷",
+                "englishTitle": "Root / Grounded Foundation",
+                "frequencyHz": 396,
+                "element": "Earth (Prithvi)",
+                "x": 0,
+                "y": 270,
+                "scale": 0.15,
+                "color": "#ff2255",
+                "attractorStrength": 2.2,
+                "active": true
+              }
+            ],
+            "activeNodeIndex": 6,
+            "transitionDuration": 2.4,
+            "holdDuration": 1.2,
+            "autoCycle": true,
+            "cycleDirection": "ascent",
+            "attractorInfluence": 1.5,
+            "particlePartitionSpread": 1,
+            "plane": "horizontal",
+            "vortexStrength": 1.6
+          },
+          "resonanceDrive": {
+            "kind": "frequency"
+          }
+        },
+        "original": {
+          "name": "Solar Corona Thermal",
+          "config": {
+            "glyph": [
+              "☉",
+              "☼"
+            ],
+            "style": "stipple",
+            "dotShape": "circle",
+            "particleSize": {
+              "min": 1.4,
+              "max": 4.2
+            },
+            "colorMode": "whiteOnBlack",
+            "color": {
+              "enabled": true,
+              "mode": "velocityThermal",
+              "primaryColor": "#ff2200",
+              "secondaryColor": "#ff8800",
+              "accentColor": "#ffffaa",
+              "cycleSpeed": 2,
+              "waveFrequency": 2,
+              "angle": 90,
+              "fieldCenterOffset": [
+                0,
+                0
+              ],
+              "turbulenceModulation": 0.55,
+              "speedReactiveIntensity": 2,
+              "densityWeight": 0.7,
+              "hueShiftSpeed": 0,
+              "contrast": 1.3,
+              "paletteId": "solar_plasma"
+            },
+            "fluid": {
+              "curlScale": 2.2,
+              "curlSpeed": 1.3,
+              "vortexStrength": 2.4,
+              "viscosity": 0.95,
+              "returnSpeed": 1.2,
+              "turbulence": 1.8,
+              "dispersion": 1.1
+            },
+            "interaction": {
+              "radius": 250,
+              "strength": 2,
+              "mode": "repel"
+            },
+            "relational": {
+              "enabled": true,
+              "mode": "orbital",
+              "attractorCount": 3,
+              "attractorGravity": 2.5,
+              "orbitSpeed": 1.4,
+              "orbitRadius": 260,
+              "relationalSpin": 2,
+              "chaosFactor": 0.3,
+              "wanderSpeed": 0.8
+            },
+            "autoMorph": true,
+            "autoMorphDuration": 3.5
+          }
+        },
+        "projection": {
+          "glyph": [
+            "☉",
+            "☼"
+          ],
+          "particleCount": 200000,
+          "fontFamily": "system-ui, -apple-system, sans-serif",
+          "fontWeight": 900,
+          "colorMode": "whiteOnBlack",
+          "backgroundColor": "#09090b",
+          "backgroundMode": "ambientGlow",
+          "backgroundGlowIntensity": 0.45,
+          "style": "stipple",
+          "dotShape": "circle",
+          "particleSize": {
+            "min": 1.4,
+            "max": 4.2
+          },
+          "fluid": {
+            "curlScale": 2.2,
+            "curlSpeed": 1.3,
+            "vortexStrength": 2.4,
+            "viscosity": 0.95,
+            "returnSpeed": 1.2,
+            "turbulence": 1.8,
+            "dispersion": 1.1,
+            "snapRigidity": 1,
+            "densityTether": 1,
+            "curlDepth": 0.57,
+            "vortexRadius": 450,
+            "gravityX": 0,
+            "gravityY": 0,
+            "gravityZ": 0,
+            "quadraticDrag": 0,
+            "thermalJitter": 0,
+            "maxSpeed": 35000,
+            "zConfinement": 1,
+            "timeScale": 1,
+            "vortex3d": 0,
+            "dispersion3d": 0
+          },
+          "interaction": {
+            "radius": 250,
+            "strength": 2,
+            "mode": "repel",
+            "velocityInfluence": 1,
+            "falloffPower": 2,
+            "placedPoints": [],
+            "clickStrength": 2.2,
+            "clickRadius": 180,
+            "clickMode": "pulse"
+          },
+          "relational": {
+            "enabled": true,
+            "mode": "orbital",
+            "attractorCount": 3,
+            "attractorGravity": 2.5,
+            "orbitSpeed": 1.4,
+            "orbitRadius": 260,
+            "relationalSpin": 2,
+            "chaosFactor": 0.3,
+            "wanderSpeed": 0.8,
+            "gravitySoftening": 45,
+            "gravityFalloff": 1.45,
+            "swirlRadius": 500
+          },
+          "pairwise": {
+            "enabled": false,
+            "radius": 2.2,
+            "stiffness": 1,
+            "restitution": 0.12,
+            "viscosity": 0.06,
+            "extent": 1400
+          },
+          "chaining": {
+            "enabled": false,
+            "chain": [
+              "▲",
+              "■",
+              "⬟",
+              "⬢",
+              "⯎",
+              "◉"
+            ],
+            "mode": "loop",
+            "stepHoldDuration": 1,
+            "transitionDuration": 2.2,
+            "easing": "smoothstep",
+            "timingJitter": 0.15,
+            "disperseImpulse": 0.8,
+            "paused": false,
+            "advance": "time"
+          },
+          "color": {
+            "enabled": true,
+            "mode": "velocityThermal",
+            "primaryColor": "#ff2200",
+            "secondaryColor": "#ff8800",
+            "accentColor": "#ffffaa",
+            "cycleSpeed": 2,
+            "waveFrequency": 2,
+            "angle": 90,
+            "fieldCenterOffset": [
+              0,
+              0
+            ],
+            "turbulenceModulation": 0.55,
+            "speedReactiveIntensity": 2,
+            "densityWeight": 0.7,
+            "hueShiftSpeed": 0,
+            "contrast": 1.3,
+            "paletteId": "solar_plasma",
+            "backgroundColor": "#09090b",
+            "backgroundMode": "ambientGlow",
+            "backgroundGlowIntensity": 0.45
+          },
+          "toroidalMorph": {
+            "enabled": false,
+            "trajectory": "toroidalHopf",
+            "progress": 0.5,
+            "autoOscillate": true,
+            "oscillationSpeed": 0.8,
+            "oscillationAmplitude": 1.2,
+            "breathRate": 0.35,
+            "breathDepth": 0.35,
+            "fiberPhaseOffset": 0,
+            "toroidalWinding": 3,
+            "poloidalWinding": 2,
+            "chiralCoupling": 0.75,
+            "manifoldRadius": 180,
+            "volumetricDepthScale": 1,
+            "poloidalRate": 0.35,
+            "toroidalPhase": 0,
+            "poloidalPhase": 0,
+            "interference": "toroidalOnly",
+            "driveShape": "sine",
+            "holdRatio": 0,
+            "driveDepth": 1
+          },
+          "medium": {
+            "enabled": false,
+            "pressure": 4,
+            "coupling": 0.8,
+            "persistence": 0.97,
+            "iterations": 4,
+            "gridRes": 192,
+            "splatGain": 1,
+            "extent": 1400,
+            "plane": "compositionPlane",
+            "dimension": "2D"
+          },
+          "collision": {
+            "enabled": false,
+            "mode": "obstacle",
+            "restitution": 0.35,
+            "friction": 0.1,
+            "band": 40,
+            "strength": 4,
+            "integrity": 0.5
+          },
+          "glyphVolume": {
+            "enabled": false,
+            "depth": 90,
+            "profile": "round",
+            "referenceFalloff": 1,
+            "wallShare": 0.34,
+            "faceBias": 0.55,
+            "interiorFill": 0.25,
+            "jitter": 2,
+            "densityDepth": 0.35,
+            "surfaceThickness": 6,
+            "wallBand": 42,
+            "outsideTaper": 0.6
+          },
+          "depth": {
+            "projection": "orthographic",
+            "fov": 38,
+            "distance": 800,
+            "sizeAttenuation": 1,
+            "sizeAttenuationCurve": 1,
+            "aerialFade": 0.55,
+            "aerialRange": 2.2,
+            "sizeDepthBias": 0,
+            "depthTintWeight": 0,
+            "depthTintColor": "#101018",
+            "occlusion": false
+          },
+          "automations": [],
+          "entities": [
+            {
+              "id": "ent_main",
+              "name": "Main",
+              "kind": "formation",
+              "enabled": true,
+              "x": 0,
+              "y": 0,
+              "z": 0,
+              "scale": 1,
+              "share": 1,
+              "shape": {
+                "kind": "glyph",
+                "text": "☉"
+              },
+              "sequence": {
+                "links": [
+                  {
+                    "id": "link_mu89v50q_47m0v",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "☉"
+                    }
+                  },
+                  {
+                    "id": "link_mu89v50q_48txi",
+                    "shape": {
+                      "kind": "glyph",
+                      "text": "☼"
+                    }
+                  }
+                ],
+                "advance": "time",
+                "hold": 0.2,
+                "transition": 3.3,
+                "easing": "smoothstep",
+                "order": "pingpong",
+                "jitter": 0,
+                "impulse": 0.6,
+                "phaseOffset": 0,
+                "rateMul": 1
+              },
+              "forces": {
+                "mode": "none",
+                "strength": 2,
+                "radius": 220.00000000000003,
+                "spin": 0
+              },
+              "tint": "#22d3ee",
+              "tintWeight": 0,
+              "extent": {
+                "width": 400,
+                "height": 400,
+                "rotation": 0,
+                "normalized": false
+              }
+            }
+          ],
+          "composition": {
+            "plane": "vertical",
+            "orchestration": {
+              "mode": "parallel",
+              "order": "listed",
+              "dwell": 1.4,
+              "glide": 2.4,
+              "followStation": true,
+              "focusTintWeight": 0.35
+            },
+            "entityTintWeight": 0.85,
+            "layoutName": "Single formation"
+          },
+          "cymatics": {
+            "enabled": false,
+            "engine": "resonator",
+            "plateGeometry": "square",
+            "dimension": "2D",
+            "frequencyHz": 396,
+            "autoSweep": false,
+            "sweepSpeed": 8,
+            "chaosIntensity": 1.4,
+            "nodalAttraction": 2.8,
+            "dampingQFactor": 4.5,
+            "dominance": 1,
+            "followFocus": true,
+            "plateSize": 700,
+            "baseFrequency": 40,
+            "driveStrength": 1,
+            "modeCount": 64,
+            "transportGain": 1,
+            "agitation": 0.3,
+            "boundaryStrength": 6,
+            "driveScale": 1,
+            "sweep": {
+              "glideS": 8,
+              "dwellS": 2,
+              "enabled": false,
+              "direction": "ascent"
+            }
+          },
+          "semanticField": {
+            "enabled": false,
+            "profile": {
+              "kind": "chakra",
+              "profileId": "chakra-seven-v1"
+            },
+            "affinity": {
+              "method": "modalProjection",
+              "bandwidth": 0.14
+            },
+            "globalColorGain": 1,
+            "bindings": []
+          },
+          "morphProgress": 0,
+          "autoMorph": true,
+          "autoMorphDuration": 3.5,
+          "positioning": "absolute",
+          "spatialChakra": {
+            "enabled": false,
+            "geometryMode": "yantra",
+            "cymatics": {
+              "plateGeometry": "square",
+              "dimension": "2D",
+              "frequencyHz": 396,
+              "autoSweep": false,
+              "sweepSpeed": 8,
+              "chaosIntensity": 1.4,
+              "nodalAttraction": 2.8,
+              "dampingQFactor": 4.5,
+              "engine": "resonator",
+              "baseFrequency": 40,
+              "driveStrength": 1,
+              "transportGain": 1,
+              "agitation": 0.3,
+              "plateSize": 700,
+              "modeCount": 64,
+              "boundaryStrength": 6,
+              "driveScale": 1,
+              "sweep": {
+                "enabled": false,
+                "glideS": 3.5,
+                "dwellS": 2,
+                "direction": "ascent"
+              }
+            },
+            "playbackMode": "simultaneousBody",
+            "glyphType": "yantra",
+            "nodes": [
+              {
+                "id": "sahasrara",
+                "name": "Sahasrara (Crown)",
+                "sanskrit": "सहस्रार",
+                "seedSyllable": "ॐ",
+                "symbol": "☸",
+                "englishTitle": "Crown / Pure Consciousness",
+                "frequencyHz": 963,
+                "element": "Cosmic Spirit (Akasha)",
+                "x": 0,
+                "y": -270,
+                "scale": 0.16,
+                "color": "#ff77ff",
+                "attractorStrength": 2.2,
+                "active": true
+              },
+              {
+                "id": "ajna",
+                "name": "Ajna (Third Eye)",
+                "sanskrit": "आज्ञा",
+                "seedSyllable": "ॐ",
+                "symbol": "👁",
+                "englishTitle": "Third Eye / Intuition",
+                "frequencyHz": 852,
+                "element": "Light (Prakasha)",
+                "x": 0,
+                "y": -180,
+                "scale": 0.14,
+                "color": "#66a3ff",
+                "attractorStrength": 2,
+                "active": true
+              },
+              {
+                "id": "vishuddha",
+                "name": "Vishuddha (Throat)",
+                "sanskrit": "विशुद्ध",
+                "seedSyllable": "हं",
+                "symbol": "◯",
+                "englishTitle": "Throat / Expression",
+                "frequencyHz": 741,
+                "element": "Ether / Sound (Akasha)",
+                "x": 0,
+                "y": -90,
+                "scale": 0.14,
+                "color": "#00ffff",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "anahata",
+                "name": "Anahata (Heart)",
+                "sanskrit": "अनाहत",
+                "seedSyllable": "यं",
+                "symbol": "✡",
+                "englishTitle": "Heart / Compassion",
+                "frequencyHz": 639,
+                "element": "Air (Vayu)",
+                "x": 0,
+                "y": 0,
+                "scale": 0.15,
+                "color": "#00ff99",
+                "attractorStrength": 2.4,
+                "active": true
+              },
+              {
+                "id": "manipura",
+                "name": "Manipura (Solar Plexus)",
+                "sanskrit": "मणिपूर",
+                "seedSyllable": "रं",
+                "symbol": "▽",
+                "englishTitle": "Solar Plexus / Willpower",
+                "frequencyHz": 528,
+                "element": "Fire (Tejas)",
+                "x": 0,
+                "y": 90,
+                "scale": 0.14,
+                "color": "#ffff00",
+                "attractorStrength": 1.9,
+                "active": true
+              },
+              {
+                "id": "svadhisthana",
+                "name": "Svadhisthana (Sacral)",
+                "sanskrit": "स्वाधिष्ठान",
+                "seedSyllable": "वं",
+                "symbol": "☽",
+                "englishTitle": "Sacral / Fluid Creativity",
+                "frequencyHz": 417,
+                "element": "Water (Apas)",
+                "x": 0,
+                "y": 180,
+                "scale": 0.14,
+                "color": "#ff8800",
+                "attractorStrength": 1.8,
+                "active": true
+              },
+              {
+                "id": "muladhara",
+                "name": "Muladhara (Root)",
+                "sanskrit": "मूलाधार",
+                "seedSyllable": "लं",
+                "symbol": "🪷",
+                "englishTitle": "Root / Grounded Foundation",
+                "frequencyHz": 396,
+                "element": "Earth (Prithvi)",
+                "x": 0,
+                "y": 270,
+                "scale": 0.15,
+                "color": "#ff2255",
+                "attractorStrength": 2.2,
+                "active": true
+              }
+            ],
+            "activeNodeIndex": 6,
+            "transitionDuration": 2.4,
+            "holdDuration": 1.2,
+            "autoCycle": true,
+            "cycleDirection": "ascent",
+            "attractorInfluence": 1.5,
+            "particlePartitionSpread": 1,
+            "plane": "horizontal",
+            "vortexStrength": 1.6
+          },
+          "paperGrain": 0,
+          "sourceType": "composition"
+        }
+      },
+      "semanticField": {
+        "enabled": false,
+        "profile": {
+          "kind": "chakra",
+          "profileId": "chakra-seven-v1"
+        },
+        "affinity": {
+          "method": "modalProjection",
+          "bandwidth": 0.14
+        },
+        "globalColorGain": 1,
+        "bindings": []
+      },
+      "resonanceDrive": {
+        "kind": "frequency"
+      }
+    }
+  ],
+  "updatedAt": "2026-09-19T10:56:18.986Z"
+}

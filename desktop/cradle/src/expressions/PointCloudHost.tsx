@@ -1,10 +1,11 @@
 /**
- * The Expressions centre: the O:I Expressions application itself — the
- * Point-Cloud-Demo workspace (owner direction 2026-09-19), its own UI and
- * UX complete: the canvas-first workspace, its Studio, toolbelt, scenes,
- * capture and its Library — the Library the app's own library reading is
- * modelled on. Full-screen: the host owns the centre; the shell's chrome
- * (navigator, panel, footer) frames it without covering it.
+ * The Expressions centre: the O:I Expressions application itself — vendored
+ * into this repo at desktop/cradle/expressions-app (owner direction
+ * 2026-09-19: "we are building now INSIDE the expressions system, not
+ * around it"), its own UI and UX complete: the canvas-first workspace, its
+ * Studio, toolbelt, scenes, capture and its Library. Full-screen: the host
+ * owns the centre; the shell's chrome (navigator, panel, footer) frames it
+ * without covering it.
  *
  * The bundle is served the only way rich material may reach a webview
  * (FND-04): through the owner's `oi-material://` file seam in the desktop
@@ -13,49 +14,47 @@
  * In a plain browser (no owner transport) the host says so honestly rather
  * than hosting a copy that could drift from the owner's ground.
  *
+ * The served artefact is the VENDORED app's own dist (hostedApp.ts carries
+ * the location): the cradle checkout sits on Central's disclosed ground, so
+ * the files seam resolves it exactly as it resolved the outer workspace —
+ * the source of record is now in-repo, Work/Point-Cloud-Demo is retired as
+ * the app of record.
+ *
  * The frame keeps same-origin within its own material origin: the
  * application autosaves its drafts to browser storage at boot, and an opaque
  * sandboxed origin would refuse storage and kill the boot — the material
  * protocol's own CSP remains the authority over what the frame may do.
  *
- * The M1–M3 body the application carries (engine, expression documents,
- * the accepted instruments) is the pre-parallel integration: the PCD
- * workspace ships its engine bundle and its expression corpus, and its
- * engine is the same intake the cradle stage runs (Point-Cloud-Demo @ the
- * #329 intake line). Deeper kernel joins (expression document sync with the
- * cradle's expression ops) are named in the landing record, not faked here.
+ * The app's masthead aligns with the shell's traffic-lights cutout (owner
+ * addendum 2026-09-19): the host posts the live cutout geometry to the
+ * frame while it stands (hostedApp.trackShellCutout).
  */
-import {useEffect, useState} from "react";
+import {useEffect, useRef, useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {listFiles} from "../files/client";
-import type {CentralLocation, NativeFileEntry} from "../kernel/types";
+import type {NativeFileEntry} from "../kernel/types";
+import {
+  EXPRESSIONS_APP_DIST,
+  EXPRESSIONS_APP_ENTRY,
+  materialUrl,
+  trackShellCutout,
+} from "./hostedApp";
 import "./point-cloud-host.css";
-
-/** The O:I Expressions application's entry, on Central's disclosed ground. */
-const PCD_DIST = "Work/Point-Cloud-Demo/dist";
-const PCD_ENTRY = "index.html";
-
-/** The oi-material URL grammar (material_protocol.rs): the url-encoded
- * location JSON as the first segment, relative siblings after it. */
-function materialUrl(location: CentralLocation, relative = ""): string {
-  const encoded = encodeURIComponent(JSON.stringify(location));
-  const segments = relative.split("/").filter(Boolean).map(encodeURIComponent);
-  return `oi-material://localhost/${[encoded, ...segments].join("/")}${segments.length === 0 ? "/" : ""}`;
-}
 
 export function PointCloudHost() {
   const kernel = useKernel();
   const [entry, setEntry] = useState<NativeFileEntry | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
   const [reason, setReason] = useState<string | undefined>();
+  const frame = useRef<HTMLIFrameElement | null>(null);
 
   useEffect(() => {
     let alive = true;
     void (async () => {
       try {
-        const directory = await listFiles(kernel.transport, PCD_DIST);
-        const found = directory.entries.find(candidate => candidate.name === PCD_ENTRY);
-        if (!found) throw new Error(`The Expressions application is not built at ${PCD_DIST} — run its build in Work/Point-Cloud-Demo`);
+        const directory = await listFiles(kernel.transport, EXPRESSIONS_APP_DIST);
+        const found = directory.entries.find(candidate => candidate.name === EXPRESSIONS_APP_ENTRY);
+        if (!found) throw new Error(`The Expressions application is not built at ${EXPRESSIONS_APP_DIST} — build it with the one law in desktop/cradle/expressions-app/README.md`);
         if (!alive) return;
         setEntry(found); setState("ready");
       } catch (error) {
@@ -75,6 +74,13 @@ export function PointCloudHost() {
         : undefined
     : undefined;
 
+  // The shell's corner cutout and the app's header row read as one
+  // continuous aligned edge: keep posting the live geometry to the frame.
+  useEffect(() => {
+    const node = frame.current;
+    return node ? trackShellCutout(node) : undefined;
+  }, [state]);
+
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}
     {state === "refused" && <div className="pcd-host-refusal" role="alert">
@@ -83,8 +89,9 @@ export function PointCloudHost() {
       {src === undefined && <p className="oi-note">This view serves through the owner's material seam in the desktop build; a plain browser window cannot host it.</p>}
     </div>}
     {src && <iframe
+      ref={frame}
       src={src}
-      title="O:I Expressions — the Point-Cloud-Demo workspace"
+      title="O:I Expressions — the application, vendored into the repo"
       className="pcd-host-frame"
       allow="fullscreen"
       referrerPolicy="no-referrer"

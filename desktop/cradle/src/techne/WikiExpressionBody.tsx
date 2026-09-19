@@ -24,12 +24,26 @@
  * relations unavailable, stage disabled, generation drift (the standing
  * projection predates the current reading), and the not-admitted
  * audience-filtered SharedField staging — each is named exactly.
+ *
+ * The ENTRY SPACE is the Epii face (owner direction 2026-09-19): instrument
+ * 0 opens onto the twelve-masks expression — "Twelve faces · one mask"
+ * (`source-twelve-faces`) in the Expressions application's Source studies —
+ * the guardian of the O:I web/wiki/graph spaces, served through the same
+ * material seam as the Expressions centre. The wiki/graph projection this
+ * file carries stands behind it and is entered from it; the face is the
+ * default and the projection is one deliberate step in.
  */
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import type {SurfaceBinding} from "../surface/types";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import {listFiles} from "../files/client";
+import {
+  EXPRESSIONS_APP_DIST,
+  EXPRESSIONS_APP_ENTRY,
+  materialUrl,
+  trackShellCutout,
+} from "../expressions/hostedApp";
 import {useVisuals} from "../visuals/ParticleExpression";
 import {visuals} from "../visuals/store";
 import {useExpressionStage, type StagePresentation} from "../stage/ExpressionStage";
@@ -82,6 +96,9 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
   const register = registers.find(row => row.key === registerKey) ?? registers[0];
 
   const [state, setState] = useState<ProjectionState>({phase: "reading", register});
+  // The entry face: instrument 0 opens ONTO the Epii expression; the whole
+  // (the projection below) is entered from it — and returns.
+  const [faceOpen, setFaceOpen] = useState(true);
   const [error, setError] = useState<string | null>(null);
   const generation = useRef(0);
   const registerRef = useRef(register);
@@ -186,7 +203,7 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
       if (presentation.current === acquired) presentation.current = null;
     };
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [showing, stage, retry, document?.expression_ref]);
+  }, [showing, stage, retry, document?.expression_ref, faceOpen]);
 
   // Re-present the same field on every document change; while the clock is
   // held the still is LANDED (the Expressions surface's own two-frames law).
@@ -243,8 +260,13 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
   const notices = projection?.notices ?? [];
   const basis = projection?.document.provenance[0];
 
+  // The face renders INSIDE the root container: the projection's truthful
+  // data-state standing stays on the container for every reader (probes,
+  // agents); data-entry names which presentation stands.
   return <div className="wiki-expression" data-register={register.key} data-state={state.phase} data-expression-ref={document?.expression_ref}
+      data-entry={faceOpen ? "epii-face" : "whole"}
       aria-label="Instrument 0 — the wiki local whole as an Expression">
+    {faceOpen ? <EpiiFace registerTitle={register.title} onEnterWhole={() => setFaceOpen(false)}/> : <>
     <header className="wx-head">
       <div className="wx-head-title">
         <label className="oi-field wx-register">
@@ -263,6 +285,8 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
         </span>
       </div>
       <div className="wx-head-tools">
+        <button type="button" className="oi-tool" title="Return to the Epii face — instrument 0's entry" aria-label="Return to the Epii face"
+            onClick={() => setFaceOpen(true)}><Glyph name="release" size={13}/></button>
         {document && <button type="button" className="oi-tool" title="Open this projection in the Expressions workspace" aria-label="Open in Expressions"
             onClick={() => requestExpressionOpen({expressionRef: document.expression_ref, sceneRef: document.selection.scene_ref, entityRef: document.selection.entity_ref})}><Glyph name={ICON.present} size={13}/></button>}
         {stageError && <button type="button" className="oi-tool" onClick={() => setRetry(value => value + 1)} title={`Retry presenting: ${stageError}`} aria-label="Retry presenting"><Glyph name={ICON.refresh} size={13}/></button>}
@@ -295,6 +319,7 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
     {document && <WikiTransport document={document} projection={projection}
         onFocus={(sceneRef, entityRef) => void focus(document.expression_ref, document.revision, sceneRef, entityRef)}
         onOpenKnowledge={openKnowledge}/>}
+    </>}
   </div>;
 }
 
@@ -419,4 +444,72 @@ function WikiSubjectPanel({document, workspaceSubjectRef, onOpenKnowledge, onOpe
       <p className="oi-note wx-subject-open-note">The page opens through the frame's knowledge path as a real pane in this arrangement's tree — beside, full, detach and re-dock are the workbench's own controls on it (the kernel's expression-world portal runtime approves the placement).</p>
     </footer>
   </aside>;
+}
+
+/** The Epii face: the twelve-masks expression ("Twelve faces · one mask",
+ * `source-twelve-faces` in the Expressions application's Source studies)
+ * opened through the same material seam as the Expressions centre —
+ * instrument 0's entry presentation (owner direction 2026-09-19): "you are
+ * met by the epii face, the guardian of the O:I web/wiki/graph spaces."
+ * The application deep-links to the expression through its own
+ * `?expression=` grammar; the shell's corner-cutout alignment applies here
+ * exactly as it does in the Expressions centre. */
+const EPII_EXPRESSION_ID = "source-twelve-faces";
+
+function EpiiFace({registerTitle, onEnterWhole}: {registerTitle: string; onEnterWhole(): void}) {
+  const kernel = useKernel();
+  const [src, setSrc] = useState<string | undefined>();
+  const [reason, setReason] = useState<string | undefined>();
+  const frame = useRef<HTMLIFrameElement | null>(null);
+
+  useEffect(() => {
+    let alive = true;
+    void (async () => {
+      try {
+        const directory = await listFiles(kernel.transport, EXPRESSIONS_APP_DIST);
+        const found = directory.entries.find(candidate => candidate.name === EXPRESSIONS_APP_ENTRY);
+        if (!found) throw new Error(`The Expressions application is not built at ${EXPRESSIONS_APP_DIST} — build it with the one law in desktop/cradle/expressions-app/README.md`);
+        const query = `?expression=${EPII_EXPRESSION_ID}`;
+        const url = kernel.transport.kind === "tauri"
+          ? materialUrl(found.location, "", query)
+          : kernel.transport.kind === "bridge"
+            ? `${kernel.transport.url}/material/${encodeURIComponent(JSON.stringify(found.location))}/index.html${query}`
+            : undefined;
+        if (!url) throw new Error("The face is served through the owner's material seam in the desktop build; a plain browser window cannot host it.");
+        if (!alive) return;
+        setSrc(url);
+      } catch (cause) {
+        if (alive) setReason(text(cause));
+      }
+    })();
+    return () => { alive = false; };
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
+  useEffect(() => {
+    const node = frame.current;
+    return node ? trackShellCutout(node) : undefined;
+  }, [src]);
+
+  return <div className="wx-face" data-state={src ? "ready" : reason ? "refused" : "reading"}>
+    <header className="wx-face-head">
+      <div className="wx-face-title">
+        <span className="oi-eyebrow">Instrument 0 · entry</span>
+        <strong>The Epii face</strong>
+        <span className="oi-note">Twelve faces · one mask — the guardian of the O:I web, wiki and graph spaces. The whole of {registerTitle} stands behind the face.</span>
+      </div>
+      <button type="button" className="oi-action oi-action-primary" onClick={onEnterWhole}>Enter the wiki · graph whole</button>
+    </header>
+    {reason && <p className="oi-refusal wx-notice" role="alert">{reason}</p>}
+    <div className="wx-face-stage">
+      {src && <iframe
+        ref={frame}
+        src={src}
+        title="The Epii face — twelve masks, one expression"
+        className="wx-face-frame"
+        allow="fullscreen"
+        referrerPolicy="no-referrer"
+        sandbox="allow-scripts allow-forms allow-downloads allow-same-origin"/>}
+    </div>
+  </div>;
 }
