@@ -126,7 +126,7 @@ export function SetupFlow({controller, native, startAtReview = false, onClose, o
 
     {state.step === "review" && <section aria-label="Reviewed native plan">
       {state.bundle?.plans.map(plan => <PlanView key={plan.plan_id} plan={plan} setting={settings[plan.setting_ref]}/>)}
-      {state.bundle?.errors.map((error, index) => <p key={index} role="alert" className="config-error" data-error-code={error.error.error_code}>{error.error_code}: {error.message}</p>)}
+      {state.bundle?.errors.map((error, index) => <p key={index} role="alert" className="config-error" data-error-code={error.error_code}>{error.error_code}: {error.message}</p>)}
       {!state.busy && state.bundle && !controller.canApply() && <p className="config-muted">Apply is unavailable: the plan is incomplete, refused or expired. A fresh plan and explicit application are required; a successful subset is never silently applied.</p>}
       <div className="config-drawer-actions">
         <button type="button" disabled={locked} onClick={() => controller.back()}>Back to settings</button>
