@@ -501,6 +501,15 @@ fn command_init_current_personal(args: &[OsString]) -> Result<i32, String> {
     // suite; this step never drives AIKit procedures.
     run_guardian_pickup(&path)?;
 
+    // Continuous-work authority disclosure (harness-first adoption). A fresh
+    // ground carries the guardian Skills but no recognised work-placement
+    // policy, so the first agent session that allocates a NOW/DAY field would
+    // otherwise stall at the session strap. Establish a sensible default here,
+    // at the front door — running the install is the person's adoption — so the
+    // ground runs agents out of the box. If a default cannot be established,
+    // fall back to naming the gap and the owner's adoption step.
+    establish_or_disclose_placement_authority(&executable, &path);
+
     println!("Initialized current-main {{O:I}} composition: {}", state_path()?.display());
     println!("Personal ground: {}", path.display());
     println!("Central: {}", executable.display());
@@ -515,6 +524,192 @@ fn command_init_current_personal(args: &[OsString]) -> Result<i32, String> {
     println!("Central contract: ProjectCentral + root Wiki federation present");
     println!("Next: oi dev status");
     Ok(0)
+}
+
+/// Ensure the freshly established ground can run agent sessions out of the box.
+///
+/// A fresh ground carries the guardian Skills but no recognised work-placement
+/// policy, so the first NOW/DAY allocation would otherwise stall at the strap.
+/// Best-effort: read Central's `central.work.policy`; if a recognised policy
+/// already governs the ground, do nothing. If none is recognised, establish a
+/// sensible default — every project under `Work/` writable, the `Control/*`
+/// regions protected — recorded as the ground's adopted policy (running the
+/// install is the adoption). If a default cannot be established safely, fall
+/// back to naming the gap and the owner's own adoption step rather than leaving
+/// a silent stall. This never changes init's success.
+fn establish_or_disclose_placement_authority(executable: &Path, root: &Path) {
+    let Ok(output) = Command::new(executable)
+        .arg("--root")
+        .arg(root)
+        .args(["--json", "action", "run", "central.work.policy", "{}"])
+        .output()
+    else {
+        return;
+    };
+    let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
+        return;
+    };
+    match payload.get("ok").and_then(serde_json::Value::as_bool) {
+        // A recognised policy already governs this ground: nothing to do.
+        Some(true) => {}
+        Some(false)
+            if payload
+                .pointer("/error/code")
+                .and_then(serde_json::Value::as_str)
+                == Some("policy_or_source_denied") =>
+        {
+            match establish_default_placement_policy(root) {
+                Ok(writable) => {
+                    println!();
+                    println!(
+                        "Established a default work-placement policy so agent sessions can run here."
+                    );
+                    if writable.is_empty() {
+                        println!(
+                            "  No projects under Work/ yet — bring one in and it joins the policy."
+                        );
+                    } else {
+                        println!("  Writable projects: {}", writable.join(", "));
+                    }
+                    println!(
+                        "  Recorded as your adopted policy at Control/user/placement.json — edit it to change what agents may write."
+                    );
+                }
+                Err(reason) => disclose_placement_gap(&reason),
+            }
+        }
+        _ => {}
+    }
+}
+
+/// Establish the default work-placement policy on a ground that has none.
+///
+/// Writes `Control/user/placement.json` (every project directly under `Work/`
+/// writable as a repository; the `Control/*` regions protected) and records the
+/// recognised `work-placement-policy` source relation. The policy file is
+/// written before the relation, so a recognised relation never points at a
+/// missing policy. Refuses (returns `Err`) rather than clobber an existing
+/// placement relation. Returns the writable project names for the confirmation.
+fn establish_default_placement_policy(root: &Path) -> Result<Vec<String>, String> {
+    use serde_json::json;
+
+    let mut writable: Vec<String> = Vec::new();
+    if let Ok(entries) = std::fs::read_dir(root.join("Work")) {
+        for entry in entries.flatten() {
+            if entry.path().is_dir() {
+                if let Ok(name) = entry.file_name().into_string() {
+                    if !name.starts_with('.') {
+                        writable.push(name);
+                    }
+                }
+            }
+        }
+    }
+    writable.sort();
+
+    let grants: Vec<serde_json::Value> = writable
+        .iter()
+        .map(|name| json!({"path": format!("Work/{name}"), "class": "repository"}))
+        .collect();
+    let policy = json!({
+        "schema": "central.work-placement-policy/v1",
+        "scope_ref": "control:root",
+        "writable": grants,
+        "protected": [
+            "Control/user",
+            "Control/relations",
+            "Control/agents/governance",
+            "Control/agents/wiki",
+            "Control/agents/expressions",
+            "Control/agents/machines"
+        ],
+        "enforcement": "native-actions",
+        "required_coverage": ["file-content"],
+        "lease_seconds": 3600
+    });
+
+    let relations_dir = root.join("Control/relations");
+    let relations_path = relations_dir.join("source-relations.json");
+    let mut relations_doc: serde_json::Value = if relations_path.exists() {
+        let raw = std::fs::read_to_string(&relations_path)
+            .map_err(|error| format!("could not read source relations: {error}"))?;
+        serde_json::from_str(&raw)
+            .map_err(|error| format!("source relations are not valid JSON: {error}"))?
+    } else {
+        json!({
+            "schema": "central.control.ground-relations/v1",
+            "project_id": "control:root",
+            "relations": []
+        })
+    };
+    let relations = relations_doc
+        .get_mut("relations")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "source relations file has no relations array".to_owned())?;
+    if relations.iter().any(|relation| {
+        relation
+            .get("roles")
+            .and_then(serde_json::Value::as_array)
+            .is_some_and(|roles| {
+                roles
+                    .iter()
+                    .any(|role| role.as_str() == Some("work-placement-policy"))
+            })
+    }) {
+        return Err("a placement-policy relation already exists".to_owned());
+    }
+    let now = std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|elapsed| elapsed.as_secs())
+        .unwrap_or(0);
+    relations.push(json!({
+        "ref": "central:source:control:root:Control/user/placement.json",
+        "path": "Control/user/placement.json",
+        "roles": ["work-placement-policy"],
+        "provenance": "human-adopted",
+        "standing": "architecture-contract",
+        "treatment": "projectcentral-user",
+        "recognition": "oi-init-established-default-work-placement",
+        "recorded_at_unix_seconds": now
+    }));
+
+    // Policy file first: a recognised relation must never point at a missing
+    // policy. Both are created fresh on a ground that had none.
+    let user_dir = root.join("Control/user");
+    std::fs::create_dir_all(&user_dir)
+        .map_err(|error| format!("could not create Control/user: {error}"))?;
+    let mut policy_text = serde_json::to_string_pretty(&policy)
+        .map_err(|error| format!("could not encode placement policy: {error}"))?;
+    policy_text.push('\n');
+    std::fs::write(user_dir.join("placement.json"), policy_text)
+        .map_err(|error| format!("could not write placement.json: {error}"))?;
+
+    std::fs::create_dir_all(&relations_dir)
+        .map_err(|error| format!("could not create Control/relations: {error}"))?;
+    let mut relations_text = serde_json::to_string_pretty(&relations_doc)
+        .map_err(|error| format!("could not encode source relations: {error}"))?;
+    relations_text.push('\n');
+    let temp_path = relations_dir.join(".source-relations.json.tmp");
+    std::fs::write(&temp_path, relations_text)
+        .map_err(|error| format!("could not stage source relations: {error}"))?;
+    std::fs::rename(&temp_path, &relations_path)
+        .map_err(|error| format!("could not record source relations: {error}"))?;
+
+    Ok(writable)
+}
+
+/// Name the missing continuous-work authority and the owner's adoption step —
+/// the fallback when a default cannot be established (for example an existing
+/// draft placement relation, or a read-only ground).
+fn disclose_placement_gap(reason: &str) {
+    println!();
+    println!("Continuous-work authority is not yet adopted for this ground.");
+    println!("  {reason}.");
+    println!("  The ground exists and the guardian Skills are projected, but agent");
+    println!("  sessions that allocate a NOW/DAY field will stop at the session strap");
+    println!("  until a recognised work-placement-policy (central.work-placement-policy/v1)");
+    println!("  is adopted as your own human source.");
+    println!("  Re-check after adopting with: oi ctrl action run central.work.policy");
 }
 
 /// The observed result of the `machine.adopt-current` fresh-ground step.
