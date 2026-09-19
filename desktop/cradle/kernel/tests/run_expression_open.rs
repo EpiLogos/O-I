@@ -4,10 +4,7 @@
 //! must pass the Expression application's own validation — and the
 //! shortcuts the composition law forbids (semantic parameters, expression-
 //! prefixed subjects) must be refused, not silently accepted.
-use oi_cradle_kernel::{
-    expression::{Application, Request},
-    CentralClient,
-};
+use oi_cradle_kernel::{expression::Application, CentralClient};
 use serde_json::{json, Value};
 
 fn apply_ok(app: &mut Application, value: Value) -> Value {
@@ -150,12 +147,12 @@ fn a_composed_run_expression_opens_through_the_kernel() {
     assert!(document["relations"]
         .as_object()
         .unwrap()
-        .contains_key(format!("expression:factory-run-nrh:relation:edge-0-branches_to").as_str()));
+        .contains_key("expression:factory-run-nrh:relation:edge-0-branches_to"));
     // The run subject stays native and action-carrying; nodes are Things.
-    let run = &document["entities"][format!("expression:factory-run-nrh:entity:run")];
+    let run = &document["entities"]["expression:factory-run-nrh:entity:run"];
     assert_eq!(run["subject"]["presentation_role"], "being");
     assert_eq!(run["subject"]["native_owner"], "software-factory");
-    let node = &document["entities"][format!("expression:factory-run-nrh:entity:work-harden-now-record-law")];
+    let node = &document["entities"]["expression:factory-run-nrh:entity:work-harden-now-record-law"];
     assert_eq!(node["subject"]["readings"][0]["ref"], "factory.run-node/work");
 }
 
