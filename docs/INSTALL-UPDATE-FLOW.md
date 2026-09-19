@@ -101,6 +101,7 @@ oi update                    # resolve cuts, plan, apply (the explicit command)
 oi update --check            # pure report; no file is touched. exit 0 current, 1 updates available
 oi update --check --json     # machine-readable report (for timers and other agents)
 oi update --apply [PRODUCT ...]   # explicit apply, optionally scoped
+oi update --apply --channel mainline [PRODUCT ...]   # apply origin/main cuts instead of the checkouts'
 oi update --rollback         # receipt-driven restore of the previous binary set
 oi update timer --platform launchd|systemd [--output PATH]   # emit the scheduled-check artefact
 ```
@@ -126,6 +127,50 @@ Planning per product:
 A checkout on a non-`main` branch (Actuation's `ql/vak-integration` on
 2026-09-15) is the owner's committed cut like any other; it installs under
 its own disclosure. Refusing it would just reproduce the hand-copy era.
+
+## The mainline route
+
+The developer-source route answers "what does this ground's committed state
+produce?" — which, on a machine whose checkouts sit on long-lived in-flight
+branches, is not "what has merged?". Work that lands on origin/main reaches
+the machine only when each checkout's branch carries it, and that gap used
+to be invisible: a product missing on the machine was really a git-state
+fact in someone else's checkout, re-derived session after session.
+
+The `--candidate PRODUCT=main` seam resolves one product's cut from the
+fetched origin/main. `--channel mainline` is its batch form: every selected
+product without an explicit candidate takes main, so merged work reaches the
+machine without touching anyone's tree:
+
+```sh
+oi update --check --json     # discloses, per product: behind_main / ahead_of_main
+oi update --apply --channel mainline central oi   # build origin/main for these products
+oi update --apply --channel mainline              # or the whole selection
+```
+
+The mainline cut is exported with `git archive` and built in isolation
+exactly as the default route builds a checkout cut; an apply that cannot
+refresh origin/main fails loudly (`--candidate main`'s contract — pass an
+exact commit id for offline work). The receipt records `branch: origin/main
+(integration-lead candidate)` and `channel: mainline`, so the machine always
+answers truthfully about which route produced what it runs. Composition
+registrations are repointed with install source `managed-update:mainline`.
+
+The default route stays developer-source, so the two channels are an
+explicit choice each time — applying mainline and later applying the default
+will honestly flip a product back to its checkout's cut, and the check
+report shows which way every product sits. The plain `--check` now carries
+the disclosure that motivates the route: for every product whose planned cut
+predates origin/main it prints `N commit(s) behind origin/main`, and the
+JSON adds `origin_main_revision`, `behind_main`, `ahead_of_main` and a
+top-level `mainline_pending_count`. The origin/main read fetches
+best-effort; a failed fetch degrades to the last-known ref and is disclosed,
+never passed off as fresh. "The machine lacks X" is now one command away
+from "the machine's cut predates X" — including when the product code for X
+merged days ago.
+
+Rollback is channel-blind by design: it restores the previous receipt set,
+whatever route produced it.
 
 Rollback restores the `previous.json` binary set: every product named there
 must still verify (artifact present, SHA-256 matches) before anything flips —
@@ -166,10 +211,12 @@ to remove managed state; it still never touches anything it does not own.
 
 ## What this flow does not do yet
 
-- **Release modality.** `stable`/`mainline` channels still refuse for lack of
+- **Release modality.** The `stable` channel still refuses for lack of
   materialisable published artifacts; `oi install`'s recorded-build path and
   its `installed-suite.json` receipt are unchanged and remain the seed for a
-  future release-channel updater.
+  future release-channel updater. (`mainline` is no longer in this refusal:
+  since the mainline route above it installs as a source build of
+  origin/main, which needs no published artifacts.)
 - **npm/bootstrap entry.** The fresh-install closed loop (a machine with no
   `oi` at all) is a separate owner handoff; this flow begins once `oi` runs.
 - **Attestation.** Adopted binaries carry provenance `adopted` with no

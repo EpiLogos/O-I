@@ -18,6 +18,8 @@ struct ManagedProduct {
     tree: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]
     branch: Option<String>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    channel: Option<String>,
     #[serde(default)]
     source_dirty: bool,
     source_path: String,
@@ -50,6 +52,78 @@ struct DesiredCut {
     dirty: bool,
 }
 
+/// The route an update takes. `source` (developer-source) builds the ground's
+/// Work checkouts at their committed heads; `mainline` builds each
+/// repository's observed `origin/main` through the same isolated export, so
+/// merged work reaches the machine without moving anyone's checkout. The
+/// channel is an explicit per-run choice; neither silently replaces the other.
+#[derive(Debug, Clone, Copy, PartialEq, Eq)]
+enum UpdateChannel {
+    DeveloperSource,
+    Mainline,
+}
+
+impl UpdateChannel {
+    fn as_str(self) -> &'static str {
+        match self {
+            Self::DeveloperSource => "source",
+            Self::Mainline => "mainline",
+        }
+    }
+    fn parse(value: &str) -> Result<Self, String> {
+        match value {
+            "source" | "developer-source" | "dev" => Ok(Self::DeveloperSource),
+            "mainline" | "main" | "origin-main" => Ok(Self::Mainline),
+            other => Err(format!(
+                "unknown channel '{other}'; --channel takes 'source' (the ground's committed cuts, the default) or 'mainline' (each repository's origin/main)"
+            )),
+        }
+    }
+}
+
+/// What the flow knows about one repository's origin/main: the revision and
+/// whether the fetch that would have refreshed it failed. A failed fetch
+/// degrades to the last-known ref and is disclosed, never passed off as
+/// fresh.
+#[derive(Debug, Clone)]
+struct OriginMainFact {
+    revision: String,
+    fetch_failed: bool,
+}
+
+/// Refresh `refs/remotes/origin/main` in one repository. This is the same
+/// read the `oi dev gate` performs: it advances a remote-tracking ref only
+/// and never touches a working tree, a branch, or a dirty file.
+fn refresh_origin_main(checkout: &Path) -> Result<bool, String> {
+    let status = Command::new("git").arg("-C").arg(checkout)
+        .args(["fetch", "origin", "refs/heads/main:refs/remotes/origin/main"])
+        .status()
+        .map_err(|error| error.to_string())?;
+    Ok(status.success())
+}
+
+/// Fetch (best-effort) and read the repository's origin/main. Returns None
+/// when the ref is unknown — no network and no prior knowledge, or a remote
+/// that carries no main at all.
+fn origin_main_fact(checkout: &Path) -> Result<Option<OriginMainFact>, String> {
+    let fetch_ok = refresh_origin_main(checkout).unwrap_or(false);
+    match git_output(checkout, &["rev-parse", "--verify", "refs/remotes/origin/main^{commit}"]) {
+        Ok(revision) => Ok(Some(OriginMainFact { revision, fetch_failed: !fetch_ok })),
+        Err(_) => Ok(None),
+    }
+}
+
+/// How a desired cut relates to its repository's origin/main: commits the
+/// cut lacks (behind) and carries beyond main (ahead). None when either side
+/// cannot be counted.
+fn mainline_relation(checkout: &Path, cut: &str, origin_main: &str) -> Option<(u64, u64)> {
+    let behind = git_output(checkout, &["rev-list", "--count", &format!("{cut}..{origin_main}")]).ok()
+        .and_then(|text| text.trim().parse().ok())?;
+    let ahead = git_output(checkout, &["rev-list", "--count", &format!("{origin_main}..{cut}")]).ok()
+        .and_then(|text| text.trim().parse().ok())?;
+    Some((behind, ahead))
+}
+
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]
 enum PlanAction {
     Skip,
@@ -78,6 +152,9 @@ struct PlanEntry {
     installed_revision: Option<String>,
     discovered: Option<PathBuf>,
     detail: String,
+    origin_main: Option<OriginMainFact>,
+    behind_main: Option<u64>,
+    ahead_of_main: Option<u64>,
 }
 
 fn updates_receipts_dir(data_root: &Path) -> PathBuf { data_root.join("receipts/updates") }
@@ -372,7 +449,18 @@ fn build_plan(
     let mut drift = Vec::new();
     for target in targets.iter().filter(|target| selection.contains(&target.id)) {
         let checkout = dev_source_path(ground, &target.id);
+        // origin/main is read for every mode: it is what a mainline or
+        // `--candidate main` cut resolves to, and it is the staleness
+        // disclosure the default check exists to give.
+        let origin_main = origin_main_fact(&checkout)?;
         let desired = resolve_desired_cut(&target.id, &checkout, candidates.get(&target.id).map(String::as_str))?;
+        let (behind_main, ahead_of_main) = match (desired.as_ref(), origin_main.as_ref()) {
+            (Some(cut), Some(fact)) => match mainline_relation(&checkout, &cut.revision, &fact.revision) {
+                Some((behind, ahead)) => (Some(behind), Some(ahead)),
+                None => (None, None),
+            },
+            _ => (None, None),
+        };
         let entry = receipt.as_ref().and_then(|receipt| receipt.products.get(&target.id));
         let discovered = {
             let resolved = resolve_executable(&target.exe);
@@ -384,6 +472,12 @@ fn build_plan(
             drift.push(format!(
                 "{}: {} is installed but unmanaged (outside {})",
                 target.id, path.display(), data_root.display(),
+            ));
+        }
+        if origin_main.as_ref().map(|fact| fact.fetch_failed).unwrap_or(false) {
+            drift.push(format!(
+                "{}: could not refresh origin/main (network?); the last-known ref is used and disclosed",
+                target.id,
             ));
         }
         let (action, detail) = plan_product(
@@ -398,14 +492,18 @@ fn build_plan(
             installed_revision: entry.map(|entry| entry.revision.clone()),
             discovered,
             detail,
+            origin_main,
+            behind_main,
+            ahead_of_main,
         });
     }
     Ok((entries, drift))
 }
 
-fn print_plan_report(entries: &[PlanEntry], drift: &[String]) -> bool {
-    println!("oi update — developer-source modality (channel: source)");
+fn print_plan_report(entries: &[PlanEntry], drift: &[String], channel: UpdateChannel) -> bool {
+    println!("oi update — developer-source modality (channel: {})", channel.as_str());
     let mut updates = false;
+    let mut behind_products = 0usize;
     for entry in entries {
         let desired = entry.desired.as_ref();
         let cut = desired.map(|cut| format!(
@@ -425,9 +523,35 @@ fn print_plan_report(entries: &[PlanEntry], drift: &[String]) -> bool {
             .unwrap_or_else(|| "—".to_owned());
         println!("  {:<18} {:<16} installed: {:<24} cut: {cut}", entry.id, state, installed);
         println!("    {}", entry.detail);
+        // The staleness disclosure: a checkout's cut can be current with
+        // itself and still predate work that has already merged. Name the
+        // gap instead of letting absence on the machine look like absence
+        // from the codebase.
+        if let (Some(fact), Some(cut)) = (entry.origin_main.as_ref(), desired) {
+            if fact.revision != cut.revision {
+                if let (Some(behind), Some(ahead)) = (entry.behind_main, entry.ahead_of_main) {
+                    if behind > 0 {
+                        behind_products += 1;
+                        println!(
+                            "    mainline: {} commit(s) behind origin/main ({}{})",
+                            behind,
+                            short_rev(&fact.revision),
+                            if fact.fetch_failed { ", fetch failed — last-known ref" } else { "" },
+                        );
+                    } else if ahead > 0 {
+                        println!("    mainline: {} commit(s) ahead of origin/main", ahead);
+                    }
+                }
+            }
+        }
     }
     for note in drift {
         println!("  drift: {note}");
+    }
+    if behind_products > 0 && channel == UpdateChannel::DeveloperSource {
+        println!(
+            "  {behind_products} product(s) can take merged main without touching any checkout: oi update --apply --channel mainline"
+        );
     }
     updates
 }
@@ -462,6 +586,7 @@ fn apply_entry(
     target: &UpdateTarget,
     data_root: &Path,
     activation_root: &Path,
+    channel: UpdateChannel,
 ) -> Result<ManagedProduct, String> {
     let id = entry.id.as_str();
     let desired = entry.desired.as_ref().ok_or_else(|| format!("{id}: nothing to apply"))?;
@@ -536,6 +661,7 @@ fn apply_entry(
                 "tree": desired.tree,
                 "branch": desired.branch,
                 "source_dirty": desired.dirty,
+                "channel": channel.as_str(),
                 "checkout": entry.checkout,
                 "provenance": provenance,
                 "build_command": build_command,
@@ -550,6 +676,7 @@ fn apply_entry(
         revision: desired.revision.clone(),
         tree: desired.tree.clone(),
         branch: desired.branch.clone(),
+        channel: Some(channel.as_str().to_owned()),
         source_dirty: desired.dirty,
         source_path: entry.checkout.display().to_string(),
         sha256,
@@ -569,15 +696,20 @@ fn repoint_registration(
     id: &str,
     checkout: &Path,
     bin_link: &Path,
+    channel: UpdateChannel,
 ) -> Result<(), String> {
     let surface = find_surface(catalog, id)?;
+    let install_source = match channel {
+        UpdateChannel::DeveloperSource => "managed-update".to_owned(),
+        UpdateChannel::Mainline => "managed-update:mainline".to_owned(),
+    };
     let registration = registration_in_modality(
         surface,
         Some(bin_link.to_path_buf()),
         Some(checkout.to_path_buf()),
         None,
         InstallModality::DeveloperSource,
-        Some("managed-update".to_owned()),
+        Some(install_source),
     )?;
     ensure_alias_available(composition, &registration)?;
     composition.modules.insert(id.to_owned(), registration);
@@ -589,6 +721,7 @@ fn command_update_apply(
     force_rebuild: bool,
     json_mode: bool,
     candidates: &BTreeMap<String, String>,
+    channel: UpdateChannel,
 ) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
@@ -608,11 +741,14 @@ fn command_update_apply(
             "desired_revision": entry.desired.as_ref().map(|cut| cut.revision.clone()),
             "desired_branch": entry.desired.as_ref().and_then(|cut| cut.branch.clone()),
             "desired_dirty": entry.desired.as_ref().map(|cut| cut.dirty),
+            "origin_main_revision": entry.origin_main.as_ref().map(|fact| fact.revision.clone()),
+            "behind_main": entry.behind_main,
+            "ahead_of_main": entry.ahead_of_main,
             "detail": entry.detail,
         })).collect();
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.managed-update-plan/v1",
-            "channel": "source",
+            "channel": channel.as_str(),
             "modality": "developer-source",
             "products": products,
             "drift": drift,
@@ -620,9 +756,9 @@ fn command_update_apply(
         })).map_err(|error| error.to_string())?);
         if pending.is_empty() { return Ok(0); }
     } else {
-        let updates = print_plan_report(&entries, &drift);
+        let updates = print_plan_report(&entries, &drift, channel);
         if !updates {
-            println!("Everything selected is already current with its ground's committed cuts; nothing to apply.");
+            println!("Everything selected is already current with its planned cuts; nothing to apply.");
             return Ok(0);
         }
     }
@@ -641,7 +777,7 @@ fn command_update_apply(
                 PlanAction::Adopt | PlanAction::Build => {
                     let target = targets.iter().find(|target| target.id == entry.id)
                         .ok_or_else(|| format!("{}: no build contract", entry.id))?;
-                    let product = apply_entry(entry, target, &data_root, &activation_root)?;
+                    let product = apply_entry(entry, target, &data_root, &activation_root, channel)?;
                     println!(
                         "{}: {} {} at {} ({} -> {})",
                         entry.id, product.provenance, short_rev(&product.revision),
@@ -656,6 +792,7 @@ fn command_update_apply(
         // Receipt order is the recovery order: the previous set is durably
         // recorded before the active receipt names the new one.
         receipt.updated_at_unix_seconds = unix_seconds_now();
+        receipt.channel = channel.as_str().to_owned();
         if let Some(previous) = previous.as_ref() {
             atomic_json(&previous_update_receipt_path(&data_root), previous)?;
         } else {
@@ -672,7 +809,7 @@ fn command_update_apply(
         let mut composition = load_composition()?;
         for entry in &entries {
             if entry.id != "oi" && updated.contains(&entry.id) && entry.desired.is_some() {
-                repoint_registration(&mut composition, &catalog, &entry.id, &entry.checkout, &data_root.join("bin").join(&entry.exe))?;
+                repoint_registration(&mut composition, &catalog, &entry.id, &entry.checkout, &data_root.join("bin").join(&entry.exe), channel)?;
             }
         }
         save_composition(&composition)?;
@@ -681,18 +818,26 @@ fn command_update_apply(
     let _ = fs::remove_file(&lock);
     let updated = outcome?;
     if !json_mode && !updated.is_empty() {
-        println!("Managed update complete: {} product(s) swapped atomically; receipts at {}.",
-            updated.len(), active_update_receipt_path(&data_root).display());
+        println!("Managed update complete (channel {}): {} product(s) swapped atomically; receipts at {}.",
+            channel.as_str(), updated.len(), active_update_receipt_path(&data_root).display());
         println!("Running processes kept their binaries; the next invocation resolves the new set. Roll back with 'oi update --rollback'.");
     }
     Ok(0)
 }
 
-fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bool, candidates: &BTreeMap<String, String>) -> Result<i32, String> {
+fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bool, candidates: &BTreeMap<String, String>, channel: UpdateChannel) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
     let data_root = oi_data_root()?;
     let (entries, drift) = build_plan(&ground, &data_root, selection, force_rebuild, &manifest, candidates)?;
+    // How many products' planned cuts predate work already on origin/main.
+    // This is the merged-but-not-delivered gap the check exists to name.
+    let mainline_pending = entries.iter().filter(|entry| {
+        matches!(
+            (&entry.origin_main, entry.desired.as_ref(), entry.behind_main),
+            (Some(_), Some(_), Some(behind)) if behind > 0
+        )
+    }).count();
     if json_mode {
         let products: Vec<serde_json::Value> = entries.iter().map(|entry| json!({
             "product": entry.id,
@@ -703,24 +848,32 @@ fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bo
             "desired_revision": entry.desired.as_ref().map(|cut| cut.revision.clone()),
             "desired_branch": entry.desired.as_ref().and_then(|cut| cut.branch.clone()),
             "desired_dirty": entry.desired.as_ref().map(|cut| cut.dirty),
+            "origin_main_revision": entry.origin_main.as_ref().map(|fact| fact.revision.clone()),
+            "origin_main_fetch_failed": entry.origin_main.as_ref().map(|fact| fact.fetch_failed),
+            "behind_main": entry.behind_main,
+            "ahead_of_main": entry.ahead_of_main,
             "detail": entry.detail,
         })).collect();
         let pending = entries.iter().filter(|entry| matches!(entry.action, PlanAction::Adopt | PlanAction::Build)).count();
         println!("{}", serde_json::to_string_pretty(&json!({
             "schema": "oi.update-check/v1",
-            "channel": "source",
+            "channel": channel.as_str(),
             "modality": "developer-source",
             "updates_available": pending > 0,
             "pending_count": pending,
+            "mainline_pending_count": mainline_pending,
             "products": products,
             "drift": drift,
         })).map_err(|error| error.to_string())?);
         return Ok(if pending > 0 { 1 } else { 0 });
     }
-    let updates = print_plan_report(&entries, &drift);
+    let updates = print_plan_report(&entries, &drift, channel);
     if updates {
         println!("Updates available. Run 'oi update' (or 'oi update --apply') to swap them in; this check changed nothing.");
         Ok(1)
+    } else if mainline_pending > 0 {
+        println!("The planned channel is current; origin/main has moved ahead as disclosed above.");
+        Ok(0)
     } else {
         println!("Everything selected is current with its ground's committed cuts.");
         Ok(0)
@@ -764,7 +917,10 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
             if id == "oi" { continue; }
             let checkout = PathBuf::from(&product.source_path);
             if checkout.is_dir() {
-                let _ = repoint_registration(&mut composition, &catalog, id, &checkout, &PathBuf::from(&product.bin));
+                let channel = product.channel.as_deref()
+                    .and_then(|name| UpdateChannel::parse(name).ok())
+                    .unwrap_or(UpdateChannel::DeveloperSource);
+                let _ = repoint_registration(&mut composition, &catalog, id, &checkout, &PathBuf::from(&product.bin), channel);
             }
         }
         save_composition(&composition)?;
@@ -898,7 +1054,9 @@ WantedBy=timers.target\n",
 
 /// `oi update` — the single command. Bare invocation applies (that explicit
 /// command is the authority); `--check` reports without effects and is what
-/// scheduled jobs run; `--rollback` restores the previous receipt set.
+/// scheduled jobs run; `--rollback` restores the previous receipt set;
+/// `--channel` picks the route (the ground's committed cuts by default, or
+/// each repository's origin/main).
 fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     if args.first().and_then(|value| value.to_str()) == Some("timer") {
         return command_update_timer(args.get(1..).unwrap_or_default());
@@ -907,31 +1065,39 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     let mut check_only = false;
     let mut rollback = false;
     let mut force_rebuild = false;
+    let mut channel = UpdateChannel::DeveloperSource;
     let mut products: Vec<OsString> = Vec::new();
     let mut candidate_specs: Vec<String> = Vec::new();
-    let usage = "oi update [--check|--apply|--rollback] [--rebuild] [--candidate PRODUCT=REVISION] [--json] [PRODUCT ...]";
+    let usage = "oi update [--check|--apply|--rollback] [--rebuild] [--candidate PRODUCT=REVISION] [--channel source|mainline] [--json] [PRODUCT ...]";
     let mut index = 0;
     while index < args.len() {
-        let value = &args[index];
-        match value.to_str() {
-            Some("--json") => json_mode = true,
-            Some("--check") => check_only = true,
-            Some("--apply") => {}
-            Some("--rollback") => rollback = true,
-            Some("--rebuild") => force_rebuild = true,
-            Some("--candidate") => {
+        let value = args[index].to_str()
+            .ok_or_else(|| "update arguments must be UTF-8".to_owned())?;
+        match value {
+            "--json" => json_mode = true,
+            "--check" => check_only = true,
+            "--apply" => {}
+            "--rollback" => rollback = true,
+            "--rebuild" => force_rebuild = true,
+            "--candidate" => {
                 index += 1;
                 let spec = args.get(index).and_then(|value| value.to_str())
                     .ok_or_else(|| format!("'--candidate' requires PRODUCT=REVISION (a commit id or 'main'); usage: {usage}"))?;
                 candidate_specs.push(spec.to_owned());
             }
-            Some(other) if other.starts_with("--candidate=") => {
+            other if other.starts_with("--candidate=") => {
                 candidate_specs.push(other.trim_start_matches("--candidate=").to_owned());
             }
-            Some(other) if other.starts_with('-') => {
+            "--channel" => {
+                index += 1;
+                let name = args.get(index).and_then(|value| value.to_str())
+                    .ok_or_else(|| "--channel requires 'source' or 'mainline'".to_owned())?;
+                channel = UpdateChannel::parse(name)?;
+            }
+            other if other.starts_with('-') => {
                 return Err(format!("unknown update option '{other}'; usage: {usage}"));
             }
-            _ => products.push(value.clone()),
+            _ => products.push(args[index].clone()),
         }
         index += 1;
     }
@@ -968,10 +1134,19 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     for id in candidates.keys() {
         if !selection.contains(id) { selection.push(id.clone()); }
     }
-    if check_only {
-        return command_update_check(json_mode, &selection, force_rebuild, &candidates);
+    // The mainline route is the batch form of `--candidate PRODUCT=main`:
+    // every selected product without an explicit candidate takes main, so
+    // merged work reaches the machine without moving anyone's checkout. An
+    // explicit candidate wins for its product.
+    if channel == UpdateChannel::Mainline {
+        for id in &selection {
+            candidates.entry(id.clone()).or_insert_with(|| "main".to_owned());
+        }
     }
-    command_update_apply(&selection, force_rebuild, json_mode, &candidates)
+    if check_only {
+        return command_update_check(json_mode, &selection, force_rebuild, &candidates, channel);
+    }
+    command_update_apply(&selection, force_rebuild, json_mode, &candidates, channel)
 }
 
 #[cfg(test)]
@@ -1016,6 +1191,7 @@ mod update_flow_tests {
             revision: revision.to_owned(),
             tree: revision.to_owned(),
             branch: Some("main".to_owned()),
+            channel: Some("source".to_owned()),
             source_dirty: false,
             source_path: "/ground/Work/tool".to_owned(),
             sha256: sha256.to_owned(),
@@ -1256,5 +1432,117 @@ mod update_flow_tests {
         for target in &targets {
             assert!(!target.build_command.is_empty(), "{} must declare a build", target.id);
         }
+    }
+
+    /// A repo whose occupied checkout sits ahead of a main that has itself
+    /// advanced: HEAD is two feature commits past `base`, origin/main names
+    /// one plumbing commit cut is missing, and the tree carries uncommitted
+    /// work. Returns (repo, cut HEAD, origin/main tip).
+    fn repo_with_occupied_checkout_and_advanced_main(dir: &Path) -> (PathBuf, String, String) {
+        let repo = dir.join("tool");
+        fs::create_dir_all(&repo).unwrap();
+        git(&repo, &["init", "-b", "main"]);
+        fs::write(repo.join("file"), "base\n").unwrap();
+        let base = commit_all(&repo, "base");
+        git(&repo, &["update-ref", "refs/remotes/origin/main", &base]);
+        git(&repo, &["checkout", "-b", "occupied"]);
+        fs::write(repo.join("feature"), "f1\n").unwrap();
+        commit_all(&repo, "feature one");
+        fs::write(repo.join("feature"), "f2\n").unwrap();
+        let cut = commit_all(&repo, "feature two");
+        fs::write(repo.join("live"), "uncommitted\n").unwrap();
+        // One commit on origin/main the cut lacks, built with plumbing so no
+        // branch has to move.
+        let tree = git(&repo, &["rev-parse", "HEAD^{tree}"]);
+        let main_tip = git(&repo, &[
+            "-c", "user.email=flow@example.invalid", "-c", "user.name=Flow",
+            "commit-tree", &tree, "-p", &base, "-m", "main advance",
+        ]);
+        git(&repo, &["update-ref", "refs/remotes/origin/main", &main_tip]);
+        (repo, cut, main_tip)
+    }
+
+    #[test]
+    fn update_channel_parses_known_names_and_refuses_unknown() {
+        assert_eq!(UpdateChannel::parse("source").unwrap(), UpdateChannel::DeveloperSource);
+        assert_eq!(UpdateChannel::parse("developer-source").unwrap(), UpdateChannel::DeveloperSource);
+        assert_eq!(UpdateChannel::parse("mainline").unwrap(), UpdateChannel::Mainline);
+        assert_eq!(UpdateChannel::parse("origin-main").unwrap(), UpdateChannel::Mainline);
+        let error = UpdateChannel::parse("stable").unwrap_err();
+        assert!(error.contains("'source'") && error.contains("'mainline'"), "{error}");
+    }
+
+    #[test]
+    fn origin_main_fact_degrades_to_the_last_known_ref_and_discloses_the_fetch() {
+        let temp = tempfile::tempdir().unwrap();
+        let (repo, _cut, main_tip) = repo_with_occupied_checkout_and_advanced_main(temp.path());
+        // No origin remote exists here, so the fetch fails and the fact is
+        // built from the last-known ref, disclosed as such — the disclosure
+        // that keeps a stale mainline reading from passing as fresh.
+        let fact = origin_main_fact(&repo).unwrap().expect("origin/main is known");
+        assert!(fact.fetch_failed);
+        assert_eq!(fact.revision, main_tip);
+        // With no ref at all there is no fact: nothing is invented.
+        let empty = tempfile::tempdir().unwrap();
+        git(empty.path(), &["init", "-b", "main"]);
+        assert!(origin_main_fact(empty.path()).unwrap().is_none());
+    }
+
+    #[test]
+    fn mainline_relation_counts_commits_each_way() {
+        let temp = tempfile::tempdir().unwrap();
+        let (repo, cut, main_tip) = repo_with_occupied_checkout_and_advanced_main(temp.path());
+        let (behind, ahead) = mainline_relation(&repo, &cut, &main_tip).unwrap();
+        assert_eq!(behind, 1, "the cut lacks the plumbing commit on main");
+        assert_eq!(ahead, 2, "the cut carries two feature commits main lacks");
+        // A cut exactly at origin/main relates 0/0.
+        let (behind, ahead) = mainline_relation(&repo, &main_tip, &main_tip).unwrap();
+        assert_eq!((behind, ahead), (0, 0));
+        // Unresolvable revisions degrade to None, never a wrong number.
+        assert!(mainline_relation(&repo, "0".repeat(40).as_str(), &main_tip).is_none());
+    }
+
+    #[test]
+    fn plan_builds_for_a_mainline_cut_and_names_the_route() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let desired = DesiredCut {
+            revision: "e".repeat(40),
+            tree: "e".repeat(40),
+            branch: Some("origin/main".into()),
+            dirty: false,
+        };
+        let (action, detail) = plan_product(None, Some(&desired), None, &data_root, false, &[]);
+        assert_eq!(action, PlanAction::Build);
+        assert!(detail.contains("origin/main"), "{detail}");
+        assert!(!detail.contains("dirty"), "a committed ref must not read as dirty work: {detail}");
+        // A receipt naming the mainline revision skips, whichever channel
+        // produced it: currency is proven from the revision, not the route.
+        let staged = script_executable(&temp.path().join("staged/tool"), "#!/bin/sh\nexit 0\n");
+        let sha = sha256_file(&staged).unwrap();
+        let artifact = managed_artifact_path(&data_root, "tool", &sha, "tool");
+        fs::create_dir_all(artifact.parent().unwrap()).unwrap();
+        fs::copy(&staged, &artifact).unwrap();
+        let entry = receipt_entry(&data_root, &temp.path().join("home"), &desired.revision, &sha);
+        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[]);
+        assert_eq!(action, PlanAction::Skip);
+    }
+
+    #[test]
+    fn receipts_without_a_per_product_channel_still_load() {
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        fs::create_dir_all(updates_receipts_dir(&data_root)).unwrap();
+        let revision = "b".repeat(40);
+        let digest = "a".repeat(64);
+        let legacy = format!(
+            r#"{{"schema":"oi.managed-update/v1","channel":"source","modality":"developer-source","updated_at_unix_seconds":5,
+                "products":{{"tool":{{"exe":"tool","revision":"{revision}","tree":"{revision}","branch":"main","source_dirty":false,
+                "source_path":"/ground/Work/tool","sha256":"{digest}","managed":"/x/tool","bin":"/x/bin/tool","activation":"/x/act/tool",
+                "provenance":"built","build_command":[],"gate":"","installed_at_unix_seconds":0}}}}}}"#
+        );
+        fs::write(active_update_receipt_path(&data_root), legacy).unwrap();
+        let receipt = load_active_update_receipt(&data_root).unwrap().expect("legacy receipt loads");
+        assert!(receipt.products["tool"].channel.is_none(), "the channel field is optional and absent on legacy entries");
     }
 }
