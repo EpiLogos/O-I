@@ -5,7 +5,7 @@ on:
     branches: [site/library-first-public-expressions-20260919]
     paths: ['site/**', '.github/workflows/site-library-preview.yml']
   pull_request:
-    paths: ['site/src/library/**', 'site/tests/library-*.py', 'site/library.test.mjs', '.github/workflows/site-library-preview.yml']
+    paths: ['site/src/library/**', 'site/tests/library-*.py', 'site/tests/publication-*', 'site/library.test.mjs', 'site/publication.test.mjs', 'site/build-publications.mjs', '.github/workflows/site-library-preview.yml']
 
 permissions:
   contents: read
@@ -31,7 +31,7 @@ jobs:
       - name: Verify source, native publication and public browser build
         working-directory: site
         run: |
-          node --test library.test.mjs public-content.test.mjs ../shared-field/expression-projection.test.mjs
+          node --test library.test.mjs publication.test.mjs public-content.test.mjs ../shared-field/expression-projection.test.mjs
           npm run build:public
       - name: Exercise the actual native reader in Chromium
         working-directory: site
@@ -44,6 +44,7 @@ jobs:
           for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
           python tests/library-acceptance.py
           python tests/library-regressions.py
+          python tests/publication-acceptance.py
       - name: Retain the preview and all browser evidence
         if: always()
         uses: actions/upload-artifact@v4
