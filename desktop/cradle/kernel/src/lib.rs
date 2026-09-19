@@ -652,7 +652,6 @@ impl Kernel {
                 if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-reading/v1"){return Err("Factory returned incompatible attempt reading".into());}
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptReading{data}})
             }
->>>>>>> 2c3adfcb (feat(cradle): Factory Run-in-Expressions — the run bound as an Expression on its own SSSF structure)
             KernelOp::WorkcellStatusRead => {
                 let workcell=std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
                 let (executable, namespace): (std::path::PathBuf, Option<&str>) = match workcell {

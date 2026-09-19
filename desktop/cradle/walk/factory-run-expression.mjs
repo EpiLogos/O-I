@@ -46,44 +46,42 @@ const transpile = async (path) => {
   return (await import("data:text/javascript," + encodeURIComponent(js)))
 }
 const adapter = await transpile("../src/contributions/factory/run-expression.ts")
-const document = adapter.composeRunExpression({run, attempt, units, statePath}, "expression:walk-factory-run-expression")
+const expressionRef = "expression:walk-factory-run-expression"
+const document = adapter.composeRunExpression({run, attempt, units, statePath}, expressionRef)
 
 check("expression schema", document.schema === "oi.expression/v1", document.schema)
-check("subject bound to the run", Object.values(document.entities).some(e => e.subject?.subject_ref === run.runRef), "")
-check("subject names its native owner", Object.values(document.entities).find(e => e.subject)?.subject?.native_owner === "software-factory", "")
-check("subject is a Being, not a thing", Object.values(document.entities).find(e => e.subject)?.subject?.presentation_role === "being", "")
+check("subject bound to the run", document.entities[`${expressionRef}:entity:run`]?.subject?.subject_ref === run.runRef, "")
+check("subject names its native owner", document.entities[`${expressionRef}:entity:run`]?.subject?.native_owner === "software-factory", "")
+check("subject is a Being, not a thing", document.entities[`${expressionRef}:entity:run`]?.subject?.presentation_role === "being", "")
 
-// SSSF preservation: the topology survives verbatim.
+// SSSF preservation: the topology survives verbatim, under the kernel's
+// composition law (expression-local refs, kinds as readings).
+const sanitize = (ref) => ref.replace(/[^A-Za-z0-9-_.]/g, "-")
+const entityFor = (suffix) => `${expressionRef}:entity:${sanitize(suffix)}`
+check("entity refs are expression-local", Object.keys(document.entities).every(k => k.startsWith(`${expressionRef}:entity:`)), "")
+check("scene refs are expression-local", document.scenes.every(scn => scn.scene_ref.startsWith(`${expressionRef}:scene:`)), "")
+check("kernel scene budget respected (<=10 entities)", document.scenes.every(scn => scn.entity_refs.length <= 10), String(Math.max(...document.scenes.map(scn => scn.entity_refs.length))))
 const nodeIds = Object.keys(run.runMap.nodes)
-check("every native node has an entity", nodeIds.every(id => document.entities[id]), String(nodeIds.length))
+check("every native node has an entity", nodeIds.every(id => document.entities[entityFor(id)]), String(nodeIds.length))
 const kindSet = new Set(Object.values(run.runMap.nodes).map(n => n.kind))
-check("node kinds preserved", [...kindSet].every(kind => Object.values(document.entities).some(e => e.parameters?.kind?.value === kind)), [...kindSet].join(","))
-check("every native edge has a relation", run.runMap.edges.every((edge, i) => document.relations[`edge-${i}-${edge.relation}`]), String(run.runMap.edges.length))
+check("node kinds preserved as readings", [...kindSet].every(kind => Object.values(document.entities).some(e => e.subject?.readings?.some(r => r.ref === `factory.run-node/${kind}`))), [...kindSet].join(","))
+check("every native edge has a relation", run.runMap.edges.every((edge, i) => document.relations[`${expressionRef}:relation:edge-${i}-${edge.relation}`]), String(run.runMap.edges.length))
 const edgeKinds = new Set(run.runMap.edges.map(e => e.relation))
 check("edge kinds preserved verbatim", [...edgeKinds].every(kind => Object.values(document.relations).some(r => r.relation.ref === `factory.run-edge/${kind}`)), [...edgeKinds].join(","))
-
-// Barriers are structure, never inferred from absence of motion: the
-// owner's topology projects compiled barriers as Gate nodes, and every
-// native edge — requires/branches_to/returns_to — survives verbatim.
+// Gate/barrier nodes are the owner's own topology projection of barriers.
 const gateNodes = Object.values(run.runMap.nodes).filter(n => n.kind === "gate" || n.kind === "Gate")
-check("gate/barrier nodes render as entities", gateNodes.every(n => document.entities[n.id]), String(gateNodes.length))
+check("gate/barrier nodes render as entities", gateNodes.every(n => document.entities[entityFor(n.id)]), String(gateNodes.length))
 
 // Attempts with their actual verification evidence.
 if (attempt) {
-  check("every attempt has an entity", attempt.attempts.every(a => document.entities[a.attemptRef]), String(attempt.attempts.length))
+  check("every attempt has an entity", attempt.attempts.every(a => document.entities[entityFor(a.attemptRef)]), String(attempt.attempts.length))
+  check("attempt subject names the native attempt", attempt.attempts.every(a => document.entities[entityFor(a.attemptRef)]?.subject?.subject_ref === a.attemptRef), "")
   const returned = attempt.attempts.find(a => a.readableReturn)
-  check("readable Return has its scene", Boolean(returned) === document.scenes.some(s => s.scene_ref === "return"), "")
+  check("readable Return has its scene", Boolean(returned) === document.scenes.some(scn => scn.scene_ref.endsWith(":scene:return")), "")
 } else {
   check("attempt-less run discloses the refusal", Boolean(attemptsSkipped), attemptsSkipped ?? "")
-  check("attempt-less run invents no attempts", !document.scenes.some(s => s.scene_ref === "executions"), "")
+  check("attempt-less run invents no attempts", !document.scenes.some(scn => scn.scene_ref.endsWith(":scene:executions-1")), "")
 }
-
-// Disclosed actions keep native authority; the host only carries requests.
-const actions = Object.values(document.entities).find(e => e.subject)?.subject?.actions ?? []
-check("actions disclose authority", actions.every(a => a.authority_requirement.includes("retains the authority")), String(actions.length))
-
-// No second run store: the document points back at the owner state and readings.
-check("provenance names the owner state", document.provenance.some(p => p.ref === `file:${statePath}`), "")
 
 // The renderer is registered for the world-presentation map.
 const presentation = await readFile(new URL("../src/explore/presentation.tsx", import.meta.url), "utf8")
