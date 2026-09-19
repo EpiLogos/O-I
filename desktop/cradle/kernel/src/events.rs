@@ -101,6 +101,12 @@ pub enum KernelEvent {
         current_revision: String,
         summary: String,
     },
+    /// A file write or restore through `central.files` changed what the
+    /// owner holds at `path` — the disclosure a retained listing (the file
+    /// tree's workspace-keyed cache) invalidates on. Emitted only when the
+    /// owner recorded an actual change; an unchanged write mutates nothing
+    /// and emits nothing, exactly as a source save does.
+    FileChanged { path: String, summary: String },
 }
 
 impl KernelEvent {
@@ -108,7 +114,7 @@ impl KernelEvent {
     /// subject without matching every variant.
     pub fn subject(&self) -> Option<&SemanticRef> {
         match self {
-            Self::WorldChanged { .. } | Self::ExpressionChanged { .. } => None,
+            Self::WorldChanged { .. } | Self::ExpressionChanged { .. } | Self::FileChanged { .. } => None,
             Self::FocusChanged { focus } => focus.subject_ref(),
             Self::SurfaceChanged { surface_ref, .. } => surface_ref.as_ref(),
             Self::SourceOpened { source, .. }
@@ -129,6 +135,7 @@ impl KernelEvent {
             Self::BufferDirty { .. } => "buffer_dirty",
             Self::SourceChanged { .. } => "source_changed",
             Self::SourceWriteConflict { .. } => "source_write_conflict",
+            Self::FileChanged { .. } => "file_changed",
         }
     }
 
@@ -217,6 +224,10 @@ impl KernelEvent {
                 non_empty("SourceWriteConflict.expected_revision", expected_revision)?;
                 non_empty("SourceWriteConflict.current_revision", current_revision)?;
                 non_empty("SourceWriteConflict.summary", summary)
+            }
+            Self::FileChanged { path, summary } => {
+                non_empty("FileChanged.path", path)?;
+                non_empty("FileChanged.summary", summary)
             }
         }
     }

@@ -54,6 +54,9 @@ pub mod refs;
 pub mod world;
 pub mod commission;
 pub mod flow_cognition;
+/// Short-horizon read-through cache for the owner readings the UI re-reads
+/// (see the module's own law). Private to the kernel's apply path.
+mod read_cache;
 // --- expression_world (ES1 knowledge side + ES4 joint focus/deixis/portals),
 // lane aikit/es-one-state-relation: the shared selection relation, Surface
 // portals, ExpressiveAct and bounded local-whole bindings over exact refs.
@@ -166,6 +169,7 @@ pub struct Kernel {
     knowledge_refs: BTreeMap<String, SemanticRef>,
     encounter_refs: BTreeMap<String,(SemanticRef,focus::ProjectRef)>,
     knowledge_projects: BTreeMap<String, Option<focus::ProjectRef>>,
+    reads: read_cache::OwnerReadCache,
 }
 
 // ---------------------------------------------------------------------------
@@ -185,7 +189,9 @@ pub enum KernelOp {
     State,
     WorldRead,
     ProjectRead { project: String },
-    WorldBrowse,
+    /// `fresh` bypasses the read cache for this one reading — the explicit
+    /// refresh affordance, not the ordinary browse.
+    WorldBrowse { #[serde(default, skip_serializing_if = "Option::is_none")] fresh: Option<bool> },
     Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
     /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
     /// wiki read model (cell C1) composed with AIKit's owner-side resolution
@@ -345,7 +351,9 @@ pub enum KernelOp {
     /// honest availability. Distinct from `CompositionRead`, which reads
     /// the `oi` composition layer's own census.
     SystemCompositionRead,
-    FilesList { path: String },
+    /// `fresh` bypasses the cached listing for this one read — the explicit
+    /// tree refresh, not an ordinary expansion.
+    FilesList { path: String, #[serde(default, skip_serializing_if = "Option::is_none")] fresh: Option<bool> },
     FileOperation {location:files::Location,request:files::Request},
     FileRead { location: files::Location },
     /// Binary-safe material read (FND-04): the owner's base64 encoding,
@@ -353,7 +361,7 @@ pub enum KernelOp {
     /// `MaterialRead` op above — this reads a native Central file, not a
     /// Workcell material target.
     FileBytes { location: files::Location },
-    ProjectBrowse { project: String },
+    ProjectBrowse { project: String, #[serde(default, skip_serializing_if = "Option::is_none")] fresh: Option<bool> },
     /// List a project's participating sources from the owner's
     /// disclosures (read-only; emits nothing).
     SourcesList { #[serde(default)] project: Option<String> },
@@ -543,6 +551,7 @@ impl Kernel {
             knowledge_refs: BTreeMap::new(),
             encounter_refs: BTreeMap::new(),
             knowledge_projects: BTreeMap::new(),
+            reads: read_cache::OwnerReadCache::default(),
         }
     }
 
@@ -603,17 +612,20 @@ impl Kernel {
             KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
             KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
                 if let Some(project)=&project {
-                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    let root=self.world_map(false).map_err(|e|e.to_string())?;
                     root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
                 }
                 let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let executable=direct.unwrap_or_else(|| std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")));
-                let data=factory::Client::with(executable).build_snapshot(&state_path,&project_ref,&run_ref).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory build snapshot failed".into()))?;
+                let (executable, suite_route)=match direct {
+                    Some(path)=>(path, false),
+                    None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")), true),
+                };
+                let data=factory::Client::with(executable).build_snapshot(&state_path,&project_ref,&run_ref,suite_route).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory build snapshot failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
             }
             KernelOp::FactoryDevelopmentRead {project,state_path,read,subject} => {
                 if let Some(project)=&project {
-                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    let root=self.world_map(false).map_err(|e|e.to_string())?;
                     root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
                 }
                 let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
@@ -637,95 +649,121 @@ impl Kernel {
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"workcell status read failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WorkcellStatusReading{data}})
             }
-            KernelOp::Ground{request} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::GroundReading{reading:ground::operate(request)?}}),
+            KernelOp::Ground{request} => {
+                // A ground change re-bases every path the cache holds.
+                self.reads.clear();
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::GroundReading{reading:ground::operate(request)?}})
+            },
             KernelOp::CompositionRead{owners} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::CompositionReading{reading:composition::Client::discover().read_with_owners(&cwd,owners)}})
             },
             KernelOp::SystemCompositionRead => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SystemCompositionReading{reading:system_composition::Client::discover().read(&cwd)}})
             },
             KernelOp::ConfigRegistryRead => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigRegistryReading{reading:configuration::Client::discover().registry_read(&cwd)}})
             },
             KernelOp::ConfigResolutionsRead {pairs} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigResolutions{resolutions:configuration::Client::discover().resolutions_read(&cwd,&pairs)}})
             },
             KernelOp::ConfigDesiredHold {request} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let entry=configuration::Client::discover().desired_hold(&cwd,&request)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigDesiredHeld{entry}})
             },
             KernelOp::ConfigDesiredDiscard {setting_ref,scope} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let document=configuration::Client::discover().desired_discard(&cwd,&configuration::ConfigPair{setting_ref,scope})?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigDesiredDiscarded{document}})
             },
             KernelOp::ConfigPlan {requests} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let (plans,errors)=configuration::Client::discover().plan(&cwd,&requests);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigPlanned{plans,errors}})
             },
             KernelOp::ConfigApply {requests} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let (changeset,owner_receipts)=configuration::Client::discover().apply(&cwd,&requests)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigApplied{changeset,owner_receipts}})
             },
             KernelOp::ProfileList => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let listing=configuration::Client::discover().profile_list(&cwd)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileListing{active_profile_ref:listing.active_profile_ref,profiles:listing.profiles,degraded:listing.degraded}})
             },
             KernelOp::ProfileRead {profile_ref} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let profile=configuration::Client::discover().profile_read(&cwd,&profile_ref)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileReading{profile}})
             },
             KernelOp::ProfileUsePlan {profile_ref} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let plan=configuration::Client::discover().profile_use_plan(&cwd,&profile_ref)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileUsePlanning{plan}})
             },
             KernelOp::ProfileUseApply {profile_ref} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let activation=configuration::Client::discover().profile_use_apply(&cwd,&profile_ref)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileUsed{activation}})
             },
             KernelOp::ProfileCreate {profile_ref,title} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let profile=configuration::Client::discover().profile_create(&cwd,&profile_ref,title.as_deref())?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileCreated{profile}})
             },
             KernelOp::ProfileEdit {profile_ref,operations} => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let document=configuration::Client::discover().profile_edit(&cwd,&profile_ref,&operations)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileEdited{document}})
             },
             KernelOp::ConfigReceipts => {
-                let root=world::read_world(&self.client).ok();
+                let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let document=configuration::Client::discover().config_receipts(&cwd)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigReceipts{document}})
             },
-            KernelOp::FileOperation {location,request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileOperation {data:files::operate(&self.client,&location,&request)?}}),
-            KernelOp::FilesList {path} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:files::list(&self.client,&path)?} }),
+            KernelOp::FileOperation {location,request} => {
+                let data=files::operate(&self.client,&location,&request)?;
+                // A write changed what a directory contains; the parent
+                // listing is the one cached reading it invalidates by name.
+                if matches!(request,files::Request::Write{..}|files::Request::Restore{..}) {
+                    self.reads.invalidate(&format!("dir:{}",files::parent_path(&location.path)));
+                }
+                // One state change, one event (the seam's law): a write or
+                // restore the owner actually recorded (`created`/`written`)
+                // discloses FileChanged so retained listings — the file
+                // tree's workspace-keyed cache — invalidate by receipt, the
+                // same "look again" relation the expressions surfaces keep
+                // with `expression_changed`. An unchanged write mutated
+                // nothing and emits nothing.
+                let receipt=matches!(request,files::Request::Write{..}|files::Request::Restore{..})
+                    .then(|| match data["outcome"].as_str() {
+                        Some("created")=>Some(self.log.record(KernelEvent::FileChanged{path:location.path.clone(),summary:"A file was created through the owner's write.".into()})),
+                        Some("written")=>Some(self.log.record(KernelEvent::FileChanged{path:location.path.clone(),summary:"A file changed through the owner's write.".into()})),
+                        _=>None,
+                    })
+                    .flatten();
+                Ok(KernelOpOutcome{receipts:receipt.into_iter().collect(),result:KernelOpResult::FileOperation {data}})
+            },
+            KernelOp::FilesList {path,fresh} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:self.directory_listing(&path,fresh.unwrap_or(false))?} }),
             KernelOp::FileRead {location} => {
                 let reading = match files::read(&self.client,&location) {
                     Ok(reading) => reading,
@@ -757,7 +795,7 @@ impl Kernel {
                 }})
             }
             KernelOp::Encounter {project,request} => {
-                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                let root=self.world_map(false).map_err(|e|e.to_string())?;
                 let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
                 let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
                 let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
@@ -772,12 +810,23 @@ impl Kernel {
             }
             KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),
             KernelOp::AgencyRead { project } => {
-                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                let root=self.world_map(false).map_err(|e|e.to_string())?;
                 let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
                 let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+                let inspection=self.inspect_project(&project,false).ok_or("Central has not bound a canonical ProjectRef")?;
                 let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
-                let spaces=self.agency.read_project(&cwd,&project_ref)?;
+                // The spaces reading spawns the AIKit owner (~100 ms); the
+                // disclosure re-reads it on every branch expansion, so the
+                // short horizon serves the repeat. A fresh stamp is minted
+                // for every answer, cached or not.
+                let cache_key=format!("agency:{}:{project_ref}",cwd.display());
+                let spaces=if let Some(value)=self.reads.get(&cache_key,read_cache::HORIZON_TTL) {
+                    value
+                } else {
+                    let spaces=self.agency.read_project(&cwd,&project_ref)?;
+                    self.reads.put(cache_key,spaces.clone());
+                    spaces
+                };
                 let observed_at_unix_ms=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d|d.as_millis() as u64).unwrap_or(0);
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgencyReading {project_ref,spaces,observed_at_unix_ms}})
             }
@@ -787,7 +836,7 @@ impl Kernel {
                 // is the root register's own field — a Day document lives
                 // there, and its receiving field is the root's.
                 if let Some(project)=&project {
-                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    let root=self.world_map(false).map_err(|e|e.to_string())?;
                     root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
                 }
                 let data=self.client.receiving(project.as_deref(),&request).map_err(|e|e.to_string())?;
@@ -798,7 +847,7 @@ impl Kernel {
                 // inside Central's disclosed ground; `None` is the root
                 // register, carried as an explicit null to the owner.
                 if let Some(project)=&project {
-                    let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                    let root=self.world_map(false).map_err(|e|e.to_string())?;
                     root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
                 }
                 let data=self.client.now(project.as_deref(),&request).map_err(|e|e.to_string())?;
@@ -808,7 +857,7 @@ impl Kernel {
                 // The standard project-disclosure gate and cwd resolution —
                 // the task record belongs to a session attached to THIS
                 // project's SessionSpaces, exactly like the encounter reads.
-                let root=world::read_world(&self.client).map_err(|e|e.to_string())?;
+                let root=self.world_map(false).map_err(|e|e.to_string())?;
                 let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
                 let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
                 let data=self.agency.task_read(&cwd,&agent_session).map_err(|e|e.to_string())?;
@@ -862,7 +911,7 @@ impl Kernel {
             KernelOp::Knowledge { project, request } => {
                 // Central discloses the scope; renderer-supplied filesystem paths
                 // and stale persisted authority never become invocation context.
-                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let root = self.world_map(false).map_err(|e| e.to_string())?;
                 let project = if let knowledge::Request::Read { address } = &request {
                     root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|row|row["projectcentral"]["agent_wiki"]["wiki"]["space_ref"].as_str()==Some(address.reference())))
                         .and_then(|row|row["name"].as_str()).map(str::to_owned).or(project)
@@ -894,7 +943,7 @@ impl Kernel {
             KernelOp::Graph { project, query } => {
                 // Central discloses the scope; the wiki read register and the
                 // AIKit project context both come from the owner root map.
-                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let root = self.world_map(false).map_err(|e| e.to_string())?;
                 let base = root["root"].as_str().ok_or("Central root location unavailable")?;
                 let (wiki_action, wiki_input, cwd) = if let Some(project) = project.as_ref() {
                     let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
@@ -917,7 +966,7 @@ impl Kernel {
                 // Central discloses the context anchor, exactly as the
                 // Graph/Knowledge arms; the lifecycle store itself is the
                 // AIKit owner's (AIKIT_HOME), never renderer-supplied.
-                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let root = self.world_map(false).map_err(|e| e.to_string())?;
                 let cwd = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
                 let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::EncounterJoined { reading } })
@@ -925,7 +974,7 @@ impl Kernel {
             KernelOp::InvokeAction { project, invocation } => {
                 // Central discloses the scope, exactly as the Knowledge/Graph
                 // arms: renderer-supplied paths never become invocation context.
-                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let root = self.world_map(false).map_err(|e| e.to_string())?;
                 let base = root["root"].as_str().ok_or("Central root location unavailable")?;
                 let cwd = if let Some(project) = project.as_ref() {
                     let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
@@ -938,7 +987,7 @@ impl Kernel {
                 // The changed-since compose resolves its owner cwd exactly as
                 // the InvokeAction arm: Central discloses the scope,
                 // renderer-supplied paths never become context.
-                let root = world::read_world(&self.client).map_err(|e| e.to_string())?;
+                let root = self.world_map(false).map_err(|e| e.to_string())?;
                 let base = root["root"].as_str().ok_or("Central root location unavailable")?;
                 let cwd = if let Some(project) = project.as_ref() {
                     let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
@@ -949,12 +998,15 @@ impl Kernel {
             }
             KernelOp::InstanceCommission { location, expected_revision, content, agent_session_ref } => {
                 let outcome = commission::commission(&self.client, &location, &expected_revision, &content, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
+                // The commission landed as a file write: the parent listing
+                // it invalidates by name.
+                self.reads.invalidate(&format!("dir:{}",files::parent_path(&location.path)));
                 Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InstanceCommissioned { outcome } })
             }
-            KernelOp::WorldRead => self.navigate(None, false),
-            KernelOp::ProjectRead { project } => self.navigate(Some(&project), false),
-            KernelOp::WorldBrowse => self.navigate(None, true),
-            KernelOp::ProjectBrowse { project } => self.navigate(Some(&project), true),
+            KernelOp::WorldRead => self.navigate(None, false, false),
+            KernelOp::ProjectRead { project } => self.navigate(Some(&project), false, false),
+            KernelOp::WorldBrowse { fresh } => self.navigate(None, true, fresh.unwrap_or(false)),
+            KernelOp::ProjectBrowse { project, fresh } => self.navigate(Some(&project), true, fresh.unwrap_or(false)),
             KernelOp::State => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::State {
@@ -964,7 +1016,7 @@ impl Kernel {
             KernelOp::SourcesList { project } => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::SourcesListed {
-                    listing: participating_sources(&self.client, project.as_deref()),
+                    listing: self.participating_sources_cached(project.as_deref()),
                 },
             }),
             KernelOp::SourceRestore { source_ref, content, base_revision, saved_content } => {
@@ -1020,7 +1072,7 @@ impl Kernel {
     // Source buffers — the two state layers
     // -----------------------------------------------------------------------
 
-    fn navigate(&mut self, project: Option<&str>, browse_only: bool) -> Result<KernelOpOutcome, String> {
+    fn navigate(&mut self, project: Option<&str>, browse_only: bool, fresh: bool) -> Result<KernelOpOutcome, String> {
         let before = self.navigator.clone();
         let old_focus = self.focus.clone();
         let result = if let Some(query) = project {
@@ -1028,46 +1080,9 @@ impl Kernel {
             let known = self.navigator.root.as_ref().and_then(|r| r["work"]["projects"].as_array())
                 .is_some_and(|rows| rows.iter().any(|p| p["name"].as_str() == Some(query)));
             if !known { return Err("Project is outside the disclosed World mapping; refresh World first".into()); }
-            world::read_project(&self.client, query).map(|reading| {
-                let bound = reading["project"]["projectcentral"]["state"] != "absent";
-                let sources = bound.then(|| participating_sources(&self.client, Some(query)));
-                let project_ref = if bound {
-                    self.client.run("projectcentral.inspect", serde_json::json!({"project": query})).ok()
-                        .and_then(|v| v["manifest"]["project_id"].as_str().filter(|id| !id.trim().is_empty()).map(str::to_owned))
-                } else { None };
-                self.focus.project = None;
-                self.focus.world = None;
-                self.focus.clear_subject();
-                let semantic = |id: String, kind: &str| SemanticRef {
-                    ref_id: id, kind: kind.into(), native_owner: "central".into(),
-                    provenance: refs::RefProvenance { source: "projectcentral.inspect".into(), revision: None },
-                };
-                if let Some(id) = project_ref.as_ref() {
-                    let reference = semantic(id.clone(), "project");
-                    self.focus.bind_project(focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"));
-                    self.focus.focus_subject(reference).expect("owner project ref");
-                }
-                if let Some(id) = sources.as_ref().and_then(|s| s.world_ref.as_ref()).filter(|id| !id.trim().is_empty()) {
-                    let mut reference = semantic(id.clone(), "world");
-                    reference.provenance.source = "projectcentral.change.horizon".into();
-                    self.focus.bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
-                }
-                self.navigator.project = Some(reading);
-                self.navigator.sources = sources;
-                self.navigator.project_ref = project_ref;
-            })
+            self.navigate_project(query, fresh)
         } else {
-            world::read_world(&self.client).map(|reading| {
-                if self.navigator.project.is_some() {
-                    self.focus.project = None;
-                    self.focus.world = None;
-                    self.focus.clear_subject();
-                }
-                self.navigator.root = Some(reading);
-                self.navigator.project = None;
-                self.navigator.sources = None;
-                self.navigator.project_ref = None;
-            })
+            self.navigate_root(fresh)
         };
         self.navigator.error = result.err();
         // Browsing changes the navigation reading, not the semantic subject
@@ -1081,6 +1096,110 @@ impl Kernel {
             receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() }));
         }
         Ok(KernelOpOutcome { receipts, result: KernelOpResult::WorldRead { snapshot: self.snapshot() } })
+    }
+
+    /// The root mapping arm of `navigate` — owner calls through the cache,
+    /// state moves exactly as before the cache existed.
+    fn navigate_root(&mut self, fresh: bool) -> Result<(), String> {
+        let reading = self.world_map(fresh)?;
+        if self.navigator.project.is_some() {
+            self.focus.project = None;
+            self.focus.world = None;
+            self.focus.clear_subject();
+        }
+        self.navigator.root = Some(reading);
+        self.navigator.project = None;
+        self.navigator.sources = None;
+        self.navigator.project_ref = None;
+        Ok(())
+    }
+
+    /// The project-mapping arm of `navigate`.
+    fn navigate_project(&mut self, query: &str, fresh: bool) -> Result<(), String> {
+        let reading = self.project_map(query, fresh)?;
+        let bound = reading["project"]["projectcentral"]["state"] != "absent";
+        let sources = bound.then(|| self.participating_sources_cached(Some(query)));
+        let project_ref = if bound {
+            self.inspect_project(query, fresh)
+                .and_then(|v| v["manifest"]["project_id"].as_str().filter(|id| !id.trim().is_empty()).map(str::to_owned))
+        } else { None };
+        self.focus.project = None;
+        self.focus.world = None;
+        self.focus.clear_subject();
+        let semantic = |id: String, kind: &str| SemanticRef {
+            ref_id: id, kind: kind.into(), native_owner: "central".into(),
+            provenance: refs::RefProvenance { source: "projectcentral.inspect".into(), revision: None },
+        };
+        if let Some(id) = project_ref.as_ref() {
+            let reference = semantic(id.clone(), "project");
+            self.focus.bind_project(focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"));
+            self.focus.focus_subject(reference).expect("owner project ref");
+        }
+        if let Some(id) = sources.as_ref().and_then(|s| s.world_ref.as_ref()).filter(|id| !id.trim().is_empty()) {
+            let mut reference = semantic(id.clone(), "world");
+            reference.provenance.source = "projectcentral.change.horizon".into();
+            self.focus.bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
+        }
+        self.navigator.project = Some(reading);
+        self.navigator.sources = sources;
+        self.navigator.project_ref = project_ref;
+        Ok(())
+    }
+
+    // -----------------------------------------------------------------------
+    // Cached owner readings — the same owner operations as before, served
+    // from the short-horizon cache when a fresh reading was not demanded.
+    // -----------------------------------------------------------------------
+
+    fn world_map(&mut self, fresh: bool) -> Result<serde_json::Value, String> {
+        if fresh { self.reads.invalidate("world"); }
+        else if let Some(value) = self.reads.get("world", read_cache::WORLD_TTL) { return Ok(value); }
+        let reading = world::read_world(&self.client)?;
+        self.reads.put("world".into(), reading.clone());
+        Ok(reading)
+    }
+
+    fn project_map(&mut self, project: &str, fresh: bool) -> Result<serde_json::Value, String> {
+        let key = format!("project:{project}");
+        if fresh { self.reads.invalidate(&key); }
+        else if let Some(value) = self.reads.get(&key, read_cache::PROJECT_TTL) { return Ok(value); }
+        let reading = world::read_project(&self.client, project)?;
+        self.reads.put(key, reading.clone());
+        Ok(reading)
+    }
+
+    fn inspect_project(&mut self, project: &str, fresh: bool) -> Option<serde_json::Value> {
+        let key = format!("inspect:{project}");
+        if fresh { self.reads.invalidate(&key); }
+        else if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) { return Some(value); }
+        let value = self.client.run("projectcentral.inspect", serde_json::json!({"project": project})).ok()?;
+        self.reads.put(key, value.clone());
+        Some(value)
+    }
+
+    /// Horizon-served source listings only: a degraded reading is the error
+    /// path, and the error path is never cached.
+    fn participating_sources_cached(&mut self, project: Option<&str>) -> SourceListing {
+        let key = format!("horizon:{}", project.unwrap_or(""));
+        if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) {
+            if let Ok(listing) = serde_json::from_value(value) { return listing; }
+        }
+        let listing = participating_sources(&self.client, project);
+        if matches!(listing.availability, world::ListingAvailability::Horizon) {
+            if let Ok(value) = serde_json::to_value(&listing) { self.reads.put(key, value); }
+        }
+        listing
+    }
+
+    fn directory_listing(&mut self, path: &str, fresh: bool) -> Result<files::Directory, String> {
+        let key = format!("dir:{path}");
+        if fresh { self.reads.invalidate(&key); }
+        else if let Some(value) = self.reads.get(&key, read_cache::DIR_TTL) {
+            if let Ok(directory) = serde_json::from_value(value) { return Ok(directory); }
+        }
+        let directory = files::list(&self.client, path)?;
+        if let Ok(value) = serde_json::to_value(&directory) { self.reads.put(key, value); }
+        Ok(directory)
     }
 
     fn source_open(
@@ -1687,5 +1806,148 @@ mod tests {
                 content: "x".into(),
             })
             .is_err());
+    }
+
+    /// A stand-in owner executable that answers the shaped readings the
+    /// cache serves and appends every action it was asked to a log file, so
+    /// a test can count real process spawns.
+    const FAKE_OWNER: &str = r#"#!/usr/bin/env python3
+import json, sys, os
+# argv: <script> --json action run <action> <input-json>
+action = sys.argv[4]
+payload = json.loads(sys.argv[5]) if len(sys.argv) > 5 else {}
+log = os.environ.get("FAKE_OWNER_LOG")
+if log:
+    with open(log, "a") as handle:
+        handle.write(action + "\n")
+def ok(data):
+    print(json.dumps({"ok": True, "data": data}))
+if action == "central.files.list":
+    path = payload["path"]
+    ok({"schema": "central.directory-reading/v1",
+        "automatic_agent_or_model_invocation": False,
+        "location": {"schema": "central.path-ref/v1", "ref": "ref:" + path, "root": "R", "path": path},
+        "entries": [{"name": "a.md", "kind": "file", "byte_len": 1, "retrieval_allowed": True,
+                     "location": {"schema": "central.path-ref/v1", "ref": "ref:" + path + "/a.md", "root": "R", "path": path + "/a.md"}}]})
+elif action == "central.files.write":
+    ok({"schema": "central.file-mutation/v1", "outcome": "written", "location": payload["location"]})
+elif action == "central.world":
+    ok({"schema": "central.world-map/v1", "root": "/tmp", "work": {"projects": []}})
+else:
+    ok({})
+"#;
+
+    #[cfg(unix)]
+    struct FakeOwner {
+        executable: std::path::PathBuf,
+        log: std::path::PathBuf,
+    }
+
+    #[cfg(unix)]
+    impl FakeOwner {
+        /// One script + one spawn log per test, so parallel tests never
+        /// share a counter. The log path is baked into a tiny wrapper so
+        /// the count never rides a process environment tests race on.
+        fn spawn_counter(test: &str) -> Self {
+            use std::os::unix::fs::PermissionsExt;
+            let stem = format!("oi-cradle-{}-{test}", std::process::id());
+            let script = std::env::temp_dir().join(format!("{stem}.py"));
+            let wrapper = std::env::temp_dir().join(format!("{stem}.sh"));
+            let log = std::env::temp_dir().join(format!("{stem}.log"));
+            std::fs::write(&script, FAKE_OWNER).unwrap();
+            std::fs::write(&wrapper, format!("#!/bin/sh\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n", log.display(), script.display())).unwrap();
+            std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
+            let _ = std::fs::remove_file(&log);
+            Self { executable: wrapper, log }
+        }
+        fn kernel(&self) -> Kernel {
+            Kernel::new(CentralClient::with(self.executable.clone(), None, "test".into()))
+        }
+        /// How many times the named action reached the owner executable.
+        fn spawns(&self, action: &str) -> usize {
+            std::fs::read_to_string(&self.log)
+                .map(|text| text.lines().filter(|line| *line == action).count())
+                .unwrap_or(0)
+        }
+    }
+
+    #[cfg(unix)]
+    impl Drop for FakeOwner {
+        fn drop(&mut self) {
+            let stem = self.executable.with_extension("");
+            for suffix in [".sh", ".py"] {
+                let _ = std::fs::remove_file(std::path::PathBuf::from(format!("{}{suffix}", stem.display())));
+            }
+            let _ = std::fs::remove_file(&self.log);
+        }
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_repeated_directory_read_serves_from_the_cache_and_a_fresh_read_bypasses_it() {
+        let owner = FakeOwner::spawn_counter("directory-cache");
+        let mut kernel = owner.kernel();
+        for _ in 0..3 {
+            kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
+        }
+        assert_eq!(owner.spawns("central.files.list"), 1, "repeats inside the TTL are one owner read");
+        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: Some(true) }).unwrap();
+        assert_eq!(owner.spawns("central.files.list"), 2, "the explicit fresh read re-asks the owner");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_file_write_invalidates_the_parent_listing_by_name() {
+        let owner = FakeOwner::spawn_counter("write-invalidation");
+        let mut kernel = owner.kernel();
+        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
+        kernel.apply(KernelOp::FileOperation {
+            location: files::Location {
+                schema: "central.path-ref/v1".into(),
+                ref_id: "ref:Work/proj/a.md".into(),
+                root: "R".into(),
+                path: "Work/proj/a.md".into(),
+            },
+            request: files::Request::Write { expected_revision: "r1".into(), content: "new".into() },
+        }).unwrap();
+        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
+        assert_eq!(owner.spawns("central.files.list"), 2, "the written directory is re-read after its write");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn a_changed_file_write_discloses_one_file_changed_receipt() {
+        // One state change, one event: an owner-confirmed write discloses
+        // FileChanged naming the changed path (the receipt a retained listing
+        // invalidates on); a non-mutating request discloses nothing.
+        let owner = FakeOwner::spawn_counter("file-changed-receipt");
+        let mut kernel = owner.kernel();
+        let outcome = kernel.apply(KernelOp::FileOperation {
+            location: files::Location {
+                schema: "central.path-ref/v1".into(),
+                ref_id: "ref:Work/proj/a.md".into(),
+                root: "R".into(),
+                path: "Work/proj/a.md".into(),
+            },
+            request: files::Request::Write { expected_revision: "r1".into(), content: "new".into() },
+        }).unwrap();
+        let receipt = outcome.receipts.iter().find(|logged| logged.envelope.event.tag() == "file_changed")
+            .expect("a written file discloses one file_changed receipt");
+        assert_eq!(receipt.envelope.event.subject(), None, "the changed path rides the payload, not a semantic subject");
+        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
+        let listed = kernel.event_log().since(0);
+        assert_eq!(listed.iter().filter(|logged| logged.envelope.event.tag() == "file_changed").count(), 1, "reads change no kernel state and emit nothing");
+    }
+
+    #[cfg(unix)]
+    #[test]
+    fn the_world_mapping_is_cached_until_a_fresh_browse_is_demanded() {
+        let owner = FakeOwner::spawn_counter("world-cache");
+        let mut kernel = owner.kernel();
+        kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
+        kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
+        assert_eq!(owner.spawns("central.world"), 1, "repeat browses inside the TTL are one owner read");
+        kernel.apply(KernelOp::WorldBrowse { fresh: Some(true) }).unwrap();
+        assert_eq!(owner.spawns("central.world"), 2, "the explicit refresh re-asks the owner");
     }
 }

@@ -8,6 +8,7 @@ import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { WorldModeStrip } from "../surfaces/navigator/WorldNavigator";
 import { MODE_CURATION, TREE_MODES, type TabPresentation, type WorkspaceMode } from "./mode";
+import { ModeCentreRetention } from "../surface/retention";
 
 type Side = "left" | "right";
 const FOOTER_KEY="oi-shell-footer.v2";
@@ -299,7 +300,13 @@ export function DesktopShell(p: Props) {
       </aside>
       <main className="desktop-centre" data-region="centre" aria-label="Workspace canvas">
 
-        {p.children}
+      {/* The mode-centre retention tier (surface/retention.tsx): the shell
+        * declares every retained centre of the ACTIVE workspace in a hidden
+        * layer beside the presenting tree, so a mode switch parks those
+        * bodies suspended instead of unmounting them. The layer renders
+        * nothing visible and owns no layout of its own. */}
+      <ModeCentreRetention workspace={p.workspace} mode={p.mode}/>
+      {p.children}
       </main>
       <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
         {<>

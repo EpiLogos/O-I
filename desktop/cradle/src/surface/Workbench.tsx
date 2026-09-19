@@ -34,12 +34,12 @@ const TerminalSurface=lazy(()=>import("../terminal/TerminalSurface").then((modul
 const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=>({default:module.BrowserSurface})));
 const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((module)=>({default:module.KnowledgeSurface})));
 const FactoryCentre=lazy(()=>import("../contributions/factory/FactoryCentre").then((module)=>({default:module.FactoryCentre})));
-const SystemPanel=lazy(()=>import("../workspace/SystemPanel").then((module)=>({default:module.SystemPanel})));
 // The mode centre surfaces (workspace/mode.ts) are ordinary bindings in this
-// pane system; each loads with its mode, never at startup.
-const PointCloudHost=lazy(()=>import("../expressions/PointCloudHost").then((module)=>({default:module.PointCloudHost})));
-const TechneSurface=lazy(()=>import("../techne/TechneSurface").then((module)=>({default:module.TechneSurface})));
-const EpiLogosSurface=lazy(()=>import("../epilogos/EpiLogosSurface").then((module)=>({default:module.EpiLogosSurface})));
+// pane system; each loads with its mode, never at startup. Their bodies are
+// declared ONCE by the shell's retention layer (surface/retention.tsx) and
+// presented here through its outlet — a mode switch parks them suspended
+// instead of unmounting them.
+import {CentreOutlet, isRetainedCentreKind} from "./retention";
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN } from "../workspace/mode";
@@ -209,7 +209,7 @@ function PaneNode(props: PaneProps) {
   return <GroupPane {...props} group={pane} />;
 }
 
-function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> }) {
+export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> }) {
   const { group, state, execute, openBindingMenu, openFrameMenu } = props;
   const focused = state.focusedGroupId === group.id;
   // The pane's footer follows focus by default (unfocused up; on focus it
@@ -218,7 +218,6 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
   const [footerUp, setFooterUp] = useState(false);
   const tabs = renderOrder(group);
   const active = group.active ?? group.tabs[0];
-  const activeBinding = active ? state.surfaces[active] : undefined;
   // The pin model (workspace/mode.ts): pinned horizontal, pinned vertical, or
   // unpinned. An unpinned pane folds its tabs to a slim reveal edge and keeps
   // the geometry it was last pinned in (tabPinOrientation) — that geometry is
@@ -379,6 +378,17 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
           }}
         />
       )}
+      {/* The three-tier retention law, pane tier (owner-approved 2026-09-19):
+        * every OPEN tab's body stays mounted — the active one presented, the
+        * others concealed-retained (hidden + display:none, the same law the
+        * agent panel's kept planes use), so returning to a tab restores its
+        * scroll, selection, draft and engine without a re-read. Concealment
+        * is honest suspension: display:none means the surface's own viewport
+        * laws (MaterialSurface's useSuspend, the engines' visibility gates)
+        * observe an off-screen surface and pause. Cheap list kinds release
+        * instead (CONCEAL_RELEASES) — they rebuild from the kernel's own
+        * reading at no cost. Explicit close releases every kind: the tab
+        * leaves the group and the body unmounts with it. */}
       <div
         className="surface-body"
         data-binding-id={active}
@@ -396,7 +406,15 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
         }}
 
       >
-        {activeBinding ? <SurfaceBody key={activeBinding.id} binding={activeBinding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} /> : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
+        {tabs.length ? tabs.map(id => {
+          const binding = state.surfaces[id];
+          if (!binding) return null;
+          const concealed = id !== active;
+          if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
+          return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
+            <SurfaceBody binding={binding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
+          </div>;
+        }) : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
       <button type="button" className="pane-footer-dot" data-pane-footer-dot
         aria-pressed={footerUp}
@@ -409,6 +427,13 @@ function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "group" }> 
   );
 }
 
+/** The pane tier's per-kind release set (the three-tier retention law):
+ * surface kinds whose body is a cheap list over kernel-owned readings — a
+ * rebuilt body costs one already-cached read and holds no engine, editor
+ * session or draft — release on conceal instead of retaining. Every other
+ * kind retains concealed; every kind releases on explicit close. */
+const CONCEAL_RELEASES = new Set(["sources", "blank"]);
+
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
  * 'source', 'sources'), the clearly-named test card otherwise. */
 export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
@@ -417,7 +442,7 @@ export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
 function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
-  factoryCentre, factoryTasks, subject,
+  factoryCentre, factoryTasks,
 }: {
   binding: import("./types").SurfaceBinding;
   onView:WorkbenchProps["onView"];
@@ -428,10 +453,16 @@ function SurfaceBodyImpl({
   factoryCentre?: WorkbenchProps["factoryCentre"];
   factoryTasks?: WorkbenchProps["factoryTasks"];
   /** The workspace world-context subject — the person's selected subject,
-   * shared with the panel planes; the Technè arrangement's instrument
-   * disclosure is requested for it. */
+   * shared with the panel planes. The retained centre bodies (surface/
+   * retention.tsx) read it from the workspace context themselves; the
+   * prop stays on the seam for the frame's composition. */
   subject?: WorkbenchProps["subject"];
 }) {
+  // Retained centre kinds (expressions/techne/epi-logos/system —
+  // surface/retention.tsx) present through the shell's ONE declared body:
+  // the outlet adopts it here, and a mode switch parks it suspended rather
+  // than unmounting it.
+  if (isRetainedCentreKind(binding.kind)) return <CentreOutlet binding={binding}/>;
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;
@@ -440,7 +471,6 @@ function SurfaceBodyImpl({
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
-  if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   // Factory's centre home (handoff §11, 2026-09-18): Desk whole-Run-first,
   // Tasks the full-size chat — one shared presentation, wherever the binding
   // renders. The imported development console renders only behind the dev
@@ -454,12 +484,8 @@ function SurfaceBodyImpl({
   // the Point-Cloud-Demo workspace hosted as-is, full-screen, its own UI and
   // Library — served through the owner's oi-material:// file seam under
   // Tauri (the walk bridge mirrors it under probes). The in-shell
-  // Expressions surface is retired from the centre.
-  if (binding.kind === "expressions") return <PointCloudHost/>;
-  if (binding.kind === "techne") return <TechneSurface binding={binding} subject={subject} />;
-  if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding} />;
-  // Agency manages purpose and usable repertoire; System settings manages the
-  // infrastructure — the surface links across, it never duplicates the forms.
+  // Expressions surface is retired from the centre; the centre kinds
+  // themselves present through the retention outlet dispatched above.
   if (binding.kind === "agency") return <AgencySurface project={binding.project} onMessage={message=>window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message}}))} onOpenSettings={()=>window.dispatchEvent(new CustomEvent("oi:open-settings"))} />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
   if (binding.kind === "source") {
