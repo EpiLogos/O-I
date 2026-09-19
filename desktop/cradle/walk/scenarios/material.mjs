@@ -106,6 +106,15 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
     await page.locator('.pane.focused .surface-retained:not([hidden]) .material-surface, .pane.focused .surface-retained:not([hidden]) .native-file-surface').first().waitFor();
   };
 
+  // The pane tier keeps every OPEN tab's body mounted-concealed (Workbench.tsx,
+  // three-tier retention law: `hidden` on `.surface-retained`), so a bare
+  // `iframe.material-frame` matches concealed siblings' frames too once a
+  // second material file is open — Playwright frame locators are strict, and
+  // unscoped counts would count concealed siblings. Scope material assertions
+  // to the focused pane's VISIBLE surface.
+  const visibleSurface = '.pane.focused .surface-retained:not([hidden])';
+  const activeFrame = () => page.frameLocator(`${visibleSurface} iframe.material-frame`);
+
   // --- HTML: relative image + stylesheet + link, in a contained surface ---
   await openFile('study.html');
   const htmlFrame = page.frameLocator('iframe.material-frame');
@@ -135,7 +144,9 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   const legitimate = await fetch(`${bridgeUrl}/material/${encodedLocation}/assets/logo.png`);
   check(legitimate.status === 200 && legitimate.headers.get('content-type') === 'image/png', 'A real sibling asset resolves with the owner mime hint as Content-Type');
 
-  // --- suspend on maximize: a second pane's iframe blanks while hidden, mounted ---
+  // --- conceal on maximize: hidden panes are suspended by disclosure, their
+  // frames keep their documents (workspace-continuity §6: suspension is
+  // never destruction) ---
   // study.html is already open (tab 1); open notes.txt as a second tab in the
   // same pane, then split — the active tab (notes.txt) moves to a new pane,
   // leaving study.html alone (and now hidden) in the first.
@@ -143,6 +154,30 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   await page.keyboard.press('Meta+d');
   await page.waitForFunction(() => document.querySelectorAll('.pane.group').length === 2);
   const htmlFrameLocator = page.locator('iframe.material-frame');
+  const srcdocBeforeConceal = await htmlFrameLocator.getAttribute('srcdoc');
+  check(!!srcdocBeforeConceal && srcdocBeforeConceal.includes('Material study'), 'study.html renders from its real revision-bound srcdoc before the split');
+  // Remember the exact frame node: the continuity law's identity claim is the
+  // SAME <iframe> DOM node across conceal→reveal (MaterialSurface.tsx), so a
+  // remount under concealment must fail this walk.
+  await page.evaluate(() => { window.__studyFrameNode = document.querySelector('iframe.material-frame'); });
+  // The inner interaction state is the continuity proof, so set a known value
+  // NOW — after the split, immediately before the conceal — and require the
+  // same value after the restore. (The click's before/after also records what
+  // the split itself did to the inner document: a split moves the tab into a
+  // new pane's subtree, which remounts its body and reloads the frame — data
+  // here, not an assertion, since the continuity law governs conceal→reveal,
+  // not structural moves.)
+  const studyInner = page.frameLocator('iframe.material-frame');
+  const innerBeforeClick = await studyInner.locator('#count').innerText();
+  await studyInner.locator('#increment').click();
+  const innerCountBeforeConceal = await studyInner.locator('#count').innerText();
+  check(innerCountBeforeConceal === String(Number(innerBeforeClick) + 1), 'The study frame still answers interaction after the split', { innerBeforeClick, innerCountBeforeConceal });
+  // That click left keyboard focus inside the sandboxed child document; the
+  // shell's keybindings listen on the parent document, so Meta+Alt+Enter
+  // below would never reach it. Return focus by clicking the already-active
+  // tab of the pane about to be maximized — a no-op for layout, the active
+  // tab and the focused group.
+  await page.locator('.tab[data-title="notes.txt"][data-active="true"]').click();
   await page.keyboard.press('Meta+Alt+Enter');
   // `:visible` is a Playwright-locator-only pseudo-class — inside a real
   // browser evaluate/waitForFunction callback only native selectors run, so
@@ -151,46 +186,50 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   await page.waitForFunction((count) => [...document.querySelectorAll('.pane.group')].filter((el) => el.offsetParent !== null).length === count, 1);
   // A retrying wait, not a one-shot `.count()` snapshot: the pane-visibility
   // wait above only guarantees CSS has settled, not that every consumer
-  // (IntersectionObserver-driven suspend, in particular) has finished its
-  // own async reaction to it.
+  // (the IntersectionObserver-driven suspension disclosure, in particular)
+  // has finished its own async reaction to it.
   await page.waitForFunction(() => document.querySelectorAll('iframe.material-frame').length === 1);
   check(true, 'Maximizing another pane keeps the hidden HTML surface mounted');
-  // The walk always runs the "bridge" transport branch (MaterialSurface.tsx):
-  // a hidden HTML iframe is suspended by clearing its `srcDoc` prop (React
-  // omits the `srcdoc` attribute entirely), never by setting `src`, which
-  // this transport's iframe never has at all — `src="about:blank"` is the
-  // Tauri-only suspension path.
-  await page.waitForFunction(() => document.querySelector('iframe.material-frame')?.getAttribute('srcdoc') === null);
-  const blankedSrcdoc = await htmlFrameLocator.getAttribute('srcdoc');
-  check(blankedSrcdoc === null, 'A hidden pane (maximize) suspends its iframe (srcdoc cleared)', { blankedSrcdoc });
+  // Suspension is disclosure, never destruction (lifecycle.ts
+  // `useSuspensionDisclosure`; MaterialSurface publishes it as
+  // `data-suspended`): the display:none pane drops out of the
+  // IntersectionObserver while the frame keeps its exact node and its
+  // revision-bound srcdoc — hiding never clears srcdoc on either transport.
+  await page.waitForFunction(() => !!document.querySelector('.material-rendered-content[data-suspended]'));
+  const concealedSrcdoc = await htmlFrameLocator.getAttribute('srcdoc');
+  check(concealedSrcdoc === srcdocBeforeConceal, 'Maximize suspends the hidden pane by disclosure (data-suspended) while its iframe keeps the same srcdoc', { concealedLength: concealedSrcdoc?.length });
   await page.keyboard.press('Meta+Alt+Enter');
   await page.waitForFunction((count) => [...document.querySelectorAll('.pane.group')].filter((el) => el.offsetParent !== null).length === count, 2);
-  await page.waitForFunction(() => !!document.querySelector('iframe.material-frame')?.getAttribute('srcdoc'));
-  const resumedSrcdoc = await htmlFrameLocator.getAttribute('srcdoc');
-  check(!!resumedSrcdoc, 'Restoring the pane resumes the real material content (srcdoc restored)', { resumedSrcdocLength: resumedSrcdoc?.length });
+  await page.waitForFunction(() => !document.querySelector('.material-rendered-content[data-suspended]'));
+  const restoredSrcdoc = await htmlFrameLocator.getAttribute('srcdoc');
+  const sameFrameNode = await page.evaluate(() => document.querySelector('iframe.material-frame') === window.__studyFrameNode);
+  check(!!restoredSrcdoc && restoredSrcdoc === srcdocBeforeConceal && sameFrameNode, 'Restoring the pane clears the suspension; the same frame node carries the same document', { sameFrameNode, sameSrcdoc: restoredSrcdoc === srcdocBeforeConceal });
+  const innerCount = await page.frameLocator('iframe.material-frame').locator('#count').innerText();
+  check(innerCount === innerCountBeforeConceal, 'The concealed frame was never reloaded — its inner interaction state survived concealment', { innerCount, innerCountBeforeConceal });
   // Close the split-off pane's tab (notes.txt) so a single pane remains.
   await page.keyboard.press('Meta+w');
   await page.waitForFunction(() => document.querySelectorAll('.pane.group').length === 1);
 
-  // --- suspend on document hidden (window hidden) ---
+  // --- suspend on document hidden (window hidden): the same disclosure ---
   await openFile('study.html');
   await page.locator('iframe.material-frame').waitFor();
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'hidden' });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await page.waitForFunction(() => document.querySelector('iframe.material-frame')?.getAttribute('srcdoc') === null);
-  check(true, 'document.visibilityState hidden suspends the rendered iframe');
+  await page.waitForFunction(() => !!document.querySelector('.material-rendered-content[data-suspended]'));
+  const hiddenWindowSrcdoc = await page.locator('iframe.material-frame').getAttribute('srcdoc');
+  check(!!hiddenWindowSrcdoc && hiddenWindowSrcdoc === srcdocBeforeConceal, 'document.visibilityState hidden suspends by disclosure and the frame keeps its document');
   await page.evaluate(() => {
     Object.defineProperty(document, 'visibilityState', { configurable: true, get: () => 'visible' });
     document.dispatchEvent(new Event('visibilitychange'));
   });
-  await page.waitForFunction(() => !!document.querySelector('iframe.material-frame')?.getAttribute('srcdoc'));
-  check(true, 'document visible again resumes the rendered iframe');
+  await page.waitForFunction(() => !document.querySelector('.material-rendered-content[data-suspended]'));
+  check(true, 'document visible again clears the suspension disclosure (nothing was reloaded)');
 
   // --- Markdown: rendered view distinct from Source, Source is the real editor ---
   await openFile('notes.md');
-  const mdFrame = page.frameLocator('iframe.material-frame');
+  const mdFrame = activeFrame();
   await mdFrame.locator('h1').waitFor();
   check((await mdFrame.locator('h1').innerText()) === 'Notes', 'Markdown heading renders');
   check((await mdFrame.locator('li').allInnerTexts()).join(',') === 'one,two', 'Markdown list renders as real <li> elements');
@@ -224,9 +263,9 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
 
   // --- PDF: renders, or an honest unavailable state — never silent ---
   await openFile('document.pdf');
-  await page.waitForSelector('iframe.material-frame, .material-unavailable', { timeout: 10000 });
-  const pdfRendered = await page.locator('iframe.material-frame').count() === 1;
-  const pdfUnavailable = await page.locator('.material-unavailable').count() === 1;
+  await page.waitForSelector(`${visibleSurface} iframe.material-frame, ${visibleSurface} .material-unavailable`, { timeout: 10000 });
+  const pdfRendered = await page.locator(`${visibleSurface} iframe.material-frame`).count() === 1;
+  const pdfUnavailable = await page.locator(`${visibleSurface} .material-unavailable`).count() === 1;
   check(pdfRendered || pdfUnavailable, 'PDF either renders in the platform viewer or discloses an honest unavailable state', { pdfRendered, pdfUnavailable });
   await shot('pdf-state');
 
@@ -246,13 +285,29 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
   // --- close and reopen restores the rendered view (not stuck on Source) ---
   await openFile('notes.md');
   await page.getByRole('tab', { name: 'Source' }).click();
-  await page.locator('.cm-content').waitFor();
+  await page.locator(`${visibleSurface} .cm-content`).waitFor();
   await page.keyboard.press('Meta+w');
+  // Explicit close releases every kind — the tab's body unmounts with it
+  // (Workbench.tsx), so the closed surface's own frame leaves the DOM
+  // entirely. (Frames are identified by their binding title: study.html's
+  // and document.pdf's frames legitimately remain mounted-concealed.)
+  await page.waitForFunction(() => !document.querySelector('iframe.material-frame[title="notes.md"]'));
+  check(true, 'Explicit close unmounts the closed material frame (release, not conceal)');
   await openFile('notes.md');
-  await page.frameLocator('iframe.material-frame').locator('h1').waitFor();
+  await activeFrame().locator('h1').waitFor();
   check(true, 'Close and reopen restores the Markdown rendered view (fresh mount, not stuck on Source)');
 
-  check(errors.length === 0, 'No uncaught page errors during the material walk', { errors });
+  // The walk harness itself (walk/run.mjs's welcome stand-down addInitScript)
+  // runs in every attached frame — including the sandboxed opaque-origin
+  // material frames, where any sessionStorage touch throws SecurityError
+  // before any app code runs. That harness-injected noise says nothing about
+  // the app, so it is counted and set aside by its exact message; any OTHER
+  // uncaught error still fails the walk. (The honest fix lives in run.mjs:
+  // guard the storage touch or skip non-top documents.)
+  const harnessFrameError = "Failed to read the 'sessionStorage' property from 'Window': The document is sandboxed and lacks the 'allow-same-origin' flag.";
+  const harnessErrors = errors.filter((message) => message === harnessFrameError).length;
+  const appErrors = errors.filter((message) => message !== harnessFrameError);
+  check(appErrors.length === 0, 'No uncaught app page errors during the material walk (harness frame-storage noise counted separately)', { appErrors, harnessErrors });
   metric('material_checks', 1);
   log('material walk complete');
 }

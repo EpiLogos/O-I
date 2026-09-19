@@ -1,0 +1,2024 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-essay-reading",
+  "name": "The Return of Zero — the sovereign reading path",
+  "description": "Eight station scenes in reading order (§0/1 → §0 → §1 → §2 → §3 → §4 → §5 → §5→0) and the closing return (M48 → M01) as one continuous path. Binds to THE-RETURN-OF-ZERO.md and the eight section rooms at Antykathera-Essay-Work dbf3b17.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "00-integral-threshold",
+      "name": "§0/1 — The Integral Threshold",
+      "character": "Station 1 of 8 — The subject at the formal limit, before any notation.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-001",
+          "name": "the open question — an unowned horizon",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-002",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-003",
+          "name": "the uncounted observer the panel does not display",
+          "kind": "pin",
+          "position": {
+            "x": 0.58,
+            "y": 0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 0,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "repel",
+            "strength": 1,
+            "radius": 0.5,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-004",
+                "text": "",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 1 OF 8",
+          "title": "§0/1 — The Integral Threshold",
+          "italic": "The subject at the formal limit, before any notation.",
+          "body": "Begins: M01 The Question Before the Mechanism.\nThe station releases into §0 with a precise distinction: the differentiating instrument can be studied positively, but no inventory of its determinations exhausts the Subject-pole for which they appear.\n\nEntered from the reading root (essay README). Next station: §0 — Differentiating Mind (01-differentiating-mind).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 01–06 · room 00-integral-threshold · six addressable movement scenes in roz-room-00-integral-threshold.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "01-differentiating-mind",
+      "name": "§0 — Differentiating Mind",
+      "character": "Station 2 of 8 — Objective internality derived from differentiating activity.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-005",
+          "name": "the descent — a local unit retaining the whole",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "yantra",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-006",
+                "text": "",
+                "shape": "yantra",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 2 OF 8",
+          "title": "§0 — Differentiating Mind",
+          "italic": "Objective internality derived from differentiating activity.",
+          "body": "Begins: M07 Awareness Bends Toward Display.\n§0 hands §1 a differentiated operative world whose measures can now be historically and formally tracked through the advent of zero.\n\nPrevious station: §0/1 — The Integral Threshold (00-integral-threshold). Next station: §1 — The Return of Zero (02-return-of-zero).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 07–12 · room 01-differentiating-mind · six addressable movement scenes in roz-room-01-differentiating-mind.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "02-return-of-zero",
+      "name": "§1 — The Return of Zero",
+      "character": "Station 3 of 8 — Zero's history and generativity until `0/1` is earned.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-007",
+          "name": "zero — the sign that changes the field of counting",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-008",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-009",
+          "name": "śūnya at the centre of the count",
+          "kind": "pin",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 0,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0.5,
+            "radius": 0.4,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00a",
+                "text": "",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 3 OF 8",
+          "title": "§1 — The Return of Zero",
+          "italic": "Zero's history and generativity until `0/1` is earned.",
+          "body": "Begins: M13 A Sign Migrates Between Worlds.\n§1 hands §2 not a mystical zero detached from arithmetic, but a disciplined sign whose widening role now forces the problem of One/All and the two conjugate logics of differentiation and gathering.\n\nPrevious station: §0 — Differentiating Mind (01-differentiating-mind). Next station: §2 — Two Logics of Two (03-two-logics).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 13–18 · room 02-return-of-zero · six addressable movement scenes in roz-room-02-return-of-zero.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "03-two-logics",
+      "name": "§2 — Two Logics of Two",
+      "character": "Station 4 of 8 — Dia-ballein and sym-ballein, the two accountings of polarity.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-00b",
+          "name": "0/1 — ground becoming legible through a mark",
+          "kind": "formation",
+          "position": {
+            "x": -0.3,
+            "y": -0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 1.6
+          },
+          "rotation": -10,
+          "shape": "text",
+          "text": "0/1",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00c",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00d",
+          "name": "1/0 — the mark returning toward its ground",
+          "kind": "formation",
+          "position": {
+            "x": 0.7,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 1.6
+          },
+          "rotation": 10,
+          "shape": "text",
+          "text": "1/0",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00e",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 4 OF 8",
+          "title": "§2 — Two Logics of Two",
+          "italic": "Dia-ballein and sym-ballein, the two accountings of polarity.",
+          "body": "Begins: M19 Difference Cannot Be Escaped.\n§2 releases into the formal body with the relational ontology already earned.\n\nPrevious station: §1 — The Return of Zero (02-return-of-zero). Next station: §3 — Mathematical Substrate (04-mathematical-substrate).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 320,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 19–24 · room 03-two-logics · six addressable movement scenes in roz-room-03-two-logics.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 320,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "04-mathematical-substrate",
+      "name": "§3 — Mathematical Substrate",
+      "character": "Station 5 of 8 — The derivational braid from `0/1` to the arche-topos.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-00f",
+          "name": "T² — first winding of the derivational braid",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00g",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00h",
+          "name": "second winding — return through retained difference",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3d5a80",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00i",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 5 OF 8",
+          "title": "§3 — Mathematical Substrate",
+          "italic": "The derivational braid from `0/1` to the arche-topos.",
+          "body": "Begins: M25 Eight Determinations.\n§3 hands §4 an exact formal field capable of psychic/mythemic refraction.\n\nPrevious station: §2 — Two Logics of Two (03-two-logics). Next station: §4 — Psychoid Flowering (05-psychoid-flowering).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 25–30 · room 04-mathematical-substrate · six addressable movement scenes in roz-room-04-mathematical-substrate.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "05-psychoid-flowering",
+      "name": "§4 — Psychoid Flowering",
+      "character": "Station 6 of 8 — Jung, Pauli, Lacan and Gebser, each performing one move.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-00j",
+          "name": "psyche — one description",
+          "kind": "formation",
+          "position": {
+            "x": 0.05,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.3,
+            "y": 1.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00k",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00l",
+          "name": "matter — the other description, one seam",
+          "kind": "formation",
+          "position": {
+            "x": 0.72,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 1.3,
+            "y": 1.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#3d5a80",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00m",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 6 OF 8",
+          "title": "§4 — Psychoid Flowering",
+          "italic": "Jung, Pauli, Lacan and Gebser, each performing one move.",
+          "body": "Begins: M31 The Psychoid Problem.\n§4 releases into §5 with a question precise enough for engineering.\n\nPrevious station: §3 — Mathematical Substrate (04-mathematical-substrate). Next station: §5 — Objective Internality (06-objective-internality).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 31–36 · room 05-psychoid-flowering · six addressable movement scenes in roz-room-05-psychoid-flowering.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "06-objective-internality",
+      "name": "§5 — Objective Internality",
+      "character": "Station 7 of 8 — Six products — Central, Actuation, AIKit, Software Factory, Workcell, Quaternal Logic — without settling the metaphysics of consciousness.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-00n",
+          "name": "Central — meaningful continuity",
+          "kind": "formation",
+          "position": {
+            "x": 0.30000000000000004,
+            "y": -0.8096,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00o",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00p",
+          "name": "Actuation — living articulation",
+          "kind": "formation",
+          "position": {
+            "x": 1.062102355330306,
+            "y": -0.4048,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#638c69",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00q",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00r",
+          "name": "AIKit — potency",
+          "kind": "formation",
+          "position": {
+            "x": 1.062102355330306,
+            "y": 0.4047999999999999,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00s",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00t",
+          "name": "Software Factory — transformation",
+          "kind": "formation",
+          "position": {
+            "x": 0.30000000000000004,
+            "y": 0.8096,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#638c69",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00u",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00v",
+          "name": "Workcell — situated existence",
+          "kind": "formation",
+          "position": {
+            "x": -0.4621023553303059,
+            "y": 0.40480000000000027,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00w",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-00x",
+          "name": "Quaternal Logic — Transcendent Relation",
+          "kind": "formation",
+          "position": {
+            "x": -0.46210235533030636,
+            "y": -0.4047999999999995,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#638c69",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-00y",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 7 OF 8",
+          "title": "§5 — Objective Internality",
+          "italic": "Six products — Central, Actuation, AIKit, Software Factory, Workcell, Quaternal Logic — without settling the metaphysics of consciousness.",
+          "body": "Begins: M37 Central — Meaningful Continuity.\n§5 now ends where the product field itself demands: an achieved technical-philosophical articulation returning into Life and World.\n\nPrevious station: §4 — Psychoid Flowering (05-psychoid-flowering). Next station: §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns (07-instrument-returns).",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 37–42 · room 06-objective-internality · six addressable movement scenes in roz-room-06-objective-internality.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "07-instrument-returns",
+      "name": "§5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+      "character": "Station 8 of 8 — Implementable architecture and a proportionate horizon; the mechanism finally enters.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-00z",
+          "name": "the instrument — outer ring",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.75,
+            "y": 1.75
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-010",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-011",
+          "name": "middle train",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.3,
+            "y": 1.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-012",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-013",
+          "name": "inner train",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.8
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-014",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE SOVEREIGN READING PATH · STATION 8 OF 8",
+          "title": "§5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+          "italic": "Implementable architecture and a proportionate horizon; the mechanism finally enters.",
+          "body": "Begins: M43 From Theory to Vocation.\nThe essay returns to `0/1` with more, not less, differentiation.\n\nPrevious station: §5 — Objective Internality (06-objective-internality). Next: the closing return — the path comes back to its opening.",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "ROOM DOOR",
+          "title": "",
+          "italic": "",
+          "body": "Movements 43–48 · room 07-instrument-returns · six addressable movement scenes in roz-room-07-instrument-returns.journey.json",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "08-the-return",
+      "name": "The Return — M48 → M01",
+      "character": "The closing return: the reading path comes back to its opening with more, not less, differentiation.",
+      "duration": 14,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-015",
+          "name": "0/1 — the root symbolon, earned",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.45,
+            "y": 1.85
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0/1",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-016",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-017",
+          "name": "the return retains its differentiation",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.9,
+            "y": 1.9
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-018",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "THE RETURN OF ZERO · THE READING PATH RETURNS · M48 → M01",
+          "title": "The Return of Zero",
+          "italic": "5→0 — every achieved `1` returns without possessing `0`.",
+          "body": "Artificial Hybrid Intelligence names the reflective activity of humans, agents, archives, institutions, Bimba fields, product-worlds and harnesses turning the Logos they jointly produce back upon its conditions. (M48 · §5→0 · #5→0)\n\nReturn to the opening: M01 The Question Before the Mechanism — the same formal limit, transformed by the journey. Faith is falling with a smile.",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 350,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "station-door",
+          "visible": true,
+          "kicker": "THE LOOP",
+          "title": "",
+          "italic": "",
+          "body": "The journey loops: this night returns to the lit threshold at 00-integral-threshold.",
+          "x": 0.05,
+          "y": 0.155,
+          "width": 380,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    }
+  ],
+  "updatedAt": "2026-09-17T05:34:06.818Z"
+}

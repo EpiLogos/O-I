@@ -44,10 +44,13 @@ export interface CollectionManifestEnvelope {
 }
 /** One member handed to the application in manifest order — the content is
  * the parsed journey document; the application validates it under its own
- * journey law at import (D3). */
+ * journey law at import (D3). `location` is the member's own disclosed
+ * Central location when the reading came through the files seam (absent on
+ * the pure core, which sees contents only). */
 export interface CollectionMemberContent {
   slot: number; id: string; name: string; group: string; file: string;
   content: unknown;
+  location?: CentralLocation;
 }
 export interface CollectionReadingError {slot: number; id: string; file: string; message: string}
 export type CollectionReading =
@@ -153,8 +156,17 @@ export async function readCollection(transport: KernelTransportStatus, manifestP
     }
     return listing;
   };
-  return assembleCollectionReading(manifestPath, manifestText, async (file) => {
+  const memberLocations = new Map<string, CentralLocation>();
+  const reading = await assembleCollectionReading(manifestPath, manifestText, async (file) => {
     const location = await locationFor(`${dir}/${file}`);
+    memberLocations.set(file, location);
     return JSON.parse((await readFile(transport, location)).content);
   });
+  if (reading.status === "ready") {
+    for (const member of reading.members) {
+      const location = memberLocations.get(member.file);
+      if (location) member.location = location;
+    }
+  }
+  return reading;
 }

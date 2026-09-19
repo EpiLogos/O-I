@@ -41,7 +41,6 @@ const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((mo
 // instead of unmounting them.
 import {CentreOutlet, isRetainedCentreKind} from "./retention";
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
-const NaraSurface=lazy(()=>import("../nara/NaraSurface").then((module)=>({default:module.NaraSurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN } from "../workspace/mode";
 
@@ -483,7 +482,6 @@ function SurfaceBodyImpl({
   // themselves present through the retention outlet dispatched above.
   if (binding.kind === "agency") return <AgencySurface project={binding.project} onMessage={message=>window.dispatchEvent(new CustomEvent("oi:workspace-message",{detail:{message}}))} onOpenSettings={()=>window.dispatchEvent(new CustomEvent("oi:open-settings"))} />;
   if (binding.kind === "knowledge") return <KnowledgeSurface binding={binding} onOpen={openKnowledge} />;
-  if (binding.kind === "nara") return <NaraSurface key={binding.id} binding={binding} />;
   if (binding.kind === "source") {
     return <SourceSurface binding={binding} />;
   }
@@ -531,7 +529,6 @@ const KIND_GLYPH: Record<string, import("../workspace/Glyph").GlyphName> = {
   "epi-logos": "wiki",
   agency: "agent",
   instrument: "instrument",
-  nara: "chat",
 };
 
 function Tab({ id, title, kind, active, pinned, dirty, groupId, vertical, execute, openBindingMenu }: TabProps) {
