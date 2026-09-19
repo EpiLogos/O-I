@@ -13,3 +13,7 @@
 .shell .office-tile__copy{gap:clamp(4px,2.5cqw,7px)}
 .shell .office-tile .sec__cell-name{font-size:clamp(14px,8cqw,23px);line-height:1.15}
 .shell .office-tile .sec__detail{font-size:clamp(10px,5cqw,13px);line-height:1.4}
+
+/* Multiply belongs to the light hero. Over the band's dark ground it erased
+   the image; retain the native media, mask, cover crop and reading shade. */
+.shell .band .vf__frame{mix-blend-mode:normal}
