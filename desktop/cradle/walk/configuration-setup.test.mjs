@@ -72,7 +72,9 @@ function Root(){
 window.__SETUP__={calls,flags,nativeCalls};
 createRoot(document.getElementById('root')).render(React.createElement(React.StrictMode,null,React.createElement(Root)));
 `;
-const server=await createServer({root,configFile:false,plugins:[react(),{name:'controlled-setup-entry',resolveId(id){if(id==='/@setup-entry')return '\0setup-entry';},load(id){if(id==='\0setup-entry')return entry;}}],define:{__CRADLE_WALK__:'true'},server:{host:'127.0.0.1',port:1443,strictPort:true,fs:{allow:[resolve(root,'../..')]}}});
+// No SPA fallback: otherwise Vite serves the normal welcome screen instead
+// of the explicit controlled entry, producing a misleading locator timeout.
+const server=await createServer({root,appType:'custom',configFile:false,plugins:[react(),{name:'controlled-setup-entry',resolveId(id){if(id==='/@setup-entry')return '\0setup-entry';},load(id){if(id==='\0setup-entry')return entry;}}],define:{__CRADLE_WALK__:'true'},server:{host:'127.0.0.1',port:1443,strictPort:true,fs:{allow:[resolve(root,'../..')]}}});
 server.middlewares.use(async(req,res,next)=>{
   if(!req.url?.startsWith('/__setup.html'))return next();
   try{const html=await server.transformIndexHtml(req.url,'<!doctype html><html><head><meta name="viewport" content="width=device-width,initial-scale=1"></head><body><div id="root"></div><script type="module" src="/@setup-entry"></script></body></html>');res.statusCode=200;res.setHeader('Content-Type','text/html');res.end(html);}catch(error){next(error);}
@@ -88,7 +90,7 @@ try{
   const dialog=page.getByRole('dialog',{name:'Plan and apply'});
   const count=verb=>page.evaluate(verb=>window.__SETUP__.calls.filter(call=>call.verb===verb).length,verb);
   const check=(ok,label)=>{assert.ok(ok,`${name}: ${label}`);report.checks.push(`${name}: ${label}`);};
-  const visit=async(query='')=>{await page.goto('http://127.0.0.1:1443/__setup.html'+query);await dialog.locator('[data-config-apply]:not([disabled])').waitFor();};
+  const visit=async(query='')=>{await page.goto('http://127.0.0.1:1443/__setup.html'+query);await page.getByText('Controlled C0 fixture world — no installed or human acceptance',{exact:true}).waitFor();await dialog.locator('[data-config-apply]:not([disabled])').waitFor();};
   const apply=async()=>{await dialog.locator('[data-config-apply]').click();await dialog.locator('[data-changeset-status]').waitFor();await page.waitForFunction(()=>document.querySelector('[data-config-drawer]')?.getAttribute('aria-busy')==='false');};
   try{
    await visit();check(await count('apply')===0&&await count('holdDesired')===0,'review and discovery have no writes');
@@ -120,7 +122,7 @@ try{
    await page.setViewportSize({width:430,height:700});await page.screenshot({path:resolve(out,name+'-narrow.png')});
    await page.keyboard.press('Escape');await dialog.waitFor({state:'detached'});
    check(errors.length===0,'no uncaught browser errors: '+errors.join('; '));
-  }catch(error){report.failure={browser:name,error:String(error),pageErrors:errors};await page.screenshot({path:resolve(out,name+'-failure.png')}).catch(()=>{});throw error;}finally{await browser.close();}
+  }catch(error){report.failure={browser:name,error:String(error),pageErrors:errors,visibleText:await page.locator('body').innerText().catch(()=>'<unavailable>')};console.error(JSON.stringify(report.failure));await page.screenshot({path:resolve(out,name+'-failure.png')}).catch(()=>{});throw error;}finally{await browser.close();}
  }
  report.passed=true;console.log(JSON.stringify(report));
 }finally{writeFileSync(resolve(out,'receipt.json'),JSON.stringify(report,null,2)+'\n');await server.close();}
