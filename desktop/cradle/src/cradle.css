@@ -1098,10 +1098,3 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
   .pane.group[data-tab-presentation="unpinned"] > .tab-strip,
   .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { transition: none; }
 }
-
-/* The repeated-failure fallback (Cradle.tsx FrameBoundary): a quiet bottom
-   bar, never a whole-page screen — the window stays open, clicking anywhere
-   reloads the workspace. */
-.oi-frame-fallback{ position: fixed; inset: auto 0 0 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 16px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-surface); cursor: pointer; z-index: 100; }
-.oi-frame-fallback p{ margin: 0; font-size: var(--oi-shell-type-ui); }
-.oi-frame-fallback small{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); overflow-wrap: anywhere; }

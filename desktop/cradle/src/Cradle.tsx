@@ -1,4 +1,4 @@
-import {Component, lazy, startTransition, Suspense, useCallback, useEffect, useState, type ReactNode} from "react";
+import {Component, Fragment, lazy, startTransition, Suspense, useCallback, useEffect, useState, type ReactNode} from "react";
 import {KernelProvider} from "./kernel/KernelProvider";
 import {VisualsProvider} from "./visuals/ParticleExpression";
 import {ExpressionStageProvider} from "./stage/ExpressionStage";
@@ -13,28 +13,26 @@ const DetachedFrame = lazy(() => import("./workspace/DetachedFrame").then(module
 
 class FrameBoundary extends Component<{children: ReactNode; onSettled:()=>void}, {error: string | null; generation: number}> {
   state: {error: string | null; generation: number} = {error: null, generation: 0};
-  // Owner ruling 2026-09-19: a render failure never opens a whole-page
-  // error screen. The reason rides the footer message system (the frame's
-  // own oi:workspace-message sink), the children get one clean remount, and
-  // only a repeated failure falls back to a quiet bottom bar — the message
-  // and clicking anywhere reload the workspace.
+  // Owner ruling 2026-09-19: a render failure never opens a whole-page error
+  // screen and never adds UI of its own. The reason rides the footer's
+  // workspace-messages route (oi:workspace-message — the frame's own sink);
+  // the children get one clean remount (a keyed Fragment, no wrapper div —
+  // the shell owns the layout); a repeated failure renders nothing further
+  // and leaves the standing footer message as the interface.
   static getDerivedStateFromError(error: unknown) { return {error: error instanceof Error ? error.message : String(error)}; }
   componentDidCatch(error: unknown) {
     this.props.onSettled();
     window.dispatchEvent(new CustomEvent("oi:workspace-message", {detail: {message: `The workspace could not load — ${error instanceof Error ? error.message : String(error)}. Click the message to reload.`}}));
   }
   render() {
-    if (!this.state.error) return <div key={this.state.generation}>{this.props.children}</div>;
-    if (this.state.generation === 0) {
+    if (this.state.error && this.state.generation === 0) {
       // one automatic remount: the crashed tree unmounts, a fresh generation
       // composes beneath the standing footer message
       queueMicrotask(() => this.setState({error: null, generation: 1}));
       return null;
     }
-    return <div key={this.state.generation} className="oi-frame-fallback" role="alert" onClick={()=>window.location.reload()} title="Reload the workspace">
-      <p className="footer-status-message">The workspace could not load twice — click anywhere to reload it.</p>
-      <small>{this.state.error}</small>
-    </div>;
+    if (this.state.error) return null;
+    return <Fragment key={this.state.generation}>{this.props.children}</Fragment>;
   }
 }
 
