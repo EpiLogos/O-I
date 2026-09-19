@@ -16,6 +16,18 @@ use std::path::PathBuf;
 
 const EMBEDDED_CATALOGUE_JSON: &str = include_str!("../../surfaces.json");
 
+/// The checked-in bootstrap snapshot itself (`surfaces.json`): the pinned,
+/// provenance-carrying catalogue document this binary embeds (`verified_at`
+/// names its recut). Hermetic tests validate against this document so a
+/// machine-adopted catalogue cannot move a test floor. Recutting follows the
+/// surface-conformance discipline (docs/CLI-SURFACE-CONFORMANCE.md): a recut
+/// happens only after owner-native CLI heads are accepted, and
+/// `suite/native-protocol.json` — which names this file as its `"source"` —
+/// is re-derived from it in the same change.
+pub fn embedded_catalogue_json() -> &'static str {
+    EMBEDDED_CATALOGUE_JSON
+}
+
 pub struct ResolvedCatalogue {
     pub json: String,
     pub origin: &'static str,
@@ -35,7 +47,7 @@ pub fn resolve() -> Result<ResolvedCatalogue, String> {
         });
     }
     Ok(ResolvedCatalogue {
-        json: EMBEDDED_CATALOGUE_JSON.to_owned(),
+        json: embedded_catalogue_json().to_owned(),
         origin: "embedded",
         path: None,
     })

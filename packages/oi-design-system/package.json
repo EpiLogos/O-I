@@ -12,6 +12,8 @@
     "DESKTOP-LANGUAGE.md",
     "expression.mjs",
     "expression.css",
+    "techne.css",
+    "src",
     "point-cloud"
   ],
   "exports": {
@@ -24,6 +26,9 @@
     "./loading": "./loading.mjs",
     "./expression": "./expression.mjs",
     "./expression.css": "./expression.css",
+    "./techne.css": "./techne.css",
+    "./techne-theme": "./src/techne-theme.mjs",
+    "./techne-surface-lifecycle": "./src/techne-surface-lifecycle.mjs",
     "./point-cloud/config": "./point-cloud/config.mjs",
     "./point-cloud/presets": "./point-cloud/presets.mjs",
     "./expressions-engine/*": "./expressions-engine/*",
@@ -33,7 +38,9 @@
     "three": ">= 0.160"
   },
   "scripts": {
-    "verify": "node checks/verify.mjs",
-    "verify:browser": "node checks/browser.mjs"
+    "verify": "node checks/verify.mjs && node checks/techne.mjs",
+    "verify:browser": "node checks/browser.mjs",
+    "verify:techne": "node checks/techne.mjs",
+    "test": "node --test \"tests/**/*.test.mjs\""
   }
 }

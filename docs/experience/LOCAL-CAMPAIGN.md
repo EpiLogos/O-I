@@ -2,6 +2,8 @@
 
 Start at [#65 and the campaign map](README.md). Use [stories](STORIES.md), [paired record profile](STORY-PROFILE.md) and [practice conditions](PRACTICE-CONDITIONS.md). Load the source-owned [campaign Method](../../skills/experience-campaign/SKILL.md) explicitly for this commissioned bootstrap when it is not yet discoverable through the actual installed AIKit source. That explicit load is not a claim that normal discovery works.
 
+**Current owner update — 18 September 2026:** Mac is the installed acceptance/ordinary-use locus; Omarchy is the development/reference host, now reported by the owner to support sandboxes. Use those sandboxes as the default place for eligible isolated install, functionality, fixture and hardening rounds (§2.1), not as permission to churn the host or the Mac. `5/0` is the hosted Library/Expression learning encounter, not a visitor-side install: [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) records the correction and clean-browser walk. These updates refine the existing C0–C5 campaign and take precedence over older peer-machine/minimal-learner-install descriptions. They neither assert physical verification of the sandbox setup nor release a still-unproved Day/NOW foundation by declaration.
+
 ## 1. Your job and why it exists
 
 Make it possible for the person to use their own tools and files with reliable help from agents. Verify each selected activity through the normal human and agent entry, locate failures precisely, repair authorised defects at the native owner and repeat the real activity. The desired output is usable work and an understandable account, not a collection of green names.
@@ -20,6 +22,74 @@ Keep one concise current entry under #65 linking the exact round, active test as
 6. **Check safety and capacity.** Set explicit time/turn/cost/concurrency/resource/retry limits for this round; record which effects, external transmissions, credentials, machine restarts and repository writes are permitted. No fixed global allowance is inferred from this document. Have an emergency stop and known cleanup/retention boundaries before starting a multi-agent or computer-use run.
 
 A missing production operation remains implementation work. Do not invite the human into a control known to have no working route. Complete it, or select a useful independent activity while preserving that obligation as blocked. Human judgement is reserved for actual choices and experience, not avoidable setup debugging.
+
+## 2.1 Omarchy sandbox proving — available development material
+
+### Machine roles and observed readiness
+
+The owner reports the sandbox facility ready on Omarchy. The planning field may now select it rather than treating disposable worlds as hypothetical. The exact backend, images, isolation guarantees, network/GPU/audio access, resource limits and native control commands have not been independently established by this documentation update. Discover and verify the selected current Workcell/provider offers at C1; do not commission a new sandbox platform, assume a named VM/container technology, or substitute an arbitrary directory for required process/network isolation.
+
+The topology is:
+
+```text
+Omarchy development/reference host
+  ├─ protected working sources, resident agents and services
+  └─ bounded disposable test worlds
+       ├─ selected install/update/lifecycle composition
+       ├─ native functionality / Factory / knowledge / SDK work
+       ├─ real browser/desktop routes where the provider supports them
+       └─ QL experiments / concurrency / failure and recovery
+                         ↓ native evidence + independent repair/replay
+                  accepted source / candidate cut
+                         ↓ established install/update path
+Mac installed acceptance world + published site/browser experience
+```
+
+Omarchy stays productive while different test worlds churn. The host itself, private Central ground, active worktrees and live SharedField service are not disposable. A guest labelled Omarchy does not establish the bare-metal host's behaviour. The Mac is not a sandbox to be silently reset or updated.
+
+### Bind a useful episode, not a sandbox count
+
+Use the existing story/capability matrix and C0/C1 round record. Bind each test to the original UX obligation, ordinary user/agent entry, actual native operation, expected result and forbidden effects, negative/recovery branch, exact source/practice and evidence grade. Keep the full parent scope visible; selected cases are sequencing, not scope reduction. No new acceptance registry or scenario numbering is needed.
+
+Record the actual sandbox/provider ref and generation, image/baseline digest and OS/architecture, candidate product/artifact/companion revisions, Project/World and existing task/child-NOW/Session/Run relations, allowed volumes/paths, ports/network/egress, credentials by reference, resource/model budgets, evidence destination, cancellation and owned cleanup. Use existing refs and native ownership; a sandbox ID is not an Agent identity, and no new semantic World is required merely because a process is isolated.
+
+The current Day/NOW foundation session remains the producer. Reuse its demonstrated readiness when returned; do not re-run its setup every round. Continue already-authorised independent bounded tests and the work making the foundation true. Broad Factory-dependent fan-out still consumes the actual foundation return; sandbox availability alone does not claim it has happened.
+
+### Repeatable C1–C5 execution
+
+1. Resolve an appropriate existing provider and allocate a bounded disposable world through supported owner operations. Verify the required isolation before exposing secrets, private source or destructive test inputs. Read-only source mounts and isolated writable work/data are preferred where compatible with the selected native route.
+2. Install the selected exact candidate through the real public installation path, including its companion executables/assets. A development binary mounted from the host is not a clean-install proof. Record absent products, PATH resolution, install receipts and actual running versions. For hosted `5/0`, prepare a clean browser with no visitor product installation and a pinned served edition instead.
+3. Give a fresh actor the ordinary task, permitted context and discoverable tools/Skills. Keep expected answers and protected canaries with the verifier. Drive actual UI controls for UI claims; native API/CLI calls are separate useful evidence, not substitute clicks. Verify that the new integrated UI, not the donor app or a stale preview, is the running target.
+4. Observe real owner effects, denial and continued work. Exercise only the declared failures: interrupted install/update, guest service loss, stale source, retry/cancel, concurrent edits, network failure, capacity pressure or guest reset where supported. Do not restart host services or change host firewall/time to simulate an isolated failure.
+5. Preserve the original failed episode and uncertain effects **outside the disposable world's deletion boundary**, at an authorised native evidence destination. A clean reset can recover the test environment but cannot erase the failed result or pretend a completed migration was rolled back.
+6. Route a warranted bounded repair through the actual product/Skill/test owner; use Factory when its real path is available and appropriate, otherwise the explicit existing bootstrap workflow. Independently replay the original inputs on the new pinned cut, then a held-out/near-miss case. Verify the actual new build is running.
+7. Release only the allocated guest resources after required artifacts are retained. Verify no orphan process, volume, listener, credential lease or unintended public endpoint remains. Keep useful retained data/source and live work elsewhere untouched; failed cleanup is a result to repair, not a silent success.
+
+### Parallel work that is genuinely independent
+
+Run disjoint install variants, functional/provider tests, knowledge imports, QL experiments and corpus work in parallel where backend capacity and authority permit. Each writable data/index/store/worktree/browser profile, service endpoint, credential scope and temporary output belongs to its declared episode. Shared caches must be read-only or designed for concurrency. One computer-use driver owns each interactive desktop; independent supported guest desktops may run concurrently.
+
+Serialise mutation of the same native registry, shared source/index, installed candidate, live service, Git integration target or desktop focus. Reserve host capacity for ongoing work and record contention: concurrent guests share physical resources, so their latency is not an isolated performance baseline. Controlled deliberate contention has its own declared comparison. Do not infer that two guests are two physical machines, that a different guest image proves another OS, or that guest GPU access proves Mac rendering.
+
+### Automated repair must stay answerable to the UX
+
+A campaign may automate allocation, installation, task execution, independent observation, defect routing, bounded repair branches, tests and replay within its explicit budgets and authority. Stop repeated failing retries at the recorded limit and return a useful diagnosis; do not request human approval for each already-authorised routine step.
+
+A fixture improvement must retain the originating UX/source obligation, observed provider behaviour and original failure. Use real native contracts and fresh inputs. The repair worker cannot make itself pass by weakening assertions, teaching the actor the expected answer, deleting negatives, changing timeout/budget without recording a new comparison, or relabelling an absent feature optional. A legitimately wrong test is corrected with its source-backed reason and independent review, not treated as untouchable canon.
+
+Use held-out cases, disconnected-handler checks and stale/unsafe candidates to test the verifier. Keep proposal, review, accepted code/Skill change, installation and later effectiveness distinct. Evidence can propose improved retrieval, descriptions, Skills, Methods or fixtures through existing Guardian/AIKit/Factory/T/T′/EX7 routes. It cannot silently author the person's preferences, govern itself more broadly or promote speculative QL results into canon. A Method remains a Skill whose description begins `METHOD:`; do not create another learning runtime.
+
+### Native, material and human evidence are different scopes
+
+Automated tests can earn real D/C/P and applicable M evidence when they actually exercise those relations; being automated does not demote them to mock proof. State exactly whether the result used deterministic fixtures, a real guest/provider/model, a browser with software rendering, or actual hardware. Two independent guest worlds can prove identity/concurrency/disclosure properties; Mac↔Omarchy connectivity, independent physical failure, macOS `.app` launch, actual Hyprland/Quickshell integration, audio/GPU/voice hardware and bare-metal restart need their own material episodes.
+
+Human H/EX concerns the mature joined experience and the person's actual assessment. There is no premature H ratification gate on carrier construction, ordinary test runs or authorised engineering repairs. Record unavailable/blocked/failed/exercised/independently verified and human-assessed separately. Sandbox success neither closes the whole #65 campaign nor reopens completed SF/EX carriers.
+
+### Ready work inside existing tracks
+
+Use sandbox rounds for #268's remaining installed forms and update/rollback/owned teardown; #65/#201–#205 functional and provider work; #366 and KN stories for real import/retrieval/change/rebuild/fresh-agent recovery; QL's existing experiment and instrument protocols; and current SDK extension lifecycle. The clean-browser hosted Library walk belongs to the same campaign. UI and domain writers retain their files; test feedback lands in the chosen new UI through the current integrator rather than creating a third app.
+
+Before the first broad batch, publish one concise #65 entry with selected cases, actual provider capabilities, isolation/cleanup results, concurrent assignments/budgets and the current foundation receipt or exact remaining dependency. Then execute; do not turn the resource inventory into a new architecture phase. Missing provider operations become bounded native-owner work.
 
 ## 3. Roles in one episode
 
@@ -103,7 +173,7 @@ Evidence grades remain D/C/P/M/H with actual scope. Subagent work and computer u
 
 ## 7. Desktop and terminal coordination
 
-Keep O:I #190's active desktop/Wave 6–8 sequence and AIKit #211/#282. This campaign tests their real domain controls and the person's ordinary external tool use; it does not launch a competing UI implementation.
+Keep O:I #190's active desktop/Wave 6–8 sequence and AIKit #211/#282, as superseded by their actual current owners including #375's new-UI landing. This campaign tests their real domain controls and the person's ordinary external tool use; it does not launch a competing UI implementation.
 
 A required control needs: useful user action, real native operation, allowed state change, readable feedback, interruption/recovery and persistence where promised. The Activity/Run view quality target is a compact readable timeline with actual inputs/turns/tool/permission events, search and expandable detail, not raw logs as the default result. Conversation, Activity, Context and Inspect remain views of the same selected participant/work.
 
@@ -114,6 +184,8 @@ Schedule one computer-use driver per shared desktop focus. Use independent deskt
 After prerequisites have been established, present one useful first activity, not an installation lecture. For example:
 
 > Open your usual coding tool in this existing project and ask it to fix the selected bug. You should not need to paste your project instructions. We'll check that it finds the right source, runs the right checks and keeps your unrelated edits intact.
+
+For the hosted learner, begin instead at the site's Library with the published corpus and live Expression route in INSTALLATION-VARIANTS. No local installer or agent credential belongs in that visitor's preparation.
 
 Later offer the deeper prepared activities: create a research assistant; change its instructions; explore a real decision in the graph; reconsider changed evidence; run work on the spare machine; compare two actual solutions; share a bounded collection; inspect a clear completed result; recover from an approved interruption.
 

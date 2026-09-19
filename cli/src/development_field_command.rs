@@ -252,6 +252,24 @@ fn command_development_suite_status(args: &[OsString]) -> Result<i32, String> {
 }
 
 fn validate_native_protocol_projection() -> Result<(), String> {
+    let resolved = crate::catalog_source::resolve()?;
+    validate_native_protocol_projection_against_catalogue(&resolved.json)
+}
+
+/// The native-protocol projection law over one explicit catalogue document.
+/// Production resolves the live catalogue (so `oi suite check` discloses
+/// machine drift); hermetic tests pin the checked-in snapshot instead.
+/// Regeneration: `suite/native-protocol.json` is a projection OF
+/// `surfaces.json` — it names that file as its `"source"` and mirrors each
+/// product's `native.command_revision` into `revision` verbatim. When an
+/// owner-native CLI head is accepted and the catalogue is recut (the
+/// discipline in docs/CLI-SURFACE-CONFORMANCE.md), update `surfaces.json`
+/// (`verified_at`, the surface's `command_revision`/`install.revision`) and
+/// re-derive `suite/native-protocol.json` from it in the same change; this
+/// validation is the join that keeps the two honest.
+fn validate_native_protocol_projection_against_catalogue(
+    catalogue_json: &str,
+) -> Result<(), String> {
     let value: serde_json::Value = serde_json::from_str(NATIVE_PROTOCOL_JSON)
         .map_err(|error| format!("native protocol projection is invalid JSON: {error}"))?;
     if value["schema"] != "oi.native-protocol-projection/v1" {
@@ -266,7 +284,8 @@ fn validate_native_protocol_projection() -> Result<(), String> {
     if products.len() != 6 {
         return Err(format!("native protocol projection must contain six products; found {}", products.len()));
     }
-    let catalogue = oi_cli::product_command::product_command_catalogue()?;
+    let catalogue =
+        oi_cli::product_command::product_command_catalogue_from_json(catalogue_json, "pinned")?;
     for product in products {
         let id = product["id"].as_str().ok_or("native protocol product has no id")?;
         oi_cli::development_field::validate_protocol_envelope(
@@ -699,7 +718,15 @@ mod development_field_command_tests {
     }
 
     #[test]
-    fn native_protocol_projection_matches_live_command_catalogue() {
-        validate_native_protocol_projection().unwrap();
+    fn native_protocol_projection_matches_the_pinned_catalogue_snapshot() {
+        // Hermetic by construction: the projection is joined against the
+        // checked-in catalogue snapshot (`surfaces.json` — the document
+        // suite/native-protocol.json itself names as its source), never the
+        // machine-adopted runtime catalogue. The live join stays available to
+        // `oi suite check`, which is where machine drift is disclosed.
+        validate_native_protocol_projection_against_catalogue(
+            crate::catalog_source::embedded_catalogue_json(),
+        )
+        .unwrap();
     }
 }
