@@ -24,7 +24,7 @@ oi workcell ...         -> workcell ...
 oi ql ...               -> ql ...
 
 oi desktop --help
-oi aikit-session-space ...
+oi aikit session-space ...
 oi ground status|bind
 oi current-world [--json]
 
@@ -53,7 +53,7 @@ oi host omarchy realise --home PATH [--accept-managed-update] [--json]
 oi host omarchy verify [--home PATH] [--json]
 ```
 
-`oi capabilities --json` is the compiled child-capability snapshot with source hashes; it is not a claim of installed availability. `oi desktop --help` is M′ application operations over the S command whole. `oi aikit-session-space` is AIKit's companion protocol with native arguments preserved. `oi ground status|bind` inspects or explicitly changes the default ground binding. `oi current-world [--json]` discloses the situated six-product composition and current machine/Workcell relation.
+`oi capabilities --json` is the compiled child-capability snapshot with source hashes; it is not a claim of installed availability. `oi desktop --help` is M′ application operations over the S command whole. `oi aikit session-space` is AIKit's SessionSpace/encounter protocol with native arguments preserved (the verbs are folded into the main aikit binary; the `oi aikit-session-space` spelling still routes to them). `oi ground status|bind` inspects or explicitly changes the default ground binding. `oi current-world [--json]` discloses the situated six-product composition and current machine/Workcell relation.
 
 The same front door still routes composition-era commands that current `oi help` does not print (`oi init`, `oi register`, `oi docs`, `oi migrate`, `oi catalogue`). They remain documented below because they are implemented, not because they appear in the printed help.
 
@@ -113,9 +113,9 @@ attestation as every other release artifact. Backing compositions are
 disclosed, never installed: backing products install through their own
 flows.
 
-## `oi aikit-session-space`
+## `oi aikit session-space`
 
-`oi aikit-session-space ...` dispatches AIKit's SessionSpace companion and preserves native arguments. It is not a seventh product namespace.
+`oi aikit session-space ...` runs AIKit's SessionSpace/encounter verbs (folded into the main aikit binary, O-I #376) and preserves native arguments. It is not a seventh product namespace. The `oi aikit-session-space ...` spelling keeps routing to the same verbs.
 
 ## `oi ground`
 

@@ -155,9 +155,8 @@ fn command_rolling_dev_gate(args: &[OsString]) -> Result<i32, String> {
         .map_err(|e| format!("capture suite dispatcher: {e}"))?;
     bindings.insert("OI_BIN".into(), suite_executable.to_string_lossy().into_owned());
     bindings.insert(rolling_product_binding(product).expect("validated product").into(),executable.to_string_lossy().into_owned());
-    if product=="ai-kit" {
-        bindings.insert("OI_AIKIT_SESSION_SPACE_BIN".into(),executable.with_file_name("aikit-session-space").to_string_lossy().into_owned());
-    }
+    // The session-space verbs live in the aikit binary itself (O-I #376 fold),
+    // so OI_AIKIT_BIN above is the only ai-kit contribution the gates need.
     println!("{product} {selection} {revision}; isolated gate {}", gate.display());
     let outcome = (|| -> Result<(), String> {
         for (name, command) in [("owner-build", &descriptor.build), ("owner-test", &test)] {
