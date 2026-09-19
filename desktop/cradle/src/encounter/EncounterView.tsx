@@ -2,6 +2,9 @@ import {useLayoutEffect,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
 import {NowRelations} from "../receiving/NowRelations";
+import {DictationSession,type DictationOutcome,type DictationRefusal} from "../dictation/client";
+import {dictationCopy} from "../dictation/copy";
+import {readDictationStipulation} from "../dictation/store";
 import "./encounter.css";
 /** Rendering and interaction only; AIKit owns transcript, consent and shared draft.
  * `presentation`: "tab" is the canvas-surface shape (own heading + plane nav);
@@ -22,6 +25,64 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   const action=(name:string)=>reading?.actions?.find(action=>action.ref===`aikit.encounter.${name}`);
   // Missing owner Actions are unknown authority, never permission to act.
   const allowed=(name:string,_legacy:boolean)=>action(name)?.enabled===true;
+  // --- Dictation (local): the agent-chat microphone is an INPUT AID, not a
+  // voice mode. It captures to the user's own loopback speech server and
+  // places the transcript in the owner-owned draft as editable text; it
+  // never sends, and it is not Nara — Nara's chat-voice dialogue is its own
+  // mode with its own constitution (docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md).
+  // Every failure is a named state; nothing is faked. ---
+  const [dictation,setDictation]=useState<{state:"idle"|"recording"|"transcribing"|"service-down"|"mic-denied"|"mic-unavailable"|"failed"|"empty"|"landed";notice?:{role:"status"|"alert";text:string}}>({state:"idle"});
+  const dictationSession=useRef<DictationSession|null>(null);
+  const dictationRefusalNotice=(refusal:DictationRefusal):{role:"status"|"alert";text:string}=>{
+   switch(refusal.kind){
+    case "service-down":return {role:"alert",text:dictationCopy("serviceDown",{url:readDictationStipulation().stt_url})};
+    case "mic-denied":return {role:"alert",text:dictationCopy("micDenied")};
+    case "mic-unavailable":return {role:"alert",text:dictationCopy("micUnavailable")};
+    case "empty":return {role:"status",text:dictationCopy("empty")};
+    case "failed":return {role:"alert",text:dictationCopy("failed",{detail:refusal.detail})};
+   }
+  };
+  // The transcript lands at the caret as ordinary draft text — the same
+  // door typed input uses — so the person can amend it before sending.
+  const insertTranscript=(text:string)=>{
+   const element=composerInput.current;
+   const start=element&&element.selectionStart!==undefined?element.selectionStart:draft.length;
+   const end=element&&element.selectionEnd!==undefined?element.selectionEnd:start;
+   const before=draft.slice(0,start);
+   const after=draft.slice(end);
+   const glue=before.length>0&&!/\s$/.test(before)?" ":"";
+   const tail=after.length>0&&!/^\s/.test(after)?" ":"";
+   onDraft(`${before}${glue}${text}${tail}${after}`);
+   const caret=start+glue.length+text.length+tail.length;
+   requestAnimationFrame(()=>{const node=composerInput.current;if(node){node.focus();node.setSelectionRange(caret,caret);}});
+  };
+  const handleDictationOutcome=(outcome:DictationOutcome)=>{
+   if(outcome.kind==="transcript"){
+    insertTranscript(outcome.text);
+    setDictation({state:"landed",notice:{role:"status",text:dictationCopy("landed")}});
+   }else{
+    setDictation({state:outcome.kind,notice:dictationRefusalNotice(outcome)});
+   }
+  };
+  const toggleDictation=async()=>{
+   if(dictation.state==="transcribing")return;
+   if(dictation.state==="recording"){
+    const session=dictationSession.current;dictationSession.current=null;
+    setDictation({state:"transcribing",notice:{role:"status",text:dictationCopy("transcribing")}});
+    try{handleDictationOutcome(session?await session.end():{kind:"failed",detail:"no capture was running"});}
+    catch(error){setDictation({state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(error)})}});}
+    return;
+   }
+   setDictation({state:"recording",notice:{role:"status",text:dictationCopy("recording")}});
+   const session=new DictationSession();
+   try{await session.begin();dictationSession.current=session;}
+   catch(refusal){
+    dictationSession.current=null;
+    setDictation(refusal&&typeof refusal==="object"&&"kind"in refusal&&["service-down","mic-denied","mic-unavailable","failed","empty"].includes(String((refusal as DictationRefusal).kind))
+      ?{state:(refusal as DictationRefusal).kind,notice:dictationRefusalNotice(refusal as DictationRefusal)}
+      :{state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(refusal)})}});
+   }
+  };
   // The Activity plane keeps the provider's working material — thinking, tools,
   // consent, stops, failures, turn boundaries — and leaves only the two
   // conversational kinds to the Conversation plane.
@@ -102,7 +163,11 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       {reading?.permissions?.map(request=><section className="encounter-permission" key={request.native_request_id} aria-label="Provider consent"><strong>Provider consent requested</strong><pre>{typeof request.tool_call==="string"?request.tool_call:JSON.stringify(request.tool_call,null,2)}</pre><p>This answers the provider. Execution remains subject to its native authority.</p><div>{request.choices.map(choice=><button key={choice.option_id} disabled={pending||!allowed("permission",false)} onClick={()=>onPermission(request.native_request_id,{outcome:"selected",option_id:choice.option_id})}>{choice.label}</button>)}<button disabled={pending||!allowed("permission",false)} onClick={()=>onPermission(request.native_request_id,{outcome:"cancelled"})}>Cancel request</button></div></section>)}
       {!connected&&<div className="encounter-connect"><span>Connect a native provider</span>{providers.map(provider=><button key={provider.id} disabled={pending||!allowed("open",true)} title={action("open")?.reason??undefined} onClick={()=>onProvider(provider.id)}>{provider.label}</button>)}{!providers.length&&<p>No ACP provider configured in AIKit.</p>}{resume&&<div className="encounter-resume"><p>The owner holds a recorded native session for this conversation, so a fresh open is refused. Reconnecting resumes that exact recorded identity — nothing is replaced or silently created.</p><button disabled={pending} aria-label="Reconnect recorded session" onClick={()=>onReconnect(resume.provider)}>Reconnect recorded session ({resume.provider})</button></div>}</div>}
       <textarea ref={composerInput} disabled={!reading||!allowed("draft",true)} aria-label="Message" value={draft} onChange={event=>onDraft(event.target.value)} rows={3}/>
-      <div className="encounter-composer-actions">
+      {/* Dictation (local): a named state line whenever dictation is not at
+        * rest — the honest gap words land here verbatim (dictation/copy.ts). */}
+      <div className="encounter-composer-actions" data-dictation-state={dictation.state}>
+        {dictation.notice&&<p className="encounter-dictation-line" role={dictation.notice.role} data-dictation-line={dictation.state}>{dictation.notice.text}</p>}
+        <button className="encounter-dictate" data-dictation-state={dictation.state} disabled={!reading||!allowed("draft",true)||dictation.state==="transcribing"} aria-pressed={dictation.state==="recording"} aria-label={dictation.state==="recording"?dictationCopy("buttonRecording"):dictation.state==="transcribing"?dictationCopy("buttonTranscribing"):dictationCopy("buttonIdle")} title={dictation.state==="recording"?dictationCopy("buttonRecording"):dictation.state==="transcribing"?dictationCopy("buttonTranscribing"):`${dictationCopy("buttonIdle")} — click to start; the transcript lands as editable text and is never sent by itself`} onClick={()=>void toggleDictation()}><Glyph name="mic" size={13}/><span className="sr-only">{dictationCopy("buttonIdle")}</span></button>
         <button className="encounter-latest" onClick={()=>{following.current=true;onLatest();const element=transcript.current;if(element)element.scrollTop=element.scrollHeight;}}>Latest</button>
         <span role="status">{pending?"Updating…":""}</span>
         {running

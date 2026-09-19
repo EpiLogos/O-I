@@ -65,6 +65,20 @@
 .encounter-latest:hover,.encounter-latest:focus-visible,.encounter-stop:hover,.encounter-stop:focus-visible{color:var(--oi-accent-ink);background:var(--oi-wash);outline:none}
 .encounter-stop:disabled{opacity:.4;cursor:default}
 
+/* Dictation (local) — the agent-chat input aid. Icon-only beside Latest,
+ * same quiet-text-button grammar; while recording it reads as a live state
+ * (accent ink, pressed), never as a second send. The named state line sits
+ * above the action row and wraps like the honest error lines do. */
+.encounter-dictate{flex:none;width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;border:0;border-radius:5px;background:transparent;color:var(--oi-muted-2);cursor:pointer;transition:color var(--oi-motion-ui) var(--oi-motion-ease-out),background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-dictate:hover,.encounter-dictate:focus-visible{color:var(--oi-accent-ink);background:var(--oi-wash);outline:none}
+.encounter-dictate:disabled{opacity:.4;cursor:default}
+.encounter-dictate[aria-pressed="true"]{color:var(--oi-composer-ground);background:var(--oi-accent)}
+.encounter-dictate[data-dictation-state="transcribing"]{animation:encounter-dictate-pulse 1.1s var(--oi-motion-ease-out) infinite}
+.encounter-dictate .sr-only{position:absolute;width:1px;height:1px;padding:0;margin:-1px;overflow:hidden;clip:rect(0,0,0,0);white-space:nowrap;border:0}
+.encounter-dictation-line{flex:1;margin:0;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);min-width:0}
+.encounter-dictation-line[role="alert"]{color:var(--oi-accent-ink)}
+@keyframes encounter-dictate-pulse{0%,100%{opacity:1}50%{opacity:.45}}
+
 /* side/full — the accompanying-agent-layer shape (FND-02): own heading/nav
  * are suppressed in JSX; the transcript runs more compact and the composer
  * takes the study's quiet card look instead of the tab's centred slab. */

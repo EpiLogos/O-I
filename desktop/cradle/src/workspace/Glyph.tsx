@@ -38,6 +38,10 @@ const paths = {
   detach: 'M14 3h7v7m0-7L10 14M10 5H3v16h16v-7',
   more: 'M4 12h1m6 0h1m6 0h1',
   close: 'M6 6l12 12M18 6L6 18',
+  /* Dictation (local) — the agent-chat input aid. A rounded capsule over a
+   * stand, drawn in the same 1.4-stroke line system; deliberately plainer
+   * than Nara's presence chrome because this is dictation, not a person. */
+  mic: 'M12 3a3 3 0 013 3v6a3 3 0 01-6 0V6a3 3 0 013-3zM6 11a6 6 0 0012 0M12 17v4M9 21h6',
 };
 export function Glyph({name,size=15}:{name:keyof typeof paths;size?:number}) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]}/></svg>;
