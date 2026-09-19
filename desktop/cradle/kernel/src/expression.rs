@@ -17,6 +17,15 @@ pub enum Availability {
     Withheld,
     Stale,
 }
+/// The unix second of now (0 if the clock reads before the epoch) — the
+/// recency stamp helper for the expression store.
+fn unix_now() -> u64 {
+    std::time::SystemTime::now()
+        .duration_since(std::time::UNIX_EPOCH)
+        .map(|since| since.as_secs())
+        .unwrap_or(0)
+}
+
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct ReadingRef {
@@ -406,6 +415,11 @@ pub struct Changed {
 pub struct Application {
     documents: BTreeMap<String, Document>,
     saved: BTreeMap<String, u64>,
+    /// Recency disclosure (owner direction 2026-09-19): the unix second of
+    /// this instance's last touch per Expression — stamped at every document
+    /// write, disclosed by `list`, and the listing's own ordering. Absence
+    /// (a pre-field document first listed) reads as 0, never guessed.
+    touched: BTreeMap<String, u64>,
     file_bindings: BTreeMap<String, Value>,
     /// ES3 reusable presentation profiles, keyed by profile_ref.
     profiles: BTreeMap<String, crate::expression_profile::ExpressionProfile>,
@@ -952,7 +966,12 @@ impl Application {
         let result = match request {
             Request::Capabilities => capabilities(),
             Request::List => {
-                json!({"schema":"oi.expression-list/v1","expressions":self.documents.values().map(|d|json!({"expression_ref":d.expression_ref,"revision":d.revision,"title":d.title,"dirty":self.saved.get(&d.expression_ref)!=Some(&d.revision)})).collect::<Vec<_>>()})
+                // Most recently touched first — the recency the Library and
+                // the Expressions panel present, now disclosed rather than
+                // invented from ref order.
+                let mut entries: Vec<&Document> = self.documents.values().collect();
+                entries.sort_by_key(|d| std::cmp::Reverse(self.touched.get(&d.expression_ref).copied().unwrap_or(0)));
+                json!({"schema":"oi.expression-list/v1","expressions":entries.iter().map(|d|json!({"expression_ref":d.expression_ref,"revision":d.revision,"title":d.title,"dirty":self.saved.get(&d.expression_ref)!=Some(&d.revision),"last_touched_unix":self.touched.get(&d.expression_ref).copied().unwrap_or(0)})).collect::<Vec<_>>()})
             }
             Request::Inspect { expression_ref } => self.inspect(&expression_ref)?,
             Request::Create {
@@ -1148,6 +1167,7 @@ impl Application {
                         activity_ref: None,
                     });
                     self.documents.insert(expression_ref.clone(), d);
+                    self.touched.insert(expression_ref.clone(), unix_now());
                 }
                 self.inspect(&expression_ref)?
             }
@@ -1218,6 +1238,7 @@ impl Application {
                 });
                 d.validate()?;
                 self.documents.insert(expression_ref.clone(), d);
+                    self.touched.insert(expression_ref.clone(), unix_now());
                 changed = Some(Changed {
                     expression_ref: expression_ref.clone(),
                     revision: expected_revision + 1,
@@ -1308,6 +1329,7 @@ impl Application {
                 });
                 d.validate()?;
                 self.documents.insert(expression_ref.clone(), d);
+                    self.touched.insert(expression_ref.clone(), unix_now());
                 changed = Some(Changed {
                     expression_ref: expression_ref.clone(),
                     revision: expected_revision + 1,
@@ -1595,6 +1617,7 @@ impl Application {
                     activity_ref: None,
                 });
                 self.documents.insert(expression_ref.clone(), d);
+                    self.touched.insert(expression_ref.clone(), unix_now());
                 self.inspect(&expression_ref)?
             }
         };
@@ -1621,7 +1644,9 @@ impl Application {
             actor,
             activity_ref: None,
         };
-        self.documents.insert(d.expression_ref.clone(), d);
+        let touched_ref = d.expression_ref.clone();
+        self.documents.insert(touched_ref.clone(), d);
+        self.touched.insert(touched_ref, unix_now());
         Ok((self.inspect(&event.expression_ref)?, Some(event)))
     }
 }

@@ -70,4 +70,4 @@ export type ExpressionRequest =
  | {operation:"asset_admit";asset:unknown;actor:string}
  | {operation:"asset_traverse";asset_ref:string}
  | {operation:"asset_subject";subject_ref:string};
-export interface ExpressionResult {state?:string;document?:ExpressionDocument;dirty?:boolean;file?:{location:CentralLocation;revision:string}|null;expressions?:{expression_ref:string;revision:number;title:string;dirty:boolean}[];[key:string]:unknown}
+export interface ExpressionResult {state?:string;document?:ExpressionDocument;dirty?:boolean;file?:{location:CentralLocation;revision:string}|null;expressions?:{expression_ref:string;revision:number;title:string;dirty:boolean;/** The owner's recency disclosure (unix seconds; 0 = before the field existed) — the listing arrives most-recently-touched first. */last_touched_unix?:number}[];[key:string]:unknown}

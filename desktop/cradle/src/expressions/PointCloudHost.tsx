@@ -13,6 +13,11 @@
  * In a plain browser (no owner transport) the host says so honestly rather
  * than hosting a copy that could drift from the owner's ground.
  *
+ * The frame keeps same-origin within its own material origin: the
+ * application autosaves its drafts to browser storage at boot, and an opaque
+ * sandboxed origin would refuse storage and kill the boot — the material
+ * protocol's own CSP remains the authority over what the frame may do.
+ *
  * The M1–M3 body the application carries (engine, expression documents,
  * the accepted instruments) is the pre-parallel integration: the PCD
  * workspace ships its engine bundle and its expression corpus, and its
@@ -83,6 +88,6 @@ export function PointCloudHost() {
       className="pcd-host-frame"
       allow="fullscreen"
       referrerPolicy="no-referrer"
-      sandbox="allow-scripts allow-forms allow-downloads"/>}
+      sandbox="allow-scripts allow-forms allow-downloads allow-same-origin"/>}
   </div>;
 }
