@@ -1,0 +1,67 @@
+name: Site Library preview
+
+on:
+  push:
+    branches: [site/library-first-public-expressions-20260919]
+    paths: ['site/**', '.github/workflows/site-library-preview.yml']
+  pull_request:
+    paths: ['site/src/library/**', 'site/tests/library-acceptance.py', 'site/library.test.mjs', '.github/workflows/site-library-preview.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-library-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser-build dependencies
+        working-directory: site
+        run: npm install --no-audit --no-fund
+      - name: Build and verify the public reader when present
+        working-directory: site
+        run: |
+          if node -e "process.exit(JSON.parse(require('fs').readFileSync('package.json')).scripts['build:public'] ? 0 : 1)"; then
+            npm run test:library
+            npm run build:public
+            python -m pip install playwright==1.51.0
+            python -m playwright install --with-deps chromium
+            mkdir -p evidence/library
+            npm run preview -- --host 127.0.0.1 --port 4173 > evidence/library/server.log 2>&1 &
+            for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+            python tests/library-acceptance.py
+          fi
+      - name: Retain the branch preview and browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-library-preview-${{ github.sha }}
+          retention-days: 7
+          if-no-files-found: ignore
+          path: |
+            site/dist/
+            site/evidence/library/
+      - name: Package bounded source and installed tooling for review
+        if: always()
+        run: |
+          tar -czf /tmp/oi-site-review.tgz \
+            --exclude='site/dist' --exclude='site/evidence' \
+            --exclude='site/.env' --exclude='site/.env.*' \
+            site packages/oi-design-system shared-field
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: site-review-workspace-${{ github.sha }}
+          path: /tmp/oi-site-review.tgz
+          retention-days: 3
+          if-no-files-found: error
