@@ -288,6 +288,12 @@ pub enum KernelOp {
     /// owner's own `factory development` family. The state path is the
     /// caller's disclosure — the desktop never invents a Factory state.
     FactoryDevelopmentRead { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, read: String, #[serde(default)] subject: Option<String> },
+    /// Run-in-Expressions: the whole SSSF attempt reading
+    /// (`factory attempt read <state> <run-ref>`) — legs, attempts,
+    /// verifications and the readable Return — so the Expression presents the
+    /// run's actual evidence structure. The payload is carried verbatim after
+    /// its contract schema is verified; no second run store is created.
+    FactoryAttemptRead { state_path: ::std::path::PathBuf, run_ref: String },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
@@ -449,6 +455,7 @@ pub enum KernelOpResult {
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
     FactoryDevelopmentReading {data:serde_json::Value},
+    FactoryAttemptReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
@@ -637,6 +644,15 @@ impl Kernel {
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory development read failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
             }
+            KernelOp::FactoryAttemptRead {state_path,run_ref} => {
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
+                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"read".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),"--json".into()]);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt read failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-reading/v1"){return Err("Factory returned incompatible attempt reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptReading{data}})
+            }
+>>>>>>> 2c3adfcb (feat(cradle): Factory Run-in-Expressions — the run bound as an Expression on its own SSSF structure)
             KernelOp::WorkcellStatusRead => {
                 let workcell=std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
                 let (executable, namespace): (std::path::PathBuf, Option<&str>) = match workcell {
