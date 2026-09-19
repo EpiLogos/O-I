@@ -590,7 +590,7 @@ fn establish_or_disclose_placement_authority(executable: &Path, root: &Path) {
 /// written before the relation, so a recognised relation never points at a
 /// missing policy. Refuses (returns `Err`) rather than clobber an existing
 /// placement relation. Returns the writable project names for the confirmation.
-fn establish_default_placement_policy(root: &Path) -> Result<Vec<String>, String> {
+pub(crate) fn establish_default_placement_policy(root: &Path) -> Result<Vec<String>, String> {
     use serde_json::json;
 
     let mut writable: Vec<String> = Vec::new();
@@ -710,6 +710,78 @@ fn disclose_placement_gap(reason: &str) {
     println!("  until a recognised work-placement-policy (central.work-placement-policy/v1)");
     println!("  is adopted as your own human source.");
     println!("  Re-check after adopting with: oi ctrl action run central.work.policy");
+}
+
+/// Bring a project placed under `Work/` into the ground's work-placement policy
+/// so agent sessions can work in it at once. Best-effort: reads
+/// `central.work.policy`; extends a recognised policy with the project (adding
+/// the grant if missing), or establishes a default covering it when none is yet
+/// recognised. Any failure is silent and never fails the completed placement.
+pub(crate) fn ensure_project_in_placement(executable: &Path, root: &Path, project: &str) {
+    let Ok(output) = Command::new(executable)
+        .arg("--root")
+        .arg(root)
+        .args(["--json", "action", "run", "central.work.policy", "{}"])
+        .output()
+    else {
+        return;
+    };
+    let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
+        return;
+    };
+    match payload.get("ok").and_then(serde_json::Value::as_bool) {
+        Some(true) => {
+            if let Ok(true) = add_grant_to_policy(root, project) {
+                println!("  Added {project} to your work-placement policy; agents can work in it.");
+            }
+        }
+        Some(false)
+            if payload
+                .pointer("/error/code")
+                .and_then(serde_json::Value::as_str)
+                == Some("policy_or_source_denied")
+                && establish_default_placement_policy(root).is_ok() =>
+        {
+            println!(
+                "  Established a default work-placement policy covering Work/, including {project}."
+            );
+        }
+        _ => {}
+    }
+}
+
+/// Add one `Work/<project>` repository grant to an existing recognised policy,
+/// preserving every other field. Returns `true` when a grant was added, `false`
+/// when it was already present. Writes atomically (temp then rename).
+fn add_grant_to_policy(root: &Path, project: &str) -> Result<bool, String> {
+    use serde_json::json;
+
+    let policy_path = root.join("Control/user/placement.json");
+    let raw = std::fs::read_to_string(&policy_path)
+        .map_err(|error| format!("could not read placement policy: {error}"))?;
+    let mut policy: serde_json::Value = serde_json::from_str(&raw)
+        .map_err(|error| format!("placement policy is not valid JSON: {error}"))?;
+    let grants = policy
+        .get_mut("writable")
+        .and_then(serde_json::Value::as_array_mut)
+        .ok_or_else(|| "placement policy has no writable array".to_owned())?;
+    let target = format!("Work/{project}");
+    if grants
+        .iter()
+        .any(|grant| grant.get("path").and_then(serde_json::Value::as_str) == Some(target.as_str()))
+    {
+        return Ok(false);
+    }
+    grants.push(json!({"path": target, "class": "repository"}));
+    let mut text = serde_json::to_string_pretty(&policy)
+        .map_err(|error| format!("could not encode placement policy: {error}"))?;
+    text.push('\n');
+    let temp_path = policy_path.with_extension("json.tmp");
+    std::fs::write(&temp_path, text)
+        .map_err(|error| format!("could not stage placement policy: {error}"))?;
+    std::fs::rename(&temp_path, &policy_path)
+        .map_err(|error| format!("could not update placement policy: {error}"))?;
+    Ok(true)
 }
 
 /// The observed result of the `machine.adopt-current` fresh-ground step.
@@ -1181,5 +1253,33 @@ mod trust_closure_modality_tests {
         ] {
             assert!(parse_install_source_choice(&arg(&rejected)).is_err());
         }
+    }
+
+    #[test]
+    fn add_grant_to_policy_appends_once_and_is_idempotent() {
+        let root = tempfile::TempDir::new().unwrap();
+        let user = root.path().join("Control/user");
+        std::fs::create_dir_all(&user).unwrap();
+        std::fs::write(
+            user.join("placement.json"),
+            r#"{"schema":"central.work-placement-policy/v1","scope_ref":"control:root","writable":[{"path":"Work/One","class":"repository"}],"protected":["Control/user"],"enforcement":"native-actions","required_coverage":["file-content"],"lease_seconds":3600}"#,
+        )
+        .unwrap();
+
+        // First add joins the writable set; a second add is idempotent.
+        assert!(add_grant_to_policy(root.path(), "Two").unwrap());
+        assert!(!add_grant_to_policy(root.path(), "Two").unwrap());
+
+        let policy: serde_json::Value =
+            serde_json::from_slice(&std::fs::read(user.join("placement.json")).unwrap()).unwrap();
+        let paths: Vec<&str> = policy["writable"]
+            .as_array()
+            .unwrap()
+            .iter()
+            .filter_map(|grant| grant["path"].as_str())
+            .collect();
+        assert_eq!(paths, vec!["Work/One", "Work/Two"]);
+        // Pre-existing fields are preserved.
+        assert_eq!(policy["enforcement"], "native-actions");
     }
 }
