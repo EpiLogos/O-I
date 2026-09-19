@@ -73,6 +73,7 @@ const SCENARIOS = {
   "sf6-joined-two-worlds": { module: "scenarios/sf6-joined-two-worlds.mjs", kernel: true, aliases: ["sf6"] },
   "nara-speech": { module: "scenarios/nara-speech.mjs", kernel: true, aliases: ["nara"] },
   "nara-stage-focus": { module: "scenarios/nara-stage-focus.mjs", kernel: true, aliases: ["nara-stage"] },
+
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   modes: { module: "scenarios/modes.mjs", kernel: true, aliases: [] },

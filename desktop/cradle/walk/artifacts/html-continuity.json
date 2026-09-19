@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "html-continuity",
-  "generated_at": "2026-09-19T23:16:46.981Z",
+  "generated_at": "2026-09-19T20:45:30.985Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -10,42 +10,36 @@
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
-      "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "f234bad2cdcf0289fb03edf21d3b33dc909f66b0",
+      "repository_root": "/private/tmp/oi-ci-check",
+      "repository_head": "0970d65d55224ccd158f2ac5ef94aaea21ee57f3",
       "tracked_changes": [
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/contributions/factory/sidebar/sidebar.css",
-        "desktop/cradle/src/expressions/ActiveContext.tsx",
-        "desktop/cradle/src/expressions/TaOntaSide.tsx",
-        "desktop/cradle/src/files/FileSurface.tsx",
         "desktop/cradle/src/material/MaterialSurface.tsx",
-        "desktop/cradle/src/material/lifecycle.ts",
-        "desktop/cradle/src/workspace/store.ts",
-        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-front.png",
-        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-library.png",
-        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-local-whole.png",
-        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-verso.png",
-        "desktop/cradle/walk/artifacts/corpus-return-of-zero.json",
+        "desktop/cradle/walk/artifacts/files-failure.png",
+        "desktop/cradle/walk/artifacts/files.json",
+        "desktop/cradle/walk/artifacts/material-failure.png",
         "desktop/cradle/walk/artifacts/material-html-rendered.png",
-        "desktop/cradle/walk/artifacts/material-image-rendered.png",
-        "desktop/cradle/walk/artifacts/material-markdown-rendered.png",
-        "desktop/cradle/walk/artifacts/material-pdf-state.png",
-        "desktop/cradle/walk/artifacts/material-unsupported-disposition.png",
         "desktop/cradle/walk/artifacts/material.json",
-        "desktop/cradle/walk/artifacts/nara-speech-nara-joined-world.png",
-        "desktop/cradle/walk/artifacts/nara-speech.json",
-        "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
-        "desktop/cradle/walk/artifacts/nara-stage-focus.json",
-        "desktop/cradle/walk/run.mjs"
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-failure.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/workspace-continuity-explore-unavailable-honest.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-sharedfield-surface.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-wiki-page-focus.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity.json",
+        "desktop/cradle/walk/scenarios/html-continuity.mjs"
       ],
-      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
   "passed": false,
-  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/html-continuity.mjs:237:70)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:426:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:502:18",
-  "duration_ms": 33938,
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/private/tmp/oi-ci-check/desktop/cradle/walk/scenarios/html-continuity.mjs:234:70)\n    at async runScenario (/private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:418:5)\n    at async file:///private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:494:18",
+  "duration_ms": 34759,
   "checks": [
     {
       "ok": true,
@@ -53,7 +47,7 @@
       "data": {
         "identity": {
           "title": "Continuity specimen",
-          "token": "sz4jdptg06f.1789859808861",
+          "token": "26y85pzkeuq.1789850732891",
           "stamp": "n0"
         }
       }
@@ -62,15 +56,15 @@
       "ok": true,
       "label": "With the tree stalled, opening a known file still completes (the file path never waits on the tree)",
       "data": {
-        "ms": 57
+        "ms": 155
       }
     },
     {
       "ok": true,
       "label": "C01/tab: the warm tab return is the SAME document instance (token kept, no reload)",
       "data": {
-        "before": "sz4jdptg06f.1789859808861",
-        "after": "sz4jdptg06f.1789859808861"
+        "before": "26y85pzkeuq.1789850732891",
+        "after": "26y85pzkeuq.1789850732891"
       }
     },
     {
@@ -81,26 +75,32 @@
       }
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "C03/mode: the HTML document survives a mode switch away and back — same document, not a rebuild",
       "data": {
-        "token": "sz4jdptg06f.1789859808861",
-        "first": "sz4jdptg06f.1789859808861"
+        "token": "gcuy8flnc2.1789850733356",
+        "first": "26y85pzkeuq.1789850732891",
+        "srcdocEvents": [
+          "SRCDOC CHANGED 0 -> 6056",
+          "SRCDOC CHANGED 0 -> 6038",
+          "SRCDOC CHANGED 0 -> 6056",
+          "SRCDOC CHANGED 0 -> 6038"
+        ]
       }
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "The mode switch parks and re-adopts the same frame node",
       "data": {
-        "stamp": "n0"
+        "stamp": null
       }
     },
     {
-      "ok": true,
+      "ok": false,
       "label": "C04/workspace: returning to the workspace restores the SAME HTML document — the warm set spans workspaces",
       "data": {
-        "token": "sz4jdptg06f.1789859808861",
-        "first": "sz4jdptg06f.1789859808861"
+        "token": "tzsf9s2ljmp.1789850735330",
+        "first": "26y85pzkeuq.1789850732891"
       }
     }
   ],
@@ -108,15 +108,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 34,
-      "data": {
-        "file": "html-continuity-boot-state.png"
-      }
-    },
-    {
-      "ok": true,
-      "op": "capture.screenshot",
-      "duration_ms": 34,
+      "duration_ms": 74,
       "data": {
         "file": "html-continuity-html-open.png"
       }
@@ -124,7 +116,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 32,
+      "duration_ms": 67,
       "data": {
         "file": "html-continuity-tab-return.png"
       }
@@ -132,7 +124,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 84,
       "data": {
         "file": "html-continuity-mode-return.png"
       }
@@ -140,17 +132,16 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 85,
       "data": {
         "file": "html-continuity-workspace-return.png"
       }
     }
   ],
   "metrics": {
-    "warm_tab_return_ms": 84
+    "warm_tab_return_ms": 206
   },
   "screenshots": [
-    "html-continuity-boot-state.png",
     "html-continuity-html-open.png",
     "html-continuity-tab-return.png",
     "html-continuity-mode-return.png",

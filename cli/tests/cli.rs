@@ -57,6 +57,13 @@ if [ "${1:-}" = "doctor" ]; then
   printf '%s\n' '{"ok":false,"status":"invalid_central_structure"}'
   exit 3
 fi
+if [ "${1:-}" = "action" ] && [ "${2:-}" = "run" ] && [ "${3:-}" = "central.work.policy" ]; then
+  case "${FAKE_CENTRAL_POLICY:-}" in
+    adopted) printf '%s\n' '{"ok":true,"status":"success","action":"central.work.policy","data":{"revision":"r","schema":"central.work-placement-policy/v1"}}' ;;
+    absent)  printf '%s\n' '{"ok":false,"status":"unavailable_capability","action":"central.work.policy","error":{"code":"policy_or_source_denied","message":"no recognised root placement policy; record exact policy adoption through Central source operations"}}' ;;
+  esac
+  exit 0
+fi
 exit 0
 "#
     .replace("__INIT_STATUS__", &init_status.to_string());
@@ -297,6 +304,89 @@ fn init_delegates_to_real_central_shape_and_is_idempotent() {
     assert_eq!(state["personal_ground"], ground.display().to_string());
     assert!(state["modules"]["central"].is_object());
     assert!(state.get("central_config").is_none());
+}
+
+#[cfg(unix)]
+#[test]
+fn init_establishes_default_continuous_work_authority() {
+    // A fresh ground with no recognised placement policy is made runnable out of
+    // the box: oi init writes a default policy covering Work/ and records the
+    // recognised relation, so agent sessions no longer stall at the strap.
+    let bin = TempDir::new().unwrap();
+    fake_central(bin.path(), 0);
+
+    let home = TempDir::new().unwrap();
+    let ground = home.path().join("Central");
+    // Give the fresh ground a project under Work/ so the default grants it.
+    fs::create_dir_all(ground.join("Work/Demo")).unwrap();
+    let established = output(
+        oi(home.path(), bin.path())
+            .env("FAKE_CENTRAL_POLICY", "absent")
+            .args(["init", "--personal-ground"])
+            .arg(&ground),
+    );
+    assert!(
+        established.status.success(),
+        "{}",
+        text(&established.stderr)
+    );
+    let told = text(&established.stdout);
+    assert!(
+        told.contains("Established a default work-placement policy"),
+        "init did not establish a default policy; stdout was:\n{told}"
+    );
+
+    // The policy file is written with the placement schema and the project.
+    let policy: Value =
+        serde_json::from_slice(&fs::read(ground.join("Control/user/placement.json")).unwrap())
+            .unwrap();
+    assert_eq!(policy["schema"], "central.work-placement-policy/v1");
+    assert_eq!(policy["enforcement"], "native-actions");
+    let writable: Vec<&str> = policy["writable"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .filter_map(|grant| grant["path"].as_str())
+        .collect();
+    assert!(
+        writable.contains(&"Work/Demo"),
+        "Work/Demo not granted: {writable:?}"
+    );
+
+    // The recognised relation is recorded (human-adopted, architecture-contract).
+    let relations: Value = serde_json::from_slice(
+        &fs::read(ground.join("Control/relations/source-relations.json")).unwrap(),
+    )
+    .unwrap();
+    let relation = relations["relations"]
+        .as_array()
+        .unwrap()
+        .iter()
+        .find(|relation| {
+            relation["roles"].as_array().is_some_and(|roles| {
+                roles
+                    .iter()
+                    .any(|r| r.as_str() == Some("work-placement-policy"))
+            })
+        })
+        .expect("a work-placement-policy relation");
+    assert_eq!(relation["provenance"], "human-adopted");
+    assert_eq!(relation["standing"], "architecture-contract");
+
+    // A ground that already carries a recognised policy is left untouched.
+    let home2 = TempDir::new().unwrap();
+    let ground2 = home2.path().join("Central");
+    let adopted = output(
+        oi(home2.path(), bin.path())
+            .env("FAKE_CENTRAL_POLICY", "adopted")
+            .args(["init", "--personal-ground"])
+            .arg(&ground2),
+    );
+    assert!(adopted.status.success(), "{}", text(&adopted.stderr));
+    assert!(
+        !ground2.join("Control/user/placement.json").exists(),
+        "must not establish a policy when one is already recognised"
+    );
 }
 
 #[cfg(unix)]
