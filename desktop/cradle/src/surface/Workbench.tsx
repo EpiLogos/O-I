@@ -37,10 +37,7 @@ const FactoryCentre=lazy(()=>import("../contributions/factory/FactoryCentre").th
 const SystemPanel=lazy(()=>import("../workspace/SystemPanel").then((module)=>({default:module.SystemPanel})));
 // The mode centre surfaces (workspace/mode.ts) are ordinary bindings in this
 // pane system; each loads with its mode, never at startup.
-// ExpressionsSurface (the in-shell expressions face) is superseded as the
-// centre by the hosted O:I Expressions application, 2026-09-19; its file is
-// retained and still feeds the receiving planes and graph navigator hosts.
-const PointCloudHost=lazy(()=>import("../expressions/PointCloudHost").then((module)=>({default:module.PointCloudHost})));
+const ExpressionsSurface=lazy(()=>import("../expressions/ExpressionsSurface").then((module)=>({default:module.ExpressionsSurface})));
 const TechneSurface=lazy(()=>import("../techne/TechneSurface").then((module)=>({default:module.TechneSurface})));
 const EpiLogosSurface=lazy(()=>import("../epilogos/EpiLogosSurface").then((module)=>({default:module.EpiLogosSurface})));
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
@@ -453,13 +450,7 @@ function SurfaceBodyImpl({
       <FactoryCentre key={binding.id} chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>
     </Suspense>
   );
-  // The Expressions centre is the O:I Expressions application itself — the
-  // Point-Cloud-Demo workspace hosted full-screen through the owner's
-  // material seam (owner direction 2026-09-19). The in-shell Expressions
-  // surface (ExpressionsSurface.tsx) is superseded as the operating face and
-  // retained for its parts (graph navigator, receiving planes) the shell
-  // still mounts elsewhere.
-  if (binding.kind === "expressions") return <PointCloudHost/>;
+  if (binding.kind === "expressions") return <ExpressionsSurface binding={binding}/>;
   if (binding.kind === "techne") return <TechneSurface binding={binding} subject={subject} />;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding} />;
   // Agency manages purpose and usable repertoire; System settings manages the
