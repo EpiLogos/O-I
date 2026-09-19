@@ -11,6 +11,17 @@
  * disclosed constellations as addressable objects; entering one opens its
  * scene with the actual wiki nodes and actual typed relations.
  *
+ * ONE STATE (QL-MEF #213 / O-I #366 EX3A): the projection's reading,
+ * standing document and selection live in `wikiProjectionStore.ts` — the
+ * one relation/selection state. This body is the only kernel actor (open,
+ * focus, drift handling) and writes every result back to the store; the
+ * Technè left body's LIST/TREE/GRAPH apertures and the Expressions graph
+ * navigator render the SAME state and ask for selection through it, and
+ * this body's selection is theirs (the bidirectional law): a sidebar click
+ * consumes as a kernel focus edit here, and a focus here highlights the
+ * same canonical ref in every aperture (`selection.ts` publishes it to the
+ * Expressions navigator).
+ *
  * Node interaction operates on the canonical wiki subject ref throughout:
  * selection is a kernel focus edit on the real document (so agents and the
  * Expressions workspace see the same Expression); the page opens through
@@ -22,8 +33,9 @@
  *
  * Honest states, never fabricated content: no kernel transport, no wiki,
  * relations unavailable, stage disabled, generation drift (the standing
- * projection predates the current reading), and the not-admitted
- * audience-filtered SharedField staging — each is named exactly.
+ * projection predates the current reading), a selection request aimed at a
+ * generation that no longer stands, and the not-admitted audience-filtered
+ * SharedField staging — each is named exactly.
  *
  * The ENTRY SPACE is the Epii face (owner direction 2026-09-19): instrument
  * 0 opens onto the twelve-masks expression — "Twelve faces · one mask"
@@ -42,6 +54,7 @@ import {
   EXPRESSIONS_APP_DIST,
   EXPRESSIONS_APP_ENTRY,
   materialUrl,
+  relayKernelChannel,
   trackShellCutout,
 } from "../expressions/hostedApp";
 import {useVisuals} from "../visuals/ParticleExpression";
@@ -49,21 +62,32 @@ import {visuals} from "../visuals/store";
 import {useExpressionStage, type StagePresentation} from "../stage/ExpressionStage";
 import {expressionConfig} from "../expression/engineProjection";
 import type {ExpressionDocument, ExpressionResult} from "../expression/types";
-import {requestExpressionOpen} from "../expressions/selection";
+import {requestExpressionOpen, consumeExpressionRequest, publishExpressionSelection, useExpressionSelectionState} from "../expressions/selection";
 import {Glyph} from "../workspace/Glyph";
 import {ICON} from "../expressions/icons";
 import {scrollWithin} from "../shared/scrollWithin";
 import {
-  projectWikiExpression,
-  readWikiRegister,
   wikiRegistersFrom,
   type WikiProjection,
   type WikiRegister,
-  type WikiRegisterReading,
 } from "./wikiExpression";
+import {
+  consumeWikiSelectionRequest,
+  ensureWikiProjection,
+  getWikiProjectionState,
+  setWikiProjectionRegister,
+  setWikiProjectionRegisters,
+  useWikiProjectionState,
+  wikiRegisterOwning,
+  wikiProjectionDocumentFocused,
+  wikiProjectionDocumentReady,
+  wikiProjectionDrift,
+  wikiProjectionKernelUnavailable,
+  wikiProjectionOpening,
+  type RegisterStanding,
+} from "./wikiProjectionStore";
 import "./techne.css";
 
-const REGISTER_KEY = "oi-cradle.techne.m0-register.v1";
 const ACTOR = "human:techne-instrument-0";
 /** The window's one composition presentation — the same id the Expressions
  * surface and the composer present under, so the two can never stand at once. */
@@ -71,66 +95,85 @@ const PRESENTATION_ID = "expression-application";
 const short = (revision: string) => revision.length > 18 ? `${revision.slice(0, 16)}…` : revision;
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause);
 
-type ProjectionState =
-  | { phase: "reading"; register: WikiRegister }
-  | { phase: "unavailable"; register: WikiRegister; reason: string }
-  | { phase: "absent"; register: WikiRegister }
-  | { phase: "drift"; register: WikiRegister; standing: ExpressionDocument; projection: WikiProjection; reason: string }
-  | { phase: "ready"; register: WikiRegister; projection: WikiProjection; document: ExpressionDocument };
-
 export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding; subject?: {ref?: string; kind?: string; title: string; project?: string}}) {
   const kernel = useKernel();
   const stage = useExpressionStage();
   const {snapshot: visualsSnapshot} = useVisuals();
-  const registers = useMemo(
-    () => wikiRegistersFrom((kernel.snapshot.navigator?.root?.work.projects ?? []).map(row => ({name: row.name, path: row.path}))),
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-    [kernel.snapshot.navigator?.root?.work.projects],
-  );
-  const [registerKey, setRegisterKey] = useState(() => {
-    const remembered = typeof window !== "undefined" ? window.localStorage.getItem(REGISTER_KEY) : null;
-    if (remembered && registers.some(register => register.key === remembered)) return remembered;
-    return binding.project && registers.some(register => register.key === binding.project) ? binding.project : "central";
-  });
-  useEffect(() => { try { window.localStorage.setItem(REGISTER_KEY, registerKey); } catch { /* per-viewer convenience only */ } }, [registerKey]);
-  const register = registers.find(row => row.key === registerKey) ?? registers[0];
+  const store = useWikiProjectionState();
 
-  const [state, setState] = useState<ProjectionState>({phase: "reading", register});
+  // The registers follow the kernel navigator's disclosed projects — one
+  // publication, every aperture reads the same list.
+  useEffect(() => {
+    setWikiProjectionRegisters(wikiRegistersFrom((kernel.snapshot.navigator?.root?.work.projects ?? []).map(row => ({name: row.name, path: row.path}))));
+  }, [kernel.snapshot.navigator?.root?.work.projects]);
+
+  // Seed the register once (remembered → the workspace's binding project →
+  // Central); afterwards the store remembers across modes and apertures.
+  useEffect(() => {
+    if (store.registerKey !== null || store.registers.length === 0) return;
+    const seed = binding.project && store.registers.some(register => register.key === binding.project)
+      ? binding.project
+      : store.registers.find(register => register.key === "central")?.key ?? store.registers[0].key;
+    setWikiProjectionRegister(seed);
+  }, [store.registerKey, store.registers, binding.project]);
+
+  const registerKey = store.registerKey;
+  const register: WikiRegister | undefined = store.registers.find(row => row.key === registerKey) ?? store.registers[0];
+  const standing: RegisterStanding = (registerKey ? store.standings[registerKey] : undefined) ?? {phase: "idle"};
+  const document = standing.phase === "ready" || standing.phase === "drift" ? standing.document : undefined;
+  const projection: WikiProjection | undefined = "projection" in standing ? standing.projection : undefined;
+
   // The entry face: instrument 0 opens ONTO the Epii expression; the whole
   // (the projection below) is entered from it — and returns.
   const [faceOpen, setFaceOpen] = useState(true);
   const [error, setError] = useState<string | null>(null);
-  const generation = useRef(0);
-  const registerRef = useRef(register);
-  registerRef.current = register;
+  const flowRef = useRef<string | null>(null);
 
-  // ---- read → project → open through the kernel's expression op ----------
-  const focus = useCallback(async (expressionRef: string, expectedRevision: number, sceneRef: string, entityRef: string | null) => {
+  // ---- ensure the reading; open the generation through the kernel --------
+  useEffect(() => {
+    if (!register) return;
+    ensureWikiProjection(register, kernel.transport);
+  }, [register, kernel.transport]);
+
+  const focus = useCallback(async (expressionRef: string, expectedRevision: number, sceneRef: string, entityRef: string | null, attempt = 0) => {
     const reply = await kernelOp(kernel.transport, {op: "expression", request: {
       operation: "edit", expression_ref: expressionRef, expected_revision: expectedRevision, actor: ACTOR,
       changes: [{change: "focus", scene_ref: sceneRef, entity_ref: entityRef}],
     }});
     const data = reply.outcome?.result === "expression" ? reply.outcome.data as ExpressionResult : undefined;
-    if (reply.error || !data?.document) { setError(reply.error ?? "the kernel did not return the focused document"); return; }
-    setError(null);
-    setState(current => (current.phase === "ready" || current.phase === "drift") && (current.phase === "ready" ? current.document : current.standing).expression_ref === data.document!.expression_ref
-      ? current.phase === "ready" ? {...current, document: data.document!} : {...current, standing: data.document!}
-      : current);
+    if (!reply.error && data?.document) {
+      setError(null);
+      const key = wikiRegisterOwning(expressionRef) ?? getWikiProjectionState().registerKey;
+      if (key) wikiProjectionDocumentFocused(key, data.document);
+      return;
+    }
+    // A stale expected revision — a rapid aperture ask during a prior
+    // focus flight, or a concurrent editor: read the standing generation
+    // back and re-apply the focus once. The kernel never replaces an open
+    // draft implicitly and neither do we.
+    if (attempt === 0 && data?.state === "revision_conflict") {
+      const inspect = await kernelOp(kernel.transport, {op: "expression", request: {operation: "inspect", expression_ref: expressionRef}});
+      const standingDocument = inspect.outcome?.result === "expression" ? (inspect.outcome.data as ExpressionResult).document : undefined;
+      if (standingDocument) {
+        const key = wikiRegisterOwning(expressionRef) ?? getWikiProjectionState().registerKey;
+        if (key) wikiProjectionDocumentFocused(key, standingDocument);
+        void focus(expressionRef, standingDocument.revision, sceneRef, entityRef, 1);
+        return;
+      }
+    }
+    setError(reply.error ?? "the kernel did not return the focused document");
   }, [kernel.transport]);
 
   useEffect(() => {
-    const target = registerRef.current;
-    if (!target) return;
-    const ticket = ++generation.current;
-    setState({phase: "reading", register: target});
-    setError(null);
+    if (!register) return;
+    if (standing.phase !== "projected" && !(standing.phase === "opening" && flowRef.current !== register.key)) return;
+    const target = register;
+    const projection = "projection" in standing ? standing.projection : undefined;
+    if (!projection) return;
+    flowRef.current = target.key;
+    wikiProjectionOpening(target.key);
     void (async () => {
       try {
-        const reading: WikiRegisterReading = await readWikiRegister(kernel.transport, target);
-        if (generation.current !== ticket) return;
-        if (reading.state === "absent") { setState({phase: "absent", register: target}); return; }
-        if (reading.state === "unavailable") { setState({phase: "unavailable", register: target, reason: reading.reason}); return; }
-        const projection = projectWikiExpression(reading);
         // A projection whose generation is already open in the kernel STANDS:
         // the kernel never replaces an open draft implicitly, and the
         // standing document — with the person's scene and focus edits — IS
@@ -139,30 +182,86 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
         // over the reading, so a changed wiki basis opens as a new
         // generation rather than silently replacing this one.)
         const standingReply = await kernelOp(kernel.transport, {op: "expression", request: {operation: "inspect", expression_ref: projection.document.expression_ref}});
-        const standing = standingReply.outcome?.result === "expression" ? (standingReply.outcome.data as ExpressionResult).document : undefined;
-        if (standing) { setState({phase: "ready", register: target, projection, document: standing}); return; }
+        const standingDocument = standingReply.outcome?.result === "expression" ? (standingReply.outcome.data as ExpressionResult).document : undefined;
+        if (standingDocument) { wikiProjectionDocumentReady(target.key, standingDocument); return; }
         const reply = await kernelOp(kernel.transport, {op: "expression", request: {operation: "open", document: projection.document, actor: ACTOR}});
-        if (generation.current !== ticket) return;
         const data = reply.outcome?.result === "expression" ? reply.outcome.data as ExpressionResult : undefined;
-        if (reply.error || !data) { setState({phase: "unavailable", register: target, reason: reply.error ?? "the kernel refused to open the projection"}); return; }
+        if (reply.error || !data) { wikiProjectionKernelUnavailable(target.key, reply.error ?? "the kernel refused to open the projection"); return; }
         if (data.state === "revision_conflict") {
           // Unreachable in the ordinary flow (inspect-first above stands the
           // open generation); a race or identity collision lands here. The
           // kernel never replaces an open draft implicitly — read it back
           // and disclose the difference rather than forcing it.
           const conflictReply = await kernelOp(kernel.transport, {op: "expression", request: {operation: "inspect", expression_ref: projection.document.expression_ref}});
-          const standingDoc = conflictReply.outcome?.result === "expression" ? (conflictReply.outcome.data as ExpressionResult).document : undefined;
-          if (standingDoc) { setState({phase: "drift", register: target, standing: standingDoc, projection, reason: "an open draft already carries this generation's identity with different content"}); return; }
-          setState({phase: "unavailable", register: target, reason: "the open projection could not be read back"}); return;
+          const conflictDocument = conflictReply.outcome?.result === "expression" ? (conflictReply.outcome.data as ExpressionResult).document : undefined;
+          if (conflictDocument) { wikiProjectionDrift(target.key, conflictDocument, "an open draft already carries this generation's identity with different content"); return; }
+          wikiProjectionKernelUnavailable(target.key, "the open projection could not be read back");
+          return;
         }
-        if (!data.document) { setState({phase: "unavailable", register: target, reason: "the kernel opened the projection without returning its document"}); return; }
-        setState({phase: "ready", register: target, projection, document: data.document});
+        if (!data.document) { wikiProjectionKernelUnavailable(target.key, "the kernel opened the projection without returning its document"); return; }
+        wikiProjectionDocumentReady(target.key, data.document);
       } catch (cause) {
-        if (generation.current !== ticket) return;
-        setState({phase: "unavailable", register: target, reason: text(cause)});
+        wikiProjectionKernelUnavailable(target.key, text(cause));
+      } finally {
+        if (flowRef.current === target.key) flowRef.current = null;
       }
     })();
-  }, [registerKey, kernel.transport]);
+  }, [register, registerKey, standing.phase, kernel.transport]);
+
+  // ---- aperture requests: a sidebar click IS a focus here ----------------
+  const consumeRequestsRef = useRef({document, focus});
+  consumeRequestsRef.current = {document, focus};
+  useEffect(() => {
+    const request = store.request;
+    if (!request || !registerKey || request.registerKey !== registerKey) return;
+    if (standing.phase !== "ready" && standing.phase !== "drift") return;
+    const current = consumeRequestsRef.current.document;
+    if (!current) return;
+    const scene = current.scenes.find(entry => entry.scene_ref === request.sceneRef);
+    const entityResolves = request.entityRef === null || !!current.entities[request.entityRef];
+    consumeWikiSelectionRequest();
+    if (!scene || !entityResolves) {
+      setError(`That position belongs to a previous generation of the projection — the wiki's basis changed since it was asked for${request.title ? ` (${request.title})` : ""}. Re-enter the constellation and select again.`);
+      return;
+    }
+    setFaceOpen(false);
+    void consumeRequestsRef.current.focus(current.expression_ref, current.revision, request.sceneRef, request.entityRef);
+  }, [store.request, registerKey, standing.phase]);
+
+  // ---- the Expressions navigator's asks on THIS standing document --------
+  // The ask names an expression ref; the projection owning that ref may not
+  // be the active register (any aperture may ask from anywhere). The ask
+  // resolves its own register, brings the projection forward, and focuses.
+  const selectionState = useExpressionSelectionState();
+  useEffect(() => {
+    const request = selectionState.request;
+    if (!request) return;
+    const snapshot = getWikiProjectionState();
+    const owningKey = wikiRegisterOwning(request.expressionRef);
+    if (!owningKey) return;
+    const standing = snapshot.standings[owningKey];
+    const document = standing && (standing.phase === "ready" || standing.phase === "drift") ? standing.document : undefined;
+    if (!document) return;
+    const wanted = consumeExpressionRequest();
+    if (!wanted) return;
+    const sceneRef = wanted.sceneRef && document.scenes.some(entry => entry.scene_ref === wanted.sceneRef) ? wanted.sceneRef : document.selection.scene_ref;
+    const entityRef = wanted.entityRef && document.entities[wanted.entityRef] ? wanted.entityRef : wanted.sceneRef ? null : document.selection.entity_ref;
+    if (snapshot.registerKey !== owningKey) setWikiProjectionRegister(owningKey);
+    setFaceOpen(false);
+    void focus(document.expression_ref, document.revision, sceneRef, entityRef);
+  }, [selectionState.request, focus]);
+
+  // ---- what the centre shows is what every aperture shows ----------------
+  useEffect(() => {
+    if (faceOpen || !document) return;
+    publishExpressionSelection({
+      expressionRef: document.expression_ref,
+      sceneRef: document.selection.scene_ref,
+      entityRef: document.selection.entity_ref,
+      revision: document.revision,
+      title: document.title,
+    });
+  }, [document, faceOpen]);
 
   // ---- the stage presentation: the Expressions workspace's own path ------
   const stageHost = useRef<HTMLDivElement | null>(null);
@@ -170,8 +269,6 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
   const [stageError, setStageError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [retry, setRetry] = useState(0);
-  const document = state.phase === "ready" ? state.document : state.phase === "drift" ? state.standing : undefined;
-  const projection = state.phase === "ready" || state.phase === "drift" ? state.projection : undefined;
   const showing = visualsSnapshot.enabled && !!document;
   const latest = useRef({document});
   latest.current = {document};
@@ -186,9 +283,9 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
     try {
       acquired = stage.present({id: PRESENTATION_ID, plane: "overlay", recipe: "", config: expressionConfig(current), appearance: "host", sceneRef: current.selection.scene_ref, paused: true});
       if (!acquired) {
-        const standing = (stage.inspect().presentations as {id: string}[] | undefined) ?? [];
+        const standingPresentations = (stage.inspect().presentations as {id: string}[] | undefined) ?? [];
         if (stage.error) setStageError(stage.error);
-        else if (standing.length) setStageError(`Another view is presenting on this window's one Expression stage (${standing.map(entry => entry.id).join(", ")}). Close it there, then retry.`);
+        else if (standingPresentations.length) setStageError(`Another view is presenting on this window's one Expression stage (${standingPresentations.map(entry => entry.id).join(", ")}). Close it there, then retry.`);
         return;
       }
       acquired.setContainer(host);
@@ -208,12 +305,12 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
   // Re-present the same field on every document change; while the clock is
   // held the still is LANDED (the Expressions surface's own two-frames law).
   useEffect(() => {
-    const standing = presentation.current;
-    if (!standing || !ready || !document) return;
+    const standingPresentation = presentation.current;
+    if (!standingPresentation || !ready || !document) return;
     try {
-      const apply = () => standing.updateConfig(expressionConfig(document), document.selection.scene_ref, document.selection.entity_ref ? [document.selection.entity_ref] : []);
+      const apply = () => standingPresentation.updateConfig(expressionConfig(document), document.selection.scene_ref, document.selection.entity_ref ? [document.selection.entity_ref] : []);
       apply();
-      standing.command({type: "reset-field"});
+      standingPresentation.command({type: "reset-field"});
       apply();
     } catch (cause) { setStageError(cause instanceof Error ? cause.message : String(cause)); }
   }, [document, ready]);
@@ -259,11 +356,16 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
 
   const notices = projection?.notices ?? [];
   const basis = projection?.document.provenance[0];
+  // The truthful data-state: the kernel flow's preparing phases are still
+  // "reading" to every reader; the named states are the named states.
+  const stateName = standing.phase === "ready" || standing.phase === "drift"
+    ? standing.phase
+    : standing.phase === "unavailable" || standing.phase === "absent" ? standing.phase : "reading";
 
   // The face renders INSIDE the root container: the projection's truthful
   // data-state standing stays on the container for every reader (probes,
   // agents); data-entry names which presentation stands.
-  return <div className="wiki-expression" data-register={register.key} data-state={state.phase} data-expression-ref={document?.expression_ref}
+  return <div className="wiki-expression" data-register={register.key} data-state={stateName} data-expression-ref={document?.expression_ref}
       data-entry={faceOpen ? "epii-face" : "whole"}
       aria-label="Instrument 0 — the wiki local whole as an Expression">
     {faceOpen ? <EpiiFace registerTitle={register.title} onEnterWhole={() => setFaceOpen(false)}/> : <>
@@ -271,17 +373,17 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
       <div className="wx-head-title">
         <label className="oi-field wx-register">
           <span className="oi-eyebrow">Instrument 0 · Project / Wiki / Graph</span>
-          <select className="oi-input" aria-label="Register (whose local whole is projected)" value={register.key} onChange={event => setRegisterKey(event.target.value)}>
-            {registers.map(row => <option key={row.key} value={row.key}>{row.title}</option>)}
+          <select className="oi-input" aria-label="Register (whose local whole is projected)" value={register.key} onChange={event => setWikiProjectionRegister(event.target.value)}>
+            {store.registers.map(row => <option key={row.key} value={row.key}>{row.title}</option>)}
           </select>
         </label>
-        <span className="oi-state wx-basis" data-phase={state.phase} title={basis ? `Wiki basis ${basis.ref} at ${basis.revision}` : undefined}>
-          {state.phase === "reading" && "reading the register's wiki…"}
-          {state.phase === "unavailable" && `wiki reading unavailable: ${state.reason}`}
-          {state.phase === "absent" && "this register discloses no wiki yet — an overview with no constellations, never fabricated objects"}
-          {state.phase === "drift" && `projection drift — ${state.reason}; the standing generation shows`}
-          {state.phase === "ready" && `wiki basis ${short(basis?.revision ?? "")} · ${state.projection.boundRelationCount} typed relations bound`}
-          {state.phase === "ready" && state.projection.adriftRelationCount > 0 && ` · ${state.projection.adriftRelationCount} outside this whole`}
+        <span className="oi-state wx-basis" data-phase={stateName} title={basis ? `Wiki basis ${basis.ref} at ${basis.revision}` : undefined}>
+          {(stateName === "reading") && (standing.phase === "opening" ? "opening the projection in the kernel…" : "reading the register's wiki…")}
+          {stateName === "unavailable" && `wiki reading unavailable: ${(standing as Extract<RegisterStanding, {phase: "unavailable"}>).reason}`}
+          {stateName === "absent" && "this register discloses no wiki yet — an overview with no constellations, never fabricated objects"}
+          {stateName === "drift" && `projection drift — ${(standing as Extract<RegisterStanding, {phase: "drift"}>).reason}; the standing generation shows`}
+          {stateName === "ready" && `wiki basis ${short(basis?.revision ?? "")} · ${projection?.boundRelationCount ?? 0} typed relations bound`}
+          {stateName === "ready" && (projection?.adriftRelationCount ?? 0) > 0 && ` · ${projection?.adriftRelationCount} outside this whole`}
         </span>
       </div>
       <div className="wx-head-tools">
@@ -441,7 +543,7 @@ function WikiSubjectPanel({document, workspaceSubjectRef, onOpenKnowledge, onOpe
     <footer className="wx-subject-tools">
       <button type="button" className="oi-action oi-action-primary" onClick={() => onOpenKnowledge(subject.subject_ref, entity.title)}>Open the page</button>
       {sources[0] && <button type="button" className="oi-action" onClick={() => onOpenSource(sources[0].ref)}>Open the source</button>}
-      <p className="oi-note wx-subject-open-note">The page opens through the frame's knowledge path as a real pane in this arrangement's tree — beside, full, detach and re-dock are the workbench's own controls on it (the kernel's expression-world portal runtime approves the placement).</p>
+      <p className="oi-note wx-subject-open-note">The page opens through the frame's knowledge path into this mode's own tree — the kernel opens the surface and the tree carries it (under the dedicated stage it stands as the tree's hidden state and surfaces through the panel's Active Context); beside, full, detach and re-dock remain the workbench's own controls on the placement.</p>
     </footer>
   </aside>;
 }
@@ -490,6 +592,16 @@ function EpiiFace({registerTitle, onEnterWhole}: {registerTitle: string; onEnter
     const node = frame.current;
     return node ? trackShellCutout(node) : undefined;
   }, [src]);
+
+  // The face's frame rides the same kernel channel as the Expressions
+  // centre (list/inspect/create/edit over the kernel's own op, central
+  // reads through the files seam) — the hosted application speaks to its
+  // kernel through one grammar wherever the shell hosts it.
+  useEffect(() => {
+    const node = frame.current;
+    if (!node) return;
+    return relayKernelChannel(node, kernel.transport);
+  }, [src, kernel.transport]);
 
   return <div className="wx-face" data-state={src ? "ready" : reason ? "refused" : "reading"}>
     <header className="wx-face-head">

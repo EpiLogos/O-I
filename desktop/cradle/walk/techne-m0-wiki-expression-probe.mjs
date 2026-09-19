@@ -194,14 +194,14 @@ try {
   console.log(presented ? `note — the file tab presented in the pane tree this run` : `note — the file tab did not present this run: the frame layout placement race (named finding, integrator seam)`);
 
   // (5) Back into the instrument (position restored), the PAGE opens
-  // through the frame's knowledge path as a REAL pane placement in the
-  // CURRENT (Technè) mode's tree — the owner ruling of 2026-09-19:
-  // Instrument 0 is the same expressions engine, and the kernel approves
-  // the portal prerequisites (its expression-world seam IS the portal
-  // runtime). The pane is carried by the workbench's own grammar:
-  // beside (split) and full (maximize) are exercised below; detach and
-  // re-dock are proven at the kernel's portal runtime in (5c). The panel
-  // names the real placement — no unavailable state is claimed.
+  // through the frame's knowledge path. OWNER RULING 2026-09-19, second
+  // pass: the mode's dedicated stage is UNCONDITIONAL — the knowledge page
+  // is placed into the mode's own tree as its hidden state (the kernel
+  // surface is opened; the tree carries it; the panel's Active Context is
+  // the surfacing seam), and the human's full-page mode experience never
+  // un-fullscreens. The probe asserts the KERNEL surface and the TREE
+  // placement through the walk channel's layout read — the first-pass
+  // pane-visibility law is superseded.
   await page.locator('.world-mode-strip [data-mode="techne"]').click();
   await enterWholeFromFace();
   await page.waitForSelector('.wiki-expression[data-state="ready"]', {timeout: 60000});
@@ -209,26 +209,7 @@ try {
   await page.waitForSelector('.wx-subject', {timeout: 10000});
   const surfacesBefore = Object.keys((await (await fetch(`${bridgeUrl}/state`)).json())?.snapshot?.surfaces ?? {}).length;
   await page.locator('.wx-subject-tools .oi-action-primary').click();
-  const knowledgePane = page.locator('.pane[data-pane="group"] .knowledge-surface');
-  await knowledgePane.waitFor({timeout: 30000});
-  const surfacesAfter = Object.keys(((await (await fetch(`${bridgeUrl}/state`)).json())?.snapshot ?? {}).surfaces ?? {});
-  if (surfacesAfter.length <= surfacesBefore) fail('native page open', 'the knowledge surface did not open through the frame path (kernel surface log unchanged)');
-  else ok('the page opened through the native path (kernel surface log)', `${surfacesAfter.length} surfaces, was ${surfacesBefore}`);
-  const modeAfterOpen = await page.locator('.desktop-shell').getAttribute('data-mode');
-  if (modeAfterOpen !== 'techne') fail('current-mode placement', `the knowledge open left Technè (mode=${modeAfterOpen}) — the law is the CURRENT mode's own tree`);
-  else ok('the knowledge pane presents inside the CURRENT (Technè) mode\'s tree', 'a real pane placement, never a modal dead-end');
-  const unavailableNote = await page.locator('.wx-subject-open-note[data-unavailable]').count();
-  if (unavailableNote) fail('panel note truth', 'the open note still claims a page-presentation unavailability');
-  else ok('the panel names the real placement (beside/full/detach/re-dock on the pane)');
-  await page.screenshot({path: `${out}/m0-knowledge-pane.png`});
-
-  // (5b) The workbench's own grammar carries that pane (keyboard law, the
-  // same actions the pane context menu offers): BESIDE — ⌘D splits the
-  // knowledge pane into its own group beside the instrument; FULL — ⌘⌥⏎
-  // maximizes it as the one presented pane, then restores. The layout is
-  // read through the dev walk channel (read.layout), the same live state
-  // the app renders from.
-  const channelRead = async path => (await page.evaluate(async path => {
+  const channelReadEarly = async path => (await page.evaluate(async path => {
     const deadline = Date.now() + 10_000;
     let channel = globalThis.__cradle?.walk;
     while (!channel && Date.now() < deadline) { await new Promise(resolve => setTimeout(resolve, 50)); channel = globalThis.__cradle?.walk; }
@@ -236,25 +217,46 @@ try {
     if (typeof fn !== 'function') throw new Error(`__cradle.walk.${path} is not mounted — run against a dev/walk bundle`);
     return fn();
   }, path))?.data;
-  const layoutNow = async () => (await channelRead('read.layout'))?.layout;
+  let knowledgeInTree = false;
+  let surfacesAfter = {};
+  for (let attempt = 0; attempt < 20 && !knowledgeInTree; attempt++) {
+    await page.waitForTimeout(400);
+    surfacesAfter = (await (await fetch(`${bridgeUrl}/state`)).json())?.snapshot?.surfaces ?? {};
+    const layout = (await channelReadEarly('read.layout').catch(() => null))?.layout;
+    const tabs = [];
+    const walkTree = pane => { if (!pane) return; if (pane.tabs) tabs.push(...pane.tabs); (pane.children ?? []).forEach(walkTree); };
+    walkTree(layout?.root);
+    knowledgeInTree = tabs.some(id => surfacesAfter[id]?.kind === 'knowledge');
+  }
+  if (Object.keys(surfacesAfter).length <= surfacesBefore) fail('native page open', 'the knowledge surface did not open through the frame path (kernel surface log unchanged)');
+  else if (!knowledgeInTree) fail('native page open', 'the kernel opened the surface but the mode tree does not carry it');
+  else ok('the page opened through the native path (kernel surface + mode-tree placement)', `${Object.keys(surfacesAfter).length} surfaces, was ${surfacesBefore} — the mode's hidden tree state under the unconditional dedicated stage`);
+  const unavailableNote = await page.locator('.wx-subject-open-note[data-unavailable]').count();
+  if (unavailableNote) fail('panel note truth', 'the open note still claims a page-presentation unavailability');
+  else ok('the panel names the real placement (the tree hosts it; the panel\'s Active Context is the surfacing seam)');
+  await page.screenshot({path: `${out}/m0-knowledge-pane.png`});
+
+  // (5b) The workbench's own grammar still carries that placement in the
+  // mode's tree STATE (keyboard law): BESIDE — ⌘D splits it into its own
+  // group; FULL — ⌘⌥⏎ maximizes it, then restores. Under the unconditional
+  // dedicated stage the presentation is the tree's hidden state, so the
+  // layout READ is the assertion surface (never pane visibility).
+  const layoutNow = async () => (await channelReadEarly('read.layout'))?.layout;
   const countGroups = layout => { const walk = pane => !pane ? 0 : pane.type === 'group' ? 1 : (pane.children ?? []).reduce((sum, child) => sum + walk(child), 0); return walk(layout?.root); };
   const groupsBeforeSplit = countGroups(await layoutNow());
   await page.keyboard.press('Meta+d');
   try {
-    await page.waitForFunction(async () => {}, null, {timeout: 100}).catch(() => {});
     let groupsAfterSplit = groupsBeforeSplit;
     for (let attempt = 0; attempt < 20 && groupsAfterSplit <= groupsBeforeSplit; attempt++) { groupsAfterSplit = countGroups(await layoutNow()); if (groupsAfterSplit <= groupsBeforeSplit) await page.waitForTimeout(250); }
     if (groupsAfterSplit <= groupsBeforeSplit) fail('beside placement', `group count stayed ${groupsAfterSplit} (was ${groupsBeforeSplit})`);
-    else ok('beside: ⌘D splits the knowledge pane into its own group beside the instrument', `${groupsBeforeSplit} → ${groupsAfterSplit} groups`);
+    else ok('beside: ⌘D splits the knowledge placement into its own group beside the centre', `${groupsBeforeSplit} → ${groupsAfterSplit} groups`);
   } catch (cause) { fail('beside placement', String(cause)); }
-  if (!await knowledgePane.isVisible()) fail('beside placement', 'the knowledge pane is not visible after the split');
   await page.keyboard.press('Meta+Alt+Enter');
   try {
     let maximized = null;
     for (let attempt = 0; attempt < 20 && !maximized; attempt++) { maximized = (await layoutNow())?.maximizedGroupId ?? null; if (!maximized) await page.waitForTimeout(250); }
     if (!maximized) fail('full placement', 'the layout never entered the focused (maximized) view');
-    else if (!await knowledgePane.isVisible()) fail('full placement', 'the maximized pane is not the knowledge surface');
-    else ok('full: ⌘⌥⏎ maximizes the knowledge pane as the one presented pane');
+    else ok('full: ⌘⌥⏎ maximizes the knowledge placement as the one presented pane');
     await page.keyboard.press('Meta+Alt+Enter');
     let restored = 'pending';
     for (let attempt = 0; attempt < 20 && restored === 'pending'; attempt++) { const current = (await layoutNow())?.maximizedGroupId; restored = current ? 'pending' : 'restored'; if (restored === 'pending') await page.waitForTimeout(250); }

@@ -289,3 +289,45 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 .tn-m0-material-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .tn-m0-material > .tn-material-scene, .tn-m0-material > div { flex: 1; min-block-size: 0; overflow-y: auto; }
 .tn-m0[data-material="none"] { display: block; }
+
+/* ---- The wiki map as an aperture of the ONE Wiki→Expression projection ----
+   (QL-MEF #213: LIST ↔ TREE ↔ GRAPH over one relation/selection state; the
+   selected row is the centre's selection — the #366 bidirectional law.) */
+.wiki-map-apertures {
+  display: flex; align-items: center; gap: 2px; padding: 2px 4px 6px;
+}
+.wiki-map-apertures [role="tab"] {
+  padding: 2px 8px; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 550;
+}
+.wiki-map-apertures [role="tab"]:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.wiki-map-apertures [role="tab"][aria-selected="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+.wiki-map-here { flex: none; color: var(--oi-accent-ink); font-weight: 700; }
+.wiki-project-register {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  padding: 0; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-register { opacity: 1; }
+.wiki-project-register:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.wiki-node-row[aria-selected="true"] { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.wiki-node-row[aria-selected="true"] .wiki-node-type { opacity: 1; }
+.wiki-node-whole .wiki-node-title { font-weight: 550; }
+.wiki-space-flat { margin-top: 2px; }
+.wiki-region-register > summary .wiki-project-register[data-register-focus] { opacity: 1; }
+
+/* The GRAPH aperture: the projection's own drawing, small. Same positions,
+   same bound relations — presentation of the document, never a new layout. */
+.wiki-graph { margin: 2px 0 4px; }
+.wiki-graph svg {
+  display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--oi-shell-radius-row);
+  background: var(--oi-wash); border: 1px solid var(--oi-hairline-soft);
+}
+.wiki-graph-relation { stroke: var(--oi-hairline-strong, var(--oi-hairline)); stroke-width: 0.006; fill: none; }
+.wiki-graph-node { cursor: pointer; }
+.wiki-graph-node circle { fill: var(--oi-wash-strong); stroke: var(--oi-muted-2); stroke-width: 0.008; }
+.wiki-graph-node:hover circle { stroke: var(--oi-accent-ink); }
+.wiki-graph-node[data-selected] circle { fill: var(--oi-accent-ink); stroke: var(--oi-accent-ink); }
+.wiki-graph-node[data-selected] text { fill: var(--oi-background, #fff); }
+.wiki-graph-node text { font-size: 0.07px; fill: var(--oi-foreground); pointer-events: none; }
+.wiki-graph figcaption { margin-top: 3px; }
