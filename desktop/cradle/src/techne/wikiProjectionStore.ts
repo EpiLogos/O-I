@@ -29,6 +29,7 @@ import type {ExpressionDocument} from "../expression/types";
 import {
   projectWikiExpression,
   readWikiRegister,
+  wikiPathOf,
   type WikiProjection,
   type WikiRegister,
   type WikiRegisterReading,
@@ -228,6 +229,82 @@ export function wikiRegisterOwning(expressionRef: string): string | null {
     if (wikiDocumentOf(standing)?.expression_ref === expressionRef) return key;
   }
   return null;
+}
+
+// ---- currentness: the file_changed seam ------------------------------------
+
+/** Receipts already applied — deduped exactly like the files broker's own
+ * cursor, so the shell's replayed receipt bursts invalidate once. */
+let appliedWikiReceiptSeq = 0;
+/** One generation per in-flight re-read, per register: a burst of writes to
+ * the same wiki basis lets only the newest re-read write the standing back. */
+const rereadGenerations = new Map<string, number>();
+
+/** A kernel `file_changed` receipt whose path is a register's wiki basis
+ * invalidates that register's cached reading (the seam the 13-step walk
+ * named): the store re-reads the local whole and re-projects, and the
+ * centre's open flow stands the new generation — the projection identity is
+ * content-addressed over the reading, so a changed wiki is a new generation;
+ * the kernel never replaces the standing draft. The stale-while-revalidate
+ * law is the files broker's own: the standing stays visible to every
+ * aperture while the fresh read flies. Returns the register keys
+ * invalidated. Any other event, an already-applied seq, or a path no
+ * register reads is not this store's concern. */
+export function applyWikiProjectionReceipt(
+  receipt: {event: string; path?: unknown; seq: number},
+  transport: KernelTransportStatus,
+): string[] {
+  if (receipt.event !== "file_changed") return [];
+  if (typeof receipt.seq !== "number" || !Number.isFinite(receipt.seq) || receipt.seq <= appliedWikiReceiptSeq) return [];
+  appliedWikiReceiptSeq = Math.max(appliedWikiReceiptSeq, receipt.seq);
+  if (typeof receipt.path !== "string" || receipt.path.length === 0) return [];
+  const invalidated: string[] = [];
+  for (const register of state.registers) {
+    if (wikiPathOf(register) !== receipt.path) continue;
+    const standing = state.standings[register.key];
+    if (!standing || standing.phase === "idle" || standing.phase === "reading") continue;
+    invalidated.push(register.key);
+    void rereadWikiRegister(register, transport);
+  }
+  return invalidated;
+}
+
+/** The re-read behind an invalidation: whatever the fresh read returns
+ * replaces the cache — a fresh reading re-stands as "projected" (the centre
+ * opens its new generation), an honest absence or refusal replaces a cache
+ * that no longer has a basis, and a failed re-read under a standing document
+ * is named as drift rather than silently keeping a currentness claim. */
+async function rereadWikiRegister(register: WikiRegister, transport: KernelTransportStatus) {
+  const generation = (rereadGenerations.get(register.key) ?? 0) + 1;
+  rereadGenerations.set(register.key, generation);
+  let fresh: WikiRegisterReading;
+  try {
+    fresh = await readWikiRegister(transport, register);
+  } catch (cause) {
+    // A read that throws (a malformed basis, a refused listing) is an
+    // unavailable reading, never a silent keep of the stale cache.
+    fresh = {state: "unavailable", reason: text(cause)};
+  }
+  try {
+    const standing = state.standings[register.key];
+    if (!standing || standing.phase === "idle" || standing.phase === "reading") return;
+    if (rereadGenerations.get(register.key) !== generation) return;
+    if (fresh.state === "absent") { setStanding(register.key, {phase: "absent"}); return; }
+    if (fresh.state === "unavailable") {
+      if (standing.phase === "ready" || standing.phase === "drift") {
+        wikiProjectionDrift(register.key, standing.document, `the wiki basis changed and the fresh reading could not be served (${fresh.reason}); the standing generation shows`);
+        return;
+      }
+      setStanding(register.key, {
+        phase: "unavailable", reason: fresh.reason,
+        ...("projection" in standing && standing.projection ? {projection: standing.projection} : {}),
+      });
+      return;
+    }
+    setStanding(register.key, {phase: "projected", reading: fresh, projection: projectWikiExpression(fresh)});
+  } catch {
+    // The standing generation stays exactly as it was.
+  }
 }
 
 // ---- selection requests (the aperture → centre direction) ------------------

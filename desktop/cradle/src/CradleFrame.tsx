@@ -51,6 +51,7 @@ const LibraryBrowser=lazy(()=>import("./library/LibraryBrowser").then(module=>({
 import { TechneSummonSurface } from "./library/techneSummon";
 import { readFile } from "./files/client";
 import { acquireFileReading, acquireFileBytes, applyReceipt } from "./files/resources";
+import { applyWikiProjectionReceipt } from "./techne/wikiProjectionStore";
 import { detectFormat } from "./material/detect";
 import type { CentralLocation, NativeFileReading } from "./kernel/types";
 import { WorldNavigator } from "./surfaces/navigator/WorldNavigator";
@@ -141,9 +142,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // broker's resident readings for the changed file, so the next acquire is
   // a real owner read while consumers keep their last reading visible.
   // applyReceipt dedupes by its own cursor; feeding every receipt is safe.
+  // The wiki projection store rides the same feed: a changed register wiki
+  // basis invalidates its cached reading and re-projects (its own dedupe).
   useEffect(() => {
-    for (const receipt of kernel.receipts) applyReceipt(receipt);
-  }, [kernel.receipts]);
+    for (const receipt of kernel.receipts) {
+      applyReceipt(receipt);
+      applyWikiProjectionReceipt(receipt, kernel.transport);
+    }
+  }, [kernel.receipts, kernel.transport]);
   // A PENDING binding restored after a restart has no in-flight open behind
   // it — the process that owned the acquisition is gone. Retire each one
   // exactly once through the ordinary open path: the tab keeps its place in
