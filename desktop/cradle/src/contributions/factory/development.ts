@@ -1,5 +1,6 @@
 import {kernelOp} from "../../kernel/bridge";
 import type {KernelTransportStatus} from "../../kernel/types";
+import type {FactoryBuildView} from "./types";
 /** The owner's developmental reads (queue cell 3): every payload is the
  * Factory CLI's own (`factory.project-reading/v1`,
  * `factory.workflow-unit-list-reading/v1`, …), carried verbatim. The state
@@ -16,6 +17,22 @@ export async function workcellStatus(transport:KernelTransportStatus):Promise<Wo
   const result=await kernelOp(transport,{op:"workcell_status_read"});
   if(result.error || result.outcome?.result!=="workcell_status_reading")throw new Error(result.error??"Workcell status is unavailable");
   return result.outcome.data as WorkcellStatus;
+}
+
+/** The host checks the contract shape before handing the payload over: the
+ * kernel carries the owner's snapshot document (contract + provenance + view)
+ * and the board renders the view inside it — or a bare view served directly.
+ * One check for every desk consumer. */
+export function buildViewOf(value:unknown):FactoryBuildView|undefined {
+  const isView=(candidate:unknown):candidate is FactoryBuildView=>{
+    const view=candidate as Partial<FactoryBuildView>|null;
+    return !!view&&typeof view==="object"&&!!view.project&&typeof view.project.projectRef==="string"&&
+      !!view.run&&typeof view.run.runRef==="string"&&Array.isArray(view.claims)&&Array.isArray(view.candidates)&&
+      Array.isArray(view.humanRequests)&&Array.isArray(view.trajectories);
+  };
+  if(isView(value))return value;
+  const document=value as {view?:unknown}|undefined;
+  return isView(document?.view)?document.view:undefined;
 }
 
 /** The re-pinned build view (queue cell B): the owner CLI reads it as

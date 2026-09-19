@@ -14,7 +14,14 @@
  * page/graph plane with its origin graph — never a cloned payload.
  */
 
-const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'system', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation'];
+// `factory` was mounted by the Workbench but missing here, so a workspace saved
+// with the Factory development tab open lost that binding on decode; the
+// workspace store treats a dropped binding as an unrestorable book and fell
+// into recovery on the next launch. `expressions` and `techne` are the mode
+// centre surfaces (workspace/mode.ts): singleton, owner-less presentation
+// bindings like `system`/`explore` — their state lives with their own owners
+// and per-viewer stores, never in the binding.
+const SURFACE_KINDS = ['source', 'sources', 'knowledge', 'file', 'encounter', 'system', 'browser', 'terminal', 'flow', 'draft', 'blank', 'instrument', 'explore', 'presentation', 'factory', 'expressions', 'techne', 'epi-logos', 'agency'];
 const ENCOUNTER_PLANES = ['Conversation', 'Activity', 'Context', 'Inspect'];
 const KNOWLEDGE_PLANES = ['graph', 'page'];
 
@@ -96,7 +103,12 @@ export function validPane(raw, surfaces) {
     if (tabs.length !== o.tabs.length) return null;
     const pinned = o.pinned.filter((p) => typeof p === 'string' && tabs.includes(p));
     const active = typeof o.active === 'string' && tabs.includes(o.active) ? o.active : null;
-    const g = { type: 'group', id: o.id, tabs, pinned, active, emptySlot: o.emptySlot === true && tabs.length === 0 ? true : undefined };
+    // The tab pin model is per pane: a pane restores unpinned / pinned-vertical
+    // and the geometry an unpinned pane reveals in. Pinned-horizontal is the
+    // absent default; an unknown name is dropped, never guessed.
+    const tabPresentation = o.tabPresentation === 'pinned-vertical' || o.tabPresentation === 'unpinned' ? o.tabPresentation : undefined;
+    const tabPinOrientation = o.tabPinOrientation === 'vertical' ? 'vertical' : undefined;
+    const g = { type: 'group', id: o.id, tabs, pinned, active, emptySlot: o.emptySlot === true && tabs.length === 0 ? true : undefined, tabPresentation, tabPinOrientation };
     return g;
   }
   if (o.type === 'split' && (o.dir === 'h' || o.dir === 'v') && Array.isArray(o.children)) {

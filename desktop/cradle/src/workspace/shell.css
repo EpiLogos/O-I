@@ -6,7 +6,7 @@
  * end of packages/oi-design-system/tokens.css exists for exactly this.
  */
 
-.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) 100%); color: var(--oi-accent-ink); }
+.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) calc(100% - var(--desktop-right-width, 0px)), var(--oi-agent-ground) calc(100% - var(--desktop-right-width, 0px)) 100%); color: var(--oi-accent-ink); }
 .shell-topbar { flex: none; display: flex; align-items: center; gap: var(--oi-space-2); height: 40px; padding: 0 var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); user-select: none; }
 .desktop-shell[data-native="true"] .shell-topbar { padding-left: 84px; }
 .shell-topbar button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border-radius: var(--oi-radius-sm); color: var(--oi-muted); }
@@ -69,18 +69,25 @@
 .desktop-regions[data-boot="true"] .desktop-centre { transition: none !important; }
 .desktop-side.depth-strip, .desktop-side.depth-collapsed { width: 0; margin: 0; border: 0; overflow: hidden; }
 
+/* Owner refinement 2026-09-18 (second pass): the side planes are continuous
+ * grounds, not boxes. Each runs edge-to-edge on its own side — top, bottom
+ * and outer edge flush with the window, the ground exact (no translucency
+ * over the shell, no tint, no keyline of its own) — so there is no colour,
+ * size or shape disjoint anywhere they stand. The container reads through
+ * the canvas card's bevel alone, which floats in the shell gutter between
+ * the two continuous strips. */
 .desktop-side.left.depth-panel, .desktop-side.left.depth-full {
-  margin: var(--oi-shell-gutter) 0 var(--oi-shell-gutter) var(--oi-shell-gutter);
+  margin: 0;
   background: var(--oi-sidebar-ground);
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: var(--oi-shell-radius);
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
 }
 .desktop-side.right.depth-panel, .desktop-side.right.depth-full {
-  margin: var(--oi-shell-gutter) var(--oi-shell-gutter) var(--oi-shell-gutter) 0;
+  margin: 0;
   background: var(--oi-agent-ground);
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: var(--oi-shell-radius);
+  border: 0;
+  border-radius: 0;
   overflow: hidden;
 }
 
@@ -100,6 +107,9 @@
 .desktop-side.right[data-overlay="true"] {
   position: absolute;
   inset: var(--oi-shell-gutter) var(--oi-shell-gutter) var(--oi-shell-gutter) auto;
+  /* The drawer's spacing comes from its inset alone; the panel margin stays
+   * cleared so the two never stack. */
+  margin: 0;
   height: auto;
   z-index: var(--oi-z-drawer);
   box-shadow: var(--oi-shadow-drawer);
@@ -158,6 +168,15 @@
 .region-resizer.right { left: -4px; } .region-resizer.right::after { right: 4px; }
 .region-resizer:hover::after, .region-resizer:focus-visible::after, .region-resizer[data-dragging="true"]::after { background: var(--oi-ink); }
 .region-resizer:focus-visible { outline: none; }
+/* Live width readout at the separator while a drag holds it: one small pill
+   beside the line, so the size being chosen is visible while it is chosen. */
+.region-resize-badge{position:absolute;top:50%;transform:translateY(-50%);padding:3px 8px;border-radius:7px;background:var(--oi-active-ground,var(--oi-accent-ink));color:var(--oi-active-ink,var(--oi-canvas-ground));font-size:var(--oi-shell-type-ui);font-variant-numeric:tabular-nums;line-height:1;pointer-events:none;white-space:nowrap;z-index:3;box-shadow:var(--oi-shadow-menu)}
+.region-resizer.left .region-resize-badge{left:calc(100% + 8px)}
+.region-resizer.right .region-resize-badge{right:calc(100% + 8px)}
+
+/* Base readability (owner direction 2026-09-18): sidebar icons read one step
+ * up, in both regions, matching the raised type ladder. */
+.desktop-side.left svg, .desktop-side.right svg { width: 16px; height: 16px; }
 
 /* The naming bar sits above .desktop-regions in the DOM but paints below its pane chrome (the pane tab strip's tools cover the Create/Save buttons); give it its own stacking place above the shell chrome. */
 .workspace-name { position: relative; z-index: 60; display: flex; gap: var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); padding: var(--oi-space-2); background: var(--oi-sidebar-ground); }
@@ -201,7 +220,10 @@
  * the one rule set for the footer; earlier generations are removed.
  */
 .workspace-footer-edge { position: relative; flex: none; height: var(--oi-footer-edge); overflow: visible; z-index: var(--oi-z-nav-top); transition: height var(--oi-motion-plane) var(--oi-motion-ease-out); }
-.workspace-footer-edge::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--oi-footer-approach); }
+/* The approach zone is a courtesy target over the shell's own ground; it must
+ * never intercept hovers owed to pane chrome — the canvas card sits flush
+ * above this edge, and its own 3px footer strip is the surface under this zone. */
+.workspace-footer-edge::before { content: ""; position: absolute; left: 0; right: 0; bottom: 0; height: var(--oi-footer-approach); pointer-events: none; }
 .canvas-arrangement { position: relative; height: var(--oi-footer-height); min-height: var(--oi-footer-height); flex: none; display: flex; flex-wrap: nowrap; align-items: center; gap: var(--oi-space-2); padding: 0 var(--oi-space-2); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: linear-gradient(to right, var(--oi-sidebar-ground) 0, var(--oi-sidebar-ground) var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width)); font-size: var(--oi-shell-type-ui); opacity: 0; pointer-events: none; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .workspace-footer-edge:is(:hover, :focus-within), .workspace-footer-edge[data-pinned="true"] { height: var(--oi-footer-height); }
 .workspace-footer-edge:is(:hover, :focus-within) .canvas-arrangement, .workspace-footer-edge[data-pinned="true"] .canvas-arrangement { opacity: 1; pointer-events: auto; }
@@ -223,6 +245,21 @@
  * reads in ink, unpressed in the row's muted register. */
 .canvas-arrangement .footer-pin { margin-left: auto; }
 .canvas-arrangement .footer-pin[aria-pressed="true"] { color: var(--oi-accent-ink); background: var(--oi-wash); }
+/* Owner ruling 2026-09-17: workspace messaging lives hidden in the status
+ * disclosure at the row's right end, beside the pin. A standing message
+ * only marks the arrow — the edge never opens on its behalf, so an error
+ * can never hold the footer permanently pinned. */
+.canvas-arrangement .footer-status summary { width: 22px; height: 22px; align-items: center; justify-content: center; }
+.canvas-arrangement .footer-status[data-attention="true"] summary { color: var(--oi-accent-ink); background: var(--oi-wash); }
+/* While a footer menu stands it must read above the floating planes (the
+ * right region stacks at --oi-z-drawer); the edge rises with it and only
+ * for as long as the menu is open. */
+.workspace-footer-edge:has(details.desktop-menu[open]) { z-index: calc(var(--oi-z-drawer) + 1); }
+.footer-status-message { display: flex; align-items: flex-start; gap: 6px; margin: 0; padding: 6px 8px; max-width: 360px; font-size: var(--oi-shell-type-ui); line-height: 1.5; color: var(--oi-muted-2); }
+.footer-status-message[role="alert"] { color: var(--oi-accent-ink); }
+.footer-status-message > span { min-width: 0; overflow-wrap: anywhere; }
+.footer-status-dismiss { flex: none; display: inline-flex; align-items: center; justify-content: center; width: 16px; height: 16px; margin-top: 1px; padding: 0; border-radius: 3px; color: var(--oi-muted-2); opacity: .55; }
+.footer-status-dismiss:hover, .footer-status-dismiss:focus-visible { opacity: 1; color: var(--oi-accent-ink); background: var(--oi-wash); }
 @media (max-width: 640px) {
   .canvas-arrangement { gap: 5px; padding: 0 6px; }
   .canvas-arrangement .workspace-select { max-width: 40%; }
@@ -274,9 +311,6 @@
 
 .native-file-surface { display: flex; flex: 1; flex-direction: column; min-width: 0; min-height: 0; height: 100%; background: var(--oi-canvas-ground); }
 
-.workspace-recovery { flex: none; padding: 12px 20px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); background: var(--oi-sidebar-ground); font-size: var(--oi-shell-type-prose); }
-.workspace-recovery p { margin: 0 0 8px; }
-.workspace-recovery button { margin-right: 12px; min-height: 28px; }
 .canvas-arrangement button, .central-heading button { min-width: var(--oi-shell-control); min-height: var(--oi-shell-control); }
 
 .file-history, .file-conflict, .file-recovery { flex: none; max-height: 40%; overflow: auto; padding: 12px 20px; font-size: var(--oi-shell-type-prose); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
@@ -332,22 +366,31 @@
 .system-panel .ground-chooser form { grid-template-columns: minmax(0, 1fr) auto; align-items: end; }
 .system-panel .ground-chooser form button { min-height: 30px; }
 
-/* Owner cleanup: a continuous left ground and a quieter window strip. */
+/* Owner refinement 2026-09-18: the quiet window strip stays; the side
+ * planes are continuous grounds of their own (see the depth-panel rules —
+ * edge-to-edge, exact ground, no box). The window row stays free of heavy
+ * chrome in every state; the corner cutouts do the only top-edge work. */
 .shell-topbar { height: 28px; border-bottom: 0; background: transparent; }
 .shell-topbar button { width: 26px; height: 26px; }
-.desktop-side.left.depth-panel, .desktop-side.left.depth-full { margin: 0; border: 0; border-radius: 0; }
 @media (pointer: coarse) { .shell-topbar { height: 38px; } .shell-topbar button { width: 34px; height: 34px; } }
 
 @media (prefers-reduced-motion: reduce) {
   .desktop-side, .desktop-centre, .region-resizer::after { transition-duration: 0.01ms; }
 }
 
-/* The geometry hook drives both chrome masks and panel bounds per frame. */
+/* The geometry hook drives both chrome masks and panel bounds per frame.
+ * Geometry only — the planes' chrome (glass ground, bevel, keyline) is the
+ * depth-panel/depth-full rules' to declare, so the two never diverge. */
 .desktop-shell .desktop-side {transition:none;overflow:hidden;will-change:auto}
-.desktop-shell .desktop-side.left {position:relative;inset:auto;width:var(--desktop-left-width)!important;max-width:none;margin:0;border:0;border-radius:0}
-.desktop-shell .desktop-side.right {position:absolute;inset:0 0 0 auto;width:var(--desktop-right-width)!important;margin:0;border:0;border-radius:0;z-index:var(--oi-z-drawer)}
+.desktop-shell .desktop-side.left {position:relative;inset:auto;width:var(--desktop-left-width)!important;max-width:none}
+.desktop-shell .desktop-side.right {position:absolute;inset:0 0 0 auto;width:var(--desktop-right-width)!important;z-index:var(--oi-z-drawer)}
 .desktop-shell .desktop-side.right > .desktop-side-content {width:100%;min-width:0}
-.desktop-shell .desktop-regions::after {content:"";width:var(--desktop-right-space);flex:none;pointer-events:none}
+/* The spacer reserves room ONLY where the panel actually floats over this
+ * row (canvas modes' absolute panel — see the agent-plane regime below; the
+ * in-flow component-mode panel takes its layout room itself, so a reserved
+ * band here shoved the panel off the right edge and doubled it with the
+ * gradient's agent ground). Default: no reservation. */
+.desktop-shell .desktop-regions::after {content:"";width:0px;flex:none;pointer-events:none}
 .desktop-shell .region-resizer::after {content:none}
 .desktop-shell .desktop-side.left[data-overlay="true"] {position:absolute;inset:0 auto 0 0;z-index:var(--oi-z-drawer)}
 .desktop-shell[data-resizing] iframe {pointer-events:none}
@@ -359,7 +402,10 @@
 @media(min-width:760px) and (pointer:fine){
  .desktop-shell .desktop-centre:has(.tab-strip){margin-top:-28px;position:relative;z-index:1}
  .desktop-shell .desktop-centre .surface-host{padding-top:0}
- .desktop-shell .shell-topbar{position:relative;z-index:2;pointer-events:none}
+ /* The window row rides above every region — including the floating
+    expressions/techne panel (drawer z) — so the corner toggles stay
+    visible and clickable in every mode, exactly as in Factory. */
+ .desktop-shell .shell-topbar{position:relative;z-index:calc(var(--oi-z-drawer) + 1);pointer-events:none}
  .desktop-shell .shell-topbar button,.desktop-shell .shell-topbar select{pointer-events:auto}
  .desktop-shell [data-window-corner="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
  .desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:32px}
@@ -369,11 +415,13 @@
 .desktop-regions[data-right-full="true"] .desktop-centre .tab-strip{opacity:0;pointer-events:none}
 
 .desktop-shell{--shell-window-reserve:42px}.desktop-shell[data-native="true"]{--shell-window-reserve:116px}
-.desktop-centre{margin-left:3px;margin-right:3px;margin-bottom:2px}
-.desktop-centre .surface-host{padding-left:3px;padding-right:3px;padding-bottom:2px}
+/* Owner cleanup 2026-09-17: the canvas card sits on the footer edge — the
+   2px bottom margins left a white hairline under the canvas at rest. */
+.desktop-centre{margin-left:3px;margin-right:3px;margin-bottom:0}
+.desktop-centre .surface-host{padding-left:3px;padding-right:3px;padding-bottom:0}
 .central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
 .shell-topbar{padding-right:3px}.shell-agent-toggle{margin-left:5px}
-@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:38px}}
+@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:-24px;position:relative;z-index:1}.desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:38px}}
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
    reserve (traffic lights when native, the navigator toggle otherwise),
@@ -383,8 +431,12 @@
 @media(min-width:760px) and (pointer:fine){
  .desktop-shell [data-window-corner="true"]{
   --window-cutout:max(0px,calc(var(--shell-window-reserve) - var(--desktop-left-width)));
-  --window-cutout-right:max(0px,calc(42px - var(--desktop-right-width,0px)));
-  clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--oi-shell-tabbar),100% 100%,0 100%,0 var(--oi-shell-tabbar),var(--window-cutout) var(--oi-shell-tabbar));
+  /* Owner ruling 2026-09-19: 4.5px more clearance both ways at the right
+     corner — the cut reaches further left AND further down, so the agent
+     toggle sits in open corner space. */
+  --window-cutout-right:max(0px,calc(52.5px - var(--desktop-right-width,0px)));
+  --window-corner-depth:calc(var(--oi-shell-tabbar) + 4.5px);
+  clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--window-corner-depth),100% 100%,0 100%,0 var(--window-corner-depth),var(--window-cutout) var(--window-corner-depth));
  }
  .desktop-shell [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
 }
@@ -398,3 +450,286 @@
  .desktop-shell .desktop-side.right.depth-full{top:-24px;padding-top:24px;box-sizing:border-box}
 }
 .desktop-shell:has(.desktop-regions[data-right-full="true"]) .shell-topbar{z-index:calc(var(--oi-z-drawer) + 2)}
+
+/* ---------------------------------------------------------------------------
+ * Workspace modes (workspace/mode.ts): the mode strip itself now lives at the
+ * World navigator's bottom row — `.world-mode-strip` in navigator.css, beside
+ * its host row `.world-system`. Kept here: the checked markers the footer's
+ * fallback mode/tab menu items share with the strip's radiogroup semantics.
+ */
+.desktop-menu .oi-menu-item[aria-checked="true"] { font-weight: 550; }
+.desktop-menu .oi-menu-item[aria-checked="true"]::after { content: ""; flex: none; width: 4px; height: 8px; margin-left: auto; border-right: 1.4px solid currentColor; border-bottom: 1.4px solid currentColor; transform: rotate(40deg) translateY(-1px); }
+.desktop-menu .oi-menu-item[aria-checked="true"]:has(kbd)::after { margin-left: 6px; order: 3; }
+
+/* A binding that could not open: a named state inside its own surface body,
+ * on the canvas ground so nothing of a half-mounted body reads through. */
+.desktop-shell .surface-open-failure[role="alert"] { position: absolute; inset: 0; z-index: 3; display: flex; flex-direction: column; align-items: center; justify-content: center; gap: 12px; margin: 0; padding: 24px; border: 0; border-radius: 0; background: var(--oi-canvas-ground); text-align: center; }
+.desktop-shell .surface-open-failure > p { max-width: 52ch; margin: 0; font-size: var(--oi-shell-type-body); line-height: 1.6; color: var(--oi-accent-ink); overflow-wrap: anywhere; }
+
+/* World context (workspace/store.ts WorldContext): the selected world and the
+ * route back, in the sidebar head, in every mode. Quiet text; ink on hover. */
+.world-context { flex: none; display: flex; flex-direction: column; gap: 2px; margin: -8px 10px 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.world-context-world { display: flex; align-items: center; gap: 6px; min-height: 22px; padding-left: 6px; }
+.world-context-world > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--oi-accent-ink); }
+.world-context-world > .oi-tool { width: 18px; height: 18px; min-width: 18px; min-height: 18px; }
+.world-context-return { display: flex; align-items: center; gap: 6px; min-height: 24px; padding: 0 6px; border-radius: 5px; text-align: left; color: var(--oi-accent-ink); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.world-context-return > svg { flex: none; transform: scaleX(-1); }
+.world-context-return > span { min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.world-context-return:hover, .world-context-return:focus-visible { background: var(--oi-wash); }
+.mode-strip-host { flex: none; margin: 0 10px; }
+
+/* The Library overlay: one summonable sheet over any mode, never a page. */
+.library-overlay { position: fixed; inset: 0; z-index: var(--oi-z-popover); display: grid; place-items: start center; padding-top: min(12vh, 96px); }
+.library-overlay[hidden] { display: none; }
+.library-scrim { position: absolute; inset: 0; width: 100%; height: 100%; border: 0; background: color-mix(in srgb, var(--oi-ink) 19%, transparent); cursor: default; }
+.library-sheet { position: relative; width: min(760px, calc(100vw - 32px)); height: min(640px, calc(100vh - 160px)); display: flex; flex-direction: column; overflow: hidden; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 10px; background: var(--oi-sidebar-ground); box-shadow: var(--oi-shadow-menu); }
+
+/* `.desktop-shell button { padding: 0 }` ties `.oi-segment > button` on
+ * specificity and wins by source order, crushing segment labels together;
+ * the segment's own padding is restored at matching weight. */
+.desktop-shell .oi-segment > button { padding: 0 7px; }
+.mode-strip-host { padding: 10px 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+
+/* The shell and its structural boxes can never be scrolled — not by the
+ * person, and not programmatically (focus(), scrollIntoView() and anchor
+ * jumps all scroll `overflow:hidden` boxes; `clip` cannot be scrolled at
+ * all). Regions inside own their scrolling. */
+/* NOT `.desktop-regions`: the centre sits 24px above that box on purpose
+ * (negative margin, sharing the window row with the tab strip); clipping it
+ * slices the top of the tab bar. It has no overflow of its own, so it cannot
+ * be scrolled anyway. */
+html, body, #root, .desktop-shell { overflow: clip; }
+.desktop-centre, .desktop-centre > .workbench, .surface-host { overflow: clip; overflow-clip-margin: 0px; }
+
+/* Expressions alignment: the current mode, the current project view and a
+ * pressed pane tool are ink fill — the reference's one active register. */
+.world-mode-strip button[aria-checked="true"],
+.world-mode-strip button[aria-checked="true"]:hover,
+.world-navigator .project-modes button[aria-pressed="true"],
+.world-navigator .project-modes button[aria-pressed="true"]:hover,
+.pane-tools button[aria-pressed="true"] { background: var(--oi-active-ground); color: var(--oi-active-ink); }
+.world-mode-strip button, .world-system-settings { border-radius: 7px; }
+
+/* ===== Mode centres share the window row with the corner cutouts =====
+ * The base Workbench pads its first tab row past the two cut corners
+ * (--window-cutout / --window-cutout-right, declared on the same
+ * [data-window-corner] element above). Every mode stage stands on the same
+ * corner element, so each mode surface's first row takes the same reserve:
+ * its own padding, or the cutout plus a small breath, whichever is larger.
+ * Nothing moves when both side regions are open (both cutouts read 0). */
+@media(min-width:760px) and (pointer:fine){
+ .desktop-shell .mode-stage[data-window-corner="true"] .factory-development-top,
+ .desktop-shell .mode-stage[data-window-corner="true"] .xp-surface > .xp-menubar,
+ .desktop-shell .mode-stage[data-window-corner="true"] .tn-surface > .tn-instruments,
+ .desktop-shell .mode-stage[data-window-corner="true"] .epi-surface > .epi-threshold,
+ .desktop-shell .mode-stage[data-window-corner="true"] .epi-surface :is(.epi-family-entrances,.epi-reading) > :first-child,
+ .desktop-shell .mode-stage[data-window-corner="true"] .system-panel > .settings-world-header{padding-left:max(14px,calc(var(--window-cutout) + 10px));padding-right:max(14px,calc(var(--window-cutout-right) + 10px))}
+}
+
+
+
+/* ——— One glass (2026-09-18, second pass) ———
+   The left sidebar IS the background, not a panel on it: the material
+   field lives on the shell itself, the whole regions area is ONE glass
+   surface over that field, and the left plane is transparent chrome
+   directly on the glass (no card, no layers). The centre is the solid
+   card that expands over the glass when a sidebar closes. The agent
+   plane, where it legitimately floats (canvas modes, drawer tier), is
+   glass too — you see the work through it. */
+.desktop-shell {
+  background-image:
+    radial-gradient(120% 90% at 10% -10%, color-mix(in srgb, var(--oi-accent-soft) 26%, transparent), transparent 62%),
+    radial-gradient(100% 120% at 88% 108%, color-mix(in srgb, var(--oi-relation, var(--oi-muted)) 20%, transparent), transparent 58%),
+    radial-gradient(70% 70% at 66% 16%, color-mix(in srgb, var(--oi-foreground) 7%, transparent), transparent 72%),
+    linear-gradient(var(--oi-paper, var(--oi-shell-ground)), var(--oi-paper, var(--oi-shell-ground)));
+}
+.oi-desktop[data-theme="dark"] .desktop-shell {
+  background-image:
+    radial-gradient(120% 90% at 10% -10%, color-mix(in srgb, var(--oi-accent-soft) 26%, transparent), transparent 62%),
+    radial-gradient(100% 120% at 88% 108%, color-mix(in srgb, var(--oi-relation, var(--oi-muted)) 20%, transparent), transparent 58%),
+    radial-gradient(70% 70% at 66% 16%, color-mix(in srgb, var(--oi-foreground) 7%, transparent), transparent 72%),
+    linear-gradient(color-mix(in srgb, var(--oi-shell-ground) 10%, transparent), color-mix(in srgb, var(--oi-shell-ground) 10%, transparent));
+}
+/* Sidebar dividers harmonised with the glass: light grey in dark mode
+   (never black), a soft grey in light mode. */
+:root { --oi-side-divider: color-mix(in srgb, var(--oi-ink) 18%, transparent); }
+.oi-desktop[data-theme="dark"] { --oi-side-divider: color-mix(in srgb, var(--oi-foreground) 22%, transparent); }
+.desktop-shell .desktop-side :is(.workspace-name, .central-heading, .world-system, .world-navigator) { border-color: var(--oi-side-divider); }
+.desktop-regions {
+  background: transparent;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+/* The last opaque slabs: the navigator panel behind the sidebar chrome and
+   the centre host behind the rounded canvas card — both sat as less-rounded
+   full-height layers poking out at corners and seams. */
+.desktop-side.left .world-navigator { background: transparent; }
+/* Mode-specific sidebar components (factory steps/trajectories/skills and
+   kin): no permanent box fills on the glass — hover keeps its feedback. */
+.desktop-shell .desktop-side :is(.factory-side-steps > li, .factory-side-traj-detail, .factory-side-skills > li),
+.desktop-shell .desktop-side .factory-side-steps > li[data-step-status="blocked"],
+.desktop-shell .desktop-side .factory-side-skills > li[data-permission="refused"],
+.desktop-shell .desktop-side .world-system button { background: transparent; }
+.desktop-shell .desktop-side .world-system button:hover { background: var(--oi-wash); }
+/* The icon belt container itself: same glass as everything else, in every
+   mode (base rules paint it sidebar-ground in two stylesheets). */
+.desktop-shell .desktop-side :is(.world-system, .central-operating-region, .world-mode-strip) { background: transparent; border-top-color: var(--oi-side-divider); }
+/* Pane footers carry the canvas ground, in every state and theme. */
+.desktop-shell :is(.pane-footer, .pane-status, .editor-footer, .terminal-footer, .browser-status) { background: var(--oi-canvas-ground); }
+/* The canvas tab strip reserves the corner toggle space CONSTANTLY — a
+   conditional reservation made the strip shift whenever the agent plane
+   toggled (the seam movement at the canvas top). */
+.desktop-shell .desktop-centre .tab-strip { padding-right: 38px; }
+/* Mode surfaces fill the mode-stage exactly — flex content-sizing left
+   the section a few pixels short of its wrapper. */
+.desktop-shell .mode-stage > * { width: 100%; }
+/* The surface body between the stage and its surfaces carries no
+   horizontal chrome of its own — surfaces meet the card edges. */
+.desktop-shell .mode-stage > main { width: 100%; padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
+.desktop-shell .mode-stage .system-panel { width: 100%; }
+.desktop-shell .surface-host { background: transparent; }
+/* The agent plane in push mode is chrome on the same glass as the left. */
+.desktop-shell .desktop-side.right.depth-panel,
+.desktop-shell .desktop-side.right.depth-full { background: transparent; border-top-color: transparent; }
+.desktop-shell .agent-layer,
+.desktop-shell .agent-chat { background: transparent; }
+/* The sidebar is text on glass with its two hairlines — rows carry no
+   filled boxes; selection stays with the accent bar. */
+.desktop-shell .desktop-side.left .central-mode-row:hover,
+.desktop-shell .desktop-side.left .central-mode-row:has(> .world-root[aria-current="true"]) { background: transparent; }
+/* The canvas card's edge fades where it meets the window edge (that
+   side's panel is closed) instead of drawing a second line beside the
+   app edge. */
+.desktop-shell .desktop-centre .pane.group { transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .desktop-centre .pane.group { border-left-color: transparent; }
+.desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane.group { border-right-color: transparent; }
+/* The corner cutout piece: very subtle rounding where it meets the glass. */
+.desktop-shell [data-window-corner="true"] { border-top-left-radius: 8px; }
+
+.desktop-side.left.depth-panel, .desktop-side.left.depth-full {
+  background: transparent;
+  border: none;
+  border-radius: 0;
+  box-shadow: none;
+  backdrop-filter: none;
+  -webkit-backdrop-filter: none;
+}
+.desktop-side.left .workspace-name,
+.desktop-side.left .world-navigator .world-system,
+.desktop-side.left .ground-chooser input { background: transparent; }
+/* The floating agent: glass, not a wall. */
+.desktop-side.right[data-overlay="true"] {
+  background: color-mix(in srgb, var(--oi-agent-ground) 55%, transparent);
+  backdrop-filter: blur(24px) saturate(150%);
+  -webkit-backdrop-filter: blur(24px) saturate(150%);
+  box-shadow: inset 0 1px 0 color-mix(in srgb, var(--oi-foreground) 10%, transparent);
+}
+
+/* The agent plane floats only where floating is the design — canvas modes
+   (expressions, techne) and the ≤760px drawer. Everywhere else it takes
+   layout room: the centre yields to the panel, never the reverse. */
+.desktop-shell .desktop-side.right { position: relative; inset: auto; width: var(--desktop-right-width) !important; z-index: auto; }
+/* Full is a float in every mode: it expands OVER the centre (the base
+   depth-full inset/left rules above carry its geometry — this regime's
+   relative + width var must not pin it back into the row). */
+.desktop-shell .desktop-side.right.depth-full { position: absolute; inset: var(--oi-shell-gutter); left: calc(var(--desktop-left-width) + var(--oi-shell-gutter)); width: auto !important; z-index: var(--oi-z-drawer); }
+/* Expressions/techne: the panel floats (canvas modes) but carries NO fill
+   of its own — the shell's own right-segment agent ground is the panel's
+   background, exactly as in Factory. No tint, no blur, no inset hairline:
+   nowhere else in the app does a sidebar lay out its own background. */
+.desktop-shell[data-mode="expressions"] .desktop-side.right,
+.desktop-shell[data-mode="techne"] .desktop-side.right {
+  position: absolute; inset: 0 0 0 auto; width: var(--desktop-right-width) !important; z-index: var(--oi-z-drawer);
+}
+/* The row spacer reserves the centre's room only under that floating canvas
+   panel; the in-flow component-mode panel takes its room itself. */
+.desktop-shell[data-mode="expressions"] .desktop-regions::after,
+.desktop-shell[data-mode="techne"] .desktop-regions::after { width: var(--desktop-right-space, 0px); }
+.desktop-shell .desktop-side.right[data-overlay="true"] {
+  position: absolute; inset: 0 0 0 auto; width: var(--desktop-right-width) !important; z-index: var(--oi-z-drawer);
+}
+/* One grey behind the glass: no ground bands, no plane edge lines — the
+   sidebars are chrome on the shared glass; the only lines left are the
+   centre card and the window bevel. The window chrome (topbar) stays
+   above, and the sidebars tuck under it exactly like the centre does —
+   no reserved header band. */
+/* No borders on the side planes at all — they are chrome on the shared
+   glass; a border here re-asserts itself on region toggles (the currentcolor
+   edge rules) and reads as stray lines and boxes. */
+.desktop-shell .desktop-side.left,
+.desktop-shell .desktop-side.right { border: none; }
+/* Stable side ground: beneath the shell sits the live expression stage
+   canvas (fixed, full-window). A fully transparent sidebar let its moving
+   render show as stray lines and shifting edges — the planes therefore
+   carry their own near-opaque theme ground (vibrancy still breathes
+   through the missing 12%). */
+
+/* The icon belt and every sidebar button in every mode: icon on glass. */
+.desktop-shell .desktop-side.left button { background: transparent; }
+.desktop-shell .desktop-side.left button:hover { background: var(--oi-wash); }
+/* The Central navigator's own right-edge hairline and file-tree indent
+   guide are lines on the glass — the sidebar keeps only its two horizontal
+   dividers. */
+.desktop-shell .desktop-side.left .world-navigator { border-right: none; }
+.desktop-shell .desktop-side.left .native-file-tree { border-left: none; }
+/* Duplicated mode components may carry their own vertical lines — none are
+   allowed inside the sidebar: horizontal dividers only, in every mode. */
+.desktop-shell .desktop-side.left * { border-left-color: transparent; border-right-color: transparent; }
+/* The workspace footer is one colour: the canvas ground of the theme (it
+   used to split sidebar-ground/shell-ground at the sidebar width). */
+.desktop-shell .canvas-arrangement { background: var(--oi-canvas-ground); }
+/* The canvas card starts flush after the sidebar — no left gutter. */
+.desktop-shell .desktop-centre { margin-left: 0; margin-right: 0; }
+.desktop-shell .desktop-centre > .workbench { padding: 0; gap: 0; }
+/* The surface host carried horizontal padding that inset the canvas — removed. */
+.desktop-shell .desktop-centre .surface-host { padding-left: 0; padding-right: 0; }
+.shell-topbar { position: relative; z-index: calc(var(--oi-z-drawer) + 1); }
+/* The sidebar PLANE tucks under the window chrome (same -24px the centre
+   uses), and the content fills the plane exactly — the content div's box
+   matches the full-height sidebar, no nested mismatched dimensions. */
+.desktop-shell .desktop-side.left.depth-panel,
+.desktop-shell .desktop-side.left.depth-full,
+.desktop-shell .desktop-side.right.depth-panel,
+.desktop-shell .desktop-side.right.depth-full { margin-top: -24px; }
+.desktop-shell .desktop-side > .desktop-side-content { margin-top: 0; padding-top: 30px; height: 100%; background: transparent; }
+/* Native macOS vibrancy (tauri windowEffects sidebar): the document is
+   transparent inside Tauri so the real frosted material behind the window
+   shows through; outside Tauri the shell ground stays as fallback. */
+html.tauri, html.tauri body { background: transparent; }
+html.tauri .desktop-shell { background-color: transparent; }
+/* The agent plane reaches full height exactly like the centre card. */
+.desktop-shell .desktop-side.right.depth-panel,
+.desktop-shell .desktop-side.right.depth-full { margin-top: -24px; }
+.desktop-shell[data-mode="expressions"] .desktop-side.right,
+.desktop-shell[data-mode="techne"] .desktop-side.right { inset: -24px 0 0 auto; }
+/* The two region toggles: slightly smaller bubbles. */
+.shell-topbar .shell-region-toggle { width: 21px; height: 21px; min-width: 21px; min-height: 21px; padding: 0; }
+
+/* The surface host carries the canvas card's side insets: 6px each side
+   (owner-measured against the wrapper). */
+.desktop-centre .surface-host { padding-left: 6px; padding-right: 6px; }
+
+/* ---------------------------------------------------------------------------
+ * Shell quieting (owner notes, 2026-09-18):
+ * 1. The right region reads on the same ground as the left — the agent-plane
+ *    ground made the panel read as a box floating beside the canvas.
+ * 2. The canvas card's hairline fades to transparent on the side that meets
+ *    the chrome (that side's panel closed): the line clashed with the app
+ *    edge there. The pane's own border-color transition is the fade.
+ * 3. The frameless window's top corners get a subtle radius — the square
+ *    content corner showed as a cutout inside the rounded window frame.
+ */
+.desktop-shell {
+  border-top-left-radius: 7px;
+  border-top-right-radius: 7px;
+  overflow: clip;
+  background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) calc(100% - var(--desktop-right-width, 0px)), var(--oi-sidebar-ground) calc(100% - var(--desktop-right-width, 0px)) 100%);
+}
+.desktop-side.right.depth-panel, .desktop-side.right.depth-full { background: var(--oi-sidebar-ground); }
+.desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .desktop-centre .pane.group { border-left-color: transparent; }
+.desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane.group { border-right-color: transparent; }
+/* The mode-centre stage wears the same card — the same per-side fade applies
+ * when its edge meets the chrome. */
+.mode-stage { transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .mode-stage { border-left-color: transparent; }
+.desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .mode-stage { border-right-color: transparent; }

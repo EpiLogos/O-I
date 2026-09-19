@@ -1,0 +1,117 @@
+/* Factory supplies the Runs/Build body. The surrounding workbench owns panes,
+ * sidecars and retained-region geometry. */
+.factory-composition { height: 100%; min-height: 0; overflow: hidden; }
+.factory-runs { display: flex; flex-direction: column; height: 100%; min-height: 0; }
+.factory-runs-heading { display: flex; align-items: start; justify-content: space-between; gap: 18px; padding: 16px 20px 12px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-runs-heading h1 { margin: 0; font-size: var(--oi-shell-type-title); font-weight: 550; }
+.factory-runs-heading p, .factory-runs-empty, .factory-run-list p { color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.55; }
+.factory-runs-heading p { margin: 4px 0 0; }
+.factory-source-picker { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.factory-source-picker[open] { width: min(520px, 100%); min-width: 0; }
+.factory-source-picker summary { cursor: pointer; padding: 4px 0; }
+.factory-source-picker form { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 8px; align-items: end; margin-top: 8px; width: min(520px, 100%); min-width: 0; }
+.factory-source-picker label { display: grid; gap: 6px; font-size: var(--oi-shell-type-nav); }
+.factory-source-picker label:first-child { grid-column: 1 / -1; }
+.factory-source-picker input { min-width: 0; width: 100%; min-height: 32px; padding: 6px 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-ink); background: var(--oi-canvas-ground); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; }
+.factory-source-picker button, .factory-runs-heading > button { min-height: 30px; padding: 6px 10px; font-size: var(--oi-shell-type-nav); border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; }
+.factory-source-picker form > button { justify-self: start; }
+.factory-owner-refusal { margin: 12px 20px; color: var(--oi-danger, #a33); font-size: var(--oi-shell-type-nav); }
+.factory-runs-empty { margin: 24px 20px; max-width: 56ch; }
+.factory-runs-layout { display: grid; grid-template-columns: minmax(235px, 29%) minmax(0, 1fr); flex: 1; min-height: 0; }
+.factory-run-list { overflow: auto; border-right: var(--oi-shell-edge) solid var(--oi-hairline); padding: 10px; }
+.factory-run-list-heading { display: grid; gap: 3px; padding: 7px 9px 12px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.factory-run-list-heading strong { overflow-wrap: anywhere; color: var(--oi-ink); font-weight: 550; }
+.factory-journey-row { display: grid; gap: 7px; margin: 0 0 14px; padding: 9px; border-top: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-journey-row > div { display: grid; gap: 3px; overflow-wrap: anywhere; }
+.factory-journey-row code { font-size: var(--oi-shell-type-meta); }
+.factory-journey-row span, .factory-journey-row small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-journey-row button { text-align: left; }
+.factory-journey-row button.is-selected { border-left: 2px solid var(--oi-accent); background: var(--oi-wash); }
+.factory-build-centre { min-width: 0; overflow: auto; }
+@media (max-width: 720px) { .factory-runs-heading { display: grid; } .factory-source-picker form { grid-template-columns: 1fr; min-width: 0; } .factory-runs-layout { grid-template-columns: 1fr; } .factory-run-list { max-height: 38vh; border-right: 0; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); } }
+
+.factory-handoff-surface { padding: 24px; overflow: auto; height: 100%; font-size: var(--oi-shell-type-ui); line-height: 1.6; }
+.factory-handoff-surface > header h1 { margin: 0 0 20px; font-size: var(--oi-shell-type-title); font-weight: 550; }
+.factory-handoff-surface > p { max-width: 64ch; font-size: var(--oi-shell-type-body); color: var(--oi-ink); }
+
+/* O:I controls live in the selected Build header; this keeps Runs from
+ * adding a second title band above Factory's semantic/live/trajectory view. */
+.factory-build .fb-header-controls { margin-left: auto; min-width: 0; }
+.factory-build-controls { display: flex; align-items: center; justify-content: flex-end; gap: 8px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.factory-build-controls > button { min-height: 28px; padding: 4px 8px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }
+.factory-build-controls .factory-source-picker { color: inherit; }
+.factory-build-controls .factory-source-picker[open] { position: relative; z-index: 5; }
+.factory-build-controls .factory-source-picker form { position: absolute; right: 0; z-index: 6; padding: 10px; border: var(--oi-shell-edge) solid var(--oi-hairline); background: var(--oi-surface); box-shadow: 0 8px 24px rgb(0 0 0 / .18); }
+.factory-handoff-standing { color: var(--oi-muted-2); white-space: nowrap; }
+@media (max-width: 860px) { .factory-build .fb-header-controls { width: 100%; margin-left: 0; } .factory-build-controls { justify-content: flex-start; flex-wrap: wrap; } .factory-build-controls .factory-source-picker form { right: auto; left: 0; } }
+.factory-runs-control-row { display: flex; align-items: center; gap: 8px; margin: 0 20px 16px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.factory-handoff-standing { display: inline-flex; align-items: center; gap: 8px; max-width: 100%; white-space: normal; overflow-wrap: anywhere; }
+.factory-handoff-standing button, .factory-handoff-surface button { min-height: 28px; padding: 4px 8px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }
+
+/* F2: source-backed Run list and selected Run reading. */
+.factory-run-list-heading { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; text-transform: uppercase; letter-spacing: .08em; }
+.factory-run-list-heading span { color: var(--oi-ink); font-weight: 600; }
+.factory-journey-row { gap: 9px; }
+.factory-journey-context { display: grid; gap: 4px; }
+.factory-journey-context strong { font-size: var(--oi-shell-type-nav); line-height: 1.35; font-weight: 550; }
+.factory-journey-context span, .factory-run-choice small { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-run-choice { display: grid; gap: 3px; width: 100%; padding: 8px 9px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid transparent; border-radius: 3px; text-align: left; font: inherit; }
+.factory-run-choice:hover { border-color: var(--oi-hairline); background: var(--oi-wash); }
+.factory-run-choice.is-selected { border-left: 2px solid var(--oi-accent); background: var(--oi-wash); }
+.factory-run-choice > span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.factory-technical-detail { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-technical-detail summary { cursor: pointer; }
+.factory-technical-detail[open] { display: grid; gap: 4px; }
+.factory-technical-detail code { overflow-wrap: anywhere; }
+.factory-run-summary { display: grid; grid-template-columns: minmax(0, 1fr) auto; gap: 14px 24px; padding: 18px 20px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-summary-copy { max-width: 68ch; }
+.factory-run-summary-copy > * { margin: 0; }
+.factory-run-kicker { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); text-transform: uppercase; letter-spacing: .08em; }
+.factory-run-summary h2 { margin-top: 4px; font-size: var(--oi-shell-type-body); font-weight: 600; line-height: 1.3; }
+.factory-run-summary-copy > p:not(.factory-run-kicker) { margin-top: 7px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); line-height: 1.45; }
+.factory-run-outcome { display: grid; gap: 2px; }
+.factory-run-outcome strong { color: var(--oi-ink); font-weight: 550; }
+.factory-run-facts { display: grid; grid-template-columns: repeat(2, minmax(100px, 1fr)); gap: 12px; margin: 0; align-content: start; }
+.factory-run-facts div { display: grid; gap: 3px; }
+.factory-run-facts dt { color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); }
+.factory-run-facts dd { margin: 0; font-size: var(--oi-shell-type-nav); }
+.factory-run-summary > .factory-technical-detail { grid-column: 1 / -1; }
+.factory-run-reading-state { margin: 16px 20px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+@media (max-width: 720px) { .factory-run-summary { grid-template-columns: 1fr; } .factory-run-facts { grid-template-columns: 1fr 1fr; } }
+.factory-runs-controls { display: flex; align-items: start; justify-content: flex-end; gap: 8px; min-width: 0; }
+.factory-runs-controls > button { min-height: 30px; padding: 6px 10px; color: var(--oi-ink); background: transparent; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: 4px; font: inherit; }
+@media (max-width: 720px) { .factory-runs-controls { justify-content: space-between; } }
+.factory-run-summary.is-compact { grid-template-columns: minmax(0, 1fr) auto; padding: 0 0 12px; border-bottom: 0; }
+.factory-run-summary.is-compact .factory-run-summary-copy { max-width: 54ch; }
+.factory-run-summary.is-compact .factory-run-outcome { margin: 0; }
+
+.factory-runs-layout.factory-runs-single{grid-template-columns:minmax(0,1fr)}
+.factory-run-summary.is-compact{margin:0 24px 16px;padding:0;font-size:.8rem}
+
+/* F4: Factory's RunMap as a compact, inspectable native topology. */
+.factory-run-map { margin: 0 24px 18px; border: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-map-head { display: flex; justify-content: space-between; gap: 12px; padding: 10px 12px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-map-head h3, .factory-run-map-head p, .factory-run-map-detail h4, .factory-run-map-detail p { margin: 0; }
+.factory-run-map-head h3 { font-size: 13px; font-weight: 600; }
+.factory-run-map-head p, .factory-run-map-kicker, .factory-run-map-empty { color: var(--oi-muted-2); font-size: 11px; line-height: 1.45; }
+.factory-run-map-layout { display: grid; grid-template-columns: minmax(190px, 38%) minmax(0, 1fr); min-height: 116px; }
+.factory-run-map-nodes { display: grid; align-content: start; gap: 2px; margin: 0; padding: 7px; list-style: none; border-right: var(--oi-shell-edge) solid var(--oi-hairline); }
+.factory-run-map-nodes button { display: grid; gap: 3px; width: 100%; padding: 7px 8px; border: var(--oi-shell-edge) solid transparent; border-radius: 3px; color: var(--oi-ink); background: transparent; text-align: left; font: inherit; }
+.factory-run-map-nodes button:hover { border-color: var(--oi-hairline); background: var(--oi-wash); }
+.factory-run-map-nodes button.is-selected { border-left: 2px solid var(--oi-accent); background: var(--oi-wash); }
+.factory-run-map-nodes span { overflow: hidden; text-overflow: ellipsis; white-space: normal; overflow-wrap: anywhere; font-size: 13px; }
+.factory-run-map-nodes small { color: var(--oi-muted-2); font-size: 11px; }
+.factory-run-map-detail { padding: 13px 14px; min-width: 0; }
+.factory-run-map-kicker { text-transform: uppercase; letter-spacing: .07em; }
+.factory-run-map-detail h4 { margin-top: 4px; font-size: 13px; line-height: 1.4; }
+.factory-run-map-semantic { margin-top: 10px; color: var(--oi-muted-2); font-size: 11px; }
+.factory-run-map-semantic summary { cursor: pointer; }
+.factory-run-map-semantic code { display: block; margin-top: 5px; overflow-wrap: anywhere; color: var(--oi-ink); }
+.factory-run-map-relations { display: grid; gap: 10px; margin-top: 12px; }
+.factory-run-map-relations h5 { margin: 0 0 4px; color: var(--oi-muted-2); font-size: 11px; font-weight: 550; }
+.factory-run-map-relations ul { display: grid; gap: 4px; margin: 0; padding: 0; list-style: none; }
+.factory-run-map-relations li { display: flex; justify-content: space-between; gap: 10px; font-size: 11px; }
+.factory-run-map-relations li span { min-width: 0; overflow-wrap: anywhere; }
+.factory-run-map-relations li small { flex: none; color: var(--oi-muted-2); }
+.factory-run-map-empty { margin: 12px; }
+@media (max-width: 720px) { .factory-run-map { margin-inline: 16px; } .factory-run-map-layout { grid-template-columns: 1fr; } .factory-run-map-nodes { border-right: 0; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); } }

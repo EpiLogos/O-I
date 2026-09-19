@@ -219,3 +219,11 @@ export interface ActionInvocation {
   actionRef: string
   subjectRef: string
 }
+
+/** A produced Factory subject the Desk can open in the material reading —
+ * the owner's own candidate/evidence ref plus its label, never a target the
+ * owner did not disclose. (Donor parity: PR #292 types.ts.) */
+export interface FactoryMaterialSelection {
+  subjectRef: string
+  label: string
+}

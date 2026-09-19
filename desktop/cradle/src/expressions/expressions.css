@@ -1,0 +1,227 @@
+/*
+ * Expressions mode — the centre surface, the left graph navigator and the
+ * right-panel planes. Tokens only (`--oi-*`), coherent in light and dark,
+ * nothing animates. The surface composes the desktop grammar for its chrome
+ * (oi-tool, oi-action, oi-menu, oi-plane-nav, oi-input, oi-state, oi-ref,
+ * oi-note, oi-refusal, oi-eyebrow, oi-chip, oi-row, oi-resize-handle,
+ * oi-scroll-quiet); this file gives it its own hierarchy: a slim menubar, the
+ * artboard as the body, the transport under it, and the Studio dock inside.
+ */
+
+/* ===== centre surface ==================================================== */
+
+.xp-surface {
+  position: relative;
+  display: flex;
+  flex-direction: column;
+  block-size: 100%;
+  min-block-size: 0;
+  min-inline-size: 0;
+  overflow: hidden;
+  background: var(--oi-canvas-ground);
+  color: var(--oi-foreground);
+  font-size: var(--oi-shell-type-body);
+}
+
+/* The slim field-local menubar: menus left, toolbelt right. Always present —
+ * it does not slide or fade. */
+.xp-menubar {
+  flex: none;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 6px;
+  min-block-size: var(--oi-shell-tabbar);
+  padding: 0 6px 0 8px;
+  border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: var(--oi-pane-bar-ground);
+}
+.xp-menus { display: flex; align-items: center; gap: 2px; min-inline-size: 0; }
+.xp-menu { position: relative; }
+.xp-menu-trigger {
+  display: inline-flex;
+  align-items: center;
+  gap: 4px;
+  block-size: var(--oi-shell-segment);
+  padding: 0 7px;
+  border: 0;
+  border-radius: var(--oi-shell-radius-control);
+  background: transparent;
+  color: var(--oi-muted);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  cursor: pointer;
+}
+.xp-menu-trigger:hover, .xp-menu-trigger[aria-expanded="true"] { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.xp-menu-trigger:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: -1px; }
+.xp-menu-trigger svg { color: var(--oi-muted-2); }
+.xp-menu-popover {
+  position: absolute;
+  inset-block-start: calc(100% + 4px);
+  inset-inline-start: 0;
+  max-inline-size: min(320px, calc(100cqi - 16px));
+  max-block-size: min(70vh, 520px);
+  overflow-x: hidden;
+}
+/* Menu row construction (reference): a 14px leading glyph, an 11px label with
+ * a 9px muted caption stacked under it, and — only where a real keyboard
+ * shortcut exists — a right-aligned mono key hint. The check-mark slot
+ * (`oi-menu-item[aria-checked]::after`, from desktop.css) still reserves its
+ * own column at the row's end. */
+.xp-menu-popover .oi-menu-item { gap: 8px; }
+.xp-menu-popover .oi-menu-item > svg { margin-block-start: 1px; }
+.xp-menu-body { display: flex; flex-direction: column; gap: 1px; flex: 1; min-inline-size: 0; }
+.xp-menu-label { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 11px; }
+.xp-menu-caption { min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: 9px; font-weight: 400; color: var(--oi-muted-2); }
+.xp-menu-popover .oi-menu-item:disabled .xp-menu-caption { opacity: 0.7; }
+.xp-menu-popover > .oi-eyebrow { padding: 8px 8px 4px; }
+.xp-menu-note { margin: 0; padding: 4px 8px 6px; }
+.xp-menu-form { display: flex; align-items: center; gap: 6px; padding: 2px 8px 6px; }
+.xp-menu-form > .oi-input { flex: 1; min-inline-size: 0; font-size: var(--oi-shell-type-nav); }
+.xp-menu-form > .oi-action { flex: none; }
+
+/* The toolbelt: small bordered icon tools, the field's own. */
+.xp-toolbelt { flex: none; display: flex; align-items: center; gap: 3px; }
+.xp-toolbelt-rule { inline-size: var(--oi-shell-edge); block-size: 16px; margin-inline: 3px; background: var(--oi-hairline); }
+
+.xp-refusal { flex: none; display: flex; align-items: flex-start; gap: 8px; margin: 6px 8px 0; }
+.xp-refusal > .oi-tool { margin-inline-start: auto; }
+
+/* Body: the field owns it all. The Studio is a summoned overlay above the
+ * full-bleed field — never a co-equal flex column that shrinks the world
+ * ("the world is primary; apparatus is summoned"). */
+.xp-body { position: relative; flex: 1; display: flex; min-block-size: 0; min-inline-size: 0; }
+.xp-surface[data-dock-edge="bottom"] .xp-body { flex-direction: column; }
+.xp-field { flex: 1; display: flex; flex-direction: column; min-block-size: 0; min-inline-size: 0; }
+
+/* The artboard: the window's one production field, placed here. */
+.xp-artboard-wrap { position: relative; flex: 1; min-block-size: 120px; min-inline-size: 0; overflow: hidden; isolation: isolate; background: var(--oi-canvas-ground); }
+.xp-artboard { position: absolute; inset: 0; overflow: hidden; }
+.xp-artboard[hidden] { display: none; }
+.xp-artboard-state { position: absolute; inset: 0; z-index: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 10px; max-inline-size: 420px; margin: auto; padding: 24px; box-sizing: border-box; }
+.xp-artboard-state > strong { font-size: var(--oi-shell-type-heading); font-weight: 550; color: var(--oi-foreground); }
+.xp-artboard-state > .oi-refusal { margin: 0; }
+/* The artboard status chip: a small floating glass token naming what the
+ * field shows and whether it runs, in the artboard's own corner. */
+.xp-artboard-label {
+  position: absolute; z-index: 1; inset-block-end: 10px; inset-inline-start: 10px;
+  display: inline-flex; align-items: center; gap: 5px;
+  height: var(--oi-shell-chip); box-sizing: border-box; padding: 0 8px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-radius-pill);
+  background: var(--oi-card-solid, var(--oi-canvas-ground));
+  color: var(--oi-muted-2);
+  pointer-events: none;
+}
+.xp-artboard-label::before { content: ""; flex: none; inline-size: 5px; block-size: 5px; border-radius: 999px; background: currentColor; }
+.xp-surface[data-playing="true"] .xp-artboard-label::before { background: var(--oi-accent-ink); color: var(--oi-accent-ink); }
+.xp-verso { position: absolute; inset: 0; z-index: 1; padding: 12px; box-sizing: border-box; background: var(--oi-canvas-ground); }
+.xp-verso > .expression-verso { min-block-size: 0; border: 0; padding: 6px; }
+
+/* Transport: identity, scene planes, the entity row. */
+.xp-transport { flex: none; display: flex; flex-direction: column; gap: 6px; padding: 8px 10px 10px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-surface); max-block-size: 45%; }
+.xp-identity { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 10px; min-inline-size: 0; }
+.xp-identity > strong { font-size: var(--oi-shell-type-body); font-weight: 550; }
+.xp-identity > small { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); overflow-wrap: anywhere; }
+.xp-identity .oi-ref { font-size: var(--oi-shell-type-meta); }
+.xp-scenes { block-size: 30px; padding-inline: 0; gap: 14px; overflow-y: hidden; }
+.xp-entities { gap: 6px; }
+.xp-entities .expression-entity { transition: none; }
+
+/* Studio: the summoned overlay itself — it floats above the field from its
+ * dock edge (right, or the foot of the surface), elevated like the shell's
+ * floating canvas panels, with the shared .oi-resize-handle as its leading
+ * edge. It never reaches the shell's panel and never takes layout room. */
+.xp-studio { position: absolute; inset-block: 0; inset-inline-end: 0; z-index: var(--oi-z-drawer, 30); display: flex; flex-direction: column; min-block-size: 0; min-inline-size: 0; max-inline-size: 70%; background: var(--oi-inspector-ground); box-shadow: 0 0 0 var(--oi-shell-edge) var(--oi-hairline-soft), 0 18px 48px color-mix(in srgb, var(--oi-foreground) 14%, transparent); }
+.xp-surface[data-dock-edge="bottom"] .xp-studio { inset: auto 0 0 0; max-inline-size: none; max-block-size: 70%; inline-size: auto; }
+/* The shared resize handle rides the overlay's leading edge — the whole
+ * hit area just outside the studio (right dock) or just above it (foot
+ * dock); the base class owns the hit geometry and hairline, the dock hook
+ * owns the drag/keyboard arithmetic. */
+.xp-studio-handle { position: absolute; inset-block: 0; inset-inline-start: calc(-1 * var(--oi-resize-hit)); margin: 0; z-index: calc(var(--oi-z-drawer, 30) + 1); }
+.xp-surface[data-dock-edge="bottom"] .xp-studio-handle { inset-block: calc(-1 * var(--oi-resize-hit)) auto; inset-inline: 0; }
+.xp-studio-body { flex: 1; min-block-size: 0; overflow-x: hidden; }
+/* Each section is a collapsible band: a faintly tinted header (chevron, an
+ * 11px medium title, a right-aligned 9px status caption) over a hairline,
+ * matching the reference inspector's construction. */
+.xp-studio-section { border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.xp-studio-section > h4 { margin: 0; font: inherit; }
+.xp-studio-section > h4 > button {
+  display: flex; align-items: center; gap: 8px; inline-size: 100%; min-block-size: var(--oi-shell-row);
+  padding: 0 12px; border: 0; border-block-end: var(--oi-shell-edge) solid transparent;
+  background: var(--oi-wash); color: var(--oi-accent-ink); font: inherit; font-size: 11px; font-weight: 550;
+  text-align: start; cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.xp-studio-section[data-open="true"] > h4 > button { border-block-end-color: var(--oi-hairline-soft); }
+.xp-studio-section > h4 > button::before { content: ""; flex: none; inline-size: 5px; block-size: 5px; border-inline-end: 1px solid currentColor; border-block-end: 1px solid currentColor; transform: rotate(-45deg); color: var(--oi-muted-2); }
+.xp-studio-section[data-open="true"] > h4 > button::before { transform: rotate(45deg); }
+.xp-studio-section > h4 > button:hover { background: var(--oi-wash-strong); }
+.xp-studio-section > h4 > button:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: -2px; }
+.xp-studio-section > h4 > button > .oi-state { margin-inline-start: auto; overflow: hidden; text-overflow: ellipsis; max-inline-size: 55%; font-size: 9px; }
+.xp-studio-section-body { display: flex; flex-direction: column; gap: 10px; padding: 10px 12px 14px; min-inline-size: 0; }
+.xp-studio-section-body > .oi-note { margin: 0; }
+.xp-studio-section-body > .oi-empty { padding: 12px 0 2px; }
+@media (prefers-reduced-motion: reduce) { .xp-studio-section > h4 > button { transition: none; } }
+/* The composer's parts, at dock width. */
+.xp-studio .expression-inspector { border: 0; padding: 0; background: transparent; }
+.xp-studio .expression-inspector > legend { padding: 0; margin-block-end: 4px; }
+.xp-studio .expression-parameters { grid-template-columns: repeat(auto-fill, minmax(96px, 1fr)); gap: 8px; }
+.xp-studio .expression-binding-fields { grid-template-columns: 1fr; }
+.xp-studio .expression-refinements.oi-section { margin-block-start: 0; padding-block-start: 0; border-block-start: 0; }
+.xp-studio .oi-disclosure:first-child { border-block-start: 0; padding-block-start: 0; }
+.xp-studio .share-projection { margin-block-start: 0; }
+.xp-studio textarea.oi-input { inline-size: 100%; box-sizing: border-box; min-block-size: 96px; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); resize: vertical; }
+.xp-disclosure { margin: 0; max-block-size: 320px; overflow: auto; overscroll-behavior: contain; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); }
+/* The engine control set as label–slider–number rows at dock width. */
+.xp-engine { gap: 10px; }
+.xp-engine .visuals-group { padding: 8px; gap: 3px; min-inline-size: 0; }
+.xp-engine .visuals-slider { grid-template-columns: minmax(0, 9.5em) minmax(40px, 1fr) 4.2em; gap: 6px; min-block-size: 24px; }
+.xp-engine .visuals-slider-label { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; color: var(--oi-muted); }
+.xp-engine .visuals-presets { grid-template-columns: repeat(auto-fill, minmax(9em, 1fr)); }
+.xp-engine .visuals-word input { min-inline-size: 0; inline-size: 100%; }
+.xp-engine .visuals-word label { flex: 1 1 9em; min-inline-size: 0; }
+.xp-engine .visuals-glyphs label { flex: 1 1 6em; min-inline-size: 0; }
+.xp-engine .visuals-glyphs input { inline-size: 100%; box-sizing: border-box; }
+.xp-engine .visuals-import { inline-size: 100%; box-sizing: border-box; }
+
+/* ===== left: the expression graph navigator ============================== */
+
+.xg-navigator { display: flex; flex-direction: column; block-size: 100%; min-block-size: 0; min-inline-size: 0; font-size: var(--oi-shell-type-nav); color: var(--oi-foreground); }
+.xg-head { border-block-end: 0; }
+.xg-tree { flex: 1; min-block-size: 0; margin: 0; padding: 0 4px 8px; list-style: none; overflow-x: hidden; }
+.xg-tree li { margin: 0; padding: 0; }
+.xg-row { padding-inline-start: calc(8px + var(--xg-depth, 0) * 12px); }
+.xg-row > .oi-chip { flex: none; max-inline-size: 48%; }
+.xg-twist { flex: none; inline-size: 8px; block-size: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--oi-muted-2); }
+.xg-twist::before { content: ""; inline-size: 4px; block-size: 4px; border-inline-end: 1px solid currentColor; border-block-end: 1px solid currentColor; transform: rotate(-45deg); }
+.xg-row[aria-expanded="true"] > .xg-twist::before { transform: rotate(45deg); }
+.xg-twist[data-leaf="true"]::before { display: none; }
+.xg-inline { margin: 2px 8px 6px; padding-inline-start: calc(8px + var(--xg-depth, 0) * 12px); }
+.xg-navigator > .oi-empty { padding: 12px; }
+
+/* ===== right: the receiving planes ====================================== */
+
+.xa-plane { display: flex; flex-direction: column; gap: 14px; block-size: 100%; min-block-size: 0; box-sizing: border-box; padding: 14px; overflow-x: hidden; font-size: var(--oi-shell-type-body); color: var(--oi-foreground); }
+.xa-plane-head { display: flex; flex-direction: column; gap: 3px; }
+.xa-plane-head > strong { font-weight: 550; }
+.xa-plane-head > small { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); overflow-wrap: anywhere; }
+.xa-offices { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; }
+.xa-office { display: grid; grid-template-columns: 18px minmax(0, 1fr); gap: 2px 8px; padding: 9px 0; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.xa-office:first-child { border-block-start: 0; }
+.xa-office-ordinal { grid-row: 1 / span 2; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); padding-block-start: 1px; }
+.xa-office-name { font-weight: 550; }
+.xa-office-state { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.xa-office-body { grid-column: 2; display: flex; flex-direction: column; gap: 6px; min-inline-size: 0; }
+.xa-reading { display: flex; flex-direction: column; gap: 4px; min-inline-size: 0; }
+.xa-reading-row { display: flex; align-items: baseline; flex-wrap: wrap; gap: 4px 8px; min-inline-size: 0; font-size: var(--oi-shell-type-nav); }
+.xa-reading-row > .oi-ref { min-inline-size: 0; }
+.xa-unavailable { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.xa-section { display: flex; flex-direction: column; gap: 8px; padding-block-start: 12px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.xa-section > .oi-eyebrow { margin: 0; }
+.xa-centres { margin: 0; padding: 0; list-style: none; display: grid; gap: 4px; }
+.xa-centres > li { display: flex; align-items: baseline; gap: 8px; font-size: var(--oi-shell-type-nav); min-inline-size: 0; }
+.xa-centres > li > span:first-child { flex: none; inline-size: 1.4em; font-family: var(--oi-font-mono); color: var(--oi-muted-2); }
+.xa-link { align-self: flex-start; }
+
+@media (prefers-reduced-motion: reduce) { .xp-surface *, .xg-navigator *, .xa-plane * { transition: none; } }

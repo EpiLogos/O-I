@@ -51,6 +51,9 @@ const observe = () => page.evaluate(async () => {
 const idle = () => page.waitForFunction(() => previewTest.stage.inspect().live === false && !previewTest.stage.inspect().scheduled);
 const preview = () => page.waitForFunction(() => document.querySelector('.visuals-preview-stage canvas'));
 const advances = async () => {
+  // ES5 lifecycle: the contained renderer only runs while it is actually in
+  // view; bring the preview back into the viewport before expecting frames.
+  await page.locator('.visuals-preview-stage').scrollIntoViewIfNeeded();
   const before = await page.evaluate(() => previewTest.stage.inspect().frames);
   await page.waitForFunction(before => previewTest.stage.inspect().frames > before,before,{polling:100});
 };
@@ -85,6 +88,11 @@ try {
   await page.getByLabel('Glyph A',{exact:true}).fill('Ω');
   await page.waitForFunction(() => previewTest.visuals.get().config.glyph[0] === 'Ω');
   assert.equal((await observe()).frames,0,'accepted config changes preserve a paused preview');
+  // ES5 lifecycle: filling the input scrolled the contained preview out of
+  // the viewport, so its renderer suspends (no frame work while unseen).
+  assert.equal(await page.evaluate(() => previewTest.stage.inspect().suspended),true,'a scrolled-out contained preview suspends its clock');
+  await page.locator('.visuals-preview-stage').scrollIntoViewIfNeeded();
+  await page.waitForFunction(() => previewTest.stage.inspect().suspended === false,null,{polling:100});
   await page.getByRole('button',{name:'Resume simulation',exact:true}).click();
   await page.waitForFunction(() => document.querySelector('.visuals-diagnostics pre')?.textContent.includes('Ω'),null,{polling:100});
   await page.getByRole('button',{name:'Pause simulation',exact:true}).click();

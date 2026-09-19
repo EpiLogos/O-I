@@ -7,7 +7,8 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {NativeFileReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/drafts";
-import {readFile,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
+import {fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
+import {acquireFileReading,peekFileReading,invalidateFile} from "./resources";
 import {detectFormat} from "../material/detect";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 
@@ -67,9 +68,16 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const dirty=!!draft&&draft.content!==draft.saved_content;
   const conflict=!!reading&&!!draft&&reading.revision!==draft.base_revision&&dirty;
   const writable=reading?.operations?.write.available===true;
+  // The scroll/caret restore used after both the seeded open and a fresh
+  // read — the same localStorage view state, applied once the editor exists.
+  const restoreView=()=>{requestAnimationFrame(()=>{try{if(body.current){if(scroll.current)scroll.current.scrollTop=Number(localStorage.getItem(scrollKey)??0);const caret=JSON.parse(localStorage.getItem(caretKey)??"null");if(caret&&Number.isInteger(caret.start)&&Number.isInteger(caret.end))body.current.setSelectionRange(caret.start,caret.end,caret.direction);}}catch{}});};
   const read=async(preserve=true)=>{
     if(!binding.location)throw new Error("The saved file location is unavailable");
-    const value=await readFile(transport,binding.location);setReading(value);retainReading(binding.ref,value);
+    // A re-read is revalidation: invalidate first so the shared seam goes to
+    // the owner instead of answering from the entry (its last reading stays
+    // resident for peers), then acquire through it.
+    invalidateFile(binding.location);
+    const value=await acquireFileReading(transport,binding.location);setReading(value);retainReading(binding.ref,value);
     const local=preserve?(held.current??readDraft(binding.ref!)):undefined;
     if(!local||local.content===local.saved_content){setDraft({content:value.content,saved_content:value.content,base_revision:value.revision});}
     else setDraft(local);
@@ -78,9 +86,25 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   useEffect(()=>{
     let live=true;setPending(true);setError(undefined);
     if(!binding.location){setError("The saved file location is unavailable");setPending(false);return;}
-    void readFile(transport,binding.location).then(value=>{
+    // Cache-first open (WF2): show the resident reading immediately —
+    // presentation only, never authority — then keep today's owner
+    // revalidation in the background exactly as this effect always did.
+    // The seed keeps the document readable while the check runs (drafting
+    // continues on the seeded basis; the CAS still guards the write), so
+    // only the not-yet-established round trip stays pending.
+    const resident=peekFileReading(binding.location);
+    if(resident&&binding.ref){
+      setReading(resident);setDraft(readDraft(binding.ref)??{content:resident.content,saved_content:resident.content,base_revision:resident.revision});restoreView();
+      setPending(false);
+    }
+    // Force the owner round trip through the shared seam: the entry the seed
+    // came from must not answer the revalidation too. When the open path's
+    // read is genuinely still in flight this joins it instead of reloading —
+    // one owner round trip for admission, renderer and editor.
+    invalidateFile(binding.location);
+    void acquireFileReading(transport,binding.location).then(value=>{
       if(!live)return;setReading(value);retainReading(binding.ref,value);setDraft(readDraft(binding.ref!)??{content:value.content,saved_content:value.content,base_revision:value.revision});
-      requestAnimationFrame(()=>{try{if(body.current){if(scroll.current)scroll.current.scrollTop=Number(localStorage.getItem(scrollKey)??0); const caret=JSON.parse(localStorage.getItem(caretKey)??"null"); if(caret && Number.isInteger(caret.start) && Number.isInteger(caret.end)) body.current.setSelectionRange(caret.start,caret.end,caret.direction);}}catch{}});
+      restoreView();
     }).catch(error=>{
       if(!live)return;
       setError(String(error));

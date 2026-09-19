@@ -47,10 +47,11 @@ export function configPlaneSource(): Promise<ConfigPlaneSource> {
 }
 
 /** The dev-only fixture-world simulation surface (external native edits,
- * registry emptying). Null in a production build. */
+ * registry emptying, one owner's outage). Null in a production build. */
 export interface FixtureWorldActions {
   simulateExternalNativeEdit(setting_ref: string, value: unknown): Promise<void>;
   setRegistryMode(mode: "full" | "empty"): void;
+  setOwnerAvailability(owner_ref: string, state: "available" | "unavailable"): void;
 }
 
 export function fixtureWorld(): Promise<FixtureWorldActions | null> {
@@ -61,6 +62,7 @@ export function fixtureWorld(): Promise<FixtureWorldActions | null> {
         return source.then((planeSource) => module.simulateExternalNativeEdit(planeSource, setting_ref, value));
       },
       setRegistryMode: module.setRegistryMode,
+      setOwnerAvailability: module.setOwnerAvailability,
     }));
   }
   return Promise.resolve(null);

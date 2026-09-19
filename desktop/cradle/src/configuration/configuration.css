@@ -11,16 +11,17 @@
 .config-mono { font-family: var(--oi-font-mono, ui-monospace, monospace); }
 .config-ref { font-size: var(--oi-shell-type-ui); opacity: .85; }
 .config-empty { color: var(--oi-muted-2); font-style: italic; max-width: 72ch; }
-.config-error { color: inherit; border: 1px solid var(--oi-accent-ink); border-radius: 4px; padding: 6px 10px; font-size: var(--oi-shell-type-ui); background: var(--oi-wash); }
+/* An owner refusal keeps the shared refusal shape: a left ink rule on the wash. */
+.config-error { color: var(--oi-accent-ink); border: 0; border-left: 2px solid var(--oi-accent); border-radius: 4px; padding: 8px 10px; font-size: var(--oi-shell-type-ui); line-height: 1.5; background: var(--oi-wash); overflow-wrap: anywhere; }
 .config-error-inline { display: block; color: inherit; font-size: var(--oi-shell-type-ui); opacity: .8; }
 
-.config-owner { border: 1px solid var(--oi-hairline-soft); border-radius: 6px; padding: 8px 12px; margin: 10px 0; }
+.config-owner { border: 1px solid var(--oi-hairline); border-radius: 8px; padding: 8px 12px; margin: 10px 0; }
 .config-owner > summary { cursor: pointer; display: flex; flex-wrap: wrap; gap: 4px 12px; align-items: baseline; font-size: var(--oi-shell-type-heading); }
 .config-owner-meta { display: inline-flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; font-size: var(--oi-shell-type-ui); }
 .config-about { margin: 6px 0; max-width: 72ch; }
 .config-obligations { margin: 6px 0; font-size: var(--oi-shell-type-ui); }
 .config-section { margin: 10px 0 4px; }
-.config-section > h4 { font-size: var(--oi-shell-type-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--oi-muted-2); margin: 0 0 6px; font-weight: 500; }
+.config-section > h4 { font-size: var(--oi-shell-type-eyebrow); text-transform: uppercase; letter-spacing: var(--oi-shell-tracking); color: var(--oi-muted-2); margin: 0 0 6px; font-weight: 500; }
 
 .config-setting { border-top: 1px solid var(--oi-hairline-soft); padding: 8px 0; }
 .config-setting-head { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
@@ -36,10 +37,17 @@
 .config-control { display: flex; flex-wrap: wrap; gap: 8px 14px; align-items: center; }
 .config-scope-picker { display: inline-flex; gap: 6px; align-items: center; }
 .config-scope-picker::before { content: "scope"; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
-.config-input { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 3px 8px; }
-.config-input:disabled { opacity: .55; }
-.config-mini { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 2px 8px; cursor: pointer; }
-.config-mini:disabled { opacity: .45; cursor: default; }
+/* Inputs and small actions follow the shared `.oi-input` / `.oi-action`
+ * register: a hairline body on the composer ground, a soft-ink edge on
+ * hover, the ink ring on keyboard focus. */
+.config-input { box-sizing: border-box; min-height: 24px; background: var(--oi-composer-ground); border: 1px solid var(--oi-hairline); border-radius: 6px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 3px 8px; transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.config-input:hover:not(:disabled) { border-color: var(--oi-accent-soft); }
+.config-input:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 0; border-color: var(--oi-accent-soft); }
+.config-input:disabled { opacity: .55; background: transparent; }
+.config-mini { min-height: 22px; background: var(--oi-composer-ground); border: 1px solid var(--oi-hairline); border-radius: 6px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 2px 8px; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.config-mini:hover:not(:disabled) { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.config-mini:active:not(:disabled) { background: var(--oi-wash-strong); }
+.config-mini:disabled { opacity: .45; cursor: default; background: transparent; }
 .config-switch { display: inline-flex; gap: 6px; align-items: center; cursor: pointer; }
 .config-reference, .config-secret, .config-secret-edit { display: inline-flex; flex-wrap: wrap; gap: 6px 10px; align-items: center; }
 .config-structured { display: grid; gap: 6px; justify-items: start; }
@@ -53,8 +61,8 @@
 
 /* The frozen reconciliation vocabulary (09 §7.1) — six statuses, six
    styles, nothing else. */
-.config-chip { display: inline-block; border: 1px solid var(--oi-hairline-soft); border-radius: 999px; padding: 0 8px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
-.config-status { display: inline-block; border: 1px solid; border-radius: 999px; padding: 0 8px; font-size: var(--oi-shell-type-ui); }
+.config-chip { display: inline-block; border: 1px solid var(--oi-hairline); border-radius: var(--oi-shell-radius-control); padding: 0 7px; font-size: var(--oi-shell-type-ui); line-height: 1.7; color: var(--oi-muted-2); white-space: nowrap; }
+.config-status { display: inline-block; border: 1px solid; border-radius: var(--oi-shell-radius-control); padding: 0 7px; font-size: var(--oi-shell-type-ui); line-height: 1.7; white-space: nowrap; }
 .config-status.is-satisfied { border-color: var(--oi-accent); color: var(--oi-accent-ink); }
 .config-status.is-drifted { border-color: var(--oi-accent-soft); color: var(--oi-foreground); }
 .config-status.is-pending { border-color: var(--oi-hairline); border-style: dashed; color: var(--oi-muted); }
@@ -71,7 +79,7 @@
 .config-chip.is-effect { border-style: dotted; }
 
 /* Plan drawer. */
-.config-drawer { position: fixed; inset: 8vh 16vw 8vh; z-index: 60; overflow: auto; background: var(--oi-surface); color: var(--oi-foreground); border: 1px solid var(--oi-hairline-soft); border-radius: 8px; padding: 16px 20px; box-shadow: var(--oi-shadow-overlay); display: grid; gap: 10px; justify-items: start; align-content: start; }
+.config-drawer { position: fixed; inset: 8vh 16vw 8vh; z-index: 60; overflow: auto; overscroll-behavior: contain; background: var(--oi-surface); color: var(--oi-foreground); border: 1px solid var(--oi-hairline); border-radius: 8px; padding: 16px 20px; box-shadow: var(--oi-shadow-overlay); display: grid; gap: 10px; justify-items: start; align-content: start; }
 .config-drawer header { display: flex; gap: 16px; align-items: baseline; justify-content: space-between; width: 100%; }
 .config-drawer h4 { margin: 0; font-size: var(--oi-shell-type-heading); font-weight: 500; }
 .config-plan { border: 1px solid var(--oi-hairline-soft); border-radius: 6px; padding: 6px 10px; width: 100%; }
@@ -81,8 +89,9 @@
 .config-plan-facts dt { color: var(--oi-muted-2); min-width: 11ch; }
 .config-plan-facts dd { margin: 0; }
 .config-drawer-actions { display: flex; flex-wrap: wrap; gap: 10px; align-items: baseline; }
-.config-drawer-actions button { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 4px 14px; cursor: pointer; }
-.config-drawer-actions button:disabled { opacity: .45; cursor: default; }
+.config-drawer-actions button { min-height: 24px; background: var(--oi-composer-ground); border: 1px solid var(--oi-hairline); border-radius: 6px; color: inherit; font: inherit; font-size: var(--oi-shell-type-nav); padding: 2px 12px; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.config-drawer-actions button:hover:not(:disabled) { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.config-drawer-actions button:disabled { opacity: .45; cursor: default; background: transparent; }
 
 /* ChangeSet result (§8). */
 .config-changeset { width: 100%; display: grid; gap: 8px; justify-items: start; }
@@ -102,16 +111,23 @@
 /* Profiles. */
 .profiles-layout { display: flex; gap: 18px; align-items: flex-start; }
 .profiles-list { display: grid; gap: 6px; min-width: 200px; }
-.profiles-list > button { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 6px; color: inherit; font: inherit; text-align: left; padding: 6px 10px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; }
-.profiles-list > button[aria-pressed="true"] { border-color: var(--oi-accent); }
+.profiles-list > button { background: none; border: 1px solid var(--oi-hairline); border-radius: 6px; color: inherit; font: inherit; text-align: left; padding: 6px 10px; cursor: pointer; display: flex; gap: 8px; align-items: baseline; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.profiles-list > button:hover { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+/* The selected profile: the ink edge plus the shared left ink rule. */
+.profiles-list > button[aria-pressed="true"] { border-color: var(--oi-accent); background: var(--oi-wash); box-shadow: inset 2px 0 0 var(--oi-accent); }
 .profile-detail { flex: 1; min-width: 0; }
 .profile-detail-head { display: flex; gap: 16px; justify-content: space-between; align-items: flex-start; }
 .profile-detail-head h4 { margin: 0 0 4px; font-size: var(--oi-shell-type-heading); font-weight: 500; }
 .profile-detail-actions { display: flex; gap: 8px; }
-.profile-detail-actions button { background: none; border: 1px solid var(--oi-hairline-soft); border-radius: 4px; color: inherit; font: inherit; font-size: var(--oi-shell-type-ui); padding: 3px 12px; cursor: pointer; }
-.profile-detail-actions button:disabled { opacity: .5; cursor: default; }
+.profile-detail-actions button { min-height: 24px; background: var(--oi-composer-ground); border: 1px solid var(--oi-hairline); border-radius: 6px; color: inherit; font: inherit; font-size: var(--oi-shell-type-nav); padding: 2px 12px; cursor: pointer; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.profile-detail-actions button:hover:not(:disabled) { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.profile-detail-actions button:disabled { opacity: .5; cursor: default; background: transparent; }
 .profile-entries { margin-top: 10px; }
 .config-native-profiles ul { margin: 4px 0; padding-left: 18px; font-size: var(--oi-shell-type-ui); list-style: none; }
 .config-native-profiles strong { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
 .config-add-entry { display: flex; flex-wrap: wrap; gap: 8px; align-items: center; margin-top: 8px; }
 .config-new-profile { display: flex; gap: 6px; align-items: center; }
+
+@media (prefers-reduced-motion: reduce) {
+  .config-input, .config-mini, .config-drawer-actions button, .profiles-list > button, .profile-detail-actions button { transition: none; }
+}

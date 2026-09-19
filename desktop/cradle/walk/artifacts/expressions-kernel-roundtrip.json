@@ -1,0 +1,21 @@
+{
+  "probe": "expressions-kernel-roundtrip",
+  "desk": "http://localhost:1421/",
+  "bridge": "http://127.0.0.1:4217",
+  "receipts": [
+    {
+      "expression_ref": "expression:kernel-bridge-roundtrip",
+      "created_revision": 1,
+      "saved_revision": 2,
+      "conflict_ok": false,
+      "fresh_inspect_revision": 2,
+      "central_read_bytes": 766,
+      "conversion_notes": 6,
+      "second_store": {
+        "localStorage": [],
+        "drafts": []
+      }
+    }
+  ],
+  "at": "2026-09-19T13:04:26.667Z"
+}

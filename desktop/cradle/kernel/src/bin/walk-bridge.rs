@@ -39,9 +39,16 @@ fn main() {
         let kernel = Arc::clone(&kernel);
         std::thread::spawn(move || {
             let mut stream = stream;
+            // Bytes read past this request's body (the next request arriving
+            // in the same TCP segment) must survive to the next iteration —
+            // discarding them wedged the connection forever.
+            let mut leftover: Vec<u8> = Vec::new();
             loop {
-                let Some(request) = read_request(&mut stream) else { return };
-                respond(&mut stream, handle(&kernel, &request));
+                let Some(request) = read_request(&mut stream, &mut leftover) else { eprintln!("[bridge] conn end ({})", std::process::id()); return };
+                eprintln!("[bridge] {} {} ({} bytes)", request.method, request.path, request.body.len());
+                let outcome = handle(&kernel, &request);
+                eprintln!("[bridge] -> answered {} {}", request.method, request.path);
+                respond(&mut stream, outcome);
                 if !request.keep_alive {
                     return;
                 }
@@ -57,16 +64,11 @@ struct Request {
     keep_alive: bool,
 }
 
-fn read_request(stream: &mut TcpStream) -> Option<Request> {
+fn read_request(stream: &mut TcpStream, leftover: &mut Vec<u8>) -> Option<Request> {
     let mut buffer = [0u8; 8192];
-    let mut head = Vec::new();
+    let mut head = std::mem::take(leftover);
     // Read until the end of the headers.
     loop {
-        let read = stream.read(&mut buffer).ok()?;
-        if read == 0 {
-            return None;
-        }
-        head.extend_from_slice(&buffer[..read]);
         if let Some(split) = find_head_end(&head) {
             let head_text = String::from_utf8_lossy(&head[..split]).to_string();
             let mut lines = head_text.split("\r\n");
@@ -74,7 +76,13 @@ fn read_request(stream: &mut TcpStream) -> Option<Request> {
             
             
             let mut content_length = 0usize;
-            let mut keep_alive = false;
+            // HTTP/1.1 keeps connections alive by default; only an explicit
+            // `Connection: close` ends them (HTTP/1.0 keeps the old default).
+            // Opting in on `Connection: keep-alive` alone left every browser
+            // fetch — which never sends that header on 1.1 — on a connection
+            // this loop closed after one response, and a request that landed
+            // on a dying connection never came back.
+            let mut keep_alive = !request_line.ends_with("HTTP/1.0");
             for header in lines {
                 let Some((name, value)) = header.split_once(':') else { continue };
                 let name = name.trim().to_ascii_lowercase();
@@ -82,8 +90,12 @@ fn read_request(stream: &mut TcpStream) -> Option<Request> {
                 if name == "content-length" {
                     content_length = value.parse().unwrap_or(0);
                 }
-                if name == "connection" && value.eq_ignore_ascii_case("keep-alive") {
-                    keep_alive = true;
+                if name == "connection" {
+                    if value.eq_ignore_ascii_case("close") {
+                        keep_alive = false;
+                    } else if value.eq_ignore_ascii_case("keep-alive") {
+                        keep_alive = true;
+                    }
                 }
             }
             let mut parts = request_line.split_whitespace();
@@ -97,9 +109,17 @@ fn read_request(stream: &mut TcpStream) -> Option<Request> {
                 }
                 body.extend_from_slice(&buffer[..read]);
             }
+            // Whatever arrived beyond this request's body is the NEXT one —
+            // keep it for the next iteration, never drop it on the floor.
+            *leftover = body[content_length.min(body.len())..].to_vec();
             body.truncate(content_length);
             return Some(Request { method, path, body, keep_alive });
         }
+        let read = stream.read(&mut buffer).ok()?;
+        if read == 0 {
+            return None;
+        }
+        head.extend_from_slice(&buffer[..read]);
         if head.len() > 65536 {
             return None;
         }

@@ -2,6 +2,8 @@ import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,type ReturnReading,type ReturnRow} from "./client";
 import {NowRelations} from "./NowRelations";
+import {Glyph} from "../workspace/Glyph";
+import "./receiving.css";
 /** Pending human Returns (Wave 6E): what arrived, from whom, against which
  * document — reviewed and included only through Central's native
  * revision-checked operations. Arrival never edits a document; this tray
@@ -59,7 +61,7 @@ export function ReturnsTray({project,refresh}:{project:string;refresh:number}) {
  const proposal=open?.record.proposal as {operation?:string;entry_id?:string;field_id?:string;reply_to?:string};
  const anchor=[proposal?.entry_id&&`entry ${proposal.entry_id}`,proposal?.field_id&&`field ${proposal.field_id}`,proposal?.reply_to&&`reply anchor ${proposal.reply_to}`].filter(Boolean).join(" · ");
  return <section className="project-returns" aria-label="Returns">
-  <header><span>Returns</span>{page&&<small aria-label="Returns summary">{shown.length?`${shown.length} in the receiving field`:"receiving field is clear"}</small>}<button className="returns-refresh" aria-label="Refresh returns" disabled={pending} onClick={load}>↻</button></header>
+  <header><span>Returns</span>{page&&<small aria-label="Returns summary">{shown.length?`${shown.length} in the receiving field`:"receiving field is clear"}</small>}<button className="returns-refresh" aria-label="Refresh returns" disabled={pending} onClick={load}><Glyph name="refresh" size={12}/></button></header>
   {shown.map(row=><button key={row.return_ref} className={`project-return ${row.now_ref?"return-has-now":""}`} data-now-ref={row.now_ref??undefined} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
     <span className={`return-status return-${row.status}`}>{row.status}</span>
     <span className="return-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}{row.now_ref&&<span className="return-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>

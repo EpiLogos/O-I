@@ -1,0 +1,460 @@
+/*
+ * Technè mode — the instrument host and Instrument 0 (the material scene),
+ * the left material navigator and the Epii plane. Tokens only (`--oi-*`),
+ * coherent in light and dark; nothing animates (the drop affordance is a
+ * static outline). Chrome is the shared desktop grammar: oi-panel-head,
+ * oi-segment, oi-row, oi-chip, oi-tool, oi-action, oi-menu, oi-input, oi-kv,
+ * oi-ref, oi-state, oi-scroll(-quiet), oi-resize-handle, oi-empty, oi-refusal.
+ */
+
+/* ===== centre surface ==================================================== */
+
+.tn-surface { position: relative; display: flex; flex-direction: column; block-size: 100%; min-block-size: 0; min-inline-size: 0; overflow: hidden; background: var(--oi-canvas-ground); color: var(--oi-foreground); font-size: var(--oi-shell-type-body); }
+
+/* ---- the instrument tab rail (the arrangement's top bar) ----------------
+ * The pane system's own grammar (workspace/mode.ts TabPresentation; the
+ * .tab-strip/.tab/.pane-tools vocabulary is the shared chrome from
+ * cradle.css): pinned horizontal by default, pinned vertical as a resizable
+ * list, or unpinned behind a hover-reveal edge. */
+
+.tn-tabbar { flex: none; }
+/* The disclosure state line rides with the pane tools, ellipsised — the full
+ * reason travels in the title. */
+.tn-tabbar-note { max-inline-size: 34cqi; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; margin-inline-end: 4px; }
+.tn-tabbar-note[data-disclosure="unavailable"] { color: var(--oi-accent-ink); }
+/* A tab whose reading disclosed the instrument unavailable keeps its tab —
+ * the constellation is the rail — but wears the mark and the reason. */
+.tab-entry > .tab[data-available="false"] { color: var(--oi-muted-3); }
+.tab-entry > .tab[data-available="false"] .tab-title { text-decoration: line-through solid transparent; text-decoration-color: var(--oi-hairline); }
+.tn-tab-unavailable { flex: none; color: var(--oi-accent-ink); }
+
+/* Pinned vertical: the surface becomes the pane's own two-column grid — the
+ * rail a column with the tools at its foot, the body beside it. */
+.tn-surface[data-tab-presentation="pinned-vertical"] { display: grid; grid-template-columns: var(--tn-tab-list-width, clamp(132px, 22%, 208px)) minmax(0, 1fr); }
+.tn-surface[data-tab-presentation="pinned-vertical"] > .tn-tabbar { grid-column: 1; grid-row: 1; position: relative; z-index: 26; flex-direction: column; align-items: stretch; height: auto; min-height: 0; min-width: 0; padding: 4px 0 0; overflow: hidden; border-bottom: 0; border-right: 1px solid var(--oi-hairline-soft); }
+.tn-surface[data-tab-presentation="pinned-vertical"] > .tn-tabbar > .tab-scroll { flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 4px; gap: 1px; }
+.tn-surface[data-tab-presentation="pinned-vertical"] > .tn-tabbar > .pane-tools { justify-content: flex-end; height: var(--oi-shell-tabbar); min-height: var(--oi-shell-tabbar); margin: 0; padding: 0 4px; border-top: 1px solid var(--oi-hairline-soft); align-self: stretch; flex-direction: column; gap: 1px; }
+.tn-surface[data-tab-presentation="pinned-vertical"] > .tn-tabbar > .pane-tools > .tn-tabbar-note { max-inline-size: none; writing-mode: vertical-rl; max-block-size: 30%; }
+.tn-surface[data-tab-presentation="pinned-vertical"] .tab-entry { display: flex; flex: none; width: 100%; }
+.tn-surface[data-tab-presentation="pinned-vertical"] .tab-entry > .tab { flex: 1; min-width: 0; max-width: none; height: 28px; padding: 0 8px; border-right: 0; border-radius: 5px; }
+.tn-surface[data-tab-presentation="pinned-vertical"] .tab-entry > .tab.active { background: var(--oi-wash); }
+.tn-surface[data-tab-presentation="pinned-vertical"] > .tn-body { grid-column: 2; min-width: 0; }
+
+/* Unpinned, horizontal geometry: the rail folds to nothing and opens in flow
+ * on approach — the pane strip's own reveal law (the strip stacks above its
+ * reveal zone while it stands open). */
+.tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="horizontal"] > .tn-tabbar { position: relative; z-index: 26; height: 0px; min-height: 0; padding: 0; border-bottom-width: 0; overflow: hidden; transition: height var(--oi-motion-ui) var(--oi-motion-ease-out), min-height var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="horizontal"]:is(:has(> .tab-reveal-zone:hover), :has(> .tn-tabbar:hover), :has(> .tn-tabbar :focus-within)) > .tn-tabbar { height: var(--oi-shell-tabbar); min-height: var(--oi-shell-tabbar); padding: 0 4px; }
+
+/* Unpinned, vertical geometry: the column folds to a hairline edge and the
+ * grid track re-opens in flow. */
+.tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { display: grid; grid-template-columns: 0px minmax(0, 1fr); transition: grid-template-columns var(--oi-motion-plane) var(--oi-motion-ease-out); }
+.tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tn-tabbar { border-right-width: 0; }
+.tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="vertical"]:is(:has(> .tab-reveal-zone:hover), :has(> .tn-tabbar:hover), :has(> .tn-tabbar :focus-within)) { grid-template-columns: var(--tn-tab-list-width, clamp(132px, 22%, 208px)) minmax(0, 1fr); }
+.tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tn-body { grid-column: 2; min-width: 0; }
+
+/* The reveal zone: the pane's own invisible approach area, beneath the bar. */
+.tn-surface > .tab-reveal-zone { position: absolute; z-index: 25; }
+.tn-surface > .tab-reveal-zone[data-orientation="horizontal"] { top: 0; left: 0; right: 0; height: 8px; }
+.tn-surface > .tab-reveal-zone[data-orientation="horizontal"]::after { content: ""; position: absolute; top: 0; right: 0; width: 132px; height: 32px; }
+.tn-surface > .tab-reveal-zone[data-orientation="vertical"] { left: 0; top: 0; bottom: 0; width: 14px; height: auto; }
+
+/* The vertical list's width separator (the .region-resizer grammar): a
+ * transparent hit area whose hairline inks on approach. */
+.tn-surface > .tab-list-resizer { position: absolute; top: 0; bottom: 0; left: calc(var(--tn-tab-list-width, clamp(132px, 22%, 208px)) - 4px); width: 9px; cursor: col-resize; z-index: 27; touch-action: none; background: transparent; }
+.tn-surface > .tab-list-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: transparent; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.tn-surface > .tab-list-resizer:is(:hover, :focus-visible, :active)::after { background: var(--oi-ink); }
+.tn-surface > .tab-list-resizer:focus-visible { outline: none; }
+
+.tn-body { flex: 1; display: flex; flex-direction: column; min-block-size: 0; min-inline-size: 0; }
+.tn-notice { flex: none; z-index: 2; }
+
+/* The scene region: Instrument 0's scene with its lens host. */
+.tn-scene-region { flex: 1; display: flex; min-block-size: 0; min-inline-size: 0; }
+.tn-scene-region[data-dock-edge="bottom"] { flex-direction: column; }
+
+/* The scene: the toolbar, then the list of references. */
+.tn-scene { position: relative; flex: 1; display: flex; flex-direction: column; min-block-size: 0; min-inline-size: 0; }
+.tn-scene-bar { flex: none; display: flex; align-items: center; gap: 8px; min-block-size: 38px; padding: 0 8px 0 10px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.tn-scene-bar-tools { display: flex; align-items: center; gap: 2px; margin-inline-start: auto; }
+.tn-add { position: relative; flex: none; }
+.tn-add-popover { position: absolute; inset-block-start: calc(100% + 4px); inset-inline-start: 0; inline-size: min(380px, calc(100cqi - 24px)); max-inline-size: calc(100vw - 32px); gap: 8px; padding: 10px; }
+.tn-add-popover > form { display: flex; gap: 6px; }
+.tn-add-popover > form > .oi-input { flex: 1; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); }
+.tn-add-popover > p { margin: 0; }
+.tn-notice { flex: none; display: flex; align-items: flex-start; gap: 8px; margin: 6px 8px 0; }
+.tn-notice > .oi-tool { margin-inline-start: auto; }
+
+.tn-items { flex: 1; min-block-size: 0; margin: 0; padding: 6px; list-style: none; display: flex; flex-direction: column; gap: 1px; overflow-x: hidden; }
+.tn-items:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: -2px; }
+/* A reference row: two lines (name, ref) and its live state. */
+.tn-item { block-size: auto; min-block-size: 40px; align-items: flex-start; padding-block: 6px; cursor: default; }
+.tn-item > svg { margin-block-start: 1px; }
+.tn-item-text { flex: 1; min-inline-size: 0; display: flex; flex-direction: column; gap: 2px; }
+.tn-item-text > .oi-row-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tn-item-ref { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); overflow: hidden; text-overflow: ellipsis; white-space: nowrap; overflow-wrap: normal; }
+.tn-item-refusal { font-size: var(--oi-shell-type-ui); color: var(--oi-accent-ink); overflow-wrap: anywhere; white-space: normal; }
+.tn-item > .oi-chip, .tn-item > .oi-state { flex: none; margin-block-start: 1px; }
+.tn-empty { padding: 18px 12px; max-inline-size: 440px; }
+.tn-empty > span:first-child { color: var(--oi-foreground); font-size: var(--oi-shell-type-body); }
+
+/* Drop affordance: a static outline over the scene while a drag is above it. */
+.tn-scene[data-drop="true"] { background: var(--oi-wash); }
+.tn-drop { position: absolute; inset: 6px; z-index: 3; display: grid; place-items: center; border: 1.5px dashed var(--oi-accent); border-radius: var(--oi-shell-radius); background: transparent; color: var(--oi-accent-ink); font-size: var(--oi-shell-type-nav); pointer-events: none; }
+.tn-drop > span { padding: 3px 8px; border-radius: var(--oi-shell-radius-row); background: var(--oi-canvas-ground); }
+
+/* The lens host: a bounded region beside (or beneath) the scene. */
+.tn-lens { flex: none; display: flex; flex-direction: column; min-block-size: 0; min-inline-size: 0; max-inline-size: 75%; background: var(--oi-inspector-ground); }
+.tn-scene-region[data-dock-edge="bottom"] .tn-lens { max-inline-size: none; inline-size: auto; max-block-size: 75%; }
+.tn-lens-body { flex: 1; min-block-size: 0; padding: 12px; box-sizing: border-box; display: flex; flex-direction: column; gap: 10px; }
+.tn-lens-body:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: -2px; }
+.tn-lens-body > p { margin: 0; }
+.tn-lens-body > .oi-empty { padding: 0; }
+.tn-lens-text { margin: 0; white-space: pre-wrap; overflow-wrap: anywhere; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); line-height: 1.55; }
+.tn-lens-prose { font-size: var(--oi-shell-type-prose); line-height: 1.6; overflow-wrap: anywhere; }
+.tn-lens-prose :is(h1, h2, h3, h4) { margin: 1.1em 0 0.4em; font-weight: 550; line-height: 1.3; }
+.tn-lens-prose h1 { font-size: var(--oi-shell-type-title); }
+.tn-lens-prose h2 { font-size: var(--oi-shell-type-heading); }
+.tn-lens-prose :is(h3, h4) { font-size: var(--oi-shell-type-prose); }
+.tn-lens-prose > :first-child { margin-block-start: 0; }
+.tn-lens-prose p { margin: 0 0 0.8em; }
+.tn-lens-prose :is(ul, ol) { margin: 0 0 0.8em; padding-inline-start: 1.4em; }
+.tn-lens-prose code, .tn-lens-prose pre { font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); }
+.tn-lens-prose pre { margin: 0 0 0.8em; padding: 8px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-surface); white-space: pre-wrap; overflow-wrap: anywhere; }
+.tn-lens-prose a { color: inherit; text-decoration: underline; text-underline-offset: 2px; cursor: default; }
+.tn-lens-prose img { display: none; }
+.tn-lens-image { max-inline-size: 100%; block-size: auto; align-self: flex-start; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius-row); }
+.tn-lens-kv { grid-template-columns: minmax(0, 0.7fr) minmax(0, 1.6fr); font-size: var(--oi-shell-type-nav); }
+.tn-lens-section { display: flex; flex-direction: column; gap: 4px; }
+.tn-lens-section > .oi-eyebrow { margin: 0; }
+.tn-lens-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 3px; }
+
+/* An M1′–M5′ host slot: the office, its disclosed standing with stated
+ * reasons, and the implementations this tree actually has. Quiet panel
+ * chrome — it never dresses an absence as a live instrument. */
+.tn-slot { flex: 1; min-block-size: 0; padding: 18px 20px; max-inline-size: 640px; display: flex; flex-direction: column; gap: 14px; }
+.tn-slot-head { display: flex; flex-direction: column; gap: 4px; }
+.tn-slot-head > strong { font-size: var(--oi-shell-type-heading); font-weight: 550; }
+.tn-slot-state { display: flex; flex-direction: column; gap: 8px; }
+.tn-slot-state > p { margin: 0; }
+.tn-slot-section { display: flex; flex-direction: column; gap: 8px; padding-block-start: 10px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.tn-slot-instrument { display: flex; align-items: center; gap: 10px; padding: 6px 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius-row); }
+.tn-slot-instrument > .oi-row-title { flex: none; }
+.tn-slot-instrument > .oi-ref { flex: 1; min-inline-size: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-surface[data-tab-presentation="unpinned"] > .tn-tabbar,
+  .tn-surface[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { transition: none; }
+}
+
+/* ===== left: the material navigator ===================================== */
+
+.tn-navigator { display: flex; flex-direction: column; block-size: 100%; min-block-size: 0; min-inline-size: 0; font-size: var(--oi-shell-type-nav); color: var(--oi-foreground); }
+.tn-nav-head { border-block-end: 0; }
+.tn-nav-note { margin: 0 12px 6px; }
+.tn-tree { flex: 1; min-block-size: 0; padding: 0 4px 8px; overflow-x: hidden; }
+.tn-dir { margin: 0; padding: 0; list-style: none; }
+.tn-dir li { margin: 0; padding: 0; }
+.tn-nav-line { position: relative; display: flex; align-items: center; }
+.tn-nav-row { padding-inline-start: calc(8px + var(--tn-depth, 0) * 12px); }
+.tn-nav-row[draggable="true"] { -webkit-user-drag: element; }
+.tn-nav-add { position: absolute; inset-inline-end: 2px; opacity: 0; }
+.tn-nav-line:hover > .tn-nav-add, .tn-nav-line:focus-within > .tn-nav-add, .tn-nav-add:focus-visible { opacity: 1; background: var(--oi-sidebar-ground); }
+.tn-nav-line:hover > .tn-nav-row, .tn-nav-line:focus-within > .tn-nav-row { padding-inline-end: 30px; }
+.tn-twist { flex: none; inline-size: 8px; block-size: 8px; display: inline-flex; align-items: center; justify-content: center; color: var(--oi-muted-2); }
+.tn-twist::before { content: ""; inline-size: 4px; block-size: 4px; border-inline-end: 1px solid currentColor; border-block-end: 1px solid currentColor; transform: rotate(-45deg); }
+.tn-nav-row[aria-expanded="true"] > .tn-twist::before { transform: rotate(45deg); }
+.tn-twist[data-leaf="true"]::before { display: none; }
+.tn-nav-inline { margin: 2px 8px 4px; padding-inline-start: calc(8px + var(--tn-depth, 0) * 12px); }
+.tn-navigator > .oi-empty { padding: 12px; }
+
+/* ===== right: the Epii plane (shares the receiving-plane layout) ========= */
+
+.tn-epii-first { padding-block-start: 0; border-block-start: 0; }
+.tn-epii-list { margin: 0; padding: 0; list-style: none; display: grid; gap: 8px; }
+
+@media (pointer: coarse) { .tn-nav-add { opacity: 1; } }
+@media (prefers-reduced-motion: reduce) { .tn-surface *, .tn-navigator * { transition: none; } }
+
+
+/* ===== left: the wiki map (owner direction 2026-09-18) ===================
+ * A quiet typographic index of the web. Region heads carry the state as a
+ * right-aligned subtitle; entries are title-first with the type revealed on
+ * hover; content hangs from one hairline rule. No message paragraphs. */
+
+.wiki-map { flex: 1 1 0; min-height: 0; min-width: 0; overflow-y: auto; padding: 2px 6px 12px; font-size: var(--oi-shell-type-nav); color: var(--oi-foreground); }
+
+.wiki-region-register > summary {
+  display: flex; align-items: center; gap: 7px; padding: 6px 6px; border-radius: var(--oi-shell-radius-row);
+  cursor: pointer; user-select: none; font-weight: 550; list-style: none;
+}
+.wiki-region-register > summary::-webkit-details-marker { display: none; }
+.wiki-region-register > summary::before {
+  content: ""; flex: none; width: 5px; height: 5px; margin-right: 1px;
+  border-right: 1px solid var(--oi-muted-2); border-bottom: 1px solid var(--oi-muted-2);
+  transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.wiki-region-register[open] > summary::before { transform: rotate(45deg); }
+.wiki-region-register > summary:hover { background: var(--oi-wash); }
+
+.wiki-map-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiki-map-count { flex: none; color: var(--oi-muted-2); font-weight: 400; font-size: 10.5px; letter-spacing: .01em; }
+
+.wiki-open-web {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  padding: 0; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.wiki-open-web svg { transform: rotate(-45deg); }
+summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-space-head:hover > .wiki-open-web { opacity: 1; }
+.wiki-open-web:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+
+.wiki-region-body { margin: 1px 0 8px 13px; padding-left: 8px; border-left: 1px solid var(--oi-hairline-soft); }
+
+.wiki-space { margin-top: 6px; }
+.wiki-space:first-child { margin-top: 2px; }
+.wiki-space-head {
+  display: flex; align-items: center; gap: 6px; padding: 2px 6px 3px;
+  color: var(--oi-muted-2); font-size: 10.5px; letter-spacing: .05em; text-transform: uppercase;
+}
+.wiki-space-name { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+
+.wiki-node-row {
+  display: flex; align-items: center; gap: 6px; width: 100%; padding: 3px 6px; border-radius: var(--oi-shell-radius-row);
+  text-align: left; color: inherit;
+}
+.wiki-node-row:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.wiki-node-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.wiki-node-type {
+  flex: none; color: var(--oi-muted-2); font-size: 10px; letter-spacing: .02em;
+  opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.wiki-node-row:hover .wiki-node-type, .wiki-node-row:focus-visible .wiki-node-type { opacity: 1; }
+
+.wiki-constellation { padding-left: 4px; }
+
+.wiki-map-note { margin: 4px 6px 2px 20px; color: var(--oi-muted-2); font-size: 11px; }
+
+@media (prefers-reduced-motion: reduce) { .wiki-map * { transition: none; } }
+
+/* Instrument 0 opens onto the wiki local whole as a REAL Expression: the
+   register's projection presented on the window's one Expression stage,
+   with the scene/entity transport under it and the selected subject's
+   panel over the field. The material scene remains the summoned depth —
+   held at the right edge when material exists, never the gate. */
+.wiki-map-note { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.wiki-expression { flex: 1; min-inline-size: 0; display: flex; flex-direction: column; block-size: 100%; min-block-size: 0; }
+.wx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 10px 14px 8px; }
+.wx-head-title { display: flex; align-items: baseline; gap: 14px; min-inline-size: 0; flex-wrap: wrap; }
+.wx-register { display: flex; flex-direction: column; gap: 3px; }
+.wx-register .oi-input { inline-size: 180px; }
+.wx-basis { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.wx-head-tools { display: flex; gap: 6px; }
+.wx-notice { display: flex; align-items: center; gap: 8px; margin: 0 14px 6px; }
+.wx-notices { display: flex; flex-direction: column; gap: 2px; margin: 0 14px 6px; }
+.wx-notice-line { margin: 0; color: var(--oi-muted-2); }
+/* The Epii face — instrument 0's entry view (owner direction 2026-09-19):
+   the twelve-masks expression filling the body, entered from the shell's
+   own material seam; the whole is one deliberate step in. */
+.wx-face { display: flex; flex-direction: column; flex: 1; min-block-size: 0; }
+.wx-face-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 10px 14px 8px; flex-wrap: wrap; }
+.wx-face-title { display: flex; align-items: baseline; gap: 14px; min-inline-size: 0; flex-wrap: wrap; }
+.wx-face-stage { position: relative; flex: 1; min-block-size: 0; display: flex; }
+.wx-face-frame { flex: 1; min-inline-size: 0; border: 0; background: var(--oi-surface); }
+.wx-field { position: relative; flex: 1; min-block-size: 0; display: flex; }
+.wx-stage-host { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; }
+.wx-stage-off { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; max-inline-size: 420px; margin: auto; padding: 24px; box-sizing: border-box; }
+.wx-transport { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 10px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.wx-scenes { display: flex; gap: 4px; flex-wrap: wrap; }
+.wx-entities { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.wx-entity { display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px; background: transparent; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
+.wx-entity[aria-pressed="true"] { border-color: var(--oi-foreground); }
+.wx-entity .oi-state { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.wx-scheme { padding-inline-start: 4px; }
+.wx-subject { position: absolute; inset-block: 10px; inset-inline-end: 10px; z-index: 2; inline-size: min(340px, 42%); display: flex; flex-direction: column; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-surface); box-shadow: 0 8px 28px rgba(0,0,0,.14); overflow: hidden; }
+.wx-subject-head { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 8px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.wx-subject-head strong { font-size: var(--oi-shell-type-ui); }
+.wx-subject-ref { overflow-wrap: anywhere; }
+.wx-subject-body { flex: 1; min-block-size: 0; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; }
+.wx-subject-section { display: flex; flex-direction: column; gap: 4px; }
+.wx-subject-source { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.wx-subject-source-ref { padding: 0; border: 0; background: transparent; cursor: pointer; text-decoration: underline dotted; overflow-wrap: anywhere; }
+.wx-subject-relation { margin: 0; display: flex; flex-direction: column; gap: 1px; }
+.wx-subject-relation .oi-state { overflow-wrap: anywhere; }
+.wx-subject-tools { display: flex; gap: 6px; padding: 8px 12px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.wx-subject-open-note { margin: 0; flex: 1; min-inline-size: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.tn-m0 { position: relative; display: flex; block-size: 100%; min-block-size: 0; }
+.tn-m0 > .wiki-expression { flex: 1; min-inline-size: 0; }
+.tn-m0-material { flex: none; inline-size: min(420px, 38%); display: flex; flex-direction: column; border-inline-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-surface, transparent); }
+.tn-m0-material-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.tn-m0-material > .tn-material-scene, .tn-m0-material > div { flex: 1; min-block-size: 0; overflow-y: auto; }
+.tn-m0[data-material="none"] { display: block; }
+
+/* ---- The wiki map as an aperture of the ONE Wiki→Expression projection ----
+   (QL-MEF #213: LIST ↔ TREE ↔ GRAPH over one relation/selection state; the
+   selected row is the centre's selection — the #366 bidirectional law.) */
+.wiki-map-apertures {
+  display: flex; align-items: center; gap: 2px; padding: 2px 4px 6px;
+}
+.wiki-map-apertures [role="tab"] {
+  padding: 2px 8px; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  font-size: 10.5px; letter-spacing: .04em; text-transform: uppercase; font-weight: 550;
+}
+.wiki-map-apertures [role="tab"]:hover { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.wiki-map-apertures [role="tab"][aria-selected="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+.wiki-map-here { flex: none; color: var(--oi-accent-ink); font-weight: 700; }
+.wiki-project-register {
+  flex: none; display: flex; align-items: center; justify-content: center; width: 20px; height: 20px;
+  padding: 0; border-radius: var(--oi-shell-radius-row); color: var(--oi-muted-2);
+  opacity: 0; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-register { opacity: 1; }
+.wiki-project-register:hover { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.wiki-node-row[aria-selected="true"] { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+.wiki-node-row[aria-selected="true"] .wiki-node-type { opacity: 1; }
+.wiki-node-whole .wiki-node-title { font-weight: 550; }
+.wiki-space-flat { margin-top: 2px; }
+.wiki-region-register > summary .wiki-project-register[data-register-focus] { opacity: 1; }
+
+/* The GRAPH aperture: the projection's own drawing, small. Same positions,
+   same bound relations — presentation of the document, never a new layout. */
+.wiki-graph { margin: 2px 0 4px; }
+.wiki-graph svg {
+  display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--oi-shell-radius-row);
+  background: var(--oi-wash); border: 1px solid var(--oi-hairline-soft);
+}
+.wiki-graph-relation { stroke: var(--oi-hairline-strong, var(--oi-hairline)); stroke-width: 0.006; fill: none; }
+.wiki-graph-node { cursor: pointer; }
+.wiki-graph-node circle { fill: var(--oi-wash-strong); stroke: var(--oi-muted-2); stroke-width: 0.008; }
+.wiki-graph-node:hover circle { stroke: var(--oi-accent-ink); }
+.wiki-graph-node[data-selected] circle { fill: var(--oi-accent-ink); stroke: var(--oi-accent-ink); }
+.wiki-graph-node[data-selected] text { fill: var(--oi-background, #fff); }
+.wiki-graph-node text { font-size: 0.07px; fill: var(--oi-foreground); pointer-events: none; }
+.wiki-graph figcaption { margin-top: 3px; }
+
+/* ===== the dual-mode surface (owner wayfinder 2026-09-19, PR #387 §11–13)
+ * ONE Expressions system, two full-screen operating cuts around the SAME
+ * stage. The surface is the field: the hosted application fills it in both
+ * cuts; the Technē cut adds the compact HUD, the active lens body, the
+ * shared dock slot, the Epii overlay and the pinned lens tools over it.
+ * Nothing animates; tokens only; the house 24×24 thin-stroke glyphs. ====== */
+
+.tn-dual { position: relative; }
+.tn-stage-frame { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; border: 0; background: var(--oi-surface); }
+.tn-stage-refusal { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px; padding: 24px; max-inline-size: 520px; margin-inline: auto; }
+.tn-stage-refusal > strong { font-size: var(--oi-shell-type-ui); }
+
+/* ---- the Technē HUD (the deep cut's compact persistent strip) -----------
+ * One thin floating row in the shell's own corner grammar: shell.css gives
+ * `.tn-surface > .tn-instruments` the traffic-lights cutout padding when
+ * the surface stands in the mode stage, exactly like every other mode bar. */
+.tn-hud {
+  position: absolute; inset-block-start: 0; inset-inline: 0; z-index: 30;
+  display: flex; align-items: center; gap: 4px;
+  min-block-size: 34px; padding-block: 3px; padding-inline: 10px;
+  border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: color-mix(in srgb, var(--oi-shell-ground, var(--oi-canvas-ground)) 88%, transparent);
+  backdrop-filter: blur(10px);
+  font-size: var(--oi-shell-type-nav); color: var(--oi-foreground);
+}
+.tn-hud-rule { flex: none; inline-size: 1px; block-size: 16px; background: var(--oi-hairline); margin-inline: 3px; }
+
+/* The cut switch: the one immediate, reversible mode control. */
+.tn-hud-switch { flex: none; display: flex; align-items: center; gap: 2px; padding: 2px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px; }
+.tn-hud-switch > button {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border: 0; border-radius: 999px; background: transparent; color: var(--oi-muted-2);
+  font: inherit; font-weight: 550; cursor: pointer;
+}
+.tn-hud-switch > button:hover { color: var(--oi-accent-ink); background: var(--oi-wash); }
+.tn-hud-switch > button[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+
+/* HUD tools: the app's own icon-button grammar, host side. */
+.tn-hud .tn-hud-tool {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  inline-size: 26px; block-size: 26px; padding: 0;
+  border: 0; border-radius: var(--oi-shell-radius-row); background: transparent;
+  color: var(--oi-muted-2); cursor: pointer;
+}
+.tn-hud .tn-hud-tool:hover:not(:disabled), .tn-hud .tn-hud-tool:focus-visible { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.tn-hud .tn-hud-tool:disabled { opacity: .35; cursor: default; }
+.tn-hud .tn-hud-tool[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+.tn-hud .tn-hud-tool[data-available="false"] { opacity: .4; }
+
+/* The position readout: what the hosted application actually reported,
+   ellipsised, with the honest absence carrying its own wording. */
+.tn-hud-position { flex: 1 1 0; min-inline-size: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; color: var(--oi-muted-2); }
+.tn-hud-position[data-reported="false"] { font-style: italic; opacity: .8; }
+
+/* The lens chooser: one compact rail; an empty registry states itself. */
+.tn-hud-lenses { flex: none; display: flex; align-items: center; gap: 2px; }
+.tn-hud-lens[data-active] { background: var(--oi-wash-strong); color: var(--oi-foreground); box-shadow: inset 0 -2px 0 var(--oi-accent); }
+.tn-hud-lens-none { color: var(--oi-muted-2); font-style: italic; padding-inline: 4px; }
+
+.tn-hud-state { flex: none; max-inline-size: 30cqi; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tn-hud-state[data-disclosure="unavailable"] { color: var(--oi-accent-ink); }
+
+/* ---- the active lens body: the ONLY rich renderer, over the field ------- */
+.tn-lens-stage { position: absolute; inset: 34px 0 0 0; z-index: 20; display: flex; flex-direction: column; background: var(--oi-canvas-ground); }
+.tn-lens-stage > * { flex: 1; min-block-size: 0; min-inline-size: 0; }
+
+/* ---- the shared dock slot (Lens Studio / material depth) ---------------- */
+.tn-dock {
+  position: absolute; inset-block: 34px 0; inset-inline-end: 0; z-index: 28;
+  display: flex; flex-direction: column; min-block-size: 0; max-inline-size: 80%;
+  border-inline-start: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: var(--oi-inspector-ground);
+}
+.tn-dock[data-guest="material"] { background: var(--oi-surface, var(--oi-inspector-ground)); }
+.tn-dock-body { flex: 1; min-block-size: 0; display: flex; flex-direction: column; }
+.tn-dock-body > * { flex: 1; min-block-size: 0; }
+.tn-dock-body > p { flex: none; margin: 12px; }
+.tn-dock-notice { position: absolute; inset-block-end: 44px; inset-inline: 12px auto; z-index: 29; max-inline-size: min(440px, 60cqi); }
+
+/* ---- the EXPRESSIONS cut's one floating recall control ------------------
+ * Bottom-right: the app's masthead, tool rail and capture cluster keep
+ * their own corners; the recall never covers them. */
+.tn-cut-recall {
+  position: absolute; inset-block-end: 64px; inset-inline-end: 14px; z-index: 30;
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px;
+  background: color-mix(in srgb, var(--oi-shell-ground, var(--oi-canvas-ground)) 88%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-nav); font-weight: 550; cursor: pointer;
+}
+.tn-cut-recall:hover, .tn-cut-recall:focus-visible { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+
+/* ---- Epii: the summonable companion overlay ----------------------------- */
+.tn-epii {
+  position: absolute; inset-block-end: 52px; inset-inline-end: 12px; z-index: 31;
+  inline-size: min(340px, 44cqi); max-block-size: min(420px, 60cqb);
+  display: flex; flex-direction: column; min-block-size: 0;
+  border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px;
+  background: var(--oi-surface); box-shadow: 0 8px 28px rgba(0,0,0,.14);
+  overflow: hidden;
+}
+.tn-epii-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.tn-epii-body { flex: 1; min-block-size: 0; overflow-y: auto; font-size: var(--oi-shell-type-nav); }
+.tn-epii-body .xa-plane { border: 0; }
+
+/* ---- the pinned lens tools (the contextual toolbelt of the deep cut) ---- */
+.tn-toolbelt {
+  position: absolute; inset-block-start: 44px; inset-inline-end: 10px; z-index: 27;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 5px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px;
+  background: color-mix(in srgb, var(--oi-shell-ground, var(--oi-canvas-ground)) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+.tn-toolbelt:empty { display: none; }
+
+/* The whole-surface disclosure refusal: one quiet line above the transport. */
+.tn-disclosure-refusal {
+  position: absolute; inset-block-end: 40px; inset-inline-start: 12px; z-index: 26;
+  max-inline-size: min(480px, 60cqi); padding: 3px 9px;
+  border-radius: var(--oi-shell-radius-row); background: var(--oi-wash);
+  color: var(--oi-accent-ink); font-size: var(--oi-shell-type-nav);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-hud, .tn-cut-recall, .tn-toolbelt { backdrop-filter: none; }
+}

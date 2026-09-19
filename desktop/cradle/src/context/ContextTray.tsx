@@ -11,6 +11,7 @@ import type {ActionDispatch} from "../kernel/types";
 import {readDraft} from "../workspace/drafts";
 import "./context.css";
 import {observationIsCurrent} from "./ComponentSelection";
+import {CONTEXT_MARK} from "./contextItems";
 type Candidate={observationKey?:string;selector?:string;role?:string;bounds?:{x:number;y:number;width:number;height:number};bindingId:string;kind:string;text:string;sourceRef?:string;start?:number;end?:number;revision?:string;workingCopy?:boolean};
 /** The owner's typed remember answer (`central.remembered-note-proposal`,
  * probed live on the installed cut). Unknown shapes render as the raw
@@ -55,7 +56,7 @@ export function ContextTray({bindings,accompanying}:{bindings:Record<string,Surf
   const origin=candidate.sourceRef??binding.terminal?.cwd??binding.browser?.url??binding.title;
   const metadata=[binding.title,origin,revision?`revision ${revision}`:candidate.kind==="element"?`observed ${candidate.role==="text"?"text":"component"} · ${candidate.selector} · role ${candidate.role??"element"}${candidate.bounds?` · viewport bounds x=${candidate.bounds.x}, y=${candidate.bounds.y}, width=${candidate.bounds.width}, height=${candidate.bounds.height} CSS px`:""}`:"observed excerpt",working?"working copy — unsaved":""].filter(Boolean).join(" · ");
   const quoted=candidate.text.split("\n").map(line=>`> ${line}`).join("\n");
-  return {sourceRef:origin,text:`@context — ${metadata}\n${quoted}`,revision,title:binding.title};
+  return {sourceRef:origin,text:`${CONTEXT_MARK}${metadata}\n${quoted}`,revision,title:binding.title};
  };
  const compose=async():Promise<{destination:{ref:string;project:string};sourceRef:string;text:string}>=>{
   const chosen=selected;

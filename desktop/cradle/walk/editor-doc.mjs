@@ -39,12 +39,24 @@ export function waitForDoc(page, content, selector = '.cm-content', timeout = 10
   );
 }
 
-/** The saving chrome is a 3px edge that opens on hover or focus (cradle.css),
- *  so a walk reaches Save / Refresh / the status line the way a reader does:
- *  by putting the pointer on the footer first. */
+/** Reach a surface's saving chrome (Save / Refresh / the status line). The
+ *  pane-footer law it once named is gone: an editor footer no longer opens
+ *  on hover — pane footers FOLLOW FOCUS (cradle.css), a focused pane's
+ *  footer drops fully, and the pane's bottom-right dot pins it up
+ *  ([data-footer-up]) for as long as it is pressed. A walk pins the footer
+ *  the way a reader does: press the owning pane's dot. */
 export async function openChrome(page, scope = '') {
   const footer = page.locator(`${scope} .editor-footer`.trim()).first();
-  if (await footer.count()) await footer.hover();
+  if (await footer.count()) {
+    const pane = page.locator('.pane.group').filter({ has: footer }).first();
+    const dot = pane.locator('[data-pane-footer-dot]');
+    if (await dot.count()) {
+      await dot.click();
+      await page.waitForTimeout(450);
+    } else {
+      await footer.hover().catch(() => {});
+    }
+  }
 }
 
 /** The workspace strip is the same auto-opening edge at the bottom of the

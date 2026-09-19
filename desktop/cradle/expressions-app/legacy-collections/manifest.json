@@ -1,0 +1,271 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-19T13:04:26.945Z",
+  "source": "the Expressions application's collection content, as of the vendoring into the O:I cradle",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/legacy-collections"
+    ],
+    "ground": "the Expressions application's own modules (field-studies-journeys), read from the O:I cradle working tree",
+    "exported_at": "2026-09-19T13:04:26.945Z",
+    "generator": {
+      "name": "scripts/export-legacy-collections.mjs",
+      "revision": "rev 2 — provenance envelope (oi.collection-provenance/v1)"
+    }
+  },
+  "retained_non_legacy": [
+    {
+      "id": "oi-mark",
+      "reason": "the current default expression — the light/dark O:I theme (owner direction 2026-09-19)"
+    },
+    {
+      "id": "source-twelve-faces",
+      "reason": "the Epii face — Instrument 0's entry expression (owner direction 2026-09-19)"
+    }
+  ],
+  "browser_saves": "User expressions saved in a browser remain browser-local (localStorage); they are not repo content and are not exported.",
+  "featured": [
+    {
+      "id": "field-studies",
+      "name": "Field studies",
+      "file": "featured/field-studies.journey.json"
+    },
+    {
+      "id": "seven-centres",
+      "name": "Seven centres",
+      "file": "featured/seven-centres.journey.json"
+    },
+    {
+      "id": "small-language",
+      "name": "A small language",
+      "file": "featured/small-language.journey.json"
+    }
+  ],
+  "starters": [
+    {
+      "id": "material-study-0",
+      "group": "Material",
+      "name": "Ink",
+      "file": "starters/material/material-study-0.journey.json"
+    },
+    {
+      "id": "material-study-1",
+      "group": "Material",
+      "name": "Print",
+      "file": "starters/material/material-study-1.journey.json"
+    },
+    {
+      "id": "material-study-2",
+      "group": "Material",
+      "name": "Gather",
+      "file": "starters/material/material-study-2.journey.json"
+    },
+    {
+      "id": "material-study-3",
+      "group": "Material",
+      "name": "Between",
+      "file": "starters/material/material-study-3.journey.json"
+    },
+    {
+      "id": "material-study-4",
+      "group": "Material",
+      "name": "Language",
+      "file": "starters/material/material-study-4.journey.json"
+    },
+    {
+      "id": "material-study-5",
+      "group": "Material",
+      "name": "Weather",
+      "file": "starters/material/material-study-5.journey.json"
+    },
+    {
+      "id": "material-study-6",
+      "group": "Material",
+      "name": "Quiet",
+      "file": "starters/material/material-study-6.journey.json"
+    },
+    {
+      "id": "material-study-7",
+      "group": "Material",
+      "name": "Nocturne",
+      "file": "starters/material/material-study-7.journey.json"
+    },
+    {
+      "id": "composition-single_glyph",
+      "group": "Composition",
+      "name": "Single Glyph Morph",
+      "file": "starters/composition/composition-single_glyph.journey.json"
+    },
+    {
+      "id": "composition-chakra_body",
+      "group": "Composition",
+      "name": "Chakra Body · 7 centres",
+      "file": "starters/composition/composition-chakra_body.journey.json"
+    },
+    {
+      "id": "composition-kundalini_focus",
+      "group": "Composition",
+      "name": "Kundalini · travelling focus",
+      "file": "starters/composition/composition-kundalini_focus.journey.json"
+    },
+    {
+      "id": "composition-cymatic_plate",
+      "group": "Composition",
+      "name": "Cymatic Plate · resonator",
+      "file": "starters/composition/composition-cymatic_plate.journey.json"
+    },
+    {
+      "id": "composition-chakra_cymatic",
+      "group": "Composition",
+      "name": "Chakra centres over a resonant plate",
+      "file": "starters/composition/composition-chakra_cymatic.journey.json"
+    },
+    {
+      "id": "native-toroidal_hopf_conjugate",
+      "group": "Native",
+      "name": "Toroidal Hopf Fibration Conjugates",
+      "file": "starters/native/native-toroidal_hopf_conjugate.journey.json"
+    },
+    {
+      "id": "native-reference_oi",
+      "group": "Native",
+      "name": "O ⇄ I Vortex Bridge",
+      "file": "starters/native/native-reference_oi.journey.json"
+    },
+    {
+      "id": "native-binary_star_orbit",
+      "group": "Native",
+      "name": "Binary Star Relational Orbits",
+      "file": "starters/native/native-binary_star_orbit.journey.json"
+    },
+    {
+      "id": "native-chaotic_strange_attractor",
+      "group": "Native",
+      "name": "Harmonic Strange Attractor",
+      "file": "starters/native/native-chaotic_strange_attractor.journey.json"
+    },
+    {
+      "id": "native-nbody_lemniscate",
+      "group": "Native",
+      "name": "N-Body Lemniscate Rosette",
+      "file": "starters/native/native-nbody_lemniscate.journey.json"
+    },
+    {
+      "id": "native-explosive_antigravity",
+      "group": "Native",
+      "name": "Anti-Spring Kinetic Dispersal",
+      "file": "starters/native/native-explosive_antigravity.journey.json"
+    },
+    {
+      "id": "native-halftone_matrix",
+      "group": "Native",
+      "name": "Ordered Halftone Matrix",
+      "file": "starters/native/native-halftone_matrix.journey.json"
+    },
+    {
+      "id": "native-risograph_spray",
+      "group": "Native",
+      "name": "Risograph Ink Spray",
+      "file": "starters/native/native-risograph_spray.journey.json"
+    },
+    {
+      "id": "native-square_dither",
+      "group": "Native",
+      "name": "Square Dither Grid",
+      "file": "starters/native/native-square_dither.journey.json"
+    },
+    {
+      "id": "native-chain_polygons",
+      "group": "Native",
+      "name": "Platonic Polygon Sequence",
+      "file": "starters/native/native-chain_polygons.journey.json"
+    },
+    {
+      "id": "native-chain_zodiac",
+      "group": "Native",
+      "name": "12 Zodiac Constellations",
+      "file": "starters/native/native-chain_zodiac.journey.json"
+    },
+    {
+      "id": "native-cyberpunk_chroma",
+      "group": "Native",
+      "name": "Cyberpunk Neon Wave",
+      "file": "starters/native/native-cyberpunk_chroma.journey.json"
+    },
+    {
+      "id": "native-aurora_borealis_spectral",
+      "group": "Native",
+      "name": "Aurora Borealis Spectral",
+      "file": "starters/native/native-aurora_borealis_spectral.journey.json"
+    },
+    {
+      "id": "native-solar_plasma_thermal",
+      "group": "Native",
+      "name": "Solar Corona Thermal",
+      "file": "starters/native/native-solar_plasma_thermal.journey.json"
+    },
+    {
+      "id": "native-editorial_parchment_stipple",
+      "group": "Native",
+      "name": "Editorial Parchment & Sumi Ink",
+      "file": "starters/native/native-editorial_parchment_stipple.journey.json"
+    },
+    {
+      "id": "native-chakral_body_constellation",
+      "group": "Native",
+      "name": "Chakral Body — 7 Subtle Centers Constellation",
+      "file": "starters/native/native-chakral_body_constellation.journey.json"
+    },
+    {
+      "id": "native-kundalini_spinal_ascent",
+      "group": "Native",
+      "name": "Kundalini Ascent — Sequential Spine Transit",
+      "file": "starters/native/native-kundalini_spinal_ascent.journey.json"
+    },
+    {
+      "id": "native-cymatic_chladni_harmonics",
+      "group": "Native",
+      "name": "Chladni Cymatics — Harmonic Attractor Spectrum",
+      "file": "starters/native/native-cymatic_chladni_harmonics.journey.json"
+    },
+    {
+      "id": "native-cymatic_volumetric_3d",
+      "group": "Native",
+      "name": "Volumetric 3D Cymatic Standing Wave",
+      "file": "starters/native/native-cymatic_volumetric_3d.journey.json"
+    },
+    {
+      "id": "source-mask-mono",
+      "group": "Source studies",
+      "name": "Mask · mono ink study",
+      "file": "starters/source-studies/source-mask-mono.journey.json"
+    },
+    {
+      "id": "source-mask-neon",
+      "group": "Source studies",
+      "name": "Mask · neon colour study",
+      "file": "starters/source-studies/source-mask-neon.journey.json"
+    },
+    {
+      "id": "source-mask-cutout",
+      "group": "Source studies",
+      "name": "Mask · cutout and dissolve",
+      "file": "starters/source-studies/source-mask-cutout.journey.json"
+    },
+    {
+      "id": "source-mask-ascii",
+      "group": "Source studies",
+      "name": "Mask · ASCII transcription",
+      "file": "starters/source-studies/source-mask-ascii.journey.json"
+    },
+    {
+      "id": "source-laminate-head",
+      "group": "Source studies",
+      "name": "Laminate · head, front and back",
+      "file": "starters/source-studies/source-laminate-head.journey.json"
+    }
+  ]
+}

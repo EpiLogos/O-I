@@ -35,10 +35,12 @@ import {
   tileSurfaces,
   togglePin,
 } from "./engine";
+import {clampTabListWidth, type TabPresentation} from "../workspace/mode";
 import type {
   ActionArg,
   ActionDisclosure,
   LayoutState,
+  Pane,
   RestorePoint,
   SurfaceId,
 } from "./types";
@@ -56,7 +58,7 @@ export interface MenuContext {
  * own canonical Actions arrive with the owner-seam units — none are
  * fabricated here (law 4).
  */
-const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank", "factory", "instrument", "explore", "presentation"]);
+const FRAME_DISCLOSED_KINDS = new Set(["source", "sources", "knowledge", "file", "encounter", "system", "browser", "terminal", "flow", "blank", "factory", "instrument", "explore", "presentation", "expressions", "techne", "epi-logos", "agency"]);
 
 /** Actions disclosed for one binding (its tab / its content right-click). */
 export function bindingDisclosures(
@@ -68,7 +70,7 @@ export function bindingDisclosures(
   if (!FRAME_DISCLOSED_KINDS.has(binding.kind)) return [];
   const pinned = isPinned(ctx.state, surfaceId);
   return [
-    {action_ref:"surface.focus-tab",title:ctx.state.focusedTabId===surfaceId?"Show tab bar":"Focus this tab",enabled:true},
+    {action_ref:"surface.focus-tab",title:"Focus this tab",enabled:true},
     ...groupsOf(ctx.state.root).filter(g=>!g.tabs.includes(surfaceId)).map((g,i)=>({action_ref:`surface.move-to:${g.id}`,title:`Move to pane ${i+1} · ${ctx.state.surfaces[g.active??g.tabs[0]]?.title??"Empty"}`,enabled:true})),
     {
       action_ref: "surface.close",
@@ -101,16 +103,113 @@ export function frameDisclosures(ctx: MenuContext): ActionDisclosure[] {
       title: "Reopen last closed",
       enabled: ctx.state.closedStack.length > 0,
     },
+    // Tab presentation is per pane (TabGroupPane): the focused pane's current
+    // one is disclosed disabled so the menu also reads as the state. Choosing
+    // an entry is a bulk control — every pane moves together.
+    ...TAB_PRESENTATION_ACTIONS.map(({presentation, title}) => {
+      const focused=groupsOf(ctx.state.root).find(g=>g.id===ctx.state.focusedGroupId);
+      const current=focused?.tabPresentation??"pinned-horizontal";
+      return {
+        action_ref: `frame.tabs:${presentation}`,
+        title: current === presentation ? `${title} (current)` : title,
+        enabled: current !== presentation,
+      };
+    }),
   ];
 }
+
+const TAB_PRESENTATION_ACTIONS: {presentation: TabPresentation; title: string}[] = [
+  {presentation: "pinned-horizontal", title: "Pin tabs horizontally"},
+  {presentation: "pinned-vertical", title: "Pin tabs vertically"},
+  {presentation: "unpinned", title: "Unpin tabs"},
+];
 
 /**
  * Execute a frame action — the one path keyboard, pointer, and context-menu
  * invocations all share (keyboard + pointer parity by construction).
  * Unknown action refs change nothing: no fabricated behaviour.
  */
+/** Apply a transform to every group pane in the tree (bulk presentation). */
+function mapGroupPanes(state: LayoutState, transform: (group: Extract<Pane,{type:"group"}>) => Extract<Pane,{type:"group"}>): LayoutState {
+  const walk=(pane: Pane): Pane =>
+    pane.type==="split"
+      ? {...pane, children: pane.children.map(walk)}
+      : transform(pane);
+  return {...state, root: state.root ? walk(state.root) : state.root};
+}
+
+/** Apply a transform to one named group pane (per-pane pin/orientation). */
+function mapGroupPane(state: LayoutState, groupId: string, transform: (group: Extract<Pane,{type:"group"}>) => Extract<Pane,{type:"group"}>): LayoutState {
+  const walk=(pane: Pane): Pane =>
+    pane.type==="split"
+      ? {...pane, children: pane.children.map(walk)}
+      : pane.type==="group"&&pane.id===groupId ? transform(pane) : pane;
+  return {...state, root: state.root ? walk(state.root) : state.root};
+}
+
 export function executeFrameAction(state: LayoutState, ref: string, arg?: ActionArg, snapshot?: RestorePoint): LayoutState {
-  if(ref==="surface.focus-tab") {const id=arg?.surfaceId??activeBindingId(state);return id?{...activateSurface(state,id),focusedTabId:state.focusedTabId===id?undefined:id}:state;}
+  if(ref.startsWith("frame.tabs:")) {
+    const presentation=ref.slice("frame.tabs:".length);
+    if(presentation!=="pinned-horizontal"&&presentation!=="pinned-vertical"&&presentation!=="unpinned")return state;
+    // Pinned horizontal is the absent default. Pinning records the geometry
+    // (tabPinOrientation) an unpinned pane later reveals; unpinning keeps it.
+    // A presentation change ends the strip's own focus mark. The footer
+    // entries are a bulk control: every pane moves together.
+    const orientation=presentation==="pinned-horizontal"?"horizontal":presentation==="pinned-vertical"?"vertical":undefined;
+    return {...mapGroupPanes(state,(group)=>({...group,
+      tabPresentation:presentation==="pinned-horizontal"?undefined:presentation,
+      tabPinOrientation:orientation??group.tabPinOrientation})),
+      focusedTabId:undefined};
+  }
+  // The pin only pins or unpins the current orientation; orientation is its
+  // own control (frame.tabs-orient). Owner ruling 2026-09-17: one control,
+  // one meaning, PER PANE.
+  if(ref==="frame.tabs-pin") {
+    const groupId=arg?.groupId??state.focusedGroupId;
+    return groupId?mapGroupPane(state,groupId,(group)=>{
+      const unpinned=(group.tabPresentation??"pinned-horizontal")==="unpinned";
+      const orientation=group.tabPinOrientation??"horizontal";
+      return unpinned
+        ? {...group,tabPresentation:orientation==="vertical"?"pinned-vertical":undefined,tabPinOrientation:orientation}
+        : {...group,tabPresentation:"unpinned"};
+    }):state;
+  }
+  if(ref==="frame.tabs-orient") {
+    const groupId=arg?.groupId??state.focusedGroupId;
+    return groupId?mapGroupPane(state,groupId,(group)=>{
+      const next=(group.tabPinOrientation??"horizontal")==="horizontal"?"vertical":"horizontal";
+      const unpinned=(group.tabPresentation??"pinned-horizontal")==="unpinned";
+      return unpinned?{...group,tabPinOrientation:next}:{...group,tabPresentation:next==="vertical"?"pinned-vertical":undefined,tabPinOrientation:next};
+    }):state;
+  }
+  if(ref==="frame.tabs-width") {
+    const width=clampTabListWidth(arg?.n);
+    return width===undefined?state:{...state,tabListWidth:width};
+  }
+  // The pin only pins or unpins the current orientation; orientation is its
+  // own control (frame.tabs-orient). Owner ruling 2026-09-17: one control,
+  // one meaning.
+  if(ref==="frame.tabs-pin") {
+    const groupId=arg?.groupId??state.focusedGroupId;
+    return groupId?mapGroupPane(state,groupId,(group)=>{
+      const unpinned=(group.tabPresentation??"pinned-horizontal")==="unpinned";
+      const orientation=group.tabPinOrientation??"horizontal";
+      return unpinned
+        ? {...group,tabPresentation:orientation==="vertical"?"pinned-vertical":undefined,tabPinOrientation:orientation}
+        : {...group,tabPresentation:"unpinned"};
+    }):state;
+  }
+  if(ref==="frame.tabs-orient") {
+    const groupId=arg?.groupId??state.focusedGroupId;
+    return groupId?mapGroupPane(state,groupId,(group)=>{
+      const next=(group.tabPinOrientation??"horizontal")==="horizontal"?"vertical":"horizontal";
+      const unpinned=(group.tabPresentation??"pinned-horizontal")==="unpinned";
+      return unpinned?{...group,tabPinOrientation:next}:{...group,tabPresentation:next==="vertical"?"pinned-vertical":undefined,tabPinOrientation:next};
+    }):state;
+  }
+  // Focusing a tab no longer folds the bar: the unpinned reveal law (cradle.css)
+  // is the one hiding law, so this is plain activation.
+  if(ref==="surface.focus-tab") {const id=arg?.surfaceId??activeBindingId(state);return id?activateSurface(state,id):state;}
   if(ref.startsWith("surface.move-to:")&&arg?.surfaceId)return moveTab(state,arg.surfaceId,ref.slice("surface.move-to:".length));
   if (ref === "surface.maximize") {
     const group = arg?.surfaceId ? groupsOf(state.root).find(g => g.tabs.includes(arg.surfaceId!)) : groupsOf(state.root).find(g => g.id === state.focusedGroupId);

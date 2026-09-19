@@ -166,3 +166,73 @@ subject (or the Expression when unbound), emitting the existing FocusChanged
 event only when that relation changes. It never invokes an Action. Parameter
 inputs retain uncommitted human text across incoming Agent revisions; a conflict
 requires an explicit choice to use the current value or apply to the new revision.
+
+## Substrate contracts (#352): carriers, triggers, profiles, editions, assets
+
+The substrate extends the same document and request surface; Rust types in
+`expression_carrier.rs`, `expression_trigger.rs`, `expression_profile.rs` and
+`expression_asset.rs` are the executable contract alongside `expression.rs`.
+
+**Scene-body native carriers (ES1A).** A scene's primary body may come from an
+admitted native carrier (`Scene.body`): `engine_composition` (the current
+default), `text_source` (source or selected span), `glyph_form`, `image_media`,
+`file_thing`, `knowledge_whole`, `html_surface`, `agent_surface`, or
+`expression_ref` (another Expression/Edition under a visible recursion bound,
+depth ≤ 4). The body retains the exact native subject ref, revision/Reading,
+provenance, disclosed Actions, capability and presentation mode
+(`live | inline | preview | degraded`). Presentation must match disclosed
+capability: live/inline require a renderable adapter; a body without one
+degrades honestly to a bound Thing/preview carrying the real native open
+Action. There is no bespoke renderer per format and no copied semantic object.
+
+**Declarative triggers (ES1B).** `Scene.triggers[]` fire on `scene_enter`,
+`scene_leave`, `activate`, `select` or `sequence_transition` and point only to:
+a bounded read operation (`inspect | list | export`) on an Expression ref, a
+SurfacePortal placement (`preview | overlay | beside | full | detached |
+re-dock`) for a subject disclosed on that scene, a canonical native ActionRef
+already disclosed on a bound subject or scene body, or exact
+focus/selection/navigation refs. Trigger refs, subjects, Actions and targets
+are cross-validated against the whole document inside atomic edits. Executable
+script bodies are refused with the typed `script_body_refused` error and
+cannot enter a document structurally (`deny_unknown_fields`).
+
+**Profiles and editions (ES3).** `ExpressionProfile` is reusable presentation
+grammar — never semantic truth: bounded material/automation defaults and
+tightened parameter domains over the existing engine vocabulary, formation
+vocabulary with carrier target rules, scene seeds, accepted carrier kinds and
+native owners, fallback policy, provenance and parents-first lineage.
+`ProfileAdoption` records an Expression's instantiation with explicit, legible
+overrides. `ExpressionEdition` is the portable relation (expression/profile
+refs and revisions, subjects, front representation, verso reading, captures,
+admitted assets, provenance, integrity digest); it must name an open
+Expression's current revision, and re-opening it never opens or rewrites the
+Expression. Library semantics are a collection/index view:
+`Document.collections[]` holds memberships (the existing Library is one
+collection, not the identity boundary) and the `index` request reads the same
+Expression refs with their collections, profiles and editions.
+
+**Asset admission + occurrence index (ES3A).** `asset_admit` indexes a real
+use: an `AdmittedAsset` (ref+revision/digest, kind, native source, rights,
+subject refs it may depict, tags/roles, fallback, family refs) with
+occurrences that must name Expressions open in the application; the index
+records the Expression revision at admission, witnessed/accepted standing and
+the witness attribution (correlation, never authentication). The same
+ref+revision keeps its kind/source/digest identity and only accumulates
+occurrences. Traversals: `asset_traverse` (asset → source/rights → every use)
+and `asset_subject` (subject → visual forms → every occurrence). The index is
+over real use, not an advance procurement catalogue and not a second semantic
+store.
+
+**Capability honesty.** `capabilities` names every new operation and change and
+lists as unsupported-until-connected: live scene-body rendering beyond the
+engine composition (owned by the Stage/UI lane) and asset binary storage
+(assets are refs into their native owners, never copies). Portal presentation
+is supported, not claimed: the portal runtime open/close/re-dock is the
+expression-world seam (`portal_open`/`portal_close`/`portal_redock` over the
+existing Surface host with the canonical target ref preserved —
+`oi.expression-world-capabilities/v1`), and the desktop's own pane grammar —
+beside, full, detach, re-dock — is that host's placement mechanism, so a page
+opened from an Expression instrument lands as a real pane in the current
+arrangement's tree. Document limits are unchanged:
+64 Expressions, 64 scenes, 256 entity/relation bindings, 256 changes per
+atomic edit, 512 KiB per document.

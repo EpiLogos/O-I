@@ -43,3 +43,27 @@
 .expression-refinements article>p{margin:0;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
 .expression-refinements article>strong{font-size:var(--oi-shell-type-body);font-weight:550}
 .agent-body>.expression-editor{flex:1;min-height:0;overflow:auto;padding:16px;box-sizing:border-box}
+/* The verso (ES2): the back of the SAME Expression — a generated reading of
+ * identity, bound subjects, relations, representations and provenance,
+ * rendered in the artboard's place while the front's renderer is suspended.
+ * It reads as a page of the same composition, not a second inspector. */
+.expression-verso{display:flex;flex-direction:column;gap:14px;min-height:360px;padding:18px;background:var(--oi-canvas-ground);color:var(--oi-foreground);border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius)}
+.expression-verso__head{display:flex;flex-direction:column;gap:4px}
+.expression-verso__head h3{margin:0;font-size:var(--oi-shell-type-heading);font-weight:550}
+.expression-verso__head small{color:var(--oi-muted-2)}
+.expression-verso__region{display:flex;flex-direction:column;gap:8px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);padding-top:12px}
+.expression-verso__region h4{margin:0;font-size:var(--oi-shell-type-ui);font-weight:550;text-transform:uppercase;letter-spacing:.08em;color:var(--oi-muted-2)}
+.expression-verso__subject{display:flex;flex-direction:column;gap:6px;padding:10px 12px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-shell-radius);background:var(--oi-surface)}
+.expression-verso__subject>header{display:flex;align-items:baseline;gap:10px;flex-wrap:wrap}
+.expression-verso__subject>header strong{font-size:var(--oi-shell-type-body);overflow-wrap:anywhere}
+.expression-verso__entity{align-self:flex-start}
+.expression-verso__sources{margin:0;display:flex;flex-direction:column;gap:4px}
+.expression-verso__sources div{display:flex;gap:8px;align-items:baseline}
+.expression-verso__sources dt{min-width:0;overflow-wrap:anywhere}
+.expression-verso__sources dd{margin:0;color:var(--oi-muted-2);font-size:var(--oi-shell-type-nav)}
+.expression-verso__actions{display:flex;flex-direction:column;gap:6px}
+.expression-verso__relations,.expression-verso__representations{margin:0;padding:0;list-style:none;display:flex;flex-direction:column;gap:6px;font-size:var(--oi-shell-type-ui)}
+.expression-verso__relations li,.expression-verso__representations li{display:flex;gap:8px;align-items:baseline;flex-wrap:wrap;overflow-wrap:anywhere}
+.expression-verso__sparse{margin:0}
+.expression-verso__provenance ul{margin:8px 0 0;padding-left:18px}
+@media (prefers-reduced-motion: reduce){.expression-verso{transition:none}}

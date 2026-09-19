@@ -1,0 +1,86 @@
+{
+  "walkedAt": "2026-09-19T13:33:53.335Z",
+  "url": "http://localhost:1432/",
+  "bridge": "http://127.0.0.1:4195",
+  "steps": [
+    {
+      "step": 1,
+      "name": "Expressions entrance → hosted application",
+      "backing": "live-native",
+      "detail": "pcd-host ready; the app of record serves through oi-material:// / the walk bridge mirror"
+    },
+    {
+      "step": 2,
+      "name": "Open the Library",
+      "backing": "live-native",
+      "detail": "the vendored application's own libraryHTML interaction, inside the hosted frame"
+    },
+    {
+      "step": 3,
+      "name": "MY WORLD / PERSONAL + O:I WEB horizons",
+      "backing": "live-native + named-unavailable",
+      "detail": "personal scopes current-project, project-collections, personal-collections, kernel-held, curated-corpus; O:I WEB names the SharedField provider as the absent native owner (Lane L 058904d1)"
+    },
+    {
+      "step": 4,
+      "name": "Enter a real ProjectCentral project → its wiki whole as an Expression",
+      "backing": "live-native",
+      "detail": "expression:techne-m0.o-i.cc90a1c9: projected from Work/O-I/ProjectCentral/agents/wiki/wiki.json through the files seam + the kernel's knowledge op"
+    },
+    {
+      "step": 5,
+      "name": "Overview scene = actual constellations as Expression objects",
+      "backing": "live-native",
+      "detail": "central:wiki:project:O-I"
+    },
+    {
+      "step": 6,
+      "name": "Constellation scene = exact nodes + typed relations",
+      "backing": "live-native",
+      "detail": "members wiki:node:project-root/o-i; layout radial — the warrant the wiki itself declares"
+    },
+    {
+      "step": 7,
+      "name": "Node selection → canonical ref focus",
+      "backing": "live-native",
+      "detail": "wiki:node:root/ta-onta-and-the-thought-stream"
+    },
+    {
+      "step": 8,
+      "name": "One selection across apertures (map ↔ centre)",
+      "backing": "live-native",
+      "detail": "wikiProjectionStore is the one relation/selection state; row wiki:node:root/ta-onta-and-the-thought-stream selected in the Technè map"
+    },
+    {
+      "step": 9,
+      "name": "Page/source through native portal/workbench paths",
+      "backing": "named-integrator-seam",
+      "detail": "page kernel-surface-opened-tree-carries-it (the panel's Active Context is the surfacing seam under the unconditional dedicated stage); source refused"
+    },
+    {
+      "step": 10,
+      "name": "Close/return restores position",
+      "backing": "live-native",
+      "detail": "central · expression:techne-m0.central.78478f8e:scene:c0 · wiki:node:root/ta-onta-and-the-thought-stream — scene and focus live in the kernel document"
+    },
+    {
+      "step": 11,
+      "name": "O:I Web through the connective field",
+      "backing": "live-native-shell + honest-shared-state",
+      "detail": "Explore opens as the discovery operation; the shared scope reads its provider or names its absence"
+    },
+    {
+      "step": 12,
+      "name": "Shared path uses the same projection identity",
+      "backing": "named-unavailable",
+      "detail": "EX3A6 unadmitted — the subject panel names it; no separate public expression form exists"
+    },
+    {
+      "step": 13,
+      "name": "Search from the shell",
+      "backing": "live-native",
+      "detail": "results 1; native refs disclosed"
+    }
+  ],
+  "failures": []
+}

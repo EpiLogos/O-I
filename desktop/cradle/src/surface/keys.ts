@@ -45,10 +45,18 @@
  *     ⌥[                shallower
  *     ⏥ (Escape)        from the full overlay back to panel
  *
+ *   MODES · TAB PRESENTATION
+ *     ⌘⌥1 … ⌘⌥6          workspace mode: Base, Factory,
+ *                       Expressions, Technè           (pointer: the mode
+ *                                                       switch in the sidebar head)
+ *     ⌘⌥\               cycle tab presentation:
+ *                       strip → vertical list → hidden (pointer: strip menu)
+ *
  *   AT REST the frame map still answers ⌘T / ⌘⇧T; everything else needs a
  *   surface and does nothing without one — honest, never fabricated.
  */
 
+import { TREE_MODES } from "../workspace/mode";
 import type { ActionArg, Dir } from "./types";
 
 const ARROW_DIR: Record<string, Dir> = {
@@ -85,6 +93,11 @@ export function frameActionForKey(
     if (code === "KeyT") return { ref: "surface.tile" };
     if (code === "KeyR") return { ref: "surface.restore-layout" };
     if (dir) return { ref: "surface.move", arg: { dir } };
+    if (code === "Backslash") return { ref: "frame.tabs-pin" };
+    // ⌘⌥1-4: the four work modes; ⌘⌥5: Settings (the terminal entry).
+    // Epi-Logos has no mode binding — it is the footer's whole-app world state.
+    const modeDigit = code.match(/^Digit([1-5])$/);
+    if (modeDigit) return { ref: `frame.mode:${TREE_MODES[Number(modeDigit[1]) - 1]}` };
     return null;
   }
   // ⌘⇧… — reopen, split down

@@ -1,6 +1,7 @@
 import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {nowReading,type NowReading} from "./now";
+import "./receiving.css";
 /** The NOW relations one record discloses (queue cell 1). The record names a
  * `now_ref`; this reads that exact NOW through the owner (`central.now.read`)
  * and renders the owner's relations verbatim — identity, lifecycle, task,

@@ -4,6 +4,7 @@ import {readFile} from "../files/client";
 import {useKernel} from "../kernel/KernelProvider";
 import {mutateField} from "./client";
 import type {KernelTransportStatus} from "../kernel/types";
+import "./receiving.css";
 /** The supplied die shell, as the die itself carries its data: one embedded
  * JSON island the shell's own scripts read. The projection swaps ONLY the
  * island's content and appends one disclosed bridge script; the shell bytes
@@ -42,6 +43,10 @@ interface FieldSync{state:"saving"|"saved"|"refused";revision?:string;message?:s
 /** A mapped document field: the owner's own field list carries the id and the
  * template pointer that names the actual payload key it writes. */
 export interface DayDocumentField{id:string;label?:string;template_pointer?:string}
+/** The supplied die shell, joined by the commission's identity — the roster
+ * kind "document-42" (the 4+2 Day die), never a roster position: reordering
+ * the roster must not silently re-shell the Day. */
+const DIE_SHELL=DOCUMENT_FORMS.find(form=>form.kind==="document-42"&&form.file==="ql-daily-die.html");
 /** The die face of a native Day document (Wave 6E/6F, edit wiring added in
  * the residue cell). The native document is the receiving substrate; its
  * template_payload IS the owner's ql-doc format. This face projects that
@@ -76,9 +81,10 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
     setFailure(undefined);
     (async()=>{
       try{
+        if(!DIE_SHELL)throw new Error("the roster no longer carries the 4+2 die shell (document-42 / ql-daily-die.html)");
         const transport:KernelTransportStatus=kernel.transport;
         const projects=kernel.snapshot.navigator?.root?.work.projects;
-        const location=await resolveDocumentForm(transport,DOCUMENT_FORMS[1],projects);
+        const location=await resolveDocumentForm(transport,DIE_SHELL,projects);
         const shell=await readFile(transport,location);
         const projected=projectDieDocument(shell.content,payload);
         if(!projected){setFailure("The supplied die shell no longer carries its ql-doc data island; the face cannot be projected honestly.");return;}

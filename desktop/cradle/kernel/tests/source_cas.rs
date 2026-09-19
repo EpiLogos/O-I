@@ -146,8 +146,8 @@ fn browsing_other_projects_preserves_open_source_focus_and_dirty_buffer() {
     kernel.apply(KernelOp::SurfaceFocus { surface_id: "document".into() }).unwrap();
     ground.edit(&mut kernel, "Unsaved writing stays here.");
     let before = kernel.snapshot();
-    kernel.apply(KernelOp::WorldBrowse).unwrap();
-    let outcome = kernel.apply(KernelOp::ProjectBrowse { project: "Other".into() }).unwrap();
+    kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
+    let outcome = kernel.apply(KernelOp::ProjectBrowse { project: "Other".into(), fresh: None }).unwrap();
     let after = kernel.snapshot();
     assert_eq!(after.focus, before.focus);
     assert_eq!(after.buffers, before.buffers);
@@ -252,7 +252,7 @@ fn native_files_are_read_without_adoption_and_focus_never_reowns_source_drafts()
     kernel.apply(KernelOp::SurfaceOpen { surface_id:"source-tab".into(), kind:"source".into(), source_ref:Some(ground.source.clone()), title:"Authored".into() }).unwrap();
     kernel.apply(KernelOp::SurfaceFocus {surface_id:"source-tab".into()}).unwrap();
     let before = kernel.snapshot().focus;
-    let KernelOpResult::DirectoryRead {directory} = kernel.apply(KernelOp::FilesList {path:"Work/Other".into()}).unwrap().result else {panic!("Native directory reading")};
+    let KernelOpResult::DirectoryRead {directory} = kernel.apply(KernelOp::FilesList {path:"Work/Other".into(), fresh: None}).unwrap().result else {panic!("Native directory reading")};
     assert_eq!(directory.entries.len(),1);
     let location = directory.entries[0].location.clone();
     assert!(kernel.apply(KernelOp::SurfaceOpen {surface_id:"file-tab".into(),kind:"file".into(),source_ref:Some(location.ref_id.clone()),title:"Native".into()}).is_err(), "Unresolved path references have no focus authority");
@@ -281,7 +281,7 @@ fn native_file_context_comes_from_central_manifest_and_cannot_be_rebound_to_anot
     let ground=Ground::new();
     fs::write(ground.root.join("Work/Editor/ordinary.rs"),"fn main() {}\n").unwrap();
     let mut kernel=Kernel::new(ground.client.clone());
-    let KernelOpResult::DirectoryRead {directory}=kernel.apply(KernelOp::FilesList {path:"Work/Editor".into()}).unwrap().result else {panic!("Native listing")};
+    let KernelOpResult::DirectoryRead {directory}=kernel.apply(KernelOp::FilesList {path:"Work/Editor".into(), fresh: None}).unwrap().result else {panic!("Native listing")};
     let location=directory.entries.iter().find(|e|e.name=="ordinary.rs").unwrap().location.clone();
     let KernelOpResult::FileRead {reading}=kernel.apply(KernelOp::FileRead {location:location.clone()}).unwrap().result else {panic!("Native file")};
     assert_eq!(reading.project.unwrap().project_ref.as_deref(),Some("editor-integration"));

@@ -1,0 +1,57 @@
+/* Agency (COMMON-BRIEF §handoff): roster, intent-led mint, Skill search,
+   setup proposal, Guardian repertoire. Composes the shared .oi-* grammar;
+   local classes here only fill gaps (no color/size/duration outside
+   --oi-* tokens; accent stays ink, never a hue). */
+
+.agency-surface { height: 100%; min-height: 0; display: flex; flex-direction: column; }
+.agency-body { flex: 1; min-height: 0; overflow: auto; padding: var(--oi-desktop-gap) var(--oi-desktop-gap-lg); scrollbar-width: thin; overscroll-behavior: contain; }
+.agency-body::-webkit-scrollbar { width: var(--oi-scrollbar-size); }
+.agency-body::-webkit-scrollbar-thumb { background: var(--oi-scrollbar-thumb); border-radius: var(--oi-radius-pill); }
+
+.agency-roster-layout { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; gap: var(--oi-desktop-gap-lg); align-items: start; min-width: 0; }
+@media (max-width: 560px) { .agency-roster-layout { grid-template-columns: 1fr; } }
+
+.agency-space-group { margin: 0 0 var(--oi-desktop-gap); display: flex; flex-direction: column; gap: 4px; }
+.agency-session-list { list-style: none; margin: 4px 0 0; padding: 0; display: flex; flex-direction: column; gap: 2px; }
+.agency-roster-row { width: 100%; display: flex; align-items: center; gap: 8px; text-align: left; }
+.agency-roster-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.agency-detail-placeholder { min-height: 120px; align-items: center; justify-content: center; }
+
+.agency-detail { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+.agency-detail-title { margin: 0; font-size: var(--oi-shell-type-heading); font-weight: 550; }
+.agency-detail-section > summary { cursor: pointer; }
+
+.agency-mint { display: flex; flex-direction: column; gap: var(--oi-desktop-gap); }
+.agency-intent-input { resize: vertical; min-height: 60px; font-family: var(--oi-font-sans); }
+.agency-routes { display: grid; grid-template-columns: 1fr 1fr; gap: var(--oi-desktop-gap-lg); align-items: start; }
+@media (max-width: 560px) { .agency-routes { grid-template-columns: 1fr; } }
+.agency-route { display: flex; flex-direction: column; gap: 8px; min-width: 0; }
+
+.agency-candidate-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 4px; }
+.agency-candidate-row { align-items: flex-start; gap: 8px; }
+.agency-candidate-row[data-included="true"] { background: var(--oi-wash); }
+.agency-candidate-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 3px; }
+.agency-dim { color: var(--oi-muted-2); }
+
+.agency-proposal { display: flex; flex-direction: column; gap: 10px; }
+.agency-proposal-stale { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.agency-suggestion-group { display: flex; flex-direction: column; gap: 4px; }
+.agency-proposal-notes { display: flex; flex-direction: column; gap: 8px; }
+.agency-proposal-note-group ul { margin: 2px 0 0; padding-left: 16px; }
+.agency-proposal-basis { color: var(--oi-muted-2); }
+
+.agency-actions { display: flex; flex-direction: column; gap: 8px; }
+.agency-action-row { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; padding: 6px 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.agency-action-row:first-child { border-top: none; }
+.agency-action-row[data-unavailable="true"] { opacity: 0.72; }
+.agency-unavailable-label { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.agency-validation { margin: 0; padding-left: 16px; }
+.agency-plan-drawer { display: flex; flex-direction: column; gap: 8px; padding: 8px 10px; border: var(--oi-shell-edge) solid var(--oi-hairline); border-radius: var(--oi-radius-sm); background: var(--oi-wash); width: 100%; }
+
+.agency-guardians { display: flex; flex-direction: column; gap: 10px; }
+.agency-guardian-list { list-style: none; margin: 0; padding: 0; display: flex; flex-direction: column; gap: 6px; }
+.agency-guardian-row { align-items: flex-start; }
+.agency-guardian-body { flex: 1; min-width: 0; display: flex; flex-direction: column; gap: 6px; }
+
+.agency-settings-link { padding: 6px var(--oi-desktop-gap-lg); border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.agency-settings-link .oi-action { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }

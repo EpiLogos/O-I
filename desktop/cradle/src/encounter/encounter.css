@@ -84,9 +84,9 @@
 .encounter-addressed-service[data-service="stopped"]{color:var(--oi-accent-ink)}
 .encounter-addressed-fields{display:grid;grid-template-columns:repeat(auto-fit,minmax(170px,1fr));gap:9px;margin-bottom:9px}
 .encounter-addressed-fields label{display:flex;flex-direction:column;gap:4px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
-.encounter-addressed-fields input{appearance:none;box-sizing:border-box;width:100%;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;padding:6px 8px;background:var(--oi-composer-ground);color:inherit;font:inherit;font-size:var(--oi-shell-type-nav);outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-addressed-fields input{appearance:none;box-sizing:border-box;width:100%;border:var(--oi-shell-edge) solid var(--oi-control-edge,var(--oi-hairline));border-radius:6px;padding:6px 8px;background:var(--oi-composer-ground);color:inherit;font:inherit;font-size:var(--oi-shell-type-nav);outline:2px solid transparent;outline-offset:2px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
 .encounter-addressed-fields input:focus-visible{outline-color:var(--oi-accent-soft)}
-.encounter-addressed textarea{appearance:none;box-sizing:border-box;width:100%;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;padding:8px;background:var(--oi-composer-ground);color:inherit;resize:vertical;font:inherit;font-size:var(--oi-shell-type-prose);min-height:52px;max-height:180px;outline:2px solid transparent;outline-offset:3px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.encounter-addressed textarea{appearance:none;box-sizing:border-box;width:100%;border:var(--oi-shell-edge) solid var(--oi-control-edge,var(--oi-hairline));border-radius:6px;padding:8px;background:var(--oi-composer-ground);color:inherit;resize:vertical;font:inherit;font-size:var(--oi-shell-type-prose);min-height:52px;max-height:180px;outline:2px solid transparent;outline-offset:3px;transition:outline-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
 .encounter-addressed textarea:focus-visible{outline-color:var(--oi-accent-soft)}
 .encounter-addressed-actions{display:flex;gap:9px;align-items:center;justify-content:flex-end;margin-top:8px}
 .encounter-addressed-preview{flex:1;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow-wrap:anywhere}
@@ -189,3 +189,48 @@
 .encounter-addressed-task dt{color:var(--oi-muted-2)}
 .encounter-addressed-task dd{margin:0}
 .encounter-addressed-task p{margin:6px 0 0;color:var(--oi-muted-2)}
+
+/* Named, static states of the transcript: reading, refused before any
+ * reading, an empty conversation, and an earlier page. No motion. */
+.encounter-reading{margin:6px 0}
+.encounter-refused{display:flex;flex-direction:column;gap:6px}
+.encounter-empty{padding:18px 0;gap:6px;line-height:1.6}
+.encounter-empty p{margin:0}
+.encounter-empty p:first-child{color:var(--oi-accent-ink);font-size:var(--oi-shell-type-body)}
+.encounter-earlier{margin:0 0 16px}
+.encounter-paged{display:flex;flex-wrap:wrap;align-items:center;gap:8px;margin:0 0 16px}
+.encounter-recover{margin:0 13px 13px}
+.encounter-unbound{padding:20px}
+
+/* Attachments, beside the composer: what is SELECTED (context blocks in the
+ * shared draft — not sent) and what was SENT (context blocks in recorded user
+ * messages). The attach path is the context tray; there is no upload control
+ * because no owner operation accepts one. */
+.encounter-context-ledger{margin:0 0 8px;display:flex;flex-direction:column;gap:5px;min-width:0;font-size:var(--oi-shell-type-meta)}
+p.encounter-context-ledger{display:block;line-height:1.5}
+.encounter-context-row{display:flex;flex-wrap:wrap;align-items:center;gap:5px;min-width:0}
+.encounter-context-row .oi-eyebrow{margin:0 3px 0 0}
+details.encounter-context-row{display:block}
+details.encounter-context-row>summary{cursor:pointer;list-style:none;margin:0}
+details.encounter-context-row>summary::-webkit-details-marker{display:none}
+details.encounter-context-row>summary:hover,details.encounter-context-row>summary:focus-visible{color:var(--oi-accent-ink);outline:none}
+details.encounter-context-row>div{display:flex;flex-wrap:wrap;gap:5px;margin-top:5px}
+.encounter-context-chip{max-width:min(100%,220px)}
+.encounter-context-chip-title{min-width:0;overflow:hidden;text-overflow:ellipsis}
+.encounter-context-chip small{flex:none;color:var(--oi-muted-2);font-size:var(--oi-shell-type-eyebrow)}
+
+/* Side presentation: the addressed request is a secondary instrument beneath
+ * the conversation. It reads as a dense field grid — label beside input, the
+ * long explanation folded to one line (its full sentence stays in the DOM and
+ * opens on focus-within) — so the transcript keeps the panel's height. */
+.encounter[data-presentation="side"] .encounter-addressed{padding:8px 9px;margin-top:8px;border-radius:7px}
+.encounter[data-presentation="side"] .encounter-addressed header{margin-bottom:6px}
+.encounter[data-presentation="side"] .encounter-addressed header strong{font-size:var(--oi-shell-type-meta);font-weight:600;letter-spacing:.08em;text-transform:uppercase;color:var(--oi-muted-2)}
+.encounter[data-presentation="side"] .encounter-addressed header small{display:-webkit-box;-webkit-line-clamp:1;-webkit-box-orient:vertical;overflow:hidden}
+.encounter[data-presentation="side"] .encounter-addressed:focus-within header small{-webkit-line-clamp:unset}
+.encounter[data-presentation="side"] .encounter-addressed-service{margin-bottom:6px}
+.encounter[data-presentation="side"] .encounter-addressed-fields{grid-template-columns:1fr;gap:3px;margin-bottom:6px}
+.encounter[data-presentation="side"] .encounter-addressed-fields label{display:grid;grid-template-columns:minmax(0,.9fr) minmax(0,1.5fr);align-items:center;gap:8px}
+.encounter[data-presentation="side"] .encounter-addressed-fields input{padding:3px 7px;min-height:24px;font-size:var(--oi-shell-type-ui)}
+.encounter[data-presentation="side"] .encounter-addressed textarea{min-height:44px;padding:6px 7px;font-size:var(--oi-shell-type-ui)}
+.encounter[data-presentation="side"] .encounter-addressed-actions{margin-top:6px}

@@ -1,0 +1,50 @@
+import {useEffect,useRef,useState} from "react";
+import {useKernel} from "../../kernel/KernelProvider";
+import type {ProfileDocumentWire} from "../../kernel/types";
+import {Glyph} from "../../workspace/Glyph";
+
+/**
+ * Who the person is talking to: the active AIKit profile, shown as an image
+ * and a name. The listing is the real one (`profile_list`, the engine `oi
+ * profile` drives); the image is the profile's own when its document carries
+ * one (`image` / `avatar` / `icon`, a URL or data URI) and a monogram until
+ * the profile integration supplies it. This is a display slot, not a picker:
+ * choosing a profile stays with Settings → Configuration.
+ */
+export interface AgentIdentityReading {name:string;ref?:string;description?:string;image?:string;state:"read"|"none"|"reading"|"unavailable"}
+
+export function useAgentIdentity(fallbackName:string,read=true):AgentIdentityReading {
+  const kernel=useKernel();
+  const [reading,setReading]=useState<AgentIdentityReading>({name:fallbackName,state:read?"reading":"none"});
+  const listed=useRef(false);
+  useEffect(()=>{
+    if(!read||listed.current)return;
+    listed.current=true;
+    let live=true;
+    kernel.apply({op:"profile_list"}).then(outcome=>{
+      if(!live)return;
+      if(outcome?.result!=="profile_listing"){setReading({name:fallbackName,state:"unavailable"});return;}
+      const active=outcome.profiles.find(profile=>profile.profile_ref===outcome.active_profile_ref);
+      if(!active){setReading({name:fallbackName,state:"none"});return;}
+      setReading({name:active.title||active.profile_ref,ref:active.profile_ref,description:active.description??undefined,image:imageOf(active),state:"read"});
+    }).catch(()=>{if(live)setReading({name:fallbackName,state:"unavailable"});});
+    return()=>{live=false;};
+  },[kernel,fallbackName,read]);
+  return reading;
+}
+
+const imageOf=(profile:ProfileDocumentWire):string|undefined=>{
+  for(const key of ["image","avatar","icon"]){const value=profile[key];if(typeof value==="string"&&value.trim())return value;}
+  return undefined;
+};
+
+export function AgentIdentity({identity,situating}:{identity:AgentIdentityReading;situating:string}) {
+  const monogram=identity.name.split(/[\s·/-]+/).filter(Boolean).slice(0,2).map(part=>part[0]?.toUpperCase()??"").join("")||"A";
+  return <div className="agent-identity" data-state={identity.state} data-profile-ref={identity.ref} title={identity.description??identity.ref??undefined}>
+    <span className="agent-identity-image" aria-hidden="true">{identity.image?<img src={identity.image} alt=""/>:identity.state==="read"?monogram:<Glyph name="agent" size={13}/>}</span>
+    <span className="agent-identity-text">
+      <strong className="agent-identity-name">{identity.name}</strong>
+      <small className="agent-identity-line">{identity.state==="reading"?"Reading the profile…":identity.state==="none"?`${situating} · no active profile`:identity.state==="unavailable"?situating:situating}</small>
+    </span>
+  </div>;
+}

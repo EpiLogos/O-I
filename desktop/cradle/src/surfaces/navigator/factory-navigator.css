@@ -1,0 +1,80 @@
+/* Factory's left body (FactoryNavigator.tsx): project space · Desk | Tasks.
+ * Rows follow the World navigator's row grammar (navigator.css) — same
+ * heights, same wash, same type ladder (rows at nav, secondary at ui) — and
+ * the compact bands keep the sidebar quiet. */
+.factory-navigator{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden;font-size:var(--oi-shell-type-nav);color:var(--oi-foreground)}
+
+/* ===== project space: the meta-project grounding ===== */
+.factory-space{flex:none;display:flex;flex-direction:column;gap:6px;margin:6px 8px 4px;padding:8px 8px 8px 10px;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:9px;background:color-mix(in srgb,var(--oi-wash) 55%,transparent)}
+.factory-space-row{display:flex;align-items:center;gap:8px;min-width:0}
+.factory-space-mark{flex:none;width:24px;height:24px;border-radius:7px;border:var(--oi-shell-edge) solid var(--oi-hairline);display:grid;place-items:center;background:var(--oi-canvas-ground);color:var(--oi-accent-ink)}
+.factory-space-title{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.factory-space-title>strong{font-size:var(--oi-shell-type-nav);font-weight:550;color:var(--oi-accent-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.factory-space-title>small{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* the picker: one control, the project name as its face, the native list behind it */
+.factory-picker{position:relative;flex:1;min-width:0;display:flex;align-items:center;height:24px}
+.factory-picker>select{position:absolute;inset:0;width:100%;height:100%;opacity:0;cursor:pointer;font:inherit}
+.factory-picker>select:disabled{cursor:default}
+.factory-picker-face{display:inline-flex;align-items:center;gap:6px;max-width:100%;min-width:0;height:24px;padding:0 6px 0 4px;border-radius:var(--oi-shell-radius-control,5px);color:var(--oi-accent-ink);font-size:var(--oi-shell-type-nav);pointer-events:none;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.factory-picker-face>strong{font-weight:550;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.factory-picker-face>svg{flex:none;color:var(--oi-muted-2)}
+.factory-picker[data-empty="true"] .factory-picker-face>strong{font-weight:500;color:var(--oi-muted-2)}
+.factory-picker:hover .factory-picker-face,.factory-picker:focus-within .factory-picker-face{background:var(--oi-wash-strong)}
+.factory-picker:focus-within .factory-picker-face{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-1px}
+
+/* agent activity in the chosen project: the newest agent returns */
+.factory-activity{display:flex;flex-direction:column;gap:1px;min-width:0}
+.factory-activity-empty{margin:0;padding:2px 4px;font-size:var(--oi-shell-type-ui)}
+.factory-activity-row{display:grid;grid-template-columns:auto minmax(0,1fr) auto;align-items:center;gap:7px;width:100%;min-height:22px;padding:2px 4px;border:0;border-radius:var(--oi-shell-radius-row,5px);background:transparent;color:inherit;font:inherit;font-size:var(--oi-shell-type-ui);text-align:left;cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.factory-activity-row:hover{background:var(--oi-wash-strong)}
+.factory-activity-row:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-1px}
+.factory-activity-kind{font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-3)}
+.factory-activity-row[data-kind="handoff"] .factory-activity-kind,.factory-activity-row[data-kind="question"] .factory-activity-kind{color:var(--oi-accent)}
+.factory-activity-subject{min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--oi-accent-ink)}
+.factory-activity-when{color:var(--oi-muted-3);font-variant-numeric:tabular-nums;white-space:nowrap}
+
+/* activity landing in other projects since yesterday: one quiet line */
+.factory-elsewhere{display:flex;flex-wrap:wrap;align-items:center;gap:2px 8px;margin:0;padding:0 4px;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.factory-elsewhere-label{font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-3);margin-right:2px}
+.factory-elsewhere-item{padding:0 2px;border:0;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-ui);cursor:pointer;border-radius:4px}
+.factory-elsewhere-item:hover{color:var(--oi-accent-ink);background:var(--oi-wash-strong)}
+.factory-elsewhere-item>b{font-weight:600;color:var(--oi-accent-ink)}
+
+/* provider pills: which native provider the bound conversation runs on */
+.factory-provider{display:flex;align-items:center;gap:7px;min-width:0;padding-top:6px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.factory-provider-label{flex:none;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-3)}
+.factory-provider>.oi-note{margin:0;font-size:var(--oi-shell-type-ui)}
+.factory-provider-pills{flex:1;min-width:0;display:flex;flex-wrap:wrap;gap:3px}
+.factory-provider-pills>.oi-note{margin:0;font-size:var(--oi-shell-type-ui)}
+.factory-provider-pill{height:20px;padding:0 8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:var(--oi-radius-pill,999px);background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-ui);cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),color var(--oi-motion-ui) var(--oi-motion-ease-out),border-color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.factory-provider-pill:hover:not(:disabled){color:var(--oi-accent-ink);border-color:var(--oi-accent-soft)}
+.factory-provider-pill:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:1px}
+.factory-provider-pill[data-current="true"]{background:var(--oi-accent);border-color:var(--oi-accent);color:var(--oi-composer-ground)}
+.factory-provider[data-state="connected"] .factory-provider-pill:not([data-current="true"]){opacity:.6}
+.factory-provider-pill:disabled{cursor:default}
+
+/* ===== Inbox | Tasks ===== */
+.factory-views{flex:none;margin:4px 10px 6px;align-self:stretch}
+.factory-views>button{flex:1 1 0;display:inline-flex;align-items:center;justify-content:center;gap:5px}
+.factory-body{flex:1;min-height:0;overflow:auto;padding:0 6px 10px}
+.factory-note{margin:6px 8px}
+.factory-body .project-encounters{display:flex;flex-direction:column;gap:1px}
+.factory-body .project-availability{margin:0;padding:4px 8px;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+
+.factory-inbox{display:flex;flex-direction:column;gap:8px}
+.factory-band{display:flex;flex-direction:column;gap:1px}
+.factory-band-head{display:flex;align-items:center;justify-content:space-between;gap:8px;min-height:24px;margin:4px 0 2px;padding:0 8px;border-radius:5px;background:color-mix(in srgb,var(--oi-wash) 62%,transparent)}
+.factory-band-head>.oi-state{font-size:var(--oi-shell-type-eyebrow);color:var(--oi-muted-3)}
+.factory-inbox-row{display:flex;align-items:center;gap:8px;width:100%;min-height:var(--oi-shell-row);padding:3px 8px;border:0;border-radius:var(--oi-shell-radius-row,6px);background:transparent;color:inherit;font:inherit;text-align:left;cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.factory-inbox-row:hover{background:var(--oi-wash)}
+.factory-inbox-row:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-1px}
+.factory-inbox-dot{flex:none;width:6px;height:6px;border-radius:50%;background:var(--oi-muted-3)}
+.factory-inbox-row[data-status="pending"] .factory-inbox-dot,.factory-inbox-row[data-status="needs-review"] .factory-inbox-dot,.factory-inbox-row[data-lifecycle="active"] .factory-inbox-dot{background:var(--oi-accent)}
+.factory-inbox-text{flex:1;min-width:0;display:flex;flex-direction:column;gap:1px}
+.factory-inbox-title{font-size:var(--oi-shell-type-nav);color:var(--oi-accent-ink);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.factory-inbox-text>small{font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+
+/* Owner note 2026-09-18: the left reads through its horizontal dividers —
+ * the project card loses its box (border + wash) and stays structure only. */
+.factory-space{border:0;background:transparent}
+.factory-space-mark{border:0;background:var(--oi-wash)}

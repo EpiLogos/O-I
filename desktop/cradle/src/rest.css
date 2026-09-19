@@ -15,6 +15,14 @@ body,
   height: 100%;
 }
 
+/* The desktop app is one fixed shell: the document itself never scrolls and
+ * never donates scrollbar gutter to the window, whatever stands (banners,
+ * boot states, appended canvases). Regions own their scrolling. */
+html,
+body {
+  overflow: hidden;
+}
+
 body {
   background: var(--oi-shell-ground);
   color: var(--oi-foreground);
@@ -79,6 +87,204 @@ body {
 
 /* The single prompt affordance — unobtrusive, keyboard reachable. */
 
+/* ===== "Locate your Central ground" / rest overview composition ==========
+ * Rest re-uses flow.css's `.fresh-surface` centring shell (shared with
+ * FreshSurface); these rules add the `rest-ground` qualifier so they win
+ * regardless of import order and compose the heading, status, ground
+ * chooser and action row into one readable page instead of the bare
+ * flow.css defaults. Every value is a token. */
+section.fresh-surface.rest-ground {
+  background: var(--oi-canvas-ground);
+}
+.rest-ground > div {
+  display: flex;
+  flex-direction: column;
+  gap: 0;
+  width: min(100%, 460px);
+}
 
+/* Heading + status no longer collide on one line: the status becomes a
+ * quiet second line under the title, not an inline sibling. */
+.rest-ground-head {
+  margin-bottom: var(--oi-desktop-gap-lg);
+}
+.rest-ground.fresh-surface .rest-ground-head h2 {
+  margin: 0 0 6px;
+  font-size: var(--oi-shell-type-title);
+  font-weight: 550;
+  letter-spacing: -0.01em;
+  color: var(--oi-accent-ink);
+}
+.rest-ground-status.rest-ground-status {
+  margin: 0;
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
 
+/* The ground chooser: GroundChooser.tsx carries no styling of its own; it
+ * renders inside this page, so its presentation is composed here. */
+.rest-ground .ground-chooser {
+  display: flex;
+  flex-direction: column;
+  gap: 10px;
+  margin: var(--oi-desktop-gap-lg) 0;
+  padding: 14px 16px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-sidebar-ground);
+}
+.rest-ground .ground-chooser h3 {
+  margin: 0;
+  font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
+}
+.rest-ground .ground-chooser p {
+  margin: 0;
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+}
+.rest-ground .ground-chooser p[role="status"] { color: var(--oi-accent-ink); }
+.rest-ground .ground-chooser form { display: flex; align-items: center; gap: 8px; }
+.rest-ground .ground-chooser label {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+}
+.rest-ground .ground-chooser input {
+  min-height: var(--oi-shell-control);
+  padding: 4px 8px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-composer-ground);
+  color: var(--oi-foreground);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.rest-ground .ground-chooser input:hover { border-color: var(--oi-accent-soft); }
+.rest-ground .ground-chooser input:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 0; border-color: var(--oi-accent-soft); }
+.rest-ground .ground-chooser button {
+  display: inline-flex;
+  align-items: center;
+  min-height: var(--oi-shell-control);
+  padding: 4px 12px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-composer-ground);
+  color: var(--oi-foreground);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.rest-ground .ground-chooser button:hover:not(:disabled) { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.rest-ground .ground-chooser button:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 2px; }
+.rest-ground .ground-chooser button:disabled { opacity: 0.45; cursor: default; }
+.rest-ground .ground-chooser details { font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.rest-ground .ground-chooser summary { cursor: pointer; }
+.rest-ground .ground-chooser pre {
+  margin: 6px 0 0;
+  padding: 8px;
+  border-radius: 4px;
+  background: var(--oi-canvas-ground);
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-eyebrow);
+  overflow: auto;
+  max-height: 180px;
+}
+.rest-ground .ground-chooser [role="alert"] {
+  margin: 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--oi-accent);
+  border-radius: 4px;
+  background: var(--oi-wash);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-accent-ink);
+}
+
+/* Action row: even cards instead of loosely wrapped inline buttons — each
+ * entry point (wiki, search, explore, write) reads as a compact, equally
+ * weighted control with its glyph, label and any keyboard hint aligned. */
+nav.rest-actions.rest-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  margin-top: var(--oi-desktop-gap-lg);
+  padding: 0;
+}
+.rest-ground .rest-actions > button {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  flex: 1 1 190px;
+  min-height: 36px;
+  margin: 0;
+  padding: 8px 12px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-composer-ground);
+  color: var(--oi-foreground);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  text-align: left;
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.rest-ground .rest-actions > button > svg { flex: none; color: var(--oi-muted-2); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.rest-ground .rest-actions > button > span { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.rest-ground .rest-actions > button:hover:not(:disabled) { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.rest-ground .rest-actions > button:hover:not(:disabled) > svg { color: var(--oi-accent-ink); }
+.rest-ground .rest-actions > button:active:not(:disabled) { background: var(--oi-wash-strong); }
+.rest-ground .rest-actions > button:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 2px; }
+.rest-ground .rest-actions > button:disabled { opacity: 0.5; cursor: default; }
+.rest-ground .rest-actions > button kbd {
+  flex: none;
+  margin-left: auto;
+  padding: 1px 5px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 4px;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-eyebrow);
+  font-style: normal;
+  color: var(--oi-muted-2);
+}
+/* The primary entry (start writing) carries ink weight, same accent role
+ * as .oi-action-primary elsewhere in the shell. */
+.rest-ground .rest-actions > button.rest-action-primary {
+  flex-basis: 100%;
+  order: 99;
+  background: var(--oi-accent);
+  border-color: var(--oi-accent);
+  color: var(--oi-composer-ground);
+}
+.rest-ground .rest-actions > button.rest-action-primary > svg { color: inherit; }
+.rest-ground .rest-actions > button.rest-action-primary:hover:not(:disabled) { background: var(--oi-accent-ink); border-color: var(--oi-accent-ink); }
+.rest-ground .rest-actions > button.rest-action-primary:disabled { opacity: 0.4; background: var(--oi-accent); border-color: var(--oi-accent); color: var(--oi-composer-ground); }
+
+.rest-ground .rest-refusal.rest-refusal {
+  width: 100%;
+  margin: var(--oi-desktop-gap) 0 0;
+  padding: 8px 10px;
+  border-left: 2px solid var(--oi-accent);
+  border-radius: 4px;
+  background: var(--oi-wash);
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
+  color: var(--oi-accent-ink);
+  overflow-wrap: anywhere;
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .rest-ground .ground-chooser input, .rest-ground .ground-chooser button,
+  .rest-ground .rest-actions > button, .rest-ground .rest-actions > button > svg {
+    transition: none;
+  }
+}
 

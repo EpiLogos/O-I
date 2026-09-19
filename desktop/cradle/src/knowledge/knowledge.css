@@ -103,7 +103,6 @@
 .knowledge-surface-footer { display:flex; flex:none; align-items:center; gap:var(--oi-desktop-gap-sm); padding:var(--oi-desktop-gap-xs) var(--oi-desktop-gap); border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft); color:var(--oi-muted-2); font-size:var(--oi-shell-type-meta); }
 .knowledge-surface-footer > span { flex:1; min-width:0; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .knowledge-surface-footer nav { display:flex; }
-.knowledge-surface-footer svg { width:var(--oi-space-3); height:var(--oi-space-3); fill:none; stroke:currentColor; stroke-width:var(--oi-focus-ring-width); }
 .knowledge-actions .oi-action { white-space:normal; }
 
 /* Local-whole Expression is a view over the same native selection. In a

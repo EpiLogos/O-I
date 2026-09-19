@@ -1,0 +1,34 @@
+{
+  "name": "oi-expressions-app",
+  "private": true,
+  "version": "0.3.0",
+  "type": "module",
+  "description": "The O:I Expressions application, vendored into the cradle repo (source of record). Self-contained: its own install and build.",
+  "scripts": {
+    "dev": "npm run build:journeys && vite --port=3000 --host=0.0.0.0",
+    "build": "npm run build:journeys && vite build",
+    "build:journeys": "node field-studies-journeys/scripts/build.mjs",
+    "preview": "vite preview",
+    "lint": "npm run build:journeys && tsc --noEmit && tsc --noEmit -p field-studies-journeys/tsconfig.json",
+    "test": "npm run build:journeys && node --test field-studies-journeys/tests/model.test.mjs",
+    "export:legacy-collections": "node scripts/export-legacy-collections.mjs"
+  },
+  "dependencies": {
+    "@tailwindcss/vite": "^4.1.14",
+    "@vitejs/plugin-react": "^5.0.4",
+    "lucide-react": "^0.546.0",
+    "react": "^19.0.1",
+    "react-dom": "^19.0.1",
+    "three": "^0.186.0",
+    "tweakpane": "^4.0.5",
+    "vite": "^6.2.3"
+  },
+  "devDependencies": {
+    "@types/node": "^22.14.0",
+    "@types/three": "^0.185.4",
+    "autoprefixer": "^10.4.21",
+    "esbuild": "^0.25.0",
+    "tailwindcss": "^4.1.14",
+    "typescript": "~5.8.2"
+  }
+}

@@ -13,7 +13,10 @@ export type DispatchState =
   | {kind:"running";ref:string;phase:string}
   | {kind:"settled";ref:string;record:DeliveryRecord;duplicate:boolean}
   | {kind:"refused";ref:string;error:string};
-export interface DeliveryHistoryEntry {ref:string;record:DeliveryRecord;duplicate:boolean}
+/** `packet` is what this window dispatched under that delivery identity (its
+ * shared source refs and audience) — kept beside the owner's receipt so the
+ * panel's Context plane can name what an addressed turn actually carried. */
+export interface DeliveryHistoryEntry {ref:string;record:DeliveryRecord;duplicate:boolean;packet?:AddressedPacket}
 /** Per-recipient line of a group dispatch. `error` is the owner's own refusal
  * verbatim; phases are the owner's durable delivery phases. */
 export interface GroupRow {agentSession:string;phase?:string;error?:string;duplicate?:boolean}

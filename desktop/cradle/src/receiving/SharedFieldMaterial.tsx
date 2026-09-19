@@ -3,6 +3,7 @@ import {createProjection,withdrawProjection} from "../../../../shared-field/inde
 import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
 import {useKernel} from "../kernel/KernelProvider";
 import {hostedPublicationArgs,sharedField,type SharedFieldHostedResult,type SharedFieldStatus} from "../knowledge/shared-field";
+import "./receiving.css";
 /** Shared Field material for the OPEN document (Wave 7). Publication is the
  * owner's portable projection contract — this strip composes and withdraws
  * real `oi.projection/v1` envelopes through `shared-field/index.mjs`, it does

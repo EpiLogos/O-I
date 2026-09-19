@@ -9,12 +9,8 @@
  * and it is marked as cradle-composed provenance like the rest.
  */
 import type {ActivityExtras, CompositionReading, ProductSectionModel, SettingRow} from "./types";
+import {availabilityWord} from "./v2/vocabulary";
 
-/** BOOT-06/12: installed/registered is discovery, never asserted runtime
- * readiness — the owner has not disclosed a readiness op yet. */
-export function availabilityLabel(availability:ProductSectionModel["availability"],nativeState:string):string {
-  return availability==="discovered" ? `${nativeState} — discovered, not verified ready` : nativeState;
-}
 
 interface WorldPosition {
   product_id:string;
@@ -130,7 +126,7 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
     }
     if(position.product_id==="ai-kit") {
       configuration.push(
-        {title:"Executable bound",value:row?availabilityLabel(availability,nativeState):"Not yet read",provenance:"composition_read"},
+        {title:"Executable bound",value:row?availabilityWord(nativeState):"Not yet read",provenance:"the installed-suite census"},
         ...(version?[{title:"Version",value:version,provenance:censusProvenance(reading)} satisfies SettingRow]:[]),
       );
       if(project) {
@@ -180,12 +176,3 @@ export function buildSections(reading:CompositionReading|undefined,extras:Activi
   });
 }
 
-export const RAIL:{id:"health"|"activity"|"config"|"configuration"|"profiles"|"bootstrap"|"visuals";label:string;hint:string}[] = [
-  {id:"health",label:"Health",hint:"Is my world healthy? — census, readiness honesty, obligations"},
-  {id:"activity",label:"Activity",hint:"What is running, and where? — SessionSpaces, providers"},
-  {id:"config",label:"Config",hint:"What is configured, and by whom? — ground binding, suite pins"},
-  {id:"configuration",label:"Configuration",hint:"The desired/native relation per owner setting — edit desired, plan and apply through the owner (#299 §11)"},
-  {id:"profiles",label:"Profiles",hint:"World profiles: sparse desired compositions, native profiles by reference, inspectable switching"},
-  {id:"bootstrap",label:"Bootstrap",hint:"Empty world → installed world — bind, install, verify, first-run"},
-  {id:"visuals",label:"Visuals",hint:"Appearance and expression — themes, and the particle layer's full control set"},
-];

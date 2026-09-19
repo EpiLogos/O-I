@@ -85,11 +85,16 @@
   cursor: pointer;
 }
 
-.k9-segment button:hover { color: var(--oi-foreground); background: var(--oi-wash); }
+.k9-segment button:hover:not(:disabled) { color: var(--oi-foreground); background: var(--oi-wash); }
 
 .k9-segment button[aria-pressed="true"] {
   background: var(--oi-accent-soft);
   color: var(--oi-foreground);
+}
+
+.k9-segment button:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: 1px;
 }
 
 .k9-segment button:disabled { opacity: 0.45; cursor: default; }
@@ -122,16 +127,23 @@
   background: transparent;
   color: var(--oi-foreground);
   font-size: var(--oi-type-xs);
+  min-height: var(--oi-shell-control, 26px);
   padding: 5px 10px;
   border-radius: calc(var(--oi-shell-radius) - 3px);
   cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
-.k9-btn:hover { background: var(--oi-wash); }
+.k9-btn:hover:not(:disabled) { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
 
 .k9-btn[aria-pressed="true"] {
   background: var(--oi-accent-soft);
   border-color: var(--oi-hairline);
+}
+
+.k9-btn:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: var(--oi-focus-ring-offset);
 }
 
 .k9-btn:disabled { opacity: 0.45; cursor: default; }
@@ -164,11 +176,16 @@
   cursor: pointer;
 }
 
-.k9-bimba-item:hover { background: var(--oi-wash); }
+.k9-bimba-item:hover:not(:disabled) { background: var(--oi-wash); }
 
 .k9-bimba-item[aria-pressed="true"] {
   background: var(--oi-accent-soft);
   border-color: var(--oi-hairline);
+}
+
+.k9-bimba-item:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: -1px;
 }
 
 .k9-bimba-item:disabled { opacity: 0.5; cursor: default; }
@@ -194,5 +211,5 @@
 .nara-expression[data-standing="stale"] { opacity: .58; }
 
 @media (prefers-reduced-motion: reduce) {
-  .k9-chip { animation: none; }
+  .k9-chip, .k9-side { animation: none; }
 }

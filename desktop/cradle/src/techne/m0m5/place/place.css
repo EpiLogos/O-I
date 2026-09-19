@@ -1,0 +1,429 @@
+/*
+ * The Place instrument (T4) — styles inside the opt-in `.oi-techne` scope
+ * (packages/oi-design-system/techne.css, imported by PlaceInstrument.tsx).
+ * Tokens only: `var(--oi-*)` and `var(--oi-techne-*)`; role names never
+ * change between themes.
+ */
+
+.techne-place {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2, 8px);
+  height: 100%;
+  min-height: 0;
+  color: var(--oi-foreground);
+}
+
+/* Tool rail: mode switch, camera, time filter, cross-open — disclosure-driven. */
+.techne-place-rail {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2, 8px);
+  flex-wrap: wrap;
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+}
+
+.techne-place-rail-group {
+  display: inline-flex;
+  align-items: center;
+  gap: 2px;
+}
+
+.techne-place-field {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+}
+
+.techne-place-input {
+  width: 11ch;
+  padding: 2px 6px;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-foreground);
+  background: var(--oi-techne-input, var(--oi-surface));
+  border: 1px solid var(--oi-rule);
+  border-radius: 4px;
+}
+
+.techne-place-input:focus-visible,
+.techne-place-field input:focus-visible {
+  outline: 2px solid var(--oi-techne-accent);
+  outline-offset: 2px;
+}
+
+/* The stage: schematic SVG + detail panel. */
+.techne-place-stage {
+  flex: 1;
+  min-height: 0;
+  display: flex;
+  gap: var(--oi-space-2, 8px);
+  align-items: stretch;
+}
+
+.techne-place-map {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  display: block;
+  background: var(--oi-world-surface, var(--oi-surface));
+  border: 1px solid var(--oi-rule);
+  border-radius: var(--oi-techne-panel-radius, 8px);
+}
+
+.techne-place-graticule line,
+.techne-place-graticule ellipse {
+  stroke: var(--oi-rule);
+  fill: none;
+  stroke-width: 1;
+}
+
+.techne-place-globe-disc {
+  fill: var(--oi-techne-wash-veil, transparent);
+  stroke: var(--oi-rule);
+  stroke-width: 1;
+}
+
+/* Hierarchy edges parent→child: hairline, dashed — a relation, not a road. */
+.techne-place-edge {
+  stroke: var(--oi-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 3;
+  opacity: 0.7;
+  fill: none;
+}
+
+/* Precision is data — the four renderings stay distinct. */
+.techne-place-marker { cursor: pointer; }
+
+.techne-place-dot {
+  fill: var(--oi-foreground);
+  stroke: none;
+}
+
+/* approximate: a halo, visibly not a solid fix. */
+.techne-place-halo {
+  fill: var(--oi-techne-accent);
+  fill-opacity: 0.16;
+  stroke: var(--oi-techne-accent);
+  stroke-opacity: 0.55;
+  stroke-width: 1;
+  stroke-dasharray: 3 2;
+}
+
+/* region: outline only. */
+.techne-place-outline {
+  fill: none;
+  stroke: var(--oi-foreground);
+  stroke-width: 1.2;
+}
+
+/* unlocated: the distinct "no coordinate" register marker. */
+.techne-place-nocoord-box {
+  fill: var(--oi-techne-input, var(--oi-surface));
+  stroke: var(--oi-muted);
+  stroke-width: 1;
+  stroke-dasharray: 2 2;
+}
+
+.techne-place-label {
+  fill: var(--oi-foreground);
+  font-size: 11px;
+  paint-order: stroke;
+  stroke: var(--oi-world-surface, var(--oi-surface));
+  stroke-width: 3px;
+  pointer-events: none;
+}
+
+/* Selected-state grammar: accent ring, ink kept. */
+.techne-place-marker[data-selected="true"] .techne-place-dot,
+.techne-place-marker[data-selected="true"] .techne-place-nocoord-box {
+  stroke: var(--oi-techne-accent);
+  stroke-width: 2;
+}
+
+.techne-place-marker[data-selected="true"] .techne-place-label {
+  font-weight: 600;
+}
+
+.techne-place-marker:hover .techne-place-halo {
+  fill-opacity: 0.3;
+}
+
+/* Detail panel: identity, precision, hierarchy, sources. */
+.techne-place-detail {
+  width: min(300px, 38%);
+  padding: var(--oi-space-3, 12px);
+  overflow: auto;
+  font-size: var(--oi-type-xs, 11px);
+}
+
+.techne-place-detail--main {
+  width: min(460px, 90%);
+  margin: 0 auto;
+}
+
+.techne-place-detail-title {
+  margin: 0 0 var(--oi-space-2, 8px);
+  font-size: var(--oi-type-xs, 11px);
+  font-weight: 500;
+  letter-spacing: var(--oi-tracking-label, 0.04em);
+  text-transform: uppercase;
+  color: var(--oi-muted);
+}
+
+.techne-place-ref {
+  display: block;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+  margin-bottom: var(--oi-space-2, 8px);
+}
+
+.techne-place-rows {
+  display: grid;
+  grid-template-columns: auto 1fr;
+  gap: 4px var(--oi-space-2, 8px);
+  margin: 0;
+}
+
+.techne-place-rows dt {
+  color: var(--oi-muted);
+}
+
+.techne-place-rows dd {
+  margin: 0;
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+}
+
+.techne-place-rows dd[data-precision="approximate"],
+.techne-place-rows dd[data-precision="region"],
+.techne-place-rows dd[data-precision="unlocated"] {
+  color: var(--oi-techne-accent);
+}
+
+.techne-place-name-row {
+  display: block;
+}
+
+.techne-place-validity {
+  color: var(--oi-muted-2, var(--oi-muted));
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+}
+
+.techne-place-status {
+  margin: 0;
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+}
+
+/* --- M4′ World / Places (issue #217) ------------------------------------- */
+
+.techne-place-office {
+  margin: 0 0 var(--oi-space-2, 8px);
+  font-size: var(--oi-type-xs, 11px);
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+  color: var(--oi-muted);
+}
+
+/* The relation legend: the hard geography distinctions stay visibly
+   distinct, verbatim; the mythic class never reads as factual. */
+
+.techne-place-legend {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: center;
+  gap: var(--oi-space-2, 8px);
+  margin: 0 0 var(--oi-space-2, 8px);
+}
+
+.techne-place-relation-chip {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  padding: 1px 6px;
+  border: 1px solid var(--oi-border, currentColor);
+  border-radius: 8px;
+  color: var(--oi-foreground);
+}
+
+.techne-place-relation-chip[data-standing="mythic"] {
+  border-style: dashed;
+  color: var(--oi-techne-accent);
+}
+
+.techne-place-relation-chip[data-standing="owner-vocabulary"] {
+  font-style: italic;
+}
+
+.techne-place-relation-chip[data-empty="true"] {
+  opacity: 0.45;
+}
+
+/* Markers carry their standing class; mythic markers stay visibly apart. */
+
+.techne-place-marker[data-standing="mythic"] .techne-place-label {
+  font-style: italic;
+}
+
+/* The movement overlay: a presentation ordering, drawn dashed — never a
+   minted route identity. */
+
+.techne-place-route {
+  fill: none;
+  stroke: var(--oi-techne-accent);
+  stroke-dasharray: 4 4;
+  stroke-width: 1.5;
+  opacity: 0.8;
+}
+
+.techne-place-overlay-toggle {
+  flex-direction: row;
+  align-items: center;
+  gap: 4px;
+}
+
+.techne-place-route-note {
+  margin: var(--oi-space-2, 8px) 0 0;
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+}
+
+/* The world panel: reference-frame ladder, carried occasion, provider-bound
+   depth, privacy constraints, routed Actions and the 3:3 crossing. */
+
+.techne-place-world {
+  margin-top: var(--oi-space-2, 8px);
+  padding: var(--oi-space-2, 8px);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2, 8px);
+}
+
+.techne-place-ladder {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.techne-place-rung {
+  display: flex;
+  flex-wrap: wrap;
+  align-items: baseline;
+  gap: var(--oi-space-2, 8px);
+  padding-left: 12px;
+  position: relative;
+}
+
+.techne-place-rung::before {
+  content: "·";
+  position: absolute;
+  left: 0;
+  color: var(--oi-muted);
+}
+
+.techne-place-rung[data-availability="disclosed"]::before {
+  content: "◉";
+}
+
+.techne-place-rung[data-availability="absent-facet"]::before,
+.techne-place-rung[data-availability="producer-unavailable"]::before {
+  content: "◌";
+}
+
+.techne-place-rung-label {
+  min-width: 22ch;
+  color: var(--oi-foreground);
+}
+
+.techne-place-rung[data-availability="producer-unavailable"] .techne-place-rung-label,
+.techne-place-rung[data-availability="absent-facet"] .techne-place-rung-label {
+  color: var(--oi-muted);
+}
+
+.techne-place-rung-detail {
+  display: inline-flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.techne-place-rung-reason {
+  font-size: var(--oi-type-xs, 11px);
+  color: var(--oi-muted);
+}
+
+.techne-place-world-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr));
+  gap: var(--oi-space-2, 8px);
+}
+
+.techne-place-world-block {
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.techne-place-depths {
+  list-style: none;
+  margin: 0;
+  padding: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 4px;
+}
+
+.techne-place-depth-name {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  color: var(--oi-foreground);
+}
+
+.techne-place-depth[data-availability="producer-unavailable"] .techne-place-depth-name {
+  color: var(--oi-muted);
+}
+
+.techne-place-depth-reason,
+.techne-place-depth-detail {
+  margin: 0;
+  font-size: 10px;
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.techne-place-privacy {
+  margin: 0;
+  font-size: 10px;
+  color: var(--oi-techne-accent);
+}
+
+.techne-place-receipt {
+  margin: 0;
+  font-size: var(--oi-type-xs, 11px);
+  overflow-wrap: anywhere;
+}
+
+.techne-place-receipt[data-routed="false"] {
+  color: var(--oi-techne-accent);
+}
+
+/* Relation and uncertainty rows in the detail view; lapsed hierarchy rows
+   (historical polity vs current geography) read as muted with their note. */
+
+.techne-place-rows dd[data-standing="mythic"] {
+  color: var(--oi-techne-accent);
+  font-style: italic;
+}
+
+.techne-place-name-row[data-standing="lapsed"] {
+  opacity: 0.65;
+}

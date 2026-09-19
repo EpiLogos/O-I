@@ -1,0 +1,16 @@
+import {Journey,validateJourney} from './model';
+import {Camera} from './camera';
+import {TransportState,validateTransport} from '../../src/engine/transportState';
+export const SESSION_KEY='oi.expression-session.v1';
+export interface SessionState {version:1;journeyId:string;sceneId:string;selected:string[];stepIndex:number;sceneElapsed:number;simTime:number;playing:boolean;journeyPlaying:boolean;camera:Camera;transport?:TransportState;scenePlaying?:boolean;fieldPaused?:boolean}
+export function validateSession(value:unknown,j:Journey):SessionState|undefined{
+ const s=value as SessionState;if(!s||s.version!==1||s.journeyId!==j.id||!j.scenes.some(v=>v.id===s.sceneId))return;
+ const c=s.camera;if(!c||!['2d','3d'].includes(c.mode)||!['XY','XZ','YZ'].includes(c.plane)||![c.yaw,c.pitch,c.zoom,c.panX,c.panY,c.depth].every(n=>Number.isFinite(n)&&Math.abs(n)<1e7)||typeof c.grid!=='boolean'||typeof c.snap!=='boolean'||c.zoom<=0||c.zoom>100||![s.sceneElapsed,s.simTime,s.stepIndex].every(n=>Number.isFinite(n)&&n>=0)||s.sceneElapsed>3600||s.simTime>1e12||!Number.isInteger(s.stepIndex)||s.stepIndex>31||!Array.isArray(s.selected)||s.selected.length>32||!s.selected.every(id=>typeof id==='string')||typeof s.playing!=='boolean'||typeof s.journeyPlaying!=='boolean'||s.scenePlaying!==undefined&&typeof s.scenePlaying!=='boolean'||s.fieldPaused!==undefined&&typeof s.fieldPaused!=='boolean')return;
+ try{return {...s,transport:s.transport?validateTransport(s.transport):undefined};}catch{return {...s,transport:undefined};}
+}
+let database:Promise<IDBDatabase>|undefined;
+function db(){return database??=new Promise((resolve,reject)=>{const request=indexedDB.open('oi.expression-recovery',1);request.onupgradeneeded=()=>request.result.createObjectStore('drafts',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);request.onblocked=()=>reject(new Error('Recovery storage is blocked by another tab.'));});}
+export async function writeDraft(j:Journey){const value=validateJourney(j),database=await db();return new Promise<void>((resolve,reject)=>{const tx=database.transaction('drafts','readwrite');tx.objectStore('drafts').put(value);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Draft backup was interrupted.'));});}
+export async function readDraft(id:string){const database=await db();return new Promise<Journey|undefined>((resolve,reject)=>{const request=database.transaction('drafts').objectStore('drafts').get(id);request.onsuccess=()=>{try{resolve(request.result?validateJourney(request.result):undefined);}catch(e){reject(e);}};request.onerror=()=>reject(request.error);});}
+export async function readDrafts(){const database=await db();return new Promise<Journey[]>((resolve,reject)=>{const request=database.transaction('drafts').objectStore('drafts').getAll();request.onsuccess=()=>resolve(request.result.flatMap(v=>{try{return [validateJourney(v)];}catch{return [];}}));request.onerror=()=>reject(request.error);});}
+export async function removeDraft(id:string){const database=await db();return new Promise<void>((resolve,reject)=>{const tx=database.transaction('drafts','readwrite');tx.objectStore('drafts').delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}

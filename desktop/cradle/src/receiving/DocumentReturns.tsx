@@ -2,6 +2,8 @@ import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {receiving,type DocumentReading,type ReceivingPage,type ReceivingRequest,type ReturnReading,type ReturnRow} from "./client";
 import {NowRelations} from "./NowRelations";
+import {Glyph} from "../workspace/Glyph";
+import "./receiving.css";
 /** Returns for the OPEN document, rendered beside it (Wave 6E cut 2). The
  * same native receiving field as the project tray, reviewed and included
  * through the same owner operations — placed where the human is reading.
@@ -88,7 +90,7 @@ export function DocumentReturns({sourceRef,project}:{sourceRef:string;project:st
    exchange_grant_ref:typeof lineage.exchange_grant_ref==="string"?lineage.exchange_grant_ref:undefined};
  };
  return <section className="document-returns" aria-label="Returns for this document">
-  <header><span>Returns for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}>↻</button></header>
+  <header><span>Returns for this document</span>{rows&&<small>{rows.length} in the receiving field</small>}<button className="returns-refresh" aria-label="Refresh this document's returns" disabled={pending} onClick={load}><Glyph name="refresh" size={12}/></button></header>
   {rows?.map(row=><button key={row.return_ref} className={`project-return document-return ${open?.return_ref===row.return_ref?"return-open":""} ${row.now_ref?"return-has-now":""}`} data-now-ref={row.now_ref??undefined} aria-expanded={open?.return_ref===row.return_ref} onClick={()=>void expand(row)}>
     <span className={`return-status return-${row.status}`}>{row.status}</span>
     <span className="return-origin">{row.author.actor_kind==="human"?"H":"Agent"} · {row.document_id}{row.now_ref&&<span className="return-now-mark" data-now-ref={row.now_ref}> · now</span>}</span>

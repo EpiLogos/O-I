@@ -1,0 +1,254 @@
+/*
+ * The Library browser's own layout. Everything colour/size/duration-bearing
+ * composes the shared desktop grammar (oi-segment, oi-panel-head, oi-row,
+ * oi-scroll, oi-eyebrow, oi-action, oi-refusal, oi-note, oi-empty, oi-kv,
+ * oi-state, oi-ref) — this file only lays those pieces out. No motion beyond
+ * the shared hover/selection colour fades.
+ */
+
+.lib-browser {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+  min-height: 0;
+}
+
+.lib-head { flex: none; }
+
+.lib-search-row { gap: 8px; }
+.lib-search {
+  flex: 1;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  padding: 0;
+  height: auto;
+}
+.lib-search:focus-visible { outline: none; box-shadow: none; }
+
+.lib-results {
+  flex: 1;
+  min-height: 0;
+  padding: 6px 4px 10px;
+}
+
+.lib-coverage {
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+  padding: 2px 10px 8px;
+}
+.lib-coverage-line { margin: 0; }
+
+.lib-scope-group { margin-bottom: 4px; }
+.lib-subset-heading {
+  margin: 10px 10px 2px;
+  padding-top: 6px;
+  border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+}
+.lib-subset-heading:first-child { border-top: 0; padding-top: 0; }
+
+.lib-kind-group { margin-bottom: 2px; }
+.lib-kind-heading { margin: 6px 10px 2px; }
+
+.lib-row-wrap { display: flex; flex-direction: column; }
+.lib-row { width: 100%; }
+.lib-fixture-mark {
+  margin-left: 6px;
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+}
+
+.lib-detail {
+  margin: 0 8px 6px 30px;
+  padding: 6px 8px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  border-radius: 6px;
+  background: var(--oi-wash);
+}
+.lib-summary { margin: 0 0 6px; }
+
+.lib-order-note {
+  margin: 10px 10px 2px;
+  font-size: var(--oi-shell-type-meta);
+}
+
+/* ---- BROWSE — the columnar Web inventory (owner Wayfinder §8A) --------- */
+
+.lib-head-controls {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  flex-wrap: wrap;
+}
+.lib-view button {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+}
+
+.lib-zoom {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  flex-wrap: wrap;
+  padding: 8px 10px;
+  border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  color: var(--oi-muted-2);
+  font-size: var(--oi-shell-type-meta);
+}
+.lib-zoom-label { letter-spacing: .1em; }
+.lib-zoom-position {
+  font-variant-numeric: tabular-nums;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  max-width: 200px;
+}
+.lib-zoom-level {
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  cursor: pointer;
+  padding: 1px 6px;
+  border-radius: 999px;
+}
+.lib-zoom-level:hover { color: var(--oi-foreground); }
+.lib-zoom-level[aria-pressed="true"] {
+  color: var(--oi-foreground);
+  background: var(--oi-wash);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+}
+
+.lib-col-group { margin: 2px 8px 10px; }
+.lib-col-group-focused > .lib-col-heading { color: var(--oi-foreground); }
+.lib-col-heading {
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  border: 0;
+  background: transparent;
+  color: var(--oi-muted-2);
+  cursor: pointer;
+  padding: 6px 2px;
+  text-align: left;
+  font: inherit;
+  letter-spacing: .08em;
+  text-transform: uppercase;
+}
+.lib-col-heading:hover { color: var(--oi-foreground); }
+.lib-col-count { font-variant-numeric: tabular-nums; }
+.lib-col-note { margin: 2px 2px 8px; }
+
+/* The row: [name] [identity] [scene chips — ONE line]. Name and identity
+ * share a band at compact widths; the scene strip stays one line at every
+ * width — flex nowrap, its own hidden overflow, bounded visible chips. */
+.lib-col-row {
+  display: grid;
+  grid-template-columns: minmax(150px, 1.1fr) minmax(110px, 1fr) minmax(180px, 1.6fr);
+  gap: 10px;
+  align-items: center;
+  padding: 5px 4px;
+  border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+}
+.lib-col-row-selected { background: var(--oi-wash); }
+.lib-col-name {
+  display: inline-flex;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  border: 0;
+  background: transparent;
+  color: inherit;
+  font: inherit;
+  text-align: left;
+  cursor: pointer;
+  padding: 0;
+}
+.lib-col-title { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.lib-col-name strong { font-size: var(--oi-shell-type-meta); letter-spacing: .1em; color: var(--oi-muted-2); font-weight: 550; }
+.lib-col-identity {
+  color: var(--oi-muted-2);
+  font-size: var(--oi-shell-type-meta);
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  min-width: 0;
+}
+.lib-col-open { display: inline-flex; gap: 6px; justify-content: flex-end; }
+.lib-col-open .oi-action { padding: 1px 8px; font-size: var(--oi-shell-type-meta); }
+
+/* The scene chip strip: ONE line, never wrapping. The hidden measuring row
+ * keeps every chip's real width for the bound computation. */
+.lib-col-chipcell { position: relative; min-width: 0; display: flex; }
+.lib-scene-strip {
+  position: relative;
+  display: flex;
+  flex-direction: row;
+  flex-wrap: nowrap;
+  align-items: center;
+  gap: 6px;
+  min-width: 0;
+  overflow: hidden;
+  height: 24px;
+}
+.lib-scene-measure {
+  position: absolute;
+  visibility: hidden;
+  display: flex;
+  flex-direction: row;
+  gap: 6px;
+  pointer-events: none;
+  white-space: nowrap;
+}
+.lib-scene-chip {
+  flex: none;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  background: var(--oi-surface);
+  color: var(--oi-foreground);
+  border-radius: 999px;
+  font-size: var(--oi-shell-type-meta);
+  padding: 1px 9px;
+  max-width: 130px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  cursor: pointer;
+}
+.lib-scene-chip:hover { border-color: var(--oi-muted-2); }
+.lib-scene-reveal {
+  flex: none;
+  border: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: transparent;
+  color: var(--oi-muted-2);
+  border-radius: 999px;
+  font-size: var(--oi-shell-type-meta);
+  padding: 1px 8px;
+  cursor: pointer;
+}
+.lib-scene-reveal:hover { color: var(--oi-foreground); }
+.lib-scene-reveal-pop {
+  position: absolute;
+  top: 26px;
+  right: 0;
+  z-index: 5;
+  display: flex;
+  flex-direction: column;
+  gap: 5px;
+  padding: 8px;
+  max-height: 220px;
+  overflow: auto;
+  background: var(--oi-sidebar-ground);
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 8px;
+  box-shadow: var(--oi-shadow-menu);
+}
+
+@media (max-width: 860px) {
+  .lib-col-row { grid-template-columns: minmax(130px, 1fr) minmax(150px, 1.2fr); }
+  .lib-col-row .lib-col-open { display: none; }
+  .lib-scene-strip { grid-column: 1 / -1; }
+}

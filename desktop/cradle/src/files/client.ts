@@ -1,7 +1,9 @@
 import {kernelOp} from "../kernel/bridge";
 import type {CentralLocation, KernelTransportStatus, NativeDirectory, NativeFileBytes, NativeFileReading} from "../kernel/types";
-export async function listFiles(transport:KernelTransportStatus,path:string):Promise<NativeDirectory> {
-  const result=await kernelOp(transport,{op:"files_list",path});
+/** `fresh` bypasses the kernel's short-horizon read cache for this one
+ * listing — the explicit refresh affordance, not an ordinary expansion. */
+export async function listFiles(transport:KernelTransportStatus,path:string,fresh=false):Promise<NativeDirectory> {
+  const result=await kernelOp(transport,fresh?{op:"files_list",path,fresh}:{op:"files_list",path});
   if(result.error || result.outcome?.result!=="directory_read")throw new Error(result.error??"Central did not return a directory reading");
   return result.outcome.directory;
 }

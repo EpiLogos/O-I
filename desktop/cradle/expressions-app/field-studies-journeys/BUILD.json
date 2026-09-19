@@ -1,0 +1,11 @@
+{
+  "built_at": "2026-09-14T01:31:58+00:00",
+  "html_sha256": "137f805840129f34c5cd367aa1bfac0698885e0c1043f284c810158fba6b32a5",
+  "bytes": 975083,
+  "typescript_modules": 21,
+  "field_parameter_controls": 94,
+  "unit_tests_passed": 70,
+  "authoring_tests_passed": 23,
+  "native_engine_integrated": true,
+  "public_url": null
+}

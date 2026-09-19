@@ -8,7 +8,7 @@
 
 import { Fragment, useEffect, useRef, type KeyboardEvent as ReactKeyboardEvent } from "react";
 import type { ActionDisclosure, SurfaceId } from "./types";
-import { Glyph } from "../workspace/Glyph";
+import { Glyph, type GlyphName } from "../workspace/Glyph";
 
 export interface MenuState {
   x: number;
@@ -44,7 +44,7 @@ const SHORTCUT: Record<string, string> = {
  * Only the actions with an obvious visual match get one; an unmapped
  * disclosure keeps its glyph slot empty rather than wearing a fabricated
  * icon. */
-const ICON: Partial<Record<string, "close" | "columns" | "rows" | "expand" | "restore" | "grid" | "history" | "detach">> = {
+const ICON: Partial<Record<string, GlyphName>> = {
   "surface.close": "close",
   "surface.split-right": "columns",
   "surface.split-down": "rows",
@@ -53,7 +53,15 @@ const ICON: Partial<Record<string, "close" | "columns" | "rows" | "expand" | "re
   "surface.restore-layout": "history",
   "surface.reopen": "history",
   "surface.detach": "detach",
+  "surface.pin": "pin",
+  "surface.unpin": "pin",
+  "surface.focus-tab": "single",
+  "surface.open-sources": "list",
+  "frame.world": "sidebar",
 };
+/** Parameterised refs (`surface.move-to:<group>`) share their family's glyph. */
+const glyphFor = (ref: string): GlyphName | undefined =>
+  ICON[ref] ?? (ref.startsWith("surface.move-to:") ? "arrow" : undefined);
 
 export function ContextMenu({ menu, onInvoke, onClose }: Props) {
   const ref = useRef<HTMLDivElement>(null);
@@ -138,7 +146,7 @@ export function ContextMenu({ menu, onInvoke, onClose }: Props) {
             aria-disabled={!item.enabled}
             onClick={() => onInvoke(item, menu.surfaceId)}
           >
-            <span className="ctx-item-glyph" aria-hidden="true">{ICON[item.action_ref] && <Glyph name={ICON[item.action_ref]!} size={13} />}</span>
+            <span className="ctx-item-glyph" aria-hidden="true">{glyphFor(item.action_ref) && <Glyph name={glyphFor(item.action_ref)!} size={13} />}</span>
             <span className="ctx-item-title">{item.title}</span>
             {SHORTCUT[item.action_ref] && <kbd aria-hidden="true">{SHORTCUT[item.action_ref]}</kbd>}
           </button>

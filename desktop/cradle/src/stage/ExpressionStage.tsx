@@ -414,6 +414,12 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     live: surfaceRef.current ? surfaceRef.current.isLive : null,
     scheduled: surfaceRef.current ? surfaceRef.current.isScheduled : null,
     frames: surfaceRef.current ? surfaceRef.current.frameCount : null,
+    /** ES5 lifecycle receipts: viewport suspension of the contained renderer
+     * and the honest WebGL context-loss/recovery state. */
+    suspended: surfaceRef.current ? surfaceRef.current.isSuspended : null,
+    context: surfaceRef.current
+      ? { lost: surfaceRef.current.isContextLost, recovery: surfaceRef.current.contextRecovery }
+      : null,
     playback: surfaceRef.current?.inspectPlayback() ?? null,
     targets: expressionTargetIds(),
     cues: cueLog.current,

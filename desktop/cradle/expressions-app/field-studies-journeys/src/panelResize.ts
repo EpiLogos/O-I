@@ -1,0 +1,16 @@
+export function panelSize(width:number,height:number,viewportWidth:number,viewportHeight:number){return {width:Math.max(220,Math.min(width,viewportWidth-24)),height:Math.max(180,Math.min(height,viewportHeight-140))};}
+export function installPanelResize(){
+ const footer=document.querySelector('.instrument');if(footer)new ResizeObserver(()=>document.documentElement.style.setProperty('--footer-height',footer.getBoundingClientRect().height+'px')).observe(footer);
+ const belt=document.getElementById('toolbelt-panel');const placeMonitor=()=>{if(belt)document.documentElement.style.setProperty('--belt-bottom',belt.getBoundingClientRect().bottom+'px');};if(belt)new ResizeObserver(placeMonitor).observe(belt);addEventListener('resize',placeMonitor);
+ const ids:Record<string,string>={left:'live-workspace',belt:'toolbelt-panel',studio:'inspector'};
+ const apply=(key:string,w:number,h:number)=>{const panel=document.getElementById(ids[key])!;if(key==='belt'&&innerWidth>850)w=Math.min(w,Math.max(240,innerWidth-620));if(key==='studio')w=Math.max(540,w);const size=panelSize(w,h,innerWidth,innerHeight);panel.style.setProperty('--panel-width',size.width+'px');panel.style.setProperty('--panel-height',size.height+'px');if(key==='belt'){document.documentElement.style.setProperty('--belt-panel-width',size.width+'px');document.documentElement.style.setProperty('--belt-panel-height',size.height+'px');}if(key==='left'){document.documentElement.style.setProperty('--left-panel-height',size.height+'px');document.documentElement.style.setProperty('--left-panel-width',size.width+'px');}return size;};
+ let saved:Record<string,{width:number;height:number}>={};try{saved=JSON.parse(localStorage.getItem('oi.panel-sizes.v1')??'{}');}catch{}
+ for(const key of Object.keys(ids))if(Number.isFinite(saved[key]?.width)&&Number.isFinite(saved[key]?.height))apply(key,saved[key].width,saved[key].height);
+ const persist=(key:string,size:{width:number;height:number})=>{saved[key]=size;try{localStorage.setItem('oi.panel-sizes.v1',JSON.stringify(saved));}catch{}};
+ document.querySelectorAll<HTMLElement>('[data-resize]').forEach(handle=>{
+  const key=handle.dataset.resize!,panel=document.getElementById(ids[key])!;
+  handle.addEventListener('pointerdown',ev=>{ev.preventDefault();const rect=panel.getBoundingClientRect(),x=ev.clientX,y=ev.clientY;handle.setPointerCapture(ev.pointerId);const move=(e:PointerEvent)=>{apply(key,rect.width+(key==='belt'?-1:1)*(e.clientX-x),rect.height+e.clientY-y);};const end=()=>{handle.removeEventListener('pointermove',move);handle.removeEventListener('pointerup',end);handle.removeEventListener('pointercancel',end);const r=panel.getBoundingClientRect();persist(key,{width:r.width,height:r.height});};handle.addEventListener('pointermove',move);handle.addEventListener('pointerup',end);handle.addEventListener('pointercancel',end);});
+  handle.addEventListener('keydown',ev=>{if(!['ArrowLeft','ArrowRight','ArrowUp','ArrowDown'].includes(ev.key))return;ev.preventDefault();const r=panel.getBoundingClientRect(),step=ev.shiftKey?40:10;persist(key,apply(key,r.width+(ev.key==='ArrowRight'?step:ev.key==='ArrowLeft'?-step:0),r.height+(ev.key==='ArrowDown'?step:ev.key==='ArrowUp'?-step:0)));});
+ });
+ addEventListener('resize',()=>{for(const key of Object.keys(saved))if(ids[key])apply(key,saved[key].width,saved[key].height);});
+}

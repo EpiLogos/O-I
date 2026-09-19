@@ -3,26 +3,141 @@
  * measurements follow the shell brief's companion-density numbers.
  * Finding 33: metas here used to read `--oi-muted` where the
  * sidebar's own metas read `--oi-muted-2` — two secondary greys
- * in adjacent planes. This file consumes `--oi-muted-2` throughout. */
+ * in adjacent planes. This file consumes `--oi-muted-2` throughout.
+ *
+ * Chrome composes the shared desktop grammar (oi-context-head, oi-plane-nav,
+ * oi-panel-head, oi-row, oi-segment, oi-chip, oi-kv, oi-ref, oi-state,
+ * oi-action, oi-tool, oi-menu, oi-scroll, oi-empty, oi-refusal, oi-note);
+ * this file keeps only the panel's own layout. Nothing here moves: status is
+ * text, and the one agent cue is the head's ExpressionAnchor. */
 .agent-layer{height:100%;min-height:0;display:flex;flex-direction:column;background:var(--oi-agent-ground);color:var(--oi-foreground);container-type:inline-size}
 .agent-head{height:65px;min-height:65px}
 .agent-head-row{display:flex;align-items:center;gap:9px;flex:1;min-width:0}
-/* The plane nav packs left with a fixed gap so its five labels fit the 260px agent minimum (finding 5). */
-.agent-layer .agent-planes{gap:10px}
+/* The plane nav packs left with a fixed gap so its five labels fit the 260px
+ * agent minimum (finding 5). A mode with more planes than fit scrolls the nav
+ * itself, quietly — the panel never widens and the document never scrolls. */
+.agent-layer .agent-planes{gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.agent-layer .agent-planes::-webkit-scrollbar{display:none}
 .agent-head-glyph{width:var(--oi-shell-control);height:28px;flex:none;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:7px;display:grid;place-items:center;background:var(--oi-canvas-ground);color:var(--oi-accent-ink)}
+
+/* ===== session row: which conversation, its provider, the owner's state ===== */
+.agent-session{position:relative;flex:none;display:flex;align-items:center;gap:8px;min-width:0;height:30px;box-sizing:border-box;padding:0 12px 0 10px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.agent-session-switch{flex:1 1 auto;min-width:0;height:24px;display:inline-flex;align-items:center;gap:6px;padding:0 6px;border:0;border-radius:var(--oi-shell-radius-control,5px);background:transparent;color:var(--oi-accent-ink);font:inherit;font-size:var(--oi-shell-type-nav);text-align:left;cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.agent-session-switch svg{flex:none;color:var(--oi-muted-2)}
+.agent-session-switch:hover:not(:disabled),.agent-session-switch[aria-expanded="true"]{background:var(--oi-wash)}
+.agent-session-switch:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-1px}
+.agent-session-switch:disabled{cursor:default;color:var(--oi-muted-2)}
+.agent-session[data-bound="false"] .agent-session-title{color:var(--oi-muted-2)}
+.agent-session-title{flex:0 1 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.agent-session-provider{flex:0 2 auto;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;font-size:var(--oi-shell-type-meta)}
+.agent-session-state{flex:none}
+.agent-switcher{position:absolute;top:calc(100% + 2px);left:8px;right:8px;min-width:0;max-height:min(52vh,380px);display:flex;flex-direction:column}
+.agent-switcher>.oi-eyebrow{flex:none}
+.agent-switcher-rows{flex:1;min-height:0}
+.agent-layer .project-encounters{display:flex;flex-direction:column;gap:1px;min-height:0}
+.agent-layer .project-encounters .project-availability{margin:0;padding:4px 8px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.agent-layer .project-encounters .oi-loading{padding:4px 8px}
+
+/* ===== Factory: the conversation lives in the centre ===== */
+.agent-centre-conversation{flex:none;display:flex;align-items:center;gap:7px;min-height:30px;box-sizing:border-box;padding:3px 10px 3px 16px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.agent-centre-conversation>span{flex:1;min-width:0}
+.agent-centre-conversation>svg{flex:none}
+
+/* ===== body and planes: each plane owns its scrolling ===== */
 .agent-body{flex:1;min-height:0;display:flex;flex-direction:column;overflow:hidden}
 .agent-body>.encounter{flex:1;min-height:0}
+.agent-plane-host{flex:1;min-height:0;display:flex;flex-direction:column}
+.agent-plane{flex:1;min-height:0;box-sizing:border-box}
 .agent-empty{flex:1;overflow:auto;padding:23px 20px}
+.agent-empty .project-encounters{display:flex;flex-direction:column;gap:2px}
+.agent-extra-plane{overflow:auto}
+
+/* ----- Activity ----- */
+.agent-activity{padding:0 8px 16px;font-size:var(--oi-shell-type-ui)}
+.agent-group{margin-top:6px}
+.agent-group>.oi-panel-head{padding-left:8px;border-bottom:0;margin-bottom:2px}
+.agent-group>:is(.oi-note,.oi-refusal){margin:4px 8px}
+.agent-group>.oi-note{line-height:1.55}
+/* A "now" row states the owner's connection state in a sentence: it wraps,
+ * and it is not itself a control. */
+.agent-now.oi-row{height:auto;min-height:var(--oi-shell-row-dense,28px);padding:5px 8px;flex-wrap:wrap;white-space:normal;cursor:default;background:var(--oi-wash)}
+.agent-now.oi-row[data-busy="true"]{cursor:default}
+.agent-now.oi-row[data-busy="true"]>*{opacity:1}
+.agent-now.oi-row[data-attention="true"]{box-shadow:inset 2px 0 0 var(--oi-accent)}
+.agent-now-text{flex:1 1 140px;min-width:0;line-height:1.5;overflow-wrap:anywhere}
+.agent-inline.oi-action{min-height:20px;padding:1px 7px;margin-left:4px;vertical-align:baseline;font-size:var(--oi-shell-type-ui)}
+.agent-op>summary{list-style:none}
+.agent-op>summary::-webkit-details-marker{display:none}
+.agent-op[open]>summary{background:var(--oi-wash)}
+.agent-op[data-attention="true"]>summary{box-shadow:inset 2px 0 0 var(--oi-accent)}
+.agent-op-label{font-weight:550}
+.agent-op-line{color:var(--oi-muted-2)}
+.agent-op-detail{margin:2px 0 8px 8px;padding:6px 0 6px 10px;border-left:var(--oi-shell-edge) solid var(--oi-hairline)}
+.agent-op-detail>.oi-action-group{margin-top:6px}
+.agent-op-detail>.oi-kv{grid-template-columns:minmax(0,.8fr) minmax(0,1.4fr)}
+.agent-layer :is(.agent-op-detail,.agent-context-item,.agent-inspect-material) pre{margin:0;padding:7px 8px;max-height:260px;overflow:auto;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px;background:var(--oi-composer-ground);font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-ui);line-height:1.5;white-space:pre-wrap;overflow-wrap:anywhere}
+.agent-more{margin:4px 8px 0}
+.agent-group-rows{list-style:none;margin:0 0 6px;padding:0;display:flex;flex-direction:column;gap:4px;overflow-wrap:anywhere}
+.agent-activity .encounter-journal{margin:12px 8px 0;padding-top:10px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+
+/* ----- Context ----- */
 .agent-context{padding:23px 20px}
 .agent-context .oi-kv{grid-template-columns:1fr 1.2fr;gap:10px 14px;margin:15px 0}
 .agent-context .oi-kv dd{text-align:right}
 .agent-subject{display:flex;align-items:center;gap:12px;margin-bottom:17px}
+.agent-subject>div{flex:1;min-width:0}
 .agent-subject-icon{width:36px;height:36px;flex:none;border-radius:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);display:grid;place-items:center;background:var(--oi-canvas-ground)}
-.agent-subject strong{display:block;font-size:var(--oi-shell-type-nav);font-weight:550}
+.agent-subject strong{display:block;font-size:var(--oi-shell-type-nav);font-weight:550;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .agent-subject span:not(.agent-subject-icon){display:block;margin-top:3px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);text-transform:none;letter-spacing:0}
 .agent-context .oi-eyebrow{margin-bottom:22px}
 .agent-context .oi-section{margin-top:24px}
-.agent-empty .project-encounters{display:flex;flex-direction:column;gap:2px}
+.agent-context .oi-section .oi-eyebrow{margin:14px 0 6px}
+.agent-context .oi-section>h3>.oi-state{float:none;margin-left:6px;white-space:normal}
+.agent-context .oi-section>.oi-note{line-height:1.6}
+.agent-context-items{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+.agent-context-item{min-width:0;display:flex;flex-wrap:wrap;align-items:center;gap:6px;font-size:var(--oi-shell-type-ui)}
+.agent-context-item>details{flex:1;min-width:0}
+.agent-context-item summary{display:flex;align-items:center;gap:7px;min-height:26px;min-width:0;list-style:none;cursor:pointer;border-radius:var(--oi-shell-radius-row,4px)}
+.agent-context-item summary::-webkit-details-marker{display:none}
+.agent-context-item summary:hover{background:var(--oi-wash)}
+.agent-context-item summary:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-1px}
+.agent-context-title{flex:1;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:var(--oi-accent-ink)}
+.agent-context-item details>:is(p,pre,.oi-action-group){margin:5px 0 0}
+.agent-context .encounter-context-facts{margin:0;font-size:var(--oi-shell-type-ui);line-height:1.55;overflow-wrap:anywhere}
+.agent-context .encounter-context-facts dt{margin-top:10px;font-weight:550}
+.agent-context .encounter-context-facts dd{margin:3px 0 0;color:var(--oi-muted-2);text-align:left}
+.agent-layer :is(.agent-context,.agent-inspect) .encounter-now-refs{list-style:none;margin:6px 0;padding:0;display:flex;flex-direction:column;gap:4px;font-size:var(--oi-shell-type-ui);overflow-wrap:anywhere}
+.agent-layer :is(.agent-context,.agent-inspect) :is([data-now-task-uncertain],[data-now-relations-empty]){margin:4px 0;font-size:var(--oi-shell-type-ui);line-height:1.55;color:var(--oi-muted-2)}
+
+/* ----- Inspect: list | material. Stacked in the side presentation, two
+ * columns in full. Both columns own their scrolling. ----- */
+.agent-inspect{display:flex;flex-direction:column;min-height:0;font-size:var(--oi-shell-type-ui)}
+.agent-inspect-list{flex:none;max-height:42%;padding:10px 10px 6px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.agent-inspect-views{display:flex;width:100%}
+.agent-inspect-views>button{flex:1 1 0;min-width:0;justify-content:center}
+.agent-inspect-rows{list-style:none;margin:8px 0 0;padding:0;display:flex;flex-direction:column;gap:1px}
+.agent-inspect-rows>li{display:flex;align-items:center;gap:2px;min-width:0}
+.agent-inspect-rows>li>.oi-row{flex:1}
+.agent-inspect-list>.oi-empty{padding:10px 2px 4px;line-height:1.55}
+.agent-inspect-material{flex:1;min-height:0;padding:4px 14px 18px}
+.agent-inspect-material .oi-panel-head{margin:10px -4px 8px;padding:0 4px}
+.agent-inspect-material>:first-child>.oi-panel-head:first-child{margin-top:4px}
+.agent-inspect-material .oi-kv{margin:0 0 10px}
+.agent-inspect-material :is(.oi-note,.oi-empty){line-height:1.55;padding-left:0;padding-right:0}
+.agent-layer .agent-inspect-material pre.agent-inspect-payload{max-height:none}
+.agent-inspect-material .encounter-session-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 12px;margin:0 0 10px}
+.agent-inspect-material .encounter-session-facts dt{color:var(--oi-muted-2)}
+.agent-inspect-material .encounter-session-facts dd{margin:0;overflow-wrap:anywhere}
+.agent-inspect-material :is(.encounter-actions,.encounter-deliveries){list-style:none;margin:0 0 10px;padding:0;display:flex;flex-direction:column;gap:6px;overflow-wrap:anywhere}
+.agent-inspect-material :is(.encounter-actions,.encounter-deliveries) li{display:flex;justify-content:space-between;gap:10px;color:var(--oi-muted-2)}
+.agent-inspect-material details>summary{cursor:pointer;color:var(--oi-muted-2)}
+.agent-inspect-two{display:grid;grid-template-columns:1fr;gap:10px;margin-top:8px}
+.agent-inspect-two section{min-width:0}
+.agent-inspect[data-layout="columns"]{display:grid;grid-template-columns:minmax(220px,300px) minmax(0,1fr);grid-template-rows:minmax(0,1fr)}
+.agent-inspect[data-layout="columns"] .agent-inspect-list{max-height:none;border-bottom:0;border-right:var(--oi-shell-edge) solid var(--oi-hairline-soft);padding:16px 12px}
+.agent-inspect[data-layout="columns"] .agent-inspect-material{padding:10px 28px 28px}
+.agent-inspect[data-layout="columns"] .agent-inspect-two{grid-template-columns:1fr 1fr}
+
 /* Item (e): full agent keeps one horizontal axis for head, nav and body.
  * The nav and body already centre at min(720px,90%); the head row gets the
  * same treatment instead of its old fixed 25px left pad, so the tile and
@@ -34,13 +149,48 @@
  * side-plane rendering (agent-min is 260px), so the compact 45px head only
  * ever existed in `full`. One head geometry (65px) always; the compact
  * head is reserved for a plane narrower than the agent minimum itself. */
-@container (max-width:259px){.agent-head{height:45px}.agent-planes{height:27px;gap:12px}.agent-context,.agent-empty{padding:16px}}
+@container (max-width:259px){.agent-head{height:45px}.agent-planes{height:27px;gap:12px}.agent-context,.agent-empty{padding:16px}.agent-session-provider{display:none}.agent-inspect-views>button{padding:0 4px}}
 
 /* Expanded agency uses a shared, responsive reading column. */
 .agent-layer[data-full="true"]{--agent-reading-width:960px}
 .agent-layer[data-full="true"] .agent-head{height:72px;padding-inline:clamp(20px,4cqi,56px)}
 .agent-layer[data-full="true"] .agent-head-row{max-width:var(--agent-reading-width)}
-.agent-layer[data-full="true"] .agent-planes{padding-inline:max(24px,calc((100% - var(--agent-reading-width))/2));justify-content:flex-start;gap:22px}
-.agent-layer[data-full="true"] :is(.agent-context,.agent-empty){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px));padding:32px 0}
+.agent-layer[data-full="true"] :is(.agent-planes,.agent-session,.agent-centre-conversation){padding-inline:max(24px,calc((100% - var(--agent-reading-width))/2));justify-content:flex-start}
+.agent-layer[data-full="true"] .agent-planes{gap:22px}
+.agent-layer[data-full="true"] .agent-session-switch{flex:0 1 auto}
+.agent-layer[data-full="true"] .agent-session-state{margin-left:auto}
+.agent-layer[data-full="true"] .agent-switcher{left:max(24px,calc((100% - var(--agent-reading-width))/2));right:auto;width:min(420px,calc(100% - 48px))}
+.agent-layer[data-full="true"] :is(.agent-context,.agent-empty,.agent-activity){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px));padding:32px 0;align-self:center;margin:0 auto}
+.agent-layer[data-full="true"] .agent-activity{padding-top:16px}
+.agent-layer[data-full="true"] .agent-inspect{box-sizing:border-box;width:min(1280px,calc(100% - 48px));align-self:center;margin:0 auto}
 .agent-layer[data-full="true"] .agent-empty{justify-content:center;gap:20px;max-width:760px}
 .agent-layer[data-full="true"] .encounter[data-presentation="full"] :is(.encounter-transcript,.encounter-composer){box-sizing:border-box;width:min(var(--agent-reading-width),calc(100% - 48px))}
+@media (prefers-reduced-motion:reduce){.agent-session-switch{transition:none}}
+
+/* Plane nav overflow (planes/PlaneNav.tsx): what fits reads in the row, the
+ * rest sit behind one "More" control; the ruler measures labels off-screen. */
+.agent-layer .agent-planes{position:relative;overflow:visible}
+.agent-planes-more{position:relative;flex:none;display:flex;align-items:center;margin-left:auto}
+.agent-planes-more>.oi-menu{position:absolute;top:calc(100% + 2px);right:0;min-width:168px}
+.agent-planes-ruler{position:absolute;left:0;top:0;display:flex;gap:inherit;visibility:hidden;pointer-events:none;height:0;overflow:hidden;white-space:nowrap}
+.agent-planes-ruler>button{flex:none;padding:0;border:0;font:inherit;font-size:var(--oi-shell-type-ui)}
+
+/* Instrument sections (Expressions alignment): each group opens on a faint
+ * tinted band — a small uppercase label at the left, its status caption at the
+ * right — instead of a page heading, and its rows sit tight beneath it. The
+ * side presentation is an inspector, not a document. */
+.agent-layer .agent-group{margin-top:0}
+.agent-layer .agent-group>.oi-panel-head{min-height:24px;margin:10px 0 4px;padding:0 8px;border-radius:5px;background:color-mix(in srgb,var(--oi-wash) 62%,transparent);border-bottom:0}
+.agent-layer .agent-group:first-child>.oi-panel-head{margin-top:8px}
+.agent-layer .agent-group>.oi-panel-head .oi-panel-head-title{font-size:var(--oi-shell-type-eyebrow);font-weight:600;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.agent-layer .agent-group>.oi-panel-head .oi-state{font-size:var(--oi-shell-type-eyebrow);color:var(--oi-muted-3)}
+.agent-layer .agent-group>.oi-note{margin:3px 8px;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.agent-layer .agent-op>summary.oi-row{min-height:26px}
+.agent-layer .agent-op>summary .oi-row-meta{font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-eyebrow);color:var(--oi-muted-3)}
+.agent-layer .agent-op-detail>.oi-action-group{opacity:.78}
+.agent-layer .agent-op-detail:is(:hover,:focus-within)>.oi-action-group{opacity:1}
+/* The Context and Inspect planes share the same section voice. */
+.agent-layer :is(.agent-context,.agent-inspect-material) .oi-eyebrow{letter-spacing:var(--oi-shell-tracking)}
+.agent-layer .agent-context{padding:14px 14px 20px}
+.agent-layer .agent-context .oi-section{margin-top:16px}
+.agent-layer .agent-empty{padding:16px 14px}

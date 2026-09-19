@@ -1,0 +1,348 @@
+/*
+ * Palace instrument (L5 Technē T6) — the schematic memory space and its
+ * affordances. Scoped under the opt-in `.oi-techne` host scope; every rule
+ * consumes existing `--oi-*` / `--oi-techne-*` tokens only (hosts theme by
+ * overriding tokens; consumers use var(--oi-*) only). No new colours, no
+ * new motion, no z-tokens beyond the house layers.
+ */
+
+.oi-palace {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  height: 100%;
+  overflow: auto;
+  padding: var(--oi-space-3);
+  background: var(--oi-surface);
+  color: var(--oi-foreground);
+}
+
+.oi-palace-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.oi-palace-eyebrow {
+  font-size: var(--oi-type-xs);
+  letter-spacing: var(--oi-tracking-label);
+  text-transform: uppercase;
+  color: var(--oi-muted);
+}
+
+.oi-palace-count {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+  font-family: var(--oi-font-mono);
+}
+
+.oi-palace-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.oi-palace-absent {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  align-items: center;
+  justify-content: center;
+  flex: 1;
+  min-height: 8rem;
+  padding: var(--oi-space-5);
+  text-align: center;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-type-sm);
+  color: var(--oi-muted);
+}
+
+.oi-palace-absent-reason {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+/* The honest dual truth: the reading still discloses the Palace unavailable
+ * while this surface holds a local composition binding. Both facts stay on
+ * screen; neither overrides the other. */
+.oi-palace-dualtruth {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-2) var(--oi-space-3);
+  border: 1px dashed var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.oi-palace-dualtruth strong {
+  color: var(--oi-foreground);
+  font-weight: 500;
+}
+
+/* The region overview: the whole's regions in canonical traversal order. */
+.oi-palace-overview {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(15rem, 1fr));
+  gap: var(--oi-space-3);
+}
+
+.oi-palace-region {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-3);
+  text-align: left;
+  background: var(--oi-techne-wash);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  cursor: pointer;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.oi-palace-region:hover {
+  border-color: var(--oi-accent);
+}
+
+.oi-palace-region:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+  outline-offset: 2px;
+}
+
+.oi-palace-region-office {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+}
+
+.oi-palace-region-count {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.oi-palace-region-archaeology {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+/* The recall path: bookmarks over the composition. */
+.oi-palace-bookmarks {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.oi-palace-bookmarks-label {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.oi-palace-bookmark {
+  display: inline-flex;
+  align-items: baseline;
+  gap: 2px;
+}
+
+.oi-palace-bookmark-open {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-accent-ink);
+  background: transparent;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  padding: 0 var(--oi-space-2);
+  cursor: pointer;
+}
+
+.oi-palace-bookmark-open:hover {
+  border-color: var(--oi-accent);
+}
+
+.oi-palace-bookmark-drop {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+  background: transparent;
+  border: none;
+  cursor: pointer;
+}
+
+.oi-palace-bookmark-drop:hover {
+  color: var(--oi-gold);
+}
+
+/* The bounded memory space: rooms sit on an exact percentage lattice so the
+ * loci geometry in the schematic is the same lattice the composition maths
+ * uses. */
+.oi-palace-space {
+  position: relative;
+  width: 100%;
+  aspect-ratio: var(--palace-aspect, 3 / 2);
+  min-height: 16rem;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  overflow: hidden;
+  touch-action: none;
+}
+
+.oi-palace-room {
+  position: absolute;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-techne-wash);
+}
+
+.oi-palace-room-label {
+  position: absolute;
+  top: var(--oi-space-1);
+  left: var(--oi-space-2);
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+  pointer-events: none;
+}
+
+.oi-palace-loci {
+  position: absolute;
+  inset: var(--oi-space-4);
+  display: grid;
+  grid-template-columns: repeat(var(--palace-locus-span, 2), 1fr);
+  grid-template-rows: repeat(var(--palace-locus-span, 2), 1fr);
+  place-items: center;
+}
+
+.oi-palace-locus {
+  width: 34%;
+  aspect-ratio: 1;
+  border: 1px dashed var(--oi-hairline);
+  border-radius: 50%;
+  pointer-events: none;
+}
+
+/* One element card: the referenced Expression's own refs, verbatim. */
+.oi-palace-card {
+  position: absolute;
+  transform: translate(-50%, -50%);
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  width: 13rem;
+  max-width: 34%;
+  padding: var(--oi-space-2) var(--oi-space-3);
+  text-align: left;
+  background: var(--oi-techne-hud-solid);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  cursor: grab;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.oi-palace-card:hover {
+  border-color: var(--oi-accent);
+}
+
+.oi-palace-card:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+  outline-offset: 2px;
+}
+
+.oi-palace-card[data-dragging="true"] {
+  cursor: grabbing;
+  border-color: var(--oi-accent);
+  transition: none;
+}
+
+.oi-palace-card[data-recall-focus="true"] {
+  border-color: var(--oi-accent);
+  background: var(--oi-techne-wash);
+}
+
+.oi-palace-card-ref {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+}
+
+.oi-palace-card-scene {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.oi-palace-card-meta {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.oi-palace-toolbar {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.oi-palace-recall-readout {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.oi-palace-action {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-accent-ink);
+  background: transparent;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-3);
+  cursor: pointer;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.oi-palace-action:hover:not(:disabled) {
+  border-color: var(--oi-accent);
+}
+
+.oi-palace-action:disabled {
+  color: var(--oi-muted);
+  cursor: default;
+}
+
+.oi-palace-action:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.oi-palace-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-type-sm);
+  color: var(--oi-muted);
+}
+
+.oi-palace-receipt strong {
+  color: var(--oi-foreground);
+  font-weight: 500;
+}
+
+.oi-palace-receipt[data-routed="false"] strong {
+  color: var(--oi-gold);
+}
+
+.oi-palace-receipt-code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
