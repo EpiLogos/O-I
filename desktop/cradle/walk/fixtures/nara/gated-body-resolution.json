@@ -1,0 +1,39 @@
+{
+  "name": "credential-gated speech body (constituted as an option, not live)",
+  "resolution": {
+    "version": "7",
+    "harness": "harness:nara-conversation",
+    "harness_composition_fingerprint": "fp-gated",
+    "relation": {
+      "model": {"model": "model:desktop-speech-gated", "variant": "realtime"},
+      "engine": {"engine": "engine:desktop-speech-gated", "provider": "provider:ai-kit", "form": "managed-service", "revision": "r3"},
+      "materialisation": {"binding_ref": "material:desktop-speech-gated", "placement": "remote", "endpoint": "wss://speech-gated.example/v1"},
+      "change_application": "live",
+      "model_surface": {
+        "contract": "contract:desktop-speech-gated", "protocol": "realtime", "capabilities": ["speech"],
+        "access": {
+          "inference": {"state": "available", "capabilities": ["speech-generation"]},
+          "material_control": {"state": "unavailable", "reason": "hosted"},
+          "interior": {"state": "unavailable", "reason": "opaque"}
+        },
+        "modality": {
+          "schema": "aikit.model-modality/v1",
+          "input_modalities": ["speech", "text"], "output_modalities": ["speech", "text"],
+          "transforms": {"speech-to-speech": {"available": true}, "speech-to-text": {"available": true}, "text-to-speech": {"available": true}},
+          "interaction": ["full-duplex-realtime", "vad-turn-detection", "barge-in", "final-transcripts", "partial-transcripts", "tool-requests", "structured-events"],
+          "degraded_interaction": {},
+          "transport": "websocket", "connection": {"kind": "connected", "reconnect": "resumable"},
+          "credential_scope": "bearer", "availability": {"state": "available"},
+          "provider": "provider:ai-kit", "provider_native_surface": "desktop-speech-gated", "provider_revision": "r3",
+          "credential": {"condition": "required", "hint": "provider:voice inference credential"}, "constraints": {}, "provenance": ["walk-fixture"]
+        }
+      }
+    },
+    "components": [], "contracts": [], "surfaces": [],
+    "unavailable": [
+      {"field": "material-control-access", "reason": "hosted"},
+      {"field": "model-interior-access", "reason": "opaque"},
+      {"field": "modality-credential", "reason": "the surface needs a credential it does not have bound: provider:voice inference credential"}
+    ]
+  }
+}

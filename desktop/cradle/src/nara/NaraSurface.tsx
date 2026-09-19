@@ -13,8 +13,14 @@
  * Capability-adaptive by law: the UI renders what the constitution
  * disclosed — manual push-to-talk/interrupt when VAD/barge-in are not
  * proven, transcript rows only for real turns, text input always available
- * as the honest fallback. Unavailable is never an error. At rest the surface
- * is summoned, never permanent: no transcript dashboard over the world.
+ * as the honest fallback. Unavailable is never an error. The speech body
+ * itself renders in one of three states derived only from the constitution's
+ * disclosed facts (src/nara/bodyState.ts): live (chips as usual), option
+ * (constituted but gated or degraded — the body shows as a visible option
+ * with the gap named exactly as the document carries it), or absent
+ * (text-capable Nara) — and hold-to-talk never presents as live on a gated
+ * or absent body. At rest the surface is summoned, never permanent: no
+ * transcript dashboard over the world.
  */
 
 import {useCallback,useEffect,useRef,useState} from "react";
@@ -37,6 +43,9 @@ import {
   beginExpressiveAct,interruptExpressiveAct,restoreExpressiveActCheckpoint,
   type ChoreographyPlan,
 } from "./expressiveAct";
+import {stageFocusPlan} from "./stageFocus";
+import {holdToTalkLive,holdToTalkRefusal,naraBodyState} from "./bodyState";
+import {voiceBodyFromConstitution,voiceBodySatisfactionReceipt} from "./voiceBody";
 import {NaraSpeechBinding,type NaraSpeechRead,type SpeechToolDecision} from "./session";
 import {supportUsable,type SpeechSupport} from "./support";
 import "./nara.css";
@@ -64,6 +73,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
  const [changeReceipt,setChangeReceipt]=useState<SpeechConstitutionChangeReceipt|null>(null);
  const [interruptReceipt,setInterruptReceipt]=useState<Record<string,unknown>|null>(null);
  const [toolReceipt,setToolReceipt]=useState<{decision:SpeechToolDecision;execution:Record<string,unknown>|null}|null>(null);
+ const [floor,setFloor]=useState<Record<string,unknown>|null>(null);
  const [mic,setMic]=useState<"idle"|"requesting"|"live"|"denied"|"unavailable">("idle");
  const composer=useRef<HTMLInputElement|null>(null);
  const head=useRef<HTMLElement|null>(null);
@@ -193,9 +203,19 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     allowed_action_refs:["action:expression.focus"],
     denied_action_refs:[],
    });
-   setChangeReceipt(null);setProposals([]);setTurns([]);setInterruptReceipt(null);setToolReceipt(null);
+   setChangeReceipt(null);setProposals([]);setTurns([]);setInterruptReceipt(null);setToolReceipt(null);setHighlight(null);setFloor(null);
+   // The caller-side composition check: does the resolved body satisfy the
+   // QL dialogical floor? Computed and disclosed at attach, recomputed at
+   // reconnect — floor unmet is a fact, never an error.
+   const floorReceipt=voiceBodySatisfactionReceipt({
+    satisfaction_ref:`voice-body-satisfaction:${crypto.randomUUID()}`,
+    nara_ref:context.nara_ref,
+    reduction:voiceBodyFromConstitution({constitution,nara_ref:context.nara_ref}),
+    evaluated_at:new Date().toISOString(),
+   });
+   setFloor(floorReceipt);
    renderFrom();
-   setNotice(`Nara attached to ${constitution.body_ref}${speechCapableWord(constitution)}`);
+   setNotice(`Nara attached to ${constitution.body_ref}${speechCapableWord(constitution)} · QL dialogical floor ${floorReceipt["satisfied"]?"met":"unmet: "+(floorReceipt["unmet"] as string[]).join("; ")}`);
   }catch(e){setError(String(e));}
  },[resolutionText,bimbaText,naraField,subjectField,coordinateField,readDocument,renderFrom]);
 
@@ -224,8 +244,15 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     at:new Date().toISOString(),
    });
    setChangeReceipt(change);
+   const floorReceipt=voiceBodySatisfactionReceipt({
+    satisfaction_ref:`voice-body-satisfaction:${crypto.randomUUID()}`,
+    nara_ref:current.contextNow.nara_ref,
+    reduction:voiceBodyFromConstitution({constitution:next,nara_ref:current.contextNow.nara_ref}),
+    evaluated_at:new Date().toISOString(),
+   });
+   setFloor(floorReceipt);
    renderFrom();
-   setNotice(`Body changed${change.delta.body_changed?" to a different body":" in place"}; speech capable: ${change.delta.speech_capable_after}; Agent/Agency identity preserved`);
+   setNotice(`Body changed${change.delta.body_changed?" to a different body":" in place"}; speech capable: ${change.delta.speech_capable_after}; Agent/Agency identity preserved · QL dialogical floor ${floorReceipt["satisfied"]?"met":"unmet: "+(floorReceipt["unmet"] as string[]).join("; ")}`);
   }catch(e){setError(String(e));}
  },[resolutionText,buildTurnContext,renderFrom]);
 
@@ -244,43 +271,69 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     kind,target:{target:"exact",ref_id:refId,target_kind:targetKind},
     requested_at_unix_ms:Date.now(),
    }));
-   applyDeixis(resolution);
+   await applyDeixis(resolution);
   }catch(e){setError(String(e));}
  },[buildTurnContext]);
 
- const applyDeixis=useCallback((resolution:DeixisResolution)=>{
+ /** Execute a resolved deixis against the LIVE Expression stage (the ES1
+  * focus wiring): the plan names real operations — a committed kernel focus
+  * edit, the live presentation's selection movement, a pure highlight — and
+  * operations the stage does not carry are named unavailable, never faked. */
+ const applyDeixis=useCallback(async(resolution:DeixisResolution)=>{
+  setError("");
   if(resolution.outcome.outcome==="unresolved-outside-context"){
    setNotice(`"${resolution.outcome.ref_id}" is not admitted to this Nara's context — nothing was invented in its place`);
    return;
   }
-  for(const focus of resolution.outcome.focus){
-   if(focus.focus_action==="highlight"){
-    setHighlight({ref:focus.ref_id,action:"highlight"});
-    setNotice(`Nara highlights ${focus.ref_id}`);
-   }else{
-    void focusEntity(focus.ref_id,focus.focus_action).catch(e=>setError(String(e)));
+  const document=await readDocument();
+  if(!document){setError("No live Expression document; Nara's focus plan has nothing real to move");return;}
+  const plan=stageFocusPlan(resolution,document);
+  const notices:string[]=[];
+  try{
+   for(const operation of plan.operations){
+    if(operation.op==="kernel-focus"){
+     const moved=await focusEntity(operation.entity_ref,operation.subject_ref);
+     if(moved)notices.push(`Nara focused ${operation.subject_ref}; Expression revision ${moved.revision}, stage selection follows`);
+    }else if(operation.op==="stage-select"){
+     // The committed kernel focus is semantic; this moves the live
+     // presentation's own decoration to match it immediately.
+     stage.focusSelection([operation.entity_ref]);
+    }else if(operation.op==="stage-highlight"){
+     const moved=stage.focusSelection([operation.entity_ref]);
+     setHighlight({ref:operation.subject_ref,action:"highlight"});
+     notices.push(moved
+      ?`Nara highlights ${operation.subject_ref} on the live Expression stage`
+      :`Nara highlights ${operation.subject_ref}; no live Expression stage presentation stands, so the highlight is named and nothing was moved`);
+    }else{
+     setHighlight(null);
+     notices.push(`Nara returned open for ${operation.subject_ref}: ${operation.reason}`);
+    }
    }
-  }
- },[]);
+   for(const refId of plan.unmapped){
+    notices.push(`Nara returned ${refId}, which no bound entity in this Expression carries; the stage was not moved`);
+   }
+   if(notices.length)setNotice(notices.join(" · "));
+  }catch(e){setError(String(e));}
+ },[readDocument,stage]);
 
- /** Focus another relation for real: a committed, reversible kernel edit. */
- const focusEntity=useCallback(async(refId:string,action:string)=>{
+ /** Focus a bound entity for real: a committed, reversible kernel edit on
+  * the exact entity the plan mapped. Returns the moved document, or null
+  * when the ref no longer sits on any bound entity (named upstream). */
+ const focusEntity=useCallback(async(entityRef:string,subjectRef:string):Promise<ExpressionDocument|null>=>{
   const document=await readDocument();
   const current=client.current;
   if(!document||!current)throw new Error("No live Expression document");
-  const entity=Object.values(document.entities).find(candidate=>candidate.subject?.subject_ref===refId);
-  if(!entity){
-   setNotice(`Nara returned ${refId}, which no bound entity in this Expression carries; nothing was moved`);
-   return;
+  const entity=document.entities[entityRef];
+  if(!entity||entity.subject?.subject_ref!==subjectRef){
+   throw new Error(`${subjectRef} no longer sits on entity ${entityRef}; the focus was not committed`);
   }
   const scene=document.scenes.find(candidate=>candidate.scene_ref===document.selection.scene_ref)??document.scenes[0];
   const changes:Change[]=[];
   if(!scene.entity_refs.includes(entity.entity_ref))changes.push({change:"scene_compose",scene_ref:scene.scene_ref,entity_refs:[...scene.entity_refs,entity.entity_ref]});
   changes.push({change:"focus",scene_ref:scene.scene_ref,entity_ref:entity.entity_ref});
-  await editExpression(changes);
-  setHighlight({ref:refId,action});
-  const moved=await readDocument();
-  setNotice(`Nara focused ${refId}; Expression revision ${moved?.revision??document.revision}`);
+  const moved=await editExpression(changes);
+  setHighlight({ref:subjectRef,action:"select"});
+  return moved;
  },[readDocument]);
 
  const editExpression=useCallback(async(changes:Change[]):Promise<ExpressionDocument|null>=>{
@@ -305,6 +358,18 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    return;
   }
   await point("pointed",selected.subject.subject_ref,"subject");
+ },[readDocument,point]);
+
+ /** Point the current selection as a highlight: the QL hovered deixis kind —
+  * a pure presentation movement on the live stage, no document change. */
+ const highlightSelection=useCallback(async()=>{
+  const document=await readDocument();
+  const selected=document?.selection.entity_ref?document.entities[document.selection.entity_ref]:null;
+  if(!selected?.subject){
+   setNotice("The current selection carries no bound subject ref; there is nothing exact to highlight");
+   return;
+  }
+  await point("hovered",selected.subject.subject_ref,"subject");
  },[readDocument,point]);
 
  /** One text turn — the honest fallback that always exists. */
@@ -332,12 +397,14 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   }catch(e){setError(String(e));renderFrom();}
  },[buildTurnContext,renderFrom]);
 
- /** Push-to-talk: real capture, honestly gated by the constitution. */
+ /** Push-to-talk: real capture, honestly gated by the constitution. A gated
+  * or absent body never presents the affordance as live. */
  const holdToTalk=useCallback(async()=>{
   const current=client.current;
   if(!current)return;
-  if(!speechInputDeclared(current.constitutionNow)){
-   setNotice("This body declares no usable acoustic input; text is the honest path");
+  const refusal=holdToTalkRefusal(current.constitutionNow);
+  if(refusal){
+   setNotice(refusal);
    return;
   }
   try{
@@ -597,9 +664,13 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     <small data-nara-phase={read.phase}>{PHASE_WORD[read.phase]}{mic==="live"?" · microphone live":mic==="denied"?" · microphone refused by the OS":mic==="unavailable"?" · microphone unreachable":""}</small>
    </div>
    <div className="oi-action-group">
-    <button className="oi-action" aria-pressed={mic==="live"} disabled={!speechInputDeclared(client.current.constitutionNow)}
-     onMouseDown={()=>void holdToTalk()} onMouseUp={releaseTalk} onTouchStart={()=>void holdToTalk()} onTouchEnd={releaseTalk}
-     title={speechInputDeclared(client.current.constitutionNow)?"Hold to capture audio for the constituted body":"This body declares no usable acoustic input; text is the honest path"}>Hold to talk</button>
+    {(()=>{
+     const talkLive=holdToTalkLive(client.current.constitutionNow);
+     const refusal=holdToTalkRefusal(client.current.constitutionNow);
+     return <button className="oi-action" aria-pressed={mic==="live"} disabled={!talkLive}
+      onMouseDown={()=>void holdToTalk()} onMouseUp={releaseTalk} onTouchStart={()=>void holdToTalk()} onTouchEnd={releaseTalk}
+      title={talkLive?"Hold to capture audio for the constituted body":refusal??""}>Hold to talk</button>;
+    })()}
     <button className="oi-action" onClick={interrupt} title={supportUsable(read.interruption)?"Stop speech and hold pending choreography":"This body cannot be trusted to cancel cleanly; the refusal is recorded honestly"}>Interrupt</button>
     <button className="oi-action" onClick={()=>void reconnect()} title="Change or reconnect the body without reminting Nara">Reconnect body</button>
    </div>
@@ -615,11 +686,23 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    <dt>interruption</dt><dd data-capability="interruption">{capWord(read.interruption)}</dd>
    <dt>transcripts</dt><dd data-capability="transcripts">{capWord(read.final_transcripts)}</dd>
    <dt>reconnect</dt><dd data-capability="reconnect">{read.reconnect??"stateless"}</dd>
+   <dt>QL dialogical floor</dt><dd data-capability="voice-floor">{floor?(floor["satisfied"]?"met":"unmet"):"—"}</dd>
   </dl>
+  {(()=>{const body=naraBodyState(client.current.constitutionNow);
+   if(body.state==="live")return null;
+   if(body.state==="absent")return <p className="oi-note" data-nara-body-state="absent">{body.line}</p>;
+   return <div className="oi-note" data-nara-body-state="option" data-nara-body-usable={body.usable?"usable":"unusable"}>
+    <p data-nara-body-state-line>{body.line}</p>
+    <ul data-nara-body-gaps>{body.gaps.map((gap,index)=><li key={index} data-nara-body-gap={gap.condition}>{gap.line}</li>)}</ul>
+    {body.credential.line&&<p data-nara-credential>{body.credential.line}</p>}
+   </div>;
+  })()}
+  {floor&&!floor["satisfied"]&&<p className="oi-note" data-voice-floor-unmet>Dialogical floor unmet for {String(floor["body_ref"])}: {(floor["unmet"] as string[]).join("; ")}. The composition is honest about the gap; it does not claim foreground dialogical speech.</p>}
   <div className="nara-composer oi-action-group">
    <input ref={composer} className="oi-input" aria-label="Message Nara" placeholder="Text is always available" onKeyDown={e=>{if(e.key==="Enter"){e.preventDefault();void sendText();}}}/>
    <button className="oi-action oi-action-primary" onClick={()=>void sendText()}>Send</button>
    <button className="oi-action" onClick={()=>void pointSelection()} title="Point the current selection to Nara as an exact ref">Point selection</button>
+   <button className="oi-action" onClick={()=>void highlightSelection()} title="Point the current selection as a highlight: the live stage moves, the document does not">Highlight selection</button>
    <button className="oi-action" onClick={()=>void delegateToEpii()}>Delegate to Epii</button>
   </div>
   <section className="nara-act oi-section" aria-label="ExpressiveAct" data-act-phase={context?.expressive_act?.phase??"none"}>
@@ -668,7 +751,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    <ol>{turns.map((row,index)=><li key={index} className={`nara-turn nara-turn-${row.role}`}>{row.text}</li>)}</ol>
    {turns.length===0&&<p className="oi-note">No turns yet. Nothing is simulated here.</p>}
   </details>
-  <details className="oi-disclosure"><summary>Session read and bounded context</summary><pre>{JSON.stringify({read,context},null,2)}</pre></details>
+   <details className="oi-disclosure"><summary>Session read and bounded context</summary><pre>{JSON.stringify({read,context,floor},null,2)}</pre></details>
  </section>;
 }
 
@@ -676,10 +759,6 @@ function collectAvailableActions(document:ExpressionDocument):string[] {
  const refs=new Set<string>();
  for(const entity of Object.values(document.entities))for(const action of entity.subject?.actions??[])refs.add(action.action_ref);
  return [...refs];
-}
-
-function speechInputDeclared(constitution:SpeechConstitutionFacts):boolean {
- return constitution.input_modalities.some(m=>m==="audio"||m==="speech");
 }
 
 function speechCapableWord(constitution:SpeechConstitutionFacts):string {

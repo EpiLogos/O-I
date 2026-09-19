@@ -45,7 +45,7 @@
       ],
       "csp": {
         "default-src": "'self' customprotocol: oi-material:",
-        "connect-src": "ipc: http://ipc.localhost",
+        "connect-src": "ipc: http://ipc.localhost http://127.0.0.1:* http://localhost:*",
         "img-src": "'self' oi-material: data: blob:",
         "style-src": "'self' 'unsafe-inline'",
         "script-src": "'self' 'sha256-bMAt1VMNSgep/lqrOnkOTbY29GqSzOytkZLkzY0Zxvk='",

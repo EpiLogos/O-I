@@ -120,7 +120,9 @@ const paths = {
    * on its stand. */
   factory: 'M3 20V10l6 3.5V10l6 3.5V4h6v16z',
   instrument: `${ring(12, 9, 6)}M12 15v6M7.5 21h9`,
-};
+  /* Dictation (local) — the agent-chat input aid. A rounded capsule over a
+   * stand, drawn in the same 1.4-stroke line system; deliberately plainer
+   * than Nara's presence chrome because this is dictation, not a person. */};
 export type GlyphName = keyof typeof paths;
 export function Glyph({name,size=15}:{name:GlyphName;size?:number}) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={GLYPH_STROKE} strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]} vectorEffect="non-scaling-stroke"/></svg>;
