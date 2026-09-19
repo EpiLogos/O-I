@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "agent-dictation",
-  "generated_at": "2026-09-19T15:49:53.155Z",
+  "generated_at": "2026-09-19T16:47:06.374Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,11 +11,14 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience",
-      "repository_head": "bfe129e080b5010f7419f60cf80c88894ff53914",
+      "repository_head": "1dd133b522544cd420c5a08890934d8eb4af72eb",
       "tracked_changes": [
-        "desktop/cradle/src/encounter/EncounterView.tsx",
-        "desktop/cradle/walk/run.mjs",
-        "docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md"
+        "desktop/cradle/walk/artifacts/agent-dictation-honest-states.png",
+        "desktop/cradle/walk/artifacts/agent-dictation-transcript-landed.png",
+        "desktop/cradle/walk/artifacts/agent-dictation.json",
+        "desktop/cradle/walk/artifacts/nara-speech.json",
+        "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
+        "desktop/cradle/walk/artifacts/nara-stage-focus.json"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -24,7 +27,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 12208,
+  "duration_ms": 11029,
   "checks": [
     {
       "ok": true,
@@ -84,7 +87,7 @@
       "ok": true,
       "label": "A stopped local speech stack names the gap and the start instruction",
       "data": {
-        "probed": "http://127.0.0.1:52648/inference"
+        "probed": "http://127.0.0.1:57437/inference"
       }
     },
     {
