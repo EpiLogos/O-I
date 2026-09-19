@@ -1,0 +1,24 @@
+/* Nara presence surface (#336). The world stays primary: the surface is
+ * summoned, compact, and themed entirely by the house tokens. */
+
+.nara-surface{display:flex;flex-direction:column;gap:var(--oi-desktop-gap);padding:var(--oi-desktop-gap) var(--oi-desktop-gap-lg);overflow-y:auto;height:100%;color:var(--oi-foreground)}
+.nara-surface .nara-head{display:flex;align-items:baseline;justify-content:space-between;gap:var(--oi-desktop-gap)}
+.nara-surface .nara-head h3{margin:0;font-size:var(--oi-desktop-type-title)}
+.nara-capabilities{display:grid;grid-template-columns:max-content 1fr max-content 1fr;gap:2px var(--oi-desktop-gap);margin:0;font-size:var(--oi-desktop-type-caption)}
+.nara-capabilities dt{color:var(--oi-muted-2)}
+.nara-capabilities dd{margin:0}
+.nara-composer{display:flex;gap:var(--oi-desktop-gap-sm);flex-wrap:wrap}
+.nara-composer .oi-input{flex:1;min-width:12rem}
+.nara-attach-grid{display:grid;grid-template-columns:1fr 1fr;gap:var(--oi-desktop-gap-sm)}
+.nara-resolution{min-height:7rem;font-family:var(--oi-font-mono);font-size:var(--oi-desktop-type-caption)}
+.nara-choreography{margin:var(--oi-desktop-gap-sm) 0 0;padding-left:18px;font-size:var(--oi-desktop-type-caption)}
+.nara-choreography li[data-step="stood"],.nara-choreography li[data-step="pending"]{color:var(--oi-muted-2)}
+.nara-choreography li[data-step="running"]{font-weight:600}
+.nara-turn-person{font-weight:600}
+.nara-turn-nara{color:var(--oi-muted-2)}
+.nara-proposal{border-left:2px solid var(--oi-hairline);padding-left:10px;margin:var(--oi-desktop-gap-sm) 0}
+.nara-proposal-facts{display:grid;grid-template-columns:max-content 1fr;gap:2px var(--oi-desktop-gap);font-size:var(--oi-desktop-type-caption);margin:var(--oi-desktop-gap-xs) 0}
+.nara-proposal-facts dt{color:var(--oi-muted-2)}
+.nara-proposal-facts dd{margin:0}
+.nara-surface pre{font-size:var(--oi-desktop-type-caption);overflow-x:auto;background:var(--oi-canvas-ground);padding:var(--oi-desktop-gap-sm);border-radius:4px}
+.nara-surface section h3{margin:0 0 var(--oi-desktop-gap-sm);font-size:var(--oi-desktop-type-body)}

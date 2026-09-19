@@ -1,0 +1,158 @@
+{
+  "purpose": "Source-mapped elaboration of harness-first adoption and the bounded non-QL native cut inside O-I#65. No new user-story IDs, installer schema, runtime or evidence store.",
+  "story_source": "docs/experience/HARNESS-FIRST-ADOPTION.md",
+  "families": [],
+  "standing": "owner-directed intended-experience clarification, 2026-09-19; implementation and installed proof remain separate",
+  "runtime_or_human_acceptance": false,
+  "obligation_sources": {
+    "adoption65": {
+      "source_ref": "docs/experience/HARNESS-FIRST-ADOPTION.md",
+      "issue": "https://github.com/EpiLogos/O-I/issues/65",
+      "native_admission_owner": "https://github.com/EpiLogos/ai-kit/issues/114",
+      "policy": "Read the complete source, current INSTALL-UPDATE-FLOW and native admission/ground contracts. This elaborates existing stories; no source count, merge or available Skill establishes actual use."
+    }
+  },
+  "required_obligation_ids": [
+    "adoption65:entry-and-facets",
+    "adoption65:source-preservation",
+    "adoption65:practice-and-defaults",
+    "adoption65:hooks-and-activation",
+    "adoption65:session-routing",
+    "adoption65:extension-and-retraction",
+    "adoption65:current-native-cut",
+    "adoption65:independent-proving"
+  ],
+  "obligations": [
+    {
+      "id": "adoption65:entry-and-facets",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §§1,2.A–B",
+      "requirement": "Enter through an ordinary request in an existing harness; explain and select useful participation before native mutation, without requiring a preinstalled O:I context or a replacement application.",
+      "story_ids": ["AD01", "AD05", "AD08", "WK01"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "Cold bootstrap and already-compatible installations are exercised separately; no hidden developer checkout, local daemon or toolchain is assumed.",
+        "0/1/2 is the proposed Central/Actuation/AIKit operational participation, not a compulsory menu; the user can retain native tools or select less.",
+        "Engagement facets do not rename native frame/wire identities or historical receipts; hosted 5/0 requires no visitor-side product installation.",
+        "A text-only or otherwise execution-limited harness names the actual local step; a pasted request is not installation evidence.",
+        "The accepted bounded plan explains prerequisites, locations, scope and effects and preserves meaningful cancellation or refusal."
+      ]
+    },
+    {
+      "id": "adoption65:source-preservation",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §2.C",
+      "requirement": "Use native Central root/Project recognition, binding and deliberate migration while retaining human source, existing agents, Skills, exclusions and pending work.",
+      "story_ids": ["AD01", "AD02", "AD03", "AD09", "GV01", "GV06"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "Root meta-Project and child Project work both have valid entry; no fake child or compulsory source relocation.",
+        "Plan/readback distinguishes in-place binding, optional move, agent-source reconciliation and derived harness projection.",
+        "Conflicting custom files, duplicate native identities, stale source and interrupted/repeated migration preserve originals and useful state.",
+        "Native Skills/agents are explained before admission; presence alone neither changes authorship nor grants trust/authority."
+      ]
+    },
+    {
+      "id": "adoption65:practice-and-defaults",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §2.D",
+      "requirement": "Make actual source-owned Skills, Methods and default Guardian relations understandable, discoverable, selected and useful in the chosen scope.",
+      "story_ids": ["AD04", "AD05", "GV03", "GV05", "PX01"],
+      "required_evidence": ["C", "P"],
+      "required_branches": [
+        "Current O:I bootstrap manifest governs membership; do not resurrect the retired frozen Central strap or a foreign-skill registry.",
+        "Central-owned strap source arrives through the native AIKit ground binding; actual source/projection/loading/use are recorded distinctly.",
+        "A SkillSet is not an AgentSet; use real Guardian source/default identities and explain purpose and scope without auto-running all agents.",
+        "Methods remain Skills whose description begins METHOD:; test relevant trigger and near-miss, not only presence of a file.",
+        "A fresh actor performs a useful task with the selected source/practice without being given the verifier's expected answer."
+      ]
+    },
+    {
+      "id": "adoption65:hooks-and-activation",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §§2.E–G",
+      "requirement": "Project through the actual harness adapter, install compatible scoped hooks, and complete truthful live/next-session/restart activation with a recoverable first task.",
+      "story_ids": ["AD04", "AD09", "GV03", "GV05", "WK01"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "Edition/version and native faculties are independently observed; a shared brand name supplies no unsupported parity.",
+        "Hook purpose, trigger, source, ordering, scope, limits, failure and owned retraction are inspectable; repeats do not duplicate or recursively strap callbacks.",
+        "Written projection, hook registration, activation and effective use have independent evidence; missing hot reload produces an exact pending-restart explanation.",
+        "Restart/resume preserves task/source identity where supported and names explicit successor/reconstituted context where not; unrelated sessions remain alive.",
+        "Foreign settings and user edits survive update/retraction; no auto-inference on passive source change or wholesale private transcript telemetry."
+      ]
+    },
+    {
+      "id": "adoption65:session-routing",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §3",
+      "requirement": "Make externally entered harness work and O:I-started SessionSpaces converge through real native context, model, authority and Activity relations, adding Factory ancestry only for genuinely commissioned work.",
+      "story_ids": ["AG04", "AG06", "WK04", "WK05", "TM02", "DV02", "UI01", "UI02"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "External retain/adopt and native start are separately exercised; failed adoption does not launch a duplicate or fabricate prior stream history.",
+        "Requested/resolved/observed model, provider, credential horizon and allowed fallback are distinct; tests observe the real recipient and response.",
+        "Two scoped sessions, duplicate/out-of-order events, cancellation and reconnect do not cross-wire prompts, models, context or results.",
+        "Direct/native sessions remain valid without Factory; Commission/Run/attempt/stream/result/independent Return must actually join when selected.",
+        "Day/NOW and effective historical context use current native owners; closing a surface or replacing installed binaries does not silently cancel or migrate work.",
+        "New-UI consumers receive the existing operations and exact failure/recovery states; a donor-app pass is not destination-UI proof."
+      ]
+    },
+    {
+      "id": "adoption65:extension-and-retraction",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §4",
+      "requirement": "An unsupported or partial harness yields a useful SDK/conformance route; acceptance, refusal and eventual retraction preserve the person's existing world.",
+      "story_ids": ["AD07", "AD08", "AD09", "EX01"],
+      "required_evidence": ["C", "P"],
+      "required_branches": [
+        "Report actual target/version/faculties, owner SDK/Skill, required conformance and current useful limitations.",
+        "Author/register an adapter only under its own bounded authority, then repeat admission and the original useful operation.",
+        "SDK fixtures retain their scope; fake-target conformance is not support for a real untested harness.",
+        "Denied authority, conflicting configuration, deferred restart and unsupported hooks have meaningful continuation; removal only retracts owned material."
+      ]
+    },
+    {
+      "id": "adoption65:current-native-cut",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §5",
+      "requirement": "Converge and install the explicitly selected current non-QL native cut on the Mac using the existing managed update authority, with exact held QL/app and actual running-provider disclosure.",
+      "story_ids": ["AD03", "AD08", "AD09", "DV01", "DV05", "UI01"],
+      "required_evidence": ["C", "M"],
+      "required_branches": [
+        "Account for remote and both-machine accepted/unique work without resetting active checkouts or reinstalling personal ground.",
+        "Select current committed source cuts before invoking the updater; native source archive/build/content-addressed activation/receipt is not a historical release or hand-copy install.",
+        "The allow-list and rollback/receipt consequences preserve held QL artifacts, registration and current app generation; no unscoped all-product mutation.",
+        "Declared companions/resources and PATH plus GUI/headless resolution are verified; installed and resident running generations are separately observed.",
+        "A frozen consumer incompatibility has a precise native owner and qualification; it does not authorise changing QL or wholesale-merging active Cradle work."
+      ]
+    },
+    {
+      "id": "adoption65:independent-proving",
+      "source": "adoption65",
+      "native_locator": "HARNESS-FIRST-ADOPTION §§6–7",
+      "requirement": "Run source-grounded useful-work tests in existing feature worktrees and isolated Omarchy test worlds; preserve failures, repair native owners and independently replay without duplicating the campaign or frontend.",
+      "story_ids": ["WK01", "WK04", "WK05", "DV01", "DV02", "DV05", "UI01", "UI02"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "Code worktree per coherent feature/development line, not per agent/session/retry; file claims and Git mutations are coordinated.",
+        "Separate sandbox/test-state allocation from code-worktree creation; preserve host and Mac/frontend work and retain evidence outside guest deletion.",
+        "Adoption, session/Factory and lifecycle lanes may use disjoint resources concurrently after binding the exact tested cut; shared host services and desktop focus are serialized.",
+        "Use original and held-out tasks and test the verifier against disconnected operations or stale/unloaded sources; do not weaken expectations for a green result.",
+        "Consume demonstrated Day/NOW readiness where needed; preserve excluded QL/full-UI scope and no premature human-ratification gate."
+      ]
+    }
+  ],
+  "current_cut_scope": {
+    "reported_on": "2026-09-19",
+    "update_owner_ids": ["oi", "central", "actuation", "ai-kit", "software-factory", "workcell"],
+    "held_native_owner": "QL-MEF",
+    "held_install_owner_id": "quaternal-logic",
+    "held_surfaces": ["active Cradle/app/UI branches", "current installed app generation"],
+    "update_source": "docs/INSTALL-UPDATE-FLOW.md",
+    "selector_policy": "Validate current updater help and actual plan against this explicit scope; do not assume aliases or apply an unscoped rollback.",
+    "code_workspace_unit": "coherent-feature-line",
+    "new_worktree_per_agent_or_session": false,
+    "actual_machine_inspection_or_install_claimed": false
+  }
+}

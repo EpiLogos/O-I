@@ -409,6 +409,11 @@ mod existing_world_tests {
     }
 
     fn with_isolated_oi_home<T>(root: &Path, operation: impl FnOnce() -> T) -> T {
+        // The guard is held across the whole set → operate → restore window:
+        // OI_HOME is process-global, so two isolating tests running in
+        // parallel would otherwise interleave their mutations and readers
+        // would observe a foreign fixture state mid-flight.
+        let _guard = crate::test_support::env_lock();
         let previous = env::var_os("OI_HOME");
         env::set_var("OI_HOME", root.join("oi-state"));
         let result = operation();

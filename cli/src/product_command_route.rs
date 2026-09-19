@@ -151,36 +151,34 @@ fn short_revision(revision: &str) -> &str {
     revision.get(..10).unwrap_or(revision)
 }
 
-// AIKit owns this companion protocol; it is not a seventh product namespace.
+// AIKit owns this protocol; it is not a seventh product namespace. The
+// session-space verbs are folded into the main aikit binary (O-I #376 local
+// resolution), so this route execs the aikit product executable with
+// `session-space` prepended — there is no companion binary any more, and the
+// old `oi aikit-session-space` spelling stays as an alias for it.
 fn dispatch_session_space(args: &[OsString]) -> Result<i32, String> {
-    let companion_override = env::var_os("OI_AIKIT_SESSION_SPACE_BIN").filter(|v| !v.is_empty());
     let product_override = env::var_os("OI_AIKIT_BIN").filter(|v| !v.is_empty());
     // Never discard an invalid active-receipt error and fall back to a stale
-    // registered/PATH companion. Explicit developer overrides stay explicit.
-    let active = if companion_override.is_none() && product_override.is_none() {
+    // registered/PATH executable. Explicit developer overrides stay explicit.
+    let active = if product_override.is_none() {
         active_suite_executable_s0("ai-kit")?
     } else {
         None
     };
     let composition = load_composition()?;
-    let executable = companion_override
+    let executable = product_override
         .map(PathBuf::from)
+        .or(active)
         .or_else(|| {
-            product_override
+            composition
+                .modules
+                .get("ai-kit")
+                .and_then(|r| r.native_executable.as_ref())
                 .map(PathBuf::from)
-                .or(active)
-                .or_else(|| {
-                    composition
-                        .modules
-                        .get("ai-kit")
-                        .and_then(|r| r.native_executable.as_ref())
-                        .map(PathBuf::from)
-                })
-                .filter(|p| p.components().count() > 1)
-                .map(|p| p.with_file_name("aikit-session-space"))
         })
-        .unwrap_or_else(|| "aikit-session-space".into());
+        .unwrap_or_else(|| "aikit".into());
     let mut command = Command::new(&executable);
+    command.arg("session-space");
     command.args(args);
     #[cfg(unix)]
     {

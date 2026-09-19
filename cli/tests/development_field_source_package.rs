@@ -151,8 +151,10 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
             "native_executable":path,"version":surface["native"]["command_revision"],
             "docs":"","modality":"developer-source","install_source":"deterministic-fixture"});
     }
+    // The session-space verbs live in the aikit binary (O-I #376 fold); a
+    // stale PATH `aikit` must never be consulted by the folded route.
     executable(
-        &root.join("poison/aikit-session-space"),
+        &root.join("poison/aikit"),
         "#!/bin/sh\necho stale-companion\n",
     );
     let source = root.join("source");
@@ -238,4 +240,20 @@ fn native_source_payload_is_immutable_incremental_and_verified_beyond_its_launch
     assert_eq!(repaired["acquired"], json!(["actuation"]));
     assert_eq!(repaired["reused"].as_array().unwrap().len(), 5);
     success(run(root, &["verify", "--json"]));
+    // After repair the folded session-space route resolves the active aikit
+    // again (the fixture executable echoes its marker for any arguments).
+    assert_eq!(
+        String::from_utf8(success(run(root, &["aikit-session-space", "project-context"])).stdout)
+            .unwrap()
+            .trim(),
+        "fixture-only"
+    );
+    assert_eq!(
+        String::from_utf8(
+            success(run(root, &["aikit", "session-space", "project-context"])).stdout
+        )
+        .unwrap()
+        .trim(),
+        "fixture-only"
+    );
 }

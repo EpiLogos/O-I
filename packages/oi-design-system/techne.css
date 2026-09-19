@@ -1,0 +1,434 @@
+/*
+ * Techne chrome tier — extracted from the live Expressions physics workspace
+ * (field-studies-journeys: workspace.css + styles.css + app.ts theme()).
+ * Lane T8, L5 Technē convergence. The local physics app is the style
+ * authority; the older hosted ExpressionView editor styling is NOT the
+ * target. Every token and rule carries an origin comment naming the
+ * reference file and line-ish region it was extracted from.
+ *
+ * Opt-in scope, like .oi-desktop: the host applies `.oi-techne` and imports
+ * this file after tokens.css. The --oi-techne-* tokens exist only where no
+ * --oi-* role already covers the meaning; where the engine's roles map onto
+ * existing house tokens, the house role is re-grounded instead (role names
+ * never change between themes — law 11). Hosts theme by overriding tokens;
+ * consumers use var(--oi-*) only.
+ *
+ * Night and hud-contrast are selected by data attributes that
+ * `src/techne-theme.mjs` applies (data-techne-night / data-techne-hud-contrast),
+ * mirroring app.ts `theme()`'s body.night / body.hud-contrast toggles.
+ */
+
+/* ===== Techne scope: light chrome =====
+ * origin: workspace.css:151 (:root{--ui-surface..--ui-wash}) and :194 (--hud-glass/--hud-solid light). */
+.oi-techne {
+  color-scheme: light; /* origin: workspace.css:328 (#app select color-scheme:light) */
+
+  /* House roles re-grounded to the reference chrome palette (mapping, not new
+   * tokens): --ui-surface/--ui-ink/--ui-muted/--ui-line → the surface / text /
+   * muted / rule roles; --accent → the focus role so the house focus-ring
+   * contract carries the accent outline. */
+  --oi-surface: #f6f5f0;        /* origin: workspace.css:151 --ui-surface */
+  --oi-foreground: #252720;     /* origin: workspace.css:151 --ui-ink */
+  --oi-muted: #66685f;          /* origin: workspace.css:151 --ui-muted */
+  --oi-rule: #d5d6ce;           /* origin: workspace.css:151 --ui-line */
+  --oi-focus: var(--oi-techne-accent); /* origin: styles.css:1 focus-visible outline uses --accent */
+  --oi-wash: var(--oi-techne-wash);    /* role alias: .oi-desktop's wash role, techne value */
+  --oi-accent: var(--oi-techne-accent); /* role alias: .oi-desktop's accent role, techne value */
+
+  /* ===== --oi-techne-* tokens (light values) ===== */
+  --oi-techne-accent: #8b5844;                 /* origin: styles.css:1 --accent (document selection/focus accent) */
+  --oi-techne-wash: #e9eae2;                   /* origin: workspace.css:151 --ui-wash (solid chrome hover wash) */
+  --oi-techne-wash-veil: rgba(63, 73, 53, 0.055); /* origin: styles.css:1 --wash (translucent over-canvas wash); night derivation styles.css tail .night --wash */
+  --oi-techne-input: #ffffff;                  /* origin: workspace.css:151 --ui-input */
+  --oi-techne-hud-glass: rgba(246, 245, 240, 0.56);  /* origin: workspace.css:194 --hud-glass light */
+  --oi-techne-hud-solid: rgba(246, 245, 240, 0.97);  /* origin: workspace.css:194 --hud-solid light; styles.css:1 --panel rgba(.97) is the same role */
+  --oi-techne-hud-contrast-glass: rgba(246, 245, 240, 0.86); /* origin: workspace.css:291 body.hud-contrast --hud-glass */
+  --oi-techne-shadow-menu: 0 5px 18px rgba(0, 0, 0, 0.07);   /* origin: workspace.css:309 header-menu box-shadow 0 5px 18px #0001 (authored once; solid chrome is shadow-none, workspace.css:202) */
+
+  /* Panel geometry. The app parameterises per-panel user resize through
+   * --panel-width/--panel-height with per-panel fallbacks (workspace.css:205-206:
+   * 264px live-workspace, 280px toolbelt, calc() studio); panelResize writes the
+   * per-element values. These are the shared defaults a host overrides per panel. */
+  --oi-techne-panel-width: 280px;    /* origin: workspace.css:206 --panel-width,280px (toolbelt) */
+  --oi-techne-panel-height: 600px;   /* origin: workspace.css:206 --panel-height,600px (toolbelt) */
+  --oi-techne-bar-height: 48px;      /* origin: workspace.css:196 .masthead height:48px */
+  --oi-techne-tool-size: 30px;       /* origin: workspace.css:198 #tool-rail>.icon-button 30x30 */
+  --oi-techne-tool-radius: 8px;      /* origin: workspace.css:122 tool button border-radius:8px */
+  --oi-techne-panel-radius: 8px;     /* origin: workspace.css:204 .hud-panel border-radius:8px */
+  --oi-techne-footer-height: 44px;   /* origin: workspace.css:251 --footer-height,44px fallback */
+  --oi-techne-automation-height: 0px; /* origin: app.ts renderLive sets 0px/160px on the document root (renderLive, ~line 133) */
+  --oi-techne-field-line: calc(var(--oi-techne-footer-height, 44px) + 36px); /* origin: workspace.css:357 --field-line */
+
+  /* Motion — origin: workspace.css:203 background .18s solidify; :244 panel-arrive .23s cubic-bezier(.2,.8,.2,1); :240/:253 instrument width .28s. */
+  --oi-techne-motion-hud: 180ms;
+  --oi-techne-motion-arrive: 230ms;
+  --oi-techne-motion-expand: 280ms;
+  --oi-techne-ease-arrive: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* ===== Techne scope: night chrome =====
+ * origin: workspace.css:152 (body.night --ui-*) and :195 (body.night --hud-glass/--hud-solid);
+ * styles.css tail (.night document derivation: --muted/--line/--panel/--wash/--accent). */
+.oi-techne[data-techne-night="true"] {
+  color-scheme: dark; /* origin: workspace.css:191 body.night{color-scheme:dark} */
+
+  --oi-surface: #000000;        /* origin: workspace.css:152 --ui-surface night */
+  --oi-foreground: #ededed;     /* origin: workspace.css:152 --ui-ink night */
+  --oi-muted: #a6a6a6;          /* origin: workspace.css:152 --ui-muted night */
+  --oi-rule: #333333;           /* origin: workspace.css:152 --ui-line night */
+  --oi-focus: var(--oi-techne-accent);
+  --oi-wash: var(--oi-techne-wash);
+  --oi-accent: var(--oi-techne-accent);
+
+  --oi-techne-accent: #d0b48b;                 /* origin: styles.css tail .night --accent:#d0b48b */
+  --oi-techne-wash: #202020;                   /* origin: workspace.css:152 --ui-wash night */
+  --oi-techne-wash-veil: rgba(221, 226, 207, 0.055); /* origin: styles.css tail .night --wash */
+  --oi-techne-input: #111111;                  /* origin: workspace.css:152 --ui-input night */
+  --oi-techne-hud-glass: rgba(0, 0, 0, 0.42);  /* origin: workspace.css:195 --hud-glass night */
+  --oi-techne-hud-solid: rgba(0, 0, 0, 0.97);  /* origin: workspace.css:195 --hud-solid night; styles.css tail .night --panel rgba(33,40,34,.97) is the same role */
+  --oi-techne-hud-contrast-glass: rgba(0, 0, 0, 0.80); /* origin: workspace.css:292 body.night.hud-contrast */
+  --oi-techne-shadow-menu: 0 5px 18px rgba(0, 0, 0, 0.07);
+
+  --oi-techne-panel-width: 280px;
+  --oi-techne-panel-height: 600px;
+  --oi-techne-bar-height: 48px;
+  --oi-techne-tool-size: 30px;
+  --oi-techne-tool-radius: 8px;
+  --oi-techne-panel-radius: 8px;
+  --oi-techne-footer-height: 44px;
+  --oi-techne-automation-height: 0px;
+  --oi-techne-field-line: calc(var(--oi-techne-footer-height, 44px) + 36px);
+
+  --oi-techne-motion-hud: 180ms;
+  --oi-techne-motion-arrive: 230ms;
+  --oi-techne-motion-expand: 280ms;
+  --oi-techne-ease-arrive: cubic-bezier(0.2, 0.8, 0.2, 1);
+}
+
+/* Forced-appearance pass: when the workspace preference opposes the scene's
+ * natural tone, the HUD glass solidifies so chrome stays legible over an
+ * opposite-tone artwork. origin: workspace.css:291-292 body(.night).hud-contrast. */
+.oi-techne[data-techne-hud-contrast="true"] {
+  --oi-techne-hud-glass: var(--oi-techne-hud-contrast-glass);
+}
+
+/* The scene is the world provider: the document tier's --paper/--ink map onto
+ * the existing world host hooks and are set at runtime by src/techne-theme.mjs
+ * (origin: app.ts theme(), line 99: setProperty('--paper', hex) /
+ * setProperty('--ink', palette[0])). Rules below paint over-canvas ink with
+ * var(--oi-world-foreground) and scene grounds with var(--oi-world-surface). */
+
+/* ===== Reduced transparency =====
+ * origin: workspace.css:226 @media(prefers-reduced-transparency:reduce){:root,body.night{--hud-glass:var(--ui-surface)}}. */
+@media (prefers-reduced-transparency: reduce) {
+  .oi-techne,
+  .oi-techne[data-techne-night="true"] {
+    --oi-techne-hud-glass: var(--oi-surface);
+  }
+}
+
+/* ===== Chrome surfaces ===== */
+
+/* HUD panel: glass ground that solidifies on hover/focus-within.
+ * origin: workspace.css:202-204 (.hud-panel background/backdrop-filter/border/
+ * transition; :hover,:focus-within → --hud-solid). */
+.oi-techne-panel {
+  background: var(--oi-techne-hud-glass);
+  backdrop-filter: blur(10px);
+  border: 1px solid var(--oi-rule);
+  color: var(--oi-foreground);
+  border-radius: var(--oi-techne-panel-radius);
+  box-shadow: none; /* origin: workspace.css:202 solid-chrome pass removed panel shadows */
+  transition: background var(--oi-techne-motion-hud) var(--oi-motion-ease, ease);
+}
+.oi-techne-panel:hover,
+.oi-techne-panel:focus-within {
+  background: var(--oi-techne-hud-solid);
+}
+/* Quiet variant: a working surface (the studio) keeps its glass while the
+ * pointer moves inside it. origin: workspace.css:213 #inspector.is-studio:hover stays --hud-glass. */
+.oi-techne-panel--quiet:hover,
+.oi-techne-panel--quiet:focus-within {
+  background: var(--oi-techne-hud-glass);
+}
+/* Opaque variant: floating menus and assignment sheets are born solid.
+ * origin: workspace.css:273 .automation-assignment background:--hud-solid; :309 header-menu background:--hud-solid. */
+.oi-techne-panel--opaque {
+  background: var(--oi-techne-hud-solid);
+  backdrop-filter: none;
+  box-shadow: var(--oi-techne-shadow-menu);
+}
+.oi-techne-panel[hidden] { display: none; } /* origin: styles.css:1 [hidden]{display:none!important} */
+
+/* Contextual panel geometry: hosts place panels; the tier fixes only the
+ * resize contract. origin: workspace.css:205-206 (#live-workspace left /
+ * #toolbelt-panel right, width/height from --panel-*); :219 .panel-resize. */
+.oi-techne-panel--resizable { position: fixed; max-width: calc(100vw - 24px); }
+.oi-techne-panel--resizable > .oi-techne-resize-handle {
+  position: absolute;
+  right: 6px;
+  bottom: 6px;
+  width: 22px;
+  height: 22px;
+  cursor: nwse-resize;
+  touch-action: none;
+  opacity: 0.5;
+} /* origin: workspace.css:219 .panel-resize; polished corner :365 */
+.oi-techne-panel--resizable > .oi-techne-resize-handle:hover,
+.oi-techne-panel--resizable > .oi-techne-resize-handle:focus-visible { opacity: 1; }
+
+/* Top bar (masthead): one full-width glass row above the stage.
+ * origin: workspace.css:196 .masthead grid/background/border-bottom/blur/z-index:70.
+ * Altitude mapped to the house nav-top layer so the family stacks with the
+ * rest of the house (reference z 70 ≈ above side panels, below dialogs). */
+.oi-techne-bar {
+  position: fixed;
+  inset: 0 0 auto 0;
+  height: var(--oi-techne-bar-height);
+  display: grid;
+  grid-template-columns: minmax(0, 1fr) auto minmax(0, 1fr); /* origin: workspace.css:301 quiet single row */
+  align-items: center;
+  gap: 12px;
+  padding: 5px 12px;
+  background: var(--oi-techne-hud-glass);
+  border-bottom: 1px solid var(--oi-rule);
+  backdrop-filter: blur(12px);
+  z-index: var(--oi-z-nav-top, 50);
+}
+.oi-techne-bar:hover, .oi-techne-bar:focus-within { background: var(--oi-techne-hud-solid); } /* origin: workspace.css:203 */
+
+/* Tool rail: a quiet row of aria-pressed toggles riding the bar; the rail
+ * itself is transparent (the bar is the surface). origin: workspace.css:197
+ * (#tool-rail static, transparent, borderless); shell.ts mounts tools with
+ * data-rail + aria-pressed="false". */
+.oi-techne-rail { display: flex; flex-direction: row; align-items: center; gap: 2px; background: transparent; border: 0; padding: 0; }
+.oi-techne-tool {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: var(--oi-techne-tool-size);
+  min-width: var(--oi-techne-tool-size);
+  height: var(--oi-techne-tool-size);
+  padding: 7px;
+  border-radius: var(--oi-techne-tool-radius);
+}
+.oi-techne-tool svg { width: 16px; height: 16px; margin: 0; } /* origin: workspace.css:123 tool icon 16px */
+.oi-techne-divider { height: 17px; width: 1px; flex: none; margin: 0 5px; background: var(--oi-rule); } /* origin: workspace.css:272 .toolbar-divider */
+/* Quiet reveal: navigation shows at 45% until hovered, focused or expanded.
+ * origin: workspace.css:200 .workspace-nav>button opacity:.45 → 1. */
+.oi-techne-quiet-reveal { opacity: 0.45; transition: opacity 0.15s; }
+.oi-techne-quiet-reveal:hover,
+.oi-techne-quiet-reveal:focus-visible,
+.oi-techne-quiet-reveal[aria-expanded="true"] { opacity: 1; }
+
+/* Transport (bottom instrument): a compact hud panel that expands in place to
+ * carry the timeline. origin: workspace.css:240/:253 .instrument width/height
+ * transition cubic-bezier(.2,.8,.2,1); .expanded → --hud-solid. */
+.oi-techne-transport {
+  overflow: hidden;
+  width: min(600px, calc(100vw - 64px));
+  transition:
+    width var(--oi-techne-motion-expand) var(--oi-techne-ease-arrive),
+    height var(--oi-techne-motion-expand) var(--oi-techne-ease-arrive),
+    background var(--oi-techne-motion-hud) var(--oi-motion-ease, ease);
+}
+.oi-techne-transport[data-expanded="true"] {
+  width: min(1050px, calc(100vw - 64px));
+  background: var(--oi-techne-hud-solid);
+}
+
+/* ===== The three state rules ===== */
+
+/* 1. Wash hover: pointer feedback is a wash, never a shadow.
+ * origin: styles.css:1 .icon-button:hover{background:var(--wash)}; workspace.css:44 modes-list hover; :180 studio-sections hover; :238 belt-candidates label:hover/:has(input:checked). */
+.oi-techne-panel button:hover:not(:disabled),
+.oi-techne-row:hover:not(.oi-techne-row--disabled) {
+  background: var(--oi-techne-wash);
+}
+
+/* 2. Ink-inversion active tool: the pressed/selected control paints surface
+ * with foreground ink. origin: workspace.css:156 #tool-rail .active{background:var(--ui-ink);color:var(--ui-surface)};
+ * :188 motion-tabs/.segmented/.primary active; :298 .chrome .icon-button.active; :396 monitor-tabs [aria-selected=true]. */
+.oi-techne-tool[aria-pressed="true"],
+.oi-techne-tab[aria-selected="true"],
+.oi-techne-button-primary {
+  background: var(--oi-foreground);
+  color: var(--oi-surface);
+}
+
+/* 3. Accent-outline focus-visible + .42 disabled.
+ * origin: styles.css:1 button:disabled{opacity:.42;cursor:not-allowed};
+ * button:focus-visible,…{outline:2px solid var(--accent);outline-offset:4px};
+ * workspace.css:24 .orbit-pad:focus-visible{outline:1px solid var(--accent);outline-offset:0} (dense embedded controls take the 1px form). */
+.oi-techne :is(button, a, input, select, textarea, summary):focus-visible {
+  outline: 2px solid var(--oi-techne-accent);
+  outline-offset: 4px;
+}
+.oi-techne :is(button, a, input, select, textarea, summary):disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+.oi-techne-embedded:focus-visible {
+  outline: 1px solid var(--oi-techne-accent);
+  outline-offset: 0;
+}
+
+/* Pressed feedback inside chrome. origin: workspace.css:244 .hud-panel button:active{transform:scale(.96)}; button transitions :244. */
+.oi-techne-panel button,
+.oi-techne-bar button {
+  transition: background 0.15s, opacity 0.15s, transform 0.15s;
+}
+.oi-techne-panel button:active,
+.oi-techne-bar button:active { transform: scale(0.96); }
+
+/* ===== Selected-state grammar =====
+ * A selected row takes the wash; a selected card takes the ink border (and the
+ * transport thumb lifts). Selection dots carry the accent. 
+ * origin: styles.css:1 .object-row.selected{background:var(--wash)}, .selection-dot accent;
+ * .scene-card.active .scene-thumb{border-color:var(--ink);box-shadow:0 0 0 1px var(--ink)}; .scene-image.active translateY(-3px);
+ * workspace.css:189 studio-sections [aria-current="page"] wash; :222 scene-card.active border-color ink. */
+.oi-techne-row {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  width: 100%;
+  min-height: 38px; /* origin: workspace.css:43 modes-list button min-height:38px */
+  padding: 10px 9px;
+  border-radius: 6px;
+  text-align: left;
+}
+.oi-techne-row[data-selected="true"],
+.oi-techne-row[aria-current="page"] {
+  background: var(--oi-techne-wash);
+}
+.oi-techne-row .oi-techne-dot {
+  width: 5px;
+  height: 5px;
+  border-radius: 50%;
+  background: transparent;
+  flex: none;
+}
+.oi-techne-row[data-selected="true"] .oi-techne-dot { background: var(--oi-techne-accent); }
+.oi-techne-card[data-selected="true"] {
+  border-color: var(--oi-foreground);
+  box-shadow: 0 0 0 1px var(--oi-foreground);
+}
+.oi-techne-card {
+  transition: opacity var(--oi-techne-motion-hud) var(--oi-motion-ease, ease), transform 0.2s, border-color 0.2s;
+}
+.oi-techne-card:hover:not(:disabled),
+.oi-techne-card:focus-visible { transform: translateY(-3px); } /* origin: workspace.css:242 .scene-image:hover,:focus-visible translateY(-3px) */
+
+/* ===== Stacked-canvas stage idiom =====
+ * The CSS stage is distinct from the high-DPI drawing buffer; non-interactive
+ * layers sit above the field canvas and never take pointers.
+ * origin: styles.css:1 #stage/#field-canvas/#grain/#guides/#text-layers;
+ * shell.ts:8 stage stack (paper-canvas, field-canvas, transition-canvas, grain, guides, text-layers);
+ * workspace.css:289 #field-canvas{width:100%;height:100%}. */
+.oi-techne-stage {
+  position: relative;
+  inset: 0;
+  overflow: hidden;
+  touch-action: none;
+  cursor: crosshair;
+  background: var(--oi-world-surface);
+  color: var(--oi-world-foreground);
+}
+.oi-techne-stage > canvas,
+.oi-techne-stage > .oi-techne-layer {
+  position: absolute;
+  inset: 0;
+  width: 100%;
+  height: 100%;
+}
+.oi-techne-layer--paper { z-index: 0; pointer-events: none; }      /* painted scene paper under the field */
+.oi-techne-layer--field { z-index: 1; }                            /* the living drawing buffer */
+.oi-techne-layer--transition { z-index: 2; pointer-events: none; } /* scene crossfade snapshot */
+.oi-techne-layer--veil { z-index: 3; pointer-events: none; mix-blend-mode: multiply; } /* grain texture, host supplies content; night flips to screen (styles.css tail .night #grain{mix-blend-mode:screen}) */
+.oi-techne[data-techne-night="true"] .oi-techne-layer--veil { mix-blend-mode: screen; }
+.oi-techne-layer--guides { z-index: 4; pointer-events: none; overflow: visible; }
+.oi-techne-layer--text { z-index: 5; pointer-events: none; }       /* page text; the host re-enables pointers while editing (styles.css .editing-text .page-text) */
+
+/* ===== Presentation mode =====
+ * The host hides chrome with [hidden] and sets inert on covered work
+ * (origin: app.ts renderAll/renderLibrary: stage.inert=libraryOpen; chrome
+ * inert; .presentation hides chrome, styles.css .presentation .chrome{display:none!important};
+ * present-return rests at 15% and wakes on hover/focus, styles.css .present-return). */
+.oi-techne[data-presentation="true"] .oi-techne-chrome { display: none !important; }
+.oi-techne-present-return { opacity: 0.15; transition: opacity 0.2s; }
+.oi-techne-present-return:hover,
+.oi-techne-present-return:focus { opacity: 1; }
+
+/* ===== Panel arrival =====
+ * origin: workspace.css:244-245 .hud-panel animation:panel-arrive .23s cubic-bezier(.2,.8,.2,1) +
+ * @keyframes panel-arrive; :249 @supports (transition-behavior:allow-discrete) @starting-style exit/enter pair. */
+.oi-techne-panel { animation: oi-techne-panel-arrive var(--oi-techne-motion-arrive) var(--oi-techne-ease-arrive); }
+@keyframes oi-techne-panel-arrive {
+  from { opacity: 0; translate: 0 7px; scale: 0.99; }
+  to { opacity: 1; translate: 0 0; scale: 1; }
+}
+@supports (transition-behavior: allow-discrete) {
+  .oi-techne-panel {
+    animation: none;
+    transition: opacity 0.2s, translate 0.2s, background var(--oi-techne-motion-hud) var(--oi-motion-ease, ease), display 0.2s allow-discrete;
+  }
+  .oi-techne-panel[hidden] { opacity: 0; translate: 0 6px; }
+  @starting-style {
+    .oi-techne-panel:not([hidden]) { opacity: 0; translate: 0 6px; }
+  }
+}
+
+/* ===== Native choice lists =====
+ * Native selects need their own opaque, themed surface, including in Firefox.
+ * origin: workspace.css:328-334 (#app select/option rules; night color-scheme :329). */
+.oi-techne select { color: var(--oi-foreground); background-color: transparent; color-scheme: light; accent-color: var(--oi-foreground); }
+.oi-techne[data-techne-night="true"] select { color-scheme: dark; }
+.oi-techne select:hover,
+.oi-techne select:focus,
+.oi-techne select[multiple] { background-color: var(--oi-techne-input); border-color: var(--oi-muted); }
+.oi-techne :is(option, optgroup) { color: var(--oi-foreground); background-color: var(--oi-techne-input); font: inherit; }
+.oi-techne option:checked { background-color: var(--oi-techne-wash); }
+.oi-techne option:disabled { color: var(--oi-muted); }
+
+/* ===== Scrollbar discipline =====
+ * Transparent tracks; a fine thumb appears only while using the surface.
+ * origin: workspace.css:342-347 (#app scrollbar rules; thumb color-mix 25% ink). */
+.oi-techne .oi-techne-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+.oi-techne .oi-techne-scroll:hover,
+.oi-techne .oi-techne-scroll:focus-within {
+  scrollbar-color: color-mix(in srgb, var(--oi-foreground) 25%, transparent) transparent;
+}
+.oi-techne .oi-techne-scroll::-webkit-scrollbar { width: 4px; height: 4px; }
+.oi-techne .oi-techne-scroll::-webkit-scrollbar-track,
+.oi-techne .oi-techne-scroll::-webkit-scrollbar-corner { background: transparent; }
+.oi-techne .oi-techne-scroll::-webkit-scrollbar-thumb { background: transparent; border-radius: 6px; }
+.oi-techne .oi-techne-scroll:hover::-webkit-scrollbar-thumb,
+.oi-techne .oi-techne-scroll:focus-within::-webkit-scrollbar-thumb {
+  background: color-mix(in srgb, var(--oi-foreground) 25%, transparent);
+}
+
+/* ===== Reduced motion =====
+ * origin: workspace.css:248 (arrive animations/transitions/scroll-behavior none);
+ * :250 (allow-discrete transitions none); :325 header-menu animation none;
+ * :268 automation-lane chevron. tokens.css already collapses --oi-motion-*;
+ * these are the raw-duration rules the chrome pass adds on top. */
+@media (prefers-reduced-motion: reduce) {
+  .oi-techne-panel { animation: none !important; transition: none !important; }
+  .oi-techne-panel button,
+  .oi-techne-bar button,
+  .oi-techne-card,
+  .oi-techne-quiet-reveal,
+  .oi-techne-present-return,
+  .oi-techne-transport { transition: none !important; }
+  .oi-techne :is(.oi-techne-scroll, .oi-techne-panel--resizable) { scroll-behavior: auto; }
+}
+
+/* ===== Forced colours =====
+ * Forced UI appearance must remain legible over an opposite-tone artwork.
+ * origin: workspace.css:348-353 @media(forced-colors:active) (scrollbars auto,
+ * native lists Canvas/CanvasText, custom marks back to appearance:auto). */
+@media (forced-colors: active) {
+  .oi-techne .oi-techne-scroll { scrollbar-color: auto; }
+  .oi-techne :is(select, option, optgroup) { color: CanvasText; background: Canvas; }
+  .oi-techne-panel { backdrop-filter: none; background: Canvas; }
+}

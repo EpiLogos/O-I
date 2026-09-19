@@ -25,7 +25,7 @@ class PersonalWebTests(unittest.TestCase):
             before = em.load_sources(root)
             old = {s["id"]: s for s in before["stories"]}
             now = {s["id"]: s for s in current["stories"]}
-            self.assertEqual(len(old), 113)
+            self.assertEqual(len(old), 114)
             self.assertEqual(set(now) - set(old), {f"PW{i:02}" for i in range(1,13)})
             for key, value in old.items():
                 self.assertEqual(now[key], value)

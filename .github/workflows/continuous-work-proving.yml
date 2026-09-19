@@ -144,7 +144,7 @@ jobs:
             --entry oi "$GITHUB_WORKSPACE/cli/target/debug/oi" "$GITHUB_WORKSPACE" \
             --entry central "$RUNNER_TEMP/caw-central/target/debug/ctrl" "$RUNNER_TEMP/caw-central" \
             --entry aikit "$RUNNER_TEMP/caw-aikit/target/debug/aikit" "$RUNNER_TEMP/caw-aikit" \
-            --entry aikit-session-space "$RUNNER_TEMP/caw-aikit/target/debug/aikit-session-space" "$RUNNER_TEMP/caw-aikit" \
+            --entry aikit-session-space "$RUNNER_TEMP/caw-aikit/target/debug/aikit" "$RUNNER_TEMP/caw-aikit" \
             --entry aikit-task-suite "$CAW_TASK_SUITE" "$RUNNER_TEMP/caw-aikit" \
             --entry workcell "$RUNNER_TEMP/caw-workcell/target/debug/workcell" "$RUNNER_TEMP/caw-workcell" \
             --entry workcell-control-service "$RUNNER_TEMP/caw-workcell/target/debug/workcell-control-service" "$RUNNER_TEMP/caw-workcell" \

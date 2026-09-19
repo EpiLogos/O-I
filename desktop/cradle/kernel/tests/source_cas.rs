@@ -205,11 +205,13 @@ fn native_session_space_discovery_is_project_scoped_and_never_moves_work() {
     let home=ground.root.join("isolated-aikit-home");
     let cwd=ground.root.join("Work/Editor");
     let native = |args: &[&str]| -> serde_json::Value {
-        let output=Command::new(&executable).env("AIKIT_HOME",&home).arg("-C").arg(&cwd).args(args).output().unwrap();
+        let output=Command::new(&executable).env("AIKIT_HOME",&home).arg("session-space").arg("-C").arg(&cwd).args(args).output().unwrap();
         assert!(output.status.success(), "{}", String::from_utf8_lossy(&output.stderr));
         serde_json::from_slice(&output.stdout).unwrap()
     };
-    let main_executable=std::env::var_os("OI_AIKIT_BIN").map(PathBuf::from).unwrap_or_else(||executable.with_file_name("aikit"));
+    // The fold put the session-space verbs in the aikit binary itself, so the
+    // agency executable above already is the main binary.
+    let main_executable=std::env::var_os("OI_AIKIT_BIN").map(PathBuf::from).unwrap_or_else(|| "aikit".into());
     let bind=Command::new(main_executable).env("AIKIT_HOME",&home)
         .current_dir(&cwd).args(["--json","project","bind","editor-integration","--directory"])
         .arg(&cwd).arg("--no-default-skill-sets").output().unwrap();

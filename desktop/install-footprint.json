@@ -35,7 +35,7 @@
     "aarch64-apple-darwin": {
       "shim": false,
       "app_copy_root": "~/Applications",
-      "exec_relative": "Contents/MacOS/O-I",
+      "exec_relative": "Contents/MacOS/oi-cradle",
       "registrations": [
         {
           "kind": "macos-app-copy",

@@ -2236,6 +2236,9 @@ printf '%s\n' '{"schema":"oi.world-recognition-result/v1","provider_ref":"contri
         assert!(registry.iter().any(|entry| entry.name == "hermes"));
         assert!(registry
             .iter()
+            .any(|entry| entry.name == "opencode" && entry.kind == "harness"));
+        assert!(registry
+            .iter()
             .any(|entry| entry.name == "buzz" && entry.version_args.is_empty()));
         assert!(registry
             .iter()

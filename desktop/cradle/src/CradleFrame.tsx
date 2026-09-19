@@ -19,6 +19,7 @@ import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane, SurfaceBody} from "./surface/Workbench";
+import {GroupPane} from "./surface/Workbench";
 import {warmWorkspaceTrees} from "./surface/retention";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
