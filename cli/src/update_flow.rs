@@ -190,17 +190,55 @@ fn binary_names_cut(executable: &Path, version_command: &[String], revision: &st
     text.contains(revision) || text.contains(&revision[..12.min(revision.len())])
 }
 
-fn resolve_desired_cut(id: &str, checkout: &Path) -> Result<Option<DesiredCut>, String> {
+fn resolve_desired_cut(id: &str, checkout: &Path, candidate: Option<&str>) -> Result<Option<DesiredCut>, String> {
     let state = inspect_dev_repo(id, checkout.to_path_buf(), None);
     if !state.present { return Ok(None); }
-    let head = state.head.ok_or_else(|| format!("{id}: checkout exists but has no HEAD commit"))?;
-    let tree = git_output(checkout, &["rev-parse", "HEAD^{tree}"])?;
-    Ok(Some(DesiredCut {
-        revision: head,
-        tree,
-        branch: state.branch,
-        dirty: state.dirty,
-    }))
+    let Some(selector) = candidate else {
+        let head = state.head.ok_or_else(|| format!("{id}: checkout exists but has no HEAD commit"))?;
+        let tree = git_output(checkout, &["rev-parse", "HEAD^{tree}"])?;
+        return Ok(Some(DesiredCut { revision: head, tree, branch: state.branch, dirty: state.dirty }));
+    };
+    // Integration-lead candidate selection: the desired cut is a committed
+    // revision the lead names, not the checkout HEAD. This is the managed
+    // sibling of `oi dev gate --candidate` (rolling_dev). It refreshes the
+    // named remote main only — no pull, no checkout, no working-tree mutation —
+    // and resolves the revision from the shared object store. The apply path
+    // exports it with `git archive <revision>`, so an occupied or dirty
+    // checkout (an owner's protected frontend branch, a live research or
+    // telemetry lane) is left exactly as it was while the accepted cut is
+    // still what gets built. HARNESS-FIRST-ADOPTION.md §5: the integration
+    // lead establishes the intended cut; when moving the checkout cannot
+    // preserve active work, the selection seam carries it instead.
+    let is_main = selector.eq_ignore_ascii_case("main");
+    let fetched = Command::new("git").arg("-C").arg(checkout)
+        .args(["fetch", "origin", "refs/heads/main:refs/remotes/origin/main"])
+        .stdin(Stdio::null()).status()
+        .map(|status| status.success())
+        .unwrap_or(false);
+    if is_main && !fetched {
+        return Err(format!(
+            "{id}: could not refresh origin/main for candidate selection; pass an exact commit id for offline work",
+        ));
+    }
+    let expression = if is_main { "origin/main".to_owned() } else { selector.to_owned() };
+    let revision = git_output(checkout, &["rev-parse", "--verify", &format!("{expression}^{{commit}}")])
+        .map_err(|_| format!(
+            "{id}: candidate '{selector}' did not resolve to a commit in {}; use 'main' or an exact commit id",
+            checkout.display(),
+        ))?;
+    if !is_main && !revision.eq_ignore_ascii_case(selector) {
+        return Err(format!(
+            "{id}: candidate must be 'main' or an exact commit id; '{selector}' is ambiguous (it resolved to {})",
+            short_rev(&revision),
+        ));
+    }
+    let tree = git_output(checkout, &["rev-parse", &format!("{revision}^{{tree}}")])?;
+    let branch = if is_main {
+        Some("origin/main (integration-lead candidate)".to_owned())
+    } else {
+        Some(format!("candidate {} (integration-lead)", short_rev(&revision)))
+    };
+    Ok(Some(DesiredCut { revision, tree, branch, dirty: false }))
 }
 
 fn managed_artifact_path(data_root: &Path, id: &str, sha256: &str, exe: &str) -> PathBuf {
@@ -326,6 +364,7 @@ fn build_plan(
     selection: &[String],
     force_rebuild: bool,
     manifest: &SuiteManifest,
+    candidates: &BTreeMap<String, String>,
 ) -> Result<(Vec<PlanEntry>, Vec<String>), String> {
     let targets = update_targets(manifest)?;
     let receipt = load_active_update_receipt(data_root)?;
@@ -333,7 +372,7 @@ fn build_plan(
     let mut drift = Vec::new();
     for target in targets.iter().filter(|target| selection.contains(&target.id)) {
         let checkout = dev_source_path(ground, &target.id);
-        let desired = resolve_desired_cut(&target.id, &checkout)?;
+        let desired = resolve_desired_cut(&target.id, &checkout, candidates.get(&target.id).map(String::as_str))?;
         let entry = receipt.as_ref().and_then(|receipt| receipt.products.get(&target.id));
         let discovered = {
             let resolved = resolve_executable(&target.exe);
@@ -549,12 +588,13 @@ fn command_update_apply(
     selection: &[String],
     force_rebuild: bool,
     json_mode: bool,
+    candidates: &BTreeMap<String, String>,
 ) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
     let data_root = oi_data_root()?;
     ensure_managed_layout(&data_root)?;
-    let (entries, drift) = build_plan(&ground, &data_root, selection, force_rebuild, &manifest)?;
+    let (entries, drift) = build_plan(&ground, &data_root, selection, force_rebuild, &manifest, candidates)?;
     let pending: Vec<&PlanEntry> = entries.iter()
         .filter(|entry| matches!(entry.action, PlanAction::Adopt | PlanAction::Build))
         .collect();
@@ -648,11 +688,11 @@ fn command_update_apply(
     Ok(0)
 }
 
-fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bool) -> Result<i32, String> {
+fn command_update_check(json_mode: bool, selection: &[String], force_rebuild: bool, candidates: &BTreeMap<String, String>) -> Result<i32, String> {
     let manifest = suite_manifest()?;
     let ground = configured_ground()?;
     let data_root = oi_data_root()?;
-    let (entries, drift) = build_plan(&ground, &data_root, selection, force_rebuild, &manifest)?;
+    let (entries, drift) = build_plan(&ground, &data_root, selection, force_rebuild, &manifest, candidates)?;
     if json_mode {
         let products: Vec<serde_json::Value> = entries.iter().map(|entry| json!({
             "product": entry.id,
@@ -868,29 +908,70 @@ fn command_update_flow(args: &[OsString]) -> Result<i32, String> {
     let mut rollback = false;
     let mut force_rebuild = false;
     let mut products: Vec<OsString> = Vec::new();
-    for value in args {
+    let mut candidate_specs: Vec<String> = Vec::new();
+    let usage = "oi update [--check|--apply|--rollback] [--rebuild] [--candidate PRODUCT=REVISION] [--json] [PRODUCT ...]";
+    let mut index = 0;
+    while index < args.len() {
+        let value = &args[index];
         match value.to_str() {
             Some("--json") => json_mode = true,
             Some("--check") => check_only = true,
             Some("--apply") => {}
             Some("--rollback") => rollback = true,
             Some("--rebuild") => force_rebuild = true,
+            Some("--candidate") => {
+                index += 1;
+                let spec = args.get(index).and_then(|value| value.to_str())
+                    .ok_or_else(|| format!("'--candidate' requires PRODUCT=REVISION (a commit id or 'main'); usage: {usage}"))?;
+                candidate_specs.push(spec.to_owned());
+            }
+            Some(other) if other.starts_with("--candidate=") => {
+                candidate_specs.push(other.trim_start_matches("--candidate=").to_owned());
+            }
             Some(other) if other.starts_with('-') => {
-                return Err(format!("unknown update option '{other}'; usage: oi update [--check|--apply|--rollback] [--rebuild] [--json] [PRODUCT ...]"));
+                return Err(format!("unknown update option '{other}'; usage: {usage}"));
             }
             _ => products.push(value.clone()),
         }
+        index += 1;
     }
     if rollback {
         if check_only { return Err("--check and --rollback are separate operations".to_owned()); }
+        if !candidate_specs.is_empty() { return Err("--candidate applies to build selection, not to --rollback".to_owned()); }
         return command_update_rollback(json_mode);
     }
     let manifest = suite_manifest()?;
-    let selection = resolve_update_selection(&products, &manifest)?;
-    if check_only {
-        return command_update_check(json_mode, &selection, force_rebuild);
+    // A named candidate selects a committed cut for that product regardless of
+    // its checkout HEAD. It also brings the product into scope, so
+    // `oi update --apply --candidate central=<sha>` needs no separate selector.
+    let mut candidates: BTreeMap<String, String> = BTreeMap::new();
+    if !candidate_specs.is_empty() {
+        let catalogue = oi_cli::product_command::product_command_catalogue()?;
+        for spec in &candidate_specs {
+            let (name, revision) = spec.split_once('=')
+                .ok_or_else(|| format!("candidate '{spec}' must be PRODUCT=REVISION (a commit id or 'main')"))?;
+            if revision.trim().is_empty() {
+                return Err(format!("candidate '{spec}' has an empty revision"));
+            }
+            let id = if name == "oi" { "oi".to_owned() } else {
+                catalogue.resolve(name).map(|descriptor| descriptor.id.clone())
+                    .ok_or_else(|| format!("unknown product '{name}' in candidate '{spec}'"))?
+            };
+            candidates.insert(id, revision.trim().to_owned());
+        }
     }
-    command_update_apply(&selection, force_rebuild, json_mode)
+    let mut selection = if products.is_empty() && !candidates.is_empty() {
+        Vec::new()
+    } else {
+        resolve_update_selection(&products, &manifest)?
+    };
+    for id in candidates.keys() {
+        if !selection.contains(id) { selection.push(id.clone()); }
+    }
+    if check_only {
+        return command_update_check(json_mode, &selection, force_rebuild, &candidates);
+    }
+    command_update_apply(&selection, force_rebuild, json_mode, &candidates)
 }
 
 #[cfg(test)]
@@ -959,13 +1040,54 @@ mod update_flow_tests {
         let tree = git(&repo, &["rev-parse", "HEAD^{tree}"]);
         // Live work happens on top; the cut is what is committed.
         fs::write(repo.join("Cargo.toml"), "live uncommitted work\n").unwrap();
-        let cut = resolve_desired_cut("tool", &repo).unwrap().unwrap();
+        let cut = resolve_desired_cut("tool", &repo, None).unwrap().unwrap();
         assert_eq!(cut.revision, revision);
         assert_eq!(cut.tree, tree);
         assert_eq!(cut.branch.as_deref(), Some("main"));
         assert!(cut.dirty);
         // A missing checkout resolves to absent, never an error.
-        assert!(resolve_desired_cut("tool", &temp.path().join("missing")).unwrap().is_none());
+        assert!(resolve_desired_cut("tool", &temp.path().join("missing"), None).unwrap().is_none());
+    }
+
+    #[test]
+    fn candidate_selection_builds_a_named_cut_without_touching_the_checkout() {
+        // A source repo whose HEAD sits on an occupied feature branch, exactly
+        // like an owner's protected frontend or a live research lane. An exact
+        // committed revision is nonetheless installable through the seam, and
+        // the working tree and current branch are left untouched.
+        let temp = tempfile::tempdir().unwrap();
+        let origin = temp.path().join("origin");
+        fs::create_dir_all(&origin).unwrap();
+        git(&origin, &["init", "-b", "main"]);
+        fs::write(origin.join("Cargo.toml"), "[package]\nname = \"tool\"\nversion = \"0.1.0\"\n").unwrap();
+        let accepted = commit_all(&origin, "accepted main cut");
+        let accepted_tree = git(&origin, &["rev-parse", "HEAD^{tree}"]);
+
+        let checkout = temp.path().join("Work/tool");
+        fs::create_dir_all(checkout.parent().unwrap()).unwrap();
+        git(temp.path(), &["clone", origin.to_str().unwrap(), checkout.to_str().unwrap()]);
+        // Move the checkout onto an occupied branch with uncommitted work.
+        git(&checkout, &["checkout", "-b", "owner/frontend-in-flight"]);
+        fs::write(checkout.join("frontend.rs"), "uncommitted UI work\n").unwrap();
+        let occupied_head = git(&checkout, &["rev-parse", "HEAD"]);
+
+        // Selecting the accepted revision resolves that exact cut, clean.
+        let cut = resolve_desired_cut("tool", &checkout, Some(&accepted)).unwrap().unwrap();
+        assert_eq!(cut.revision, accepted);
+        assert_eq!(cut.tree, accepted_tree);
+        assert!(!cut.dirty, "a named committed cut is clean regardless of the working tree");
+        assert!(cut.branch.as_deref().unwrap().contains("candidate"));
+
+        // The checkout's branch, HEAD and uncommitted file are all untouched.
+        assert_eq!(git(&checkout, &["rev-parse", "HEAD"]), occupied_head);
+        assert_eq!(git(&checkout, &["symbolic-ref", "--short", "HEAD"]), "owner/frontend-in-flight");
+        assert!(checkout.join("frontend.rs").exists());
+
+        // 'main' resolves the fetched origin/main; a non-exact ref is refused.
+        let by_main = resolve_desired_cut("tool", &checkout, Some("main")).unwrap().unwrap();
+        assert_eq!(by_main.revision, accepted);
+        assert!(resolve_desired_cut("tool", &checkout, Some("HEAD")).is_err(),
+            "a candidate must be 'main' or an exact commit id");
     }
 
     #[test]
