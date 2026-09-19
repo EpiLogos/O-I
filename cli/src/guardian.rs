@@ -45,8 +45,12 @@ pub const GUARDIAN_SKILL_SOURCES: &[(&str, &str)] = &[
 
 /// Sibling payload files a guardian Skill ships beside its SKILL.md, keyed by
 /// the same `source.path` scheme. Members without declared siblings project
-/// SKILL.md (and its receipt) exactly as before.
-pub const GUARDIAN_SKILL_PAYLOAD_FILES: &[(&str, &str)] = &[];
+/// SKILL.md (and its receipt) exactly as before. The `oi` router ships its
+/// claim-reception companion, so every packaged copy carries it.
+pub const GUARDIAN_SKILL_PAYLOAD_FILES: &[(&str, &str)] = &[(
+    "skills/oi/references/claim-reception.md",
+    include_str!("../../skills/oi/references/claim-reception.md"),
+)];
 
 /// Harness skill trees a personal ground projects the guardian set into.
 pub const GUARDIAN_HARNESS_SKILL_ROOTS: &[&str] = &[".claude/skills", ".agents/skills"];

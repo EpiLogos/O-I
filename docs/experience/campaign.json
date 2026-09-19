@@ -14,25 +14,43 @@
   "runtime_or_human_acceptance": false,
   "setup_contexts": ["fresh-ground", "existing-ground-reconcile", "developer-source", "existing-world-adoption", "reference-world-host", "harness-strap"],
   "setup_context_semantics": "Historical bootstrap/registration operation provenance only. O-I#268 supersedes these as an installation-modality or Context Frame taxonomy. Preserve old receipts under their original version.",
-  "composition_examples": ["ground-only", "existing-native-harness", "selected-praxis-and-knowledge", "commissioned-development", "nested-material-work", "full-desktop", "headless", "optional-QL"],
-  "composition_note": "Examples remain non-prescriptive activity/view labels for existing readers. O-I#268 is the current authorial composition lock: CF5 contains the other six forms; selected/effective/installed, experience surface, source sync and material connection remain separate. Story variants are detailed in INSTALLATION-VARIANTS.md. Neither this source nor a CF string proves runtime support.",
+  "composition_examples": ["ground-only", "existing-native-harness", "selected-praxis-and-knowledge", "commissioned-development", "nested-material-work", "full-desktop", "headless", "optional-QL", "hosted-library-learning"],
+  "composition_note": "Examples remain non-prescriptive activity/view labels for existing readers. O-I#268 with the owner's 18 September 2026 correction: CF5 contains six forms of engagement, not necessarily six local installs. CF7 5/0 is hosted Library/Expression learning. Selected/effective/installed, visitor versus host, experience surface, source sync and material connection remain separate. INSTALLATION-VARIANTS.md is the current source. Neither this source nor a CF string proves runtime support.",
   "installation_composition": {
     "authority": "https://github.com/EpiLogos/O-I/issues/268",
     "variant_source": "docs/experience/INSTALLATION-VARIANTS.md",
     "organisation": "1+6",
-    "containing_frame": {"id":"CF5","expression":"4.0/1–4.4/5","meaning":"The material nesting condition for every installation form, not a maximal installed-package tier.","management_software_mandatory":false},
+    "source_amendment": "2026-09-18: retain this existing planning key and frame identities; CF7 is hosted engagement, not a visitor installation. This is not an executable installer schema or a reinterpretation of historical receipts.",
+    "containing_frame": {"id":"CF5","expression":"4.0/1–4.4/5","meaning":"The material nesting condition for every engagement form, not a maximal installed-package tier; host and visitor material are separately observed.","management_software_mandatory":false},
     "forms": [
       {"id":"CF1","expression":"00/00","composition":"Desktop + Central + explicitly selected backing","normal_new_install_backing":["Central","Actuation","ai-kit"],"backing_selection_explicit":true,"story_ids":["AD01","AD02","AD08","AD09","UI01","UI02","UI03","UI04","UI05","UI06","UI07"],"required_observation":"Desktop is independently addable/removable; selected underlying useful work and source survive.","not_implied":"CF1 is not CF3; a chosen writing-only backing does not promise agent features."},
       {"id":"CF2","expression":"0/1","composition":"Central + Actuation","native_products":["Central","Actuation"],"not_required":["ai-kit","Factory","QL-MEF"],"story_ids":["AD02","AD04","AD08","WK01","WK02"],"required_observation":"Existing realised agent tool uses durable relevant ground and explicit bounds without hidden AIKit, Factory or QL installation."},
       {"id":"CF3","expression":"0/1/2","composition":"Central + Actuation + AIKit","native_products":["Central","Actuation","ai-kit"],"not_required":["Factory","QL-MEF"],"story_ids":["AD01","AD04","AD05","WK01","WK02","WK03","WK04","WK05","GV03","PX01","PX02","PX03"],"required_observation":"Relevant source and practice reach an actual ordinary task through the person's selected tool; desktop optional."},
       {"id":"CF4","expression":"0/1/2/3","composition":"Central + Actuation + AIKit + Factory","native_products":["Central","Actuation","ai-kit","Factory"],"not_required":["QL-MEF"],"story_ids":["AD08","AD09","DV01","DV02","DV03","DV04","DV05","DV06","DV07","DV08","WK04","WK05"],"required_observation":"Actual coordinated development coexists with ordinary sessions; Factory presence does not commission every conversation."},
       {"id":"CF6","expression":"4.5/0","composition":"Central + minimal Workcell client/connectivity to a separately realised world","native_products":["Central","Workcell-client"],"not_required_locally":["Actuation","ai-kit","Factory","QL-MEF"],"story_ids":["AD06","AD08","AD09","MC02","MC03","MC05","MC06","UI02","UI07"],"required_observation":"An authorised remote activity/service is reachable with private source/access boundaries; remote software is not reported as local installation."},
-      {"id":"CF7","expression":"5/0","composition":"Central + QL with useful learning/exploration material","native_products":["Central","QL-MEF"],"not_required":["Actuation","ai-kit","Factory"],"story_ids":["AD02","AD08","AD09"],"required_observation":"A supported native QL learning/exploration activity works without agent tutoring. Rich Epii stories require their actual separately selected backing.","optional_richer_source":"docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md in EpiLogos/QL-MEF"}
+      {"id":"CF7","expression":"5/0","composition":"Hosted O:I Web Library + accepted Expression renderer + published source-bound corpus/edition","entry_kind":"hosted-browser","requires_local_install":false,"native_products":[],"native_products_scope":"visitor-local required O:I packages, not the host's software composition","not_required":["Central","Actuation","ai-kit","Factory","QL-MEF","Workcell","O-I Desktop"],"visitor_agent_or_api_key_required":false,"live_shared_session_required_for_reading":false,"default_collection":"owner-curated published Epi-Logos corpus in the existing shared Library, not another catalogue or the limit of O:I Web","story_ids":["AD08","KN01","KN02","KN07","KN09","UI01","UI02","UI03","UI05"],"required_observation":"Clean browser with no local O:I installation: Library → real source-bound subject → live Expression → declared relation/source → same reading position; deep-link reload and truthful optional-service/renderer loss. Published corpus/source/projection and visitor state retain distinct identities.","optional_richer_source":"docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md in EpiLogos/QL-MEF","implementation_followup":"O-I#268 removes mandatory learner-install assumptions in native catalogue/setup/help through reviewed compatibility changes; #375/#366 and QL-MEF#201 supply the same hosted/app corpus consumer. No runtime migration is claimed by this planning record."}
     ],
     "cross_form_branches":["add-remove-desktop-without-recreating-work","change-capability-composition-with-pending-work","software-update-distinct-from-source-sync-and-reconnect","private-two-machine-continuation","owned-teardown-with-residue-account","historical-receipt-version-preserved"],
     "all_products_with_or_without_desktop":"Supported inside CF5; no eighth frame and no CF5-by-package-count derivation.",
-    "variant_rule":"A story/form link requests applicability review and concrete episode binding, not every action in that family being supported by the minimum composition. Excluded local products must actually be absent in minimum-form proof.",
-    "readiness":"specified; native composition implementation and installed proof are separate"
+    "variant_rule":"A story/form link requests applicability review and concrete episode binding, not every action in that family being supported by the minimum composition. Excluded local products must actually be absent in installed-minimum proof. CF7 tests a clean visitor browser, not a fictitious learner package install/uninstall; host administration and optional personal/shared participation are separate.",
+    "readiness":"specified; native composition implementation and actual hosted/installed proof are separate"
+  },
+  "sandbox_proving": {
+    "source": "docs/experience/LOCAL-CAMPAIGN.md#21-omarchy-sandbox-proving--available-development-material",
+    "availability_standing": "owner-reported-available",
+    "reported_on": "2026-09-18",
+    "host_role": "Omarchy development/reference host with bounded disposable test worlds",
+    "mac_role": "installed acceptance/ordinary-use world; not a disposable test target",
+    "provider": null,
+    "provider_readiness": "verify actual current native offers, isolation and lifecycle in C1; this source pass did not inspect the host",
+    "new_runtime_or_campaign": false,
+    "foundation_policy": "Consume the existing Day/NOW foundation return before broad Factory-dependent fan-out; continue authorised independent work and foundation-building tests. Do not add a premature H gate.",
+    "episode_binding": ["existing UX story and full parent obligations", "native capability/Action and expected/forbidden effects", "source/build/install/running/practice cut", "provider/sandbox/image generation and actual OS/hardware scope", "World/Project/task/child-NOW/session/Run refs where real", "writable resources/network/credentials/authority and finite budgets", "evidence retained outside guest deletion", "independent replay/holdout and owned cleanup"],
+    "parallelism": "Disjoint writable worlds and supported guest desktops may run concurrently within measured capacity; shared host services, data/indexes, Git targets, installations and desktop focus are serialized.",
+    "fixture_rule": "Preserve original UX/source expectation and failed episode; source-backed fixture correction and native repair require independent replay. No expected-answer coaching, weakened assertions or silent scope reduction.",
+    "evidence_scope": "Real automation can supply D/C/P and applicable M at its observed scope; guest isolation is not independent physical hardware, macOS packaging or human H/EX.",
+    "execution_evidence": [],
+    "human_assessment": null
   },
   "families": [
     {"id":"AD","ids":["AD01","AD02","AD03","AD04","AD05","AD06","AD07","AD08","AD09"],"title":"Add only what helps my existing setup","owners":["O-I","Central","Actuation","ai-kit","Workcell"],"proof_refs":["O-I#65:A","O-I#93","O-I#173","O-I#268","O-I#192:historical-provenance","O-I:bootstrap/loading"],"source_refs":["docs/positions/FOUNDING-POSITIONS.md","docs/INSTALL.md","docs/EXISTING-WORLD-ADOPTION.md","docs/experience/INSTALLATION-VARIANTS.md","https://github.com/EpiLogos/O-I/issues/268"]},
@@ -64,7 +82,7 @@
     "practice_path":"docs/kernel-rebuild/AGENT-PRACTICE-AND-BOOTSTRAP.md",
     "standing_path":"docs/kernel-rebuild/ux-publication-standing.json",
     "known_ids":["UX01","UX02","UX03","UX04","UX05","UX06","UX07","UX08","UX09","UX10","UX11","UX12"],
-    "policy":"Include the complete selected source trace and all linked original acceptance/matrix fields. Preserve additional rows and source standing; never infer coverage from this snapshot count. CF7 non-agent learning is not the complete richer Epii instrument.",
+    "policy":"Include the complete selected source trace and all linked original acceptance/matrix fields. Preserve additional rows and source standing; never infer coverage from this snapshot count. CF7 hosted learning is not the complete richer Epii instrument and does not imply a visitor installation.",
     "H_ratification_at_inspection":"pending",
     "human_experience_validated_at_inspection":false,
     "host_extensions":["docs/cradle/03-UX-STATES.md#L","docs/cradle/04-VERIFICATION.md#8"]
