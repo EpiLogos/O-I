@@ -4,6 +4,9 @@
 /* Compact controls retain both their icon and explicit accessible name. */
 @media(max-width:700px){.library-host .reader-library>.library-icon,.library-host .read-source-action>.library-icon,.library-host .return-field>.library-icon{display:inline-flex}}
 
+/* The editorial column may be taller than two tile rows. Its height must not
+   stretch the independent 3x2 product grid beyond the authored square form. */
+.shell .sec--offices .office-grid{align-self:start}
 /* These six tiles sit in a narrow column even on a wide display. Viewport-sized
    type made the new authored descriptions expand them beyond their 1:1 form.
    Size the typography to the actual tile; retain every word and the square. */
