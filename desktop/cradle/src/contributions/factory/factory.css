@@ -115,3 +115,20 @@
 .factory-run-map-relations li small { flex: none; color: var(--oi-muted-2); }
 .factory-run-map-empty { margin: 12px; }
 @media (max-width: 720px) { .factory-run-map { margin-inline: 16px; } .factory-run-map-layout { grid-template-columns: 1fr; } .factory-run-map-nodes { border-right: 0; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); } }
+
+/* Run-in-Expressions: the developmental run presentation. Structure first —
+   lanes, edges, barriers and verifications are labeled content, never
+   decorative particles. */
+.factory-run-expression{display:flex;flex-direction:column;gap:12px;font-size:13px}
+.factory-run-expression__header h3{margin:0;font-size:15px}
+.factory-run-expression__frontier,.factory-run-expression__basis{margin:2px 0;opacity:.75}
+.factory-run-expression__lane{display:flex;gap:8px;align-items:baseline;margin:4px 0}
+.factory-run-expression__lane-label{min-width:88px;opacity:.6;font-variant:all-small-caps}
+.factory-run-expression__node{display:flex;gap:6px;flex-wrap:wrap;align-items:baseline}
+.factory-run-expression__node code{opacity:.55;font-size:11px}
+.factory-run-expression__node-state{opacity:.6;font-style:italic}
+.factory-run-expression__edges,.factory-run-expression__barriers{display:flex;flex-direction:column;gap:2px;margin-top:6px;opacity:.7;font-size:12px}
+.factory-run-expression__attempt{border-left:2px solid currentColor;padding-left:8px;margin:6px 0;opacity:.9}
+.factory-run-expression__verifications{margin:2px 0 0;padding-left:16px}
+.factory-run-expression__actions-note{opacity:.6;margin:2px 0}
+.factory-run-expression__return{border-top:1px solid color-mix(in srgb,currentColor 20%,transparent);padding-top:8px}
