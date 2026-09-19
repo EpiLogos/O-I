@@ -33,7 +33,6 @@ const ExploreSurface=lazy(()=>import("../explore/ExploreSurface").then((module)=
 const TerminalSurface=lazy(()=>import("../terminal/TerminalSurface").then((module)=>({default:module.TerminalSurface})));
 const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=>({default:module.BrowserSurface})));
 const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((module)=>({default:module.KnowledgeSurface})));
-const FactoryCentre=lazy(()=>import("../contributions/factory/FactoryCentre").then((module)=>({default:module.FactoryCentre})));
 // The mode centre surfaces (workspace/mode.ts) are ordinary bindings in this
 // pane system; each loads with its mode, never at startup. Their bodies are
 // declared ONCE by the shell's retention layer (surface/retention.tsx) and
@@ -442,7 +441,6 @@ export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
 function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
-  factoryCentre, factoryTasks,
 }: {
   binding: import("./types").SurfaceBinding;
   onView:WorkbenchProps["onView"];
@@ -458,10 +456,12 @@ function SurfaceBodyImpl({
    * prop stays on the seam for the frame's composition. */
   subject?: WorkbenchProps["subject"];
 }) {
-  // Retained centre kinds (expressions/techne/epi-logos/system —
+  // Retained centre kinds (expressions/techne/epi-logos/system/factory —
   // surface/retention.tsx) present through the shell's ONE declared body:
   // the outlet adopts it here, and a mode switch parks it suspended rather
-  // than unmounting it.
+  // than unmounting it. Factory's body composes the frame-built chat node —
+  // the shell's declarer mounts that one body (DesktopShell passes
+  // CradleFrame.factoryCentre down), so there is no second direct arm here.
   if (isRetainedCentreKind(binding.kind)) return <CentreOutlet binding={binding}/>;
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
@@ -471,15 +471,6 @@ function SurfaceBodyImpl({
   if (binding.kind === "blank") return <FreshSurface binding={binding} />;
   if (binding.kind === "browser") return <BrowserSurface binding={binding} />;
   if (binding.kind === "file") return <FileSurface key={binding.id} binding={binding}/>;
-  // Factory's centre home (handoff §11, 2026-09-18): Desk whole-Run-first,
-  // Tasks the full-size chat — one shared presentation, wherever the binding
-  // renders. The imported development console renders only behind the dev
-  // debug disclosure inside FactoryCentre — never as the ordinary experience.
-  if (binding.kind === "factory") return (
-    <Suspense fallback={null}>
-      <FactoryCentre key={binding.id} chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>
-    </Suspense>
-  );
   // The Expressions centre IS the application (owner ruling 2026-09-19):
   // the Point-Cloud-Demo workspace hosted as-is, full-screen, its own UI and
   // Library — served through the owner's oi-material:// file seam under

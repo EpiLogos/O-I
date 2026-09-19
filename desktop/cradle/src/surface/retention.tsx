@@ -22,11 +22,12 @@
  *
  * Per surface KIND (the tier law): engines and hosted applications retain —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
- * `system`. Factory's centre does NOT retain here: its Desk/Tasks body
- * composes the frame-built chat node (`CradleFrame.factoryCentre`), which
- * only the frame can supply — that seam is the named integration dependency
- * for this tier; its conversation state already rides the shared session
- * store, so releasing it costs a re-read, not a loss.
+ * `system`, and `factory`. Factory's Desk/Tasks body composes the frame-built
+ * chat node (`CradleFrame.factoryCentre`), so the frame passes that node —
+ * with its Desk/Tasks context — down through the shell (DesktopShell →
+ * ModeCentreRetention) and the declarer mounts the ONE FactoryCentre body
+ * with it: the park holds the same node the stage's and panes' outlets
+ * adopt, exactly like the other centres.
  *
  * Retention keys on the workspace: the retained set is derived only from the
  * ACTIVE workspace's trees, so switching workspaces unmounts every declarer
@@ -46,10 +47,22 @@ const PointCloudHost = lazy(() => import("../expressions/PointCloudHost").then((
 const TechneSurface = lazy(() => import("../techne/TechneSurface").then((module) => ({default: module.TechneSurface})));
 const EpiLogosSurface = lazy(() => import("../epilogos/EpiLogosSurface").then((module) => ({default: module.EpiLogosSurface})));
 const SystemPanel = lazy(() => import("../workspace/SystemPanel").then((module) => ({default: module.SystemPanel})));
+const FactoryCentre = lazy(() => import("../contributions/factory/FactoryCentre").then((module) => ({default: module.FactoryCentre})));
 
 /** The centre kinds this tier retains (see the module law above). */
-export const RETAINED_CENTRE_KINDS = new Set(["expressions", "techne", "epi-logos", "system"]);
+export const RETAINED_CENTRE_KINDS = new Set(["expressions", "techne", "epi-logos", "system", "factory"]);
 export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(kind);
+
+/** Factory's Desk/Tasks context (CradleFrame.factoryCentreProps): the
+ * browsed project, the bound conversation, the one task-open path and the
+ * message sink — the same shape Workbench carries; declared here so the
+ * shell can pass it to the declarer without importing the workbench. */
+export interface FactoryCentreContext {
+  project?: string;
+  accompanying?: {ref: string; project: string; space: string};
+  onOpenTask?: (row: import("../encounter/EncounterList").EncounterRow) => void | Promise<void>;
+  onMessage?: (message: string) => void;
+}
 
 // ---------------------------------------------------------------------------
 // The park — one hidden layer per shell. `ModeCentreRetention` sets it on
@@ -136,19 +149,20 @@ function retainedCentres(workspace: Workspace, activeMode: WorkspaceMode): Retai
 
 interface WorkbenchSubject { ref?: string; kind?: string; title: string; project?: string }
 
-function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject): ReactNode {
+function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject, factoryCentre?: ReactNode, factoryTasks?: FactoryCentreContext): ReactNode {
   // The centre arms of the workbench's own SurfaceBody, mirrored here with
   // the props the shell itself holds (the frame passes nothing richer into
-  // the stage than these). Factory deliberately has no arm — see the module
-  // law.
+  // the stage than these). Factory's arm composes the frame-built chat node
+  // the shell received — the declarer mounts the one body with it.
   if (binding.kind === "expressions") return <PointCloudHost/>;
   if (binding.kind === "techne") return <TechneSurface binding={binding} subject={subject}/>;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
+  if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>;
   return null;
 }
 
-function RetainedCentre({binding, subject}: {binding: SurfaceBinding; subject?: WorkbenchSubject}) {
+function RetainedCentre({binding, subject, factoryCentre, factoryTasks}: {binding: SurfaceBinding; subject?: WorkbenchSubject; factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext}) {
   const [container] = useState(() => {
     const element = document.createElement("div");
     element.className = "retained-centre-host";
@@ -165,17 +179,18 @@ function RetainedCentre({binding, subject}: {binding: SurfaceBinding; subject?: 
       container.remove();
     };
   }, [binding.id, container]);
-  return createPortal(<Suspense fallback={null}>{retainedBody(binding, subject)}</Suspense>, container);
+  return createPortal(<Suspense fallback={null}>{retainedBody(binding, subject, factoryCentre, factoryTasks)}</Suspense>, container);
 }
 
 /** The shell's retention layer — DesktopShell renders this once beside the
  * centre region's presenting tree. It owns the hidden park and declares every
- * retained centre of the ACTIVE workspace. */
-export function ModeCentreRetention({workspace, mode}: {workspace: Workspace; mode: WorkspaceMode}) {
+ * retained centre of the ACTIVE workspace. Factory's declarer receives the
+ * frame-built chat node and its context through the shell. */
+export function ModeCentreRetention({workspace, mode, factoryCentre, factoryTasks}: {workspace: Workspace; mode: WorkspaceMode; factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext}) {
   const centres = useMemo(() => retainedCentres(workspace, mode), [workspace, mode]);
   const subject = workspace.context?.subject;
   return <div className="mode-centre-retention" ref={node => { shellPark.current = node; }} aria-hidden="true">
-    {centres.map(({binding}) => <RetainedCentre key={`${workspace.id}:${binding.id}`} binding={binding} subject={subject}/>)}
+    {centres.map(({binding}) => <RetainedCentre key={`${workspace.id}:${binding.id}`} binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks}/>)}
   </div>;
 }
 

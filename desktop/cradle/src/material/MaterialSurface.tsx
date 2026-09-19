@@ -14,6 +14,7 @@ import {EditorButton,EditorFrame} from "../editor/EditorChrome";
 // @ts-ignore -- Personal Web ql-doc parser is the canonical JS document contract.
 import {readPage} from "../personal/page.mjs";
 import {PageExpression,type PageExpressionHostedState} from "../personal/PageExpression";
+import {Glyph} from "../workspace/Glyph";
 
 /** One material path segment, percent-encoded whole (mirrors
  * `ctrl/src/files.rs::escape` closely enough for URL transport — the
@@ -149,12 +150,9 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   const zoomable = ["html","markdown","image"].includes(format);
   const tools = view === "rendered" ? <div className="material-tools">
     {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{[.5,.75,1,1.25,1.5,2].map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
-    <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={pending} onClick={()=>setGeneration(value=>value+1)}>↻</button>
+    <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={pending} onClick={()=>setGeneration(value=>value+1)}><Glyph name="refresh" size={12}/></button>
   </div> : null;
   if (!location) return <p role="alert" className="source-note">The saved file location is unavailable</p>;
-  if (view === "source") {
-    return <FileSurface binding={binding} forceSource leadingTools={<MaterialToggle view={view} onChange={setView}/>}/>;
-  }
 
   const resolveAsset = (relative: string) => materialUrl(transport, location, relative) ?? "";
   const baseUrl = materialUrl(transport, location);
@@ -175,6 +173,15 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     frame.contentWindow?.postMessage({type:"oi:page-expression-host",token,generation,live:hostedExpression.live,page:{document_id:hostedExpression.documentId,revision:hostedExpression.documentRevision},expression:{ref:hostedExpression.expressionRef,revision:hostedExpression.expressionRevision}},"*");
     return()=>{disposed=true;window.removeEventListener("message",receive);};
   },[format,htmlFrameLoaded,personalPage,textRevision,hostedExpression,generation,binding.ref,binding.id,transport.kind,baseUrl]);
+
+  // The source view mounts the real FileSurface editor — AFTER every hook,
+  // so toggling views never changes this component's hook count. (The early
+  // return once stood above the hooks: the first Source toggle crashed the
+  // subtree on the hook mismatch and the error boundary remounted it
+  // straight back into the rendered view — the toggle could never stick.)
+  if (view === "source") {
+    return <FileSurface binding={binding} forceSource leadingTools={<MaterialToggle view={view} onChange={setView}/>}/>;
+  }
 
   return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}

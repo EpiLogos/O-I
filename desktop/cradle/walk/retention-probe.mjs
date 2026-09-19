@@ -8,6 +8,9 @@
 //      tree-level indicator, never a per-node affordance;
 //   C. mode-centre tier — the expressions centre's iframe is the SAME DOM
 //      node across mode switches away and back (parked, not reloaded);
+//   C2. mode-centre tier, factory — the frame-built centre (the chat node
+//      the frame passes down through the shell) parks identically: the SAME
+//      main.factory-centre node returns after a mode round trip;
 //   D. book quarantine — one corrupted workspace record empties and names
 //      itself in the footer while the book still loads.
 import {chromium} from 'playwright';
@@ -145,6 +148,25 @@ await page.waitForTimeout(1200);
 const returnedCentre=await page.evaluate(()=>{const f=window.__exprFrame;const visible=f&&f.getClientRects().length>0;return {same:f===document.querySelector('.pcd-host-frame'),inStage:!!f?.closest('.mode-stage'),visible,src:f?.getAttribute('src')};});
 check(returnedCentre.same&&returnedCentre.inStage&&returnedCentre.visible,'returning to the mode presents the SAME iframe in the stage — the centre did not rebuild',JSON.stringify({same:returnedCentre.same,inStage:returnedCentre.inStage,visible:returnedCentre.visible}));
 check(returnedCentre.src===frameBefore.src,'the centre never reloaded across the round trip');
+
+// --- C2. mode-centre tier, factory: the frame-built centre parks too -----
+// Factory's Desk/Tasks body composes the frame-built chat node
+// (CradleFrame.factoryCentre) — the frame passes it down through the shell
+// and the retention declarer mounts the ONE FactoryCentre body with it, so
+// the park law covers Factory exactly like the other centres.
+await page.locator('.world-mode-strip [data-mode="factory"]').click();
+await page.waitForSelector('.mode-stage main.factory-centre',{timeout:30000});
+await page.waitForTimeout(1500);
+const factoryBefore=await page.evaluate(()=>{const el=document.querySelector('.mode-stage main.factory-centre');window.__factoryCentre=el;return {view:el?.getAttribute('data-centre-view'),label:el?.getAttribute('aria-label'),parked:!!el?.closest('.mode-centre-retention')};});
+check(factoryBefore.view&&factoryBefore.label==='Factory','the factory centre mounts its Desk body in the stage',JSON.stringify(factoryBefore));
+await page.locator('.world-mode-strip [data-mode="base"]').click();
+await page.waitForTimeout(1200);
+const factoryParked=await page.evaluate(()=>{const el=window.__factoryCentre;return {connected:el?.isConnected??false,parked:!!el?.closest('.mode-centre-retention'),inStage:!!el?.closest('.mode-stage'),view:el?.getAttribute('data-centre-view')};});
+check(factoryParked.connected&&factoryParked.parked&&!factoryParked.inStage,'switching modes parks the SAME factory centre node in the hidden retention layer — the frame-built body never unmounts',JSON.stringify(factoryParked));
+await page.locator('.world-mode-strip [data-mode="factory"]').click();
+await page.waitForTimeout(1200);
+const factoryBack=await page.evaluate(()=>{const el=window.__factoryCentre;const visible=!!el&&el.getClientRects().length>0;return {same:el===document.querySelector('.mode-stage main.factory-centre'),inStage:!!el?.closest('.mode-stage'),visible,view:el?.getAttribute('data-centre-view')};});
+check(factoryBack.same&&factoryBack.inStage&&factoryBack.visible,'returning to Factory presents the SAME centre node in the stage — the chat-bearing body did not rebuild',JSON.stringify(factoryBack));
 
 // --- D. book quarantine: one broken record empties and names itself ------
 const quarantineSeed={

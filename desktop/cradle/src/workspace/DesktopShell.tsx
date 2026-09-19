@@ -8,7 +8,7 @@ import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { WorldModeStrip } from "../surfaces/navigator/WorldNavigator";
 import { MODE_CURATION, TREE_MODES, type TabPresentation, type WorkspaceMode } from "./mode";
-import { ModeCentreRetention } from "../surface/retention";
+import { ModeCentreRetention, type FactoryCentreContext } from "../surface/retention";
 
 type Side = "left" | "right";
 const FOOTER_KEY="oi-shell-footer.v2";
@@ -42,6 +42,12 @@ interface Props {
   /** Epi-Logos: a whole-app world state, disclosed and toggled here in the
    * footer (owner ruling 2026-09-18) — never a mode entry or a page. */
   epiLogos?: boolean; onEpiLogosToggle?: () => void;
+  /** Factory's centre retains across mode switches with the other centres
+   * (surface/retention.tsx): the frame-built chat node
+   * (CradleFrame.factoryCentre) and its Desk/Tasks context ride down here so
+   * the retention declarer mounts the ONE FactoryCentre body the stage's and
+   * panes' outlets adopt — the park holds that same node. */
+  factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext;
   onRecoverAvailable?: () => void; onStartFresh?: () => void; /** One click reloads the workspace (owner ruling 2026-09-19) — the message row and its dismissal both route here while a load failure stands. */ onReload?: () => void;
   navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
 }
@@ -305,7 +311,7 @@ export function DesktopShell(p: Props) {
         * layer beside the presenting tree, so a mode switch parks those
         * bodies suspended instead of unmounting them. The layer renders
         * nothing visible and owns no layout of its own. */}
-      <ModeCentreRetention workspace={p.workspace} mode={p.mode}/>
+      <ModeCentreRetention workspace={p.workspace} mode={p.mode} factoryCentre={p.factoryCentre} factoryTasks={p.factoryTasks}/>
       {p.children}
       </main>
       <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
@@ -334,6 +340,15 @@ export function DesktopShell(p: Props) {
             <Glyph name="down" size={9}/>
           </div>
           <small className="arrangement-state">{l.maximizedGroupId ? "Focused view" : groupCount === 0 ? "Empty workspace" : `${groupCount} group${groupCount === 1 ? "" : "s"}`}</small>
+          {/* The arrangement actions (Workbench.ArrangementActions — split,
+            * tile, detach, maximize/restore, window actions): the frame
+            * composes them and this row is their home — the pane tools defer
+            * here ("maximize stays with the arrangement actions",
+            * Workbench GroupPane), the keyboard paths (⌘D/⌘⇧D/⌘⌥T/⌘⌥Enter)
+            * name themselves in the tooltips, and `.canvas-arrangement >
+            * button` is this row's own styling for them. Declared-but-never-
+            * rendered since the shell landed; rendered now, deliberately. */}
+          {p.arrangementActions}
           <span className="canvas-arrangement-spacer"/>
           <details className="desktop-menu"><summary aria-label="Workspace actions"><Glyph name="more"/></summary><div className="oi-menu">
             <button className="oi-menu-item" aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>

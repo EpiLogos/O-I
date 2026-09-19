@@ -14,9 +14,28 @@ export async function setup(args) {
 export default async function run({page,baseUrl,check,shot,channel,provision:p}) {
   await page.goto(baseUrl);await channel('info');
   const nav=page.getByRole('complementary',{name:'World navigator'});
+  // The hover-reveal law's approach (owner ruling 2026-09-18): a row at rest
+  // shows only its name — its chats/files/wiki toggles belong to the row's
+  // hover (visibility, not just opacity, so they stay out of the hit loop).
+  // A cold click can never land; the scenario approaches the row like a
+  // person does. Async listings shift rows while they land, so the approach
+  // retries until the toggle actually reveals, then acts at once while the
+  // pointer holds the row.
+  const revealToggle=async (row,toggle)=>{
+    for(let attempt=0;attempt<20;attempt++){
+      await row.hover();
+      try{await toggle.waitFor({state:'visible',timeout:250});return true;}
+      catch{/* the row moved under the pointer; approach again */}
+    }
+    return false;
+  };
+  const projectRow=path=>nav.locator(`[data-project-path="${path}"]`);
+  const centralRow=page.locator('.central-mode-row').first();
   await nav.locator('[data-project-path="Work/Editor"]').click();
   if(await page.getByRole('button',{name:'Editor: files',exact:true}).getAttribute('aria-pressed') !== 'true') await page.getByRole('button',{name:'Editor: files',exact:true}).click();
-  check(await nav.getByRole('button',{name:'Other: chats and tasks',exact:true}).getAttribute('aria-pressed')==='true','An unvisited project defaults to chats and tasks');
+  const otherChats=nav.getByRole('button',{name:'Other: chats and tasks',exact:true});
+  check(await revealToggle(projectRow('Work/Other'),otherChats),'Approaching a row reveals its mode toggles (the hover-reveal law)');
+  check(await otherChats.getAttribute('aria-pressed')===null,'An unvisited project keeps its mode quiet — no pressed default');
   check(await page.locator('.desktop-bar').count()===0,'No web-rendered app menu or extra topbar row');
   check(await page.getByRole('button',{name:/^(Toggle|Collapse) left region$/}).count()===1,'Visible chrome offers exactly one left-panel control');
   const authored=p.sources[0];
@@ -45,7 +64,12 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.getByRole('region',{name:'Central file history'}).getByText('No changes recorded by Central.',{exact:true}).waitFor();
   check(true,'Ordinary-file History renders its actual empty native history, never source context');
   check(await agentLayer.locator('.source-history').count()===0,'Previous subject history is absent for an ordinary file');
-  await page.getByRole('button',{name:'Collapse right region',exact:true}).click();
+  // FND-02: the accompanying agent layer owns the right region, so the legacy
+  // "Collapse right region" row is gone — the topbar's one control toggles it.
+  await page.getByRole('button',{name:'Toggle right region',exact:true}).click();
+  // The pointer left the row (the collapse click above); approach again
+  // before the mode toggle is reachable.
+  await revealToggle(projectRow('Work/Other'),nav.getByRole('button',{name:'Other: chats and tasks',exact:true}));
   await nav.getByRole('button',{name:'Other: chats and tasks',exact:true}).click();
   check(await readingText()===p.content,'Project mode changes retain the active surface');
   await nav.getByRole('button',{name:'Other: files',exact:true}).click();
@@ -62,6 +86,11 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await readingText()===p.content,'Close and reopen revalidate the same native location');
   await page.reload();await channel('info');await reading.waitFor();
   check(await readingText()===p.content,'Saved file bindings restore through Central');
+  // A reload also resets the pointer: approach the row before reading its
+  // mode toggle (the hover-reveal law). The restored selection itself lands
+  // asynchronously — wait for the restored mode to light before reading it.
+  await revealToggle(projectRow('Work/Other'),nav.getByRole('button',{name:'Other: files',exact:true}));
+  await page.waitForFunction(()=>document.querySelector('button[aria-label="Other: files"]')?.getAttribute('aria-pressed')==='true',null,{timeout:15000});
   check(await nav.getByRole('button',{name:'Other: files',exact:true}).getAttribute('aria-pressed')==='true','Workspace restore retains the directory Files mode without minting a ProjectRef');
   writeFileSync(join(p.root,p.path),'External native update.\n');
   // The file surface exposes no refresh control: a file is re-read by opening
@@ -84,6 +113,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(await page.locator('.native-file-surface').getByRole('button',{name:/^Save/}).count()===0,
     'The retained last reading offers no way to write over a file that is not there');
   check(readFileSync(join(p.projectRoot,authored.binding.path),'utf8')===p.originals.get(authored.binding.path),'Browsing never writes the dirty authored draft to disk');
+  // The Central row's mode toggles are hover-revealed like every other row's:
+  // approach the row, then choose Files.
+  await revealToggle(centralRow,nav.getByRole('button',{name:'Central: files',exact:true}));
   await nav.getByRole('button',{name:'Central: files',exact:true}).click();
   await nav.locator('[data-file-path="root-note.md"]').click();
   // .md is a material kind (src/material): it opens on the rendered iframe
