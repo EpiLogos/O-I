@@ -34,6 +34,16 @@ with sync_playwright() as p:
  for card in page.locator('.expression-card').all():card.scroll_into_view_if_needed();page.wait_for_timeout(30)
  page.evaluate('scrollTo(0,0)');page.wait_for_timeout(100)
  page.screenshot(path=str(OUT/'library-complete-covers.png'),full_page=True)
- (OUT/'regressions.json').write_text(json.dumps({'passed':3,'failed':0,'checks':['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named'],'standing':'Controlled browser/pixel evidence, not owner visual acceptance'},indent=2))
+ # The band's original multiply treatment erased a successfully loaded poster
+ # against its black ground. Pixel evidence must reject that false success.
+ page.goto(BASE)
+ band=page.locator('.band');band.scroll_into_view_if_needed()
+ expect(band.locator('.vf__poster')).not_to_have_js_property('naturalWidth',0)
+ image=Image.open(BytesIO(band.screenshot(path=str(OUT/'home-video-band.png')))).convert('RGB')
+ w,h=image.size
+ pixels=list(image.crop((int(w*.25),int(h*.12),int(w*.75),int(h*.38))).getdata())
+ assert sum(max(rgb)>40 for rgb in pixels)>len(pixels)*.01, 'The loaded band media is visually erased against the dark ground'
+ checks=['Direct links pin exact edition and Scene','Paused Scene change renders every native formation','Mobile Library/source/Return icons remain visible and named','Video-band media remains visible on its actual dark ground']
+ (OUT/'regressions.json').write_text(json.dumps({'passed':len(checks),'failed':0,'checks':checks,'standing':'Controlled browser/pixel evidence, not owner visual acceptance'},indent=2))
  browser.close()
-print('PASS 3 returned-reality regressions')
+print('PASS 4 returned-reality regressions')
