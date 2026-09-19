@@ -26,7 +26,19 @@ desktop/cradle/src/nara/
                          constitution→declaration reduction and QL dialogical floor satisfaction
     NaraSurface.tsx      the summoned "nara" surface: capability-adaptive presence, push-to-talk,
                          interrupt, reconnect, transcript expansion, authority proofs, Epii panel
+
+```text
+desktop/cradle/src/dictation/        the agent chat's LOCAL DICTATION — a separate desktop input aid,
+    store.ts             the loopback endpoint stipulation (oi-cradle.dictation.v1; documented default
+                         http://127.0.0.1:8080/inference; non-loopback refused by name)
+    wav.ts               16 kHz mono PCM16 WAV encode + linear resample
+    client.ts            probe-before-capture, one transcription attempt, named refusal mapping
+    copy.ts              the rendered words, asserted verbatim by conformance and the walk
 ```
+
+Dictation is listed here, not because it is Nara — the section below exists
+to keep the two apart — but because this contract is where the desktop's
+speech surfaces are named, and the separation IS the contract.
 
 ## The laws this lane keeps
 
@@ -133,6 +145,76 @@ the floor originally required the `tool-access` mechanism with strict
 equality, which no host-pushed composition could satisfy; the requirement was
 recast from mechanism to capability, contract version unchanged.)
 
+## Dictation is not Nara voice (2026-09-19, owner-commissioned separation)
+
+The desktop now carries TWO speech inputs, and keeping them distinct is the
+law, not a naming preference:
+
+```text
+agent-chat microphone   DICTATION (LOCAL) — a generic voice-INPUT aid, owned by the
+                        desktop. src/dictation/. Click to record, click to
+                        transcribe; the transcript lands in the AIKit-owned
+                        shared draft as EDITABLE text. It never auto-sends.
+Nara surface            NARA VOICE — its own dialogue MODE. Push-to-talk on a
+                        constituted speech body, the Actuation speech
+                        constitution, the QL voice-body floor, interrupts,
+                        ExpressiveAct choreography. src/nara/. Untouched by
+                        dictation.
+```
+
+**Bring your own.** Nara voice requires the person to bring one of:
+
+- **their own provider credential** — bind it and the gated body renders as
+  the OPTION state (the condition named verbatim from the disclosure); or
+- **their own adapter** — AIKit's swap path: a speech body is constituted or
+  swapped without changing Nara. The machine's local speech stack
+  (`~/.local-speech`: whisper.cpp on `127.0.0.1:8080`, Kokoro on
+  `127.0.0.1:8880`) is the worked EXAMPLE of a body the user brought, not a
+  built-in dependency of this surface.
+
+The agent-chat mic is **not** a piece of that story: it is local dictation
+against the stipulated loopback STT endpoint, an input aid on the same
+footing as the keyboard. No provider name is hardcoded anywhere in either
+path; the only endpoint dictation knows is the one the stipulation record
+names, default `http://127.0.0.1:8080/inference` (this whisper.cpp build
+serves the OpenAI-shaped multipart call on `/inference`, not
+`/v1/audio/transcriptions`).
+
+**The SDK check (owner question):** the agent invocation path — the AIKit
+encounter owner's disclosed actions (`start`, `open`, `read`, `view`,
+`draft`, `prompt`, `cancel`, `status`, `permission`, `send`, `send-group`,
+`delivery`, `reconnect`) — has NO voice-input hook on this cut; audio is not
+an encounter currency, and the ACP wire carries no audio channel here.
+Dictation therefore rides the door typed text already uses: the transcript
+lands through the owner's `draft` action and leaves through the person's own
+`prompt` send. The new seam is desktop-local input surface
+(`src/dictation/`); no owner operation was added, renamed, or bypassed.
+
+**The lawful home of the STT endpoint.** Not a settings-page product
+setting: the settings page projects product-owned descriptors
+(docs/cradle/06-SYSTEM-SETTINGS.md L4/L6) and the composition plane's
+setting refs belong to real product owners (docs/cradle/09-CONFIGURATION-PLANE.md)
+— no product owns a local speech stack, and inventing an owner would
+misattribute one. Dictation is desktop-owned input matter, the same class as
+the Visuals layer ("the appearance and expression layer owned by the desktop
+itself"), so the stipulation is a versioned, validated localStorage record
+(`oi-cradle.dictation.v1`, `src/dictation/store.ts`) with the documented
+default above, field-by-field fallback, and a named refusal for
+non-loopback endpoints (dictation is LOCAL; a remote endpoint is a different
+product and this record refuses to become one silently). If the desktop
+later grows an input settings slot, it binds to this same store door; until
+then the seam is this record and this paragraph.
+
+**Honest states, both directions.** Up → dictation works. Down → the mic
+probes BEFORE touching the microphone, so the named gap renders without a
+permission prompt: `Local speech is not running — start it with
+~/.local-speech/start.sh. Dictation expected a local transcription server at
+<url>.` Mic refused, mic unreachable, transcription failure and an empty
+transcript each render their own named line; no state ever invents text.
+Dictation is disabled exactly where the composer is (no draft authority, no
+reading) and its transcript is never the only copy of anything — it is draft
+text like typed text.
+
 ## Evidence
 
 ```bash
@@ -140,16 +222,42 @@ cd desktop/cradle
 node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-speech-conformance.mjs
     # 38 tests: QL fixture round-trips, admission/deixis/delegation laws, constitution + receipt
     # shapes, and the three body states (option+gap, absent, live) with the exact rendered strings
+node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/dictation-conformance.mjs
+    # 12 tests: the dictation stipulation law, the 16 kHz mono WAV wire, the honest states against a
+    # real local HTTP fixture speaking the whisper.cpp contract, and the rendered words verbatim
 node tests/nara-presence-lifecycle.mjs
     # 30 checks: the real surface on a real kernel walk bridge; capture via the synthetic device;
     # the gated body rendered as an option and the text-only body as absent, in the real component
 node walk/run.mjs nara-speech
     # 22 checks: the joined chain against the real kernel, including the credential-gated and
     # text-only body states; receipt in walk/artifacts/nara-speech.json
+node walk/run.mjs agent-dictation
+    # 16 checks: the agent-chat mic end to end on the real encounter owner — synthetic-mic capture,
+    # a walk-served whisper.cpp-wire STT fixture, the editable landing, a real amended send through
+    # the owner, and the service-down / failure / empty states; receipt in
+    # walk/artifacts/agent-dictation.json
 ```
 
 ## Honest remainders (owner-visible)
 
+- **Dictation is loopback-only by law.** The stipulation record refuses a
+  non-loopback endpoint by name; a remote STT product would be a different
+  surface, not a silent retarget of this one.
+- **No live OS microphone in the dictation walk.** The agent-chat walk uses
+  chromium's synthetic device, exactly like the Nara lifecycle proof; a live
+  OS-permission walk and a live whisper round-trip remain the owner's
+  acceptance (the local services were live on this machine at implementation
+  time; the fixture speaks their byte-identical wire contract).
+- **The endpoint stipulation has no settings slot yet.** The lawful home is
+  the desktop-owned store (`src/dictation/store.ts`); a desktop input
+  settings view, when one exists, binds to the same door. Until then the
+  seam is the record and the dictation section above.
+- **The Tauri CSP now allows loopback http.** `connect-src` gained
+  `http://127.0.0.1:* http://localhost:*` for the stipulated speech server;
+  non-loopback hosts stay refused. (Observation, owned elsewhere: the A2A
+  exchange's arbitrary peer endpoints are NOT covered and will be
+  CSP-blocked in the installed app — a pre-existing condition this lane did
+  not change.)
 - **No live provider or live microphone in the walk.** The realtime body above is a
   resolution *document*; no provider session is opened and no audio is played. Live-mic capture
   is proven against chromium's synthetic device; a live OS-permission walk and a real
