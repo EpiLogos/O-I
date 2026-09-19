@@ -69,6 +69,17 @@ source revisions and archive references before releasing working material.
 
 ## Bounded bootstrap and repair
 
+### Skill health at strap time
+
+When `Work/O-I/scripts/verify-skill-health-chain.py` exists, run it once during
+strap with `--ground` set to the Central root. The check is **fail-open**: report
+its named states and repair pointers, then continue only with work that is still
+authorised. Do not repair projections from the strap and do not wait on Mac-only
+UI proof. Treat `unprojected`, `stale`, `blocked`, `broken-companion`,
+`selected_but_unloaded`, and `loading-unconfirmed` as distinct facts; send each
+repair to its native owner (O:I for the bootstrap set, AIKit for resolver,
+trust, generation, broker or hook ownership).
+
 If native root CAW operations are absent, disclose the exact installed gap.
 The machine-local legacy `now.py` repertoire described in Central#164/#165 is a
 possible already-authorised compatibility route only after inspecting its actual

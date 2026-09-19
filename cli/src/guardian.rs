@@ -37,10 +37,6 @@ pub const GUARDIAN_SKILL_SOURCES: &[(&str, &str)] = &[
         "skills/suite-operator/SKILL.md",
         include_str!("../../skills/suite-operator/SKILL.md"),
     ),
-    (
-        "skills/central-session-strap/SKILL.md",
-        include_str!("../../skills/central-session-strap/SKILL.md"),
-    ),
 ];
 
 /// Sibling payload files a guardian Skill ships beside its SKILL.md, keyed by

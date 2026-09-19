@@ -1,6 +1,6 @@
 ---
 name: oi
-description: Operate the installed O:I suite through the oi CLI — route work to the right product, navigate and augment the personal world through the AIKit branch, and keep Central as the durable authored ground.
+description: Use when a person asks to understand, install, inspect, compose, snapshot, verify, or enter the installed O:I suite, or route work across its products through the oi CLI. It navigates and augments the personal world AIKit-first and keeps Central as durable authored ground; near-miss: single-product work belongs to that product's own skill, and ordinary Central-session orientation starts from central-session-strap.
 ---
 
 # {O:I} Agent Skill
