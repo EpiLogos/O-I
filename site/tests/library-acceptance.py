@@ -4,7 +4,7 @@ Run from site/ with the production preview on port 4173. Test-only Playwright.
 """
 import json, os, traceback
 from pathlib import Path
-from playwright.sync_api import sync_playwright, expect
+from playwright.sync_api import sync_playwright, expect, Error as PlaywrightError
 BASE=os.environ.get('LIBRARY_BASE_URL','http://127.0.0.1:4173/')
 OUT=Path('evidence/library');OUT.mkdir(parents=True,exist_ok=True)
 INDEX=json.loads(Path('public/data/library/index.json').read_text())
@@ -19,6 +19,7 @@ def check(name, fn, page=None):
     try:
         fn();RESULTS.append({'case':name,'passed':True});print('PASS',name,flush=True)
     except Exception as e:
+        RESULTSS=None
         RESULTS.append({'case':name,'passed':False,'error':str(e),'traceback':traceback.format_exc()});print('FAIL',name,str(e),flush=True)
         if page:
             try:page.screenshot(path=str(OUT/(name+'-failure.png')),full_page=True)
@@ -118,10 +119,21 @@ with sync_playwright() as p:
     def detached_source():
         page.get_by_role('button',name='Read & sources',exact=True).click()
         if page.get_by_role('dialog',name='Read the source').is_visible():page.get_by_role('button',name='Read beside the field',exact=True).click()
+        original_expression=page.locator('.expression-reader').get_attribute('data-expression-ref')
+        original_scene=page.locator('.native-stage').get_attribute('data-scene-ref')
         with page.expect_popup() as popup:page.get_by_role('button',name='Open source in a separate window',exact=True).click()
         child=popup.value;expect(child.locator('.source-prose')).to_be_visible();assert 'face=detached' in child.url
-        with child.expect_event('close',timeout=5000):child.get_by_role('button',name='Re-dock',exact=True).click()
-        expect(page.locator('.source-panel')).to_be_visible();page.get_by_role('button',name='Return to the field',exact=True).click()
+        # Re-dock intentionally closes its own window. Chromium can acknowledge
+        # that close before click() completes; accept only that exact close,
+        # then still verify the surviving parent and the unchanged native refs.
+        with child.expect_event('close',timeout=5000):
+            try:child.get_by_role('button',name='Re-dock',exact=True).click()
+            except PlaywrightError as error:
+                if 'Target page, context or browser has been closed' not in str(error) or not child.is_closed() or page.is_closed():raise
+        expect(page.locator('.source-panel')).to_be_visible()
+        expect(page.locator('.expression-reader')).to_have_attribute('data-expression-ref',original_expression)
+        expect(page.locator('.native-stage')).to_have_attribute('data-scene-ref',original_scene)
+        page.get_by_role('button',name='Return to the field',exact=True).click()
     check('detached-source-redock-preserves-subject',detached_source,page)
     def stale_and_missing():
         page.goto(url(FIRST,edition=1));expect(page.get_by_role('button',name='Open the current edition')).to_be_visible()

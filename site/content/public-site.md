@@ -72,17 +72,17 @@ Shared work extends that relation. Independently grounded worlds can meet throug
 
 ### [title] Six facets of one undertaking.
 
-Meaningful continuity. Consequential articulation. Potency. Transformation. Situated actuality. Transcendent relation.
+Meaningful continuity. Living articulation. Potency. Transformation. Situated existence. Transcendent Relation.
 
-Each product develops one of these relations through its own native instruments and public contracts. Together they let intention become work, let work encounter a world, and let what happens change the terms of the next act. Enter a product below to explore its published Expression and read the reasons behind it.
+Each product develops one of these relations through its own native instruments and public contracts. Together they let intention become work, let work encounter a world, and let what happens change the terms of the next act. These six offices form a constructed paradigm within Objective Internality, not an exhaustive definition imposed on every World. Enter a product below to read its account; the Library distinguishes that account from the native subjects and Expressions actually published in this edition.
 
 ## [shared] Shared field
 
 ### [title] A living field. An open Library.
 
-Expressions give this work a sensible body: a page, a constellation, a sequence of Scenes, a field through which you can move. The Library gathers our published product and research editions in one place.
+Expressions give this work a sensible body: a page, a constellation, a sequence of Scenes, a field through which you can move. The Library receives deliberately published product and corpus collections through their own subjects and revisions. A published edition is a chosen reading of the work, not a live subscription to its author’s working world.
 
-Enter an Expression, change your view, follow a Scene, turn to its source, and return to the same place. Reading is open in your browser. Your attention is not an installation requirement, and encountering a published work does not grant authority over its source.
+Begin with a subject, enter its available Expression, follow its permitted relations or source, and return to the same reading position. Reading is open in your browser without a local O:I installation or an Agent key. Unpublished material remains unavailable rather than becoming sample content, and encountering a published work does not grant authority over its source.
 
 ## [build] Build
 
@@ -208,7 +208,7 @@ The diagrams below show current product seams and native technical nouns rather 
 
 Central concerns meaningful continuity: the passage from what has happened to the ground from which another encounter becomes intelligible. A folder can preserve every draft and lose the reason for making them. Continuity matters where purpose, adopted decisions and the powers of revision remain available to the next act.
 
-Central is the human-owned root for personal context and ordinary work. `Control/` holds material about the person, their agents and their machines; `Work/` holds normal projects and files. `ctrl` exposes stable Actions, and connectors bind those Actions to technologies available on a particular machine.
+Central is the human-owned root meta-project for personal context and ordinary work. `Control/` holds material about the person, their agents and their machines; `Work/` holds normal projects and files. `ctrl` exposes stable Actions, and connectors bind those Actions to technologies available on a particular machine.
 
 Control deliberately distinguishes **authored source**, **observed state** and **generated material**. Natural prose is first-class: a person does not have to translate themselves into one universal profile schema before their writing can become useful to an agent.
 
@@ -324,7 +324,7 @@ https://github.com/EpiLogos/Factory
 
 ### [what] What it is
 
-Workcell concerns situated actuality: the concrete here in which an undertaking meets a world capable of answering it. A correctly specified process can have nowhere to run; a service declared available can fail when needed. Materialisation and observation distinguish what was planned from what actually sustains the act.
+Workcell concerns situated existence: the concrete here in which an undertaking meets a world capable of answering it. A correctly specified process can have nowhere to run; a service declared available can fail when needed. Materialisation and observation distinguish what was planned from what actually sustains the act.
 
 Technologically, Workcell takes provider-neutral material requirements and resolves them into real computational resources: writable workspaces, processes, services, containers, MicroVMs or VMs, remote hosts, storage, databases, network relationships, credentials and browser-accessible applications — without those providers becoming the higher ontology of World or Agency.
 
@@ -533,13 +533,16 @@ Humans and agents can participate throughout this cycle: discovering sources, st
 
 The extension direction is equally important: native product SDKs and public contracts let developers connect the technologies they already use — providers, connectors and fixtures, not private patches. Install steps and CLI tables live in repository docs when earned; this page stays the doorway.
 
-Until the public distribution package for `oi` is accepted, the repository install guide remains the source of truth for installing the command.
+The accepted installation guide distinguishes immutable released artifacts from the current native-source suite. Public reading needs neither route. For local work, choose the supported platform and the products you need, check their prerequisites, and follow the declared install source. The short npm registry command is not a verified distribution merely because it appears in an intended workflow.
+
+For an existing source installation, `oi update --check` reports what is current before an explicit update. The operating instructions explain committed source cuts, the mainline choice, managed activation and rollback. A successful build, an installed product and a verified human experience remain different claims.
 
 ## [links] Start here
 
 ### [title] Source, installation and governing documents
 
-- [Install O:I — current supported install path](https://github.com/EpiLogos/O-I/blob/main/docs/INSTALL.md)
+- [Install O:I — supported routes and prerequisites](https://github.com/EpiLogos/O-I/blob/main/docs/INSTALL.md)
+- [Operate and update — source cuts, activation and recovery](https://github.com/EpiLogos/O-I/blob/main/docs/INSTALL-UPDATE-FLOW.md)
 - [CLI — current `oi` command surface](https://github.com/EpiLogos/O-I/blob/main/docs/CLI.md)
 - [Founding positions — why the field exists](https://github.com/EpiLogos/O-I/blob/main/docs/positions/FOUNDING-POSITIONS.md)
 - [Vision — agency, world and Return](https://github.com/EpiLogos/O-I/blob/main/docs/VISION.md)

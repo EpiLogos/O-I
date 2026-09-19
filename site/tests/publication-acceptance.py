@@ -3,17 +3,20 @@ import json
 import os
 import subprocess
 from pathlib import Path
-from urllib.parse import parse_qs, urlparse
+from urllib.parse import parse_qs, urlparse, quote
 from playwright.sync_api import sync_playwright, expect
 
 BASE = os.environ.get('OI_SITE_TEST_URL', 'http://127.0.0.1:4173')
 OUT = Path('evidence/library')
 OUT.mkdir(parents=True, exist_ok=True)
-fixture = json.loads(subprocess.check_output(['node', 'tests/publication-fixtures.mjs'], text=True))
+fixture_path = os.environ.get('OI_PUBLICATION_TEST_FIXTURE')
+fixture = json.loads(Path(fixture_path).read_text() if fixture_path else subprocess.check_output(['node', 'tests/publication-fixtures.mjs'], text=True))
 results = []
 
-def record(name):
-    results.append({'test': name, 'status': 'passed', 'basis': 'explicit test-only native publication fixture'})
+def record(name, basis='explicit test-only native publication fixture'):
+    results.append({'test': name, 'status': 'passed', 'basis': basis})
+    (OUT / 'publication-results.json').write_text(json.dumps({'scope': 'receiver contract only, not corpus/hosting acceptance', 'tests': results}, indent=2))
+    print('PASS', name, flush=True)
 
 def query(page):
     return parse_qs(urlparse(page.url).fragment.split('?', 1)[-1])
@@ -25,9 +28,16 @@ with sync_playwright() as pw:
     errors = []
     page.on('pageerror', lambda e: errors.append(str(e)))
     page.goto(BASE + '/library.html')
-    expect(page.get_by_text('The corpus has not been published to this edition yet.', exact=True)).to_be_visible()
+    actual = json.loads(Path('dist/data/library/published.json').read_text())
+    if actual['entries']:
+        expect(page.locator('.published-shelf .publication-cards article')).to_have_count(len(actual['entries']))
+    else:
+        expect(page.get_by_text('The corpus has not been published to this edition yet.', exact=True)).to_be_visible()
     assert not page.get_by_text('Fixture collection', exact=True).count()
-    record('real production build has an honest empty native catalogue, not fixture entries')
+    assert not Path('dist/data/field-proof-demo.json').exists()
+    assert not Path('dist/data/self-other-demo.json').exists()
+    assert 'world:fixture/wiki:subject' not in Path('dist/data/library/published.json').read_text()
+    record('production build reflects its actual publications and excludes development/test datasets', 'actual production build, before request interception')
 
     def receive(route):
         path = urlparse(route.request.url).path
@@ -48,15 +58,15 @@ with sync_playwright() as pw:
     expect(page.get_by_role('heading', name='Fixture collection', exact=True)).to_be_visible()
     page.get_by_role('link', name='Fixture subject', exact=True).click()
     expect(page.locator('h1')).to_have_text('Fixture subject')
-    assert query(page)['revision'] == ['3']
-    record('Library → real-ref collection membership → subject; source revision pinned in URL')
+    page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('revision') === '3'")
+    record('Library → actual-ref collection membership → subject; source revision pinned in URL')
 
     block = page.locator('[data-reading-at="17"]')
     block.evaluate('(node) => window.scrollTo(0, node.getBoundingClientRect().top + window.scrollY - 100)')
     page.wait_for_function("new URLSearchParams(location.hash.split('?')[1]).get('at') === '17'")
     before = query(page)['at']
     page.get_by_role('link', name='Expression', exact=True).click()
-    expect(page.locator('.native-stage canvas[data-ready="yes"]')).to_be_visible(timeout=45000)
+    expect(page.locator('.native-stage canvas[data-rendered="true"]')).to_be_visible(timeout=45000)
     expect(page.get_by_role('button', name='Play field motion', exact=True)).to_be_visible()
     assert query(page)['expression_revision'] == ['2']
     assert query(page)['expression_projection_revision'] == ['4']
@@ -104,9 +114,16 @@ with sync_playwright() as pw:
     page.screenshot(path=str(OUT / 'publication-reading-mobile-test-fixture.png'), full_page=True)
     record('narrow screen has no horizontal overflow; keyboard focus reaches controls')
 
+    for entry in ['library.html', 'explore.html']:
+        page.goto(BASE + '/' + entry + '?ref=' + quote('world:fixture/wiki:subject', safe=''))
+        expect(page.locator('h1')).to_have_text('Fixture subject')
+        page.reload()
+        expect(page.locator('h1')).to_have_text('Fixture subject')
+    record('native Library and retained Explore direct addresses open the same subject after refresh')
+
     context.unroute('**/data/library/**', receive)
     page.goto(BASE + '/library.html')
-    expect(page.get_by_text('The corpus has not been published to this edition yet.', exact=True)).to_be_visible()
+    expect(page.locator('.published-shelf')).to_be_visible()
     context.set_offline(True)
     page.get_by_role('link', name='All published subjects', exact=True).click()
     expect(page.get_by_text('You are offline.', exact=False)).to_be_visible()

@@ -18,6 +18,7 @@ export default function PublicApp(){
    const ref=new URLSearchParams(location.search).get('ref');
    const old=location.pathname.split('/').pop()?.replace('.html','');
    if(ref)history.replaceState(null,'',location.pathname+publicationHref({ref:ref.slice(0,2048)}));
+   else if(old==='explore')history.replaceState(null,'',publicationHref());
    else if(old&&['oi','products','research','shared-field','build','library'].includes(old))history.replaceState(null,'',`#/library${old==='products'||old==='library'?'':'/'+old}`);
   }
   return surface();
