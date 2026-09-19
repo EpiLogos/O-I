@@ -89,6 +89,7 @@ import type {
   ActionArg,
   ActionDisclosure,
   LayoutState,
+  Pane,
   RestorePoint,
   SurfaceBinding,
   SurfaceId,
@@ -396,8 +397,8 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    * asked from — the sidebar's own pane canvas when the request came from
    * there, the centre tree otherwise — and a fresh tab's own choice replaces
    * that tab in place, wherever it lives. A binding is hosted in exactly one
-   * canvas: a side-targeted open of something the tree already hosts mints
-   * its own tab rather than double-hosting the id. */
+   * canvas: an open into one canvas of something the other hosts MOVES the
+   * tab (same binding, same buffer — never a second host). */
   const openInSidePlace=(s:LayoutState,id:SurfaceId,binding?:SurfaceBinding):LayoutState=>{
     const pane=s.sidePane??{type:"group" as const,id:"side-panel",tabs:[],pinned:[],active:null};
     if(pane.tabs.includes(id))return {...s,sidePane:{...pane,active:id}};
@@ -410,22 +411,44 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(groupsOf(s.root).some(g=>g.tabs.includes(id)))return executeFrameAction(s,"surface.activate",{surfaceId:id});
     return s;
   };
+  /** The tree side of the single-host move: the binding's tab leaves its
+   * group untouched except for the move — the buffer, the session and the
+   * binding survive; a group left holding nothing stays for its own close. */
+  const withoutTreeTab=(pane:Pane,id:SurfaceId):Pane=>
+    pane.type==="split"
+      ? {...pane,children:pane.children.map(child=>withoutTreeTab(child,id))}
+      : {...pane,tabs:pane.tabs.filter(tab=>tab!==id),pinned:pane.pinned.filter(pin=>pin!==id),active:pane.active===id?(pane.tabs.filter(tab=>tab!==id)[0]??null):pane.active};
+  const moveTreeTabToSide=(s:LayoutState,id:SurfaceId):LayoutState=>openInSidePlace(s.root?{...s,root:withoutTreeTab(s.root,id)}:s,id);
+  /** The modes whose panel hosts the sidebar's own pane canvas: there the
+   * canvas is the VISIBLE canvas — the mode's dedicated stage stands over
+   * the tree — so a person-open asked without a canvas lands there. */
+  const SIDE_CANVAS_MODES:readonly WorkspaceMode[]=["factory","expressions","techne"];
+  const personCanvasAsk=(): "side"|undefined => SIDE_CANVAS_MODES.includes(stateRef.current.mode??"base") ? "side" : undefined;
+  /** Find a surface twice, by the canvas that hosts it (single-host law). */
+  const twinsByCanvas=(pred:(b:SurfaceBinding)=>boolean):{side?:SurfaceBinding;tree?:SurfaceBinding}=>{
+    const current=stateRef.current;
+    const sideTabs=current.sidePane?.tabs;
+    return {
+      side: sideTabs?Object.values(current.surfaces).find(b=>pred(b)&&sideTabs.includes(b.id)):undefined,
+      tree: Object.values(current.surfaces).find(b=>pred(b)&&groupsOf(current.root).some(g=>g.tabs.includes(b.id))),
+    };
+  };
   /** Open a real source from the index listing: one layout binding carrying
    * the owner's canonical ref verbatim — the kernel mount effect opens the
-   * buffer through the owner's read. `into:"side"` places it in the sidebar's
-   * own pane canvas (the canvas the request came from), never the tree. */
-  const openSource = async (source: ListedSource, project?: string, into?: "side") => {
+   * buffer through the owner's read. Asked without a canvas it lands in the
+   * visible canvas (the sidebar's own pane canvas in the dedicated-stage
+   * modes), never the hidden tree behind the stage. */
+  const openSource = async (source: ListedSource, project?: string, intoArg?: "side") => {
     if(kernel.transport.kind==="tauri") {
       const {invoke}=await import("@tauri-apps/api/core");
       if(await invoke<boolean>("window_focus_subject",{reference:source.ref})) return;
     }
     const current = stateRef.current;
+    const into = intoArg ?? personCanvasAsk();
     if (into === "side") {
-      const sideTabs = current.sidePane?.tabs;
-      const hostedSide = sideTabs
-        ? Object.values(current.surfaces).find(b => b.kind === "source" && b.ref === source.ref && sideTabs.includes(b.id))
-        : undefined;
-      if (hostedSide) { setState(s => activateInHostCanvas(s, hostedSide.id)); return; }
+      const twins = twinsByCanvas(b => b.kind === "source" && b.ref === source.ref);
+      if (twins.side) { setState(s => activateInHostCanvas(s, twins.side!.id)); return; }
+      if (twins.tree) { setState(s => moveTreeTabToSide(s, twins.tree!.id)); return; }
       await openInSidePane({ id: crypto.randomUUID(), kind: "source", ref: source.ref, project, title: source.path.split("/").pop() || source.path }, "none");
       return;
     }
@@ -437,20 +460,29 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     setState((s) => openBinding({ ...s, closedStack: s.closedStack.filter(id => id !== binding.id) }, makeSourceBinding(s, source.ref, source.path, project)));
   };
 
-  const openEncounter=async(row:EncounterRow,into?: "side")=>{
+  const openEncounter=async(row:EncounterRow,intoArg?: "side")=>{
     await encounter(kernel.transport,row.project,{action:"start"});
     await encounter(kernel.transport,row.project,{action:"read",agent_session:row.ref,after:0,limit:1});
     if(kernel.transport.kind==="tauri") {const {invoke}=await import("@tauri-apps/api/core");if(await invoke<boolean>("window_focus_subject",{reference:row.ref}))return;}
-    // Canvas-scoped reuse (the canvas law): into the side canvas, only a
-    // side-hosted binding is reused; into the tree, anything not hosted by
-    // the side canvas — a binding never lives in both.
-    const current=stateRef.current;
-    const sideTabs=current.sidePane?.tabs;
-    const existing=Object.values(current.surfaces).find(binding=>binding.kind==="encounter"&&binding.ref===row.ref&&(into==="side"? !!sideTabs?.includes(binding.id) : !sideTabs?.includes(binding.id)));
-    const binding=existing??{id:crypto.randomUUID(),kind:"encounter",ref:row.ref,title:row.title,project:row.project,encounter:{space:row.space}};
-    const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
-    if(opened?.result!=="surface_opened")throw new Error("AIKit encounter surface could not be opened");
-    setState(state=> into==="side" ? openInSidePlace(state,binding.id,binding) : groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
+    const into = intoArg ?? personCanvasAsk();
+    // Single-host law: one conversation, one tab — activate where it is,
+    // move it to the asking canvas, or open it there fresh.
+    const twins=twinsByCanvas(b=>b.kind==="encounter"&&b.ref===row.ref);
+    const twinSide=twins.side; const twinTree=twins.tree;
+    const binding:SurfaceBinding = twinSide ?? twinTree ?? {id:crypto.randomUUID(),kind:"encounter",ref:row.ref,title:row.title,project:row.project,encounter:{space:row.space}};
+    if(!twinSide&&!twinTree){
+      const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+      if(opened?.result!=="surface_opened")throw new Error("AIKit encounter surface could not be opened");
+    }
+    if(into==="side"){
+      if(twinSide)setState(s=>activateInHostCanvas(s,twinSide.id));
+      else if(twinTree)setState(s=>moveTreeTabToSide(s,twinTree.id));
+      else setState(s=>openInSidePlace(s,binding.id,binding));
+      return;
+    }
+    // A side-hosted tab is never re-hosted here: a tree ask mints its own.
+    if(twinSide){const fresh={...binding,id:crypto.randomUUID()};const opened=await kernel.apply({op:"surface_open",surface_id:fresh.id,kind:fresh.kind,source_ref:fresh.ref,title:fresh.title});if(opened?.result!=="surface_opened")throw new Error("AIKit encounter surface could not be opened");setState(state=>openBinding({...state,closedStack:state.closedStack.filter(id=>id!==fresh.id)},fresh));return;}
+    setState(state=>groupsOf(state.root).some(group=>group.tabs.includes(binding.id))?executeFrameAction(state,"surface.activate",{surfaceId:binding.id}):openBinding({...state,closedStack:state.closedStack.filter(id=>id!==binding.id)},binding));
   };
 
   const openFileRef=useRef<(location:CentralLocation)=>Promise<void>>(async()=>{});
@@ -468,22 +500,31 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const isBinaryMaterial = format === "image" || format === "pdf" || format === "unsupported";
     const title = location.path.split("/").pop() ?? "File";
     const replaceId = opts?.replaceId;
-    const into = replaceId ? undefined : opts?.into;
+    // The canvas is the person's choice; asked without one, a file opens in
+    // the VISIBLE canvas — in a dedicated-stage mode that is the sidebar's
+    // own pane canvas, never the hidden tree behind the stage.
+    const into = replaceId ? undefined : (opts?.into ?? personCanvasAsk());
     const id = replaceId ?? crypto.randomUUID();
     if (!replaceId) {
       // A known binding opens by activation alone — never a second read; and
       // the activation is canvas-scoped, so a side-hosted copy activates in
-      // the side canvas. A copy hosted in the OTHER canvas (or closed) is not
-      // reused: a binding lives in exactly one canvas.
+      // the side canvas. A copy hosted in the OTHER canvas MOVES to the ask:
+      // one file, one tab, one host.
       const currentAt = stateRef.current;
-      const known = location.ref ? Object.values(currentAt.surfaces).find(binding => binding.kind === "file" && binding.ref === location.ref) : undefined;
+      // A file may already be hosted as kind "file" or, once its reading
+      // yielded a bound source, as kind "source" — the ref is the identity.
+      const known = location.ref ? Object.values(currentAt.surfaces).find(binding => (binding.kind === "file" || binding.kind === "source") && binding.ref === location.ref) : undefined;
       const sideTabs = currentAt.sidePane?.tabs;
       if (known && sideTabs?.includes(known.id)) {
         setState(s => activateInHostCanvas(s, known.id));
         return;
       }
-      if (known && into !== "side" && groupsOf(currentAt.root).some(g => g.tabs.includes(known.id))) {
-        setState(s => executeFrameAction(s, "surface.activate", { surfaceId: known.id }));
+      if (known && groupsOf(currentAt.root).some(g => g.tabs.includes(known.id))) {
+        if (into !== "side") {
+          setState(s => executeFrameAction(s, "surface.activate", { surfaceId: known.id }));
+          return;
+        }
+        setState(s => moveTreeTabToSide(s, known.id));
         return;
       }
       if (kernel.transport.kind === "tauri" && location.ref) {
@@ -549,34 +590,49 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     await openSource({ref: buffer.source_ref, path: buffer.path ?? "", treatment: "projectcentral-user", agent_retrieval_allowed: true, revision: buffer.base_revision}, undefined);
   };
 
-  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, into?: "side") => {
+  const openKnowledge = async (address: KnowledgeAddress, title: string, project?: string, placement: "tab"|"page"|"window" = "tab", graphOrigin?:string, intoArg?: "side") => {
     if(placement==="window"&&kernel.transport.kind!=="tauri")throw new Error("Native popout is available in the desktop app");
-    // A side-canvas open detaches nowhere: pop-out is a centre-tree act.
-    if(into==="side"&&placement==="window")placement="tab";
     // Project wiki ownership is an exact Central disclosure, never inferred
     // from a label or parsed out of an opaque wiki reference.
     project = kernel.snapshot.navigator?.root?.work.projects.find(p=>p.projectcentral.agent_wiki.wiki.space_ref===address.value)?.name ?? project;
     if (!["wiki", "source", "project-map"].includes(address.kind)) throw new Error("This native knowledge body is not yet supported by the desktop");
+    const into = intoArg ?? personCanvasAsk();
+    // A side-canvas open detaches nowhere: pop-out is a centre-tree act.
+    if(into==="side"&&placement==="window")placement="tab";
     if(kernel.transport.kind==="tauri"&&placement==="tab") {
       const {invoke}=await import("@tauri-apps/api/core");
       if(await invoke<boolean>("window_focus_subject",{reference:address.value})) return;
     }
     const read = await knowledge<KnowledgeReading>(kernel.transport,project,{action:"read",address});
     const current = stateRef.current;
-    // Canvas-scoped reuse (the canvas law): a binding never lives in both.
-    const sideTabs=current.sidePane?.tabs;
-    const existing = Object.values(current.surfaces).find(b=>b.kind==="knowledge"&&b.ref===read.resource&&(!graphOrigin||b.view?.graphOrigin===graphOrigin)&&(b.view?.knowledgePlane==="page")===(placement!=="tab")&&(into==="side"? !!sideTabs?.includes(b.id) : !sideTabs?.includes(b.id)));
-    const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
-    const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
-    if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
-    setState(s=> into==="side" ? openInSidePlace(s,binding.id,binding) : groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
-    if(placement==="window") {
-      try {
-        const {invoke}=await import("@tauri-apps/api/core");
-        await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
-        detachedRequests.current.add(`${workspaceRef.current.current.id}:${binding.id}`);
-        setState(s=>detachBinding(s,binding.id));
-      }catch(error){setWindowError(String(error));throw error;}
+    // Single-host law: one knowledge page, one tab — activate where it is,
+    // move it to the asking canvas, or open it there fresh.
+    const same=(b:SurfaceBinding)=>b.kind==="knowledge"&&b.ref===read.resource&&(!graphOrigin||b.view?.graphOrigin===graphOrigin)&&(b.view?.knowledgePlane==="page")===(placement!=="tab");
+    if(into==="side"){
+      const twins=twinsByCanvas(same);
+      if(twins.side){setState(s=>activateInHostCanvas(s,twins.side!.id));}
+      else if(twins.tree){setState(s=>moveTreeTabToSide(s,twins.tree!.id));}
+      else{
+        const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
+        const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
+        if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
+        setState(s=>openInSidePlace(s,binding.id,binding));
+      }
+    } else {
+      // A side-hosted tab is never re-hosted here: a tree ask mints its own.
+      const existing = Object.values(current.surfaces).find(b=>same(b)&&!current.sidePane?.tabs.includes(b.id));
+      const binding:SurfaceBinding = existing ?? {id:crypto.randomUUID(),kind:"knowledge",ref:read.resource,title,project,address,...(placement!=="tab"?{view:{knowledgePlane:"page" as const,graphOrigin}}:{})};
+      const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"knowledge",source_ref:binding.ref,title:binding.title});
+      if (opened?.result !== "surface_opened") throw new Error("The native knowledge surface could not be opened");
+      setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+      if(placement==="window") {
+        try {
+          const {invoke}=await import("@tauri-apps/api/core");
+          await invoke("window_detach",{workspaceId:workspaceRef.current.current.id,binding,bounds:stateRef.current.windowBounds?.[binding.id]??null});
+          detachedRequests.current.add(`${workspaceRef.current.current.id}:${binding.id}`);
+          setState(s=>detachBinding(s,binding.id));
+        }catch(error){setWindowError(String(error));throw error;}
+      }
     }
     // Explicit successful navigation only. Refresh, restore and display do
     // not execute AIKit's route-use operation.
@@ -588,33 +644,57 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
    * opened/focused like System; workspace-independent view state lives in
    * its own remembered travel, never in the workspace's project. Opening
    * it discloses nothing to anyone and starts no AgentSession. */
-  const openExplore = async (select?: {ref:string;title?:string}, into?: "side") => {
+  const openExplore = async (select?: {ref:string;title?:string}, intoArg?: "side") => {
     if(select)navigateExplore({ref:select.ref});
-    const current = stateRef.current;
-    // Canvas-scoped singleton (the canvas law): one Explore per canvas.
-    const sideTabs=current.sidePane?.tabs;
-    const existing = Object.values(current.surfaces).find(b=>b.kind==="explore"&&(into==="side"? !!sideTabs?.includes(b.id) : !sideTabs?.includes(b.id)));
-    const binding = existing ?? {id:crypto.randomUUID(),kind:"explore",title:"Explore"};
+    const into = intoArg ?? personCanvasAsk();
+    // Single-host law: one Explore per canvas — activate, move, or open there.
+    const twins=twinsByCanvas(b=>b.kind==="explore");
+    const twinSide=twins.side; const twinTree=twins.tree;
+    if(into==="side"){
+      if(twinSide){setState(s=>activateInHostCanvas(s,twinSide.id));return;}
+      if(twinTree){setState(s=>moveTreeTabToSide(s,twinTree.id));return;}
+      const binding={id:crypto.randomUUID(),kind:"explore",title:"Explore"} as SurfaceBinding;
+      if(!kernel.snapshot.surfaces[binding.id]){
+        const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"explore",source_ref:undefined,title:binding.title});
+        if (opened?.result !== "surface_opened") throw new Error("The Explore surface could not be opened");
+      }
+      setState(s=>openInSidePlace(s,binding.id,binding));
+      return;
+    }
+    // A side-hosted Explore is never re-hosted here: a tree ask mints its own.
+    const binding = twinTree ?? ({id:crypto.randomUUID(),kind:"explore",title:"Explore"} as SurfaceBinding);
     if(!kernel.snapshot.surfaces[binding.id]){
       const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"explore",source_ref:undefined,title:binding.title});
       if (opened?.result !== "surface_opened") throw new Error("The Explore surface could not be opened");
     }
-    setState(s=> into==="side" ? openInSidePlace(s,binding.id,binding) : groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction(s,"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
   /** SF1: one projected subject pinned as its own ordinary Surface, carrying
    * the exact refs it was opened with; split/full/detach/re-dock are the
    * frame's own grammar on this binding. */
-  const openPresentation = async (ref:string,title:string,meta:PresentationMeta,into?: "side") => {
-    const current = stateRef.current;
-    // Canvas-scoped reuse (the canvas law): a binding never lives in both.
-    const sideTabs=current.sidePane?.tabs;
-    const existing = Object.values(current.surfaces).find(b=>b.kind==="presentation"&&b.ref===ref&&(into==="side"? !!sideTabs?.includes(b.id) : !sideTabs?.includes(b.id)));
+  const openPresentation = async (ref:string,title:string,meta:PresentationMeta,intoArg?: "side") => {
+    const into = intoArg ?? personCanvasAsk();
+    // Single-host law: one presentation per canvas — activate, move, or open there.
+    const twins=twinsByCanvas(b=>b.kind==="presentation"&&b.ref===ref);
+    const twinSide=twins.side; const twinTree=twins.tree;
+    if(into==="side"){
+      if(twinSide){setState(s=>activateInHostCanvas(s,twinSide.id));return;}
+      if(twinTree){setState(s=>moveTreeTabToSide(s,twinTree.id));return;}
+      const binding:SurfaceBinding={id:crypto.randomUUID(),kind:"presentation",ref,title,presentation:meta};
+      if(!kernel.snapshot.surfaces[binding.id]){
+        const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"presentation",source_ref:ref,title});
+        if (opened?.result !== "surface_opened") throw new Error("The presentation surface could not be opened");
+      }
+      setState(s=>openInSidePlace(s,binding.id,binding));
+      return;
+    }
+    const existing = twinTree;
     const binding:SurfaceBinding = existing ? {...existing,title,presentation:meta} : {id:crypto.randomUUID(),kind:"presentation",ref,title,presentation:meta};
     if(!kernel.snapshot.surfaces[binding.id]){
       const opened = await kernel.apply({op:"surface_open",surface_id:binding.id,kind:"presentation",source_ref:ref,title});
       if (opened?.result !== "surface_opened") throw new Error("The presentation surface could not be opened");
     }
-    setState(s=> into==="side" ? openInSidePlace(s,binding.id,binding) : groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction({...s,surfaces:{...s.surfaces,[binding.id]:binding}},"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
+    setState(s=>groupsOf(s.root).some(g=>g.tabs.includes(binding.id)) ? executeFrameAction({...s,surfaces:{...s.surfaces,[binding.id]:binding}},"surface.activate",{surfaceId:binding.id}) : openBinding({...s,closedStack:s.closedStack.filter(id=>id!==binding.id)},binding));
   };
   const openExploreRef=useRef(openExplore);openExploreRef.current=openExplore;
   useEffect(()=>{
@@ -1328,19 +1408,12 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // (expressions / techne / factory): hold the open file in the panel, or
   // open a file, a browser or a terminal in the centre exactly as the shell
   // does. The canvas law (owner, 2026-09-19): an open asked from the sidebar
-  // canvas lands THERE — the wrappers below retarget the frame's openers —
-  // never behind the mode's dedicated stage in the workspace's own panes.
-  // The tree keeps hosting mode-specific tabs as hidden state the agent
-  // manages (the owner ruling of 2026-09-19); those surface in the panel's
-  // Active Context beside the canvas's own tabs, marked as workspace-held.
-  const sideTabs=state.sidePane?.tabs??[];
-  const treeTabIds=groupsOf(state.root).flatMap(g=>g.tabs).filter(id=>!sideTabs.includes(id));
+  // canvas lands THERE, and in these modes any person-open asked without a
+  // canvas lands there too — never behind the mode's dedicated stage in the
+  // workspace's hidden panes.
   const taPaneOpens:TaPaneOpens={
-    sideTabs:[
-      ...sideTabs.map(id=>({id,title:state.surfaces[id]?.title??id,kind:state.surfaces[id]?.kind??"blank",active:state.sidePane?.active===id})),
-      ...treeTabIds.map(id=>({id,title:state.surfaces[id]?.title??id,kind:state.surfaces[id]?.kind??"blank",active:false,canvas:"workspace" as const})),
-    ],
-    activateTab:(id)=>{if(sideTabs.includes(id))setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:id}}:s);else if(treeTabIds.includes(id))setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:id}));},
+    sideTabs:(state.sidePane?.tabs??[]).map(id=>({id,title:state.surfaces[id]?.title??id,kind:state.surfaces[id]?.kind??"blank",active:state.sidePane?.active===id})),
+    activateTab:(id)=>{if(state.sidePane?.tabs.includes(id))setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:id}}:s);},
     sideHost:(()=>{const sideGroup=state.sidePane??{type:"group" as const,id:"side-panel",tabs:[],pinned:[],active:null};return (
       <GroupPane group={sideGroup} pane={sideGroup} state={state} menuOpen={!!menu} execute={sideExecute}
         kernelDirty={ref=>!!ref&&!!kernel.snapshot.buffers[ref]?.dirty} openBindingMenu={openBindingMenu} openFrameMenu={openFrameMenu}
@@ -1419,14 +1492,46 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
           ))}
         </>
       ) : (
-        <RestPane>
-          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
-            const reading=kernel.snapshot.navigator;
-            const project=reading?.project?.project;
-            const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
-            return ref ? () => { void openKnowledge({kind:"wiki",value:ref},project ? `${project.name} wiki` : "Central wiki",project?.name).catch(e=>setWindowError(String(e))); } : undefined;
-          })()} />
-        </RestPane>
+        <>
+          {/* The ACTIVE tree is empty (a fresh mode tree or a brand-new
+            * workspace — freshLayout() has no root): show the rest frame,
+            * but keep the warm-tree hosts MOUNTED BESIDE it (all hidden —
+            * with no active root nothing in them is presented). Branching
+            * the hosts themselves on state.root tore every warm tree out
+            * of the DOM for one commit on each first visit to a mode or a
+            * new workspace, destroying the live documents the warm set
+            * exists to keep (html-continuity C03/C04). */}
+          <RestPane>
+            <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
+              const reading=kernel.snapshot.navigator;
+              const project=reading?.project?.project;
+              const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
+              return ref ? () => { void openKnowledge({kind:"wiki",value:ref},project ? `${project.name} wiki` : "Central wiki",project?.name).catch(e=>setWindowError(String(e))); } : undefined;
+            })()} />
+          </RestPane>
+          {warmTrees.map(tree => (
+            <div key={tree.key} className="warm-tree-host" hidden>
+              <Workbench
+                onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
+                workspaceName={workspace.current.name}
+                state={tree.layout}
+                menuOpen={!!menu}
+                execute={execute}
+                openBindingMenu={openBindingMenu}
+                openFrameMenu={openFrameMenu}
+                openSource={openSource}
+                openKnowledge={openKnowledge}
+                openPresentation={openPresentation}
+                openExplore={openExplore}
+                openEncounter={row=>openEncounter(row).catch(report)}
+                factoryCentre={factoryCentre}
+                factoryTasks={factoryCentreProps}
+                subject={workspace.current.context?.subject}
+                nativeWindows={kernel.transport.kind==="tauri"}
+              />
+            </div>
+          ))}
+        </>
       )}
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
