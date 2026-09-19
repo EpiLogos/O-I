@@ -31,7 +31,14 @@ class FrameBoundary extends Component<{children: ReactNode; onSettled:()=>void},
       queueMicrotask(() => this.setState({error: null, generation: 1}));
       return null;
     }
-    if (this.state.error) return null;
+    if (this.state.error) {
+      // The tree failed twice: the footer (inside the tree) may not exist, so
+      // its message route can't be reached. One tiny floating glyph in the
+      // footer's own corner and vocabulary — nothing else — keeps the reload
+      // reachable. The reason stays on its tooltip and in the dispatched
+      // footer message whenever the footer is alive to show it.
+      return <button type="button" className="oi-tool oi-frame-revive" aria-label="The workspace could not load — reload it" title={`The workspace could not load — ${this.state.error}. Click to reload.`} onClick={() => window.location.reload()}>↻</button>;
+    }
     return <Fragment key={this.state.generation}>{this.props.children}</Fragment>;
   }
 }

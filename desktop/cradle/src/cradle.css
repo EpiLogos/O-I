@@ -1098,3 +1098,9 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
   .pane.group[data-tab-presentation="unpinned"] > .tab-strip,
   .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { transition: none; }
 }
+
+/* The dead-tree revive glyph (Cradle.tsx FrameBoundary, repeated failure):
+   one tiny footer-vocabulary tool pinned to the footer's own corner — the
+   only element the boundary ever renders, so a dead shell still has a
+   clickable reload. Nothing else, no bar, no page. */
+.oi-frame-revive{ position: fixed; right: 10px; bottom: 10px; z-index: 100; width: 24px; height: 24px; border-radius: 6px; font-size: 13px; line-height: 1; }
