@@ -66,8 +66,73 @@ centre park, per-workspace quarantine) stand. Findings at the local cut:
   (acknowledged durability), `workspace/recovery.ts`, corruption/crash tests;
   store.ts integration patches are handed to the primary.
 
-## Evidence
+## Execution state (19 September 2026, end of pass)
 
-Walk receipts land in `walk/artifacts/`; browser probes in `tests/artifacts/`.
-The first integrated vertical (HTML → tab → mode → workspace → return →
-restart, tree stalled) is recorded in this file's Trace section as it lands.
+Commits on `agent/expression-world-convergence-20260917`:
+`7459f2cb` (WF0 contracts + reconciliation) · `95541a52` (lane A: broker +
+listing store) · `17e434ba` (lane B: HTML lifecycle) · `6867fdde` (lane C:
+progressive recovery + staged journal + acknowledged drafts) · `36e6c4e7`
+(WF4+WF5 integration + vertical scenario) · `9bd29970` (warm tree shelves +
+walk-bridge connection fixes + queue-hog guards).
+
+Walk-bridge kernel defects found by the vertical and fixed
+(`kernel/src/bin/walk-bridge.rs`): (1) connections closed after one
+response — keep-alive was opt-in on a header browsers never send — so any
+fetch landing on a dying connection hung forever, wedging the renderer's
+serialized apply queue (measured: up to half of opens stalled); (2) bytes
+arriving past the current request's body were discarded, wedging pipelined
+connections permanently. Neither the Tauri path nor production Central is
+affected; the walk/dev bridge serves the browser transport only.
+
+### The vertical (walk `html-continuity`)
+
+One real HTML file from a real Central ground: open through the tree →
+every directory listing stalled ten seconds → second tab + warm return →
+mode switch away and back → workspace switch away and back → pending-open
+origin law → renderer restart, tree still stalled.
+
+- BEFORE receipt (pre-change build,
+  `docs/experience/evidence/html-continuity.before.json`): the warm tab
+  return DESTROYED the document (`about:blank` suspension) and lost the
+  frame node; mode and workspace switches rebuilt both.
+- AFTER: open under the stalled tree completes independently; the warm tab
+  return keeps the same document token and the same iframe node (~85 ms);
+  pending opens acknowledge their tab before the owner read resolves and
+  land in their ORIGIN workspace; after restart the saved binding restores
+  and the document loads with exactly ONE owner read (admission and
+  renderer share the broker's acquisition) and without a single completed
+  directory read.
+- The mode/workspace identity legs are implemented (warm tree shelves) but
+  their final acceptance run collided with the owner's in-flight
+  mode-stage rework landing during this pass (unconditional dedicated
+  stage; trees hosting tabs as hidden state — the same semantics). The
+  checks will validate once that rework settles; the scenario asserts the
+  shelf (`.warm-tree-host[hidden]`) rather than the stage markup.
+
+### Verification (executed)
+
+- Node suites, 39/39: `resource-coherence` 10 (C06 single-flight join, C12
+  stale race, C10 last-reading, epoch partition, receipt semantics) ·
+  `material-html-lifecycle` 9 (C25 retired-generation guards, view
+  persistence, static no-`about:blank`/no-suspension-mutation) ·
+  `workspace-recovery-granular` 9 (C19 sibling recovery, C20
+  last-known-good, C18 draft bound) · `workspace-continuity` 7 ·
+  `mode-workspaces` 4 (updated to the owner's Epi-Logos refinement).
+- Walk receipts: `files` 23/23 · `material` 8/8 · `shell-recovery` 35/35 ·
+  `workspace-continuity` 9/10 · `html-continuity` 4/4 checks run before the
+  mode-step collision (tab tier + C05 stall law proven; mode/workspace legs
+  as above). `tsc --noEmit` clean throughout.
+
+### Remaining (honest)
+
+- Mode/workspace identity acceptance: blocked on the owner's in-flight
+  mode-stage rework settling; the mechanism (warm shelves) is in.
+- Installed Tauri acceptance (real `oi-material://` frames, native process
+  spawn vs attach counters, physical restart rather than renderer reload),
+  Omarchy-side runs, and the human campaign legs under #65 — none claimed.
+- C22/C23 (terminal process continuity, Run-behind-hidden-view) are
+  unverified this pass; the queue-congestion fix removes one measured
+  cause of delayed UI catch-up but no native claim is made.
+- Restored pending bindings after a restart have no completion path yet
+  (they render as permanently opening); a restore-time re-acquire should
+  complete or retire them (next pass, openFile's completion reused).
