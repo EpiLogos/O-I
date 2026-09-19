@@ -122,6 +122,14 @@ try{
   check(talkDisabled===true,'Hold-to-talk is disabled on a body with no declared acoustic input (manual fallback, honest)');
   check(await page.locator('input[aria-label="Message Nara"]').count()===1,'The text composer is always available as the honest fallback');
 
+  // The caller-side QL dialogical floor check, computed at attach.
+  check(await capabilities('voice-floor')==='unmet','The QL dialogical floor is evaluated at attach: the text body fails it honestly');
+  await page.waitForFunction(()=>document.querySelector('[data-voice-floor-unmet]')?.textContent?.includes('duplex'),null,{timeout:15000});
+  const unmetNote=await page.locator('[data-voice-floor-unmet]').innerText();
+  check(['duplex','barge-in','manual interrupt','structured event channel','reconnect status reporting'].every(named=>unmetNote.includes(named))
+    &&!unmetNote.includes('context refresh'),
+    'Every body-fact gap is named on the surface; context refresh is met by the per-turn push, never named');
+
   // Reconnect the body: same Nara, different resolution.
   await page.locator('.nara-next-body summary').click();
   await page.locator('textarea[aria-label="Next body resolution"]').fill(JSON.stringify(realtimeResolution));
@@ -130,6 +138,9 @@ try{
   check(await capabilities('interruption')==='supported'&&await capabilities('vad')==='supported',
     'Body change disclosed: interruption and VAD now supported; Nara identity unchanged',{nara:await page.locator('[data-nara]').getAttribute('data-nara')});
   check(await page.locator('[data-change-receipt]').count()===1,'The constitution-change receipt is visible');
+  await page.waitForFunction(()=>document.querySelector('dd[data-capability="voice-floor"]')?.textContent==='met',null,{timeout:15000});
+  check(await page.locator('[data-voice-floor-unmet]').count()===0,
+    'The floor recomputes at reconnect: the realtime body meets it — context refresh met by push-on-change over the structured event channel');
 
   // Hold to talk: the REAL capture pipeline against the synthetic device.
   const talk=page.locator('button:has-text("Hold to talk")');
@@ -150,6 +161,14 @@ try{
   await page.locator('button:has-text("Point selection")').click();
   await page.waitForFunction(()=>document.querySelector('[data-nara-notice]')?.textContent?.includes('focused'),null,{timeout:15000});
   check(true,'Point selection crosses deixis: the exact ref enters the bounded context and Nara focuses it');
+
+  // Highlight pointing (QL hovered deixis): a pure presentation movement.
+  // This harness stands no live stage presentation, so the honesty law is
+  // exactly observable: the highlight is named, nothing is faked.
+  await page.locator('button:has-text("Highlight selection")').click();
+  await page.waitForFunction(()=>document.querySelector('[data-nara-notice]')?.textContent?.includes('no live Expression stage presentation stands'),null,{timeout:15000});
+  check(await page.locator('[data-nara-highlight]').count()===1,
+    'A highlight without a live stage presentation is named honestly; nothing was moved');
 
   // One reversible ExpressiveAct with speech; interrupt holds both together.
   await page.locator('button:has-text("Perform reversible act with speech")').click();
@@ -181,6 +200,36 @@ try{
   // Transcript expansion only on demand; no permanent dashboard.
   check(await page.locator('.nara-transcript summary').isVisible()&&!(await page.locator('.nara-transcript').getAttribute('open')),
     'The transcript stays collapsed at rest');
+
+  // The option+gap law (#336): a credential-gated body shows as a visible
+  // OPTION with the gap and credential condition named exactly as the
+  // constitution discloses; no speech affordance presents itself as live.
+  const gatedResolution=JSON.parse(readFileSync(`${walkFixtureRoot}gated-body-resolution.json`,'utf8')).resolution;
+  if(await page.locator('.nara-next-body').getAttribute('open')===null)await page.locator('.nara-next-body summary').click();
+  await page.locator('textarea[aria-label="Next body resolution"]').fill(JSON.stringify(gatedResolution));
+  await page.locator('button:has-text("Reconnect body")').click();
+  await page.waitForFunction(()=>document.querySelector('[data-nara-body-state="option"]'),null,{timeout:15000});
+  const optionState=await page.locator('[data-nara-body-state="option"]').innerText();
+  check(optionState.includes('speech body present as an option (not usable today)')
+    &&optionState.includes('unavailable (modality-credential): the surface needs a credential it does not have bound: provider:voice inference credential')
+    &&optionState.includes('credential condition required — provider:voice inference credential'),
+    'The gated body shows as an option with the gap and credential condition named exactly as disclosed',{rendered:optionState});
+  check(await page.locator('button:has-text("Hold to talk")').isDisabled()===true,
+    'Hold-to-talk presents as NOT live while the body is gated');
+  check(await page.locator('dd[data-capability="speech"]').innerText()==='unsupported'&&await page.locator('dd[data-capability="text"]').innerText()==='unsupported',
+    'The gated body discloses neither speech nor text as supported',{speech:await page.locator('dd[data-capability="speech"]').innerText(),text:await page.locator('dd[data-capability="text"]').innerText()});
+  await page.screenshot({path:new URL('../walk/artifacts/nara-body-option-state.png',import.meta.url).pathname});
+
+  // Back on a text-only body: the surface names the speech body ABSENT.
+  await page.locator('textarea[aria-label="Next body resolution"]').fill(JSON.stringify(textResolution));
+  await page.locator('button:has-text("Reconnect body")').click();
+  await page.waitForFunction(()=>document.querySelector('[data-nara-body-state="absent"]'),null,{timeout:15000});
+  check((await page.locator('[data-nara-body-state="absent"]').innerText())==='speech body absent (text-capable Nara); a speech body may be constituted or swapped later without changing Nara',
+    'The text-only body names the speech body absent: constituted, swappable, Nara unchanged');
+  check(await page.locator('button:has-text("Hold to talk")').isDisabled()===true,
+    'Hold-to-talk still presents as NOT live on the absent body');
+  check(await page.locator('[data-nara-body-state="option"]').count()===0,
+    'No option state lingers after the swap back to the text-only body');
 
   await page.screenshot({path:new URL('../walk/artifacts/nara-presence-lifecycle.png',import.meta.url).pathname});
 }catch(error){

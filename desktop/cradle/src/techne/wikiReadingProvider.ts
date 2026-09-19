@@ -166,11 +166,16 @@ export function wikiReadingPayload(input: {
       focus_refs: [wholeRef],
     },
     ...(document ? {
-      expressions: [{
-        expression_ref: document.expression_ref,
-        revision: String(document.revision),
-        scene_ref: null,
-      }],
+      // One binding per REAL scene: Journey's beat model reads scene refs
+      // from these entries — the reading discloses the register's Expression
+      // as it actually stands, scenes included.
+      expressions: document.scenes
+        .filter(scene => typeof scene.scene_ref === "string" && scene.scene_ref.length > 0)
+        .map(scene => ({
+          expression_ref: document.expression_ref,
+          revision: String(document.revision),
+          scene_ref: scene.scene_ref,
+        })),
       actions: [{
         action_ref: "oi.expression.edit",
         native_owner: "oi.cradle.kernel",

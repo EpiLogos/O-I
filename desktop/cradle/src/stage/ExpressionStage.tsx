@@ -110,6 +110,12 @@ export interface ExpressionStageApi {
   express(name: string, options: ExpressionOptions & { target?: string }): number | null;
   update(handle: number | null, options: Partial<ExpressionOptions> & { name?: FormName; target?: string }): boolean;
   release(handle: number | null): void;
+  /** Move the LIVE presentation's selection — the stage's real
+   * focus/highlight decoration (ES4 deictic focus over the stage). Editing
+   * decoration only: no document, scene, config or clock change. Returns
+   * false when no live presentation stands in this window, so the caller
+   * names the stage's absence honestly instead of faking a movement. */
+  focusSelection(selectedIds: string[]): boolean;
   /** Honest engine failure (context creation or unrecoverable runtime failure)
    * — surfaced, never swallowed. A retained context return is reconciled through
    * its lease and therefore does not destroy this stage. */
@@ -403,9 +409,29 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     cuesRef.current?.release(handle);
   }, []);
 
+  /** The one live presentation — the surface presents at most one at a
+   * time; a stale provider record cannot exist because release() removes it
+   * from the same map. */
+  const focusSelection = useCallback((selectedIds: string[]): boolean => {
+    const surface = surfaceRef.current;
+    const record = [...presentations.current.values()][0];
+    if (!surface || !record) return false;
+    try {
+      surface.updateSelection(record.id, selectedIds);
+      return true;
+    } catch {
+      // The presentation released between the lookup and the call — the
+      // stage no longer stands; the caller names that honestly.
+      return false;
+    }
+  }, []);
+
   const inspect = useCallback(() => ({
     presentations: [...presentations.current.values()].map((record) => ({ id: record.id, plane: record.plane })),
     engine: surface ? surface.capabilities() : null,
+    /** The live presentation's selection (the stage's focus/highlight
+     * decoration), as data. */
+    selection: surface ? surface.selectionSnapshot() : [],
     /** Whether the window surface's own clock is held (lease pause law). */
     paused: surfaceRef.current ? surfaceRef.current.isPaused : null,
     /** The clock law, observable: a live presentation stands / a drawing
@@ -435,9 +461,10 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
     express,
     update: updateHandle,
     release: releaseHandle,
+    focusSelection,
     error: surfaceError,
     inspect,
-  }), [present, retainedLease, capture, emit, express, updateHandle, releaseHandle, surfaceError, inspect]);
+  }), [present, retainedLease, capture, emit, express, updateHandle, releaseHandle, focusSelection, surfaceError, inspect]);
 
   return <StageContext.Provider value={api}>{children}</StageContext.Provider>;
 }

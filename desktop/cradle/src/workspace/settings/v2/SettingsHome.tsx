@@ -288,7 +288,7 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
                 <SuitePins census={census}/>
               </div>
             : <>
-                {ownerGroups.length === 0 && <p className="settings-empty" data-config-empty-registry>Nothing is installed to configure yet. Once the suite is installed, each product's settings appear here — same page, no extra setup.</p>}
+                {ownerGroups.length === 0 && <p className="settings-empty" data-config-empty-registry>Nothing installed to configure yet.</p>}
                 {searching && <p className="settings-note" data-settings-search-count>{filtered.length === entries.length ? `${entries.length} settings` : `${filtered.length} of ${entries.length} settings match`}</p>}
                 {ownerGroups.map((mount) => {
                   if (panel.kind === "owner" && panel.ownerRef !== mount.owner_ref) return null;
@@ -303,15 +303,15 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
                     </header>
                     {!actionable && mount.availability.state !== "available" && (
                       <p className="settings-empty" data-owner-availability={mount.availability.state}>
-                        {availabilityWord(mount.availability.state)}{mount.availability.reason ? ` — ${mount.availability.reason}` : ""}. Its settings are listed below, but changes need the product working.
+                        {availabilityWord(mount.availability.state)}{mount.availability.reason ? ` — ${mount.availability.reason}` : ""}
                       </p>
                     )}
                     {!actionable && mount.availability.state === "available" && standing === "absent" && (
                       <p className="settings-empty" data-config-absent-owner>
-                        This product is not part of the running world, so its settings can't be changed here — adding it is a deliberate choice made with the suite, not a checkbox.
+                        Not part of the running world — its settings can't change here.
                       </p>
                     )}
-                    {groupEntries.length === 0 && !mount.error && !searching && <p className="settings-empty">This product offers no settings here right now.</p>}
+                    {groupEntries.length === 0 && !mount.error && !searching && <p className="settings-empty">No settings here right now.</p>}
                     {sectionEntries(groupEntries).map(([title, list]) => <div key={title} className="settings-section">
                       <h4>{title}</h4>
                       {list.map((entry) => {
@@ -345,7 +345,7 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
     {pendingRequests.length > 0 && !drawerOpen && panel.kind !== "profiles" && (
       <div className="settings-tray" role="region" aria-label="Pending changes" data-settings-tray>
         <span>
-          <strong>{pendingRequests.length}</strong> change{pendingRequests.length === 1 ? "" : "s"} waiting — the products haven't received {pendingRequests.length === 1 ? "it" : "them"} yet.
+          <strong>{pendingRequests.length}</strong> change{pendingRequests.length === 1 ? "" : "s"} waiting
         </span>
         <span className="settings-tray-actions">
           <button type="button" className="settings-mini" data-config-discard-all onClick={() => void discardAll(pendingRequests)}>Discard all</button>
@@ -460,7 +460,7 @@ function SettingRowCard({
               disabled={!ownerOperable || drawerOpen}
               hint={null}
               onCommit={onHold}/>
-          : <span className="settings-note">Can't be changed here{setting.effect.summary ? ` — ${setting.effect.summary}` : " — it belongs to the product's own tools"}.</span>}
+          : null}
         {desired && (secret ? !desired.secret_reference : desired.value === undefined) && <span className="settings-note">Finish this change below before applying.</span>}
       </div>
       {(desired || axesNeedShowing || effectWorthShowing) && <div className="settings-row-facts">

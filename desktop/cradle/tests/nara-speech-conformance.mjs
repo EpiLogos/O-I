@@ -18,6 +18,7 @@ import {
   constitutionFromAikitResolution,recordConstitutionChange,constitutionDelta,validateSpeechConstitution,
   speechCapable,realtimeCapable,textPathSupport,aikitResolutionRef,
 } from "../src/nara/constitution";
+import {holdToTalkLive,holdToTalkRefusal,naraBodyState} from "../src/nara/bodyState";
 import {
   validateDialogueContext,buildDialogueContext,admitRefs,isAdmitted,turnContext,
   buildDeixisRequest,resolveDeixis,contextContinues,
@@ -28,6 +29,11 @@ import {
   planChoreography,takeChoreographyStep,completeChoreographyStep,interruptChoreography,
 } from "../src/nara/expressiveAct";
 import {NaraSpeechBinding,validateToolRequest} from "../src/nara/session";
+import {stageFocusPlan} from "../src/nara/stageFocus";
+import {
+  NARA_VOICE_BODY_CONTRACT,bodyBindsDistinctly,dialogicalFloor,
+  validateVoiceBodyDeclaration,validateVoiceBodyRequirements,voiceBodyFromConstitution,voiceBodySatisfaction,voiceBodySatisfactionReceipt,
+} from "../src/nara/voiceBody";
 
 const fixturesRoot=fileURLToPath(new URL("./fixtures/nara/",import.meta.url));
 const readFixture=name=>JSON.parse(readFileSync(`${fixturesRoot}${name}`,"utf8"));
@@ -211,9 +217,9 @@ const realtimeResolution={
         degraded_interaction:{},
         transport:"webrtc",
         connection:{kind:"connected",reconnect:"resumable"},
-        credential_scope:"bearer",availability:"available",
+        credential_scope:"bearer",availability:{state:"available"},
         provider:"provider:openai",provider_native_surface:"gpt-realtime",provider_revision:"r1",
-        credential:{state:"declared",scope:"bearer"},constraints:{},provenance:["fixture"],
+        credential:{condition:"satisfied",hint:"provider:openai inference credential",binding_ref:"credential-binding:conformance"},constraints:{},provenance:["fixture"],
       },
     },
   },
@@ -274,12 +280,15 @@ test("a resolution declaring a transform its modalities lack is refused, not pap
 });
 
 test("the constitution carries no secret material",()=>{
-  // The reduction strips the raw contract wholesale: an api_key on the
-  // resolution's credential object cannot travel into the constitution.
+  // The reduction strips the raw contract wholesale: an api_key riding the
+  // resolution's credential condition cannot travel into the constitution —
+  // while the condition's own ref/presence facts (state and hint) do.
   const leaky=structuredClone(realtimeResolution);
-  leaky.relation.model_surface.modality.credential={state:"declared",scope:"bearer",api_key:"sk-nothing"};
+  leaky.relation.model_surface.modality.credential={condition:"required",hint:"provider:openai inference credential",api_key:"sk-nothing"};
   const built=constitutionFromAikitResolution(identities,leaky,"2026-09-17T09:00:00Z");
   assert.ok(!JSON.stringify(built).includes("sk-nothing"),"secret material must not travel");
+  assert.equal(built.provider_binding.facts.credential_condition,"required");
+  assert.equal(built.provider_binding.facts.credential_hint,"provider:openai inference credential");
   // A hand-built constitution that carries a value-shaped key is refused.
   const carrying=structuredClone(built);
   carrying.provider_binding.facts.api_key="sk-nothing";
@@ -425,4 +434,266 @@ test("turn context updates keep the Nara and session identity",()=>{
   binding.updateContext({...binding.contextNow,expression_revision:"rev-8",pointed_ref:"bimba:relation:1"});
   assert.equal(binding.contextNow.expression_revision,"rev-8");
   assert.throws(()=>binding.updateContext({...binding.contextNow,nara_ref:"nara:b"}),/cannot change the Nara identity/);
+});
+
+// ---------------------------------------------------------------------------
+// ES1 stage focus: DeixisResolution focus actions drive the real stage
+// ---------------------------------------------------------------------------
+
+function focusDocument(){
+  const ref="expression:focus";
+  const entity=(entityRef,subjectRef)=>({entity_ref:entityRef,revision:1,title:entityRef.endsWith("person")?"Person":"EarthBody",subject:subjectRef?{subject_ref:subjectRef,native_owner:"ql",presentation_role:"thing",sources:[],readings:[],actions:[]}:null,parameters:{}});
+  return {
+    schema:"oi.expression/v1",expression_ref:ref,revision:7,title:"Focus",
+    scenes:[{scene_ref:`${ref}:scene:main`,revision:2,title:"Main",entity_refs:[`${ref}:entity:person`,`${ref}:entity:earth`]}],
+    entities:{
+      [`${ref}:entity:person`]:entity(`${ref}:entity:person`,"bimba:#4"),
+      [`${ref}:entity:earth`]:entity(`${ref}:entity:earth`,"ql:nara:focus:m4:earth-body"),
+    },
+    relations:{},selection:{scene_ref:`${ref}:scene:main`,entity_ref:null},provenance:[],representations:[],refinements:[],
+  };
+}
+
+function focusResolution(action,refId){
+  return {
+    schema:"ql.nara-deixis/v1",resolution_ref:"deixis:1:resolution",deixis_ref:"deixis:1",turn_ref:"turn:1",nara_ref:"nara:a",
+    outcome:{outcome:"focused",focus:[{ref_id:refId,target_kind:"subject",focus_action:action}],turn_context:{coordinate_ref:"M4.1.1",expression_ref:"expression:focus",expression_revision:"7",turn_refs:[refId]}},
+  };
+}
+
+test("a Nara select focus action plans a committed kernel edit plus the live stage movement",()=>{
+  const plan=stageFocusPlan(focusResolution("select","bimba:#4"),focusDocument());
+  assert.deepEqual(plan.operations.map(op=>op.op),["kernel-focus","stage-select"]);
+  assert.equal(plan.operations[0].entity_ref,"expression:focus:entity:person");
+  assert.equal(plan.operations[0].subject_ref,"bimba:#4");
+  assert.deepEqual(plan.unmapped,[]);
+});
+
+test("a highlight focus action moves the stage presentation without touching the document",()=>{
+  const plan=stageFocusPlan(focusResolution("highlight","ql:nara:focus:m4:earth-body"),focusDocument());
+  assert.deepEqual(plan.operations.map(op=>op.op),["stage-highlight"]);
+  assert.equal(plan.operations[0].entity_ref,"expression:focus:entity:earth");
+});
+
+test("an open focus action is named unavailable; a select is not staged in its place",()=>{
+  const plan=stageFocusPlan(focusResolution("open","bimba:#4"),focusDocument());
+  assert.equal(plan.operations.length,1);
+  assert.equal(plan.operations[0].op,"unavailable");
+  assert.equal(plan.operations[0].action,"open");
+  assert.match(plan.operations[0].reason,/portal/);
+});
+
+test("a deictic focus on a ref no bound entity carries is unmapped, never invented",()=>{
+  const plan=stageFocusPlan(focusResolution("select","bimba:#5"),focusDocument());
+  assert.deepEqual(plan.operations,[]);
+  assert.deepEqual(plan.unmapped,["bimba:#5"]);
+});
+
+test("an unresolved deixis outcome plans nothing",()=>{
+  const resolution={...focusResolution("select","bimba:#4"),outcome:{outcome:"unresolved-outside-context",ref_id:"bimba:#5"}};
+  const plan=stageFocusPlan(resolution,focusDocument());
+  assert.deepEqual(plan.operations,[]);
+  assert.deepEqual(plan.unmapped,["bimba:#5"]);
+});
+
+// ---------------------------------------------------------------------------
+// Voice-body satisfaction bridge (caller-side, QL ql.nara-voice-body/v1)
+// ---------------------------------------------------------------------------
+
+const floorDeclaration=extra=>validateVoiceBodyDeclaration({
+  binding:{schema:NARA_VOICE_BODY_CONTRACT,body_ref:"model:x",body_provenance_ref:"prov:resolved-by-aikit"},
+  duplex:"full-duplex",barge_in:"supported",manual_interrupt:"supported",
+  structured_event_channel:"supported",reconnect_status_reporting:"supported",
+  context_refresh:"tool-access",observation_refs:[],...extra,
+});
+
+test("the QL voice-body contract round-trips and the body stays distinct from Nara and session",()=>{
+  const declaration=floorDeclaration();
+  bodyBindsDistinctly(declaration.binding,"nara:a","agent-session:1");
+  assert.throws(()=>bodyBindsDistinctly(declaration.binding,"model:x","agent-session:1"),/not the Nara/);
+  assert.throws(()=>bodyBindsDistinctly(declaration.binding,"nara:a","model:x"),/not the AgentSession/);
+  assert.throws(()=>validateVoiceBodyDeclaration({...declaration,extra:1}),/unknown field/);
+  assert.throws(()=>validateVoiceBodyDeclaration({...declaration,binding:{...declaration.binding,schema:"ql.nara-voice-body/v2"}}),/unsupported Nara voice body contract/);
+  // The requirement slot carries the requirement vocabulary; a mechanism
+  // value is refused there (QL `ContextRefreshRequirement`, deny-unknown).
+  assert.throws(()=>validateVoiceBodyRequirements({...dialogicalFloor(),context_refresh:"tool-access"}),/invalid context refresh requirement/);
+  assert.throws(()=>validateVoiceBodyRequirements({...dialogicalFloor(),context_refresh:"none"}),/invalid context refresh requirement/);
+});
+
+test("full duplex satisfies a streamed requirement but not the inverse, and unknown never satisfies",()=>{
+  const streamedFloor={...dialogicalFloor(),duplex:"streamed-turn-taking"};
+  const strictFloor={...dialogicalFloor(),duplex:"full-duplex"};
+  assert.deepEqual(voiceBodySatisfaction(floorDeclaration(),streamedFloor),[]);
+  assert.deepEqual(voiceBodySatisfaction(floorDeclaration({duplex:"streamed-turn-taking"}),streamedFloor),[]);
+  assert.ok(voiceBodySatisfaction(floorDeclaration({duplex:"streamed-turn-taking"}),strictFloor).some(line=>line.includes("duplex")));
+  assert.ok(voiceBodySatisfaction(floorDeclaration({duplex:"unknown"}),streamedFloor).some(line=>line.includes("duplex")),"unknown satisfies nothing");
+  assert.ok(voiceBodySatisfaction(floorDeclaration({barge_in:"unknown"}),dialogicalFloor()).some(line=>line.includes("barge-in")));
+  const gaps=voiceBodySatisfaction(floorDeclaration({duplex:"unknown",barge_in:"unknown",manual_interrupt:"unknown",structured_event_channel:"unknown",reconnect_status_reporting:"unknown",context_refresh:"none"}),dialogicalFloor());
+  assert.equal(gaps.length,6,"every unmet requirement is named, never just the first");
+  assert.ok(gaps.some(line=>line.includes("host-refreshable context")),"the refresh gap names the capability, not a mechanism");
+});
+
+test("the text body fails the floor on the five body facts; per-turn context push is met",()=>{
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:text"},textResolution,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.declaration.duplex,"unknown");
+  assert.equal(reduction.declaration.barge_in,"unsupported");
+  assert.equal(reduction.declaration.manual_interrupt,"unsupported");
+  assert.equal(reduction.declaration.structured_event_channel,"unsupported");
+  assert.equal(reduction.declaration.reconnect_status_reporting,"unsupported");
+  // The host recomposes the bounded context each turn: the structural
+  // push-on-change disposition meets the floor's refreshable requirement.
+  assert.equal(reduction.declaration.context_refresh,"push-on-change");
+  assert.equal(reduction.context_refresh.source,"composition");
+  const unmet=voiceBodySatisfaction(reduction.declaration,dialogicalFloor());
+  assert.equal(unmet.length,5);
+  for(const named of ["duplex","barge-in","manual interrupt","structured event channel","reconnect status reporting"]){
+    assert.ok(unmet.some(line=>line.includes(named)),`${named} is named: ${unmet.join("; ")}`);
+  }
+  assert.ok(!unmet.some(line=>line.includes("context refresh")),"context refresh is met by per-turn push, never named as a gap");
+});
+
+test("the realtime body meets the QL dialogical floor; push-on-change over the structured event channel is the named basis",()=>{
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},realtimeResolution,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.declaration.duplex,"full-duplex");
+  assert.equal(reduction.declaration.barge_in,"supported");
+  assert.equal(reduction.declaration.manual_interrupt,"supported");
+  assert.equal(reduction.declaration.structured_event_channel,"supported");
+  assert.equal(reduction.declaration.reconnect_status_reporting,"supported");
+  assert.equal(reduction.declaration.context_refresh,"push-on-change");
+  assert.equal(reduction.context_refresh.source,"interaction.structured-events + interaction.tool-requests");
+  assert.match(reduction.context_refresh.note,/structured event channel/);
+  assert.deepEqual(voiceBodySatisfaction(reduction.declaration,dialogicalFloor()),[]);
+});
+
+test("a realtime body with no proven structured event channel discloses none and the floor names the gap",()=>{
+  const muteChannel=structuredClone(realtimeResolution);
+  const modality=muteChannel.relation.model_surface.modality;
+  assert.ok(modality);
+  modality.interaction=modality.interaction.filter(name=>name!=="structured-events"&&name!=="tool-requests");
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime-mute-channel"},muteChannel,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.declaration.duplex,"full-duplex","the body is still realtime");
+  assert.equal(reduction.declaration.structured_event_channel,"unsupported");
+  assert.equal(reduction.declaration.context_refresh,"none","unproven channel: the host has no push path");
+  assert.deepEqual(voiceBodySatisfaction(reduction.declaration,dialogicalFloor()),[
+    "structured event channel: required supported, body discloses unsupported",
+    "context refresh: body discloses none; the floor requires host-refreshable context",
+  ]);
+});
+
+test("a degraded capability reduces to unknown, never to supported",()=>{
+  const degraded=structuredClone(realtimeResolution);
+  // The composed view is authoritative for body-level facts: an explicitly
+  // degraded full-duplex capability is a stated reduction, not proven support.
+  degraded.composed_modality={
+    input_modalities:["speech","text"],output_modalities:["speech","text"],
+    transforms:{},interaction:{"full-duplex-realtime":{state:"degraded",reason:"provider's turn budget is limited"}},
+    complete:true,basis:["fixture"],
+  };
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},degraded,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  assert.equal(reduction.duplex.disposition,"unknown");
+  assert.match(reduction.duplex.note,/degraded/);
+});
+
+test("the satisfaction receipt carries the named reduction, the verdict, and no secret material",()=>{
+  const constitution=constitutionFromAikitResolution({...identities,body_ref:"surface:realtime"},realtimeResolution,"2026-09-17T09:00:00Z");
+  const reduction=voiceBodyFromConstitution({constitution,nara_ref:"nara:a"});
+  const receipt=voiceBodySatisfactionReceipt({satisfaction_ref:"voice-body-satisfaction:1",nara_ref:"nara:a",reduction,evaluated_at:"2026-09-17T09:00:00Z"});
+  assert.equal(receipt.schema,"oi.nara-voice-body-satisfaction/v1");
+  assert.equal(receipt.satisfied,true,"the realtime body meets the floor: refreshable is met by push-on-change over the structured event channel");
+  assert.deepEqual(receipt.unmet,[]);
+  assert.equal(receipt.declaration.duplex,"full-duplex");
+  assert.equal(receipt.reduction.context_refresh.disposition,"push-on-change");
+  assert.match(receipt.reduction.context_refresh.note,/structured event channel/,"the verdict's basis is named, not just the verdict");
+  assert.ok(receipt.declaration.observation_refs.some(ref=>ref.startsWith("aikit:model-runtime:")),"the reduction cites its resolution provenance");
+});
+
+// ---------------------------------------------------------------------------
+// Body-state vocabulary (#336 option+gap): what the surface may say
+// ---------------------------------------------------------------------------
+
+const walkFixtureRoot=fileURLToPath(new URL("../walk/fixtures/nara/",import.meta.url));
+const readResolution=name=>JSON.parse(readFileSync(`${walkFixtureRoot}${name}`,"utf8")).resolution;
+const gatedResolution=readResolution("gated-body-resolution.json");
+const textOnlyResolution=readResolution("text-body-resolution.json");
+
+test("a credential-gated body is constituted as an option: the gap and credential condition are named as disclosed",()=>{
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:gated",body_ref:"model:desktop-speech-gated"},gatedResolution,"2026-09-18T09:00:00Z");
+  // Only the body-scoped unavailability becomes a body condition; the read
+  // model's access-profile entries stay access facts, so the body is gated
+  // by exactly one named thing — the credential it does not have bound.
+  assert.deepEqual(c.conditions,[
+    {condition:"unavailable",field:"modality-credential",reason:"the surface needs a credential it does not have bound: provider:voice inference credential"},
+  ]);
+  assert.deepEqual(c.access_profile.control.allowed,[],"access facts stay in the access profile");
+  assert.equal(c.provider_binding.facts.credential_condition,"required","the credential condition travels as a scalar presence fact");
+  assert.equal(c.provider_binding.facts.credential_hint,"provider:voice inference credential");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"option");
+  assert.equal(state.usable,false);
+  assert.equal(state.text_capable,false);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),
+    ["unavailable (modality-credential): the surface needs a credential it does not have bound: provider:voice inference credential"]);
+  assert.match(state.line,/speech body present as an option \(not usable today\)/);
+  assert.equal(state.credential.condition,"required");
+  assert.equal(state.credential.line,"credential condition required — provider:voice inference credential");
+  assert.equal(speechCapable(c),false);
+  assert.equal(textPathSupport(c).state,"unsupported","the recorded-unavailable body carries no usable text path either");
+  assert.equal(holdToTalkLive(c),false,"no speech affordance presents itself as live while the body is gated");
+  assert.equal(holdToTalkRefusal(c),"This body is recorded unavailable; text is the honest path");
+});
+
+test("a no-speech-body (text-only) read model renders absent: the gap is named and the affordance never presents",()=>{
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:absent",body_ref:"model:desktop-text"},textOnlyResolution,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"absent");
+  assert.equal(state.text_capable,true,"the text-capable Nara is constituted, not broken");
+  assert.equal(state.line,"speech body absent (text-capable Nara); a speech body may be constituted or swapped later without changing Nara");
+  assert.equal(speechCapable(c),false);
+  assert.equal(holdToTalkLive(c),false);
+  assert.equal(holdToTalkRefusal(c),"This body declares no usable acoustic input; text is the honest path");
+});
+
+test("a supported body stays live: chips as usual, no body-state banner, the affordance presents",()=>{
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:live",body_ref:"surface:realtime"},realtimeResolution,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"live");
+  assert.equal(state.line,"speech body live: surface:realtime");
+  assert.equal(c.provider_binding.facts.credential_condition,"satisfied","the bound credential is a disclosed presence fact");
+  assert.equal(c.provider_binding.facts.credential_binding_ref,"credential-binding:conformance");
+  assert.equal(holdToTalkLive(c),true);
+  assert.equal(holdToTalkRefusal(c),null);
+});
+
+test("a degraded acoustic body is an option usable with its named reduction",()=>{
+  const reduced=structuredClone(realtimeResolution);
+  const modality=reduced.relation.model_surface.modality;
+  assert.ok(modality);
+  modality.availability={state:"degraded",reason:"provider turn budget is limited"};
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:degraded",body_ref:"surface:degraded"},reduced,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"option","a degraded body is an option whose reduction is named, never a silent live body");
+  assert.equal(state.usable,true);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),["degraded (modality-availability): provider turn budget is limited"]);
+  assert.match(state.line,/speech body present as an option \(usable with named reductions\)/);
+  assert.equal(holdToTalkLive(c),true,"a usable body may still present the affordance; the reduction is named beside it");
+});
+
+test("a one-sided acoustic declaration is an option naming the missing direction from the modality lists",()=>{
+  const half=structuredClone(realtimeResolution);
+  const modality=half.relation.model_surface.modality;
+  assert.ok(modality);
+  modality.output_modalities=["text"];
+  modality.transforms={"speech-to-text":{available:true}};
+  const c=constitutionFromAikitResolution({...identities,constitution_ref:"speech-constitution:half",body_ref:"surface:hearing-only"},half,"2026-09-18T09:00:00Z");
+  const state=naraBodyState(c);
+  assert.equal(state.state,"option");
+  assert.equal(state.usable,true);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),
+    ["unavailable (output_modalities): the constitution declares acoustic input but no acoustic output"]);
+  assert.equal(holdToTalkLive(c),false,"a body that cannot speak back does not present the speech affordance");
+  assert.equal(holdToTalkRefusal(c),"This body declares acoustic input but no acoustic output; text is the honest path");
 });

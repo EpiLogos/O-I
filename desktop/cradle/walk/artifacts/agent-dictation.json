@@ -1,0 +1,109 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "agent-dictation",
+  "generated_at": "2026-09-19T16:47:06.374Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience",
+      "repository_head": "1dd133b522544cd420c5a08890934d8eb4af72eb",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/agent-dictation-honest-states.png",
+        "desktop/cradle/walk/artifacts/agent-dictation-transcript-landed.png",
+        "desktop/cradle/walk/artifacts/agent-dictation.json",
+        "desktop/cradle/walk/artifacts/nara-speech.json",
+        "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
+        "desktop/cradle/walk/artifacts/nara-stage-focus.json"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 11029,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The composer's microphone renders beside the actions",
+      "data": {
+        "aria": "Dictate into the message (local)"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The mic is labelled dictation (local) — the generic voice-input aid, not a voice mode"
+    },
+    {
+      "ok": true,
+      "label": "At rest the dictation state is idle and no status line stands"
+    },
+    {
+      "ok": true,
+      "label": "Click one records from the (synthetic) microphone and says so"
+    },
+    {
+      "ok": true,
+      "label": "The mic reads as pressed while recording"
+    },
+    {
+      "ok": true,
+      "label": "Nothing entered the composer while recording — dictation never invents text"
+    },
+    {
+      "ok": true,
+      "label": "The owner's transcript carries no new turn — recording dispatched nothing"
+    },
+    {
+      "ok": true,
+      "label": "The fixture transcript landed in the composer as editable text"
+    },
+    {
+      "ok": true,
+      "label": "The landed line says the text is yours to amend and nothing was sent"
+    },
+    {
+      "ok": true,
+      "label": "The transcript is the person's text — amended before anything sends"
+    },
+    {
+      "ok": true,
+      "label": "The person's send carries the amended transcript; the fixture provider answers through the real owner"
+    },
+    {
+      "ok": true,
+      "label": "The owner's canonical transcript holds the amended dictated text verbatim",
+      "data": {
+        "sent": "Dictated fixture transcript — then the owner adds this."
+      }
+    },
+    {
+      "ok": true,
+      "label": "A stopped local speech stack names the gap and the start instruction",
+      "data": {
+        "probed": "http://127.0.0.1:57437/inference"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The microphone was never opened — the probe refused first"
+    },
+    {
+      "ok": true,
+      "label": "A failed transcription names the failure; nothing was placed in the composer"
+    },
+    {
+      "ok": true,
+      "label": "An empty transcription says so and places nothing"
+    }
+  ],
+  "ops": [],
+  "metrics": {},
+  "screenshots": []
+}

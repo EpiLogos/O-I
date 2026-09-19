@@ -71,6 +71,9 @@ const SCENARIOS = {
   "instrument-native-host": { module: "scenarios/instrument-native-host.mjs", kernel: true, aliases: ["k9-native"] },
   "sf5-protected-nara": { module: "scenarios/sf5-protected-nara.mjs", kernel: true, aliases: ["sf5"] },
   "sf6-joined-two-worlds": { module: "scenarios/sf6-joined-two-worlds.mjs", kernel: true, aliases: ["sf6"] },
+  "nara-speech": { module: "scenarios/nara-speech.mjs", kernel: true, aliases: ["nara"] },
+  "nara-stage-focus": { module: "scenarios/nara-stage-focus.mjs", kernel: true, aliases: ["nara-stage"] },
+
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   modes: { module: "scenarios/modes.mjs", kernel: true, aliases: [] },
@@ -83,6 +86,7 @@ const SCENARIOS = {
   configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
+  "agent-dictation": {module:"scenarios/agent-dictation.mjs",kernel:true,aliases:["dictation"]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
   "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},
@@ -407,7 +411,12 @@ async function runScenario(name, { baseUrl }) {
   // ?frontstate (the welcome scenario runs the real first-open path).
   await page.addInitScript(() => {
     if (!new URLSearchParams(location.search).has("frontstate")) {
-      sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+      // Opaque-origin frames (the sandboxed material iframes) refuse storage
+      // access entirely — the touch must not throw there; only the top
+      // document's stand-down matters.
+      try {
+        sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+      } catch { /* opaque frame: no storage authority, no stand-down needed */ }
     }
   });
 

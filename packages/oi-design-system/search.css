@@ -14,9 +14,15 @@
   --oi-search-shadow: 0 24px 80px rgba(26, 34, 24, .20), 0 4px 16px rgba(26, 34, 24, .10);
   --oi-search-blur: 28px;
   --oi-search-saturation: 1.25;
-  --oi-search-selected: rgba(101, 120, 82, .12);
-  --oi-search-selection-edge: rgba(101, 120, 82, .28);
-  --oi-search-inner-rule: rgba(101, 120, 82, .15);
+  /* Owner ruling 2026-09-15 (DESKTOP-LANGUAGE.md): the desktop accent is
+   * INK, not a hue. These four roles carried the retired olive palette
+   * (rgba(101,120,82,…)) from the superseded 6 September direction — they
+   * are re-grounded in `--oi-ink` via color-mix so selection reads in
+   * foreground strength like every other selected/current state in the
+   * shell, in both appearances. */
+  --oi-search-selected: color-mix(in srgb, var(--oi-ink) 12%, transparent);
+  --oi-search-selection-edge: color-mix(in srgb, var(--oi-ink) 28%, transparent);
+  --oi-search-inner-rule: color-mix(in srgb, var(--oi-ink) 15%, transparent);
   --oi-search-query-size: 22px;
   --oi-search-result-size: 14px;
   --oi-search-meta-size: 11px;
@@ -27,7 +33,7 @@
   --oi-search-symbol: 22px;
   --oi-search-travel: 6px;
   --oi-search-outline-offset: -2px;
-  --oi-search-key-ground: rgba(101, 120, 82, .06);
+  --oi-search-key-ground: color-mix(in srgb, var(--oi-ink) 6%, transparent);
 }
 @media (prefers-contrast: more) {
   .oi-desktop {

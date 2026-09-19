@@ -61,6 +61,22 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const [reading,setReading]=useState<NativeFileReading>();
   const [draft,setDraft]=useState<HeldDraft>();const held=useRef(draft);held.current=draft;
   const [error,setError]=useState<string>();const [pending,setPending]=useState(false);
+  // First-presentation latch (the same inactive-tab law the material
+  // renderer holds): an editor that mounted CONCEALED — a restart-restored
+  // inactive tab — defers its seed and its owner revalidation until the
+  // person actually presents it. The latch only ever turns on, so a live
+  // editor's concealment never defers anything.
+  const [presentedNow,setPresentedNow]=useState(true);
+  const shellRef=useRef<HTMLDivElement>(null);
+  useEffect(()=>{
+    const wrapper=shellRef.current?.closest('.surface-retained');
+    if(!wrapper)return;
+    const sync=()=>setPresentedNow(!wrapper.hasAttribute('hidden'));
+    sync();
+    const observer=new MutationObserver(sync);
+    observer.observe(wrapper,{attributes:true,attributeFilter:['hidden']});
+    return()=>observer.disconnect();
+  },[]);
   const [history,setHistory]=useState<FileHistory>();const [preview,setPreview]=useState<FilePreview>();
   const body=useRef<EditorHandle>(null);const scroll=useRef<HTMLDivElement>(null);const scrollKey=`oi-cradle.file-scroll:${binding.id}`;
   const caretKey=`oi-cradle.file-caret:${binding.id}`;
@@ -85,6 +101,11 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   };
   useEffect(()=>{
     let live=true;setPending(true);setError(undefined);
+    // Inactive-tab deferral (WORKSPACE-CONTINUITY): while concealed this
+    // editor holds every owner I/O — the seed and the forced revalidation —
+    // until first presentation, which re-runs this effect exactly as a
+    // fresh open.
+    if(!presentedNow) return;
     if(!binding.location){setError("The saved file location is unavailable");setPending(false);return;}
     // Cache-first open (WF2): show the resident reading immediately —
     // presentation only, never authority — then keep today's owner
@@ -128,7 +149,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     document.addEventListener('visibilitychange',reread);
     window.addEventListener('storage',sync);
     return()=>{live=false;window.removeEventListener('focus',reread);document.removeEventListener('visibilitychange',reread);window.removeEventListener('storage',sync);};
-  },[binding.ref]);
+  },[binding.ref,presentedNow]);
   const perform=async(run:()=>Promise<void>)=>{setPending(true);setError(undefined);try{await run();}catch(error){setError(String(error));}finally{setPending(false);}};
   const change=(content:string)=>{if(!draft)return;const next={...draft,content};setDraft(next);try{writeDraft(binding.ref!,next);}catch{setError("Typing remains open, but this device could not retain the draft. Keep this view open.");}};
   // ⌘S reaches save() twice for one keystroke — TextEditor's CodeMirror
@@ -157,7 +178,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const updateCaret=()=>{const el=body.current;if(!el)return;const before=el.value.slice(0,el.selectionStart),lines=before.split("\n");setCaret({line:lines.length,column:(lines[lines.length-1]?.length??0)+1,selected:el.selectionStart!==el.selectionEnd});try{localStorage.setItem(caretKey,JSON.stringify({start:el.selectionStart,end:el.selectionEnd,direction:el.selectionDirection}));}catch{}};
   const extension=binding.location?.path.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const json=extension==="json";
   const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
-  return <EditorFrame className="native-file-surface" label={`File ${binding.title}`}
+  return <div ref={shellRef} style={{display:"contents"}}><EditorFrame className="native-file-surface" label={`File ${binding.title}`}
     toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable}>Format JSON</EditorButton>}</>}
     footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
   >
@@ -168,5 +189,5 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
     {preview&&<section className="file-recovery" aria-label="File recovery preview"><label>Current<textarea aria-label="Current recovery basis" readOnly value={preview.current_content}/></label><label>Recovery<textarea aria-label="Recovery content" readOnly value={preview.content}/></label><button disabled={pending||dirty||!reading?.operations?.restore.available} onClick={()=>void restore()}>Restore this revision</button>{dirty&&<p>Save or resolve the open draft before restoring a revision.</p>}<button onClick={()=>setPreview(undefined)}>Close preview</button></section>}
     {reading&&draft&&<div className="source-editor-scroll" ref={scroll} onScroll={event=>{try{localStorage.setItem(scrollKey,String(event.currentTarget.scrollTop));}catch{}}} onKeyDown={event=>{if((event.metaKey||event.ctrlKey)&&event.code==="KeyS"){event.preventDefault();void save();}}}><div className="source-editor-body"><TextEditor ref={body} binding={binding} aria-label={`${writable?"Editing":"Reading"} ${binding.title}`} readOnly={!writable||pending} value={draft.content} onChange={change} onSelect={updateCaret} onSave={()=>void save()}/></div></div>}
 
-  </EditorFrame>;
+  </EditorFrame></div>;
 }

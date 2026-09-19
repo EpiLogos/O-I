@@ -1,0 +1,53 @@
+{
+  "probe": "walk/techne-lenses-probe.mjs",
+  "date": "2026-09-19T19:10:00.466Z",
+  "pass": true,
+  "steps": [
+    {
+      "step": "registration: exactly six M′ lenses stand in the mount registry",
+      "detail": "project, canvas, timeline, journey, place, palace",
+      "pass": true
+    },
+    {
+      "step": "registration: a duplicate lens registration is refused",
+      "detail": "A Technē lens for project is already registered",
+      "pass": true
+    },
+    {
+      "step": "resolve once, lens many: six-lens round trip on one subject",
+      "detail": "provider reads 6→6, one session, hops 5",
+      "pass": true
+    },
+    {
+      "step": "no false waiting: every resolved lens mounts its body immediately",
+      "detail": "project:mounted canvas:mounted timeline:mounted journey:mounted place:mounted palace:mounted",
+      "pass": true
+    },
+    {
+      "step": "journey real refs: the Studio panel names the reading's own Expression scene refs",
+      "detail": "2 real scene beats — oi.expression:probe:scene:oneoi.expression:probe:scene:two",
+      "pass": true
+    },
+    {
+      "step": "lifecycle: canvas mount → unmount → remount ×3 with Studio release",
+      "detail": "3 remounts, final release [body:null, tools:null]",
+      "pass": true
+    },
+    {
+      "step": "lifecycle: journey mount → unmount → remount ×3 with Studio release",
+      "detail": "3 remounts, final release [body:null, tools:null]",
+      "pass": true
+    },
+    {
+      "step": "four states: each renders its named state with the actual reason",
+      "detail": "",
+      "pass": true
+    },
+    {
+      "step": "no page errors across the whole probe",
+      "detail": "",
+      "pass": true
+    }
+  ],
+  "pageErrors": []
+}

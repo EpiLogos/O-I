@@ -45,7 +45,7 @@ import type {Workspace} from "../workspace/store";
 // The retained centre bodies are the same lazy chunks the workbench mounts;
 // a retained centre loads on first presentation, never at startup.
 const PointCloudHost = lazy(() => import("../expressions/PointCloudHost").then((module) => ({default: module.PointCloudHost})));
-const TechneSurface = lazy(() => import("../techne/TechneSurface").then((module) => ({default: module.TechneSurface})));
+
 const EpiLogosSurface = lazy(() => import("../epilogos/EpiLogosSurface").then((module) => ({default: module.EpiLogosSurface})));
 const SystemPanel = lazy(() => import("../workspace/SystemPanel").then((module) => ({default: module.SystemPanel})));
 const FactoryCentre = lazy(() => import("../contributions/factory/FactoryCentre").then((module) => ({default: module.FactoryCentre})));
@@ -150,13 +150,13 @@ function retainedCentres(workspace: Workspace, activeMode: WorkspaceMode): Retai
 
 interface WorkbenchSubject { ref?: string; kind?: string; title: string; project?: string }
 
-function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject, factoryCentre?: ReactNode, factoryTasks?: FactoryCentreContext): ReactNode {
+function retainedBody(binding: SurfaceBinding, _subject?: WorkbenchSubject, factoryCentre?: ReactNode, factoryTasks?: FactoryCentreContext): ReactNode {
   // The centre arms of the workbench's own SurfaceBody, mirrored here with
   // the props the shell itself holds (the frame passes nothing richer into
   // the stage than these). Factory's arm composes the frame-built chat node
   // the shell received — the declarer mounts the one body with it.
-  if (binding.kind === "expressions") return <PointCloudHost/>;
-  if (binding.kind === "techne") return <TechneSurface binding={binding} subject={subject}/>;
+  if (binding.kind === "expressions") return <PointCloudHost mode="expressions"/>;
+  if (binding.kind === "techne") return <PointCloudHost mode="techne"/>;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>;

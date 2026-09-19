@@ -94,6 +94,9 @@ export interface WalkStageData {
   playback: {name: string; elapsed: number; duration: number; status: "active" | "completed" | "cancelled"} | null;
   frames: number | null;
   presentations: Array<{ id: string; plane: string }>;
+  /** The live presentation's selection — the stage's real focus/highlight
+   * decoration, as data (empty when no live presentation stands). */
+  selection: string[];
 }
 
 export interface WalkTimingData {
@@ -585,7 +588,7 @@ export function createWalkChannel(
         timed<WalkStageData>("read.stage", async () => {
           if (!stage) return { error: "the expression stage is not bound to this channel" };
           const inspect = stage.inspect() as Partial<WalkStageData>;
-          return { data: { paused: inspect.paused ?? null, live: inspect.live ?? null, scheduled: inspect.scheduled ?? null, frames: inspect.frames ?? null, presentations: inspect.presentations ?? [], playback: inspect.playback ?? null } };
+          return { data: { paused: inspect.paused ?? null, live: inspect.live ?? null, scheduled: inspect.scheduled ?? null, frames: inspect.frames ?? null, presentations: inspect.presentations ?? [], playback: inspect.playback ?? null, selection: inspect.selection ?? [] } };
         }),
     },
     capture: {
