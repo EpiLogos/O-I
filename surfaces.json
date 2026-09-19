@@ -183,7 +183,10 @@
             "--locked",
             "--release"
           ],
-          "executable_path": "target/release/aikit"
+          "executable_path": "target/release/aikit",
+          "companion_executables": [
+            "aikit-session-space"
+          ]
         },
         "version_manifest": "crates/aikit-cli/Cargo.toml"
       },

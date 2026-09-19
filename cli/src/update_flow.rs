@@ -11,6 +11,19 @@
 // rollback never disturbs live sessions; only the next invocation resolves
 // differently.
 
+/// A non-entry executable the same build produces and the product's dispatcher
+/// exposes (O-I #376): deployed beside the entry into the content-addressed
+/// store, `bin/<exe>` and an activation symlink, receipted alongside the entry
+/// so a declared-but-undelivered companion is visible and self-heals.
+#[derive(Debug, Clone, Serialize, Deserialize)]
+struct ManagedCompanion {
+    exe: String,
+    sha256: String,
+    managed: String,
+    bin: String,
+    activation: String,
+}
+
 #[derive(Debug, Clone, Serialize, Deserialize)]
 struct ManagedProduct {
     exe: String,
@@ -31,6 +44,8 @@ struct ManagedProduct {
     #[serde(default)]
     gate: String,
     installed_at_unix_seconds: u64,
+    #[serde(default, skip_serializing_if = "Vec::is_empty")]
+    companions: Vec<ManagedCompanion>,
 }
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
@@ -248,6 +263,28 @@ fn managed_artifact_path(data_root: &Path, id: &str, sha256: &str, exe: &str) ->
 /// The plan is pure with respect to effects: nothing is written, nothing is
 /// built. `discovered` is the PATH-resolved unmanaged executable, when one
 /// exists outside the managed root.
+/// A declared companion the receipt never recorded, or whose managed artifact
+/// is gone or no longer matches its digest, is an undelivered dispatched
+/// surface (O-I #376). Returns the first such companion name.
+fn first_undelivered_companion(entry: &ManagedProduct, declared: &[String]) -> Option<String> {
+    for name in declared {
+        match entry.companions.iter().find(|companion| &companion.exe == name) {
+            None => return Some(name.clone()),
+            Some(companion) => {
+                let managed = Path::new(&companion.managed);
+                let delivered = is_executable(managed)
+                    && sha256_file(managed).map(|digest| digest == companion.sha256).unwrap_or(false)
+                    && is_executable(Path::new(&companion.bin))
+                    && is_executable(Path::new(&companion.activation));
+                if !delivered {
+                    return Some(name.clone());
+                }
+            }
+        }
+    }
+    None
+}
+
 fn plan_product(
     entry: Option<&ManagedProduct>,
     desired: Option<&DesiredCut>,
@@ -255,6 +292,7 @@ fn plan_product(
     data_root: &Path,
     force_rebuild: bool,
     version_command: &[String],
+    declared_companions: &[String],
 ) -> (PlanAction, String) {
     let Some(desired) = desired else {
         return (PlanAction::Absent, "no checkout under the ground's Work/; nothing to update".to_owned());
@@ -271,6 +309,12 @@ fn plan_product(
                     && is_executable(Path::new(&entry.bin))
                     && is_executable(Path::new(&entry.activation));
                 if healthy {
+                    if let Some(missing) = first_undelivered_companion(entry, declared_companions) {
+                        return (PlanAction::Build, format!(
+                            "receipt names cut {} but companion '{}' is undelivered or drifted; rebuilding to deploy it",
+                            short_rev(&entry.revision), missing,
+                        ));
+                    }
                     return (PlanAction::Skip, format!("receipt already names cut {} and the managed binary verifies", short_rev(&entry.revision)));
                 }
                 return (PlanAction::Build, format!(
@@ -312,6 +356,7 @@ struct UpdateTarget {
     version_command: Vec<String>,
     build_command: Vec<String>,
     executable_path: String,
+    companion_executables: Vec<String>,
 }
 
 /// The flow's product registry: `oi` itself plus the six suite products,
@@ -328,6 +373,7 @@ fn update_targets(manifest: &SuiteManifest) -> Result<Vec<UpdateTarget>, String>
             "--locked".to_owned(), "--release".to_owned(), "--bin".to_owned(), "oi".to_owned(),
         ],
         executable_path: "cli/target/release/oi".to_owned(),
+        companion_executables: Vec::new(),
     }];
     for id in manifest.products.iter().map(|product| product.id.clone()) {
         let descriptor = catalogue.products.iter().find(|descriptor| descriptor.id == id)
@@ -338,6 +384,7 @@ fn update_targets(manifest: &SuiteManifest) -> Result<Vec<UpdateTarget>, String>
             version_command: descriptor.version_command.clone(),
             build_command: descriptor.source_install.build.clone(),
             executable_path: descriptor.source_install.executable_path.clone(),
+            companion_executables: descriptor.source_install.companion_executables.clone(),
         });
     }
     Ok(targets)
@@ -387,7 +434,8 @@ fn build_plan(
             ));
         }
         let (action, detail) = plan_product(
-            entry, desired.as_ref(), discovered.as_deref(), data_root, force_rebuild, &target.version_command,
+            entry, desired.as_ref(), discovered.as_deref(), data_root, force_rebuild,
+            &target.version_command, &target.companion_executables,
         );
         entries.push(PlanEntry {
             id: target.id.clone(),
@@ -465,9 +513,19 @@ fn apply_entry(
 ) -> Result<ManagedProduct, String> {
     let id = entry.id.as_str();
     let desired = entry.desired.as_ref().ok_or_else(|| format!("{id}: nothing to apply"))?;
+    // Non-entry executables the same build produces and the dispatcher exposes
+    // (O-I #376). Each is staged, linked and receipted beside the entry below;
+    // populated only on a Build, since adoption links a single found binary.
+    let mut companion_builds: Vec<(String, PathBuf)> = Vec::new();
     let (built, provenance, build_command, gate_path) = match entry.action {
         PlanAction::Adopt => {
             let discovered = entry.discovered.clone().ok_or_else(|| format!("{id}: adoption source vanished"))?;
+            if !target.companion_executables.is_empty() {
+                return Err(format!(
+                    "{id}: declares companion executables {:?}; adoption cannot deliver them — rerun with --rebuild to build and deploy the companions",
+                    target.companion_executables,
+                ));
+            }
             (discovered, "adopted".to_owned(), Vec::new(), None)
         }
         PlanAction::Build => {
@@ -505,6 +563,14 @@ fn apply_entry(
             if !is_executable(&built) {
                 return Err(format!("{id}: build did not produce {}", built.display()));
             }
+            // Declared companions the same build produced, resolved beside the
+            // entry in the build output directory. Verified and staged below.
+            let release_dir = built.parent()
+                .ok_or_else(|| format!("{id}: built executable {} has no parent directory", built.display()))?
+                .to_path_buf();
+            for name in &target.companion_executables {
+                companion_builds.push((name.clone(), release_dir.join(name)));
+            }
             (built, "built".to_owned(), target.build_command.clone(), Some(gate_root))
         }
         PlanAction::Skip | PlanAction::Absent => return Err(format!("{id}: nothing to apply for action {}", entry.action.as_str())),
@@ -522,6 +588,33 @@ fn apply_entry(
         return Err(format!("{id}: staged binary failed its version smoke check"));
     }
     let activation = point_activation(activation_root, &entry.exe, data_root)?;
+    // Deploy each declared companion beside the entry: same content-addressed
+    // store, its own `bin/<exe>` and activation symlink, receipted below
+    // (O-I #376). A companion that the build did not produce fails the apply
+    // before any swap, so a half-delivered product never becomes active.
+    let mut companions = Vec::new();
+    for (companion_exe, companion_built) in &companion_builds {
+        if !is_executable(companion_built) {
+            return Err(format!(
+                "{id}: build did not produce declared companion '{companion_exe}' at {}",
+                companion_built.display(),
+            ));
+        }
+        let companion_sha = sha256_file(companion_built)?;
+        let companion_managed = stage_and_link(data_root, id, companion_exe, &companion_sha, companion_built)?;
+        let companion_staged = managed_artifact_path(data_root, id, &companion_sha, companion_exe);
+        if sha256_file(&companion_staged)? != companion_sha {
+            return Err(format!("{id}: staged companion '{companion_exe}' digest changed during staging"));
+        }
+        let companion_activation = point_activation(activation_root, companion_exe, data_root)?;
+        companions.push(ManagedCompanion {
+            exe: companion_exe.clone(),
+            sha256: companion_sha,
+            managed: companion_managed.display().to_string(),
+            bin: data_root.join("bin").join(companion_exe).display().to_string(),
+            activation: companion_activation.display().to_string(),
+        });
+    }
     let gate_ref = gate_path.as_ref().map(|path| path.display().to_string()).unwrap_or_default();
     if let Some(gate_dir) = gate_path {
         // The exported cut is rebuildable input, not evidence; the build log
@@ -541,6 +634,9 @@ fn apply_entry(
                 "build_command": build_command,
                 "sha256": sha256,
                 "managed": managed,
+                "companions": companions.iter().map(|companion| json!({
+                    "exe": companion.exe, "sha256": companion.sha256, "managed": companion.managed,
+                })).collect::<Vec<_>>(),
                 "result": "passed",
             }),
         );
@@ -560,6 +656,7 @@ fn apply_entry(
         build_command,
         gate: gate_ref,
         installed_at_unix_seconds: unix_seconds_now(),
+        companions,
     })
 }
 
@@ -744,6 +841,15 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
         if observed != product.sha256 {
             return Err(format!("rollback refused: previous {id} artifact digest drifted (receipt {}, observed {observed})", product.sha256));
         }
+        for companion in &product.companions {
+            let companion_artifact = managed_artifact_path(&data_root, id, &companion.sha256, &companion.exe);
+            if !is_executable(&companion_artifact) {
+                return Err(format!("rollback refused: previous {id} companion '{}' artifact {} is missing", companion.exe, companion_artifact.display()));
+            }
+            if sha256_file(&companion_artifact)? != companion.sha256 {
+                return Err(format!("rollback refused: previous {id} companion '{}' artifact digest drifted", companion.exe));
+            }
+        }
     }
     let lock = acquire_update_lock(&data_root)?;
     let outcome = (|| -> Result<Vec<String>, String> {
@@ -754,6 +860,12 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
             let relative = Path::new("../products").join(id).join(&product.sha256).join("bin").join(&product.exe);
             atomic_symlink(&bin_link, &relative)?;
             point_activation(&activation_root, &product.exe, &data_root)?;
+            for companion in &product.companions {
+                let companion_link = data_root.join("bin").join(&companion.exe);
+                let companion_relative = Path::new("../products").join(id).join(&companion.sha256).join("bin").join(&companion.exe);
+                atomic_symlink(&companion_link, &companion_relative)?;
+                point_activation(&activation_root, &companion.exe, &data_root)?;
+            }
             restored.push(id.clone());
         }
         atomic_json(&active_update_receipt_path(&data_root), &previous)?;
@@ -1026,7 +1138,36 @@ mod update_flow_tests {
             build_command: vec!["cargo".to_owned(), "build".to_owned()],
             gate: String::new(),
             installed_at_unix_seconds: 0,
+            companions: Vec::new(),
         }
+    }
+
+    #[test]
+    fn plan_rebuilds_when_a_declared_companion_is_undelivered() {
+        // An entry whose main binary is perfectly healthy but which declares a
+        // companion the receipt never recorded is an undelivered dispatched
+        // surface (O-I #376): the plan must rebuild to deploy it, not skip.
+        let temp = tempfile::tempdir().unwrap();
+        let data_root = temp.path().join("data");
+        let home = temp.path().join("home");
+        let staged = script_executable(&temp.path().join("staged/tool"), "#!/bin/sh\nexit 0\n");
+        let sha = sha256_file(&staged).unwrap();
+        let artifact = managed_artifact_path(&data_root, "tool", &sha, "tool");
+        fs::create_dir_all(artifact.parent().unwrap()).unwrap();
+        fs::copy(&staged, &artifact).unwrap();
+        script_executable(&artifact, "#!/bin/sh\nexit 0\n");
+        let entry = receipt_entry(&data_root, &home, "cut1", &sha);
+        let desired = DesiredCut { revision: "cut1".to_owned(), tree: "t".to_owned(), branch: Some("main".to_owned()), dirty: false };
+        // No companion declared: healthy entry skips.
+        let (skip, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()], &[]);
+        assert_eq!(skip, PlanAction::Skip);
+        // A declared-but-unrecorded companion turns the same entry into a build.
+        let (build, detail) = plan_product(
+            Some(&entry), Some(&desired), None, &data_root, false,
+            &["--version".to_owned()], &["tool-companion".to_owned()],
+        );
+        assert_eq!(build, PlanAction::Build);
+        assert!(detail.contains("tool-companion") && detail.contains("undelivered"));
     }
 
     #[test]
@@ -1109,12 +1250,12 @@ mod update_flow_tests {
             branch: Some("main".into()),
             dirty: false,
         };
-        let (action, detail) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()]);
+        let (action, detail) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Skip, "{detail}");
         // A drifted managed artifact breaks the skip: the receipt still names
         // the cut, but the bytes no longer verify.
         script_executable(&artifact, "#!/bin/sh\nexit 2\n");
-        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Build);
     }
 
@@ -1130,12 +1271,12 @@ mod update_flow_tests {
         };
         // Receipt names an older cut.
         let stale = receipt_entry(&data_root, &temp.path().join("home"), "b".repeat(40).as_str(), &"a".repeat(64));
-        let (action, detail) = plan_product(Some(&stale), Some(&desired), None, &data_root, false, &[]);
+        let (action, detail) = plan_product(Some(&stale), Some(&desired), None, &data_root, false, &[], &[]);
         assert_eq!(action, PlanAction::Build);
         assert!(detail.contains("dirty checkout is untouched"), "{detail}");
         // Receipt names the cut but the managed artifact no longer verifies.
         let entry = receipt_entry(&data_root, &temp.path().join("home"), &desired.revision, &"a".repeat(64));
-        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[]);
+        let (action, _) = plan_product(Some(&entry), Some(&desired), None, &data_root, false, &[], &[]);
         assert_eq!(action, PlanAction::Build);
         // --rebuild forces a build even when everything verifies.
         let staged = script_executable(&temp.path().join("staged/tool"), "#!/bin/sh\nexit 0\n");
@@ -1144,7 +1285,7 @@ mod update_flow_tests {
         fs::create_dir_all(artifact.parent().unwrap()).unwrap();
         fs::copy(&staged, &artifact).unwrap();
         let healthy = receipt_entry(&data_root, &temp.path().join("home"), &desired.revision, &sha);
-        let (action, _) = plan_product(Some(&healthy), Some(&desired), None, &data_root, true, &[]);
+        let (action, _) = plan_product(Some(&healthy), Some(&desired), None, &data_root, true, &[], &[]);
         assert_eq!(action, PlanAction::Build);
     }
 
@@ -1163,20 +1304,20 @@ mod update_flow_tests {
             &temp.path().join("elsewhere/tool"),
             &format!("#!/bin/sh\necho \"tool 0.1.0 ({})\"\n", &revision[..12]),
         );
-        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Adopt);
         // A binary that names some other cut is never adopted.
         let stranger = script_executable(
             &temp.path().join("elsewhere/stranger"),
             "#!/bin/sh\necho \"tool 0.1.0 (0123456789ab)\"\n",
         );
-        let (action, _) = plan_product(None, Some(&desired), Some(&stranger), &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, Some(&desired), Some(&stranger), &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Build);
         // --rebuild escapes adoption.
-        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, true, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, Some(&desired), Some(&discovered), &data_root, true, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Build);
         // A missing checkout stays absent even with a discovered binary.
-        let (action, _) = plan_product(None, None, Some(&discovered), &data_root, false, &["--version".to_owned()]);
+        let (action, _) = plan_product(None, None, Some(&discovered), &data_root, false, &["--version".to_owned()], &[]);
         assert_eq!(action, PlanAction::Absent);
     }
 

@@ -45,12 +45,21 @@ struct SourceInstallSource {
     #[serde(default)]
     build: Vec<String>,
     executable_path: Option<String>,
+    // Additional executables the same build produces that the product's
+    // dispatcher exposes but that are not the entry (e.g. AIKit's
+    // `aikit-session-space`). Named here so the managed install deploys them
+    // beside the entry instead of leaving the dispatched surface undelivered
+    // (O-I #376). Names, not paths: they resolve beside `executable_path`.
+    #[serde(default)]
+    companion_executables: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
 pub struct SourceInstallDescriptor {
     pub build: Vec<String>,
     pub executable_path: String,
+    #[serde(default)]
+    pub companion_executables: Vec<String>,
 }
 
 #[derive(Debug, Clone, Serialize, PartialEq, Eq)]
@@ -218,6 +227,7 @@ pub fn product_command_catalogue_from_json(
             source_install: SourceInstallDescriptor {
                 build: source_install.build,
                 executable_path,
+                companion_executables: source_install.companion_executables,
             },
         });
     }
