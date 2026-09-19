@@ -615,6 +615,14 @@ fn apply_entry(
             }
             let mut envs = BTreeMap::new();
             envs.insert("CARGO_TARGET_DIR".to_owned(), target_dir.display().to_string());
+            // The cut is exported with `git archive`, so the build tree has no
+            // `.git` for build.rs to probe — without this the compiled binary
+            // self-reports its revision as "unknown". build.rs reads
+            // SUITE_BUILD_REVISION first for exactly this out-of-tree case; set
+            // it to the same short-12 form a git-clone build would stamp, so a
+            // flow-built binary answers its cut in `--version` and stays
+            // re-adoptable (binary_names_cut can match its own revision).
+            envs.insert("SUITE_BUILD_REVISION".to_owned(), short_rev(&desired.revision));
             rolling_check(&exported, &target.build_command, &envs, &gate_root.join("build.log"))
                 .map_err(|error| format!("{id}: build of cut {} failed (log {}): {error}", short_rev(&desired.revision), gate_root.join("build.log").display()))?;
             // With CARGO_TARGET_DIR set, cargo writes `<target>/release/...`
