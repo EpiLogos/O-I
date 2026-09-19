@@ -37,6 +37,7 @@ import {
   EXPRESSIONS_APP_DIST,
   EXPRESSIONS_APP_ENTRY,
   materialUrl,
+  relayKernelChannel,
   trackShellCutout,
 } from "./hostedApp";
 import "./point-cloud-host.css";
@@ -80,6 +81,16 @@ export function PointCloudHost() {
     const node = frame.current;
     return node ? trackShellCutout(node) : undefined;
   }, [state]);
+
+  // The kernel host channel: the application reaches the kernel's expression
+  // ops and Central's file reads through this host — the kernel document is
+  // the only store (hostedApp.relayKernelChannel, same laws as the cutout).
+  useEffect(() => {
+    const node = frame.current;
+    if (!node || state !== "ready") return;
+    return relayKernelChannel(node, kernel.transport);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, kernel.transport]);
 
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}
