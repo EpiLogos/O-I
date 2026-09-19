@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-9a70fdfa-5e0c-494a-bd8d-2709be72ad50",
+      "id": "scene-4cba92f6-040e-4b65-ab9a-4ed9ec16cab0",
       "name": "Toroidal Hopf Fibration Conjugates",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50c_2mk5q",
+                "id": "link_mu8efx3z_2migy",
                 "shape": {
                   "kind": "glyph",
                   "text": "⏣"
                 }
               },
               {
-                "id": "link_mu89v50c_2n55w",
+                "id": "link_mu8efx3z_2no29",
                 "shape": {
                   "kind": "glyph",
                   "text": "☯"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50c_2mk5q",
+                "id": "link_mu8efx3z_2migy",
                 "native": {
-                  "id": "link_mu89v50c_2mk5q",
+                  "id": "link_mu8efx3z_2migy",
                   "shape": {
                     "kind": "glyph",
                     "text": "⏣"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50c_2n55w",
+                "id": "link_mu8efx3z_2no29",
                 "native": {
-                  "id": "link_mu89v50c_2n55w",
+                  "id": "link_mu8efx3z_2no29",
                   "shape": {
                     "kind": "glyph",
                     "text": "☯"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50c_2mk5q",
+                  "id": "link_mu8efx3z_2migy",
                   "shape": {
                     "kind": "glyph",
                     "text": "⏣"
                   }
                 },
                 {
-                  "id": "link_mu89v50c_2n55w",
+                  "id": "link_mu8efx3z_2no29",
                   "shape": {
                     "kind": "glyph",
                     "text": "☯"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50c_2mk5q",
+                    "id": "link_mu8efx3z_2migy",
                     "shape": {
                       "kind": "glyph",
                       "text": "⏣"
                     }
                   },
                   {
-                    "id": "link_mu89v50c_2n55w",
+                    "id": "link_mu8efx3z_2no29",
                     "shape": {
                       "kind": "glyph",
                       "text": "☯"
@@ -1114,14 +1114,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50c_2mk5q",
+                    "id": "link_mu8efx3z_2migy",
                     "shape": {
                       "kind": "glyph",
                       "text": "⏣"
                     }
                   },
                   {
-                    "id": "link_mu89v50c_2n55w",
+                    "id": "link_mu8efx3z_2no29",
                     "shape": {
                       "kind": "glyph",
                       "text": "☯"
@@ -1388,5 +1388,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.972Z"
+  "updatedAt": "2026-09-19T13:04:26.975Z"
 }

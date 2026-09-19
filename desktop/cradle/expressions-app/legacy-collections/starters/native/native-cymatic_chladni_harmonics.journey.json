@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-0b979f91-6b9a-4e5a-b4c0-b6c5113ce3d5",
+      "id": "scene-330e8a1b-6e98-40f0-a739-4bfd5afdda38",
       "name": "Chladni Cymatics — Harmonic Attractor Spectrum",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -3142,5 +3142,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.991Z"
+  "updatedAt": "2026-09-19T13:04:26.996Z"
 }

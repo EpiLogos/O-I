@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-2ea399c8-4c01-45b3-bcb3-d6c03a15af16",
+      "id": "scene-ba742ee6-b490-432e-8ba0-b0a5e6d5d77c",
       "name": "Binary Star Relational Orbits",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50e_2sef6",
+                "id": "link_mu8efx41_2scmg",
                 "shape": {
                   "kind": "glyph",
                   "text": "✦"
                 }
               },
               {
-                "id": "link_mu89v50e_2tgme",
+                "id": "link_mu8efx41_2tema",
                 "shape": {
                   "kind": "glyph",
                   "text": "✧"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50e_2sef6",
+                "id": "link_mu8efx41_2scmg",
                 "native": {
-                  "id": "link_mu89v50e_2sef6",
+                  "id": "link_mu8efx41_2scmg",
                   "shape": {
                     "kind": "glyph",
                     "text": "✦"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50e_2tgme",
+                "id": "link_mu8efx41_2tema",
                 "native": {
-                  "id": "link_mu89v50e_2tgme",
+                  "id": "link_mu8efx41_2tema",
                   "shape": {
                     "kind": "glyph",
                     "text": "✧"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50e_2sef6",
+                  "id": "link_mu8efx41_2scmg",
                   "shape": {
                     "kind": "glyph",
                     "text": "✦"
                   }
                 },
                 {
-                  "id": "link_mu89v50e_2tgme",
+                  "id": "link_mu8efx41_2tema",
                   "shape": {
                     "kind": "glyph",
                     "text": "✧"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50e_2sef6",
+                    "id": "link_mu8efx41_2scmg",
                     "shape": {
                       "kind": "glyph",
                       "text": "✦"
                     }
                   },
                   {
-                    "id": "link_mu89v50e_2tgme",
+                    "id": "link_mu8efx41_2tema",
                     "shape": {
                       "kind": "glyph",
                       "text": "✧"
@@ -1091,14 +1091,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50e_2sef6",
+                    "id": "link_mu8efx41_2scmg",
                     "shape": {
                       "kind": "glyph",
                       "text": "✦"
                     }
                   },
                   {
-                    "id": "link_mu89v50e_2tgme",
+                    "id": "link_mu8efx41_2tema",
                     "shape": {
                       "kind": "glyph",
                       "text": "✧"
@@ -1365,5 +1365,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.974Z"
+  "updatedAt": "2026-09-19T13:04:26.977Z"
 }

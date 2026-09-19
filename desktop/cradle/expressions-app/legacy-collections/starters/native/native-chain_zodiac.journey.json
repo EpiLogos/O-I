@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-09fab2f8-94bd-4893-95ef-b4c86a5e1b29",
+      "id": "scene-8dadbf4a-9292-4df3-adf1-65c8d2f9245d",
       "name": "12 Zodiac Constellations",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,84 +258,84 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50n_3kvs3",
+                "id": "link_mu8efx4a_3kwrg",
                 "shape": {
                   "kind": "glyph",
                   "text": "♈"
                 }
               },
               {
-                "id": "link_mu89v50n_3l6j4",
+                "id": "link_mu8efx4a_3lzb0",
                 "shape": {
                   "kind": "glyph",
                   "text": "♉"
                 }
               },
               {
-                "id": "link_mu89v50n_3m14k",
+                "id": "link_mu8efx4a_3mben",
                 "shape": {
                   "kind": "glyph",
                   "text": "♊"
                 }
               },
               {
-                "id": "link_mu89v50n_3nsxo",
+                "id": "link_mu8efx4a_3nj23",
                 "shape": {
                   "kind": "glyph",
                   "text": "♋"
                 }
               },
               {
-                "id": "link_mu89v50n_3odz3",
+                "id": "link_mu8efx4a_3ov9r",
                 "shape": {
                   "kind": "glyph",
                   "text": "♌"
                 }
               },
               {
-                "id": "link_mu89v50n_3pxy5",
+                "id": "link_mu8efx4a_3pqb4",
                 "shape": {
                   "kind": "glyph",
                   "text": "♍"
                 }
               },
               {
-                "id": "link_mu89v50n_3qmj2",
+                "id": "link_mu8efx4a_3qjrk",
                 "shape": {
                   "kind": "glyph",
                   "text": "♎"
                 }
               },
               {
-                "id": "link_mu89v50n_3rqzw",
+                "id": "link_mu8efx4a_3ruoh",
                 "shape": {
                   "kind": "glyph",
                   "text": "♏"
                 }
               },
               {
-                "id": "link_mu89v50n_3s9g3",
+                "id": "link_mu8efx4a_3suae",
                 "shape": {
                   "kind": "glyph",
                   "text": "♐"
                 }
               },
               {
-                "id": "link_mu89v50n_3te5k",
+                "id": "link_mu8efx4a_3trln",
                 "shape": {
                   "kind": "glyph",
                   "text": "♑"
                 }
               },
               {
-                "id": "link_mu89v50n_3u8ab",
+                "id": "link_mu8efx4a_3uu6m",
                 "shape": {
                   "kind": "glyph",
                   "text": "♒"
                 }
               },
               {
-                "id": "link_mu89v50n_3vkoq",
+                "id": "link_mu8efx4a_3vdmm",
                 "shape": {
                   "kind": "glyph",
                   "text": "♓"
@@ -356,9 +356,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50n_3kvs3",
+                "id": "link_mu8efx4a_3kwrg",
                 "native": {
-                  "id": "link_mu89v50n_3kvs3",
+                  "id": "link_mu8efx4a_3kwrg",
                   "shape": {
                     "kind": "glyph",
                     "text": "♈"
@@ -373,9 +373,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3l6j4",
+                "id": "link_mu8efx4a_3lzb0",
                 "native": {
-                  "id": "link_mu89v50n_3l6j4",
+                  "id": "link_mu8efx4a_3lzb0",
                   "shape": {
                     "kind": "glyph",
                     "text": "♉"
@@ -390,9 +390,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3m14k",
+                "id": "link_mu8efx4a_3mben",
                 "native": {
-                  "id": "link_mu89v50n_3m14k",
+                  "id": "link_mu8efx4a_3mben",
                   "shape": {
                     "kind": "glyph",
                     "text": "♊"
@@ -407,9 +407,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3nsxo",
+                "id": "link_mu8efx4a_3nj23",
                 "native": {
-                  "id": "link_mu89v50n_3nsxo",
+                  "id": "link_mu8efx4a_3nj23",
                   "shape": {
                     "kind": "glyph",
                     "text": "♋"
@@ -424,9 +424,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3odz3",
+                "id": "link_mu8efx4a_3ov9r",
                 "native": {
-                  "id": "link_mu89v50n_3odz3",
+                  "id": "link_mu8efx4a_3ov9r",
                   "shape": {
                     "kind": "glyph",
                     "text": "♌"
@@ -441,9 +441,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3pxy5",
+                "id": "link_mu8efx4a_3pqb4",
                 "native": {
-                  "id": "link_mu89v50n_3pxy5",
+                  "id": "link_mu8efx4a_3pqb4",
                   "shape": {
                     "kind": "glyph",
                     "text": "♍"
@@ -458,9 +458,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3qmj2",
+                "id": "link_mu8efx4a_3qjrk",
                 "native": {
-                  "id": "link_mu89v50n_3qmj2",
+                  "id": "link_mu8efx4a_3qjrk",
                   "shape": {
                     "kind": "glyph",
                     "text": "♎"
@@ -475,9 +475,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3rqzw",
+                "id": "link_mu8efx4a_3ruoh",
                 "native": {
-                  "id": "link_mu89v50n_3rqzw",
+                  "id": "link_mu8efx4a_3ruoh",
                   "shape": {
                     "kind": "glyph",
                     "text": "♏"
@@ -492,9 +492,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3s9g3",
+                "id": "link_mu8efx4a_3suae",
                 "native": {
-                  "id": "link_mu89v50n_3s9g3",
+                  "id": "link_mu8efx4a_3suae",
                   "shape": {
                     "kind": "glyph",
                     "text": "♐"
@@ -509,9 +509,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3te5k",
+                "id": "link_mu8efx4a_3trln",
                 "native": {
-                  "id": "link_mu89v50n_3te5k",
+                  "id": "link_mu8efx4a_3trln",
                   "shape": {
                     "kind": "glyph",
                     "text": "♑"
@@ -526,9 +526,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3u8ab",
+                "id": "link_mu8efx4a_3uu6m",
                 "native": {
-                  "id": "link_mu89v50n_3u8ab",
+                  "id": "link_mu8efx4a_3uu6m",
                   "shape": {
                     "kind": "glyph",
                     "text": "♒"
@@ -543,9 +543,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50n_3vkoq",
+                "id": "link_mu8efx4a_3vdmm",
                 "native": {
-                  "id": "link_mu89v50n_3vkoq",
+                  "id": "link_mu8efx4a_3vdmm",
                   "shape": {
                     "kind": "glyph",
                     "text": "♓"
@@ -579,84 +579,84 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50n_3kvs3",
+                  "id": "link_mu8efx4a_3kwrg",
                   "shape": {
                     "kind": "glyph",
                     "text": "♈"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3l6j4",
+                  "id": "link_mu8efx4a_3lzb0",
                   "shape": {
                     "kind": "glyph",
                     "text": "♉"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3m14k",
+                  "id": "link_mu8efx4a_3mben",
                   "shape": {
                     "kind": "glyph",
                     "text": "♊"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3nsxo",
+                  "id": "link_mu8efx4a_3nj23",
                   "shape": {
                     "kind": "glyph",
                     "text": "♋"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3odz3",
+                  "id": "link_mu8efx4a_3ov9r",
                   "shape": {
                     "kind": "glyph",
                     "text": "♌"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3pxy5",
+                  "id": "link_mu8efx4a_3pqb4",
                   "shape": {
                     "kind": "glyph",
                     "text": "♍"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3qmj2",
+                  "id": "link_mu8efx4a_3qjrk",
                   "shape": {
                     "kind": "glyph",
                     "text": "♎"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3rqzw",
+                  "id": "link_mu8efx4a_3ruoh",
                   "shape": {
                     "kind": "glyph",
                     "text": "♏"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3s9g3",
+                  "id": "link_mu8efx4a_3suae",
                   "shape": {
                     "kind": "glyph",
                     "text": "♐"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3te5k",
+                  "id": "link_mu8efx4a_3trln",
                   "shape": {
                     "kind": "glyph",
                     "text": "♑"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3u8ab",
+                  "id": "link_mu8efx4a_3uu6m",
                   "shape": {
                     "kind": "glyph",
                     "text": "♒"
                   }
                 },
                 {
-                  "id": "link_mu89v50n_3vkoq",
+                  "id": "link_mu8efx4a_3vdmm",
                   "shape": {
                     "kind": "glyph",
                     "text": "♓"
@@ -916,84 +916,84 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50n_3kvs3",
+                    "id": "link_mu8efx4a_3kwrg",
                     "shape": {
                       "kind": "glyph",
                       "text": "♈"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3l6j4",
+                    "id": "link_mu8efx4a_3lzb0",
                     "shape": {
                       "kind": "glyph",
                       "text": "♉"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3m14k",
+                    "id": "link_mu8efx4a_3mben",
                     "shape": {
                       "kind": "glyph",
                       "text": "♊"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3nsxo",
+                    "id": "link_mu8efx4a_3nj23",
                     "shape": {
                       "kind": "glyph",
                       "text": "♋"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3odz3",
+                    "id": "link_mu8efx4a_3ov9r",
                     "shape": {
                       "kind": "glyph",
                       "text": "♌"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3pxy5",
+                    "id": "link_mu8efx4a_3pqb4",
                     "shape": {
                       "kind": "glyph",
                       "text": "♍"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3qmj2",
+                    "id": "link_mu8efx4a_3qjrk",
                     "shape": {
                       "kind": "glyph",
                       "text": "♎"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3rqzw",
+                    "id": "link_mu8efx4a_3ruoh",
                     "shape": {
                       "kind": "glyph",
                       "text": "♏"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3s9g3",
+                    "id": "link_mu8efx4a_3suae",
                     "shape": {
                       "kind": "glyph",
                       "text": "♐"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3te5k",
+                    "id": "link_mu8efx4a_3trln",
                     "shape": {
                       "kind": "glyph",
                       "text": "♑"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3u8ab",
+                    "id": "link_mu8efx4a_3uu6m",
                     "shape": {
                       "kind": "glyph",
                       "text": "♒"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3vkoq",
+                    "id": "link_mu8efx4a_3vdmm",
                     "shape": {
                       "kind": "glyph",
                       "text": "♓"
@@ -1503,84 +1503,84 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50n_3kvs3",
+                    "id": "link_mu8efx4a_3kwrg",
                     "shape": {
                       "kind": "glyph",
                       "text": "♈"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3l6j4",
+                    "id": "link_mu8efx4a_3lzb0",
                     "shape": {
                       "kind": "glyph",
                       "text": "♉"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3m14k",
+                    "id": "link_mu8efx4a_3mben",
                     "shape": {
                       "kind": "glyph",
                       "text": "♊"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3nsxo",
+                    "id": "link_mu8efx4a_3nj23",
                     "shape": {
                       "kind": "glyph",
                       "text": "♋"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3odz3",
+                    "id": "link_mu8efx4a_3ov9r",
                     "shape": {
                       "kind": "glyph",
                       "text": "♌"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3pxy5",
+                    "id": "link_mu8efx4a_3pqb4",
                     "shape": {
                       "kind": "glyph",
                       "text": "♍"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3qmj2",
+                    "id": "link_mu8efx4a_3qjrk",
                     "shape": {
                       "kind": "glyph",
                       "text": "♎"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3rqzw",
+                    "id": "link_mu8efx4a_3ruoh",
                     "shape": {
                       "kind": "glyph",
                       "text": "♏"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3s9g3",
+                    "id": "link_mu8efx4a_3suae",
                     "shape": {
                       "kind": "glyph",
                       "text": "♐"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3te5k",
+                    "id": "link_mu8efx4a_3trln",
                     "shape": {
                       "kind": "glyph",
                       "text": "♑"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3u8ab",
+                    "id": "link_mu8efx4a_3uu6m",
                     "shape": {
                       "kind": "glyph",
                       "text": "♒"
                     }
                   },
                   {
-                    "id": "link_mu89v50n_3vkoq",
+                    "id": "link_mu8efx4a_3vdmm",
                     "shape": {
                       "kind": "glyph",
                       "text": "♓"
@@ -1847,5 +1847,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.983Z"
+  "updatedAt": "2026-09-19T13:04:26.986Z"
 }

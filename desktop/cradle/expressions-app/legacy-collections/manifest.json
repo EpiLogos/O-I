@@ -1,7 +1,21 @@
 {
   "schema": "oi.legacy-collections/v1",
-  "exported_at": "2026-09-19T10:56:18.947Z",
+  "exported_at": "2026-09-19T13:04:26.945Z",
   "source": "the Expressions application's collection content, as of the vendoring into the O:I cradle",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/legacy-collections"
+    ],
+    "ground": "the Expressions application's own modules (field-studies-journeys), read from the O:I cradle working tree",
+    "exported_at": "2026-09-19T13:04:26.945Z",
+    "generator": {
+      "name": "scripts/export-legacy-collections.mjs",
+      "revision": "rev 2 — provenance envelope (oi.collection-provenance/v1)"
+    }
+  },
   "retained_non_legacy": [
     {
       "id": "oi-mark",

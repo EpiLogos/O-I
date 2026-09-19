@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-afdde455-d1ca-484a-8ee2-92d55e716fa8",
+      "id": "scene-2ccfea66-812c-425e-ae16-fbd54e4cea57",
       "name": "Single Glyph Morph",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v504_19wyq",
+                "id": "link_mu8efx3q_19qta",
                 "shape": {
                   "kind": "glyph",
                   "text": "O"
                 }
               },
               {
-                "id": "link_mu89v504_1angg",
+                "id": "link_mu8efx3q_1aqpj",
                 "shape": {
                   "kind": "glyph",
                   "text": "I"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v504_19wyq",
+                "id": "link_mu8efx3q_19qta",
                 "native": {
-                  "id": "link_mu89v504_19wyq",
+                  "id": "link_mu8efx3q_19qta",
                   "shape": {
                     "kind": "glyph",
                     "text": "O"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v504_1angg",
+                "id": "link_mu8efx3q_1aqpj",
                 "native": {
-                  "id": "link_mu89v504_1angg",
+                  "id": "link_mu8efx3q_1aqpj",
                   "shape": {
                     "kind": "glyph",
                     "text": "I"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v504_19wyq",
+                  "id": "link_mu8efx3q_19qta",
                   "shape": {
                     "kind": "glyph",
                     "text": "O"
                   }
                 },
                 {
-                  "id": "link_mu89v504_1angg",
+                  "id": "link_mu8efx3q_1aqpj",
                   "shape": {
                     "kind": "glyph",
                     "text": "I"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v504_19wyq",
+                    "id": "link_mu8efx3q_19qta",
                     "shape": {
                       "kind": "glyph",
                       "text": "O"
                     }
                   },
                   {
-                    "id": "link_mu89v504_1angg",
+                    "id": "link_mu8efx3q_1aqpj",
                     "shape": {
                       "kind": "glyph",
                       "text": "I"
@@ -866,14 +866,14 @@
                 "sequence": {
                   "links": [
                     {
-                      "id": "link_mu89v504_19wyq",
+                      "id": "link_mu8efx3q_19qta",
                       "shape": {
                         "kind": "glyph",
                         "text": "O"
                       }
                     },
                     {
-                      "id": "link_mu89v504_1angg",
+                      "id": "link_mu8efx3q_1aqpj",
                       "shape": {
                         "kind": "glyph",
                         "text": "I"
@@ -1123,14 +1123,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v504_19wyq",
+                    "id": "link_mu8efx3q_19qta",
                     "shape": {
                       "kind": "glyph",
                       "text": "O"
                     }
                   },
                   {
-                    "id": "link_mu89v504_1angg",
+                    "id": "link_mu8efx3q_1aqpj",
                     "shape": {
                       "kind": "glyph",
                       "text": "I"
@@ -1397,5 +1397,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.964Z"
+  "updatedAt": "2026-09-19T13:04:26.966Z"
 }

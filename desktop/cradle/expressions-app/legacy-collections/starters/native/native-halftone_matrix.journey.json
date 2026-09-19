@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-3c8a9698-ba49-4efa-99ea-299ba3f40d19",
+      "id": "scene-afb84f69-30bc-44a5-8076-adaf27967fd4",
       "name": "Ordered Halftone Matrix",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50j_34v61",
+                "id": "link_mu8efx46_34305",
                 "shape": {
                   "kind": "glyph",
                   "text": "O"
                 }
               },
               {
-                "id": "link_mu89v50j_35v48",
+                "id": "link_mu8efx46_357x7",
                 "shape": {
                   "kind": "glyph",
                   "text": "I"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50j_34v61",
+                "id": "link_mu8efx46_34305",
                 "native": {
-                  "id": "link_mu89v50j_34v61",
+                  "id": "link_mu8efx46_34305",
                   "shape": {
                     "kind": "glyph",
                     "text": "O"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50j_35v48",
+                "id": "link_mu8efx46_357x7",
                 "native": {
-                  "id": "link_mu89v50j_35v48",
+                  "id": "link_mu8efx46_357x7",
                   "shape": {
                     "kind": "glyph",
                     "text": "I"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50j_34v61",
+                  "id": "link_mu8efx46_34305",
                   "shape": {
                     "kind": "glyph",
                     "text": "O"
                   }
                 },
                 {
-                  "id": "link_mu89v50j_35v48",
+                  "id": "link_mu8efx46_357x7",
                   "shape": {
                     "kind": "glyph",
                     "text": "I"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50j_34v61",
+                    "id": "link_mu8efx46_34305",
                     "shape": {
                       "kind": "glyph",
                       "text": "O"
                     }
                   },
                   {
-                    "id": "link_mu89v50j_35v48",
+                    "id": "link_mu8efx46_357x7",
                     "shape": {
                       "kind": "glyph",
                       "text": "I"
@@ -1084,14 +1084,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50j_34v61",
+                    "id": "link_mu8efx46_34305",
                     "shape": {
                       "kind": "glyph",
                       "text": "O"
                     }
                   },
                   {
-                    "id": "link_mu89v50j_35v48",
+                    "id": "link_mu8efx46_357x7",
                     "shape": {
                       "kind": "glyph",
                       "text": "I"
@@ -1358,5 +1358,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.979Z"
+  "updatedAt": "2026-09-19T13:04:26.982Z"
 }

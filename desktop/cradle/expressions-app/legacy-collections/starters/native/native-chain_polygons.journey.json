@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-07ccc31a-c88b-4786-b50b-4f785832246e",
+      "id": "scene-36aca48a-1e32-4192-956d-fc134281a22f",
       "name": "Platonic Polygon Sequence",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,42 +258,42 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50m_3dhlg",
+                "id": "link_mu8efx49_3dr3t",
                 "shape": {
                   "kind": "glyph",
                   "text": "▲"
                 }
               },
               {
-                "id": "link_mu89v50m_3eqjr",
+                "id": "link_mu8efx49_3ee9k",
                 "shape": {
                   "kind": "glyph",
                   "text": "■"
                 }
               },
               {
-                "id": "link_mu89v50m_3ftk9",
+                "id": "link_mu8efx49_3fv59",
                 "shape": {
                   "kind": "glyph",
                   "text": "⬟"
                 }
               },
               {
-                "id": "link_mu89v50m_3giio",
+                "id": "link_mu8efx49_3gioa",
                 "shape": {
                   "kind": "glyph",
                   "text": "⬢"
                 }
               },
               {
-                "id": "link_mu89v50m_3hz2y",
+                "id": "link_mu8efx49_3hdnw",
                 "shape": {
                   "kind": "glyph",
                   "text": "⯎"
                 }
               },
               {
-                "id": "link_mu89v50m_3idw7",
+                "id": "link_mu8efx49_3ivey",
                 "shape": {
                   "kind": "glyph",
                   "text": "◉"
@@ -314,9 +314,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50m_3dhlg",
+                "id": "link_mu8efx49_3dr3t",
                 "native": {
-                  "id": "link_mu89v50m_3dhlg",
+                  "id": "link_mu8efx49_3dr3t",
                   "shape": {
                     "kind": "glyph",
                     "text": "▲"
@@ -331,9 +331,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50m_3eqjr",
+                "id": "link_mu8efx49_3ee9k",
                 "native": {
-                  "id": "link_mu89v50m_3eqjr",
+                  "id": "link_mu8efx49_3ee9k",
                   "shape": {
                     "kind": "glyph",
                     "text": "■"
@@ -348,9 +348,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50m_3ftk9",
+                "id": "link_mu8efx49_3fv59",
                 "native": {
-                  "id": "link_mu89v50m_3ftk9",
+                  "id": "link_mu8efx49_3fv59",
                   "shape": {
                     "kind": "glyph",
                     "text": "⬟"
@@ -365,9 +365,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50m_3giio",
+                "id": "link_mu8efx49_3gioa",
                 "native": {
-                  "id": "link_mu89v50m_3giio",
+                  "id": "link_mu8efx49_3gioa",
                   "shape": {
                     "kind": "glyph",
                     "text": "⬢"
@@ -382,9 +382,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50m_3hz2y",
+                "id": "link_mu8efx49_3hdnw",
                 "native": {
-                  "id": "link_mu89v50m_3hz2y",
+                  "id": "link_mu8efx49_3hdnw",
                   "shape": {
                     "kind": "glyph",
                     "text": "⯎"
@@ -399,9 +399,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50m_3idw7",
+                "id": "link_mu8efx49_3ivey",
                 "native": {
-                  "id": "link_mu89v50m_3idw7",
+                  "id": "link_mu8efx49_3ivey",
                   "shape": {
                     "kind": "glyph",
                     "text": "◉"
@@ -435,42 +435,42 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50m_3dhlg",
+                  "id": "link_mu8efx49_3dr3t",
                   "shape": {
                     "kind": "glyph",
                     "text": "▲"
                   }
                 },
                 {
-                  "id": "link_mu89v50m_3eqjr",
+                  "id": "link_mu8efx49_3ee9k",
                   "shape": {
                     "kind": "glyph",
                     "text": "■"
                   }
                 },
                 {
-                  "id": "link_mu89v50m_3ftk9",
+                  "id": "link_mu8efx49_3fv59",
                   "shape": {
                     "kind": "glyph",
                     "text": "⬟"
                   }
                 },
                 {
-                  "id": "link_mu89v50m_3giio",
+                  "id": "link_mu8efx49_3gioa",
                   "shape": {
                     "kind": "glyph",
                     "text": "⬢"
                   }
                 },
                 {
-                  "id": "link_mu89v50m_3hz2y",
+                  "id": "link_mu8efx49_3hdnw",
                   "shape": {
                     "kind": "glyph",
                     "text": "⯎"
                   }
                 },
                 {
-                  "id": "link_mu89v50m_3idw7",
+                  "id": "link_mu8efx49_3ivey",
                   "shape": {
                     "kind": "glyph",
                     "text": "◉"
@@ -724,42 +724,42 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50m_3dhlg",
+                    "id": "link_mu8efx49_3dr3t",
                     "shape": {
                       "kind": "glyph",
                       "text": "▲"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3eqjr",
+                    "id": "link_mu8efx49_3ee9k",
                     "shape": {
                       "kind": "glyph",
                       "text": "■"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3ftk9",
+                    "id": "link_mu8efx49_3fv59",
                     "shape": {
                       "kind": "glyph",
                       "text": "⬟"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3giio",
+                    "id": "link_mu8efx49_3gioa",
                     "shape": {
                       "kind": "glyph",
                       "text": "⬢"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3hz2y",
+                    "id": "link_mu8efx49_3hdnw",
                     "shape": {
                       "kind": "glyph",
                       "text": "⯎"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3idw7",
+                    "id": "link_mu8efx49_3ivey",
                     "shape": {
                       "kind": "glyph",
                       "text": "◉"
@@ -1249,42 +1249,42 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50m_3dhlg",
+                    "id": "link_mu8efx49_3dr3t",
                     "shape": {
                       "kind": "glyph",
                       "text": "▲"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3eqjr",
+                    "id": "link_mu8efx49_3ee9k",
                     "shape": {
                       "kind": "glyph",
                       "text": "■"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3ftk9",
+                    "id": "link_mu8efx49_3fv59",
                     "shape": {
                       "kind": "glyph",
                       "text": "⬟"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3giio",
+                    "id": "link_mu8efx49_3gioa",
                     "shape": {
                       "kind": "glyph",
                       "text": "⬢"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3hz2y",
+                    "id": "link_mu8efx49_3hdnw",
                     "shape": {
                       "kind": "glyph",
                       "text": "⯎"
                     }
                   },
                   {
-                    "id": "link_mu89v50m_3idw7",
+                    "id": "link_mu8efx49_3ivey",
                     "shape": {
                       "kind": "glyph",
                       "text": "◉"
@@ -1551,5 +1551,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.982Z"
+  "updatedAt": "2026-09-19T13:04:26.985Z"
 }

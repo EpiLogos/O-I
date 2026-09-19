@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-71e5ae0a-ba13-410d-9abc-8613654625d2",
+      "id": "scene-8b47a0da-b4ff-480f-a919-7a6c432411c0",
       "name": "Anti-Spring Kinetic Dispersal",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50i_311fl",
+                "id": "link_mu8efx45_31qne",
                 "shape": {
                   "kind": "glyph",
                   "text": "&"
                 }
               },
               {
-                "id": "link_mu89v50i_32pik",
+                "id": "link_mu8efx45_32zob",
                 "shape": {
                   "kind": "glyph",
                   "text": "@"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50i_311fl",
+                "id": "link_mu8efx45_31qne",
                 "native": {
-                  "id": "link_mu89v50i_311fl",
+                  "id": "link_mu8efx45_31qne",
                   "shape": {
                     "kind": "glyph",
                     "text": "&"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50i_32pik",
+                "id": "link_mu8efx45_32zob",
                 "native": {
-                  "id": "link_mu89v50i_32pik",
+                  "id": "link_mu8efx45_32zob",
                   "shape": {
                     "kind": "glyph",
                     "text": "@"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50i_311fl",
+                  "id": "link_mu8efx45_31qne",
                   "shape": {
                     "kind": "glyph",
                     "text": "&"
                   }
                 },
                 {
-                  "id": "link_mu89v50i_32pik",
+                  "id": "link_mu8efx45_32zob",
                   "shape": {
                     "kind": "glyph",
                     "text": "@"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50i_311fl",
+                    "id": "link_mu8efx45_31qne",
                     "shape": {
                       "kind": "glyph",
                       "text": "&"
                     }
                   },
                   {
-                    "id": "link_mu89v50i_32pik",
+                    "id": "link_mu8efx45_32zob",
                     "shape": {
                       "kind": "glyph",
                       "text": "@"
@@ -1092,14 +1092,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50i_311fl",
+                    "id": "link_mu8efx45_31qne",
                     "shape": {
                       "kind": "glyph",
                       "text": "&"
                     }
                   },
                   {
-                    "id": "link_mu89v50i_32pik",
+                    "id": "link_mu8efx45_32zob",
                     "shape": {
                       "kind": "glyph",
                       "text": "@"
@@ -1366,5 +1366,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.978Z"
+  "updatedAt": "2026-09-19T13:04:26.981Z"
 }

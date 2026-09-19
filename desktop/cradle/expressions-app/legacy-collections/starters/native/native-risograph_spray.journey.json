@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-bf3d4b01-90d0-497a-821a-b701b1d0c8d1",
+      "id": "scene-992cb8b7-410d-46eb-a59c-7f031786c47c",
       "name": "Risograph Ink Spray",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50k_37qnp",
+                "id": "link_mu8efx47_37vwa",
                 "shape": {
                   "kind": "glyph",
                   "text": "&"
                 }
               },
               {
-                "id": "link_mu89v50k_38y2z",
+                "id": "link_mu8efx47_38pjz",
                 "shape": {
                   "kind": "glyph",
                   "text": "@"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50k_37qnp",
+                "id": "link_mu8efx47_37vwa",
                 "native": {
-                  "id": "link_mu89v50k_37qnp",
+                  "id": "link_mu8efx47_37vwa",
                   "shape": {
                     "kind": "glyph",
                     "text": "&"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50k_38y2z",
+                "id": "link_mu8efx47_38pjz",
                 "native": {
-                  "id": "link_mu89v50k_38y2z",
+                  "id": "link_mu8efx47_38pjz",
                   "shape": {
                     "kind": "glyph",
                     "text": "@"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50k_37qnp",
+                  "id": "link_mu8efx47_37vwa",
                   "shape": {
                     "kind": "glyph",
                     "text": "&"
                   }
                 },
                 {
-                  "id": "link_mu89v50k_38y2z",
+                  "id": "link_mu8efx47_38pjz",
                   "shape": {
                     "kind": "glyph",
                     "text": "@"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50k_37qnp",
+                    "id": "link_mu8efx47_37vwa",
                     "shape": {
                       "kind": "glyph",
                       "text": "&"
                     }
                   },
                   {
-                    "id": "link_mu89v50k_38y2z",
+                    "id": "link_mu8efx47_38pjz",
                     "shape": {
                       "kind": "glyph",
                       "text": "@"
@@ -1084,14 +1084,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50k_37qnp",
+                    "id": "link_mu8efx47_37vwa",
                     "shape": {
                       "kind": "glyph",
                       "text": "&"
                     }
                   },
                   {
-                    "id": "link_mu89v50k_38y2z",
+                    "id": "link_mu8efx47_38pjz",
                     "shape": {
                       "kind": "glyph",
                       "text": "@"
@@ -1358,5 +1358,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.980Z"
+  "updatedAt": "2026-09-19T13:04:26.983Z"
 }

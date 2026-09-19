@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "solar_plasma"
       },
-      "id": "scene-b6609945-527c-40fa-9bbe-092fbbfb83ea",
+      "id": "scene-43b33faa-1af2-4e59-a12e-c9f3648bfd5b",
       "name": "Solar Corona Thermal",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50q_47m0v",
+                "id": "link_mu8efx4e_47jkc",
                 "shape": {
                   "kind": "glyph",
                   "text": "☉"
                 }
               },
               {
-                "id": "link_mu89v50q_48txi",
+                "id": "link_mu8efx4e_48x7i",
                 "shape": {
                   "kind": "glyph",
                   "text": "☼"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50q_47m0v",
+                "id": "link_mu8efx4e_47jkc",
                 "native": {
-                  "id": "link_mu89v50q_47m0v",
+                  "id": "link_mu8efx4e_47jkc",
                   "shape": {
                     "kind": "glyph",
                     "text": "☉"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50q_48txi",
+                "id": "link_mu8efx4e_48x7i",
                 "native": {
-                  "id": "link_mu89v50q_48txi",
+                  "id": "link_mu8efx4e_48x7i",
                   "shape": {
                     "kind": "glyph",
                     "text": "☼"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50q_47m0v",
+                  "id": "link_mu8efx4e_47jkc",
                   "shape": {
                     "kind": "glyph",
                     "text": "☉"
                   }
                 },
                 {
-                  "id": "link_mu89v50q_48txi",
+                  "id": "link_mu8efx4e_48x7i",
                   "shape": {
                     "kind": "glyph",
                     "text": "☼"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50q_47m0v",
+                    "id": "link_mu8efx4e_47jkc",
                     "shape": {
                       "kind": "glyph",
                       "text": "☉"
                     }
                   },
                   {
-                    "id": "link_mu89v50q_48txi",
+                    "id": "link_mu8efx4e_48x7i",
                     "shape": {
                       "kind": "glyph",
                       "text": "☼"
@@ -1113,14 +1113,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50q_47m0v",
+                    "id": "link_mu8efx4e_47jkc",
                     "shape": {
                       "kind": "glyph",
                       "text": "☉"
                     }
                   },
                   {
-                    "id": "link_mu89v50q_48txi",
+                    "id": "link_mu8efx4e_48x7i",
                     "shape": {
                       "kind": "glyph",
                       "text": "☼"
@@ -1387,5 +1387,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.986Z"
+  "updatedAt": "2026-09-19T13:04:26.990Z"
 }

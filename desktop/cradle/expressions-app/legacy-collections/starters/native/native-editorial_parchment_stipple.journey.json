@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "editorial_vermilion"
       },
-      "id": "scene-f1282790-b93d-4d53-8484-576cf7044165",
+      "id": "scene-9adca487-3ed8-4bc8-a746-430200ce0d47",
       "name": "Editorial Parchment & Sumi Ink",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50r_4amgi",
+                "id": "link_mu8efx4f_4aoos",
                 "shape": {
                   "kind": "glyph",
                   "text": "字"
                 }
               },
               {
-                "id": "link_mu89v50r_4b8zg",
+                "id": "link_mu8efx4f_4bvbj",
                 "shape": {
                   "kind": "glyph",
                   "text": "道"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50r_4amgi",
+                "id": "link_mu8efx4f_4aoos",
                 "native": {
-                  "id": "link_mu89v50r_4amgi",
+                  "id": "link_mu8efx4f_4aoos",
                   "shape": {
                     "kind": "glyph",
                     "text": "字"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50r_4b8zg",
+                "id": "link_mu8efx4f_4bvbj",
                 "native": {
-                  "id": "link_mu89v50r_4b8zg",
+                  "id": "link_mu8efx4f_4bvbj",
                   "shape": {
                     "kind": "glyph",
                     "text": "道"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50r_4amgi",
+                  "id": "link_mu8efx4f_4aoos",
                   "shape": {
                     "kind": "glyph",
                     "text": "字"
                   }
                 },
                 {
-                  "id": "link_mu89v50r_4b8zg",
+                  "id": "link_mu8efx4f_4bvbj",
                   "shape": {
                     "kind": "glyph",
                     "text": "道"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50r_4amgi",
+                    "id": "link_mu8efx4f_4aoos",
                     "shape": {
                       "kind": "glyph",
                       "text": "字"
                     }
                   },
                   {
-                    "id": "link_mu89v50r_4b8zg",
+                    "id": "link_mu8efx4f_4bvbj",
                     "shape": {
                       "kind": "glyph",
                       "text": "道"
@@ -1107,14 +1107,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50r_4amgi",
+                    "id": "link_mu8efx4f_4aoos",
                     "shape": {
                       "kind": "glyph",
                       "text": "字"
                     }
                   },
                   {
-                    "id": "link_mu89v50r_4b8zg",
+                    "id": "link_mu8efx4f_4bvbj",
                     "shape": {
                       "kind": "glyph",
                       "text": "道"
@@ -1381,5 +1381,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.987Z"
+  "updatedAt": "2026-09-19T13:04:26.991Z"
 }

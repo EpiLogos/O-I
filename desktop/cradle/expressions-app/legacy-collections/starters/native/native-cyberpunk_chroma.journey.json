@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-c5a1b0ae-02e5-403a-aef6-42da2e74de47",
+      "id": "scene-fa429472-757b-435b-b171-a85a014c68c0",
       "name": "Cyberpunk Neon Wave",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50o_3x2og",
+                "id": "link_mu8efx4c_3xgms",
                 "shape": {
                   "kind": "glyph",
                   "text": "Ω"
                 }
               },
               {
-                "id": "link_mu89v50o_3yqre",
+                "id": "link_mu8efx4c_3y6fp",
                 "shape": {
                   "kind": "glyph",
                   "text": "✦"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50o_3x2og",
+                "id": "link_mu8efx4c_3xgms",
                 "native": {
-                  "id": "link_mu89v50o_3x2og",
+                  "id": "link_mu8efx4c_3xgms",
                   "shape": {
                     "kind": "glyph",
                     "text": "Ω"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50o_3yqre",
+                "id": "link_mu8efx4c_3y6fp",
                 "native": {
-                  "id": "link_mu89v50o_3yqre",
+                  "id": "link_mu8efx4c_3y6fp",
                   "shape": {
                     "kind": "glyph",
                     "text": "✦"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50o_3x2og",
+                  "id": "link_mu8efx4c_3xgms",
                   "shape": {
                     "kind": "glyph",
                     "text": "Ω"
                   }
                 },
                 {
-                  "id": "link_mu89v50o_3yqre",
+                  "id": "link_mu8efx4c_3y6fp",
                   "shape": {
                     "kind": "glyph",
                     "text": "✦"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50o_3x2og",
+                    "id": "link_mu8efx4c_3xgms",
                     "shape": {
                       "kind": "glyph",
                       "text": "Ω"
                     }
                   },
                   {
-                    "id": "link_mu89v50o_3yqre",
+                    "id": "link_mu8efx4c_3y6fp",
                     "shape": {
                       "kind": "glyph",
                       "text": "✦"
@@ -1105,14 +1105,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50o_3x2og",
+                    "id": "link_mu8efx4c_3xgms",
                     "shape": {
                       "kind": "glyph",
                       "text": "Ω"
                     }
                   },
                   {
-                    "id": "link_mu89v50o_3yqre",
+                    "id": "link_mu8efx4c_3y6fp",
                     "shape": {
                       "kind": "glyph",
                       "text": "✦"
@@ -1379,5 +1379,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.984Z"
+  "updatedAt": "2026-09-19T13:04:26.988Z"
 }

@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-33911d26-0180-4bce-9eac-a58be80f1f3a",
+      "id": "scene-a62b3553-5537-40fc-a0b1-7d7477cc58e7",
       "name": "Square Dither Grid",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50l_3acso",
+                "id": "link_mu8efx48_3ang3",
                 "shape": {
                   "kind": "glyph",
                   "text": "8"
                 }
               },
               {
-                "id": "link_mu89v50l_3bf2m",
+                "id": "link_mu8efx48_3bl4a",
                 "shape": {
                   "kind": "glyph",
                   "text": "∞"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50l_3acso",
+                "id": "link_mu8efx48_3ang3",
                 "native": {
-                  "id": "link_mu89v50l_3acso",
+                  "id": "link_mu8efx48_3ang3",
                   "shape": {
                     "kind": "glyph",
                     "text": "8"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50l_3bf2m",
+                "id": "link_mu8efx48_3bl4a",
                 "native": {
-                  "id": "link_mu89v50l_3bf2m",
+                  "id": "link_mu8efx48_3bl4a",
                   "shape": {
                     "kind": "glyph",
                     "text": "∞"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50l_3acso",
+                  "id": "link_mu8efx48_3ang3",
                   "shape": {
                     "kind": "glyph",
                     "text": "8"
                   }
                 },
                 {
-                  "id": "link_mu89v50l_3bf2m",
+                  "id": "link_mu8efx48_3bl4a",
                   "shape": {
                     "kind": "glyph",
                     "text": "∞"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50l_3acso",
+                    "id": "link_mu8efx48_3ang3",
                     "shape": {
                       "kind": "glyph",
                       "text": "8"
                     }
                   },
                   {
-                    "id": "link_mu89v50l_3bf2m",
+                    "id": "link_mu8efx48_3bl4a",
                     "shape": {
                       "kind": "glyph",
                       "text": "∞"
@@ -1084,14 +1084,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50l_3acso",
+                    "id": "link_mu8efx48_3ang3",
                     "shape": {
                       "kind": "glyph",
                       "text": "8"
                     }
                   },
                   {
-                    "id": "link_mu89v50l_3bf2m",
+                    "id": "link_mu8efx48_3bl4a",
                     "shape": {
                       "kind": "glyph",
                       "text": "∞"
@@ -1358,5 +1358,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.981Z"
+  "updatedAt": "2026-09-19T13:04:26.984Z"
 }

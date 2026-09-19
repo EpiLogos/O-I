@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "aurora_borealis"
       },
-      "id": "scene-0baac2c1-36fc-44af-b846-cdf5b3a80b2a",
+      "id": "scene-90922239-84b9-4828-9c29-e0c4cbef8d61",
       "name": "Aurora Borealis Spectral",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,42 +258,42 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50p_40yvj",
+                "id": "link_mu8efx4d_40hyf",
                 "shape": {
                   "kind": "glyph",
                   "text": "᚛"
                 }
               },
               {
-                "id": "link_mu89v50p_41oy3",
+                "id": "link_mu8efx4d_41nvh",
                 "shape": {
                   "kind": "glyph",
                   "text": "᚜"
                 }
               },
               {
-                "id": "link_mu89v50p_42k6j",
+                "id": "link_mu8efx4d_42jrm",
                 "shape": {
                   "kind": "glyph",
                   "text": "ᚠ"
                 }
               },
               {
-                "id": "link_mu89v50p_43daf",
+                "id": "link_mu8efx4d_433uq",
                 "shape": {
                   "kind": "glyph",
                   "text": "ᚢ"
                 }
               },
               {
-                "id": "link_mu89v50p_44wrz",
+                "id": "link_mu8efx4d_44nav",
                 "shape": {
                   "kind": "glyph",
                   "text": "ᚦ"
                 }
               },
               {
-                "id": "link_mu89v50p_45hq1",
+                "id": "link_mu8efx4d_45vt8",
                 "shape": {
                   "kind": "glyph",
                   "text": "ᚨ"
@@ -314,9 +314,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50p_40yvj",
+                "id": "link_mu8efx4d_40hyf",
                 "native": {
-                  "id": "link_mu89v50p_40yvj",
+                  "id": "link_mu8efx4d_40hyf",
                   "shape": {
                     "kind": "glyph",
                     "text": "᚛"
@@ -331,9 +331,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50p_41oy3",
+                "id": "link_mu8efx4d_41nvh",
                 "native": {
-                  "id": "link_mu89v50p_41oy3",
+                  "id": "link_mu8efx4d_41nvh",
                   "shape": {
                     "kind": "glyph",
                     "text": "᚜"
@@ -348,9 +348,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50p_42k6j",
+                "id": "link_mu8efx4d_42jrm",
                 "native": {
-                  "id": "link_mu89v50p_42k6j",
+                  "id": "link_mu8efx4d_42jrm",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚠ"
@@ -365,9 +365,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50p_43daf",
+                "id": "link_mu8efx4d_433uq",
                 "native": {
-                  "id": "link_mu89v50p_43daf",
+                  "id": "link_mu8efx4d_433uq",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚢ"
@@ -382,9 +382,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50p_44wrz",
+                "id": "link_mu8efx4d_44nav",
                 "native": {
-                  "id": "link_mu89v50p_44wrz",
+                  "id": "link_mu8efx4d_44nav",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚦ"
@@ -399,9 +399,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50p_45hq1",
+                "id": "link_mu8efx4d_45vt8",
                 "native": {
-                  "id": "link_mu89v50p_45hq1",
+                  "id": "link_mu8efx4d_45vt8",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚨ"
@@ -435,42 +435,42 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50p_40yvj",
+                  "id": "link_mu8efx4d_40hyf",
                   "shape": {
                     "kind": "glyph",
                     "text": "᚛"
                   }
                 },
                 {
-                  "id": "link_mu89v50p_41oy3",
+                  "id": "link_mu8efx4d_41nvh",
                   "shape": {
                     "kind": "glyph",
                     "text": "᚜"
                   }
                 },
                 {
-                  "id": "link_mu89v50p_42k6j",
+                  "id": "link_mu8efx4d_42jrm",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚠ"
                   }
                 },
                 {
-                  "id": "link_mu89v50p_43daf",
+                  "id": "link_mu8efx4d_433uq",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚢ"
                   }
                 },
                 {
-                  "id": "link_mu89v50p_44wrz",
+                  "id": "link_mu8efx4d_44nav",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚦ"
                   }
                 },
                 {
-                  "id": "link_mu89v50p_45hq1",
+                  "id": "link_mu8efx4d_45vt8",
                   "shape": {
                     "kind": "glyph",
                     "text": "ᚨ"
@@ -724,42 +724,42 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50p_40yvj",
+                    "id": "link_mu8efx4d_40hyf",
                     "shape": {
                       "kind": "glyph",
                       "text": "᚛"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_41oy3",
+                    "id": "link_mu8efx4d_41nvh",
                     "shape": {
                       "kind": "glyph",
                       "text": "᚜"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_42k6j",
+                    "id": "link_mu8efx4d_42jrm",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚠ"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_43daf",
+                    "id": "link_mu8efx4d_433uq",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚢ"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_44wrz",
+                    "id": "link_mu8efx4d_44nav",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚦ"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_45hq1",
+                    "id": "link_mu8efx4d_45vt8",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚨ"
@@ -1270,42 +1270,42 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50p_40yvj",
+                    "id": "link_mu8efx4d_40hyf",
                     "shape": {
                       "kind": "glyph",
                       "text": "᚛"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_41oy3",
+                    "id": "link_mu8efx4d_41nvh",
                     "shape": {
                       "kind": "glyph",
                       "text": "᚜"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_42k6j",
+                    "id": "link_mu8efx4d_42jrm",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚠ"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_43daf",
+                    "id": "link_mu8efx4d_433uq",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚢ"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_44wrz",
+                    "id": "link_mu8efx4d_44nav",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚦ"
                     }
                   },
                   {
-                    "id": "link_mu89v50p_45hq1",
+                    "id": "link_mu8efx4d_45vt8",
                     "shape": {
                       "kind": "glyph",
                       "text": "ᚨ"
@@ -1572,5 +1572,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.985Z"
+  "updatedAt": "2026-09-19T13:04:26.989Z"
 }

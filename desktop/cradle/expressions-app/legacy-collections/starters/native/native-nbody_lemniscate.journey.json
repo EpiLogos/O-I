@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-4ed7175d-d8ca-431a-a3dc-19546fbd50ff",
+      "id": "scene-aa1de28b-7c4e-411c-af9f-584b3fc7dfd1",
       "name": "N-Body Lemniscate Rosette",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50h_2y3oj",
+                "id": "link_mu8efx44_2ymcz",
                 "shape": {
                   "kind": "glyph",
                   "text": "∑"
                 }
               },
               {
-                "id": "link_mu89v50h_2zlx6",
+                "id": "link_mu8efx44_2zazv",
                 "shape": {
                   "kind": "glyph",
                   "text": "∫"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50h_2y3oj",
+                "id": "link_mu8efx44_2ymcz",
                 "native": {
-                  "id": "link_mu89v50h_2y3oj",
+                  "id": "link_mu8efx44_2ymcz",
                   "shape": {
                     "kind": "glyph",
                     "text": "∑"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50h_2zlx6",
+                "id": "link_mu8efx44_2zazv",
                 "native": {
-                  "id": "link_mu89v50h_2zlx6",
+                  "id": "link_mu8efx44_2zazv",
                   "shape": {
                     "kind": "glyph",
                     "text": "∫"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50h_2y3oj",
+                  "id": "link_mu8efx44_2ymcz",
                   "shape": {
                     "kind": "glyph",
                     "text": "∑"
                   }
                 },
                 {
-                  "id": "link_mu89v50h_2zlx6",
+                  "id": "link_mu8efx44_2zazv",
                   "shape": {
                     "kind": "glyph",
                     "text": "∫"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50h_2y3oj",
+                    "id": "link_mu8efx44_2ymcz",
                     "shape": {
                       "kind": "glyph",
                       "text": "∑"
                     }
                   },
                   {
-                    "id": "link_mu89v50h_2zlx6",
+                    "id": "link_mu8efx44_2zazv",
                     "shape": {
                       "kind": "glyph",
                       "text": "∫"
@@ -1091,14 +1091,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50h_2y3oj",
+                    "id": "link_mu8efx44_2ymcz",
                     "shape": {
                       "kind": "glyph",
                       "text": "∑"
                     }
                   },
                   {
-                    "id": "link_mu89v50h_2zlx6",
+                    "id": "link_mu8efx44_2zazv",
                     "shape": {
                       "kind": "glyph",
                       "text": "∫"
@@ -1365,5 +1365,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.977Z"
+  "updatedAt": "2026-09-19T13:04:26.980Z"
 }

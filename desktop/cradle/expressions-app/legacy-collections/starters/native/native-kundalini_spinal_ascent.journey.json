@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-72fca10a-fc8b-42f8-a5f5-eb4aa00f97a0",
+      "id": "scene-25e24174-4a9e-4f54-9935-3b0a36b0b4d3",
       "name": "Kundalini Ascent — Sequential Spine Transit",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -3109,5 +3109,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.990Z"
+  "updatedAt": "2026-09-19T13:04:26.995Z"
 }

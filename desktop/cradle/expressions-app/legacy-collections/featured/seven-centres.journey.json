@@ -82,7 +82,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-62c4a63a-de21-43ee-b81b-188bf1090fdf",
+      "id": "scene-1d3a0538-308c-4ab2-81e3-e9f8011ef475",
       "name": "Chakra Body · 7 centres",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -3462,7 +3462,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-f0d2533d-c967-439e-801e-cff34a19cde6",
+      "id": "scene-1fb9a7ec-6f69-435e-91d1-acd9099a1261",
       "name": "Kundalini · travelling focus",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -7239,7 +7239,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-8a3b28f7-2247-46b6-b1c6-73f764a1d740",
+      "id": "scene-36a571db-ff7e-49a7-91fb-49ba80fcf314",
       "name": "Chakra centres over a resonant plate",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -10550,5 +10550,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.961Z"
+  "updatedAt": "2026-09-19T13:04:26.963Z"
 }

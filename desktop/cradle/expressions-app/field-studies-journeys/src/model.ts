@@ -159,3 +159,69 @@ export function validateJourney(value:unknown):Journey {
  }
  return clone(j);
 }
+// --- Collections (the library refit at the Central/ProjectCentral levels) --
+/** A collection manifest names member journey files as ordinary data. The
+ * OPTIONAL provenance envelope (oi.collection-provenance) names where an
+ * export was read from: its register and root, the Central-relative paths,
+ * the ground the content was read from, the exported-at civil date, and the
+ * generator with its own revision. Envelopes are additive and never a
+ * schema gate: a manifest without one (an old export) validates unchanged,
+ * and an envelope this code does not know is carried verbatim. */
+export interface CollectionProvenance {schema?:string;register?:string;root?:string;paths?:string[];ground?:string;exported_at?:string;generator?:{name?:string;revision?:string;[key:string]:unknown};[key:string]:unknown}
+export interface CollectionManifestEntry {id:string;name:string;file:string;group?:string}
+export interface CollectionManifest {schema:string;exported_at?:string;source?:string;provenance?:CollectionProvenance;retained_non_legacy?:{id:string;reason:string}[];featured:CollectionManifestEntry[];starters:CollectionManifestEntry[];[key:string]:unknown}
+export const COLLECTION_MANIFEST_SCHEMA='oi.legacy-collections/v1';
+export const COLLECTION_PROVENANCE_SCHEMA='oi.collection-provenance/v1';
+/** Validate a collection manifest — the manifest law beside validateJourney.
+ * Rejects malformed documents (unsafe keys, ambiguous membership, unsafe
+ * member paths); when the provenance envelope declares the known schema its
+ * required facts are checked, and any other (or absent) envelope passes
+ * through untouched. */
+export function validateCollectionManifest(value:unknown):CollectionManifest {
+ if(!value||typeof value!=='object'||Array.isArray(value))throw new Error('Choose a collection manifest JSON document.');
+ const inspect=(v:unknown,depth=0):void=>{if(depth>40)throw new Error('Document nesting is too deep.');if(typeof v==='number'&&!Number.isFinite(v))throw new Error('Non-finite value.');if(v&&typeof v==='object')for(const [k,x]of Object.entries(v)){if(['__proto__','constructor','prototype'].includes(k))throw new Error('Unsafe document key.');inspect(x,depth+1);}};inspect(value);
+ const safeId=(s:unknown)=>typeof s==='string'&&/^[a-zA-Z0-9_.:-]{1,160}$/.test(s);
+ const str=(s:unknown,max=5000)=>typeof s==='string'&&s.length<=max;
+ const m=clone(value) as CollectionManifest;
+ if(m.schema!==COLLECTION_MANIFEST_SCHEMA)throw new Error(`This is not a collection manifest this build understands (expected ${COLLECTION_MANIFEST_SCHEMA}, got ${String(m.schema)}).`);
+ const entry=(e:unknown,where:string):CollectionManifestEntry=>{
+  if(!e||typeof e!=='object'||Array.isArray(e))throw new Error(`Manifest ${where} entry is not an object.`);
+  const t=e as CollectionManifestEntry;
+  if(!safeId(t.id))throw new Error(`Manifest ${where} entry has an invalid id.`);
+  if(typeof t.file!=='string'||!t.file||t.file.startsWith('/')||t.file.split('/').some(seg=>seg==='..'))throw new Error(`Manifest entry ${t.id} names an unsafe member path.`);
+  if(t.name!==undefined&&!str(t.name,300))throw new Error(`Manifest entry ${t.id} has an invalid name.`);
+  if(t.group!==undefined&&!str(t.group,120))throw new Error(`Manifest entry ${t.id} has an invalid group.`);
+  return {id:t.id,name:typeof t.name==='string'&&t.name?t.name:t.id,file:t.file,...(t.group!==undefined?{group:t.group}:{})};
+ };
+ for(const key of ['featured','starters'] as const){
+  const list=m[key];
+  if(list===undefined){m[key]=[];continue;}
+  if(!Array.isArray(list))throw new Error(`Manifest ${key} must be a list of member entries.`);
+  m[key]=list.map(e=>entry(e,key));
+ }
+ const ids=new Set<string>();
+ for(const e of [...m.featured,...m.starters]){if(ids.has(e.id))throw new Error(`Manifest names "${e.id}" more than once; membership would be ambiguous.`);ids.add(e.id);}
+ if(m.exported_at!==undefined&&!str(m.exported_at,60))throw new Error('Manifest exported_at is invalid.');
+ if(m.source!==undefined&&!str(m.source,2000))throw new Error('Manifest source is invalid.');
+ if(m.retained_non_legacy!==undefined){
+  if(!Array.isArray(m.retained_non_legacy))throw new Error('Manifest retained_non_legacy must be a list.');
+  for(const r of m.retained_non_legacy){if(!r||typeof r!=='object'||!safeId((r as {id?:unknown}).id)||!str((r as {reason?:unknown}).reason,500))throw new Error('Manifest retained_non_legacy entry is invalid.');}
+ }
+ if(m.provenance!==undefined){
+  if(!m.provenance||typeof m.provenance!=='object'||Array.isArray(m.provenance))throw new Error('Collection provenance must be an object envelope.');
+  const p=m.provenance as CollectionProvenance;
+  if(p.schema===COLLECTION_PROVENANCE_SCHEMA){
+   for(const k of ['register','root','ground','exported_at'] as const){const v=p[k];if(typeof v!=='string'||!v)throw new Error(`Provenance envelope is missing its ${k}.`);}
+   if(!Array.isArray(p.paths)||!p.paths.length||!p.paths.every(x=>typeof x==='string'))throw new Error('Provenance envelope is missing its paths.');
+   const g=p.generator;
+   if(!g||typeof g!=='object'||typeof g.name!=='string'||!g.name||typeof g.revision!=='string'||!g.revision)throw new Error('Provenance envelope is missing its generator and revision.');
+  }
+ }
+ return clone(m);
+}
+/** The collection's membership in manifest order — featured first, then the
+ * starters in their listed groups. This order is what a collection restores
+ * with (D3): a collection is never N loose expressions. */
+export function collectionMembership(m:CollectionManifest):CollectionManifestEntry[]{
+ return [...(m.featured??[]).map(e=>({...e,group:e.group??'Featured'})),...(m.starters??[]).map(e=>({...e,group:e.group??'Starters'}))];
+}

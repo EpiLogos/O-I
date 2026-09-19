@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-eddc1013-1d39-4edc-af8d-03fb94289e90",
+      "id": "scene-a6b62b58-14b6-406c-b643-7dee1c5ace5a",
       "name": "Volumetric 3D Cymatic Standing Wave",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -3142,5 +3142,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.993Z"
+  "updatedAt": "2026-09-19T13:04:26.998Z"
 }

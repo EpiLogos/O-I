@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-4ffeba3f-b30a-42d1-ab51-d2ca86210ce7",
+      "id": "scene-4c86e371-7cc2-41c4-9619-e8058966d76d",
       "name": "Chakra centres over a resonant plate",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -3394,5 +3394,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.970Z"
+  "updatedAt": "2026-09-19T13:04:26.973Z"
 }

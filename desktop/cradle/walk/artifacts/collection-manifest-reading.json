@@ -1,0 +1,24 @@
+{
+  "manifest_path": "Work/O-I/desktop/cradle/expressions-app/legacy-collections/manifest.json",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/legacy-collections"
+    ],
+    "ground": "the Expressions application's own modules (field-studies-journeys), read from the O:I cradle working tree",
+    "exported_at": "2026-09-19T13:04:26.945Z",
+    "generator": {
+      "name": "scripts/export-legacy-collections.mjs",
+      "revision": "rev 2 — provenance envelope (oi.collection-provenance/v1)"
+    }
+  },
+  "members": 40,
+  "errors": 0,
+  "first": {
+    "id": "field-studies",
+    "name": "Field studies",
+    "group": "Featured"
+  }
+}

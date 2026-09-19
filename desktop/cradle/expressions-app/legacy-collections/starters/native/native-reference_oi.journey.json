@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-2eeb1d4d-5149-40fc-acd6-0e70e1226d2e",
+      "id": "scene-e3777d6c-13e5-4856-950f-1e6f6ed428bb",
       "name": "O ⇄ I Vortex Bridge",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50d_2py1i",
+                "id": "link_mu8efx40_2p1j2",
                 "shape": {
                   "kind": "glyph",
                   "text": "O"
                 }
               },
               {
-                "id": "link_mu89v50d_2q7o2",
+                "id": "link_mu8efx40_2qdes",
                 "shape": {
                   "kind": "glyph",
                   "text": "I"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50d_2py1i",
+                "id": "link_mu8efx40_2p1j2",
                 "native": {
-                  "id": "link_mu89v50d_2py1i",
+                  "id": "link_mu8efx40_2p1j2",
                   "shape": {
                     "kind": "glyph",
                     "text": "O"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50d_2q7o2",
+                "id": "link_mu8efx40_2qdes",
                 "native": {
-                  "id": "link_mu89v50d_2q7o2",
+                  "id": "link_mu8efx40_2qdes",
                   "shape": {
                     "kind": "glyph",
                     "text": "I"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50d_2py1i",
+                  "id": "link_mu8efx40_2p1j2",
                   "shape": {
                     "kind": "glyph",
                     "text": "O"
                   }
                 },
                 {
-                  "id": "link_mu89v50d_2q7o2",
+                  "id": "link_mu8efx40_2qdes",
                   "shape": {
                     "kind": "glyph",
                     "text": "I"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50d_2py1i",
+                    "id": "link_mu8efx40_2p1j2",
                     "shape": {
                       "kind": "glyph",
                       "text": "O"
                     }
                   },
                   {
-                    "id": "link_mu89v50d_2q7o2",
+                    "id": "link_mu8efx40_2qdes",
                     "shape": {
                       "kind": "glyph",
                       "text": "I"
@@ -1092,14 +1092,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50d_2py1i",
+                    "id": "link_mu8efx40_2p1j2",
                     "shape": {
                       "kind": "glyph",
                       "text": "O"
                     }
                   },
                   {
-                    "id": "link_mu89v50d_2q7o2",
+                    "id": "link_mu8efx40_2qdes",
                     "shape": {
                       "kind": "glyph",
                       "text": "I"
@@ -1366,5 +1366,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.973Z"
+  "updatedAt": "2026-09-19T13:04:26.976Z"
 }

@@ -19,11 +19,29 @@ const here = path.dirname(fileURLToPath(import.meta.url));
 const out = path.resolve(here, '..', 'legacy-collections');
 const RETAINED = new Set(['oi-mark', 'source-twelve-faces']);
 
+// The provenance envelope (manifest gap D1, the collections/library refit):
+// where this export was READ from — the register and root it lives under,
+// the Central-relative paths it was written to, the ground the content was
+// read from, the exported-at civil date, and the generator with its own
+// revision. Additive by law: validators accept manifests without the
+// envelope (old exports keep importing) and envelopes they do not know.
+const GENERATOR = {name: 'scripts/export-legacy-collections.mjs', revision: 'rev 2 — provenance envelope (oi.collection-provenance/v1)'};
+const exportedAt = new Date().toISOString();
+
 fs.rmSync(out, {recursive: true, force: true});
 const manifest = {
   schema: 'oi.legacy-collections/v1',
-  exported_at: new Date().toISOString(),
+  exported_at: exportedAt,
   source: 'the Expressions application\'s collection content, as of the vendoring into the O:I cradle',
+  provenance: {
+    schema: 'oi.collection-provenance/v1',
+    register: 'project',
+    root: 'Work/O-I',
+    paths: ['Work/O-I/desktop/cradle/expressions-app/legacy-collections'],
+    ground: 'the Expressions application\'s own modules (field-studies-journeys), read from the O:I cradle working tree',
+    exported_at: exportedAt,
+    generator: GENERATOR,
+  },
   retained_non_legacy: [
     {id: 'oi-mark', reason: 'the current default expression — the light/dark O:I theme (owner direction 2026-09-19)'},
     {id: 'source-twelve-faces', reason: 'the Epii face — Instrument 0\'s entry expression (owner direction 2026-09-19)'},

@@ -71,7 +71,7 @@
         "autoSweep": false,
         "sweepDirection": "ascent"
       },
-      "id": "scene-7aefeaf5-2344-48c8-8ad9-893df7b9d8dd",
+      "id": "scene-0dd7ac74-bf76-4c56-84ba-9835ffe12b2d",
       "name": "A beginning",
       "character": "Fine, irregular stippling. Form on the edge of dissolution.",
       "duration": 14,
@@ -170,7 +170,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-9553536e-4f06-4838-9bab-7e377fa083b7",
+                "id": "step-e8367240-dd80-4c45-8889-62d8429d1548",
                 "text": "O",
                 "shape": "text",
                 "hold": 3,
@@ -212,7 +212,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-2aee7bb6-e147-42e7-af41-98673ca4dde5",
+                "id": "step-ed71dae9-d835-40fa-8b64-5fcadcb72d68",
                 "text": "I",
                 "shape": "text",
                 "hold": 3,
@@ -309,7 +309,7 @@
         "autoSweep": false,
         "sweepDirection": "ascent"
       },
-      "id": "scene-3b7c8c9b-6317-4170-b90b-55dc21d14b1a",
+      "id": "scene-abb4f9af-56cb-4abe-9ac0-2e9cb4f1dc87",
       "name": "And",
       "character": "A different character. The same living field.",
       "duration": 14,
@@ -408,7 +408,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-422f02c3-bce9-4225-bd14-74982cdea855",
+                "id": "step-f842dcca-db89-47f9-962f-54f982629aa7",
                 "text": "O",
                 "shape": "text",
                 "hold": 3,
@@ -505,7 +505,7 @@
         "autoSweep": false,
         "sweepDirection": "ascent"
       },
-      "id": "scene-e6868609-bf59-4086-874a-5e3246e6205b",
+      "id": "scene-e6928004-4500-4d81-9791-68c3beebd462",
       "name": "An opening",
       "character": "A little less certainty. A little more space.",
       "duration": 14,
@@ -604,7 +604,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-aa1c08d0-42c6-4fd4-aff1-84a6bc86ca5e",
+                "id": "step-301ebe9a-52d1-47c8-92f9-81d9992d8363",
                 "text": "O",
                 "shape": "text",
                 "hold": 3,
@@ -646,7 +646,7 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "step-03dd046b-f075-4115-9406-dbf2e2f67567",
+                "id": "step-66c59550-2663-4f1f-a451-5dd456022e5c",
                 "text": "I",
                 "shape": "text",
                 "hold": 3,
@@ -679,5 +679,5 @@
       "automation": []
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.961Z"
+  "updatedAt": "2026-09-19T13:04:26.964Z"
 }

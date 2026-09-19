@@ -83,7 +83,7 @@
         "depthTintColor": "#101018",
         "paletteId": "cyberpunk_neon"
       },
-      "id": "scene-b74bbfce-7d68-4d11-91fa-293b61cd5442",
+      "id": "scene-278f1426-b01c-49d3-b496-f01a96d04403",
       "name": "Harmonic Strange Attractor",
       "character": "An arrangement, waiting to happen.",
       "duration": 12,
@@ -258,14 +258,14 @@
           "sequence": {
             "links": [
               {
-                "id": "link_mu89v50f_2vbep",
+                "id": "link_mu8efx43_2vm9k",
                 "shape": {
                   "kind": "glyph",
                   "text": "Ω"
                 }
               },
               {
-                "id": "link_mu89v50f_2w14o",
+                "id": "link_mu8efx43_2wkbb",
                 "shape": {
                   "kind": "glyph",
                   "text": "∞"
@@ -286,9 +286,9 @@
             "clock": "seconds",
             "steps": [
               {
-                "id": "link_mu89v50f_2vbep",
+                "id": "link_mu8efx43_2vm9k",
                 "native": {
-                  "id": "link_mu89v50f_2vbep",
+                  "id": "link_mu8efx43_2vm9k",
                   "shape": {
                     "kind": "glyph",
                     "text": "Ω"
@@ -303,9 +303,9 @@
                 "position": null
               },
               {
-                "id": "link_mu89v50f_2w14o",
+                "id": "link_mu8efx43_2wkbb",
                 "native": {
-                  "id": "link_mu89v50f_2w14o",
+                  "id": "link_mu8efx43_2wkbb",
                   "shape": {
                     "kind": "glyph",
                     "text": "∞"
@@ -339,14 +339,14 @@
             "sequence": {
               "links": [
                 {
-                  "id": "link_mu89v50f_2vbep",
+                  "id": "link_mu8efx43_2vm9k",
                   "shape": {
                     "kind": "glyph",
                     "text": "Ω"
                   }
                 },
                 {
-                  "id": "link_mu89v50f_2w14o",
+                  "id": "link_mu8efx43_2wkbb",
                   "shape": {
                     "kind": "glyph",
                     "text": "∞"
@@ -600,14 +600,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50f_2vbep",
+                    "id": "link_mu8efx43_2vm9k",
                     "shape": {
                       "kind": "glyph",
                       "text": "Ω"
                     }
                   },
                   {
-                    "id": "link_mu89v50f_2w14o",
+                    "id": "link_mu8efx43_2wkbb",
                     "shape": {
                       "kind": "glyph",
                       "text": "∞"
@@ -1091,14 +1091,14 @@
               "sequence": {
                 "links": [
                   {
-                    "id": "link_mu89v50f_2vbep",
+                    "id": "link_mu8efx43_2vm9k",
                     "shape": {
                       "kind": "glyph",
                       "text": "Ω"
                     }
                   },
                   {
-                    "id": "link_mu89v50f_2w14o",
+                    "id": "link_mu8efx43_2wkbb",
                     "shape": {
                       "kind": "glyph",
                       "text": "∞"
@@ -1365,5 +1365,5 @@
       }
     }
   ],
-  "updatedAt": "2026-09-19T10:56:18.975Z"
+  "updatedAt": "2026-09-19T13:04:26.979Z"
 }
