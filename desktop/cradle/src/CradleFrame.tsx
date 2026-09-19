@@ -18,7 +18,7 @@ import {ModeLeftBody,modeExtraPlanes} from "./workspace/modeBodies";
 import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
-import {GroupPane} from "./surface/Workbench";
+import {GroupPane, SurfaceBody} from "./surface/Workbench";
 import {warmWorkspaceTrees} from "./surface/retention";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
@@ -1292,6 +1292,16 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             * ALWAYS-PRESENT slot (keyed, never conditionally inserted):
             * inserting a sibling before the hosts would MOVE them, and
             * moving a host detaches its documents — an iframe reloads. */}
+          {/* The mode's dedicated solo stage — the ALWAYS-PRESENT slot the
+            * comment above names (keyed, never conditionally inserted, so
+            * inserting it beside the hosts moves nothing): it presents the
+            * mode's centre when the mode has one, through the same
+            * SurfaceBody the workbench pane uses — retained centres adopt
+            * from the park via CentreOutlet inside it. Hidden while there
+            * is nothing to present; the trees hold the centre then. */}
+          <div key="mode-stage" className="mode-stage" data-mode={mode} data-window-corner="true" hidden={!modeCentreBinding || undefined}>
+            {modeCentreBinding && <SurfaceBody binding={modeCentreBinding} onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)} openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} subject={workspace.current.context?.subject} />}
+          </div>
           {warmTrees.map(tree => (
             <div key={tree.key} className="warm-tree-host" hidden={!tree.presented || !!(modeSoloStage && modeCentreBinding) || undefined}>
               <Workbench
