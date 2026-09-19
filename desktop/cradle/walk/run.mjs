@@ -79,6 +79,7 @@ const SCENARIOS = {
   configuration: {module:"scenarios/configuration.mjs",kernel:true,aliases:["c6"]},
   permission: {module:"scenarios/permission.mjs",kernel:true,aliases:[]},
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
+  "agent-dictation": {module:"scenarios/agent-dictation.mjs",kernel:true,aliases:["dictation"]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
   "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},

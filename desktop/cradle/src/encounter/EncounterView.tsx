@@ -33,6 +33,9 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   // Every failure is a named state; nothing is faked. ---
   const [dictation,setDictation]=useState<{state:"idle"|"recording"|"transcribing"|"service-down"|"mic-denied"|"mic-unavailable"|"failed"|"empty"|"landed";notice?:{role:"status"|"alert";text:string}}>({state:"idle"});
   const dictationSession=useRef<DictationSession|null>(null);
+  // A press while the capture is still opening must stop THAT capture, not
+  // fall into "no capture was running" — the starting promise is the seam.
+  const dictationStarting=useRef<Promise<void>|null>(null);
   const dictationRefusalNotice=(refusal:DictationRefusal):{role:"status"|"alert";text:string}=>{
    switch(refusal.kind){
     case "service-down":return {role:"alert",text:dictationCopy("serviceDown",{url:readDictationStipulation().stt_url})};
@@ -64,24 +67,38 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
     setDictation({state:outcome.kind,notice:dictationRefusalNotice(outcome)});
    }
   };
+  const stopDictation=async()=>{
+   const starting=dictationStarting.current;dictationStarting.current=null;
+   let session=dictationSession.current;
+   if(!session&&starting){
+    // The capture was still opening: give it its outcome first. If it was
+    // refused, the named refusal already stands — there is nothing to stop.
+    try{await starting;session=dictationSession.current;}
+    catch{dictationSession.current=null;return;}
+   }
+   dictationSession.current=null;
+   if(!session){setDictation({state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:"no capture was running"})}});return;}
+   setDictation({state:"transcribing",notice:{role:"status",text:dictationCopy("transcribing")}});
+   try{handleDictationOutcome(await session.end());}
+   catch(error){setDictation({state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(error)})}});}
+  };
   const toggleDictation=async()=>{
    if(dictation.state==="transcribing")return;
-   if(dictation.state==="recording"){
-    const session=dictationSession.current;dictationSession.current=null;
-    setDictation({state:"transcribing",notice:{role:"status",text:dictationCopy("transcribing")}});
-    try{handleDictationOutcome(session?await session.end():{kind:"failed",detail:"no capture was running"});}
-    catch(error){setDictation({state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(error)})}});}
-    return;
-   }
+   if(dictation.state==="recording"){await stopDictation();return;}
    setDictation({state:"recording",notice:{role:"status",text:dictationCopy("recording")}});
    const session=new DictationSession();
-   try{await session.begin();dictationSession.current=session;}
-   catch(refusal){
-    dictationSession.current=null;
-    setDictation(refusal&&typeof refusal==="object"&&"kind"in refusal&&["service-down","mic-denied","mic-unavailable","failed","empty"].includes(String((refusal as DictationRefusal).kind))
+   const starting=session.begin().then(()=>{
+    dictationSession.current=session;
+   }).catch(refusal=>{
+    dictationSession.current=null;dictationStarting.current=null;
+    setDictation(refusal&&typeof refusal==="object"&&"kind"in refusal&&["service-down","mic-denied","mic-unavailable","failed","empty"].includes(String(refusal.kind))
       ?{state:(refusal as DictationRefusal).kind,notice:dictationRefusalNotice(refusal as DictationRefusal)}
       :{state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(refusal)})}});
-   }
+    throw refusal;
+   });
+   dictationStarting.current=starting;
+   try{await starting;}
+   catch{ /* the refusal is already rendered */ }
   };
   // The Activity plane keeps the provider's working material — thinking, tools,
   // consent, stops, failures, turn boundaries — and leaves only the two
