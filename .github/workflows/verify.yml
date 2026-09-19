@@ -274,8 +274,18 @@ jobs:
           ]
           for relative in required:
               assert (root / relative).is_dir(), relative
-          for relative in ["Control/user", "Control/agents/governance"]:
-              assert list((root / relative).iterdir()) == [], relative
+          assert list((root / "Control/agents/governance").iterdir()) == [], "Control/agents/governance"
+          # Bootstrap establishes a default work-placement policy so a fresh
+          # ground runs agents out of the box (O:I #65). Control/user carries
+          # exactly that policy; the migrated project has joined it, and the
+          # policy is recognised through its recorded source relation.
+          assert sorted(p.name for p in (root / "Control/user").iterdir()) == ["placement.json"], "Control/user"
+          placement = json.load(open(root / "Control/user/placement.json"))
+          assert placement["schema"] == "central.work-placement-policy/v1"
+          assert placement["enforcement"] == "native-actions"
+          assert any(g["path"] == "Work/demo" for g in placement["writable"]), "Work/demo grant"
+          relations = json.load(open(root / "Control/relations/source-relations.json"))
+          assert any("work-placement-policy" in relation.get("roles", []) for relation in relations["relations"]), "work-placement-policy relation"
           # Fresh-ground machine adoption (Central #87 through O:I #192):
           # exactly one authored current-machine declaration, bound to the
           # local Workcell.
