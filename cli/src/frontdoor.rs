@@ -68,6 +68,18 @@ pub fn cli_main() -> ExitCode {
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
         };
     }
+    if command == Some("config-contribution") {
+        return match command_config_contribution(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("system") {
+        return match command_system(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
     if command == Some("config") {
         return match command_config(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
