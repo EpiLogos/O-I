@@ -183,3 +183,75 @@ A screenshot, static graph, passing registry check, generated page, green headle
 - embedded renderer unavailable and fallback used.
 
 The desired result is graceful, inspectable degradation—not capability theatre and not hidden manual repair.
+
+## 9. Vāk-authored craft, real participants and live repertoire
+
+**Owner clarification, 19 September 2026.** This elaborates EF04/EF07 and their discovery, continuity and delivery relations. It does not redefine the existing stories or require QL for ordinary O:I Expressions. [vak-expression-craft.json](vak-expression-craft.json) maps the clauses to the existing #65 story families. The implementation/proving authority is QL-MEF's [Vāk Expression Workflow Wayfinder](https://github.com/EpiLogos/QL-MEF/blob/main/docs/integrations/epi-logos/VAK-EXPRESSION-WORKFLOW-WAYFINDER.md), continuing its existing #201/#135 and K/AW map. Publication is intended-experience ground, not evidence of a shipped native TypeScript entry or loaded agent.
+
+### 9.1 Enter with a small operative language, not development history
+
+> I ask for an expressive work. The agent understands the available language and its role, finds the actual material and controls, and makes something with me. I do not have to paste build notes, chase old tickets or explain hidden APIs before it can begin.
+
+Runtime guidance is a lean specification of the relevant Vāk language and participant contribution. Build/test notes, implementation history, source archaeology and readiness belong in development documents. Preserve useful operation/maintenance Skills in their proper office rather than deleting them wholesale. A Method remains a Skill whose description begins `METHOD:`. Neither a Skill nor a TypeScript type proves that an operation is currently supported.
+
+For Epi work the clean language retains all CPF/CT/CP/CF/CFP/CS meanings, exact source-supported passages, the compact operation×horizon field and access to the full 109-entry Vāk source. No generic four-stage agent recipe replaces it.
+
+### 9.2 The commissioned work has a typed source before it acts
+
+> I can inspect what is being attempted, which participants are needed and what they are meant to return, then see the same undertaking actually run.
+
+A readable `*.vak.ts` definition is the source form of this Vāk-composed Factory undertaking. It lowers through the current QL and native Factory workflow contracts. The first source stamp binds source/revision/import digest, compiler/native semantic basis, subject/whole, C′ choices, participant requirements, effects, bounds and intended Return before dispatch. It is attached to the existing Commission/Run provenance, not stored in a second workflow system. Actual body/tool/currentness/authority resolution remains independently observed at execution.
+
+The TypeScript definition can be authored or prepared by the agent under the person's request. The person need not write TypeScript to commission work. A provider adapter may project roles into Claude's programmatic `AgentDefinition` or another supported body; the native meaning must not depend on Claude. Compilation has no implicit effect; submitted source is not evaluated with ambient desktop credentials.
+
+Recomposition preserves the earlier source and creates a new attributable basis. A named work, revised draft, performed occasion and reusable Method are not collapsed. Direct artistic interaction remains direct; the proving/production commission is carried by Factory, not every slider event.
+
+### 9.3 Participants are useful contributors with real capabilities
+
+> I can understand why another agent is participating, what it received and what it returned, without managing the internal delegation myself.
+
+Retain the constitutional field hosted by Anima: Nous, Logos, Eros, Mythos, Anima, Psyche and Sophia, their native frame/role sources and distinct contributions. Retain the relevant Anansi, Janus, Moirai, Mercurius, Agora and Zeithoven specialists. Aletheia is S5′ disclosure/crystallisation/Return, not an eighth constitutional peer; Techne remains Pleroma's atomic-skill substrate. Nara/Epii and the two M′ readings keep their current native relations.
+
+The available role field is not a compulsory all-agent fan-out. Each selected child has an actual native identity/source, delegation description, bounded task/context, selected tools/Skills, permitted effects, body requirement, return contract and stop conditions. Verify actual child loading/invocation/return; role names in a transcript are not independent subagent evidence. The parent does not silently transmit its whole private context or authority. Independent verification remains separate from the executor.
+
+### 9.4 Search, inspect and perform through live native tools
+
+> I can ask for a known work, a kind of action, a mood or a deliberate gesture, and the agent finds a fitting current expression or procedure. It can inspect and change the real field while we work, rather than relying on a stale list in its prompt.
+
+Provide discoverable native tools for repertoire search, current state/schema inspection, composition, performance, observation and interruption through the existing AIKit/O:I interfaces. Reuse existing operations wherever possible. Tool discovery locates faculties; repertoire search locates native work and practice. Return stable refs, revisions, source/applicability, permitted variation and truthful unavailable/ambiguous results. Reading is not invocation.
+
+Parameter and object coverage comes from the actual engine registry and application contracts: formations versus pins; glyph/image/ASCII and layered forms; material, topology, resonance and forces; camera versus working plane; entity versus scene sequences; grouped automation and manual takeover; source/subject binding and supported placement/capture. Load detailed schemas on demand. Do not reduce agent craft to a small legacy parameter list, add a hidden debug route or send an LLM request per animation frame.
+
+The person can say, for example, "keep this movement, make the material gentler, preserve those two objects, and show it quietly beside my writing." The agent resolves and applies the corresponding scoped native operations, then observes their effect. It does not reset the field, reinterpret camera movement as force or discard manual edits to manufacture an easy result.
+
+### 9.5 Retain a repertoire and vary it on later occasions
+
+> I name the work we developed, later invoke it for another subject or placement, and retain both what made it recognisable and the freedom to vary it.
+
+Collections remain native Library views over source-bound Expressions/Profiles/Scenes/Editions. A cue names or helps resolve a work/practice; it creates no separate identity ontology. Mood is an authored/user-provided expressive description, not a diagnosis or universal emotion-to-physics table. Gesture follows an actual input binding and current context, not implicit authority to change a source or publish.
+
+Saving a named Expression is ordinary authoring. Recognising a useful reusable procedure uses existing AIKit `= name`/Inbox/Skill/Method/proof and Return laws. Keep source/expansion/applicability accessible. Fresh-agent reuse must work with changed inputs and reject near-misses; a static preset bank or saved prompt transcript is not the full repertoire.
+
+T/T′ keeps concise useful evidence, choices and differences against the actual performance and human response. Compose→perform→record→rehear→recompose returns into later useful practice, without automatically changing the person's taste, source or policy. Technical candidate learning proceeds within its grant; meaningful human judgement is recorded at the appropriate point, not installed as a premature gate on construction.
+
+### 9.6 The joined proving walk
+
+Use the actual Factory/Day/NOW and integrated Expression cut in a bounded Omarchy test world. Prepare the full capability/role coverage before choosing specimens. The real operator receives an ordinary concern and native discovery, not an answer key.
+
+```text
+request / source / NOW
+→ typed Vāk undertaking and native source stamp
+→ actual selected participants and tool/context delivery
+→ compose and perform in the real Expression body
+→ pause / inspect / manual change / interruption / continued work
+→ observed result and independent comparison
+→ curated source-bound work and appropriate practice Return
+→ fresh-agent name/action/mood/gesture resolution on changed inputs
+→ same subject across Expression / Technē / page / subtle placement
+```
+
+Exercise all six CFP forms with actual differing conduct, exact CS and other selected C′ effects, cancellation/material stop, stale/concurrent changes, missing tools or models, disconnected handlers and unavailable renderers. Preserve source/knowledge/Expression identity through #366's actual Wiki projection where applicable. Keep configuration and exact physical state recovery distinct. A request accepted or a screenshot produced is not the joined proof.
+
+The current new UI remains the receiving design; Factory's centre Chat/full Run and Run/Agents/Context expose their existing source/participant/work/result relations without a second monitor. No new shell, per-coordinate mini-app or permanent graph/agent furniture is commissioned. The same admitted work can later enter hosted O:I Web; the visitor has no new learner-install or agent-key prerequisite.
+
+Follow the existing #65 C0–C5 and the Wayfinder's VW0–VW6 packets. TypeScript/native admission, live tools and clean role delivery can develop in parallel after the shared boundary is identified; the real Factory craft walk consumes them. Reuse one code worktree per coherent feature line, not per agent/session. Sandboxes and disjoint artifacts are separate allocations. Preserve current Mac/frontend work, the held QL kernel/install and independent running reviews. This publication launches no worker and certifies no runtime.
