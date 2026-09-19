@@ -237,31 +237,47 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 
 @media (prefers-reduced-motion: reduce) { .wiki-map * { transition: none; } }
 
-/* Instrument 0 opens onto the wiki web: registers of the web at centre
-   scale, entries opening their knowledge pages. The material scene is the
-   summoned depth — held at the right edge when material exists, never the
-   gate of the experience. */
-.wiki-web { display: flex; flex-direction: column; gap: 14px; block-size: 100%; min-block-size: 0; overflow-y: auto; padding: 22px clamp(18px, 3vw, 42px) 40px; box-sizing: border-box; }
-.wiki-web-head { display: flex; flex-direction: column; gap: 4px; }
-.wiki-web-head h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.01em; }
-.wiki-web-head p { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
-.wiki-web-registers { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
-.wiki-web-register { display: flex; flex-direction: column; gap: 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; padding: 14px 16px; }
-.wiki-web-register-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
-.wiki-web-register-head h3 { margin: 0; font-size: var(--oi-shell-type-ui); font-weight: 600; }
-.wiki-web-count { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
-.wiki-web-note, .wiki-map-note { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
-.wiki-web-space { display: flex; flex-direction: column; gap: 4px; }
-.wiki-web-space-head { font-size: var(--oi-shell-type-nav); text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); padding-block-start: 6px; }
-.wiki-web-space ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
-.wiki-web-entry { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; inline-size: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: var(--oi-shell-type-ui); text-align: start; cursor: pointer; }
-.wiki-web-entry:hover { background: var(--oi-wash, rgba(127,127,127,.08)); }
-.wiki-web-entry-title { min-inline-size: 0; overflow-wrap: anywhere; }
-.wiki-web-entry-type { flex: none; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+/* Instrument 0 opens onto the wiki local whole as a REAL Expression: the
+   register's projection presented on the window's one Expression stage,
+   with the scene/entity transport under it and the selected subject's
+   panel over the field. The material scene remains the summoned depth —
+   held at the right edge when material exists, never the gate. */
+.wiki-map-note { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.wiki-expression { flex: 1; min-inline-size: 0; display: flex; flex-direction: column; block-size: 100%; min-block-size: 0; }
+.wx-head { display: flex; align-items: flex-end; justify-content: space-between; gap: 12px; padding: 10px 14px 8px; }
+.wx-head-title { display: flex; align-items: baseline; gap: 14px; min-inline-size: 0; flex-wrap: wrap; }
+.wx-register { display: flex; flex-direction: column; gap: 3px; }
+.wx-register .oi-input { inline-size: 180px; }
+.wx-basis { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.wx-head-tools { display: flex; gap: 6px; }
+.wx-notice { display: flex; align-items: center; gap: 8px; margin: 0 14px 6px; }
+.wx-notices { display: flex; flex-direction: column; gap: 2px; margin: 0 14px 6px; }
+.wx-notice-line { margin: 0; color: var(--oi-muted-2); }
+.wx-field { position: relative; flex: 1; min-block-size: 0; display: flex; }
+.wx-stage-host { position: relative; flex: 1; min-inline-size: 0; min-block-size: 0; }
+.wx-stage-off { flex: 1; display: flex; flex-direction: column; align-items: flex-start; justify-content: center; gap: 8px; max-inline-size: 420px; margin: auto; padding: 24px; box-sizing: border-box; }
+.wx-transport { display: flex; flex-direction: column; gap: 6px; padding: 8px 14px 10px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.wx-scenes { display: flex; gap: 4px; flex-wrap: wrap; }
+.wx-entities { display: flex; gap: 4px; flex-wrap: wrap; align-items: center; }
+.wx-entity { display: inline-flex; align-items: baseline; gap: 6px; padding: 3px 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px; background: transparent; font: inherit; font-size: var(--oi-shell-type-nav); cursor: pointer; }
+.wx-entity[aria-pressed="true"] { border-color: var(--oi-foreground); }
+.wx-entity .oi-state { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.wx-scheme { padding-inline-start: 4px; }
+.wx-subject { position: absolute; inset-block: 10px; inset-inline-end: 10px; z-index: 2; inline-size: min(340px, 42%); display: flex; flex-direction: column; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-surface); box-shadow: 0 8px 28px rgba(0,0,0,.14); overflow: hidden; }
+.wx-subject-head { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 8px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.wx-subject-head strong { font-size: var(--oi-shell-type-ui); }
+.wx-subject-ref { overflow-wrap: anywhere; }
+.wx-subject-body { flex: 1; min-block-size: 0; overflow-y: auto; padding: 8px 12px; display: flex; flex-direction: column; gap: 10px; }
+.wx-subject-section { display: flex; flex-direction: column; gap: 4px; }
+.wx-subject-source { display: flex; align-items: baseline; justify-content: space-between; gap: 8px; }
+.wx-subject-source-ref { padding: 0; border: 0; background: transparent; cursor: pointer; text-decoration: underline dotted; overflow-wrap: anywhere; }
+.wx-subject-relation { margin: 0; display: flex; flex-direction: column; gap: 1px; }
+.wx-subject-relation .oi-state { overflow-wrap: anywhere; }
+.wx-subject-tools { display: flex; gap: 6px; padding: 8px 12px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.wx-subject-open-note { margin: 0; flex: 1; min-inline-size: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
 .tn-m0 { position: relative; display: flex; block-size: 100%; min-block-size: 0; }
-.tn-m0 > .wiki-web { flex: 1; min-inline-size: 0; }
+.tn-m0 > .wiki-expression { flex: 1; min-inline-size: 0; }
 .tn-m0-material { flex: none; inline-size: min(420px, 38%); display: flex; flex-direction: column; border-inline-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-surface, transparent); }
 .tn-m0-material-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .tn-m0-material > .tn-material-scene, .tn-m0-material > div { flex: 1; min-block-size: 0; overflow-y: auto; }
 .tn-m0[data-material="none"] { display: block; }
-.tn-m0[data-material="none"] > .wiki-web { block-size: auto; }

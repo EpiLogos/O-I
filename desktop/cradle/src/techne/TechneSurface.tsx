@@ -61,7 +61,7 @@ import {registerBuiltInLenses} from "./lenses";
 import {DEEP_INSTRUMENTS, GROUND_INSTRUMENT, deepInstrument, type DeepInstrument} from "./instruments";
 import {selectInstrument, toggleRailOrientation, toggleRailPin, setRailListWidth, useInstrumentRail} from "./instrumentRail";
 import {instrumentStanding, useTechneDisclosure, type TechneDisclosureState} from "./techneReading";
-import {WikiWebBody} from "./WikiWebBody";
+import {WikiExpressionBody} from "./WikiExpressionBody";
 import {TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN} from "../workspace/mode";
 import "./techne.css";
 
@@ -213,31 +213,33 @@ export function TechneSurface({binding, subject}: {binding: SurfaceBinding; subj
     <div className="tn-body" role="tabpanel" id={panelId} aria-labelledby={`${uid}tab-${active.instrument}`}>
       {notice && <p className="oi-refusal tn-notice" role="status">{notice}<button type="button" className="oi-tool" aria-label="Dismiss" onClick={() => setNotice(null)}><Glyph name={ICON.close} size={12}/></button></p>}
       {active.instrument === "project"
-        ? <Instrument0Body sceneId={sceneId} project={binding.project}/>
+        ? <Instrument0Body sceneId={sceneId} binding={binding} subject={subject}/>
         : <InstrumentSlotBody tab={active} disclosure={disclosure} readings={instruments} onNotice={setNotice}/>}
     </div>
   </section>;
 }
 
 /** Instrument 0's body (owner direction 2026-09-19): the arrangement opens
- * onto the wiki web — Central and its projects as their wikis disclose
- * them — with no material required to be in the experience. The material
- * scene and its lens host stay mounted as the summoned depth beside the
- * web: the navigator's "Add to instrument" still lands here, and the depth
- * surfaces itself whenever material is present. */
-function Instrument0Body({sceneId, project}: {sceneId: string; project?: string}) {
+ * onto the register's wiki local whole as a REAL Expression projection
+ * (WikiExpressionBody — overview scene, constellations as addressable
+ * objects, constellation scenes with the actual nodes and typed
+ * relations), with no material required to be in the experience. The
+ * material scene and its lens host stay mounted as the summoned depth
+ * beside the projection: the navigator's "Add to instrument" still lands
+ * here, and the depth surfaces itself whenever material is present. */
+function Instrument0Body({sceneId, binding, subject}: {sceneId: string; binding: SurfaceBinding; subject?: {ref?: string; kind?: string; title: string; project?: string}}) {
   const scene = useMaterialScene(sceneId);
   const holding = scene.items.length > 0;
   const [open, setOpen] = useState(holding);
   useEffect(() => { if (holding) setOpen(true); }, [holding]);
   return <div className="tn-m0" data-material={holding ? (open ? "open" : "held") : "none"}>
-    <WikiWebBody/>
+    <WikiExpressionBody binding={binding} subject={subject}/>
     {(holding || open) && <aside className="tn-m0-material" aria-label="Material scene" data-open={open}>
       <header className="tn-m0-material-head">
         <span className="oi-eyebrow">Material scene</span>
         <button type="button" className="oi-tool" aria-label={open ? "Fold the material scene away" : "Open the material scene"} onClick={() => setOpen(value => !value)}>{open ? "–" : "+"}</button>
       </header>
-      {open && <MaterialSceneBody sceneId={sceneId} project={project}/>}
+      {open && <MaterialSceneBody sceneId={sceneId} project={binding.project}/>}
     </aside>}
   </div>;
 }

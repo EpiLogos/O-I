@@ -29,16 +29,34 @@ const tabIds=await tabs.evaluateAll(nodes=>nodes.map(n=>n.dataset.instrument));
 console.log('tab ids:',tabIds.join(','));
 if(tabIds.join(',')!=='project,canvas,timeline,journey,place,palace')fail('tab order',tabIds.join(','));
 
-// M0′ is the first view: the project tab selected, the WIKI WEB mounted —
-// the arrangement opens onto the web over Central and its projects (owner
-// direction 2026-09-19), no material required.
+// M0′ is the first view: the project tab selected, the WIKI→EXPRESSION
+// PROJECTION mounted (owner direction 2026-09-19) — the register's local
+// whole as a real Expression on the stage, never the wiki list browser this
+// replaced. Without a kernel transport (this probe's plain dev bundle) the
+// projection stands in its honest unavailable state, named — never a
+// fabricated overview.
 const surface=page.locator('.tn-surface');
 const firstSelected=await tabs.first().getAttribute('aria-selected');
 const surfaceInstrument=await surface.getAttribute('data-instrument');
 console.log('first tab selected:',firstSelected,'surface instrument:',surfaceInstrument);
 if(firstSelected!=='true'||surfaceInstrument!=='project')fail('M0 first view',`selected=${firstSelected} instrument=${surfaceInstrument}`);
-if(!await page.locator('.wiki-web').count())fail('M0 wiki web','the wiki web is not mounted as Instrument 0\u2019s opening');
-if(await page.locator('.tn-m0-material').count()===0)fail('M0 material gate','material is required to be in the experience');
+const projection=page.locator('.wiki-expression');
+if(!await projection.count())fail('M0 projection','the wiki→Expression projection is not mounted as Instrument 0\u2019s opening');
+const projectionState=await projection.getAttribute('data-state');
+console.log('projection state:',projectionState);
+if(projectionState!=='ready'&&projectionState!=='unavailable'&&projectionState!=='absent')fail('M0 projection state',`data-state=${projectionState} is not a truthful standing`);
+if(projectionState==='unavailable'){
+  const basis=await page.locator('.wx-basis').textContent();
+  if(!/wiki reading unavailable/.test(basis??''))fail('M0 unavailable naming',`the unavailable state does not name itself: "${basis}"`);
+}
+if(projectionState==='ready'){
+  const expressionRef=await projection.getAttribute('data-expression-ref')??'';
+  if(!/^expression:techne-m0\./.test(expressionRef))fail('M0 expression identity',`data-expression-ref=${expressionRef}`);
+  if(!await page.locator('.wx-stage-host').count())fail('M0 stage host','the projection does not present through the stage host');
+}
+// Material is never the gate: with an empty material scene the depth stands
+// down (no forced aside) and the projection is the experience either way.
+if(await page.locator('.tn-m0-material[data-open="true"]').count()&&!(await page.locator('.wiki-expression').count()))fail('M0 material gate','the material depth is forced open ahead of the experience');
 await page.screenshot({path:`${out}/tt-1-m0-first-view.png`});
 
 // The truthful disclosure state line (no subject join, no QL provider wired).
@@ -90,7 +108,7 @@ if(!await page.locator('.tn-surface > .tab-reveal-zone').count())fail('reveal ed
 // The reveal answers approach from outside (the pane's own law): the clicked
 // tool keeps focus-within open (the keyboard law), so step away with focus
 // AND pointer, then approach the edge.
-await page.locator('.wiki-web, .tn-m0').first().click({position:{x:20,y:20}}).catch(()=>{});
+await page.locator('.tn-m0, .wiki-expression').first().click({position:{x:20,y:20}}).catch(()=>{});
 await page.mouse.move(400,600);
 await page.waitForTimeout(400);
 const foldedHeight=await page.locator('.tn-tabbar').evaluate(node=>node.getBoundingClientRect().height);

@@ -6,8 +6,8 @@
  * 0 renders it as the wiki web the arrangement opens onto. No material is
  * required to be in the experience: the web IS the opening.
  */
-export interface WikiSpace { object: "space"; ref: string; title?: string; node_refs?: string[]; child_space_refs?: string[] }
-export interface WikiNode { object: "node"; ref: string; title?: string; type?: string }
+export interface WikiSpace { object: "space"; ref: string; title?: string; node_refs?: string[]; child_space_refs?: string[]; revision?: number; anchor_ref?: string }
+export interface WikiNode { object: "node"; ref: string; title?: string; type?: string; revision?: number; source_refs?: string[]; ql?: { face?: string; position?: number; unit?: string } }
 export interface WikiConstellationMember { ref?: string; position?: number; conjugate?: boolean }
 export interface WikiConstellation { anchor_ref?: string; members?: WikiConstellationMember[] }
 export interface WikiFrame { object: "frame"; constellations?: WikiConstellation[] }
