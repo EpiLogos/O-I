@@ -410,7 +410,12 @@ async function runScenario(name, { baseUrl }) {
   // ?frontstate (the welcome scenario runs the real first-open path).
   await page.addInitScript(() => {
     if (!new URLSearchParams(location.search).has("frontstate")) {
-      sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+      // Opaque-origin frames (the sandboxed material iframes) refuse storage
+      // access entirely — the touch must not throw there; only the top
+      // document's stand-down matters.
+      try {
+        sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+      } catch { /* opaque frame: no storage authority, no stand-down needed */ }
     }
   });
 

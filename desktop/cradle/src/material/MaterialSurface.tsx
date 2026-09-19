@@ -83,16 +83,20 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // over the person's own newer toggle after that.
   const [savedView] = useState(() => parseMaterialViewPrefs(localStorage.getItem(viewKey)));
   const [view, setView] = useState<MaterialView>(savedView.view ?? "rendered");
-  const { containerRef, suspended } = useSuspensionDisclosure(view);
+  const { containerRef, suspended, observed } = useSuspensionDisclosure(view);
+  // First-presentation latch: the acquisition below waits for it. The
+  // viewport observation is asynchronous by one frame, so a surface cannot
+  // know at mount whether it is presented or a restart-restored inactive
+  // tab; the latch turns on only from an actual observation of a presented
+  // surface, and never turns off (concealment never defers a live surface).
+  const [everPresented, setEverPresented] = useState(false);
+  useEffect(() => {
+    if (everPresented || !observed || suspended) return;
+    setEverPresented(true);
+  }, [everPresented, observed, suspended]);
   useMaterialContext(containerRef,binding,view);
   const [zoom, setZoom] = useState<number>(savedView.zoom ?? 1);
   const [generation, setGeneration] = useState(0);
-  useEffect(() => {
-    const log = (window as unknown as {__ms?: string[]}).__ms = (window as unknown as {__ms?: string[]}).__ms ?? [];
-    log.push('MS-MOUNT ' + binding.id.slice(0, 6));
-    return () => { log.push('MS-UNMOUNT ' + binding.id.slice(0, 6)); };
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, []);
   // Readiness is generation-scoped and honest (C25): a load event or a late
   // message from a retired generation can neither clear this generation's
   // state nor claim a retired revision ready. A frame load is recorded
@@ -124,6 +128,12 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
 
   useEffect(() => {
     let live = true;
+    // Inactive-tab deferral (WORKSPACE-CONTINUITY: inactive tabs remain
+    // logically open without all being eagerly mounted, executed or read).
+    // A surface that mounted CONCEALED — a restart-restored inactive tab —
+    // holds its first owner acquisition until first presentation;
+    // everPresented only ever turns on, so a live surface is never reset.
+    if (!everPresented) return;
     beginLoad(generation);
     setPdfFailedGeneration(-1);
     if (!location) {
@@ -155,7 +165,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
       .catch(error => { if (live) observeLoad(generation, {kind: "failed", error: String(error)}); })
       .finally(() => { if (live) observeLoad(generation, {kind: "ready"}); });
     return () => { live = false; };
-  }, [transport, location, format, generation, beginLoad, observeLoad]);
+  }, [transport, location, format, generation, beginLoad, observeLoad, everPresented]);
 
   const showToggle = format === "html" || format === "markdown";
   const zoomable = ["html","markdown","image"].includes(format);

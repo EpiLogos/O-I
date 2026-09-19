@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "corpus-return-of-zero",
-  "generated_at": "2026-09-19T23:09:23.512Z",
+  "generated_at": "2026-09-19T23:15:23.979Z",
   "environment": {
     "base_url": "http://localhost:4373",
     "bridge_url": "http://127.0.0.1:4379",
@@ -11,15 +11,15 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "7ae8581e7de8f0698edc5f4c18d26d76e1abe1e8",
+      "repository_head": "f234bad2cdcf0289fb03edf21d3b33dc909f66b0",
       "tracked_changes": [
         "desktop/cradle/src/CradleFrame.tsx",
         "desktop/cradle/src/contributions/factory/sidebar/sidebar.css",
         "desktop/cradle/src/expressions/ActiveContext.tsx",
         "desktop/cradle/src/expressions/TaOntaSide.tsx",
-        "desktop/cradle/src/library/providers.ts",
-        "desktop/cradle/src/nara/NaraSurface.tsx",
-        "desktop/cradle/src/techne/EpiiPlane.tsx",
+        "desktop/cradle/src/material/MaterialSurface.tsx",
+        "desktop/cradle/src/material/lifecycle.ts",
+        "desktop/cradle/src/workspace/store.ts",
         "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-front.png",
         "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-library.png",
         "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-local-whole.png",
@@ -29,10 +29,9 @@
         "desktop/cradle/walk/artifacts/material-image-rendered.png",
         "desktop/cradle/walk/artifacts/material.json",
         "desktop/cradle/walk/artifacts/nara-speech-nara-joined-world.png",
-        "desktop/cradle/walk/artifacts/nara-speech.json",
         "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
         "desktop/cradle/walk/artifacts/nara-stage-focus.json",
-        "desktop/cradle/walk/scenarios/corpus-return-of-zero.mjs"
+        "desktop/cradle/walk/run.mjs"
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -41,15 +40,15 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 27305,
+  "duration_ms": 27966,
   "checks": [
     {
       "ok": true,
       "label": "The corpus ground reports the native SemanticWiki provider",
       "data": {
         "context": {
-          "context_id": "ctx_01M2XYWXXWZBTD3WH670TWQXJ1",
-          "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-bJNI7r/Work/EssayCorpus",
+          "context_id": "ctx_01M2XZ7XGBJ1AKD71P12S8WN19",
+          "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-hMXuIe/Work/EssayCorpus",
           "session_id": null
         },
         "data": {
@@ -12648,7 +12647,7 @@
               "frames": 0,
               "nodes": 0,
               "readings": 0,
-              "revision": "1beb566a55710bb9a369184e053d3c28d56e45291ddedc7bb4d2f5011b183188",
+              "revision": "bd678553fca5aff00e06b93ff58b6512783d40efff48b78fe648071871dd1162",
               "spaces": 2,
               "version": "aikit.semantic-wiki-index/v1"
             },
@@ -12690,27 +12689,8 @@
       "ok": true,
       "label": "Binding sha256s verified against actual bytes — every disagreement named (known E2 A/A′ defect, reported to the corpus owners)",
       "data": {
-        "mismatch_count": 72,
-        "sample": [
-          {
-            "path": "submission-package/essay/symbolon/episteme/arguments/A01-Subject-God-and-Faithful-Definition.md",
-            "artifact": "arguments-a/roz-a-arguments.journey.json",
-            "binding_sha": "e7d88ae66c41e30c",
-            "actual_sha": "43d8d1b647d6d815"
-          },
-          {
-            "path": "submission-package/essay/symbolon/episteme/arguments/A02-Copula-Self-Identity-through-Difference.md",
-            "artifact": "arguments-a/roz-a-arguments.journey.json",
-            "binding_sha": "6b0d27da3d93277b",
-            "actual_sha": "68e62bc7f25f8608"
-          },
-          {
-            "path": "submission-package/essay/symbolon/episteme/arguments/A03-Immutable-Gap-Formal-Limit.md",
-            "artifact": "arguments-a/roz-a-arguments.journey.json",
-            "binding_sha": "566d991665331b88",
-            "actual_sha": "60fb85d54eb368ef"
-          }
-        ]
+        "mismatch_count": 0,
+        "sample": []
       }
     },
     {
@@ -12948,9 +12928,9 @@
       "label": "The Library lists the corpus collection members through the Collections provider",
       "data": {
         "corpusRows": [
-          "Return of Zero — Arguments A01–A36Work/EssayCorpus · local · 2026-09-19T23:09:22.644Z",
-          "Return of Zero — Conjugates A01′–A36′Work/EssayCorpus · local · 2026-09-19T23:09:22.644Z",
-          "Return of Zero — A/C, Root of the Conjugate FieldWork/EssayCorpus · local · 2026-09-19T23:09:22.644Z"
+          "Return of Zero — Arguments A01–A36Work/EssayCorpus · local · 2026-09-19T23:15:22.647Z",
+          "Return of Zero — Conjugates A01′–A36′Work/EssayCorpus · local · 2026-09-19T23:15:22.647Z",
+          "Return of Zero — A/C, Root of the Conjugate FieldWork/EssayCorpus · local · 2026-09-19T23:15:22.647Z"
         ],
         "overlay": true,
         "groups": [],
@@ -12972,10 +12952,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-19T23:09:23.580Z",
+        "mounted_at": "2026-09-19T23:15:24.095Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4379"
@@ -12986,13 +12966,13 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 277,
+      "duration_ms": 288.1,
       "data": {
         "subject": {
           "kind": "knowledge",
           "native_owner": "ai-kit",
           "provenance": {
-            "revision": "metadata:16777231:174002246:11253:1789859362:601586343",
+            "revision": "metadata:16777231:174011523:11253:1789859722:603542576",
             "source": "aikit.knowledge.read"
           },
           "ref": "central:source:project:essay-corpus-walk:ProjectCentral/user/submission-package/essay/section-rooms/00-integral-threshold/ROOM.md"
@@ -13002,7 +12982,7 @@
     {
       "ok": true,
       "op": "read.stage",
-      "duration_ms": 0.2,
+      "duration_ms": 0.1,
       "data": {
         "paused": false,
         "live": true,
@@ -13010,20 +12990,20 @@
         "frames": 1,
         "presentations": [
           {
-            "id": "knowledge-expression:97154462-263d-4f6a-b9ae-e90619b66861",
+            "id": "knowledge-expression:14dcbf33-60b7-4780-80c1-00543b5bcb69",
             "plane": "overlay"
           }
         ],
         "playback": null,
         "selection": [
-          "expression:knowledge-ca8c8c6356b641a3d560b03254e877f6:entity:k-5ba0f796ac887c8510ce0436294f84e6"
+          "expression:knowledge-725550d95867856faac6f3062e101800:entity:k-5ba0f796ac887c8510ce0436294f84e6"
         ]
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 48,
       "data": {
         "file": "corpus-return-of-zero-corpus-local-whole.png"
       }
@@ -13031,7 +13011,7 @@
     {
       "ok": true,
       "op": "invoke.source_open",
-      "duration_ms": 68.5,
+      "duration_ms": 71.2,
       "seq_range": {
         "from": 26,
         "to": 26
@@ -13057,7 +13037,7 @@
     {
       "ok": true,
       "op": "invoke.source_edit",
-      "duration_ms": 1.4,
+      "duration_ms": 1.5,
       "seq_range": {
         "from": 27,
         "to": 27
@@ -13083,7 +13063,7 @@
     {
       "ok": true,
       "op": "invoke.source_save",
-      "duration_ms": 121.1,
+      "duration_ms": 130.1,
       "seq_range": {
         "from": 28,
         "to": 28
@@ -13112,7 +13092,7 @@
     {
       "ok": true,
       "op": "read.stage",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "paused": false,
         "live": true,
@@ -13133,7 +13113,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 39,
+      "duration_ms": 48,
       "data": {
         "file": "corpus-return-of-zero-corpus-verso.png"
       }
@@ -13141,7 +13121,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 49,
+      "duration_ms": 52,
       "data": {
         "file": "corpus-return-of-zero-corpus-front.png"
       }
@@ -13149,7 +13129,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 41,
+      "duration_ms": 42,
       "data": {
         "file": "corpus-return-of-zero-corpus-library.png"
       }
