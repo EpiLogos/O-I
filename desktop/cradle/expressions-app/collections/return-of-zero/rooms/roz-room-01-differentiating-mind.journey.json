@@ -1,0 +1,989 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-room-01-differentiating-mind",
+  "name": "Return of Zero · Room 2 of 8 · §0 — Differentiating Mind",
+  "description": "Mind is the movement by which an implicated whole becomes a determinate world for a situated subject. Six movements as addressable scenes in one shared section-room grammar. Binds to section-rooms/01-differentiating-mind/ at Antykathera-Essay-Work dbf3b17.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "movement-07",
+      "name": "§0 · #0 — Awareness Bends Toward Display",
+      "character": "§0 · #0 — Awareness Bends Toward Display (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138"
+        ],
+        "material": "round",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-01l",
+          "name": "#0 — Awareness Bends Toward Display",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-01m",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 07 OF 48 · §0 · #0 · ROOM 01-DIFFERENTIATING-MIND",
+          "title": "Awareness Bends Toward Display",
+          "italic": "Argued",
+          "body": "The first differentiation is the reflexive bend by which luminous awareness takes its own manifestation as other enough to encounter.\n← previous · M06 The Return to Zero   ·   next → M08 The Inner Instrument",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M07 → A01 · A05 · A26 / C01 · C13 · C41 — Encounter + Śaiva depth",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-08",
+      "name": "§0 · #1 — The Inner Instrument",
+      "character": "§0 · #1 — The Inner Instrument (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138"
+        ],
+        "material": "round",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-01n",
+          "name": "#1 — The Inner Instrument",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.2,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "#1",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-01o",
+                "text": "#1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 08 OF 48 · §0 · #1 · ROOM 01-DIFFERENTIATING-MIND",
+          "title": "The Inner Instrument",
+          "italic": "Argued",
+          "body": "Buddhi, ahaṃkāra, and manas are determinate internal functions—judgment, appropriation, and coordination—available to reflection as contents and operations. The subject remains the pole under which these functions and their products appear.\n← previous · M07 Awareness Bends Toward Display   ·   next → M09 Vikalpa and Saṃkalpa",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M08 → A09 · A26 / C15 · C16 · C41 — regioned inner-instrument depth",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-09",
+      "name": "§0 · #2 — Vikalpa and Saṃkalpa",
+      "character": "§0 · #2 — Vikalpa and Saṃkalpa (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138"
+        ],
+        "material": "round",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-01p",
+          "name": "#2 — Vikalpa and Saṃkalpa",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.45,
+            "y": 1.45
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-01q",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 09 OF 48 · §0 · #2 · ROOM 01-DIFFERENTIATING-MIND",
+          "title": "Vikalpa and Saṃkalpa",
+          "italic": "Argued",
+          "body": "Mind constructs a context-world through a pulse: vikalpa differentiates and qualifies; saṃkalpa composes possibilities, intentions, and commitments from those differences.\n← previous · M08 The Inner Instrument   ·   next → M10 Apoha",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M09 → A07 · A09 / C12 · C17 — Encounter/Name/Count; Script = frozen conditioned will",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-10",
+      "name": "§0 · #3 — Apoha",
+      "character": "§0 · #3 — Apoha (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138"
+        ],
+        "material": "round",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-01r",
+          "name": "#3 — Apoha",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.6,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "yantra",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-01s",
+                "text": "",
+                "shape": "yantra",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 10 OF 48 · §0 · #3 · ROOM 01-DIFFERENTIATING-MIND",
+          "title": "Apoha",
+          "italic": "Argued",
+          "body": "Determination arises through exclusion: a selected 1 is intelligible against the field of what it is not.\n← previous · M09 Vikalpa and Saṃkalpa   ·   next → M11 The Sixfold Tattvic Compression",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M10 → A08 / C03 · C18 · C23 — Name-through-Count; Buddhist Apoha remains source-distinct from technical neighbours",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-11",
+      "name": "§0 · #4 — The Sixfold Tattvic Compression",
+      "character": "§0 · #4 — The Sixfold Tattvic Compression (Derived).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138"
+        ],
+        "material": "round",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-01t",
+          "name": "#4 — The Sixfold Tattvic Compression",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-01u",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 11 OF 48 · §0 · #4 · ROOM 01-DIFFERENTIATING-MIND",
+          "title": "The Sixfold Tattvic Compression",
+          "italic": "Derived",
+          "body": "The thirty-six tattvas can be carried argumentatively as six movements: Paramaśiva/Anuttara; Śiva–Śakti; Sadāśiva–Īśvara; Sadvidyā–Māyā; the kañcukas and complete contracted apparatus; Pratyabhijñā.\n← previous · M10 Apoha   ·   next → M12 Objective Internality",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M11 → A09 / C14 · C15 · C16 · C17 — Apportionment/Economy; sixfold compression is a reading, not source-tradition identity",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-12",
+      "name": "§0 · #5→0 — Objective Internality",
+      "character": "§0 · #5→0 — Objective Internality (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138"
+        ],
+        "material": "round",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-01v",
+          "name": "#5→0 — Objective Internality",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.55,
+            "y": 1.55
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-01w",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 12 OF 48 · §0 · #5→0 · ROOM 01-DIFFERENTIATING-MIND",
+          "title": "Objective Internality",
+          "italic": "Argued",
+          "body": "Objective Internality is the constituted means through which a Life inhabits, discriminates and acts within a World.\n← previous · M11 The Sixfold Tattvic Compression   ·   next → M13 A Sign Migrates Between Worlds",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M12 → A26 / C07 · C08 · C40 · C41 · C57 — Encounter Region→Account; general Objective Internality",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    }
+  ],
+  "updatedAt": "2026-09-17T05:34:06.821Z"
+}

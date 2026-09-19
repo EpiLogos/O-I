@@ -1,0 +1,1213 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-room-04-mathematical-substrate",
+  "name": "Return of Zero · Room 5 of 8 · §3 — Mathematical Substrate",
+  "description": "QL connects distinction, re-entry, polarity, ratio, topology, harmonic resolution, and formal incompleteness into one derivational braid. Six movements as addressable scenes in one shared section-room grammar. Binds to section-rooms/04-mathematical-substrate/ at Antykathera-Essay-Work dbf3b17.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "movement-25",
+      "name": "§3 · #0 — Eight Determinations",
+      "character": "§3 · #0 — Eight Determinations (Derived (native eight-turn traversal; local calculus identities) / Argued (calculus analogy, Jungian 4+2, perspectival geometry)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#3d5a80"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-034",
+          "name": "Traversal — Eight Determinations",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.25,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "−/−",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-036",
+                "text": "−/−",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-037",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-038",
+                "text": "?/!",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-039",
+                "text": "−/+",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-03a",
+                "text": "X/x",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-03b",
+                "text": "AM/IS",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-03c",
+                "text": "∞/dx",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-03d",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 25 OF 48 · §3 · #0 · ROOM 04-MATHEMATICAL-SUBSTRATE",
+          "title": "Eight Determinations",
+          "italic": "Derived (native eight-turn traversal; local calculus identities) / Argued (calculus analogy, Jungian 4+2, perspectival geometry)",
+          "body": "The ground–mark relation unfolds as eight determinations: −/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0. Their ordered traversal establishes the concordance.\n← previous · M24 Zero Changes Its Role   ·   next → M26 The Spanda Equations and 4+2",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M25 → A18 / C11 · C21 · C49 · C50 · C61 · C64 — exact traversal + Symbol/Account/Trust",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-26",
+      "name": "§3 · #1 — The Spanda Equations and 4+2",
+      "character": "§3 · #1 — The Spanda Equations and 4+2 (Mixed: Derived (ordinary arithmetic identities and reductions; native QL traversal by its declared rules) / Argued (4:2–3:3 harmonic reading) / Offered (Pythagorean and metaphysical interpretations)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#3d5a80"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-03e",
+          "name": "4+2 — The Spanda Equations and 4+2",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.25,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4+2",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03f",
+                "text": "4+2",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 26 OF 48 · §3 · #1 · ROOM 04-MATHEMATICAL-SUBSTRATE",
+          "title": "The Spanda Equations and 4+2",
+          "italic": "Mixed: Derived (ordinary arithmetic identities and reductions; native QL traversal by its declared rules) / Argued (4:2–3:3 harmonic reading) / Offered (Pythagorean and metaphysical interpretations)",
+          "body": "The Spanda equations are the native generative kernel of QL, read in the declared QL register: horizontal 3:3, vertical 4:2, and the exact 16/9 · 9/8 = 2/1 completion.\n← previous · M25 Eight Determinations   ·   next → M27 Mark, Re-entry, and Complex Orientation",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M26 → A11 · A12 · A13 · A14 · A18 / C11 · C49 · C50 — Spanda/4+2 Matheme with source boundary intact",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-27",
+      "name": "§3 · #2 — Mark, Re-entry, and Complex Orientation",
+      "character": "§3 · #2 — Mark, Re-entry, and Complex Orientation (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#3d5a80"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-03g",
+          "name": "Quarter-turn rotation — i² = −1",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.45,
+            "y": 1.45
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03i",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.45,
+                    "y": 1.45
+                  },
+                  "rotation": 0,
+                  "tint": "#252720",
+                  "tintWeight": 0,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "step-03j",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.45,
+                    "y": 1.45
+                  },
+                  "rotation": 90,
+                  "tint": "#252720",
+                  "tintWeight": 0,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "step-03k",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.45,
+                    "y": 1.45
+                  },
+                  "rotation": 180,
+                  "tint": "#252720",
+                  "tintWeight": 0,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "step-03l",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 1.45,
+                    "y": 1.45
+                  },
+                  "rotation": 270,
+                  "tint": "#252720",
+                  "tintWeight": 0,
+                  "force": {
+                    "kind": "attract",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 27 OF 48 · §3 · #2 · ROOM 04-MATHEMATICAL-SUBSTRATE",
+          "title": "Mark, Re-entry, and Complex Orientation",
+          "italic": "Argued",
+          "body": "Spencer-Brown begins with the injunction to draw a distinction; Kauffman's iterants make the temporal seam algebraic: i² = −1, and a quarter-turn rotation 1 → i → −1 → −i → 1.\n← previous · M26 The Spanda Equations and 4+2   ·   next → M28 Projective Completion and Dimensional Reframing",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M27 → A14 · A18 · A19 / C31 · C64 — re-entry/complex formal neighbours via source-distinct Homologia/Analogia",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-28",
+      "name": "§3 · #3 — Projective Completion and Dimensional Reframing",
+      "character": "§3 · #3 — Projective Completion and Dimensional Reframing (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#3d5a80"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-03m",
+          "name": "#3 — Projective Completion and Dimensional Reframing",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.6,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "yantra",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03n",
+                "text": "",
+                "shape": "yantra",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 28 OF 48 · §3 · #3 · ROOM 04-MATHEMATICAL-SUBSTRATE",
+          "title": "Projective Completion and Dimensional Reframing",
+          "italic": "Argued",
+          "body": "Mathematics repeatedly encounters obstructions that become tractable after the representational space, algebra or logic is changed.\n← previous · M27 Mark, Re-entry, and Complex Orientation   ·   next → M29 Topology and Musical Resolution",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M28 → A10 · A17 / C52 · C64 — projective/dimensional Matheme; witness not metaphysical derivation",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-29",
+      "name": "§3 · #4 — Topology and Musical Resolution",
+      "character": "§3 · #4 — Topology and Musical Resolution (Mixed: Derived (local topology and ratio identities) / Argued (toroidal and harmonic QL coordination) / Offered (4+2 and Pythagorean amplifications)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#3d5a80"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-03o",
+          "name": "T² = ℝ²/ℤ² — first winding",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03p",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-03q",
+          "name": "second winding — π₁(T²) = ℤ×ℤ",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3d5a80",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03r",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 29 OF 48 · §3 · #4 · ROOM 04-MATHEMATICAL-SUBSTRATE",
+          "title": "Topology and Musical Resolution",
+          "italic": "Mixed: Derived (local topology and ratio identities) / Argued (toroidal and harmonic QL coordination) / Offered (4+2 and Pythagorean amplifications)",
+          "body": "Topology and music give two distinct exact forms of return through retained difference: a torus carries local closure while a lift retains global displacement; a selected musical span is completed by an exact multiplicative interval (9/8).\n← previous · M28 Projective Completion and Dimensional Reframing   ·   next → M30 The Arche-Topos",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M29 → A15 · A16 · A17 / C20 · C52 — topology/music Matheme + Homologia/Analogia",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-30",
+      "name": "§3 · #5→0 — The Arche-Topos",
+      "character": "§3 · #5→0 — The Arche-Topos (Derived (Arche-Topos formal synthesis); Argued (psychoid identification)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#3d5a80"
+        ],
+        "material": "print",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-03s",
+          "name": "The arche-topos — the differential field",
+          "kind": "formation",
+          "position": {
+            "x": 0.25,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.55,
+            "y": 1.55
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03t",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-03u",
+          "name": "quotient — a determinate place within it",
+          "kind": "formation",
+          "position": {
+            "x": 0.78,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.45,
+            "y": 0.45
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#3d5a80",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03v",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 30 OF 48 · §3 · #5→0 · ROOM 04-MATHEMATICAL-SUBSTRATE",
+          "title": "The Arche-Topos",
+          "italic": "Derived (Arche-Topos formal synthesis); Argued (psychoid identification)",
+          "body": "The arche-topos is the differential field on which the 0/1 relation can be written as path, circulated as winding, heard as interval, and recognised as symbolic transformation.\n← previous · M29 Topology and Musical Resolution   ·   next → M31 The Psychoid Problem",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M30 → A16 · A17 · A18 / C20 · C30 · C61 — Arche-Topos across Matheme/Mytheme/Episteme without register collapse",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    }
+  ],
+  "updatedAt": "2026-09-17T05:34:06.823Z"
+}

@@ -1,0 +1,507 @@
+{
+  "schema": "oi.collection-publication/v1",
+  "exported_at": "2026-09-19T21:17:41.716Z",
+  "title": "Return of Zero — the published reading",
+  "standing": "deliberately published collection/edition outputs for the O:I Web/SharedField site lane; the owner remains the recognition authority for anything beyond these surfaces",
+  "source_revision": {
+    "repo": "EpiLogos/Antykathera-Essay-Work",
+    "commit": "dbf3b17"
+  },
+  "corpus": {
+    "repo": "EpiLogos/Point-Cloud-Demo",
+    "path": "production/return-of-zero",
+    "engine_revision": "oi.journey v1 (validated by production/return-of-zero/tools/validate.mjs)"
+  },
+  "manifests": [
+    {
+      "manifest": "collections/return-of-zero/essay.manifest.json",
+      "members": 1,
+      "member_paths": [
+        "collections/return-of-zero/essay/roz-essay-reading.journey.json"
+      ],
+      "source_bindings": [
+        {
+          "path": "submission-package/essay/THE-RETURN-OF-ZERO.md",
+          "sha256": "6268ebb478e701a3a23b2e3f15521ee92245f132ca94c0c1449465aabca0bfdd",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/README.md",
+          "sha256": "f15eb4f7ea7591b0acb59fcac860de55aba60e37a3d6095f1749a7a8e8a00793",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/README.md",
+          "sha256": "e8423f198abf79026fda8de68ace60dc70d6a9c7f14ebb9566e79a6a9672df2d",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+          "sha256": "cb5f1aa43ee69f127de09561768ee3ec02e7b4fce624b376486fbb6bf8fddb2c",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "c24377951a2c55086f1ea1c245e5a5349ce528f06fee56c583a511ebdff8a791",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+          "sha256": "9e75af9563613dbb61293c01b669d9a9512c076e8bf52562f0385b9a73413438",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "869159e26694407749d88e0adafe77b4f21fc143a9347fbe221be6ce088afc09",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+          "sha256": "a844e41ad2fb8cb15a8d8e82dd9cf1e27135408af1bf9a8267327934638e71cc",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "5019fd721937429c9bd1c177f7f10292a6affc99ccb8aeefa1550c9246c004a5",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+          "sha256": "9a8d46c3c5a674d652dbca8ea0e05218b47201d1e23bbe47772545553de05ca0",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "8f017c8815d166a2817f34c169bebcc1707c94e3f7c010efafda52a7d8400c5f",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+          "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+          "sha256": "615f25e7946cf5fa74b9f7f304b11351f71c860c6846ad0003930320a958a614",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "0cbbc0ce02feefd0cfcb3cb40117de67e1b788bfe46207be4a3054dddadec14d",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+          "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+          "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585",
+          "artifact": "essay/roz-essay-reading.journey.json"
+        }
+      ]
+    },
+    {
+      "manifest": "collections/return-of-zero/rooms.manifest.json",
+      "members": 8,
+      "member_paths": [
+        "collections/return-of-zero/rooms/roz-room-00-integral-threshold.journey.json",
+        "collections/return-of-zero/rooms/roz-room-01-differentiating-mind.journey.json",
+        "collections/return-of-zero/rooms/roz-room-02-return-of-zero.journey.json",
+        "collections/return-of-zero/rooms/roz-room-03-two-logics.journey.json",
+        "collections/return-of-zero/rooms/roz-room-04-mathematical-substrate.journey.json",
+        "collections/return-of-zero/rooms/roz-room-05-psychoid-flowering.journey.json",
+        "collections/return-of-zero/rooms/roz-room-06-objective-internality.journey.json",
+        "collections/return-of-zero/rooms/roz-room-07-instrument-returns.journey.json"
+      ],
+      "source_bindings": [
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/ROOM.md",
+          "sha256": "cb5f1aa43ee69f127de09561768ee3ec02e7b4fce624b376486fbb6bf8fddb2c",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "c24377951a2c55086f1ea1c245e5a5349ce528f06fee56c583a511ebdff8a791",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/01-s01-p0-question-before-mechanism.md",
+          "sha256": "69c17d483608c81fec425e2b0442c9afa7ce317ce2f200fab4f246f3a1cb3441",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/02-s01-p1-define-subject.md",
+          "sha256": "82ed67b30117b6acb25be32e2e0fd3d5fbf2ed63c8b6d85f0351b5cdb8e135ef",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/03-s01-p2-definition-cut-gift-danger.md",
+          "sha256": "c5da497e3b6015c71a641de7e1a1b826cf7e44923291d460a8ef48d054a7d63a",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/04-s01-p3-formal-limit-genealogy.md",
+          "sha256": "6b481e61c1cecc9ea02b3ccdcf280fdb92531ec146c95f83c412fdced7d900bd",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/05-s01-p4-gebser-diaphaneity.md",
+          "sha256": "8abe57833cd935f9520787a970a0621c992f12ca5c5eea6a3306f7981e1ea249",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/00-integral-threshold/movements/06-s01-p5-return-zero.md",
+          "sha256": "3921264e9cc444b7e5670018b633821106700b09b2df55375acf1f88b7523fa1",
+          "artifact": "rooms/roz-room-00-integral-threshold.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/ROOM.md",
+          "sha256": "9e75af9563613dbb61293c01b669d9a9512c076e8bf52562f0385b9a73413438",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "869159e26694407749d88e0adafe77b4f21fc143a9347fbe221be6ce088afc09",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/07-s0-p0-awareness-bends-display.md",
+          "sha256": "6f966d87bd6bfadca83626d8dd24938ce4aa77dd1056a145726327343518c026",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/08-s0-p1-inner-instrument.md",
+          "sha256": "1b15eb79917f3f770700197e751239b0118350b6f204bf7ffbd98fae5ed6d2d2",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/09-s0-p2-vikalpa-samkalpa.md",
+          "sha256": "8bbe89746678f48cf5e039bf4b10a0e88932a3fcf955b746d72c092238d9897b",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/10-s0-p3-apoha.md",
+          "sha256": "c12cdb35998c551c7bcdf6751738dd96df747e7c9b778ded0423590bf0474940",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/11-s0-p4-tattvic-compression.md",
+          "sha256": "d9e8bff025edc0d2f9cdba014c96c79f77360de72e9868a6829c3786fe5120dc",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/01-differentiating-mind/movements/12-s0-p5-objective-internality.md",
+          "sha256": "c87b61c502ae426aedfd07582a7337c430bfeff4569e782afa1940c7bbc8cd2c",
+          "artifact": "rooms/roz-room-01-differentiating-mind.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/ROOM.md",
+          "sha256": "a844e41ad2fb8cb15a8d8e82dd9cf1e27135408af1bf9a8267327934638e71cc",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "5019fd721937429c9bd1c177f7f10292a6affc99ccb8aeefa1550c9246c004a5",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/13-s1-p0-sign-migrates.md",
+          "sha256": "cd73f03956fbf4982812468bb382d9487f552c51aefbbc868a932ea3052009af",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/14-s1-p1-sunya-operational.md",
+          "sha256": "020e2b99f009b93eb71285090821b5f0cedb1af9a954eea241ed4aac26a5c2f0",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/15-s1-p2-empty-set-generates-one.md",
+          "sha256": "f8bb4b9d84b72809b65c264081585cf097159a926d1aeca01b09903cba600498",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/16-s1-p3-crossed-zero.md",
+          "sha256": "6d80ad9ba234df2f7b6331e80c4980b71d94eef1b8befa31ff057b36d535b84a",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/17-s1-p4-zero-outside-math.md",
+          "sha256": "ec53f6b9e68dba4112544e8692f22784e1bba1b4f000bbb457c1abeb41d00aae",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/02-return-of-zero/movements/18-s1-p5-loan-returns.md",
+          "sha256": "ed41e30a18998115a1a43790c1620b1269a2d6a52238988c6d3d0313bbafadc2",
+          "artifact": "rooms/roz-room-02-return-of-zero.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/ROOM.md",
+          "sha256": "9a8d46c3c5a674d652dbca8ea0e05218b47201d1e23bbe47772545553de05ca0",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "8f017c8815d166a2817f34c169bebcc1707c94e3f7c010efafda52a7d8400c5f",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/movements/19-s2-p0-difference-cannot-be-escaped.md",
+          "sha256": "03ddcf6904a041c5e42dbc7e84ad2dfae0f6227ae76e5de896cdd16c850329d9",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/movements/20-s2-p1-dia-ballein.md",
+          "sha256": "badff2d1f05fb037bbeb2fa3148443f1ff8e4e7b096deaffc9a07094a38d7ab8",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/movements/21-s2-p2-sym-ballein.md",
+          "sha256": "6582c0eafd34ea9c05651eb582835f0fbc91b4d9bef96ef0cebc6355dcf628c6",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/movements/22-s2-p3-ares-aphrodite-harmonia.md",
+          "sha256": "d91555c0b0d4dd9d2d1678c6e3f58a31fbba30dd24429dfc2a186ba04dee5195",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/movements/23-s2-p4-complex-dynamism.md",
+          "sha256": "6350a8750814b88d05be73deb0d77c77868a14ba2b9608664f9d36a5b0d94425",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/03-two-logics/movements/24-s2-p5-zero-changes-role.md",
+          "sha256": "04c09005a2b5453aa94fa000d2d89dbedb5fcf87f4893164975d027d5daf3e93",
+          "artifact": "rooms/roz-room-03-two-logics.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/ROOM.md",
+          "sha256": "8bd7d7cd7d31bc608398c597ea76957c2a3c8e663cf22b2b9c2ee80a1d0fe230",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "4b657d4ad8700c211b6b0ea24dc7cb878cab2cc6b9103394b910477a2303c455",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/25-s3-p0-eight-determinations.md",
+          "sha256": "25a6166dc80d383b871de0106489c3e48432e89031d1a1a9af5bfbc574401876",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/26-s3-p1-spanda-4-2.md",
+          "sha256": "29a94e3230e2aa4337e6de7a477558c7bf426aa4093b9e829350a65f8e6bdb02",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/27-s3-p2-mark-reentry-complex.md",
+          "sha256": "a722fc39aed65c47d95c9fbc98eabc15a8a899afaca33e8338c04152c510180d",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/28-s3-p3-projective-dimensional-reframing.md",
+          "sha256": "f716be16da2e47f2abe4db9a14911e793644fd5bd056117a41e17c7b1cb4a259",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/29-s3-p4-topology-music-resolution.md",
+          "sha256": "2032030478b911b48946070b5fa79d75c551158d3b614a98e7f0f28b6f4cc561",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/04-mathematical-substrate/movements/30-s3-p5-arche-topos.md",
+          "sha256": "68a20486fa03ad5dc035dd3ffab3fcaa72cde3feed6015984b8514a84862991f",
+          "artifact": "rooms/roz-room-04-mathematical-substrate.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/ROOM.md",
+          "sha256": "615f25e7946cf5fa74b9f7f304b11351f71c860c6846ad0003930320a958a614",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "0cbbc0ce02feefd0cfcb3cb40117de67e1b788bfe46207be4a3054dddadec14d",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/31-s4-p0-psychoid-problem.md",
+          "sha256": "4d1b5712e7b5752078eb586d85d9f4f8b87d720d004e4427fec7cae801c8ffd8",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/32-s4-p1-jung-individuation.md",
+          "sha256": "ac1398fcdd10b04c8918671f498e516a97862874b50ec476c7198ee67a2ba5cc",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/33-s4-p2-complexio-quaternity-senarius.md",
+          "sha256": "968bcb2600a5b920fc101465fe9e197b94225bcf2d5717fc8c7325bd0fda8e3d",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/34-s4-p3-lacan-matheme-mytheme.md",
+          "sha256": "b7a84801cc8621da7f99e554fc56c4bc01983b06087a928f23258fe15a529680",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/35-s4-p4-gebser-apollo-dionysus.md",
+          "sha256": "8dca25c303fcec914ff66995c89ceb3d685db68044c1ed46bca87c6a0c8a2384",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/05-psychoid-flowering/movements/36-s4-p5-mef-prompt-thrownness.md",
+          "sha256": "5a63f86318ab84825332c7d979fc4814b6cdf5f143e4c41afc99d47446165a88",
+          "artifact": "rooms/roz-room-05-psychoid-flowering.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/ROOM.md",
+          "sha256": "0d45caf3a1bd19d159f5bf1cc90f5826caa99c5d99d34c820d29125544ed2056",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "2f8c03cfc0db406466b33451e04abe9417d211548b6f53978300316242d52cb9",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/movements/37-s5-p0-math-moves-meaning.md",
+          "sha256": "359a04816d4337b4fd790b8a890f962bb4c9be9575a147ba4e9008df87f38f3c",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/movements/38-s5-p1-apoha-softmax.md",
+          "sha256": "6b5845b301fb4db0c060c8f0fe4e458ed51070c17b615f96e177e6fda53c8ea0",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/movements/39-s5-p2-j-space.md",
+          "sha256": "ebb024b02f3781b4c4c80890b3efa040112e4cbfe62c187ca12b6fc7024c0771",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/movements/40-s5-p3-preference-hidden-zero.md",
+          "sha256": "7a966b1837fdbdef0dc9e7c527b953e952ed99b5bbaceceb7f912099a46a3b1c",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/movements/41-s5-p4-bimba-energy-fields.md",
+          "sha256": "6b260aab9ed6dae68a4d631a442ae8463dc3c4706d45fb8b85ad36dfd42df38d",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/06-objective-internality/movements/42-s5-p5-research-vectors.md",
+          "sha256": "6b21fa66601b228f7ece1d32dcf3cbd6cd2315b4cc3940148b865e415e206a07",
+          "artifact": "rooms/roz-room-06-objective-internality.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/ROOM.md",
+          "sha256": "76c6014947a1555ca2caa00d85233a40aac308f5ac290927b07ef9997752a299",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/P1-CANONICAL-ALIGNMENT.md",
+          "sha256": "874b538026cbb3ca71a6da5ae384ad40fb6546d3edbc2743fc35935048199585",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/43-s50-p0-theory-vocation-compassion.md",
+          "sha256": "977f7ffc1738dc79791f037b78bc9f9fc40f7323516bc5991daf2df0d03dda1c",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/44-s50-p1-ql-mef-bimba-harness.md",
+          "sha256": "8ec0bddb1408fc599f32a7b9403496b5f45ff9d95b6d0ac48810ea76332e5407",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/45-s50-p2-antikythera-attunement.md",
+          "sha256": "a0ec95f26de9098ceb57e6c73cb635287c4caca5f244271c5b49b4252985350c",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/46-s50-p3-4-2-mono-poly.md",
+          "sha256": "1b2bae8c61fbffc080b6cdf730b95db6ea4bdec59a9de250f4020ac83460d8da",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/47-s50-p4-idealism-horizon.md",
+          "sha256": "869ca3220209496ce0e55378a34865dfac36ac10091163c19d0584605776694b",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        },
+        {
+          "path": "submission-package/essay/section-rooms/07-instrument-returns/movements/48-s50-p5-ahi-planetary-return.md",
+          "sha256": "43814a9fa3c92665d0a7a662d3af46f96c63ffc6702f2b1c4c16c30d1f99348e",
+          "artifact": "rooms/roz-room-07-instrument-returns.journey.json"
+        }
+      ]
+    }
+  ],
+  "required_assets": [
+    {
+      "asset": "collections/return-of-zero/essay/roz-essay-reading.cover.png",
+      "sha256": "c10c25f17983e72facf6154741c98ed365f1bc18d08fc79d855f915312dc00b7"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-00-integral-threshold.cover.png",
+      "sha256": "097ccb13088346a423c1729e13652e59323683f43f8c8766bb00744943b60277"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-01-differentiating-mind.cover.png",
+      "sha256": "e62962bdebea6f79c018f6c58ea2fcd4e748730fb5b3128f1dce091531df075e"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-02-return-of-zero.cover.png",
+      "sha256": "9499e078dcf87bccf0484063b8635e69d44cacf3844a123d17519aa4cf8b8aab"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-03-two-logics.cover.png",
+      "sha256": "7794af3155342d3e392ad628c73ecfee3bcb083338c466462492ad087ebcb6e1"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-04-mathematical-substrate.cover.png",
+      "sha256": "8d66f959567214b12f3be19e75e5c3c96cad618f89bd697354ada19eed217a3e"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-05-psychoid-flowering.cover.png",
+      "sha256": "13b65ef29516cd15b0bb3b3dace5c20af7fb444bdc43944a6a05a044ce06def6"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-06-objective-internality.cover.png",
+      "sha256": "eac3861413cd84eb89060692ac89453c8fe4a1115e154eaad5c570b7350f4057"
+    },
+    {
+      "asset": "collections/return-of-zero/rooms/roz-room-07-instrument-returns.cover.png",
+      "sha256": "bbeae08afda0f99fcfde1a468a31094f91bffb529d1b76d7d2f0a93f6e7b34d9"
+    }
+  ],
+  "browser_operations": {
+    "open_expression": "collection member journeys open through the Expressions application’s own import (oi.journey v1) and present on the one Global Expression Stage",
+    "read_scenes": "scene traversal with per-scene text/material composition",
+    "front_verso": "face/verso account of the same Expression identity",
+    "offline": "an unreachable ground degrades to a NAMED absence (manifest-absent / unavailable); nothing is fabricated"
+  },
+  "degradation_states": [
+    "manifest absent — Central lists the collections directory without this manifest (named, not guessed)",
+    "member unreadable — a member file missing or refused carries the owner’s refusal verbatim beside the members that returned",
+    "engine absent — the page renders the manifest and covers without the live particle engine; no silent substitution",
+    "private material — absent from these manifests by construction (only the essay’s own publication surfaces are published)"
+  ]
+}

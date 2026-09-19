@@ -59,6 +59,7 @@ const SCENARIOS = {
   "expression-controls": {module:"scenarios/expression-controls.mjs",kernel:true,aliases:[]},
   "expression-page": {module:"scenarios/expression-page.mjs",kernel:true,aliases:["ex5"]},
   "expression-world-join": {module:"scenarios/expression-world-join.mjs",kernel:true,aliases:["join"]},
+  "corpus-return-of-zero": {module:"scenarios/corpus-return-of-zero.mjs",kernel:true,aliases:["roz","corpus"]},
   refinement:{module:"scenarios/refinement.mjs",kernel:true,aliases:[]},
   "shell-recovery": {module:"scenarios/shell-recovery.mjs",kernel:true,aliases:[]},
   ground:{module:"scenarios/ground.mjs",kernel:true,aliases:[]},

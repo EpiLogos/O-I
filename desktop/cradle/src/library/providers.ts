@@ -16,6 +16,7 @@ import {knowledge} from "../knowledge/client";
 import {isUnavailable, sharedField, type SharedFieldSnapshot, type SharedFieldUnavailable} from "../knowledge/shared-field";
 import {useKernel} from "../kernel/KernelProvider";
 import type {WorkspaceMode} from "../workspace/mode";
+import {collectionsProvider} from "./collectionsProvider";
 import type {LibraryItem, LibraryCoverage, LibraryKind, LibraryQuery} from "./scope";
 
 export interface LibraryProvider {
@@ -179,6 +180,7 @@ export function useBuiltInLibraryProviders(): void {
       registerLibraryProvider(expressionWorldsProvider()),
       registerLibraryProvider(sharedFieldProvider(transport)),
       registerLibraryProvider(wikiProvider(transport)),
+      registerLibraryProvider(collectionsProvider(transport)),
     ];
     return () => { for (const off of unregister) off(); };
   }, [transport]);

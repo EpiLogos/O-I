@@ -1,0 +1,1283 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-room-07-instrument-returns",
+  "name": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+  "description": "Epi-Logos is the attempt to build a technical and institutional vessel for intelligence that retains its ground, limits, and plurality of lenses. Six movements as addressable scenes in one shared section-room grammar. Binds to section-rooms/07-instrument-returns/ at Antykathera-Essay-Work dbf3b17.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "movement-43",
+      "name": "§5→0 · #0 — From Theory to Vocation",
+      "character": "§5→0 · #0 — From Theory to Vocation (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-050",
+          "name": "#0 — From Theory to Vocation",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-051",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 43 OF 48 · §5→0 · #0 · ROOM 07-INSTRUMENT-RETURNS",
+          "title": "From Theory to Vocation",
+          "italic": "Argued",
+          "body": "The six product movements have disclosed one constructed paradigm within Objective Internality; its ethical vocation is to make an achieved articulation answerable to the Life/World relation it mediates.\n← previous · M42 Quaternal Logic — Transcendent Relation   ·   next → M44 QL, MEF, Bimba, and Harness",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M43 → A24 · A25 · A29 · A35 / C27 · C29 · C41 · C51 · C56 · C59 — vocation = non-usurping source-return, not generic sentiment or compulsory self-modification",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-44",
+      "name": "§5→0 · #1 — QL, MEF, Bimba, and Harness",
+      "character": "§5→0 · #1 — QL, MEF, Bimba, and Harness (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-052",
+          "name": "0/1 — QL, MEF, Bimba, and Harness",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.25,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0/1",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-053",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 44 OF 48 · §5→0 · #1 · ROOM 07-INSTRUMENT-RETURNS",
+          "title": "QL, MEF, Bimba, and Harness",
+          "italic": "Argued",
+          "body": "Within the larger six-product paradigm restored in §5, QL, MEF, Bimba and the harness form one disclosure-and-return architecture.\n← previous · M43 From Theory to Vocation   ·   next → M45 Antikythera as Attunement Instrument",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M44 → A30 · A32 · A33 / C38 · C39 · C40 · C42 · C45 · C55 · C61 — QL/MEF/Bimba/harness are return instruments within the six-product paradigm, not the paradigm's exhaustive ontology",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-45",
+      "name": "§5→0 · #2 — Antikythera as Attunement Instrument",
+      "character": "§5→0 · #2 — Antikythera as Attunement Instrument (Offered).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-054",
+          "name": "the instrument — outer gear ring",
+          "kind": "formation",
+          "position": {
+            "x": 0.25,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.75,
+            "y": 1.75
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-055",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-056",
+          "name": "middle train",
+          "kind": "formation",
+          "position": {
+            "x": 0.25,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.3,
+            "y": 1.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-057",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-058",
+          "name": "inner train",
+          "kind": "formation",
+          "position": {
+            "x": 0.25,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.8
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-059",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05a",
+          "name": "the observer the instrument does not replace",
+          "kind": "pin",
+          "position": {
+            "x": 0.25,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 0,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0.4,
+            "radius": 0.4,
+            "spin": 0.2
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05b",
+                "text": "",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 45 OF 48 · §5→0 · #2 · ROOM 07-INSTRUMENT-RETURNS",
+          "title": "Antikythera as Attunement Instrument",
+          "italic": "Offered",
+          "body": "The Antikythera mechanism is finally earned as an image of situated coordination: its gears render heterogeneous celestial cycles mutually readable for an observer while the heavens remain beyond the instrument.\n← previous · M44 QL, MEF, Bimba, and Harness   ·   next → M46 4:2 Technē and the Sovereign Commons",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M45 → A15 · A16 · A17 · A35 / C20 · C48 · C51 · C62 — Fides/Topos + controlling Antikythera Mytheme",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-46",
+      "name": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons",
+      "character": "§5→0 · #3 — 4:2 Technē and the Sovereign Commons (Argued (mono–poly / epistemic sovereignty); Offered (specific federated Bimba / sovereign-commons architecture)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-05c",
+          "name": "shared commons — protocol · memory · provenance · consequence",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 1.8,
+            "y": 1
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05d",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05e",
+          "name": "Bimba A — local ground",
+          "kind": "formation",
+          "position": {
+            "x": -0.75,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.55,
+            "y": 0.55
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05f",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05g",
+          "name": "Bimba B — local ground",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": -0.72,
+            "z": 0
+          },
+          "size": {
+            "x": 0.55,
+            "y": 0.55
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05h",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05i",
+          "name": "Bimba C — local ground",
+          "kind": "formation",
+          "position": {
+            "x": 1.05,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.55,
+            "y": 0.55
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05j",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 46 OF 48 · §5→0 · #3 · ROOM 07-INSTRUMENT-RETURNS",
+          "title": "4:2 Technē and the Sovereign Commons",
+          "italic": "Argued (mono–poly / epistemic sovereignty); Offered (specific federated Bimba / sovereign-commons architecture)",
+          "body": "The essay's mono–poly institutional principle is one common field strong enough to carry shared protocols, memory, consequence and collective work, composed with locally governed centres strong enough to retain material and epistemic sovereignty.\n← previous · M45 Antikythera as Attunement Instrument   ·   next → M47 Idealism as Horizon",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M46 → A12 · A23 · A24 · A25 · A29 · A30 / C26 · C27 · C28 · C29 · C48 · C49 · C53 · C54 · C59 — sovereign commons protects source, refusal and attributable contribution without installing a master Bimba or collective source-ego",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-47",
+      "name": "§5→0 · #4 — Idealism as Horizon",
+      "character": "§5→0 · #4 — Idealism as Horizon (Argued (order of dependence); Offered (technical comparisons); Open (artificial phenomenal localisation)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-05k",
+          "name": "the field it cannot finally map from outside",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.9,
+            "y": 1.9
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05l",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-05m",
+          "name": "a locally authoritative map",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.1,
+            "y": 1.1
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#b08d4f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05n",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 47 OF 48 · §5→0 · #4 · ROOM 07-INSTRUMENT-RETURNS",
+          "title": "Idealism as Horizon",
+          "italic": "Argued (order of dependence); Offered (technical comparisons); Open (artificial phenomenal localisation)",
+          "body": "The return from agentic praxis carries the essay's Argued order of dependence: Subject/Consciousness → Mind/Objective Internality → Object.\n← previous · M46 4:2 Technē and the Sovereign Commons   ·   next → M48 AHI and Planetary Return",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M47 → A01 · A26 · A27 · A34 / C01 · C35 · C41 · C48 · C58 · C60 — Idealism carries the Argued order while artificial phenomenal localisation remains Open",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-48",
+      "name": "§5→0 · #5→0 — AHI and Planetary Return",
+      "character": "§5→0 · #5→0 — AHI and Planetary Return (Argued (Return of Zero / Epi-Logos); Offered (AHI federation / planetary architecture); Open (artificial phenomenality)).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#161a17",
+        "palette": [
+          "#eee9d9",
+          "#b08d4f"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-05o",
+          "name": "#5→0 — AHI and Planetary Return",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.55,
+            "y": 1.55
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#eee9d9",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-05p",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 48 OF 48 · §5→0 · #5→0 · ROOM 07-INSTRUMENT-RETURNS",
+          "title": "AHI and Planetary Return",
+          "italic": "Argued (Return of Zero / Epi-Logos); Offered (AHI federation / planetary architecture); Open (artificial phenomenality)",
+          "body": "Artificial Hybrid Intelligence names the reflective activity of humans, agents, archives, institutions, Bimba fields, product-worlds and harnesses turning the Logos they jointly produce back upon its conditions.\n← previous · M47 Idealism as Horizon   ·   return to the opening → M01 The Question Before the Mechanism",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M48 → A30 · A31 · A32 · A33 · A34 · A35 · A36 / C27 · C41 · C42 · C43 · C45 · C46 · C47 · C51 · C55 · C56 · C57 · C59 · C61 · C62 · C64 — THE MIRROR THAT MOVES FIRST; paradigm-level Epi-Logos and A36 terminal Return",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "fontWeight": 900
+      }
+    }
+  ],
+  "updatedAt": "2026-09-17T05:34:06.824Z"
+}

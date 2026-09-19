@@ -1,0 +1,30 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-19T21:17:41.716Z",
+  "source": "Return of Zero — published essay surfaces",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/collections/return-of-zero"
+    ],
+    "ground": "EpiLogos/Point-Cloud-Demo production/return-of-zero (E0 corpus) + EpiLogos/Antykathera-Essay-Work sources at dbf3b17 (sha-verified at export)",
+    "exported_at": "2026-09-19T21:17:41.716Z",
+    "generator": {
+      "name": "scripts/export-return-of-zero-publication.mjs",
+      "revision": "track3-2026-09-19"
+    },
+    "source_revision": {
+      "repo": "EpiLogos/Antykathera-Essay-Work",
+      "commit": "dbf3b17"
+    }
+  },
+  "featured": [
+    {
+      "id": "roz-essay-reading",
+      "name": "The Return of Zero — the sovereign reading path",
+      "file": "essay/roz-essay-reading.journey.json"
+    }
+  ]
+}

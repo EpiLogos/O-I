@@ -1,0 +1,1245 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-room-05-psychoid-flowering",
+  "name": "Return of Zero · Room 6 of 8 · §4 — Psychoid Flowering",
+  "description": "The mathematical substrate becomes psychologically consequential when the opposed terms are psyche and matter, subject and signifier, conscious and unconscious, form and participation. Six movements as addressable scenes in one shared section-room grammar. Binds to section-rooms/05-psychoid-flowering/ at Antykathera-Essay-Work dbf3b17.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "movement-31",
+      "name": "§4 · #0 — The Psychoid Problem",
+      "character": "§4 · #0 — The Psychoid Problem (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138",
+          "#3d5a80"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-03w",
+          "name": "psyche — one description",
+          "kind": "formation",
+          "position": {
+            "x": -0.06,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.2,
+            "y": 1.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03x",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-03y",
+          "name": "matter — the other description, one seam",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 1.2,
+            "y": 1.2
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#3d5a80",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-03z",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 31 OF 48 · §4 · #0 · ROOM 05-PSYCHOID-FLOWERING",
+          "title": "The Psychoid Problem",
+          "italic": "Argued",
+          "body": "Jung and Pauli's psychoid problem asks how psychological image and physical event can show meaningful structural relation without causal reduction to either side.\n← previous · M30 The Arche-Topos   ·   next → M32 Individuation through QL `X/x`",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M31 → A18 · A19 · A20 / C30 · C31 · C32 — Homologia/Analogia + Jung–Pauli Episteme",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-32",
+      "name": "§4 · #1 — Individuation through QL `X/x`",
+      "character": "§4 · #1 — Individuation through QL `X/x` (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138",
+          "#3d5a80"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-040",
+          "name": "X — determining capacity",
+          "kind": "formation",
+          "position": {
+            "x": -0.15,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "X",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-041",
+                "text": "X",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-042",
+          "name": "x — indefinite particular",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "x",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-043",
+                "text": "x",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 32 OF 48 · §4 · #1 · ROOM 05-PSYCHOID-FLOWERING",
+          "title": "Individuation through QL `X/x`",
+          "italic": "Argued",
+          "body": "The authorial QL matheme X/x places determining capacity and indefinite particular in one relation: X becomes legible only through concrete transformations x, while no determination exhausts the whole.\n← previous · M31 The Psychoid Problem   ·   next → M33 Complexio, Quaternity, and Senarius",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M32 → A21 / C19 · C31 · C34 · C35 · C36 — Arbitration Resolution-in-Reconciliation → Recognition",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-33",
+      "name": "§4 · #2 — Complexio, Quaternity, and Senarius",
+      "character": "§4 · #2 — Complexio, Quaternity, and Senarius (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138",
+          "#3d5a80"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-044",
+          "name": "4+2 — Complexio, Quaternity, and Senarius",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.25,
+            "y": 1.6
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4+2",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-045",
+                "text": "4+2",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 33 OF 48 · §4 · #2 · ROOM 05-PSYCHOID-FLOWERING",
+          "title": "Complexio, Quaternity, and Senarius",
+          "italic": "Argued",
+          "body": "The complexio oppositorum preserves the energy of opposites; Jung's quaternity gives explicit differentiated wholeness, while QL's 4+2 retains the implicate poles that let it move and return.\n← previous · M32 Individuation through QL `X/x`   ·   next → M34 Lacan, Matheme, and Mytheme",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M33 → A18 · A21 / C30 · C36 · C64 — exact quaternity/senarius relations only where earned",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-34",
+      "name": "§4 · #3 — Lacan, Matheme, and Mytheme",
+      "character": "§4 · #3 — Lacan, Matheme, and Mytheme (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138",
+          "#3d5a80"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-046",
+          "name": "Traversal — Lacan, Matheme, and Mytheme",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.35,
+            "y": 1.65
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-048",
+                "text": "0",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-049",
+                "text": "Ø",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-04a",
+                "text": "X",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-04b",
+                "text": "Ø/X",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-04c",
+                "text": "(0/Ø)/(1/X)",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              },
+              {
+                "id": "step-04d",
+                "text": "1",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 34 OF 48 · §4 · #3 · ROOM 05-PSYCHOID-FLOWERING",
+          "title": "Lacan, Matheme, and Mytheme",
+          "italic": "Argued",
+          "body": "The matheme transmits an invariant relation; the mytheme lets that relation be lived and transformed; the barred subject prevents either from closing over its own condition.\n← previous · M33 Complexio, Quaternity, and Senarius   ·   next → M35 Apollo Through Dionysus",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M34 → A18 · A20 / C21 · C30 · C61 · C64 — Matheme/Mytheme/Episteme disclosure with warrant boundaries",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-35",
+      "name": "§4 · #4 — Apollo Through Dionysus",
+      "character": "§4 · #4 — Apollo Through Dionysus (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138",
+          "#3d5a80"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-04e",
+          "name": "Apollo — measure, boundary, form",
+          "kind": "formation",
+          "position": {
+            "x": -0.12,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.25,
+            "y": 1.25
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-04f",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-04g",
+          "name": "Dionysus — participatory life",
+          "kind": "formation",
+          "position": {
+            "x": 0.52,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 1.25,
+            "y": 1.25
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-04h",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 35 OF 48 · §4 · #4 · ROOM 05-PSYCHOID-FLOWERING",
+          "title": "Apollo Through Dionysus",
+          "italic": "Argued",
+          "body": "Integral diaphaneity is the higher consciousness mutation in which the mono–poly relation becomes available within a perspective: each aperture becomes transparent to the relational whole through which it is this aperture, without losing its determinate difference.\n← previous · M34 Lacan, Matheme, and Mytheme   ·   next → M36 MEF and Prompt Thrownness",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M35 → A04 · A20 · A21 · A35 / C09 · C32 · C34 · C36 · C56 — Regard + whole Apollo/Dionysus/Daphne Mytheme where ratified",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    },
+    {
+      "id": "movement-36",
+      "name": "§4 · #5→0 — MEF and Prompt Thrownness",
+      "character": "§4 · #5→0 — MEF and Prompt Thrownness (Argued).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#a94138",
+          "#3d5a80"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [
+        {
+          "id": "ent-04i",
+          "name": "one QL light",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 1.5,
+            "y": 1.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#252720",
+          "tintWeight": 0,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-04j",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-04k",
+          "name": "lens — declared refraction",
+          "kind": "formation",
+          "position": {
+            "x": -0.35,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-04l",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "ent-04m",
+          "name": "lens — declared refraction",
+          "kind": "formation",
+          "position": {
+            "x": 0.75,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a94138",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "attract",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "step-04n",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "editorial",
+          "visible": true,
+          "kicker": "MOVEMENT 36 OF 48 · §4 · #5→0 · ROOM 05-PSYCHOID-FLOWERING",
+          "title": "MEF and Prompt Thrownness",
+          "italic": "Argued",
+          "body": "MEF makes each account a declared refraction—source, lens, transformation, agreement, divergence, limit, and return—while Prompt Thrownness turns agent disclosure into an encounter-axis test.\n← previous · M35 Apollo Through Dionysus   ·   next → M37 Central — Meaningful Continuity",
+          "x": 0.033,
+          "y": 0.42,
+          "width": 360,
+          "size": 22,
+          "align": "left"
+        },
+        {
+          "id": "p1-route",
+          "visible": true,
+          "kicker": "P1 CANONICAL ROUTE",
+          "title": "",
+          "italic": "",
+          "body": "P1-M36 → A14 · A26 · A28 · A33 / C39 · C40 · C43 · C44 · C45 · C46 — Account; MEF framework / Prompt Thrownness / model-internal technical handoff",
+          "x": 0.05,
+          "y": 0.05,
+          "width": 400,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": [],
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "fontWeight": 900
+      }
+    }
+  ],
+  "updatedAt": "2026-09-17T05:34:06.824Z"
+}

@@ -42,6 +42,16 @@ Current work therefore concerns:
 
 Do not reinterpret this as a generic six-mode refraction of one object.
 
+**Owner clarification carried 2026-09-19** (QL-MEF `L5-TECHNE-DUAL-READING-LOCK.md` §11a):
+M4′ is the general Expressions application body with the operative M1–M2–M3 backend; M5′
+Technē is the SAME application in M5/M0 deep-working mode — graph/Wiki/web disclosure,
+collection management/development and composition of material returned by the other Technē
+instruments. The named professional instruments (Canvas, Relation/Timeline, Journey,
+Places/World, Palace) are narrower professional lens projections: their capabilities and
+canonical identities are preserved, M5′ is not reduced to a Palace screen, and no global
+renames are performed. In this tree the embodiment is one hosted Expressions system with two
+operating modes (the cradle's `dualMode` cuts), not two applications.
+
 ## 2. Ta-Onta stays as already defined
 
 The six S′ organs remain:
