@@ -26,9 +26,10 @@ export function useListingLoading(): boolean {
 export function useListing(transport: KernelTransportStatus, path: string, refresh: number): ListingEntry {
   const entry = useSyncExternalStore(subscribeListings, () => listings.entry(path), () => EMPTY_LISTING);
   const rev = entry.rev;
+  const activeKey = useSyncExternalStore(subscribeListings, () => listings.activeWorkspaceKey, () => "root");
   useEffect(() => {
     listings.ensure(transport, path, false);
-  }, [transport, path, rev]);
+  }, [transport, path, rev, activeKey]);
   useEffect(() => {
     if (refresh > 0) listings.ensure(transport, path, true);
   }, [refresh, transport, path]);

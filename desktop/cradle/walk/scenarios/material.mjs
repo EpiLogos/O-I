@@ -101,7 +101,9 @@ export default async function run({ page, baseUrl, bridgeUrl, check, metric, sho
     // locator's `.first()` can match the previous surface's still-mounted
     // node before React has actually switched the active tab over).
     await page.locator(`.tab[data-title="${title}"][data-active="true"]`).waitFor();
-    await page.locator('.pane.focused .material-surface, .pane.focused .native-file-surface').first().waitFor();
+    // The pane keeps every tab's body mounted-concealed: scope to the VISIBLE
+    // one — the first match in DOM order may be a concealed sibling's.
+    await page.locator('.pane.focused .surface-retained:not([hidden]) .material-surface, .pane.focused .surface-retained:not([hidden]) .native-file-surface').first().waitFor();
   };
 
   // --- HTML: relative image + stylesheet + link, in a contained surface ---

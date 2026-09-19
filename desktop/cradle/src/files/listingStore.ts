@@ -82,6 +82,14 @@ export class ListingStore {
     return this.loading;
   }
 
+  /** The workspace the cache is keyed on. The tree's ensure effect depends
+   * on it: a directory mounted in the same render that switched workspaces
+   * reads before the store's key effect runs, and without this dependency
+   * its one ensure would land in the old key's generation and never retry. */
+  get activeWorkspaceKey(): string {
+    return this.activeKey;
+  }
+
   /** Completions the generation guard dropped (C12 evidence). */
   staleDropped(): number {
     return this.stale;

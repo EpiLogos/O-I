@@ -16,9 +16,9 @@ import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
  */
 
 import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState } from "react";
+import { Loading } from "../shared/Loading";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
-import { Loading } from "../shared/Loading";
 import { FileSurface } from "../files/FileSurface";
 import { SourceSurface } from "./SourceSurface";
 import { SourcesIndex } from "./SourcesIndex";
@@ -38,11 +38,8 @@ const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((mo
 // pane system; each loads with its mode, never at startup. Their bodies are
 // declared ONCE by the shell's retention layer (surface/retention.tsx) and
 // presented here through its outlet — a mode switch parks them suspended
-// instead of unmounting them. Pane surfaces of the warm set (files with live
-// documents, editors, encounters, terminals — the tier law) park the same
-// way: declared once here, adopted by their presenting tab, released only by
-// explicit close or the warm-set budget.
-import {CentreOutlet, PaneSurfaceRetention, isRetainedCentreKind, isRetainedPaneKind, type RetainedPaneRef} from "./retention";
+// instead of unmounting them.
+import {CentreOutlet, isRetainedCentreKind} from "./retention";
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
 import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN } from "../workspace/mode";
@@ -83,10 +80,6 @@ export interface WorkbenchProps {
    * centre surface — Technè's instrument disclosure — can request its
    * reading for the actual subject instead of standing on "no subject". */
   subject?: {ref?: string; kind?: string; title: string; project?: string};
-  /** The retained pane surfaces of the warm set (the frame derives them from
-   * the whole book — the retention law spans workspaces; Workbench only
-   * presents). Declared once here so tree swaps park instead of unmount. */
-  retainedPaneSurfaces?: RetainedPaneRef[];
 }
 
 export function Workbench(props: WorkbenchProps) {
@@ -154,11 +147,6 @@ export function Workbench(props: WorkbenchProps) {
 
   return (
     <div className="workbench">
-      {/* The pane tier of the retention park (surface/retention.tsx): every
-        * warm-set pane surface is declared ONCE here — its presenting tab
-        * adopts it through the outlet below, and a mode or workspace swap
-        * parks it suspended instead of unmounting it. */}
-      <PaneSurfaceRetention surfaces={props.retainedPaneSurfaces ?? []} renderBody={binding => <SurfaceBody binding={binding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />}/>
       <main className="surface-host" aria-label="Canvas">
         <PaneNode pane={state.root} {...props} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
       </main>
@@ -396,7 +384,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
         * agent panel's kept planes use), so returning to a tab restores its
         * scroll, selection, draft and engine without a re-read. Concealment
         * is honest suspension: display:none means the surface's own viewport
-        * laws (material/lifecycle.ts's suspension disclosure, the engines' visibility gates)
+        * laws (MaterialSurface's useSuspend, the engines' visibility gates)
         * observe an off-screen surface and pause. Cheap list kinds release
         * instead (CONCEAL_RELEASES) — they rebuild from the kernel's own
         * reading at no cost. Explicit close releases every kind: the tab
@@ -424,13 +412,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
           const concealed = id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
-            {/* Retained pane kinds present through the park's ONE declared
-              * body (the outlet adopts it — never a second copy); other
-              * kinds mount directly. Concealment is the same honest
-              * suspension either way. */}
-            {isRetainedPaneKind(binding.kind)
-              ? <CentreOutlet binding={binding}/>
-              : <SurfaceBody binding={binding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />}
+            <SurfaceBody binding={binding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
           </div>;
         }) : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
@@ -453,9 +435,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
 const CONCEAL_RELEASES = new Set(["sources", "blank"]);
 
 /** The surface body by kind: real owner surfaces where they exist (U0.4:
- * 'source', 'sources'), the clearly-named test card otherwise. A pending
- * open — the destination acknowledged before its owner read resolved —
- * shows the shared local feedback, never a fake body. */
+ * 'source', 'sources'), the clearly-named test card otherwise. */
 export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
   const label = props.binding.pending ? `Opening ${props.binding.title}…` : props.binding.title;
   return <Suspense fallback={<Loading label={`Loading ${label}`} scope="surface"/>}><SurfaceBodyImpl {...props}/></Suspense>;

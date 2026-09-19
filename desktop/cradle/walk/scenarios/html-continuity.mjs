@@ -100,9 +100,9 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
     const title = path.split('/').pop();
     await nav.locator(`[data-file-path="Work/Continuity/${path}"]`).click();
     await page.locator(`.tab[data-title="${title}"][data-active="true"]`).waitFor({ timeout: 15000 });
-    // The PRESENTED body: the pane keeps every tab's body mounted-concealed,
-    // so scope to the visible one — the first `.material-surface` in DOM
-    // order may be a concealed sibling's.
+    // The PRESENTED body: warm trees keep every tab's body mounted, so scope
+    // to the visible one — the first `.material-surface` in DOM order may be
+    // a concealed sibling's.
     await page.locator('.pane.focused .surface-retained:not([hidden]) .material-surface, .pane.focused .surface-retained:not([hidden]) .native-file-surface').first().waitFor({ timeout: 15000 });
   };
 
@@ -184,9 +184,11 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
   await shot('tab-return');
 
   // ---- mode switch away and back -------------------------------------------
+  // The base tree with the file tab SHELVES HIDDEN (the warm-tree law): the
+  // shelved document stays alive while the mode's own presentation stands.
   const group = page.getByRole('radiogroup', { name: 'Workspace mode', exact: true });
   await group.getByRole('radio', { name: 'Expressions' }).click();
-  await page.locator('.mode-stage[data-mode="expressions"]').waitFor({ timeout: 15000 });
+  await page.locator('.warm-tree-host[hidden] iframe.material-frame').first().waitFor({ state: 'attached', timeout: 15000 });
   await page.waitForTimeout(500);
   await group.getByRole('radio', { name: 'Central', exact: true }).click();
   await page.locator('.tab[data-title="continuity.html"][data-active="true"]').waitFor({ timeout: 15000 });
@@ -220,6 +222,15 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
   // A text file whose owner read is delayed: the tab must acknowledge the
   // destination immediately, and when the read finally resolves it must land
   // in the workspace it was asked for — never in the one you switched to.
+  // The navigator's plane state is remembered per workspace; if the return
+  // left the project collapsed (its listing re-reads under the stall), open
+  // it the way the journey opened it before reaching for the row.
+  if (await nav.locator('[data-file-path="Work/Continuity/readme.txt"]').count() === 0) {
+    await nav.locator('[data-project-path="Work/Continuity"]').click();
+    if ((await nav.getByRole('button', { name: 'Continuity: files', exact: true }).getAttribute('aria-pressed')) !== 'true') {
+      await nav.getByRole('button', { name: 'Continuity: files', exact: true }).click();
+    }
+  }
   await nav.locator('[data-file-path="Work/Continuity/readme.txt"]').click();
   await page.waitForFunction(() => [...document.querySelectorAll('.tab')].some((tab) => tab.dataset.title === 'readme.txt'), null, { timeout: 2500 })
     .then(() => check(true, 'The pending open acknowledges its tab before the owner read resolves', {}))

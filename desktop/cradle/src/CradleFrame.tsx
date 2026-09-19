@@ -19,7 +19,7 @@ import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
-import {retainedPaneSurfaces} from "./surface/retention";
+import {warmWorkspaceTrees} from "./surface/retention";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -44,6 +44,11 @@ import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 
 import { lazy, Suspense, useCallback, useEffect, useMemo, useRef, useState, type ComponentType, type ReactNode } from "react";
 const LibraryBrowser=lazy(()=>import("./library/LibraryBrowser").then(module=>({default:module.LibraryBrowser})));
+// Technē summon seam (T2): the HUD's summon CustomEvents present the Library,
+// the gallery search and the current subject's verso through the existing
+// surfaces — see src/library/techneSummon.tsx (the parent reconciles the
+// mounting point).
+import { TechneSummonSurface } from "./library/techneSummon";
 import { readFile } from "./files/client";
 import { acquireFileReading, acquireFileBytes, applyReceipt } from "./files/resources";
 import { detectFormat } from "./material/detect";
@@ -61,7 +66,7 @@ import { useKernel } from "./kernel/KernelProvider";
 import type { ListedSource } from "./kernel/types";
 import { ContextMenu, type MenuState } from "./surface/ContextMenu";
 import { SourceHistory } from "./surface/SourceHistory";
-import { Workbench, ArrangementActions, SurfaceBody } from "./surface/Workbench";
+import { Workbench, ArrangementActions } from "./surface/Workbench";
 import { frameActionForKey } from "./surface/keys";
 
 import {
@@ -132,15 +137,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // renders them any more: writing is a real Flow in a NOW register now.
   const state = workspace.current.layout;
   const setState = workspace.setLayout;
-  // The retention warm set (WF4): the retained pane surfaces of the active
-  // workspace plus the recently visited ones. The workbench declares each
-  // once, so a mode swap or a workspace swap parks the body (an HTML
-  // document, an editor, an encounter view, a terminal) instead of
-  // unmounting it — returning presents the same instance.
-  const warmPaneSurfaces = useMemo(
-    () => retainedPaneSurfaces(workspace.workspaces, workspace.current.id),
-    [workspace.workspaces, workspace.current.id],
-  );
   // Broker invalidation (WF2): kernel `file_changed` receipts drop the
   // broker's resident readings for the changed file, so the next acquire is
   // a real owner read while consumers keep their last reading visible.
@@ -1136,6 +1132,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
   const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
   const mode:WorkspaceMode=state.mode??"base";
+  // The retention warm set (WF4): the warm trees of the active workspace and
+  // the recently visited ones, rendered whole and hidden at stable positions —
+  // a mode swap or a workspace swap flips visibility, it never unmounts a
+  // tree that carries a live document or an editor session.
+  const warmTrees = useMemo(
+    () => warmWorkspaceTrees(workspace.workspaces, workspace.current.id, mode),
+    [workspace.workspaces, workspace.current.id, mode],
+  );
+  useEffect(() => { (window as unknown as {__oiWarmTreesDebug?: unknown}).__oiWarmTreesDebug = warmTrees.map(t => ({ key: t.key, presented: t.presented })); }, [warmTrees]);
   const curation=MODE_CURATION[mode];
   // Owner correction 2026-09-18: Base keeps the pane/tab workbench; every
   // other mode DEDICATES its view — the mode's own surface, full screen, no
@@ -1237,30 +1242,39 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
-      {state.root && modeSoloStage && modeCentreBinding ? (
-        <div className="mode-stage" data-mode={mode} data-window-corner="true">
-          <SurfaceBody binding={modeCentreBinding} onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)} openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} subject={workspace.current.context?.subject} />
-        </div>
-      ) : state.root ? (
-        <Workbench
-          onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
-          workspaceName={workspace.current.name}
-          state={state}
-          menuOpen={!!menu}
-          execute={execute}
-          openBindingMenu={openBindingMenu}
-          openFrameMenu={openFrameMenu}
-          openSource={openSource}
-          openKnowledge={openKnowledge}
-          openPresentation={openPresentation}
-          openExplore={openExplore}
-          openEncounter={row=>openEncounter(row).catch(report)}
-          factoryCentre={factoryCentre}
-          factoryTasks={factoryCentreProps}
-          subject={workspace.current.context?.subject}
-          nativeWindows={kernel.transport.kind==="tauri"}
-          retainedPaneSurfaces={warmPaneSurfaces}
-        />
+      {state.root ? (
+        <>
+          {/* The warm trees (surface/retention.tsx): every tree of the warm
+            * set renders here at a STABLE position — the presented one
+            * visible, the others mounted-hidden — so a mode or workspace
+            * swap flips visibility instead of unmounting anything. The mode
+            * stage, when the mode has a centre, renders inside its own
+            * ALWAYS-PRESENT slot (keyed, never conditionally inserted):
+            * inserting a sibling before the hosts would MOVE them, and
+            * moving a host detaches its documents — an iframe reloads. */}
+          {warmTrees.map(tree => (
+            <div key={tree.key} className="warm-tree-host" hidden={!tree.presented || !!(modeSoloStage && modeCentreBinding) || undefined}>
+              <Workbench
+                onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
+                workspaceName={workspace.current.name}
+                state={tree.layout}
+                menuOpen={!!menu}
+                execute={execute}
+                openBindingMenu={openBindingMenu}
+                openFrameMenu={openFrameMenu}
+                openSource={openSource}
+                openKnowledge={openKnowledge}
+                openPresentation={openPresentation}
+                openExplore={openExplore}
+                openEncounter={row=>openEncounter(row).catch(report)}
+                factoryCentre={factoryCentre}
+                factoryTasks={factoryCentreProps}
+                subject={workspace.current.context?.subject}
+                nativeWindows={kernel.transport.kind==="tauri"}
+              />
+            </div>
+          ))}
+        </>
       ) : (
         <RestPane>
           <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
@@ -1274,6 +1288,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
+      {/* T2 summon seam: answers "oi:techne-summon" (library / verso / search)
+        * through the same Library overlay and the verso account overlay. */}
+      <TechneSummonSurface subject={workspace.current.context?.subject} trail={workspace.current.context?.trail} onOpenLibrary={()=>setLibrary("open")}/>
       {library!=="closed"&&<Suspense fallback={null}><div className="library-overlay" hidden={library!=="open"} role="dialog" aria-modal="true" aria-label="Library" onKeyDown={event=>{if(event.key==="Escape"&&!event.defaultPrevented){event.stopPropagation();setLibrary("held");}}}>
         <button className="library-scrim" aria-label="Close the Library" onClick={()=>setLibrary("held")}/>
         <div className="library-sheet"><LibraryBrowser mode={mode} onMessage={message=>setWindowError(message)} onOpen={(item,how)=>window.dispatchEvent(new CustomEvent("oi:library-open",{detail:{item,how}}))}/></div>
