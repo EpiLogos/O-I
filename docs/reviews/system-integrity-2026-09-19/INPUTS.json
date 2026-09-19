@@ -1,0 +1,48 @@
+{
+  "review_id": "system-integrity-2026-09-19",
+  "purpose": "Shared source snapshot and publication assignments for six report-only product fidelity reviews; not a release manifest, installed receipt or new Wayfinder.",
+  "captured_on": "2026-09-19",
+  "snapshot_id": "R0",
+  "snapshot_standing": "GitHub main refs independently resolved during this preparation; not evidence that their composition or the Mac installation has been tested",
+  "report_repository": "EpiLogos/O-I",
+  "report_directory": "docs/reviews/system-integrity-2026-09-19",
+  "publication_target": "main",
+  "protocol": "docs/reviews/system-integrity-2026-09-19/README.md",
+  "shared_report_branch": "docs/system-integrity-review",
+  "repositories": {
+    "EpiLogos/O-I": {"ref": "main", "sha": "a1c7010fa290219d58f78ee03f55651ac14ed75d", "role": "shared CLI, installation, settings, desktop/application and cross-product consumer inspection"},
+    "EpiLogos/Central": {"ref": "main", "sha": "adaa3b46926e9fb9be93b83f9cbc12b7087f94c7", "product_position": 0},
+    "EpiLogos/Actuation": {"ref": "main", "sha": "47f4fa3c184850e254ef5089696bf5fbbad907ec", "product_position": 1},
+    "EpiLogos/ai-kit": {"ref": "main", "sha": "944e00e1cbec79d4a23b46d78231b78816b5dad5", "product_position": 2},
+    "EpiLogos/Factory": {"ref": "main", "sha": "bbb8f48943cf1cf398005ae40ee8fa29c111c3a5", "product_position": 3},
+    "EpiLogos/Workcell": {"ref": "main", "sha": "04160f51d37e78d600f32440b4f5275c02b78e9c", "product_position": 4},
+    "EpiLogos/QL-MEF": {"ref": "main", "sha": "dbff5cc457615ea9ddeeebe741c52f154d8f3d9c", "product_position": 5, "review_access": "read-only; no source, ledger, matrix, M/M-prime, install or configuration mutation"}
+  },
+  "installed_candidate": {
+    "standing": "The owner's scoped non-QL Mac cut is running; its exact published receipt must be read before making installed-cut claims.",
+    "receipt_ref": null,
+    "source_pins": null,
+    "held_ql_installed_basis": null,
+    "policy": "Preserve R0. Each reviewer records later selected cuts/pushed branch heads separately and rechecks relevant findings. The collator freezes the actual returned target in TARGET-CUT.json and reconciles deltas before issuing repairs. A main snapshot is not an installed receipt."
+  },
+  "ui_consumer": {
+    "destination": "owner's approved parallel/new UI under O-I#375",
+    "destination_sha": null,
+    "donor_sha": null,
+    "source": "https://github.com/EpiLogos/O-I/issues/375",
+    "policy": "Read latest substantive owner amendments and actual accessible pushed sources. Record old/donor, desired/new, integrated and installed versions separately. Local-only work is not accessible by assumption; do not infer that unavailable UI code is absent from the project. No UI merge or modification is authorised."
+  },
+  "reviewers": [
+    {"product": "Central", "prefix": "CEN", "stem": "S0-CENTRAL", "shared_seams": "O:I source/Project bindings, common Library source return, workspace-to-source continuity, root/Project settings and temporal source"},
+    {"product": "Actuation", "prefix": "ACT", "stem": "S1-ACTUATION", "shared_seams": "O:I chat/Agency receivers, request/stream/result/permission state, Gateway and execution authority"},
+    {"product": "AIKit", "prefix": "AIK", "stem": "S2-AIKIT", "shared_seams": "O:I operative front door, TUI, Search/Library, configuration contribution controller, harness setup and companions"},
+    {"product": "Factory", "prefix": "FAC", "stem": "S3-FACTORY", "shared_seams": "O:I Factory UI/read models, Run/Agents/Context, native Day/NOW return, feature-line worktree and development lifecycle"},
+    {"product": "Workcell", "prefix": "WKC", "stem": "S4-WORKCELL", "shared_seams": "O:I managed install/update, artifact/receipt/launcher and machine settings, remote/sandbox/service lifecycle and hosting"},
+    {"product": "QL-MEF", "prefix": "QLM", "stem": "S5-QL-MEF", "shared_seams": "O:I Expression/Techne/Epi consumers, corpus/world context, published Library/WorldPresentation and protected formal contracts"}
+  ],
+  "each_reviewer_writes": ["<stem>.md", "<stem>.json"],
+  "collator_writes": ["TARGET-CUT.json", "SYNTHESIS.md", "ALIGNMENT-SPEC.md", "REPAIR-BATCHES.json"],
+  "mutation_policy": "Only assigned review artifacts in this directory may be added or amended. Reports may be published/merged to O-I main through normal checks. No production code/config, other docs/Skills, issue state, live services, remote feature branches or QL source changes.",
+  "evidence_standing": "Report publication is not product acceptance, human ratification or authority to implement a suggested design.",
+  "worktree_policy": "One reusable worktree per coherent feature line, not per reviewer/agent/session. Report-only connector publication needs no local worktree. Shared-branch writes and merges are serialized and current file SHAs reread on conflict."
+}
