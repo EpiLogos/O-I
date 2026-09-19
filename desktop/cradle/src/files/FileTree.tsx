@@ -2,7 +2,7 @@ import {useEffect,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {CentralLocation,NativeFileEntry} from "../kernel/types";
 import {Glyph} from "../workspace/Glyph";
-import {useListing,useListingInvalidation,useListingLoading} from "./listingStore";
+import {useListing,useListingInvalidation,useListingLoading} from "./listingHooks";
 import {LOCATION_DRAG_TYPE} from "./drag";
 
 /** The file tree over the listing store (the retention law's cache tier,

@@ -19,12 +19,20 @@
  * Presentation law (BOOT-14): a re-read keeps the last-observed reading
  * visible — the entry keeps its `reading` while a fresh one is in flight —
  * and pending is disclosed by ONE tree-level affordance, never a per-node
- * spinner cascade. Errors stay per path, honestly, where they happened.
+ * spinner cascade. Errors stay per path, honestly, where they happened —
+ * an error replaces the entry's STATUS, never its last reading (C10).
+ *
+ * Coherence (C12): every read captures the path's generation at start and
+ * publishes only while it is still current — an older slow completion
+ * cannot roll a newer listing backward. A fresh refresh supersedes an
+ * ordinary read in flight instead of racing it (and joins an already-fresh
+ * one), so the newest intent always wins single-flight.
+ *
+ * This module is deliberately react/kernel-free so node:test can load it
+ * through workspace/store.ts; the React bindings live in listingHooks.tsx.
  */
-import {useEffect, useRef, useSyncExternalStore} from "react";
 import {listFiles} from "./client";
-import type {KernelReceipt, KernelTransportStatus, NativeDirectory} from "../kernel/types";
-import {useKernel} from "../kernel/KernelProvider";
+import type {KernelTransportStatus, NativeDirectory} from "../kernel/types";
 
 export interface ListingEntry {
   /** `pending` with a `reading` is a re-read in flight (BOOT-14 keeps the
@@ -36,61 +44,88 @@ export interface ListingEntry {
   rev: number;
 }
 
-const EMPTY: ListingEntry = {status: "pending", rev: 0};
+export const EMPTY_LISTING: ListingEntry = {status: "pending", rev: 0};
 
-class ListingStore {
+export class ListingStore {
   private workspace = new Map<string, ListingEntry>();
-  private inflight = new Set<string>();
+  /** The reads in flight, named by path and whether they are fresh. */
+  private inflight = new Map<string, boolean>();
+  /** Each path's current read generation. Captures come from one store-wide
+   * monotonic counter, so a generation is never reused — clearing the map on
+   * a workspace switch orphans every read in flight across that boundary. */
+  private generations = new Map<string, number>();
+  private generationCounter = 0;
   private listeners = new Set<() => void>();
   private activeKey = "root";
   private loading = false;
+  private stale = 0;
 
   setActiveWorkspace(key: string) {
     if (key === this.activeKey) return;
     this.activeKey = key;
     // Retention keys on the workspace: leaving one releases its listings.
+    // Clearing the generations orphans the reads in flight too — a late
+    // completion from the old workspace is stale-dropped, never published
+    // into the new one.
     this.workspace.clear();
     this.inflight.clear();
+    this.generations.clear();
     this.loading = false;
     this.emit();
   }
 
   entry(path: string): ListingEntry {
-    return this.workspace.get(path) ?? EMPTY;
+    return this.workspace.get(path) ?? EMPTY_LISTING;
   }
 
   isLoading(): boolean {
     return this.loading;
   }
 
+  /** Completions the generation guard dropped (C12 evidence). */
+  staleDropped(): number {
+    return this.stale;
+  }
+
   /** Admit a listing for `path` if it is not held: the ordinary expansion
    * (cached), the first read, or — with `fresh` — the explicit refresh
-   * affordance that bypasses both this cache and the kernel's own. */
+   * affordance that bypasses both this cache and the kernel's own. A fresh
+   * refresh joins an already-fresh read and SUPERSEDES an ordinary one:
+   * the superseded completion is dropped by its generation, never published. */
   ensure(transport: KernelTransportStatus, path: string, fresh = false) {
     const held = this.workspace.get(path);
     if (!fresh && held && held.status !== "pending") return;
     if (!fresh && this.inflight.has(path)) return;
+    if (fresh && this.inflight.get(path) === true) return;
     this.read(transport, path, fresh);
   }
 
   private read(transport: KernelTransportStatus, path: string, fresh: boolean) {
     const previous = this.workspace.get(path);
-    this.workspace.set(path, {status: "pending", reading: previous?.reading, rev: (previous?.rev ?? 0) + (fresh ? 1 : 0)});
-    this.inflight.add(path);
+    const rev = (previous?.rev ?? 0) + (fresh ? 1 : 0);
+    const generation = ++this.generationCounter;
+    this.generations.set(path, generation);
+    this.workspace.set(path, {status: "pending", reading: previous?.reading, rev});
+    this.inflight.set(path, fresh);
     this.loading = true;
     this.emit();
     void listFiles(transport, path, fresh)
       .then(reading => {
-        const rev = this.entry(path).rev;
+        if (this.generations.get(path) !== generation) { this.stale += 1; return; }
         this.workspace.set(path, {status: "ready", reading, rev});
       })
       .catch(error => {
-        const rev = this.entry(path).rev;
-        this.workspace.set(path, {status: "error", error: String(error), rev});
+        if (this.generations.get(path) !== generation) { this.stale += 1; return; }
+        // C10: the error takes the status, never the last reading.
+        this.workspace.set(path, {status: "error", error: String(error), reading: this.workspace.get(path)?.reading, rev});
       })
       .finally(() => {
-        this.inflight.delete(path);
-        this.loading = this.inflight.size > 0;
+        // Only the current generation owns the in-flight slot: a stale
+        // completion must not release the read that superseded it.
+        if (this.generations.get(path) === generation) {
+          this.inflight.delete(path);
+          this.loading = this.inflight.size > 0;
+        }
         this.emit();
       });
   }
@@ -125,52 +160,9 @@ export function parentPath(path: string): string | null {
   return path.slice(0, cut);
 }
 
-const store = new ListingStore();
+export const listings = new ListingStore();
 
 /** Name the workspace the cache keys on (workspace/store.ts on switch). */
 export function setActiveListingWorkspace(key: string) {
-  store.setActiveWorkspace(key);
-}
-
-function subscribeListings(listener: () => void): () => void {
-  return store.subscribe(listener);
-}
-
-/** The tree-level pending observation: one affordance while ANY listing of
- * the active workspace is in flight — a cached expansion never trips it. */
-export function useListingLoading(): boolean {
-  return useSyncExternalStore(subscribeListings, () => store.isLoading(), () => false);
-}
-
-/** One directory's listing: admitted on mount, retained until a receipt or
- * an explicit refresh invalidates it. `refresh` is the tree's explicit
- * refresh generation — every increment re-reads this path fresh. */
-export function useListing(transport: KernelTransportStatus, path: string, refresh: number): ListingEntry {
-  const entry = useSyncExternalStore(subscribeListings, () => store.entry(path), () => EMPTY);
-  const rev = entry.rev;
-  useEffect(() => {
-    store.ensure(transport, path, false);
-  }, [transport, path, rev]);
-  useEffect(() => {
-    if (refresh > 0) store.ensure(transport, path, true);
-  }, [refresh, transport, path]);
-  return entry;
-}
-
-/** Kernel receipts drive invalidation: every `file_changed` receipt since
- * the last observed one drops the changed file's parent listing. Mounted
- * once per FileTree root; idempotent across instances. */
-export function useListingInvalidation() {
-  const kernel = useKernel();
-  const changes = kernel.receipts.filter((receipt: KernelReceipt) => receipt.event === "file_changed");
-  const latest = changes[changes.length - 1]?.seq;
-  const applied = useRef(0);
-  useEffect(() => {
-    for (const receipt of changes) {
-      if (receipt.seq <= applied.current) continue;
-      const changed = typeof receipt.path === "string" ? receipt.path : null;
-      if (changed !== null) store.invalidateParentOf(changed);
-    }
-    if (latest !== undefined) applied.current = Math.max(applied.current, latest);
-  }, [latest]);
+  listings.setActiveWorkspace(key);
 }

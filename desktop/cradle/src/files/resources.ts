@@ -14,12 +14,16 @@
  * a different bridge is a different access scope), the operation class
  * (UTF-8 reading vs binary bytes — never deduplicated across the two), and
  * the owner's canonical ref, falling back to root+path only when no ref is
- * known. Path alone or workspace alone is never a key.
+ * known. Path alone or workspace alone is never a key. Entries record the
+ * location they were acquired under, so invalidation and peeks find a
+ * subject by ref or path across the epoch-scoped keys.
  *
  * Coherence: equivalent concurrent acquisitions join one in-flight read;
  * each entry carries a generation that invalidation bumps, and a read
  * publishes only into the generation it started in — a late older
  * completion cannot replace a newer state (the stale-result law, C12).
+ * Kernel receipts land in `applyReceipt`: a `file_changed` receipt drops
+ * the changed file's readings, deduped by seq like the tree's own feed.
  */
 
 import {readFile, readFileBytes} from "./client";
@@ -30,6 +34,9 @@ interface FileEntry<Reading> {
   reading?: Reading;
   revision?: string;
   error?: string;
+  /** The location the entry was acquired under — receipts name a bare path,
+   * so invalidation matches subjects, not one key spelling. */
+  location: CentralLocation;
   /** Bumped on every ensure/invalidation; in-flight reads publish only when
    * their captured generation still matches. */
   generation: number;
@@ -67,6 +74,15 @@ function locationKey(location: CentralLocation): string {
   return location.ref || `${location.root}:${location.path}`;
 }
 
+/** Whether two locations name the same owner subject: the canonical ref
+ * when both carry one (or the same root+path beneath those refs), the path
+ * when one side is a receipt's path-only name. */
+function sameSubject(a: CentralLocation | undefined, b: CentralLocation): boolean {
+  if (!a) return false;
+  if (a.ref && b.ref) return a.ref === b.ref || (a.root === b.root && a.path === b.path);
+  return a.path === b.path;
+}
+
 function emit() {
   for (const listener of listeners) listener();
 }
@@ -76,14 +92,30 @@ export function subscribeResources(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+/** Keys are epoch-scoped, so subject lookup scans the resident set — small
+ * by construction (the open files' entries, not the tree). */
+function findEntry<Reading>(binary: boolean, location: CentralLocation): FileEntry<Reading> | undefined {
+  for (const held of entryMap<Reading>(binary).values()) {
+    if (sameSubject(held.location, location)) return held;
+  }
+  return undefined;
+}
+
 /** Cache-only observation — what is already resident, never a reason to
  * read. A `ready` entry here is an allowed last reading, not a fresh grant. */
 export function peekFileReading(location: CentralLocation): NativeFileReading | undefined {
-  return textEntries.get(locationKey(location))?.reading;
+  return findEntry<NativeFileReading>(false, location)?.reading;
 }
 
 export function peekFileBytes(location: CentralLocation): NativeFileBytes | undefined {
-  return byteEntries.get(locationKey(location))?.reading;
+  return findEntry<NativeFileBytes>(true, location)?.reading;
+}
+
+/** Cache-only full-entry observation — the status and any error beside the
+ * reading (C10's law made inspectable); never a reason to read. */
+export function peekFileState(location: CentralLocation): {status: FileEntry<NativeFileReading>["status"]; reading?: NativeFileReading; error?: string} | undefined {
+  const held = findEntry<NativeFileReading>(false, location);
+  return held ? {status: held.status, reading: held.reading, error: held.error} : undefined;
 }
 
 export function resourceStats(): ResourceCounters {
@@ -95,23 +127,41 @@ function entryMap<Reading>(binary: boolean): Map<string, FileEntry<Reading>> {
 }
 
 /** Drop one file's resident readings (both operation classes — a write can
- * change either view of the same subject). Receipt-driven invalidation and
- * explicit refresh land here; the entry tombstones to `loading` so a mounted
- * consumer re-reads while any last reading it already held stays visible to
- * it (BOOT-14's law, kept by the consumer, not by a fake freshness claim). */
+ * change either view of the same subject, and the change is epoch-
+ * independent). Receipt-driven invalidation and explicit refresh land here;
+ * the entry tombstones to `loading` so a mounted consumer re-reads while any
+ * last reading it already held stays visible to it (BOOT-14's law, kept by
+ * the consumer, not by a fake freshness claim). */
 export function invalidateFile(location: CentralLocation) {
-  const key = locationKey(location);
   let dropped = false;
   for (const entries of [textEntries as Map<string, FileEntry<never>>, byteEntries as Map<string, FileEntry<never>>]) {
-    const held = entries.get(key);
-    if (!held) continue;
-    entries.set(key, {...held, status: "loading", generation: held.generation + 1, inflight: null});
-    dropped = true;
+    for (const [key, held] of entries) {
+      if (!sameSubject(held.location, location)) continue;
+      entries.set(key, {...held, status: "loading", generation: held.generation + 1, inflight: null});
+      dropped = true;
+    }
   }
   if (dropped) {
     counters.invalidations += 1;
     emit();
   }
+}
+
+/** The latest receipt seq applied — deduped exactly like the tree's
+ * useListingInvalidation cursor, so a replayed burst applies once. */
+let appliedReceiptSeq = 0;
+
+/** Receipt-driven invalidation, as a store function (the shell's kernel-
+ * receipt feed subscribes through applyReceipt's own emit): a `file_changed`
+ * receipt drops the changed file's readings; every other event is not this
+ * broker's concern (expressions re-read through their own channel), and a
+ * receipt whose path is not a plain string is ignored, not thrown on. */
+export function applyReceipt(receipt: {event: string; path?: unknown; seq: number}) {
+  if (receipt.event !== "file_changed") return;
+  if (typeof receipt.seq !== "number" || !Number.isFinite(receipt.seq) || receipt.seq <= appliedReceiptSeq) return;
+  appliedReceiptSeq = Math.max(appliedReceiptSeq, receipt.seq);
+  if (typeof receipt.path !== "string" || receipt.path.length === 0) return;
+  invalidateFile({schema: "central.path-ref/v1", ref: "", root: "", path: receipt.path});
 }
 
 async function acquire<Reading extends {revision: string}>(
@@ -136,7 +186,7 @@ async function acquire<Reading extends {revision: string}>(
   }
   const generation = held?.generation ?? 0;
   const inflight = read(transport, location);
-  entries.set(key, {status: "loading", reading: held?.reading, revision: held?.revision, generation, inflight});
+  entries.set(key, {status: "loading", reading: held?.reading, revision: held?.revision, location, generation, inflight});
   counters.acquisitions += 1;
   emit();
   try {
@@ -145,13 +195,13 @@ async function acquire<Reading extends {revision: string}>(
     if (!current || current.generation !== generation) {
       counters.stale_dropped += 1;
     } else {
-      entries.set(key, {status: "ready", reading, revision: reading.revision, generation, inflight: null});
+      entries.set(key, {status: "ready", reading, revision: reading.revision, location, generation, inflight: null});
     }
     return reading;
   } catch (error) {
     const current = entries.get(key);
     if (current && current.generation === generation) {
-      entries.set(key, {status: "error", error: String(error), reading: current.reading, revision: current.revision, generation, inflight: null});
+      entries.set(key, {status: "error", error: String(error), reading: current.reading, revision: current.revision, location, generation, inflight: null});
     }
     throw error;
   } finally {
