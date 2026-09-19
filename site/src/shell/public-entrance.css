@@ -3,3 +3,13 @@
 @media(max-width:600px){.sn__library{margin-right:1rem}}
 /* Compact controls retain both their icon and explicit accessible name. */
 @media(max-width:700px){.library-host .reader-library>.library-icon,.library-host .read-source-action>.library-icon,.library-host .return-field>.library-icon{display:inline-flex}}
+
+/* These six tiles sit in a narrow column even on a wide display. Viewport-sized
+   type made the new authored descriptions expand them beyond their 1:1 form.
+   Size the typography to the actual tile; retain every word and the square. */
+.shell .office-tile{container-type:inline-size}
+.shell .office-tile__link{min-height:0;gap:clamp(6px,5cqw,14px);padding:clamp(10px,7cqw,20px)}
+.shell .office-tile__head{gap:clamp(5px,3cqw,9px)}
+.shell .office-tile__copy{gap:clamp(4px,2.5cqw,7px)}
+.shell .office-tile .sec__cell-name{font-size:clamp(14px,8cqw,23px);line-height:1.15}
+.shell .office-tile .sec__detail{font-size:clamp(10px,5cqw,13px);line-height:1.4}
