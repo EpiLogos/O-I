@@ -95,6 +95,53 @@ class VakExpressionCraftSourceTests(unittest.TestCase):
         self.assertFalse(forms["CF7"]["requires_local_install"])
         self.assertFalse(forms["CF7"]["visitor_agent_or_api_key_required"])
 
+    def test_generic_authoring_and_source_stamp_have_factory_authority(self):
+        owner = self.module["factory_native_authoring"]
+        self.assertEqual(owner["owner_repository"], "EpiLogos/Factory")
+        self.assertEqual(owner["source_path"], "docs/program/NATIVE-WORKFLOW-AUTHORING.md")
+        for prerequisite in ("requires_ql", "requires_epi_roles", "requires_claude", "requires_dsh"):
+            with self.subTest(prerequisite=prerequisite):
+                self.assertFalse(owner[prerequisite])
+        self.assertFalse(owner["source_is_runtime_telemetry"])
+        self.assertFalse(owner["live_execution_claimed"])
+        expected = "https://github.com/EpiLogos/Factory/blob/main/" + owner["source_path"]
+        basis = self.module["obligation_sources"]["vakcraft65"]
+        self.assertEqual(basis["factory_authority"], expected)
+        self.assertTrue({195, 197, 199, 145}.issubset(set(basis["factory_issues"])))
+        source = self.reading["source_documents"][SOURCE]["text"]
+        self.assertIn(expected, source)
+        # Source-owner attribution must survive the actual campaign projection,
+        # not just remain an unconsumed metadata value in the input file.
+        stamps = [
+            obligation
+            for story in self.reading["stories"]
+            for obligation in story["extensions"]["inherited_obligations"]
+            if obligation["id"] == "vakcraft65:first-source-stamp"
+        ]
+        self.assertTrue(stamps)
+        for stamp in stamps:
+            self.assertEqual(stamp["source_basis"]["factory_authority"], expected)
+            self.assertEqual(stamp["mapping_status"], "specified-not-exercised")
+
+    def test_source_trace_join_is_existing_ui_and_evidence_not_new_runtime(self):
+        owner = self.module["factory_native_authoring"]
+        self.assertEqual(owner["ui_source"], "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md")
+        self.assertTrue((ROOT / owner["ui_source"]).is_file())
+        self.assertEqual(owner["correlation"], [
+            "authored source revision/digest and unit locator",
+            "compiled WorkflowUnit and Run/frontier",
+            "ExecutionDisposition and actual attempt",
+            "Actuation Activity and native session/trace/tool event",
+            "artifact/evidence/Return",
+            "exact original source basis",
+        ])
+        obligations = {o["id"]: o for o in self.module["obligations"]}
+        self.assertIn("UI06", obligations["vakcraft65:first-source-stamp"]["story_ids"])
+        self.assertTrue({"UI02", "UI04", "UI06"}.issubset(
+            obligations["vakcraft65:joined-experience"]["story_ids"]))
+        self.assertIn("DSH", owner["dsh_role"])
+        self.assertIn("optional", owner["ql_role"])
+
 
 if __name__ == "__main__":
     unittest.main()
