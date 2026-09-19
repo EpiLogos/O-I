@@ -10,6 +10,7 @@ import {readDraft,writeDraft,clearSavedDraft,type HeldDraft} from "../workspace/
 import {readFile,fileOperation,type FileMutation,type FileHistory,type FilePreview} from "./client";
 import {detectFormat} from "../material/detect";
 import {EditorButton,EditorFrame} from "../editor/EditorChrome";
+import {Glyph} from "../workspace/Glyph";
 
 /** All writes/history belong to Central. Local storage retains unsaved typing.
  * FND-04: every non-plain-text format delegates entirely to the material
@@ -134,7 +135,7 @@ export function FileSurface({binding,forceSource,leadingTools}:{binding:SurfaceB
   const extension=binding.location?.path.split(".").pop()?.toLowerCase();const markdown=extension==="md"||extension==="markdown";const json=extension==="json";
   const formatJson=()=>{if(!draft)return;try{change(`${JSON.stringify(JSON.parse(draft.content),null,2)}\n`);setError(undefined);}catch{setError("JSON could not be formatted because it is not valid.");}};
   return <EditorFrame className="native-file-surface" label={`File ${binding.title}`}
-    toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable}>Format JSON</EditorButton>}</>}
+    toolbar={<>{leadingTools}<EditorCommands editor={body} markdown={markdown} readOnly={!writable||pending}/>{json&&<EditorButton onClick={formatJson} disabled={!writable} aria-label="Format JSON" title="Format JSON"><Glyph name="braces" size={13}/></EditorButton>}</>}
     footer={<><span className="editor-path" title={`Central / ${binding.location?.path}`}>Central / {binding.location?.path}</span>{reading&&<span>Ln {caret.line}, Col {caret.column}</span>}<span>{error&&reading?"Last reading":dirty?"Unsaved":writable?"Saved":"Read only"}</span>{reading?.operations?.history.available&&<button onClick={()=>void loadHistory()} disabled={pending}>History</button>}{writable&&<button onClick={()=>void save()} disabled={pending||!dirty||conflict}>Save ⌘S</button>}</>}
   >
     {error&&<p role="alert" className="source-note">{error}</p>}

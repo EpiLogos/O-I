@@ -15,7 +15,13 @@
 .shell-focus { min-width: 0; flex: 1; align-self: stretch; display: flex; align-items: center; padding: 0 var(--oi-space-2); }
 .shell-focus span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
 .shell-focus select { min-width: 0; max-width: 100%; text-overflow: ellipsis; font-size: var(--oi-shell-type-ui); }
-.shell-agent-toggle svg { transform: scaleX(-1); }
+/* Companion control (2026-09-19): the direction-neutral half-panel mark at
+ * rest is quieter than the boxed sidebar glyph it replaces; the open state
+ * keeps the shared expanded tint. The prepared count rides as a small
+ * superscript — discoverable, never demanding. */
+.shell-region-toggle { position: relative; }
+.shell-agent-toggle { opacity: .82; }
+.shell-agent-count { position: absolute; top: -2px; right: -3px; font-size: 9px; line-height: 1; font-weight: 600; color: var(--oi-accent-ink); pointer-events: none; }
 @media (max-width: 639px) {
   .desktop-centre .pane.split { display: contents; }
   .desktop-centre .pane.group:not(.focused), .desktop-centre .split-resizer { display: none !important; }

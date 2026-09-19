@@ -48,6 +48,44 @@
   });
   document.addEventListener('scroll',clear,true);
   document.addEventListener('pointerleave',clear,true);
+  // Natural selection (owner direction 2026-09-19): in reading material no
+  // mode exists. A plain selection offers a small add action at the
+  // selection; clicking it proposes one bounded observation to the host.
+  // The chip is page-side UI with no authority — the host validates the
+  // observation before it can enter any owner draft.
+  const chip = document.createElement('div');
+  chip.setAttribute('aria-hidden', 'true');
+  chip.style.cssText = 'position:fixed;z-index:2147483647;display:none;cursor:pointer;font:11px/1.7 system-ui,sans-serif;padding:1px 9px;border-radius:999px;background:#fff;color:#1c1c1c;border:1px solid #c8c8c8;box-shadow:0 2px 8px rgba(0,0,0,.25);user-select:none';
+  chip.textContent = '+ Context';
+  let naturalRange = null;
+  const chipHide = () => { naturalRange = null; chip.style.display = 'none'; };
+  const chipMount = () => { if (!chip.isConnected) (document.body || document.documentElement)?.append(chip); };
+  document.addEventListener('selectionchange', () => {
+    if (mode !== 'off') return;
+    const selection = getSelection();
+    if (!selection || selection.isCollapsed || !selection.rangeCount) return chipHide();
+    const range = selection.getRangeAt(0);
+    const text = range.toString().slice(0, 12000);
+    if (!text.trim()) return chipHide();
+    naturalRange = range.cloneRange();
+    const box = range.getBoundingClientRect();
+    chipMount();
+    chip.style.display = 'block';
+    chip.style.left = Math.max(2, Math.min(box.left, innerWidth - 94)) + 'px';
+    chip.style.top = Math.max(2, Math.min(box.bottom + 4, innerHeight - 26)) + 'px';
+  });
+  document.addEventListener('scroll', () => { if (mode === 'off') chipHide(); }, true);
+  chip.addEventListener('pointerdown', event => { event.preventDefault(); event.stopPropagation(); }, true);
+  chip.addEventListener('click', event => {
+    event.preventDefault(); event.stopPropagation();
+    if (!naturalRange) return;
+    const ancestor = naturalRange.commonAncestorContainer;
+    const node = ancestor.nodeType === 1 ? ancestor : ancestor.parentElement;
+    pending = observe(node, naturalRange);
+    chipHide();
+    try { getSelection().removeAllRanges(); } catch {}
+    if (pending) signal?.();
+  });
   const api = window.__OI_PAGE_CONTEXT__ = {
     setSignal(callback){signal=callback;},
     mode(value){const scope=typeof value==='object'?value?.scope:value;if(value?.ink&&CSS.supports('color',value.ink)){outline.style.borderColor=value.ink;outline.style.backgroundColor=`color-mix(in srgb, ${value.ink} 6%, transparent)`;}mode=['text','components'].includes(scope)?scope:'off';clear();pending=null;return true;},

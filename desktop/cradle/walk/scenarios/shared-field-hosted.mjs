@@ -1,4 +1,5 @@
 // shared-field-hosted (Lane C step 5, unit U-SF1): the desktop opens the
+import {itemMenuAction,openContextPlane} from "./prepared-helper.mjs";
 // same hosted Shared Field refs the browser Explore page opens.
 //
 // Relation cell S→S0 · aperture mode: the hosted field is an owner read
@@ -193,10 +194,10 @@ export default async function run({page, baseUrl, check, metric, shot, channel, 
   await selectRange(editor, start, start + passage.length);
   await page.getByRole("button", {name: "Context mode", exact: true}).click();
   await page.getByRole("button", {name: "Attach selection", exact: true}).click();
-  const tray = page.getByRole("dialog", {name: "Include selected context"}); await tray.waitFor();
-  check((await tray.locator("pre").innerText()) === passage, "The tray holds the exact selected passage", {passage});
-  await tray.getByRole("button", {name: "Publish to the shared field"}).click();
-  await tray.waitFor({state: "detached"});
+  await openContextPlane(page);
+  const item = page.locator("[data-prepared-id]").first(); await item.waitFor();
+  check((await item.locator(".prepared-excerpt").innerText()) === passage, "The prepared item holds the exact selected passage", {passage});
+  await itemMenuAction(page, "Publish to the shared field");
   const strip = page.locator(".shared-field-material"); await strip.waitFor();
   await strip.getByLabel("Publisher participant").fill("human:desktop-walk");
   await strip.getByLabel("Projection visibility").selectOption("public");

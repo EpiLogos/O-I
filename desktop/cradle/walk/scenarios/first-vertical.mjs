@@ -1,4 +1,5 @@
 // first-vertical (wave 6, one joined walk on the installed frozen cut): a real Central
+import {itemMenuAction,chooseAccompanying,openContextPlane} from "./prepared-helper.mjs";
 // document opens, a passage is selected, the selection composes an addressed
 // request to the resident agent (installed ai-kit frozen cut 62a238b — real
 // Actuation admission, controlled protocol provider), the attributable reply
@@ -77,7 +78,7 @@ export async function setup(args) {
   const actuationBin = process.env.OI_CAW_ACTUATION_BIN;
   if (!actuationBin) throw new Error("The addressed leg requires an explicit Actuation owner binding (OI_CAW_ACTUATION_BIN)");
   const suite=process.env.OI_BIN??"oi", router=join(source.root,"oi-owner-router.mjs");
-  writeFileSync(router,`#!/usr/bin/env node\nimport {spawnSync} from "node:child_process";\nconst args=process.argv.slice(2), routed=args[0]==="aikit-session-space";\nconst child=spawnSync(routed?${JSON.stringify(sessionSpace)}:${JSON.stringify(suite)},routed?args.slice(1):args,{stdio:"inherit"});\nprocess.exit(child.status??1);\n`);chmodSync(router,0o755);
+  writeFileSync(router,`#!/usr/bin/env node\nimport {spawnSync} from "node:child_process";\nconst args=process.argv.slice(2), routed=args[0]==="aikit-session-space"||args[0]==="session-space";\nconst child=spawnSync(routed?${JSON.stringify(sessionSpace)}:${JSON.stringify(suite)},routed?args.slice(1):args,{stdio:"inherit"});\nprocess.exit(child.status??1);\n`);chmodSync(router,0o755);
   const env = {...process.env,...source.env,AIKIT_HOME:join(source.root,".aikit-home"),OI_BIN:router,OI_AIKIT_BIN:aikit,OI_AIKIT_SESSION_SPACE_BIN:sessionSpace,OI_CAW_ACTUATION_BIN:actuationBin,CENTRAL_NATIVE_TOKEN:HUMAN_TOKEN};
   const native = (...parts) => JSON.parse(execFileSync(sessionSpace,["-C",source.projectRoot,...parts],{encoding:"utf8",env}));
   const bind = JSON.parse(execFileSync(aikit,["--json","-C",source.projectRoot,"project","bind","editor-walk","--directory",source.projectRoot,"--no-default-skill-sets"],{encoding:"utf8",env}));
@@ -170,14 +171,15 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot("document-open");
 
   // 3 — select a passage; the context tray offers the addressed destination.
+  await chooseAccompanying(page,"First vertical acceptance");
   await selectRange(editor,start+1,start+1+passage.length);
   await page.getByRole("button",{name:"Context mode",exact:true}).click();
   await page.getByRole("button",{name:"Attach selection",exact:true}).click();
-  const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
-  check(await dialog.locator("pre").innerText()===passage,"The tray presents the exact selected passage from the real document");
-  await shot("selection-in-tray");
-  await dialog.getByRole("button",{name:"Address to the participant"}).click();
-  await dialog.waitFor({state:"detached"});
+  await openContextPlane(page);
+  const item=page.locator("[data-prepared-id]").first();await item.waitFor();
+  check((await item.locator(".prepared-excerpt").innerText())===passage,"The prepared item holds the exact selected passage from the real document");
+  await shot("selection-prepared");
+  await itemMenuAction(page,"Address to the participant");
 
   // 4 — back on the conversation, the addressed composer holds the selection:
   // exact source ref, quote, selection-time revision. Sender/audience/basis
@@ -185,19 +187,23 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // is consumed when this composer renders again.)
   await page.locator(".tab").filter({hasText:"First vertical acceptance"}).click();
   await page.getByRole("textbox",{name:"Message",exact:true}).waitFor();
-  const selectionRef=await page.locator(".encounter-addressed-selection code").innerText();
+  // The same conversation renders both as this tab and as the right region's
+  // accompanying agent (the context host); every composer act below targets
+  // the tab surface's pane, never the companion's mirror of it.
+  const tabPane=page.locator(".pane.group").filter({has:page.locator(".encounter-addressed-selection")});
+  const selectionRef=await tabPane.locator(".encounter-addressed-selection code").innerText();
   check(selectionRef===p.doc.source.ref,"The composed request carries the document's exact Central source ref");
-  const requestText=await page.getByRole("textbox",{name:"Addressed request text",exact:true}).inputValue();
+  const requestText=await tabPane.getByRole("textbox",{name:"Addressed request text",exact:true}).inputValue();
   check(requestText.includes(`> ${passage}`)&&requestText.includes(`revision ${p.doc.revision.revision}`),"The composed request quotes the exact passage at its selection-time revision");
-  check((await page.locator(".encounter-addressed-preview").innerText()).includes("1 source ref"),"The preview names the one shared source scope");
-  await page.getByRole("textbox",{name:"Sender identity",exact:true}).fill("agent:sender");
-  await page.getByRole("textbox",{name:"Recipient agent",exact:true}).fill("agent:editor-walk");
-  await page.getByRole("textbox",{name:"Expected participation basis",exact:true}).fill("rev/1");
-  await page.getByRole("textbox",{name:"Message",exact:true}).fill("HUMAN_DRAFT_NEVER_SENT_MARKER");
+  check((await tabPane.locator(".encounter-addressed-preview").innerText()).includes("1 source ref"),"The preview names the one shared source scope");
+  await tabPane.getByRole("textbox",{name:"Sender identity",exact:true}).fill("agent:sender");
+  await tabPane.getByRole("textbox",{name:"Recipient agent",exact:true}).fill("agent:editor-walk");
+  await tabPane.getByRole("textbox",{name:"Expected participation basis",exact:true}).fill("rev/1");
+  await tabPane.getByRole("textbox",{name:"Message",exact:true}).fill("HUMAN_DRAFT_NEVER_SENT_MARKER");
   await shot("addressed-composed-from-selection");
 
   // 5 — dispatch; the attributable reply arrives through the ordinary read path.
-  await page.locator(".encounter-addressed-send").click();
+  await tabPane.locator(".encounter-addressed-send").click();
   await page.waitForFunction(()=>document.querySelector(".encounter-addressed-state")?.getAttribute("data-phase")==="returned",null,{timeout:30000});
   const deliveryRef=await page.locator(".encounter-addressed-state code").first().innerText();
   await page.waitForFunction(()=>document.querySelector(".encounter-transcript")?.textContent?.includes("FIXTURE_REPLY"),null,{timeout:60000});

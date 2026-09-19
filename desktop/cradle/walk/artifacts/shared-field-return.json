@@ -1,18 +1,88 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "shared-field-return",
-  "generated_at": "2026-09-15T14:49:10.483Z",
+  "generated_at": "2026-09-19T15:32:38.477Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
-    "node": "v24.16.0",
-    "platform": "darwin"
+    "node": "v26.8.1",
+    "platform": "linux",
+    "source": {
+      "repository_root": "/home/frank/Central/Work/O-I",
+      "repository_head": "6a9d2b6fecebaac59d4779969402956d53eaf2b1",
+      "tracked_changes": [
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        "cli/src/guardian.rs",
+        "cli/src/update_flow.rs",
+        "cli/tests/guardian_projection.rs",
+        "cli/tests/suite_skillset.rs",
+        "desktop/cradle/src-tauri/tauri.conf.json",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/context/ComponentSelection.ts",
+        "desktop/cradle/src/context/ContextTray.tsx",
+        "desktop/cradle/src/context/PageContext.ts",
+        "desktop/cradle/src/context/context.css",
+        "desktop/cradle/src/context/page-context.js",
+        "desktop/cradle/src/editor/EditorChrome.tsx",
+        "desktop/cradle/src/editor/TextEditor.tsx",
+        "desktop/cradle/src/editor/text-editor.css",
+        "desktop/cradle/src/encounter/EncounterSurface.tsx",
+        "desktop/cradle/src/encounter/EncounterView.tsx",
+        "desktop/cradle/src/encounter/client.ts",
+        "desktop/cradle/src/encounter/encounter.css",
+        "desktop/cradle/src/files/FileSurface.tsx",
+        "desktop/cradle/src/flow/FlowSurface.tsx",
+        "desktop/cradle/src/flow/flow.css",
+        "desktop/cradle/src/flow/instance.ts",
+        "desktop/cradle/src/receiving/SharedFieldMaterial.tsx",
+        "desktop/cradle/src/surfaces/navigator/navigator.css",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/src/workspace/Glyph.tsx",
+        "desktop/cradle/src/workspace/shell.css",
+        "desktop/cradle/walk/artifacts/context-draft-real-owner-cas-and-stale-refusal.png",
+        "desktop/cradle/walk/artifacts/context-draft.json",
+        "desktop/cradle/walk/artifacts/first-vertical-addressed-composed-from-selection.png",
+        "desktop/cradle/walk/artifacts/first-vertical-document-holds-reviewed-reply.png",
+        "desktop/cradle/walk/artifacts/first-vertical-document-open.png",
+        "desktop/cradle/walk/artifacts/first-vertical-failure.png",
+        "desktop/cradle/walk/artifacts/first-vertical-reply-in-transcript.png",
+        "desktop/cradle/walk/artifacts/first-vertical-reply-included.png",
+        "desktop/cradle/walk/artifacts/first-vertical-return-of-the-reply-before-review.png",
+        "desktop/cradle/walk/artifacts/first-vertical.json",
+        "desktop/cradle/walk/artifacts/page-context.json",
+        "desktop/cradle/walk/artifacts/remember-failure.png",
+        "desktop/cradle/walk/artifacts/remember-remember-project-register-receipt.png",
+        "desktop/cradle/walk/artifacts/remember-remember-stale-refusal.png",
+        "desktop/cradle/walk/artifacts/remember-remembered-list-read.png",
+        "desktop/cradle/walk/artifacts/remember.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/a2a-exchange.mjs",
+        "desktop/cradle/walk/scenarios/agency-a2a.mjs",
+        "desktop/cradle/walk/scenarios/agency-planes.mjs",
+        "desktop/cradle/walk/scenarios/context-draft.mjs",
+        "desktop/cradle/walk/scenarios/first-vertical.mjs",
+        "desktop/cradle/walk/scenarios/page-context.mjs",
+        "desktop/cradle/walk/scenarios/remember.mjs",
+        "desktop/cradle/walk/scenarios/select-send.mjs",
+        "desktop/cradle/walk/scenarios/send-group-reconnect.mjs",
+        "desktop/cradle/walk/scenarios/shared-field-hosted.mjs",
+        "desktop/cradle/walk/scenarios/shared-field-return.mjs",
+        "desktop/cradle/walk/scenarios/task-basis.mjs",
+        "skills/central-session-strap/SKILL.md",
+        "skills/oi/SKILL.md",
+        "skills/suite-operator/skillset.toml"
+      ],
+      "engine_provenance_path": "/home/frank/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
-  "passed": false,
-  "error": "locator.waitFor: Timeout 30000ms exceeded.\nCall log:\n  - waiting for locator('.document-returns') to be visible\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/shared-field-return.mjs:194:17)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:383:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:456:18",
-  "duration_ms": 33778,
+  "passed": true,
+  "error": null,
+  "duration_ms": 25232,
   "checks": [
     {
       "ok": true,
@@ -24,7 +94,7 @@
     },
     {
       "ok": true,
-      "label": "The tray presents the exact selected passage — the selected-projection state begins here"
+      "label": "The prepared item holds the exact selected passage — the selected-projection state begins here"
     },
     {
       "ok": true,
@@ -73,6 +143,50 @@
     {
       "ok": true,
       "label": "The receiver's admitted records survive the withdrawal — retained evidence, not revoked"
+    },
+    {
+      "ok": true,
+      "label": "Before the Return arrives the strip honestly shows an empty receiving field"
+    },
+    {
+      "ok": true,
+      "label": "The Return's producer is the receiving participant"
+    },
+    {
+      "ok": true,
+      "label": "The return discloses its shared-field lineage — admitted, and withdrawn by the publisher yet retained"
+    },
+    {
+      "ok": true,
+      "label": "The exact admitted material is shown before any decision"
+    },
+    {
+      "ok": true,
+      "label": "Inclusion lands through the owner's revision-checked operation on the exact reviewed basis"
+    },
+    {
+      "ok": true,
+      "label": "The strip names the advanced source revision the inclusion produced"
+    },
+    {
+      "ok": true,
+      "label": "The accepted contribution shows producer, human reviewer and entry anchor as distinct facts"
+    },
+    {
+      "ok": true,
+      "label": "All four material states are visible at once — local document, published (withdrawn) projection, admitted return, accepted revision"
+    },
+    {
+      "ok": true,
+      "label": "The document holds the admitted contribution with distinct native attribution"
+    },
+    {
+      "ok": true,
+      "label": "The document source revision advanced through the inclusion"
+    },
+    {
+      "ok": true,
+      "label": "The proposed entry anchor exists in the real document bytes"
     }
   ],
   "ops": [
@@ -82,7 +196,7 @@
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-15T14:49:10.683Z",
+        "mounted_at": "2026-09-19T15:32:39.118Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -93,7 +207,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 177,
       "data": {
         "file": "shared-field-return-projection-published.png"
       }
@@ -101,15 +215,33 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 145,
       "data": {
         "file": "shared-field-return-projection-withdrawn.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 151,
+      "data": {
+        "file": "shared-field-return-return-with-shared-field-lineage.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 190,
+      "data": {
+        "file": "shared-field-return-four-states-one-canvas.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
     "shared-field-return-projection-published.png",
-    "shared-field-return-projection-withdrawn.png"
+    "shared-field-return-projection-withdrawn.png",
+    "shared-field-return-return-with-shared-field-lineage.png",
+    "shared-field-return-four-states-one-canvas.png"
   ]
 }

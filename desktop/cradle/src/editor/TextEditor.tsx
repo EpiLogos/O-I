@@ -38,6 +38,8 @@ import { css } from "@codemirror/lang-css";
 import { python } from "@codemirror/lang-python";
 import { xml } from "@codemirror/lang-xml";
 import type { SurfaceBinding } from "../surface/types";
+import { preparedSnapshot, preparedSubscribe, type PreparedItem } from "../context/prepared";
+import { Glyph } from "../workspace/Glyph";
 import "./text-editor.css";
 import {useEditorMode} from "./EditorChrome";
 
@@ -102,6 +104,40 @@ const highlights = StateField.define<DecorationSet>({
   },
   provide: (f) => EditorView.decorations.from(f),
 });
+/** Prepared-context cues (owner direction 2026-09-19): a quiet, non-persisted
+ * decoration over each range that is currently staged as a context item.
+ * Presentation only — never written into the document, never saved with the
+ * editor view, removed the moment the item is. */
+const refreshCues = StateEffect.define<null>();
+const cueClass = "context-prepared-cue";
+function cueDecorations(items: readonly PreparedItem[], state: EditorState): DecorationSet {
+  const ranges: { from: number; to: number; id: string }[] = [];
+  for (const item of items) {
+    if (item.start === undefined || item.end === undefined) continue;
+    if (item.end > state.doc.length) continue;
+    if (state.sliceDoc(item.start, item.end) !== item.text) continue;
+    ranges.push({ from: item.start, to: item.end, id: item.id });
+  }
+  ranges.sort((a, b) => a.from - b.from || a.to - b.to);
+  let set = Decoration.none;
+  for (const range of ranges)
+    set = set.update({
+      add: [
+        Decoration.mark({ class: cueClass, "data-prepared-id": range.id }).range(range.from, range.to),
+      ],
+      sort: true,
+    });
+  return set;
+}
+const contextCues = StateField.define<DecorationSet>({
+  create: () => Decoration.none,
+  update(value, tr) {
+    for (const effect of tr.effects) if (effect.is(refreshCues)) return cueDecorations(preparedSnapshot(), tr.state);
+    if (tr.docChanged) return cueDecorations(preparedSnapshot(), tr.state);
+    return value.map(tr.changes);
+  },
+  provide: (f) => EditorView.decorations.from(f),
+});
 const languages = (name: string) => {
   const ext = name.split(".").pop()?.toLowerCase();
   switch (ext) {
@@ -158,6 +194,8 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
       wrap = useRef(new Compartment());
     const [, setSelection] = useState(false),
       [notice, setNotice] = useState("");
+    const modeRef = useRef(mode); modeRef.current = mode;
+    const [chip, setChip] = useState<{ x: number; y: number }>();
     const api = useRef<EditorHandle>({
       get value() {
         return view.current?.state.doc.toString() ?? "";
@@ -212,6 +250,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
           const {from,to}=v.state.selection.main;const basis=v.state.doc;const text=basis.sliceString(from,to);if(!text)return;
           void navigator.clipboard.writeText(text).then(()=>{if(name==='cut'&&!v.state.readOnly&&v.state.doc===basis){v.dispatch({changes:{from,to,insert:''},selection:{anchor:from},userEvent:'delete.cut'});v.focus();}}).catch(()=>{v.focus();if(!document.execCommand(name))setNotice('Clipboard access was unavailable. Use the keyboard shortcut.');});return;
         }
+        if (name === "context-add") { attach(); return; }
         if (name.startsWith("highlight-")) {
           const { from, to } = v.state.selection.main;
           v.dispatch({
@@ -242,6 +281,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
         basicSetup,
         syntaxHighlighting(sourceHighlightStyle),
         highlights,
+        contextCues,
         editable.current.of(
           EditorState.readOnly.of(!!callbacks.current.readOnly),
         ),
@@ -276,9 +316,22 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
           if (update.docChanged && !external.current)
             callbacks.current.onChange(update.state.doc.toString());
           if (update.selectionSet || update.docChanged) {
-            setSelection(!update.state.selection.main.empty);
-              host.current?.dispatchEvent(new CustomEvent("oi:editor-selection",{bubbles:true,detail:{selected:!update.state.selection.main.empty}}));
+            const { from, to } = update.state.selection.main;
+            const selected = from !== to;
+            setSelection(selected);
+            host.current?.dispatchEvent(new CustomEvent("oi:editor-selection", {
+              bubbles: true,
+              detail: {
+                selected,
+                ...(selected ? { text: update.state.sliceDoc(from, to), start: from, end: to, sourceRef: callbacks.current.binding.ref } : {}),
+              },
+            }));
             callbacks.current.onSelect?.();
+            if (selected && modeRef.current === "writing" && !update.state.readOnly && view.current) {
+              const coords = view.current.coordsAtPos(to);
+              const box = host.current!.getBoundingClientRect();
+              setChip(coords ? { x: Math.min(coords.left - box.left, box.width - 96), y: coords.bottom - box.top } : undefined);
+            } else setChip(undefined);
           }
         }),
       ];
@@ -374,6 +427,28 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
       });
     }, [props.readOnly, props.filename, props.binding.title,mode]);
     useEffect(()=>{const node=host.current?.parentElement;if(!node)return;const add=()=>attach();const command=(event:Event)=>api.current.command((event as CustomEvent<string>).detail);node.addEventListener('oi:attach-selection',add);node.addEventListener('oi:editor-command',command);return()=>{node.removeEventListener('oi:attach-selection',add);node.removeEventListener('oi:editor-command',command);};},[]);
+    // Prepared-context cues redraw from the staging store; a change anywhere
+    // (add, remove, source edit elsewhere) refreshes this editor's ranges.
+    useEffect(()=>{
+      const refresh=()=>view.current?.dispatch({effects:refreshCues.of(null)});
+      refresh();
+      return preparedSubscribe(refresh);
+    },[]);
+    // Reveal a prepared item at the source: exact range selected, centred.
+    useEffect(()=>{
+      const reveal=(event:Event)=>{
+        const detail=(event as CustomEvent<{sourceRef?:string;start?:number;end?:number}>).detail;
+        const v=view.current;if(!v||!detail)return;
+        const own=callbacks.current.binding.ref;
+        if(detail.sourceRef&&own&&detail.sourceRef!==own)return;
+        if(detail.start===undefined||detail.end===undefined)return;
+        v.focus();
+        v.dispatch({selection:{anchor:detail.start,head:detail.end},effects:EditorView.scrollIntoView(detail.start,{y:"center"})});
+      };
+      window.addEventListener("oi:reveal-prepared",reveal);
+      return()=>window.removeEventListener("oi:reveal-prepared",reveal);
+    },[]);
+    useEffect(()=>{setChip(undefined);},[mode,props.readOnly]);
     function attach() {
       const p = callbacks.current,
         a = api.current;
@@ -399,6 +474,20 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
     return (
       <div className="text-editor" onContextMenu={props.onContextMenu}>
         <div ref={host} className="text-editor-host" />
+        {chip && mode === "writing" && !props.readOnly && (
+          <button
+            type="button"
+            className="context-chip"
+            style={{ left: chip.x, top: chip.y }}
+            title="Add selection to context (Shift-Cmd-2)"
+            aria-label="Add selection to context"
+            onMouseDown={(event) => event.preventDefault()}
+            onClick={() => { attach(); setChip(undefined); }}
+          >
+            <Glyph name="context" size={11} />
+            Context
+          </button>
+        )}
 
         {notice && (
           <p role="status">
@@ -429,39 +518,25 @@ export function EditorCommands({
     e.setSelectionRange(start + left.length, end + left.length);
     e.focus();
   };
+  type GlyphName = React.ComponentProps<typeof Glyph>["name"];
+  // Compact icon controls (owner direction 2026-09-19): every tool keeps its
+  // name, tooltip and real keyboard equivalent; the command behind each one
+  // is the same implementation the writing menu and the keymap route to.
+  // The editor itself holds the selection across toolbar use.
+  const tool = (name: string, glyph: GlyphName, title: string, run: () => void, disabled = readOnly) =>
+    <button key={name} aria-label={title} title={title} disabled={disabled} onClick={run}><Glyph name={glyph} size={13} /></button>;
   return (
     <>
-      <button title="Undo · ⌘Z" disabled={readOnly} onClick={() => act("undo")}>
-        Undo
-      </button>
-      <button
-        title="Redo · ⇧⌘Z"
-        disabled={readOnly}
-        onClick={() => act("redo")}
-      >
-        Redo
-      </button>
-      <button onClick={() => act("find")}>Find / Replace</button>
+      {tool("undo", "undo", "Undo (Cmd-Z)", () => act("undo"))}
+      {tool("redo", "redo", "Redo (Shift-Cmd-Z)", () => act("redo"))}
+      {tool("find", "search", "Find / Replace (Cmd-F)", () => act("find"), false)}
       {md ? (
         <>
-          <button disabled={readOnly} onClick={() => surround("**")}>
-            Bold
-          </button>
-          <button disabled={readOnly} onClick={() => surround("_")}>
-            Italic
-          </button>
-          <button disabled={readOnly} onClick={() => surround("~~")}>
-            Strike
-          </button>
-          <button disabled={readOnly} onClick={() => surround("`")}>
-            Code
-          </button>
-          <button
-            disabled={readOnly}
-            onClick={() => surround("[", "](https://)")}
-          >
-            Link
-          </button>
+          {tool("bold", "bold", "Bold", () => surround("**"))}
+          {tool("italic", "italic", "Italic", () => surround("_"))}
+          {tool("strike", "strike", "Strikethrough", () => surround("~~"))}
+          {tool("inline-code", "code", "Code", () => surround("`"))}
+          {tool("link", "link", "Link", () => surround("[", "](https://)"))}
           <select
             aria-label="Insert block"
             disabled={readOnly}
@@ -485,15 +560,9 @@ export function EditorCommands({
         </>
       ) : (
         <>
-          <button disabled={readOnly} onClick={() => act("indent")}>
-            Indent
-          </button>
-          <button disabled={readOnly} onClick={() => act("outdent")}>
-            Outdent
-          </button>
-          <button disabled={readOnly} onClick={() => act("comment")}>
-            Comment
-          </button>
+          {tool("indent", "indent", "Indent", () => act("indent"))}
+          {tool("outdent", "outdent", "Outdent", () => act("outdent"))}
+          {tool("comment", "comment", "Toggle comment (Cmd-/)", () => act("comment"))}
         </>
       )}
     </>

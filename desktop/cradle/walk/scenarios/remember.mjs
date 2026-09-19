@@ -1,4 +1,5 @@
 import { readdirSync, readFileSync } from "node:fs";
+import {openItemMenu,itemMenuAction,openContextPlane} from "./prepared-helper.mjs";
 import { join } from "node:path";
 import { setup as sourceSetup } from "./editor.mjs";
 
@@ -39,6 +40,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   // "no such directory" refusal is what nothing-remembered looks like.
   const rememberedList = nav.locator('[data-remembered-list="Editor"]');
   await rememberedList.waitFor();
+  await rememberedList.locator('[data-remembered-absent]').waitFor({timeout: 20000});
   check(await rememberedList.locator('[data-remembered-absent]').count() === 1, "An empty remembered register renders honest absence, not an error");
   await nav.getByRole("button", { name: "Editor: files", exact: true }).click();
   const source = p.sources[0], content = p.originals.get(source.binding.path);
@@ -49,26 +51,25 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await selectRange(editor, 5, 12);
   await page.getByRole("button", { name: "Context mode", exact: true }).click();
   await page.getByRole("button", { name: "Attach selection", exact: true }).click();
-  const dialog = page.getByRole("dialog", { name: "Include selected context" }); await dialog.waitFor();
+  await openContextPlane(page);
+  const item = page.locator("[data-prepared-id]").first(); await item.waitFor();
 
-  const rememberButton = dialog.getByRole("button", { name: "Remember this", exact: true });
-  const scopeSelect = dialog.getByRole("combobox", { name: "Remember destination" });
-  check(await rememberButton.isVisible(), "A revision-carrying source selection offers Remember");
-  check(await scopeSelect.isVisible(), "The remember destination select names the registers");
-  const options = await scopeSelect.locator("option").allInnerTexts();
-  check(options.some(t => t.includes("Editor register")) && options.some(t => t.includes("Root register")), "Both the project and the root register are offered for a project source selection");
-  check((await scopeSelect.inputValue()) === "project", "The selection's own project register is the default destination");
+  await openItemMenu(page, 0);
+  const rememberProject = item.getByRole("button", { name: "Remember — project register", exact: true });
+  const rememberRoot = item.getByRole("button", { name: "Remember — root register", exact: true });
+  check(await rememberProject.isVisible() && await rememberProject.isEnabled(), "A revision-carrying source selection offers Remember into the selection's own project register");
+  check(await rememberRoot.isVisible() && await rememberRoot.isEnabled(), "Both the project and the root register are offered for a project source selection");
 
   // Remember into the project register.
-  await rememberButton.click();
-  await dialog.locator('[data-remembered-state="invoked"]').waitFor();
-  const receipt = await dialog.locator('[data-remembered-state="invoked"]').innerText();
+  await rememberProject.click();
+  await item.locator('[data-remembered-state="invoked"]').waitFor();
+  const receipt = await item.locator('[data-remembered-state="invoked"]').innerText();
   check(receipt.includes("remembered-note:"), "The receipt names the owner's content-addressed note ref");
   check(receipt.includes("generated-proposal"), "The receipt carries the owner's generated-proposal authorship");
   check(receipt.includes("unrecognised") && receipt.includes("human owner's separate act"), "The receipt states recognition is the human owner's separate act and none is performed here");
   check(receipt.includes("projectcentral.remember"), "The receipt names the owner operation that ran");
   check(receipt.includes(source.binding.ref), "The receipt carries the exact Central source ref");
-  check(await rememberButton.isVisible(), "The tray stays open on the receipt — the provenance is the result of the act");
+  check(await item.isVisible(), "The prepared item stays on the receipt — the provenance is the result of the act");
   const invocation = dispatched.at(-1);
   check(invocation?.result === "action_dispatched" && invocation.dispatch.state === "invoked", "The kernel dispatch settles invoked");
   const ownerNote = invocation.dispatch.data.note;
@@ -86,9 +87,8 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await shot("remember-project-register-receipt");
 
   // The same passage into the ROOT register.
-  await scopeSelect.selectOption("root");
-  await rememberButton.click();
-  await dialog.locator('[data-remembered-state="invoked"]', { hasText: "central.remember" }).waitFor();
+  await itemMenuAction(page, "Remember — root register", 0);
+  await item.locator('[data-remembered-state="invoked"]', { hasText: "central.remember" }).waitFor();
   const rootInvocation = dispatched.at(-1);
   check(rootInvocation.dispatch.state === "invoked" && rootInvocation.dispatch.data.note.provenance.origin_action === "central.remember", "The root-register remember runs the owner's central.remember operation");
   const rootDir = join(p.root, "Control", "agents", "remembered");
@@ -99,30 +99,31 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
 
   // A source that changed after selection is refused; no note lands.
   const dispatchCount = dispatched.length;
-  await page.getByRole("button", { name: "Close context selection" }).click();
   await selectRange(editor, 8, 15);
-  await page.getByRole("button", { name: "Context mode", exact: true }).click();
-  await page.getByRole("button", { name: "Attach selection", exact: true }).click(); await dialog.waitFor();
+  await page.getByRole("button", { name: "Attach selection", exact: true }).click();
+  const staleItem = page.locator("[data-prepared-id]").nth(1); await staleItem.waitFor();
   await channel("invoke.source_edit", [source.binding.ref, `Changed after selection.\n${content}`]);
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'true');
-  await rememberButton.click();
-  const refusal = dialog.getByRole("alert"); await refusal.waitFor();
+  await itemMenuAction(page, "Remember — project register", 1);
+  const refusal = staleItem.getByRole("alert"); await refusal.waitFor();
   check((await refusal.innerText()).includes("selected material changed"), "A source changed after selection is visibly refused");
   check(dispatched.length === dispatchCount, "A stale selection dispatches nothing");
   check(readdirSync(projectDir).length === 1 && readdirSync(rootDir).length === 1, "A stale remember changes no owner ground");
   await shot("remember-stale-refusal");
 
-  // An observed component selection offers no Remember (no owner revision).
-  await page.getByRole("button", { name: "Close context selection" }).click();
+  // An observed component selection offers no runnable Remember or Publish
+  // (no owner revision) — the acts are disabled, never advertised then refused.
   await editor.locator('.cm-line').first().hover();
   await page.locator('.component-pick-bounds').waitFor();
-  await editor.locator('.cm-line').first().click(); await dialog.waitFor();
-  check(await dialog.getByRole("button", { name: "Remember this", exact: true }).count() === 0, "An observed component selection offers no Remember — nothing is advertised that cannot run");
+  await editor.locator('.cm-line').first().click();
+  const elementItem = page.locator("[data-prepared-id]").nth(2); await elementItem.waitFor();
+  await openItemMenu(page, 2);
+  check(await elementItem.getByRole("button", { name: "Remember — project register", exact: true }).isDisabled(), "An observed component selection offers no runnable Remember — nothing is advertised that cannot run");
+  check(await elementItem.getByRole("button", { name: "Publish to the shared field", exact: true }).isDisabled(), "An observed component selection offers no runnable Publish — no revision to share");
 
   // The read half against a filled register: the navigator lists exactly the
   // project note the owner holds, and reading it renders the owner's file
   // verbatim against its content-addressed ref.
-  await page.getByRole("button", { name: "Close context selection" }).click();
   await nav.getByRole("button", { name: "Editor: chats and tasks", exact: true }).click();
   await rememberedList.locator("summary").click();
   await rememberedList.locator("[data-remembered-row]").first().waitFor({timeout: 20000});

@@ -1,18 +1,80 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "remember",
-  "generated_at": "2026-09-13T13:32:18.100Z",
+  "generated_at": "2026-09-19T15:28:49.934Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
-    "node": "v24.16.0",
-    "platform": "darwin"
+    "node": "v26.8.1",
+    "platform": "linux",
+    "source": {
+      "repository_root": "/home/frank/Central/Work/O-I",
+      "repository_head": "6a9d2b6fecebaac59d4779969402956d53eaf2b1",
+      "tracked_changes": [
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        "cli/src/guardian.rs",
+        "cli/src/update_flow.rs",
+        "cli/tests/guardian_projection.rs",
+        "cli/tests/suite_skillset.rs",
+        "desktop/cradle/src-tauri/tauri.conf.json",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/context/ComponentSelection.ts",
+        "desktop/cradle/src/context/ContextTray.tsx",
+        "desktop/cradle/src/context/PageContext.ts",
+        "desktop/cradle/src/context/context.css",
+        "desktop/cradle/src/context/page-context.js",
+        "desktop/cradle/src/editor/EditorChrome.tsx",
+        "desktop/cradle/src/editor/TextEditor.tsx",
+        "desktop/cradle/src/editor/text-editor.css",
+        "desktop/cradle/src/encounter/EncounterSurface.tsx",
+        "desktop/cradle/src/encounter/EncounterView.tsx",
+        "desktop/cradle/src/encounter/client.ts",
+        "desktop/cradle/src/encounter/encounter.css",
+        "desktop/cradle/src/files/FileSurface.tsx",
+        "desktop/cradle/src/flow/FlowSurface.tsx",
+        "desktop/cradle/src/flow/flow.css",
+        "desktop/cradle/src/flow/instance.ts",
+        "desktop/cradle/src/receiving/SharedFieldMaterial.tsx",
+        "desktop/cradle/src/surfaces/navigator/navigator.css",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/src/workspace/Glyph.tsx",
+        "desktop/cradle/src/workspace/shell.css",
+        "desktop/cradle/walk/artifacts/context-draft-real-owner-cas-and-stale-refusal.png",
+        "desktop/cradle/walk/artifacts/context-draft.json",
+        "desktop/cradle/walk/artifacts/page-context.json",
+        "desktop/cradle/walk/artifacts/remember-failure.png",
+        "desktop/cradle/walk/artifacts/remember-remember-project-register-receipt.png",
+        "desktop/cradle/walk/artifacts/remember-remember-stale-refusal.png",
+        "desktop/cradle/walk/artifacts/remember-remembered-list-read.png",
+        "desktop/cradle/walk/artifacts/remember.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/a2a-exchange.mjs",
+        "desktop/cradle/walk/scenarios/agency-a2a.mjs",
+        "desktop/cradle/walk/scenarios/agency-planes.mjs",
+        "desktop/cradle/walk/scenarios/context-draft.mjs",
+        "desktop/cradle/walk/scenarios/first-vertical.mjs",
+        "desktop/cradle/walk/scenarios/page-context.mjs",
+        "desktop/cradle/walk/scenarios/remember.mjs",
+        "desktop/cradle/walk/scenarios/select-send.mjs",
+        "desktop/cradle/walk/scenarios/send-group-reconnect.mjs",
+        "desktop/cradle/walk/scenarios/shared-field-hosted.mjs",
+        "desktop/cradle/walk/scenarios/shared-field-return.mjs",
+        "desktop/cradle/walk/scenarios/task-basis.mjs",
+        "skills/central-session-strap/SKILL.md",
+        "skills/oi/SKILL.md",
+        "skills/suite-operator/skillset.toml"
+      ],
+      "engine_provenance_path": "/home/frank/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1639,
+  "duration_ms": 6923,
   "checks": [
     {
       "ok": true,
@@ -20,19 +82,11 @@
     },
     {
       "ok": true,
-      "label": "A revision-carrying source selection offers Remember"
-    },
-    {
-      "ok": true,
-      "label": "The remember destination select names the registers"
+      "label": "A revision-carrying source selection offers Remember into the selection's own project register"
     },
     {
       "ok": true,
       "label": "Both the project and the root register are offered for a project source selection"
-    },
-    {
-      "ok": true,
-      "label": "The selection's own project register is the default destination"
     },
     {
       "ok": true,
@@ -56,7 +110,7 @@
     },
     {
       "ok": true,
-      "label": "The tray stays open on the receipt — the provenance is the result of the act"
+      "label": "The prepared item stays on the receipt — the provenance is the result of the act"
     },
     {
       "ok": true,
@@ -112,7 +166,11 @@
     },
     {
       "ok": true,
-      "label": "An observed component selection offers no Remember — nothing is advertised that cannot run"
+      "label": "An observed component selection offers no runnable Remember — nothing is advertised that cannot run"
+    },
+    {
+      "ok": true,
+      "label": "An observed component selection offers no runnable Publish — no revision to share"
     },
     {
       "ok": true,
@@ -127,7 +185,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 61,
+      "duration_ms": 172,
       "data": {
         "file": "remember-remember-project-register-receipt.png"
       }
@@ -135,7 +193,7 @@
     {
       "ok": true,
       "op": "invoke.source_edit",
-      "duration_ms": 10.6,
+      "duration_ms": 59.7,
       "seq_range": {
         "from": 6,
         "to": 6
@@ -161,7 +219,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 176,
       "data": {
         "file": "remember-remember-stale-refusal.png"
       }
@@ -169,7 +227,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 38,
+      "duration_ms": 170,
       "data": {
         "file": "remember-remembered-list-read.png"
       }

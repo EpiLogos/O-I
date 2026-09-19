@@ -1,4 +1,5 @@
 // shared-field-return (wave 7, first vertical): two participants share one
+import {itemMenuAction,openContextPlane} from "./prepared-helper.mjs";
 // document's material through the owner's own contracts — publish with an
 // explicit audience (oi.projection/v1, composed in the desktop through the
 // in-repo shared-field floor), admit/quarantine on the receiving side
@@ -108,10 +109,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await selectRange(editor,start+1,start+1+passage.length);
   await page.getByRole("button",{name:"Context mode",exact:true}).click();
   await page.getByRole("button",{name:"Attach selection",exact:true}).click();
-  const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
-  check(await dialog.locator("pre").innerText()===passage,"The tray presents the exact selected passage — the selected-projection state begins here");
-  await dialog.getByRole("button",{name:"Publish to the shared field"}).click();
-  await dialog.waitFor({state:"detached"});
+  await openContextPlane(page);
+  const item=page.locator("[data-prepared-id]").first();await item.waitFor();
+  check((await item.locator(".prepared-excerpt").innerText())===passage,"The prepared item holds the exact selected passage — the selected-projection state begins here");
+  await itemMenuAction(page,"Publish to the shared field");
 
   // 3 — the publication strip composes beside the document; audience and
   // publisher are explicit. The contract's own laws refuse incomplete ones.

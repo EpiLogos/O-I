@@ -3,3 +3,54 @@
 .context-remember-row{display:flex;gap:8px;justify-content:flex-end;align-items:center;flex-wrap:wrap;margin-top:10px}
 .context-remember-row select{max-width:340px}
 .context-remembered{margin-top:12px;border-top:1px solid var(--oi-rule);padding-top:10px;display:grid;gap:4px}
+
+/* Prepared context (2026-09-19): compact staged items in the right region's
+ * Context plane; a quiet corner status for staging feedback. No modal. */
+.prepared-panel{display:grid;gap:8px;font-size:12px}
+.prepared-empty{margin:0;opacity:.7}
+.prepared-preview{margin:0;padding:4px 8px;border-left:2px solid var(--oi-accent-ink);color:var(--oi-muted-2);font-size:11px;white-space:pre-wrap;overflow-wrap:anywhere;max-height:64px;overflow-y:auto}
+.prepared-preview span{display:block;font-size:9px;letter-spacing:.06em;text-transform:uppercase;opacity:.7}
+.prepared-items{list-style:none;margin:0;padding:0;display:grid;gap:7px}
+.prepared-item{border:1px solid var(--oi-hairline);border-radius:8px;padding:8px 10px;display:grid;gap:6px;background:var(--oi-surface)}
+.prepared-row{display:flex;align-items:baseline;gap:8px;min-width:0}
+.prepared-reveal{appearance:none;border:0;background:transparent;color:var(--oi-foreground);font:inherit;font-weight:550;padding:0;cursor:pointer;text-align:left;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.prepared-reveal:hover,.prepared-reveal:focus-visible{color:var(--oi-accent-ink);outline:none}
+.prepared-state{flex:none;font-size:10px;color:var(--oi-muted-2)}
+.prepared-remove{appearance:none;border:0;background:transparent;color:var(--oi-muted-2);font:inherit;padding:0 2px;cursor:pointer;margin-left:auto}
+.prepared-remove:hover,.prepared-remove:focus-visible{color:var(--oi-foreground);outline:none}
+.prepared-excerpt{margin:0;font-size:11px;line-height:1.5;color:var(--oi-muted-2);white-space:pre-wrap;overflow-wrap:anywhere;display:-webkit-box;-webkit-line-clamp:3;-webkit-box-orient:vertical;overflow:hidden}
+.prepared-instruction{font:inherit;font-size:11px;padding:4px 7px;border:1px solid var(--oi-hairline);border-radius:5px;background:transparent;color:inherit;min-width:0}
+.prepared-instruction:focus-visible{outline:1px solid var(--oi-accent-soft);outline-offset:0}
+.prepared-actions{display:flex;gap:6px;align-items:center}
+.prepared-actions>button,.prepared-more summary{appearance:none;border:1px solid var(--oi-hairline);border-radius:5px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:11px;padding:3px 8px;cursor:pointer}
+.prepared-actions>button:hover:not(:disabled),.prepared-actions>button:focus-visible,.prepared-more summary:hover,.prepared-more summary:focus-visible{color:var(--oi-accent-ink);border-color:var(--oi-accent-ink);outline:none}
+.prepared-actions>button:disabled{opacity:.4;cursor:default}
+.prepared-include{color:var(--oi-foreground)!important;border-color:var(--oi-hairline)}
+.prepared-more{position:relative}
+.prepared-more summary{list-style:none}
+.prepared-more summary::-webkit-details-marker{display:none}
+.prepared-more .oi-menu{position:absolute;right:0;top:calc(100% + 4px);z-index:60;display:grid;min-width:215px;padding:4px;border:1px solid var(--oi-hairline);border-radius:8px;background:var(--oi-surface);box-shadow:0 8px 22px color-mix(in srgb, var(--oi-ink) 16%, transparent)}
+.prepared-more .oi-menu-item{text-align:left;border:0;background:transparent;color:var(--oi-foreground);font:inherit;font-size:11px;padding:6px 8px;border-radius:5px;cursor:pointer}
+.prepared-more .oi-menu-item:hover:not(:disabled),.prepared-more .oi-menu-item:focus-visible{background:var(--oi-wash);color:var(--oi-accent-ink);outline:none}
+.prepared-more .oi-menu-item:disabled{opacity:.4;cursor:default}
+.prepared-error{margin:0;font-size:11px;color:var(--oi-foreground);background:color-mix(in srgb, var(--oi-ink) 7%, transparent);border-radius:5px;padding:5px 8px;overflow-wrap:anywhere}
+.prepared-details{display:grid;gap:6px;border-top:1px solid var(--oi-hairline-soft);padding-top:6px}
+.prepared-details .oi-kv{margin:0;display:grid;grid-template-columns:auto 1fr;gap:2px 10px;font-size:11px}
+.prepared-details .oi-kv dt{color:var(--oi-muted-2)}
+.prepared-details .oi-kv dd{margin:0;overflow-wrap:anywhere}
+.prepared-resolve{display:grid;gap:4px}
+.prepared-resolve>button{justify-self:start;appearance:none;border:1px solid var(--oi-hairline);border-radius:5px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:11px;padding:3px 8px;cursor:pointer}
+.prepared-resolve>button:hover,.prepared-resolve>button:focus-visible{color:var(--oi-accent-ink);border-color:var(--oi-accent-ink);outline:none}
+.prepared-resolve pre{margin:0;max-height:180px;overflow:auto;font-size:10px;border:1px solid var(--oi-hairline-soft);border-radius:5px;padding:6px}
+.prepared-remembered,.prepared-origin{font-size:11px}
+.prepared-remembered{border-top:1px solid var(--oi-hairline-soft);padding-top:5px;display:grid;gap:3px}
+.prepared-origin{margin:0;opacity:.75;overflow-wrap:anywhere}
+.prepared-notice{position:fixed;right:14px;bottom:14px;z-index:1001;max-width:340px;padding:7px 12px;border-radius:8px;border:1px solid var(--oi-hairline);background:var(--oi-surface);color:var(--oi-foreground);font-size:11px;box-shadow:0 8px 22px color-mix(in srgb, var(--oi-ink) 18%, transparent);overflow-wrap:anywhere}
+.prepared-notice[data-prepared-notice="refused"]{border-color:color-mix(in srgb, var(--oi-ink) 45%, transparent)}
+.prepared-clear{justify-self:start;appearance:none;border:0;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:11px;padding:0;cursor:pointer}
+.prepared-clear:hover,.prepared-clear:focus-visible{color:var(--oi-accent-ink);outline:none}
+
+/* The same cue on held element observations. */
+.context-prepared-cue{outline:1px dashed color-mix(in srgb, var(--oi-accent-ink) 55%, transparent);outline-offset:1px;background:color-mix(in srgb, var(--oi-accent-ink) 7%, transparent)}
+@keyframes context-prepared-flash{0%{outline:2px solid var(--oi-accent-ink)}100%{outline:2px solid transparent}}
+.context-prepared-flash{animation:context-prepared-flash 1.4s ease-out}

@@ -1,30 +1,92 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "context-draft",
-  "generated_at": "2026-09-13T13:32:01.676Z",
+  "generated_at": "2026-09-19T15:14:28.977Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
-    "node": "v24.16.0",
-    "platform": "darwin"
+    "node": "v26.8.1",
+    "platform": "linux",
+    "source": {
+      "repository_root": "/home/frank/Central/Work/O-I",
+      "repository_head": "6a9d2b6fecebaac59d4779969402956d53eaf2b1",
+      "tracked_changes": [
+        ".superpowers/sdd/cradle-rebuild/progress.md",
+        "cli/src/guardian.rs",
+        "cli/src/update_flow.rs",
+        "cli/tests/guardian_projection.rs",
+        "cli/tests/suite_skillset.rs",
+        "desktop/cradle/src-tauri/tauri.conf.json",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/context/ComponentSelection.ts",
+        "desktop/cradle/src/context/ContextTray.tsx",
+        "desktop/cradle/src/context/PageContext.ts",
+        "desktop/cradle/src/context/context.css",
+        "desktop/cradle/src/context/page-context.js",
+        "desktop/cradle/src/editor/EditorChrome.tsx",
+        "desktop/cradle/src/editor/TextEditor.tsx",
+        "desktop/cradle/src/editor/text-editor.css",
+        "desktop/cradle/src/encounter/EncounterSurface.tsx",
+        "desktop/cradle/src/encounter/EncounterView.tsx",
+        "desktop/cradle/src/encounter/client.ts",
+        "desktop/cradle/src/encounter/encounter.css",
+        "desktop/cradle/src/files/FileSurface.tsx",
+        "desktop/cradle/src/flow/instance.ts",
+        "desktop/cradle/src/receiving/SharedFieldMaterial.tsx",
+        "desktop/cradle/src/surfaces/navigator/navigator.css",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/src/workspace/Glyph.tsx",
+        "desktop/cradle/src/workspace/shell.css",
+        "desktop/cradle/walk/artifacts/context-draft-real-owner-cas-and-stale-refusal.png",
+        "desktop/cradle/walk/artifacts/context-draft.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/a2a-exchange.mjs",
+        "desktop/cradle/walk/scenarios/agency-a2a.mjs",
+        "desktop/cradle/walk/scenarios/agency-planes.mjs",
+        "desktop/cradle/walk/scenarios/context-draft.mjs",
+        "desktop/cradle/walk/scenarios/first-vertical.mjs",
+        "desktop/cradle/walk/scenarios/page-context.mjs",
+        "desktop/cradle/walk/scenarios/remember.mjs",
+        "desktop/cradle/walk/scenarios/select-send.mjs",
+        "desktop/cradle/walk/scenarios/send-group-reconnect.mjs",
+        "desktop/cradle/walk/scenarios/shared-field-hosted.mjs",
+        "desktop/cradle/walk/scenarios/shared-field-return.mjs",
+        "desktop/cradle/walk/scenarios/task-basis.mjs",
+        "skills/central-session-strap/SKILL.md",
+        "skills/oi/SKILL.md",
+        "skills/suite-operator/skillset.toml"
+      ],
+      "engine_provenance_path": "/home/frank/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 8962,
+  "duration_ms": 25131,
   "checks": [
     {
       "ok": true,
-      "label": "An existing real conversation is an explicit context destination"
+      "label": "No context-selection modal stands between the selection and context"
     },
     {
       "ok": true,
-      "label": "The tray presents the exact selected source text"
+      "label": "The prepared item holds the exact selected source text"
     },
     {
       "ok": true,
-      "label": "Context append preserves the existing AIKit-owned draft"
+      "label": "The prepared item discloses its exact source ref and selection-time revision"
+    },
+    {
+      "ok": true,
+      "label": "A subtle source cue marks the staged range without altering it"
+    },
+    {
+      "ok": true,
+      "label": "Context include preserves the existing AIKit-owned draft"
     },
     {
       "ok": true,
@@ -32,11 +94,11 @@
     },
     {
       "ok": true,
-      "label": "Adding context does not send a provider prompt or create transcript blocks"
+      "label": "Including context does not send a provider prompt or create transcript blocks"
     },
     {
       "ok": true,
-      "label": "Component mode presents the picked element bounds and selector"
+      "label": "Component mode presents the picked element bounds and structural provenance"
     },
     {
       "ok": true,
@@ -52,11 +114,19 @@
     },
     {
       "ok": true,
-      "label": "A sandboxed page observation is validated and appended through the real draft owner"
+      "label": "Removing a prepared item removes exactly that item"
     },
     {
       "ok": true,
-      "label": "Page mutation after picking is refused by live DOM validation"
+      "label": "A plain selection in rendered material stages exactly the selected text"
+    },
+    {
+      "ok": true,
+      "label": "A natural page selection is validated and appended through the real draft owner"
+    },
+    {
+      "ok": true,
+      "label": "Page mutation after selection is refused by live DOM validation"
     },
     {
       "ok": true,
@@ -67,10 +137,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T13:32:01.763Z",
+        "mounted_at": "2026-09-19T15:14:30.211Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -80,11 +150,19 @@
     },
     {
       "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 592,
+      "data": {
+        "file": "context-draft-staged-prepared-item.png"
+      }
+    },
+    {
+      "ok": true,
       "op": "invoke.source_edit",
-      "duration_ms": 13.4,
+      "duration_ms": 145.4,
       "seq_range": {
-        "from": 8,
-        "to": 8
+        "from": 6,
+        "to": 6
       },
       "data": {
         "outcome": {
@@ -107,7 +185,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 176,
       "data": {
         "file": "context-draft-real-owner-cas-and-stale-refusal.png"
       }
@@ -115,15 +193,16 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 363,
       "data": {
-        "file": "context-draft-rendered-component-stale-refusal.png"
+        "file": "context-draft-rendered-natural-selection-stale-refusal.png"
       }
     }
   ],
   "metrics": {},
   "screenshots": [
+    "context-draft-staged-prepared-item.png",
     "context-draft-real-owner-cas-and-stale-refusal.png",
-    "context-draft-rendered-component-stale-refusal.png"
+    "context-draft-rendered-natural-selection-stale-refusal.png"
   ]
 }

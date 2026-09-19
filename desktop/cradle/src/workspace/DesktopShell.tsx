@@ -6,6 +6,7 @@ import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
 import { Glyph } from "./Glyph";
+import { usePreparedItems } from "../context/PreparedContext";
 import { focusGroup, groupsOf } from "../surface/engine";
 
 type Side = "left" | "right";
@@ -211,11 +212,15 @@ export function DesktopShell(p: Props) {
   // as a broken counter, not a state. Name it, matching the reference
   // vocabulary's "1 group" / "Focused view" register.
   const groupCount = groupsOf(l.root).length;
+  // Quiet discoverable indication (owner direction 2026-09-19): prepared
+  // context items count on the region control itself — never an expansion,
+  // never a focus steal.
+  const preparedCount = usePreparedItems().length;
   return <div ref={host} className="desktop-shell" data-native={p.native} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
-      <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
+      <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle agents and context region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Agents & context (Shift-Cmd-B)"><Glyph name="companion"/>{preparedCount > 0 && <span className="shell-agent-count" aria-label={`${preparedCount} prepared context item${preparedCount === 1 ? "" : "s"}`}>{preparedCount}</span>}</button>
     </header>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>
       <input aria-label="Workspace name" autoFocus value={name} onChange={e => setName(e.target.value)} />

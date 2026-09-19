@@ -33,7 +33,7 @@ export async function setup(args) {
   const workcellBin = process.env.OI_CAW_WORKCELL_BIN;
   if (!workcellBin) throw new Error("Task allocation requires an explicit Workcell boundary binding (OI_CAW_WORKCELL_BIN)");
   const suite=process.env.OI_BIN??"oi", router=join(source.root,"oi-owner-router.mjs");
-  writeFileSync(router,`#!/usr/bin/env node\nimport {spawnSync} from "node:child_process";\nconst args=process.argv.slice(2), routed=args[0]==="aikit-session-space";\nconst child=spawnSync(routed?${JSON.stringify(sessionSpace)}:${JSON.stringify(suite)},routed?args.slice(1):args,{stdio:"inherit"});\nprocess.exit(child.status??1);\n`);chmodSync(router,0o755);
+  writeFileSync(router,`#!/usr/bin/env node\nimport {spawnSync} from "node:child_process";\nconst args=process.argv.slice(2), routed=args[0]==="aikit-session-space"||args[0]==="session-space";\nconst child=spawnSync(routed?${JSON.stringify(sessionSpace)}:${JSON.stringify(suite)},routed?args.slice(1):args,{stdio:"inherit"});\nprocess.exit(child.status??1);\n`);chmodSync(router,0o755);
   const env = {...process.env,...source.env,AIKIT_HOME:join(source.root,".aikit-home"),OI_BIN:router,OI_AIKIT_BIN:aikit,OI_AIKIT_SESSION_SPACE_BIN:sessionSpace,OI_CAW_ACTUATION_BIN:actuationBin,WORKCELL_CONTROL_TOKEN};
   // The task chain reads Central's effective work policy: seed the same
   // policy sources the owner's own task world uses (the caw_task_dispatch

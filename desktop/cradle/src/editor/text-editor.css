@@ -111,3 +111,10 @@
 .flow-surface .text-editor .cm-scroller {
   font-family: var(--oi-font-sans, sans-serif);
 }
+
+/* Prepared context (2026-09-19): the anchored add-to-context chip at the
+ * selection, and the quiet cue over a staged range. Both are presentation
+ * only — the cue never enters the document, exports or saved editor state. */
+.context-chip{position:absolute;z-index:30;display:inline-flex;align-items:center;gap:4px;padding:2px 8px;border:1px solid var(--oi-hairline);border-radius:999px;background:var(--oi-surface);color:var(--oi-muted-2);font:inherit;font-size:11px;line-height:1.5;cursor:pointer;opacity:.9;box-shadow:0 3px 12px color-mix(in srgb, var(--oi-ink) 12%, transparent);transform:translateY(4px)}
+.context-chip:hover,.context-chip:focus-visible{color:var(--oi-accent-ink);border-color:var(--oi-accent-ink);opacity:1;outline:none}
+.cm-content .context-prepared-cue{background:color-mix(in srgb, var(--oi-accent-ink) 9%, transparent);border-bottom:1px dashed color-mix(in srgb, var(--oi-accent-ink) 55%, transparent)}

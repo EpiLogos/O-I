@@ -5,7 +5,10 @@
  * study's own icon set (`src/study/WorkspaceStudy.tsx`) so the tab-bar kind
  * glyphs and shell iconography read as the same drawing system; `folder`,
  * `restore` and `detach` are production-only additions the studies never
- * needed.
+ * needed. The 2026-09-19 canvas-context lane adds the region-companion
+ * control (a quiet half-panel with a presence dot, not the boxed `sidebar`
+ * glyph) and the format-aware editing marks used by the shared editor
+ * toolbar; all follow the same 24×24 stroke drawing system.
  */
 const paths = {
   pin: 'M9 3h6l-1 7 4 4H6l4-4zM12 14v7',
@@ -38,6 +41,30 @@ const paths = {
   detach: 'M14 3h7v7m0-7L10 14M10 5H3v16h16v-7',
   more: 'M4 12h1m6 0h1m6 0h1',
   close: 'M6 6l12 12M18 6L6 18',
+  /* Companion region (2026-09-19): a soft half-panel with a presence dot —
+   * quiet at rest, direction-neutral, unlike the boxed `sidebar` glyph it
+   * replaces on the right region. */
+  companion: 'M13 4h4a3 3 0 013 3v10a3 3 0 01-3 3h-4M16.5 12h.01M13 8v8',
+  /* Add-to-context (the anchored selection chip and its menu item): a
+   * passage with a small plus — material joining context, not a document. */
+  context: 'M8 6h9M8 10h6M15 15h5M17.5 12.5v5',
+  edit: 'M14 5l5 5L8 21H3v-5zM12 7l5 5',
+  undo: 'M8 5L4 9l4 4M4 9h11a5 5 0 015 5v1',
+  redo: 'M16 5l4 4-4 4M20 9H9a5 5 0 00-5 5v1',
+  bold: 'M8 5h5a3.5 3.5 0 010 7H8zM8 12h6a3.5 3.5 0 010 7H8z',
+  italic: 'M11 5h6M7 19h6M14 5l-4 14',
+  strike: 'M5 12h14M8 7c0-1.7 1.8-3 4-3 1.8 0 3.3.8 3.8 2M16 17c0 1.7-1.8 3-4 3-1.8 0-3.3-.8-3.8-2',
+  code: 'M9 8l-4 4 4 4M15 8l4 4-4 4',
+  quote: 'M6 16c-1-3 0-6 3-8M6 16h4v4H6zM14 16c-1-3 0-6 3-8M14 16h4v4h-4z',
+  list: 'M9 6h11M9 12h11M9 18h11M5 6h.01M5 12h.01M5 18h.01',
+  task: 'M4 6l2 2 3-3M4 15l2 2 3-3M12 7h8M12 16h8',
+  image: 'M4 6a2 2 0 012-2h12a2 2 0 012 2v12a2 2 0 01-2 2H6a2 2 0 01-2-2zM4 15l4-4 5 5M14 13l2-2 4 4M15.5 8.5h.01',
+  table: 'M4 5h16v14H4zM4 10h16M10 5v14',
+  heading: 'M6 5v14M18 5v14M6 12h12',
+  comment: 'M4 5h16v11H10l-5 4v-4H4z',
+  indent: 'M4 5h16M9 10h11M9 15h11M4 9.5L7 12l-3 2.5',
+  outdent: 'M4 5h16M9 10h11M9 15h11M7 9.5L4 12l3 2.5',
+  braces: 'M8 4c-2 0-3 1-3 3v2c0 1-1 2-2 2 1 0 2 1 2 2v2c0 2 1 3 3 3M16 4c2 0 3 1 3 3v2c0 1 1 2 2 2-1 0-2 1-2 2v2c0 2-1 3-3 3',
 };
 export function Glyph({name,size=15}:{name:keyof typeof paths;size?:number}) {
   return <svg width={size} height={size} viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.4" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true"><path d={paths[name]}/></svg>;

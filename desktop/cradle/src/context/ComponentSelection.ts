@@ -10,3 +10,20 @@ export function observeComponent(node:Element,bindingId:string){
 }
 export function registerPageObservation(text:string,validate:()=>Promise<boolean>){const key=crypto.randomUUID();held.set(key,{text,validate});if(held.size>32)held.delete(held.keys().next().value!);return key;}
 export async function observationIsCurrent(key:string){const reading=held.get(key);if(reading?.validate)return reading.validate();return !!reading?.node?.isConnected&&componentText(reading.node)===reading.text;}
+
+/** The prepared-context source cue on a held element observation:
+ * presentation only — a class toggle, never a source change. */
+export function setObservationCue(key:string,on:boolean){
+ const reading=held.get(key);const node=reading?.node;
+ if(!node)return;
+ node.classList.toggle("context-prepared-cue",on);
+ if(!on)node.classList.remove("context-prepared-flash");
+}
+/** Reveal a held observation: scroll to it and flash once. */
+export function revealObservation(key:string){
+ const reading=held.get(key);const node=reading?.node;
+ if(!node)return;
+ node.scrollIntoView({block:"center"});
+ node.classList.add("context-prepared-flash");
+ setTimeout(()=>node.classList.remove("context-prepared-flash"),1500);
+}

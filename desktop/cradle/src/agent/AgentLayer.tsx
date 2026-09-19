@@ -13,6 +13,7 @@ import {encounter} from "../encounter/client";
 import type {SurfaceBinding} from "../surface/types";
 import type {CentralLocation} from "../kernel/types";
 import "./agent.css";
+import {PreparedPanel} from "../context/PreparedPanel";
 
 /**
  * FND-02 — the person's own accompanying agent. This is never a subject
@@ -51,8 +52,9 @@ const KIND_OWNER: Record<string, string> = {
   presentation: "Shared Field",
 };
 
-export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose}: {
+export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, onClose, bindings}: {
   project?: string;
+  bindings: Record<string, SurfaceBinding>;
   subject: AgentSubject;
   history?: ReactNode;
   historyAvailable: boolean;
@@ -136,7 +138,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
         ? <EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane}}} onView={view => setPlane(view.encounterPlane ?? "Conversation")} presentation={full ? "full" : "side"} onExpression={setExpression} concealed={plane==="Context"||plane==="Composition"}/>
         : plane!=="Context"&&plane!=="Composition" ? <NoAccompanying project={project} onOpen={choose}/> : null}
       {plane==="Composition"&&<Suspense fallback={null}><ExpressionView key={compositionRef??"expression-composition"} initialExpressionRef={compositionRef??(subject.ref?.startsWith("expression:")?subject.ref:undefined)}/></Suspense>}
-      {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying}/>}
+      {plane==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying} bindings={bindings}/>}
     </div>
   </section>;
 }
@@ -159,12 +161,17 @@ function NoAccompanying({project, onOpen}: {project?: string; onOpen: (row: Enco
 
 /** D5/D9 — the Context plane follows the active canvas subject, never a
  * previous subject's rows (keyed by ref) and never a stand-in for it. */
-function ContextPlane({subject, history, historyAvailable, accompanying}: {
+function ContextPlane({subject, history, historyAvailable, accompanying, bindings}: {
   subject: AgentSubject; history?: ReactNode; historyAvailable: boolean; accompanying?: AgentAccompanying;
+  bindings: Record<string, SurfaceBinding>;
 }) {
   const glyph = KIND_GLYPH[subject.kind ?? ""] ?? "file";
   const owner = KIND_OWNER[subject.kind ?? ""] ?? "Central";
   return <div className="agent-context oi-sidecar" key={subject.ref ?? "none"}>
+    <section className="agent-prepared oi-section" data-prepared-host="true">
+      <p className="agent-eyebrow oi-eyebrow">Prepared context · From your selections</p>
+      <PreparedPanel bindings={bindings} accompanying={accompanying}/>
+    </section>
     <p className="agent-eyebrow oi-eyebrow">Current subject · Follows selection</p>
     {subject.ref ? <>
       <div className="agent-subject">

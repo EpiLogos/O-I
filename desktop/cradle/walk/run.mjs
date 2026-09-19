@@ -92,8 +92,6 @@ const SCENARIOS = {
   "explore-sf1": {module:"scenarios/explore-sf1.mjs",kernel:true,aliases:["sf1","explore"]},
   "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},
   "workspace-continuity": {module:"scenarios/workspace-continuity.mjs",kernel:true,aliases:["ws-continuity"]},
-  "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
-  "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
   "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},
   "leave-reenter": {module:"scenarios/leave-reenter.mjs",kernel:true,aliases:["6f"]},
   "day-edit": {module:"scenarios/day-edit.mjs",kernel:true,aliases:["6f2"]},
@@ -365,21 +363,28 @@ async function runScenario(name, { baseUrl }) {
   let bridgeUrl = null;
   let bridgeService = null;
   if (spec.kernel) {
-    bridgeService = spawnService(
-      "walk-bridge",
-      "cargo",
-      [
-        "run",
-        "--quiet",
-        "--manifest-path",
-        join(cradleRoot, "kernel/Cargo.toml"),
-        "--bin",
-        "walk-bridge",
-        "--",
-        `127.0.0.1:${BRIDGE_PORT}`,
-      ],
-      { env: { ...process.env, ...provision?.env } },
-    );
+    // WALK_BRIDGE_BIN reuses an already-built bridge binary. On machines
+    // with a shared CARGO_TARGET_DIR, `cargo run` serializes behind every
+    // other lane's builds for minutes; the artifact is the same binary this
+    // scenario needs, so the runner may reuse it when the environment
+    // points at one.
+    bridgeService = process.env.WALK_BRIDGE_BIN
+      ? spawnService("walk-bridge", process.env.WALK_BRIDGE_BIN, [`127.0.0.1:${BRIDGE_PORT}`], { env: { ...process.env, ...provision?.env } })
+      : spawnService(
+          "walk-bridge",
+          "cargo",
+          [
+            "run",
+            "--quiet",
+            "--manifest-path",
+            join(cradleRoot, "kernel/Cargo.toml"),
+            "--bin",
+            "walk-bridge",
+            "--",
+            `127.0.0.1:${BRIDGE_PORT}`,
+          ],
+          { env: { ...process.env, ...provision?.env } },
+        );
     await waitForHttp(`${BRIDGE_URL}/state`, "the walk bridge", 180_000);
     console.log(`  walk bridge up: ${BRIDGE_URL} (fresh kernel, seq from 1)`);
     bridgeUrl = BRIDGE_URL;

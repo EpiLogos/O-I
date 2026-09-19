@@ -1,4 +1,5 @@
 import {setup as materialSetup} from './material.mjs';
+import {openContextPlane} from "./prepared-helper.mjs";
 import {appendFileSync,readFileSync} from 'node:fs';
 import {createHash} from 'node:crypto';
 import {join} from 'node:path';
@@ -18,24 +19,23 @@ export default async function run({page,baseUrl,channel,check,shot}){
  await frame.locator('h1').dblclick({position:{x:35,y:15}});
  const selected=await frame.locator('h1').evaluate(()=>getSelection().toString());
  check(selected.trim().length>0&&selected.trim()!=='Material study','Rendered HTML supports granular text selection');
- await page.getByRole('button',{name:'Context mode',exact:true}).click();await page.waitForTimeout(400);
- await page.getByRole('button',{name:'Attach selection',exact:true}).click();
- const dialog=page.getByRole('dialog',{name:'Include selected context'});await dialog.waitFor();
- check(await dialog.locator('pre').innerText()===selected,'Opaque HTML frame returns exactly the user-selected text');
- await dialog.getByRole('button',{name:'Close context selection'}).click();
-
- await frame.getByRole('button',{name:'Increment',exact:true}).hover();
- await frame.getByRole('button',{name:'Increment',exact:true}).click();await dialog.waitFor();
- check(await dialog.locator('pre').innerText()==='Increment','Component picker observes a real page button');
- check(await frame.locator('#count').innerText()==='1','Picking a component does not activate the page control');
- check((await dialog.locator('.context-origin').first().innerText()).includes('×'),'Rendered component carries measured bounds');
- await dialog.getByRole('button',{name:'Close context selection'}).click();
- await page.getByRole('button',{name:'Writing mode',exact:true}).click();await page.waitForTimeout(400);
+ // Natural selection: no mode, no chrome — the add action appears at the
+ // selection; the host stages the validated observation in the Context plane.
+ await openContextPlane(page);
+ await frame.getByText('+ Context',{exact:true}).click();
+ const staged=page.locator('[data-prepared-id]').first();await staged.waitFor();
+ check((await staged.locator('.prepared-excerpt').innerText())===selected,'Opaque HTML frame returns exactly the user-selected text');
+ // Ordinary interaction stays live: there is no mode to leave, and acting
+ // on a real control works — its click also clears any text selection,
+ // which is exactly what a natural reading gesture should do.
  await frame.getByRole('button',{name:'Increment',exact:true}).click();
- check(await frame.locator('#count').innerText()==='2','Leaving context mode restores ordinary page interaction');
+ check(await frame.locator('#count').innerText()==='2','Ordinary page interaction stays live without any context mode');
+ // The staged selection carries its measured bounds in the item details.
+ await staged.locator('.prepared-details-toggle').click();await staged.locator('.prepared-details').waitFor();
+ check((await staged.locator('.prepared-details').innerText()).includes('×'),'Rendered selection carries measured bounds');
  await frame.locator('body').hover();await page.mouse.wheel(0,600);await page.waitForTimeout(350);
  check(await frame.locator('body').evaluate(()=>scrollY)>100,'Rendered page still scrolls with hidden scrollbars');
  check(await frame.locator('body').evaluate(el=>getComputedStyle(el).scrollbarWidth)==='none','Rendered page scrollbar chrome is suppressed');
- check(await page.locator('iframe').getAttribute('sandbox')==='allow-scripts allow-forms','Context observation preserves the opaque sandbox without shell authority');
- await shot('rendered-context-and-scroll');
+ const sandbox=await page.locator('iframe').getAttribute('sandbox');check(!!sandbox&&sandbox.includes('allow-scripts')&&sandbox.includes('allow-forms')&&!sandbox.includes('allow-same-origin'),'Context observation preserves the opaque sandbox without shell authority');
+ await shot('rendered-natural-context-and-scroll');
 }

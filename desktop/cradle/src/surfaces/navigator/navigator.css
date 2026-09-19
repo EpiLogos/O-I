@@ -256,14 +256,6 @@ aside.world-navigator[aria-label="World navigator"] { padding: 19px 10px 0; }
 
 /* Wave 7 A2A: the peer-exchange form and its returned difference live in the
  * same document strip — no second architecture. */
-.shared-field-a2a{margin-top:10px;border-top:1px dashed var(--oi-hairline-soft);padding-top:8px}
-.shared-field-a2a-header{display:flex;flex-direction:column;gap:2px;margin-bottom:6px}
-.shared-field-a2a-header small{opacity:.65}
-.shared-field-a2a textarea{font:inherit;padding:4px 6px;border:1px solid var(--oi-hairline);border-radius:4px;background:inherit;color:inherit;width:100%;box-sizing:border-box}
-.shared-field-a2a-send{border:1px solid var(--oi-hairline);border-radius:6px;background:inherit;font:inherit;padding:3px 10px;cursor:pointer}
-.shared-field-a2a-send:hover:not(:disabled){border-color:var(--oi-accent-ink)}
-.shared-field-a2a-send:disabled{opacity:.5;cursor:default}
-.shared-field-a2a-difference p{margin:4px 0}
 
 /* Flows integrate into the project/NOW navigation field (U4.1 §2): rows
  * mirror the encounter rows' rhythm; identity is the owner's FlowRef. */
