@@ -50,6 +50,53 @@
   border: 0;
 }
 
+/* The split handle's visual (the shared resize-handle shape, desktop.css
+ * `.oi-resize-handle`): the gutter stays the quiet shell ground at rest —
+ * the two card edges already draw the seam — and a centred ink line appears
+ * while the handle is hovered, focused or dragged. The hit area reaches
+ * --oi-resize-hit across without moving any layout. Geometry and cursors
+ * stay with shell.css. */
+.pane.split > .split-resizer {
+  position: relative;
+  z-index: 2;
+  background: var(--oi-shell-ground);
+}
+.pane.split > .split-resizer::before {
+  content: "";
+  position: absolute;
+  inset: 0 calc((var(--oi-shell-gutter) - var(--oi-resize-hit)) / 2);
+}
+.pane.split > .split-resizer[aria-orientation="horizontal"]::before {
+  inset: calc((var(--oi-shell-gutter) - var(--oi-resize-hit)) / 2) 0;
+}
+.pane.split > .split-resizer::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: 50%;
+  width: 2px;
+  margin-left: -1px;
+  border-radius: 1px;
+  background: transparent;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.pane.split > .split-resizer[aria-orientation="horizontal"]::after {
+  top: 50%;
+  bottom: auto;
+  left: 0;
+  right: 0;
+  width: auto;
+  height: 2px;
+  margin: -1px 0 0;
+}
+.pane.split > .split-resizer:is(:hover, :focus-visible, :active)::after {
+  background: var(--oi-accent);
+}
+.pane.split > .split-resizer:focus-visible {
+  outline: none;
+}
+
 .pane.group {
   position: relative;
   flex-direction: column;
@@ -115,8 +162,8 @@
   display: inline-flex;
   flex-shrink: 0;
   align-items: center;
-  gap: 6px;
-  padding: 0 35px 0 8px;
+  gap: 7px;
+  padding: 0 30px 0 10px;
   height: 31px;
   border: none;
   border-radius: 0;
@@ -129,12 +176,24 @@
   overflow: hidden;
   white-space: nowrap;
   border-right: 1px solid var(--oi-hairline-soft);
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+/* The kind glyph rests a step quieter than the title and takes ink with it. */
+.tab-entry > .tab > svg {
+  flex: none;
+  color: var(--oi-muted-3);
   transition: color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .tab-entry > .tab.active {
   color: var(--oi-accent-ink);
   background: var(--oi-canvas-ground);
+}
+
+.tab-entry > .tab.active > svg,
+.tab-entry > .tab:hover > svg {
+  color: inherit;
 }
 
 .tab.active::after {
@@ -151,9 +210,13 @@
   color: var(--oi-accent-ink);
 }
 
+.tab-entry > .tab:hover:not(.active) {
+  background: var(--oi-wash);
+}
+
 .tab:focus-visible {
-  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
-  outline-offset: -1px;
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
 }
 
 .tab.drop-before {
@@ -166,23 +229,24 @@
 }
 
 .tab-pin {
+  flex: none;
   color: var(--oi-accent);
   font-size: var(--oi-shell-type-eyebrow);
 }
 
 .tab-entry > .tab-close {
   position: absolute;
-  right: 8px;
+  right: 6px;
   top: 50%;
   transform: translateY(-50%);
   flex: none;
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 21px;
-  height: 24px;
+  width: 20px;
+  height: 20px;
   border: none;
-  border-radius: 3px;
+  border-radius: var(--oi-shell-radius-row);
   background: transparent;
   color: var(--oi-muted-2);
   font-size: var(--oi-shell-type-ui);
@@ -190,6 +254,12 @@
   opacity: 0.45;
   cursor: pointer;
   transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), opacity var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+/* With a hovering pointer an unfocused tab keeps its close control out of
+ * the strip until the tab is approached; touch keeps it faintly present. */
+@media (hover: hover) and (pointer: fine) {
+  .tab-entry > .tab-close { opacity: 0; }
 }
 
 .tab-entry:hover .tab-close,
@@ -201,8 +271,13 @@
 .tab-close:hover,
 .tab-close:focus-visible {
   color: var(--oi-accent-ink);
-  background: var(--oi-wash);
+  background: var(--oi-wash-strong);
   outline: none;
+}
+
+.tab-close:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
 }
 
 /* Pane tools — '+' (open source) and the '⋯' window menu, at the strip's
@@ -210,6 +285,7 @@
 .pane-tools {
   display: flex;
   align-items: center;
+  gap: 1px;
   margin-left: auto;
   flex: none;
   background: var(--oi-pane-bar-ground);
@@ -222,15 +298,15 @@
   display: inline-flex;
   align-items: center;
   justify-content: center;
-  width: 22px;
-  height: 23px;
+  width: 24px;
+  height: 22px;
   padding: 0;
   border: none;
-  border-radius: 4px;
+  border-radius: var(--oi-shell-radius-row);
   background: transparent;
   color: var(--oi-muted-2);
   cursor: pointer;
-  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .strip-open svg,
@@ -243,10 +319,31 @@
 .strip-open:hover,
 .strip-open:focus-visible,
 .pane-tool-menu:hover,
-.pane-tool-menu:focus-visible {
+.pane-tool-menu:focus-visible,
+.pane-tool-menu[aria-expanded="true"],
+.pane-tool-menu[aria-pressed="true"] {
   color: var(--oi-accent-ink);
   background: var(--oi-wash);
   outline: none;
+}
+
+.strip-open:active,
+.pane-tool-menu:active {
+  background: var(--oi-wash-strong);
+}
+
+/* A held tool (an open menu, a pressed toggle) keeps an inset edge so the
+ * state does not rest on the wash alone; the keyboard ring is drawn inside
+ * the strip, which clips anything outside it. */
+.pane-tool-menu[aria-expanded="true"],
+.pane-tool-menu[aria-pressed="true"] {
+  box-shadow: inset 0 0 0 1px var(--oi-hairline);
+}
+
+.strip-open:focus-visible,
+.pane-tool-menu:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
 }
 
 /* ---------------------------------------------------------------------------
@@ -260,6 +357,16 @@
   padding: var(--oi-space-3);
 }
 
+/* Retention tier (owner-approved 2026-09-19): the pane presents one open
+ * tab and keeps its siblings mounted-concealed. The wrapper is layout-
+ * transparent while presented (the body roots keep the sizing they had as
+ * direct children) and genuinely off-screen while concealed — display:none
+ * skips layout and paint, which is what the surfaces' own viewport
+ * suspension laws (MaterialSurface's useSuspend, engine visibility gates)
+ * observe to pause honestly. */
+.surface-retained { display: contents; }
+.surface-retained[hidden] { display: none; }
+
 /* ---------------------------------------------------------------------------
  * Context menu — the canonical-Actions disclosure UI (D15).
  */
@@ -269,23 +376,46 @@
   to { opacity: 1; transform: scale(1); }
 }
 
+/* The menu body is the shared popover (desktop.css `.oi-menu`): a glass
+ * plane with tight rows, a glyph column, mono shortcut hints at the right.
+ * `.ctx-menu` stays self-sufficient because the editor's writing menu
+ * composes it without the grammar class. */
 .ctx-menu {
   position: fixed;
   z-index: var(--oi-z-popover);
-  width: 244px;
-  padding: 7px;
+  width: 232px;
+  padding: 4px;
   background: var(--oi-sidebar-ground);
   border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: 7px;
+  border-radius: var(--oi-shell-radius-menu);
   box-shadow: var(--oi-shadow-menu);
+  font-family: var(--oi-font-sans);
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
   transform-origin: top left;
   animation: ctx-menu-in var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .ctx-menu {
+    background: var(--oi-popover-ground-glass);
+    -webkit-backdrop-filter: blur(var(--oi-popover-blur)) saturate(1.3);
+    backdrop-filter: blur(var(--oi-popover-blur)) saturate(1.3);
+  }
+}
+
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  .ctx-menu { background: var(--oi-sidebar-ground); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+
+.ctx-menu:focus-visible { outline: none; }
+
 .ctx-menu-subject {
   display: block;
-  padding: 6px 9px 9px;
+  padding: 6px 8px 5px;
+  font-family: var(--oi-font-sans);
   font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
   letter-spacing: var(--oi-shell-tracking);
   text-transform: uppercase;
   color: var(--oi-muted-2);
@@ -297,22 +427,26 @@
 .ctx-menu hr {
   border: 0;
   border-top: 1px solid var(--oi-hairline-soft);
-  margin: 5px 0;
+  margin: 4px;
 }
 
 .ctx-item {
   display: flex;
   align-items: center;
-  gap: var(--oi-space-2);
+  gap: 8px;
   width: 100%;
+  min-height: var(--oi-shell-menu-row);
+  box-sizing: border-box;
   text-align: left;
   border: none;
-  border-radius: 5px;
+  border-radius: var(--oi-shell-radius-row);
   background: transparent;
-  padding: 9px;
-  font-size: var(--oi-shell-type-ui);
+  padding: 4px 8px;
+  font-family: inherit;
+  font-size: var(--oi-shell-type-nav);
   color: var(--oi-accent-ink);
   cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .ctx-item-glyph {
@@ -322,6 +456,7 @@
   justify-content: center;
   width: 13px;
   color: var(--oi-muted-2);
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .ctx-item-title {
@@ -329,12 +464,15 @@
   min-width: 0;
   overflow: hidden;
   text-overflow: ellipsis;
+  white-space: nowrap;
 }
 
 .ctx-item kbd {
   flex: none;
-  font: inherit;
-  font-size: var(--oi-shell-type-eyebrow);
+  padding-left: 12px;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  letter-spacing: 0.02em;
   color: var(--oi-muted-2);
 }
 
@@ -344,10 +482,28 @@
   outline: none;
 }
 
+.ctx-item:not([disabled]):hover .ctx-item-glyph,
+.ctx-item:not([disabled]):focus-visible .ctx-item-glyph {
+  color: inherit;
+}
+
+.ctx-item:not([disabled]):active {
+  background: var(--oi-wash-strong);
+}
+
 .ctx-item[disabled] {
   color: var(--oi-muted-2);
-  opacity: 0.35;
+  opacity: 0.4;
   cursor: default;
+}
+
+@media (pointer: coarse) {
+  .ctx-item { min-height: 36px; }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .ctx-menu { animation: none; }
+  .ctx-item, .ctx-item-glyph { transition: none; }
 }
 
 /* ---------------------------------------------------------------------------
@@ -464,99 +620,128 @@
 }
 
 .source-note {
-  padding: var(--oi-space-2);
-  font-size: var(--oi-type-sm);
-  color: var(--oi-foreground);
+  margin: 0;
+  padding: 10px 16px;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
+  color: var(--oi-accent-ink);
+  overflow-wrap: anywhere;
 }
 
 .source-note-muted {
-  color: var(--oi-muted);
+  color: var(--oi-muted-2);
 }
 
-/* The structured conflict: both sides preserved, nothing overwritten. */
+/* The structured conflict: both sides preserved, nothing overwritten. It is
+ * a `role="alert"`, so it already wears the shared refusal shape (left ink
+ * rule on the wash); these rules only lay out its contents. */
 
 .source-conflict {
-  border-top: 1px solid var(--oi-rule);
-  padding: var(--oi-space-2);
+  flex: none;
+  padding: 12px 16px;
   display: flex;
   flex-direction: column;
-  gap: var(--oi-space-2);
+  gap: 10px;
   max-height: calc(var(--oi-space-7) * 6);
   overflow: auto;
-  background: var(--oi-paper);
+  overscroll-behavior: contain;
 }
 
+.desktop-shell .source-conflict[role="alert"] {
+  margin: 0;
+  border-radius: 0;
+  border-top: 1px solid var(--oi-hairline-soft);
+}
+
+.source-conflict p { margin: 0; }
+
 .source-conflict-title {
-  font-size: var(--oi-type-sm);
-  color: var(--oi-foreground);
+  font-size: var(--oi-shell-type-nav);
+  font-weight: 550;
+  color: var(--oi-accent-ink);
 }
 
 .source-conflict-revisions {
   display: flex;
-  gap: var(--oi-space-5);
+  flex-wrap: wrap;
+  gap: 8px 24px;
   margin: 0;
 }
 
-.source-conflict-revisions dt {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
-  letter-spacing: var(--oi-tracking-label);
+.source-conflict-revisions dt,
+.source-conflict-canonical-label {
+  font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
 }
 
 .source-conflict-revisions dd {
-  margin: 0;
-  font-size: var(--oi-type-sm);
-  color: var(--oi-foreground);
+  margin: 2px 0 0;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-accent-ink);
+  overflow-wrap: anywhere;
 }
 
-.source-conflict-sides {
-  font-size: var(--oi-type-xs);
+.source-conflict-sides,
+.source-conflict-hint {
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
   color: var(--oi-muted);
 }
 
 .source-conflict-canonical {
   display: flex;
   flex-direction: column;
-  gap: var(--oi-space-1);
-}
-
-.source-conflict-canonical-label {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
-  letter-spacing: var(--oi-tracking-label);
+  gap: 5px;
 }
 
 .source-conflict-canonical-body {
   margin: 0;
-  padding: var(--oi-space-2);
-  border: 1px solid var(--oi-rule);
-  background: var(--oi-surface);
+  padding: 8px 10px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-canvas-ground);
   color: var(--oi-foreground);
-  font-size: var(--oi-type-xs);
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.55;
   white-space: pre-wrap;
   overflow: auto;
   max-height: calc(var(--oi-space-7) * 3);
 }
 
-.source-reread {
+/* Hairline text actions in the shared `.oi-action` register. */
+.source-reread,
+.source-history button {
   align-self: flex-start;
-  border: 1px solid var(--oi-rule);
-  background: var(--oi-surface);
+  display: inline-flex;
+  align-items: center;
+  min-height: 24px;
+  padding: 2px 9px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 6px;
+  background: var(--oi-composer-ground);
   color: var(--oi-foreground);
-  font-size: var(--oi-type-sm);
-  padding: var(--oi-space-1) var(--oi-space-2);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
   cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .source-reread:hover,
-.source-reread:focus-visible {
-  box-shadow: inset 2px 0 0 var(--oi-focus);
-  outline: none;
+.source-reread:focus-visible,
+.source-history button:hover:not(:disabled),
+.source-history button:focus-visible {
+  background: var(--oi-wash);
+  border-color: var(--oi-accent-soft);
 }
 
-.source-conflict-hint {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
+.source-history button:disabled {
+  color: var(--oi-muted-2);
+  cursor: default;
 }
 
 /* The sources index: real participating sources, honest unavailability. */
@@ -566,33 +751,44 @@
   flex-direction: column;
   height: 100%;
   min-width: 0;
-  padding: var(--oi-space-2);
-  gap: var(--oi-space-2);
+  box-sizing: border-box;
+  padding: 16px 18px;
+  gap: 10px;
   overflow: auto;
+  overscroll-behavior: contain;
 }
 
 .sources-head {
   display: flex;
   align-items: baseline;
-  gap: var(--oi-space-3);
+  gap: 10px;
+  padding: 0 8px;
 }
 
+.sources-head p { margin: 0; }
+
 .sources-title {
-  font-size: var(--oi-type-title);
-  color: var(--oi-foreground);
+  font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
+  letter-spacing: var(--oi-shell-tracking);
+  text-transform: uppercase;
+  color: var(--oi-muted-2);
 }
 
 .sources-project {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
-  letter-spacing: var(--oi-tracking-label);
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
 }
 
 .sources-unavailable {
-  font-size: var(--oi-type-sm);
+  margin: 0;
+  padding: 8px 10px;
+  border: 1px dashed var(--oi-hairline);
+  border-radius: 6px;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
   color: var(--oi-muted);
-  padding: var(--oi-space-2);
-  border: 1px solid var(--oi-rule);
+  overflow-wrap: anywhere;
 }
 
 .sources-list {
@@ -601,56 +797,73 @@
   padding: 0;
   display: flex;
   flex-direction: column;
-  gap: var(--oi-space-1);
+  gap: 1px;
 }
 
+/* A source row is the shared dense row: path in mono, its treatment and
+ * revision as trailing meta. */
 .source-row-open {
   display: flex;
-  align-items: baseline;
-  gap: var(--oi-space-3);
+  align-items: center;
+  gap: 10px;
   width: 100%;
+  min-height: var(--oi-shell-row-dense);
+  box-sizing: border-box;
   text-align: left;
-  border: 1px solid transparent;
+  border: 0;
+  border-radius: var(--oi-shell-radius-row);
   background: transparent;
-  padding: var(--oi-space-1) var(--oi-space-2);
-  font-size: var(--oi-type-sm);
-  color: var(--oi-foreground);
+  padding: 3px 8px;
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
   cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 
 .source-row-open:hover,
 .source-row-open:focus-visible {
-  border-color: var(--oi-rule);
-  background: var(--oi-surface);
-  outline: none;
+  background: var(--oi-wash);
+}
+
+.source-row-open:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-accent);
+  outline-offset: calc(0px - var(--oi-focus-ring-width));
 }
 
 .source-row-path {
   flex: 1;
   min-width: 0;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
   overflow-wrap: anywhere;
 }
 
 .source-row-treatment,
 .source-row-revision {
-  font-size: var(--oi-type-xs);
-  color: var(--oi-muted);
-  letter-spacing: var(--oi-tracking-label);
+  flex: none;
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+  white-space: nowrap;
 }
 
-.source-save { font: inherit; border: 1px solid var(--oi-rule); background: var(--oi-surface); color: var(--oi-foreground); padding: var(--oi-space-1) var(--oi-space-2); cursor: pointer; margin-left: auto; }
-.source-save:disabled { color: var(--oi-muted); cursor: default; }
-.source-save:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-focus); }
+.source-row-revision {
+  font-family: var(--oi-font-mono);
+}
 
-.source-history button { font: inherit; color: var(--oi-muted); border: 1px solid var(--oi-rule); background: var(--oi-surface); padding: var(--oi-space-2); cursor: pointer; }
-.source-history { padding: var(--oi-space-4); border-top: 1px solid var(--oi-rule); overflow: auto; max-height: 35vh; flex-shrink: 0; }
-.source-history-heading { display: flex; align-items: center; justify-content: space-between; }
-.source-history h2 { font: inherit; margin: 0; }
+.source-save:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); }
+
+.source-history { flex-shrink: 0; max-height: 35vh; padding: 12px 16px; border-top: 1px solid var(--oi-hairline-soft); overflow: auto; overscroll-behavior: contain; font-size: var(--oi-shell-type-ui); }
+.source-history-heading { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.source-history h2 { margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 550; color: var(--oi-accent-ink); }
+.source-history .source-note { padding: 4px 0 8px; }
 .source-history-rows { list-style: none; margin: 0; padding: 0; }
-.source-history-rows li { padding: var(--oi-space-3) 0; border-bottom: 1px solid var(--oi-rule); }
-.source-history time { margin-left: var(--oi-space-4); color: var(--oi-muted); font-size: var(--oi-type-sm); }
-.source-history details { margin-top: var(--oi-space-2); font-size: var(--oi-type-sm); }
-.source-history dd { overflow-wrap: anywhere; }
+.source-history-rows li { padding: 8px 0; border-bottom: 1px solid var(--oi-hairline-soft); }
+.source-history-rows li:last-child { border-bottom: 0; }
+.source-history time { margin-left: 10px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-meta); font-variant-numeric: tabular-nums; }
+.source-history details { margin-top: 6px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
+.source-history summary { cursor: pointer; }
+.source-history dd { margin: 0 0 4px; overflow-wrap: anywhere; font-family: var(--oi-font-mono); }
+.source-history dt { color: var(--oi-muted-2); }
 
 /* Owner cleanup: tabs scroll independently; pane actions stay within reach. */
 .tab-strip { overflow: hidden; }
@@ -659,13 +872,21 @@
 .pane-tools { margin-left: 0; }
 .pane.group.focused > .tab-strip { box-shadow: none; }
 .tab.active::after { display: none; }
-.pane-status { flex: none; min-height: 18px; display: flex; align-items: center; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); }
+.pane-status { flex: none; min-height: 18px; display: flex; align-items: center; gap: 8px; padding: 0 10px; background: var(--oi-canvas-ground); border-top: 1px solid var(--oi-hairline-soft); font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; overflow: hidden; }
 
 /* A status edge expands in flow, gently making room for its content. */
 .pane.group{position:relative;overflow:hidden}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.browser-status),.pane.group.focused > .pane-footer{position:relative;inset:auto;flex:none;z-index:15;height:3px;min-height:3px;padding-top:0;padding-bottom:0;overflow:hidden;transform:none;background:var(--oi-canvas-ground);border-top:1px solid var(--oi-hairline-soft);transition:height 420ms cubic-bezier(.22,.7,.25,1),min-height 420ms cubic-bezier(.22,.7,.25,1)}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.browser-status):not(:hover):not(:focus-within)>*{visibility:hidden}
-.pane.group.focused :is(.editor-footer,.terminal-footer,.browser-status):is(:hover,:focus-within),.pane.group.focused > .pane-footer:hover{height:24px;min-height:24px}
+/* Pane footers follow focus: unfocused panes keep their footers up; the
+   newly focused pane's footer drops — now FULLY (height 0, no 3px
+   residue strip). No hover reveal: the pane's bottom-right dot pins the
+   footer up ([data-footer-up]) for as long as it is pressed. */
+.pane.group.focused:not([data-footer-up]) :is(.editor-footer,.terminal-footer,.browser-status),.pane.group.focused:not([data-footer-up]) > .pane-footer{position:relative;inset:auto;flex:none;z-index:15;height:0;min-height:0;padding-top:0;padding-bottom:0;border-top:none;overflow:hidden;transform:none;background:var(--oi-canvas-ground);transition:height 420ms cubic-bezier(.22,.7,.25,1),min-height 420ms cubic-bezier(.22,.7,.25,1)}
+.pane.group.focused:not([data-footer-up]) :is(.editor-footer,.terminal-footer,.browser-status)>*{visibility:hidden}
+.desktop-shell .pane-footer-dot{position:absolute;right:7px;bottom:5px;width:6px;height:6px;padding:0;border:1px solid var(--oi-muted-2);border-radius:999px;background:transparent;cursor:pointer;z-index:16;transition:border-color var(--oi-motion-ui) var(--oi-motion-ease-out),background var(--oi-motion-ui) var(--oi-motion-ease-out),transform var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.desktop-shell .pane-footer-dot:hover{border-color:var(--oi-accent-ink);transform:scale(1.25)}
+.desktop-shell .pane-footer-dot[aria-pressed="true"]{background:var(--oi-accent-ink);border-color:var(--oi-accent-ink)}
+/* Footer content keeps clear of the corner dot. */
+.desktop-shell .pane.group :is(.editor-footer,.terminal-footer,.browser-status),.desktop-shell .pane.group > .pane-footer{padding-right:24px}
 .surface-body,.surface-body *{scrollbar-width:none}.surface-body::-webkit-scrollbar,.surface-body *::-webkit-scrollbar{display:none;width:0;height:0}
 
 /* Writing surfaces already own a footer: keep one bottom status band. */
@@ -675,10 +896,10 @@
   .pane.group, .pane-footer, .editor-footer, .browser-status, .terminal-footer { transition-duration: 0.01ms !important; }
 }
 
-.tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out)}
-.pane[data-tab-focus="true"] > .tab-strip{height:0;min-height:0;overflow:hidden;border:0;padding-top:0;padding-bottom:0}
-.pane .tab-focus-reveal{position:absolute;right:35px;top:0;width:24px;height:5px;opacity:0;z-index:25;border:0;background:var(--oi-canvas-ground);color:var(--oi-muted-2);cursor:pointer;transition:height var(--oi-motion-ui),opacity var(--oi-motion-ui)}
-.pane .tab-focus-reveal:is(:hover,:focus-visible){height:24px;opacity:1}
+/* Tab hiding has ONE law: the unpinned reveal (see the tab-presentation
+ * section below) — the old `data-tab-focus` fold and its `.tab-focus-reveal`
+ * button are gone. `data-tab-focus` only marks the frame's tab focus; it
+ * never hides the bar, so the two mechanisms can no longer fight. */
 
 /* The die face of a native Day document: the supplied shell projected with
  * the owner's canonical payload, read-only, beside the ordinary strips.
@@ -693,28 +914,30 @@
   background: var(--oi-canvas-ground);
 }
 
+/* The Rendered / Source toggle composes the shared `.oi-segment`; these
+ * rules only seat it in the editor's command line, whose own button rule
+ * would otherwise size the segments as toolbar buttons. */
 .source-view-toggle {
-  display: inline-flex;
-  gap: 0;
   margin-right: 8px;
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: 6px;
-  overflow: hidden;
 }
-.source-view-toggle button {
-  border: none;
-  border-radius: 0;
-  padding: 2px 10px;
-  font-size: var(--oi-shell-type-body);
+.editor-frame .editor-command-line .source-view-toggle > button {
+  height: calc(var(--oi-shell-segment) - 6px);
+  padding: 0 8px;
+  border-radius: var(--oi-shell-radius-row);
+  font-size: var(--oi-shell-type-ui);
 }
-.source-view-toggle button[aria-selected="true"] {
+.editor-frame .editor-command-line .source-view-toggle > button[aria-selected="true"] {
+  color: var(--oi-accent-ink);
   background: var(--oi-wash);
+  box-shadow: inset 0 0 0 1px var(--oi-hairline);
 }
 
 .die-face-unavailable,
 .die-face-loading {
-  padding: 15px;
-  font-size: var(--oi-shell-type-body);
+  margin: 0;
+  padding: 14px 16px;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
   color: var(--oi-muted-2);
 }
 
@@ -733,13 +956,152 @@
   color: var(--oi-muted-2);
 }
 .die-face-sync p { margin: 2px 0; }
-.die-face-sync-saving { color: var(--oi-ink); }
-.die-face-sync-refused { color: var(--oi-ink); }
+.die-face-sync-saving { color: var(--oi-accent-ink); }
+.die-face-sync-refused { color: var(--oi-accent-ink); font-weight: 500; }
 .source-reread-day {
   margin-right: 8px;
-  font-size: var(--oi-shell-type-body);
 }
 /* The opening gates interaction without changing the workspace's layout. */
 .oi-workspace-mount { display: contents; }
 /* Match the opening before its JavaScript or native field can paint. */
 body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-ground); }
+
+/* ---------------------------------------------------------------------------
+ * Tab presentation — the pin model (LayoutState.tabPresentation,
+ * workspace/mode.ts). Pinned horizontal is the strip above; pinned vertical
+ * is a resizable list beside the body; unpinned folds the tabs to a slim
+ * reveal edge.
+ *
+ * ONE hiding law: only an unpinned pane hides its tabs, and it follows the
+ * workspace footer's reveal grammar (.workspace-footer-edge, shell.css) — a
+ * hairline edge at rest that opens IN FLOW on hover or focus-within (the
+ * surface gives room; nothing overlays) and collapses when they leave. The
+ * reveal zone is generous exactly where the tab icons live: the full top
+ * edge with extra depth over the pane tools (horizontal geometry), the
+ * bottom of the strip region (vertical geometry — where the pane tools now
+ * sit). Nothing about a tab changes but where it is drawn: activation,
+ * close, pin, drag, the context menu and the keyboard map are the strip's
+ * own.
+ */
+
+/* The pin glyph reads the pane's state: upright pinned vertical (fixed to the
+ * left edge), rotated flat pinned horizontal, tilted off unpinned. */
+.pane-tool-pin svg { transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.pane-tool-pin[data-tab-presentation="pinned-horizontal"] svg { transform: rotate(-90deg); }
+.pane-tool-pin[data-tab-presentation="unpinned"] svg { transform: rotate(45deg); opacity: 0.7; }
+
+/* Vertical presentation — pinned, or unpinned revealing in the vertical
+ * geometry: the strip is the pane's left column (the persisted
+ * LayoutState.tabListWidth arrives as the pane's --tab-list-width), and the
+ * pane tools sit at the column's foot so the icons live exactly where the
+ * vertical reveal zone waits. */
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) { display: grid; grid-template-rows: minmax(0, 1fr) auto; }
+.pane.group[data-tab-presentation="pinned-vertical"] { grid-template-columns: var(--tab-list-width, clamp(132px, 22%, 208px)) minmax(0, 1fr); }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip { grid-column: 1; grid-row: 1 / span 2; position: relative; z-index: 26; flex-direction: column; align-items: stretch; height: auto; min-height: 0; min-width: 0; padding: 0; overflow: hidden; border-bottom: 0; border-right: 1px solid var(--oi-hairline-soft); }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .surface-body { grid-column: 2; grid-row: 1; min-width: 0; }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .pane-status { grid-column: 2; grid-row: 2; }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip > .pane-tools { justify-content: flex-end; height: var(--oi-shell-tabbar); min-height: var(--oi-shell-tabbar); margin: 0; padding: 0 4px; border-top: 1px solid var(--oi-hairline-soft); }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip > .tab-scroll { flex: 1; min-height: 0; flex-direction: column; overflow-x: hidden; overflow-y: auto; overscroll-behavior: contain; padding: 4px; gap: 1px; }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry { display: flex; flex: none; width: 100%; }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab { flex: 1; min-width: 0; max-width: none; height: 28px; padding: 0 28px 0 8px; border-right: 0; border-radius: 5px; }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab.active { background: var(--oi-wash); }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab-entry > .tab-close { right: 4px; }
+.pane.group:is([data-tab-presentation="pinned-vertical"], [data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) .tab.drop-before { box-shadow: inset 0 2px 0 var(--oi-accent); }
+
+/* Unpinned, horizontal geometry: the bar folds to a hairline band along the
+ * pane's top and opens in flow on approach — the surface shrinks, nothing
+ * overlays. Focus-within keeps it open (the footer's own law), so a keyboard
+ * user never loses their place inside the folded strip. */
+.pane.group[data-tab-presentation="unpinned"][data-tab-orientation="horizontal"] > .tab-strip { position: relative; z-index: 26; height: 0px; min-height: 0; padding: 0; border-bottom-width: 0; overflow: hidden; transition: height var(--oi-motion-ui) var(--oi-motion-ease-out), min-height var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.pane.group[data-tab-presentation="unpinned"][data-tab-orientation="horizontal"]:is(:has(> .tab-reveal-zone:hover), :has(> .tab-strip:hover), :has(> .tab-strip :focus-within)) > .tab-strip { height: var(--oi-shell-tabbar); min-height: var(--oi-shell-tabbar); padding: 0 4px; }
+
+/* Unpinned, vertical geometry: the column folds to a hairline edge and the
+ * grid track itself re-opens in flow. */
+.pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { grid-template-columns: 0px minmax(0, 1fr); transition: grid-template-columns var(--oi-motion-plane) var(--oi-motion-ease-out); }
+.pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { border-right-width: 0; }
+.pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"]:is(:has(> .tab-reveal-zone:hover), :has(> .tab-strip:hover), :has(> .tab-strip :focus-within)) { grid-template-columns: var(--tab-list-width, clamp(132px, 22%, 208px)) minmax(0, 1fr); }
+
+/* The window-corner reserve (shell.css) is a horizontal-strip concern — the
+ * shared window row's cutouts. A vertical or folded list has no top edge in
+ * that row, and its border-box could never shrink below that padding, so the
+ * folded 6px track would stay 39px wide. The vertical strip's padding is its own. */
+.desktop-shell .desktop-centre .workbench .pane.group:is([data-tab-presentation="pinned-vertical"],[data-tab-presentation="unpinned"][data-tab-orientation="vertical"]) > .tab-strip { padding: 0; }
+
+/* A dedicated mode stands full screen: its own surface, no pane/tab chrome.
+ * The window-corner attribute carries the same top cutouts a tabbed pane
+ * gets, so a dedicated mode never reads as an incomplete page. */
+.mode-stage { flex: 1; min-width: 0; min-height: 0; display: flex; flex-direction: column; background: var(--oi-canvas-ground); overflow: auto; scrollbar-width: none;
+  /* Owner refinement 2026-09-18: the centre fixture wears the same card as
+   * the Central workbench pane — canvas ground, hairline bevel, one radius —
+   * so the chrome is coherent whatever mode holds the centre. */
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius); }
+.mode-stage::-webkit-scrollbar { display: none; }
+/* Children keep their natural height against a full-stage floor: short
+ * surfaces still fill the stage, tall ones (Factory's desk sections) grow
+ * and THIS stage is their scroll owner. */
+.mode-stage > * { flex: none; min-width: 0; min-height: 100%; }
+
+/* Mode-centre retention (surface/retention.tsx): the shell's hidden park
+ * layer owns no box; a parked container is display:none — genuinely
+ * off-screen, which is what the surfaces' own viewport suspension laws
+ * observe. When an outlet adopts the container, both wrappers are
+ * layout-transparent (display:contents), so the centre's own root element
+ * keeps the exact sizing and flow it had as the stage's/tabpanel's direct
+ * child — the depth-matched rules below restore the two child-combinator
+ * laws the extra wrappers would otherwise hide from `.mode-stage > *` and
+ * `.mode-stage > main`. */
+.mode-centre-retention { display: none; }
+.retained-centre-outlet, .retained-centre-host { display: contents; }
+.mode-stage .retained-centre-outlet .retained-centre-host > * { flex: none; min-width: 0; min-height: 100%; }
+.desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > * { width: 100%; }
+.desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > main { padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
+
+/* The reveal zone: an invisible, generous approach area rendered only while
+ * unpinned (Workbench.tsx) — a pseudo-element cannot carry :hover. It sits
+ * beneath the strip (z 25 < 26) so an open bar is never blocked by it. */
+.pane.group > .tab-reveal-zone { position: absolute; z-index: 25; }
+/* Horizontal: the full top edge, with extra depth over the pane-tool icons. */
+.pane.group > .tab-reveal-zone[data-orientation="horizontal"] { top: 0; left: 0; right: 0; height: 8px; }
+.pane.group > .tab-reveal-zone[data-orientation="horizontal"]::after { content: ""; position: absolute; top: 0; right: 0; width: 132px; height: 32px; }
+/* Vertical: the bottom of the strip region, at the column's full open width. */
+/* Owner correction 2026-09-18: the vertical reveal answers along the FULL
+ * height of the drawer's edge — one narrow invisible band, not a pocket at
+ * the foot. When the drawer stands open the strip (z 26) covers the band. */
+.pane.group > .tab-reveal-zone[data-orientation="vertical"] { left: 0; top: 0; bottom: 0; width: 14px; height: auto; }
+
+/* The vertical list's width separator (the .region-resizer grammar,
+ * shell.css): a transparent hit area on the strip's inner edge whose
+ * hairline inks on approach; the geometry it moves is the pane's
+ * --tab-list-width. */
+.pane.group > .tab-list-resizer { position: absolute; top: 0; bottom: 0; left: calc(var(--tab-list-width, clamp(132px, 22%, 208px)) - 4px); width: 9px; cursor: col-resize; z-index: 27; touch-action: none; background: transparent; }
+.pane.group > .tab-list-resizer::after { content: ""; position: absolute; top: 0; bottom: 0; left: 4px; width: 1px; background: transparent; transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.pane.group > .tab-list-resizer:is(:hover, :focus-visible, :active)::after { background: var(--oi-ink); }
+.pane.group > .tab-list-resizer:focus-visible { outline: none; }
+
+/* The window-corner pane gives its top band to the window controls and the
+ * region toggles (shell.css cutouts): the list starts beneath that band. */
+@media (min-width: 760px) and (pointer: fine) {
+  /* shell.css reserves strip padding for the corner controls (including a
+   * :has() reservation for the collapsed agent toggle); a list column is not
+   * under the right corner, so it gives none of its width away. With the
+   * tools at the column's foot, the list's tabs start below the controls'
+   * cut band instead of beside them. */
+  .desktop-shell [data-window-corner="true"][data-tab-presentation="pinned-vertical"] > .tab-strip,
+  .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane[data-tab-presentation="pinned-vertical"] > .tab-strip,
+  .desktop-shell [data-window-corner="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { padding: 0; }
+  .desktop-shell [data-window-corner="true"][data-tab-presentation="pinned-vertical"] > .tab-strip > .tab-scroll,
+  .desktop-shell [data-window-corner="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip > .tab-scroll { padding-top: var(--oi-shell-tabbar); }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .pane.group[data-tab-presentation="unpinned"] > .tab-strip,
+  .pane.group[data-tab-presentation="unpinned"][data-tab-orientation="vertical"] { transition: none; }
+}
+
+/* The repeated-failure fallback (Cradle.tsx FrameBoundary): a quiet bottom
+   bar, never a whole-page screen — the window stays open, clicking anywhere
+   reloads the workspace. */
+.oi-frame-fallback{ position: fixed; inset: auto 0 0 0; display: flex; flex-direction: column; gap: 4px; padding: 10px 16px; border-block-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-surface); cursor: pointer; z-index: 100; }
+.oi-frame-fallback p{ margin: 0; font-size: var(--oi-shell-type-ui); }
+.oi-frame-fallback small{ color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); overflow-wrap: anywhere; }
