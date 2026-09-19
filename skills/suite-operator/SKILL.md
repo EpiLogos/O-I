@@ -1,6 +1,6 @@
 ---
 name: oi-suite-operator
-description: Use when operating a composed O:I World, reconciling cross-product work, upgrading a developer suite, or recovering from installation, provider or session failure. Carry one coherent operation and Return through native owners; ordinary single-product work need not trigger a whole-suite audit.
+description: Use when operating a composed O:I World, adopting it from an existing harness conversation, reconciling cross-product work, upgrading a developer suite, or recovering from installation, provider or session failure. Carry one coherent operation and Return through native owners; ordinary single-product work need not trigger a whole-suite audit.
 ---
 
 # O:I suite operator
@@ -45,6 +45,45 @@ profile from remembered prose. An Actuation WorldBinding/root determination
 establishes Root Agency separately. AIKit owns Skill/METHOD registration, trust,
 composition and projection. A Method is the same Skill with a description
 beginning `METHOD:`, not another artifact.
+
+## Harness-first adoption and current-cut entry
+
+For a request made in an existing harness, read
+`docs/experience/HARNESS-FIRST-ADOPTION.md` at this Skill's source revision.
+Its source module belongs to the existing #65 map. Resolve the reference from
+its owner when a projected Skill has no sibling docs; an explicit bootstrap
+read is not proof that normal discovery/loading works.
+
+Receive the task in the current tool; recognise the actual edition, Project,
+native source/configuration and permissions. Explain the proposed Central,
+Actuation and AIKit participation and its reversible changes in human language.
+Existing compatible products can be retained. Central owns source/Project
+binding or deliberate migration; AIKit owns native practice/adapter projection.
+A default SkillSet is not an AgentSet: explain real existing Guardian definitions
+and defaults separately, and do not invoke them merely by installing practice.
+
+Inspect supported hooks and their actual activation timing. Preserve foreign
+configuration and make repeats idempotent. A written projection is not a loaded
+instruction: use the target's real reload/next-session/restart route, preserve
+continuation and verify a useful task. An unsupported edition gets the owner SDK,
+authoring Skill and conformance route under separate development authority.
+External retained work and O:I-launched SessionSpaces are both legitimate;
+only actual bindings and effects establish session, Stream or Factory ancestry.
+
+For an existing-world update, read `docs/INSTALL-UPDATE-FLOW.md` and current
+native help before acting. This is the update authority, distinct from
+`docs/INSTALL.md` for a genuinely fresh bootstrap. Resolve intended committed
+cuts first; the updater archives the selected Work checkout's committed HEAD,
+not its uncommitted changes and not necessarily accepted main. Use scoped
+`oi update --apply` selection where scope is bounded, with real plan/receipt
+and companion-artifact checks. Account separately for running residents.
+Preserve any held products, app generation, active work and private source
+through update and rollback; an unscoped command must not widen the commission.
+
+Use one reusable code worktree per coherent feature/development line, not per
+agent or session. Share the line with explicit file claims and serial Git/index
+operations. Disposable test worlds and isolated build outputs are separate
+material allocations, not reasons to create another code branch for every actor.
 
 ## Ordinary operating procedure
 
@@ -99,9 +138,9 @@ This is an executable procedure over the same owners, not a new runtime.
    other chat the human must reopen. Preserve active writers; no repeated census
    or manual A–E dependency relay.
 4. Reconcile authorised branches and squash/rebase ancestry while preserving
-   dirty/untracked work and unique commits. Use isolated acceptance worktrees
-   and isolated build outputs or serial builds. Verify the final accepted
-   revisions; label any explicitly pinned candidate cut as candidate.
+   dirty/untracked work and unique commits. Reuse feature-line worktrees;
+   isolate test material/build outputs without a worktree per agent or session.
+   Verify final accepted revisions; label an explicitly pinned candidate as such.
 5. Build and test source operations wherever tooling is available, using normal
    CI when needed. Temporary Worlds, actual Git and controlled protocol providers
    establish their scoped evidence. Missing local credentials or private Control
