@@ -1,0 +1,39 @@
+name: Configuration setup and recovery
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/configuration/**'
+      - 'desktop/cradle/tests/configuration-setup.test.mjs'
+      - 'desktop/cradle/walk/configuration-setup.test.mjs'
+      - '.github/workflows/configuration-setup.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: configuration-setup-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  controlled-interaction:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    defaults:
+      run:
+        working-directory: desktop/cradle
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - run: npm ci --no-audit --no-fund
+      - run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-setup.test.mjs
+      - run: npx tsc --noEmit
+      - run: npx playwright install --with-deps chromium webkit
+      - run: node walk/configuration-setup.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: configuration-setup-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/configuration-setup
+          if-no-files-found: warn
