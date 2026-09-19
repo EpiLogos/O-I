@@ -1,0 +1,143 @@
+{
+  "purpose": "Source-mapped Vāk Expression craft under O-I#65, not a new campaign, runtime schema or capability registry.",
+  "story_source": "docs/experience/EXPRESSION-FIELD.md",
+  "families": [],
+  "standing": "owner-directed intended-experience clarification, 2026-09-19; native TypeScript admission, role loading and live tool support require execution evidence",
+  "runtime_or_human_acceptance": false,
+  "obligation_sources": {
+    "vakcraft65": {
+      "source_ref": "docs/experience/EXPRESSION-FIELD.md#9-vāk-authored-craft-real-participants-and-live-repertoire",
+      "issue": "https://github.com/EpiLogos/O-I/issues/65",
+      "implementation_wayfinder": "https://github.com/EpiLogos/QL-MEF/blob/main/docs/integrations/epi-logos/VAK-EXPRESSION-WORKFLOW-WAYFINDER.md",
+      "policy": "Read complete EF stories and the source-owned S′/C′/role field; the compact TypeScript specimen is not the full Vāk registry or a shipped SDK. Current author correction separates lean runtime instruction, typed undertaking, live faculties and development records."
+    }
+  },
+  "required_obligation_ids": [
+    "vakcraft65:lean-language",
+    "vakcraft65:first-source-stamp",
+    "vakcraft65:real-participants",
+    "vakcraft65:live-faculties",
+    "vakcraft65:curated-invocation",
+    "vakcraft65:performed-return",
+    "vakcraft65:joined-experience"
+  ],
+  "obligations": [
+    {
+      "id": "vakcraft65:lean-language",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §9.1; QL Vāk workflow §§0,3,VW3",
+      "requirement": "A fresh runtime participant receives concise source-qualified Vāk/role guidance and current discovery, rather than development notes or a frozen catalogue.",
+      "story_ids": ["PX01", "PX02", "GV03", "GV05"],
+      "required_evidence": ["C", "P"],
+      "required_branches": [
+        "Preserve exact CPF/CT/CP/CF/CFP/CS, source passages and full 109-entry access; no generic agent recipe or compact-card-as-full-language substitution.",
+        "Move issue history, build/debug/readiness prose out of runtime instruction while retaining useful maintenance/formal-operation Skills in their proper office.",
+        "Verify actual child source selection, projection, loading, trigger/near-miss and useful use; parent context and file existence prove neither.",
+        "A Method remains a Skill whose description begins METHOD:; a missing live tool is an owner dependency rather than more prompt text."
+      ]
+    },
+    {
+      "id": "vakcraft65:first-source-stamp",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §9.2; QL Vāk workflow §§1–2,VW1",
+      "requirement": "A readable TypeScript Vāk definition becomes attributable native workflow ground before the commissioned Factory undertaking acts.",
+      "story_ids": ["DV02", "DV03", "GV03", "UI04"],
+      "required_evidence": ["D", "C", "P"],
+      "required_branches": [
+        "Lower through existing QL bindings and native Factory WorkflowSource/CompiledWorkflow, preserving source/import/compiler/native semantic digests and subject/whole/Return.",
+        "No second scheduler or copied authority/store; actual bodies/tools/currentness and permissions resolve independently at dispatch.",
+        "Restricted deterministic source admission: no ambient network, environment, clock, arbitrary eval or side effects while merely compiling.",
+        "Preserve harmless-source versus semantic-change identity, invalid composition, missing role/capability, revision conflict and genuine stamped recomposition.",
+        "Provider-neutral native source can project to Claude or other admitted bodies; the person may commission in natural language without writing TypeScript."
+      ]
+    },
+    {
+      "id": "vakcraft65:real-participants",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §9.3; QL Vāk workflow §4,VW3–4",
+      "requirement": "Declared roles correspond to actual selectively prepared participants and attributable contributions, not invented names or one model impersonating a group.",
+      "story_ids": ["AG01", "AG03", "AG04", "AG07", "AG09", "UI04"],
+      "required_evidence": ["C", "P"],
+      "required_branches": [
+        "Preserve the constitutional seven hosted by Anima and six existing specialists; Aletheia is the Return organ, not an eighth peer, and Techne stays Pleroma's atomic-skill substrate.",
+        "Each selected participant has native identity/source, delegation purpose, limited context, actual tools/Skills, effects, body requirement, return and stop bounds.",
+        "Available field is not compulsory fan-out; verify actual plural work when required, exact predecessor material for chains and independent fusion/verification.",
+        "Target-native delegation/nesting limits and lost providers are explicit; model change does not remint the semantic actor or hide a failed child.",
+        "Human can inspect purpose/result and interrupt without acting as the inter-agent relay."
+      ]
+    },
+    {
+      "id": "vakcraft65:live-faculties",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §9.4; QL Vāk workflow §5,VW2",
+      "requirement": "The agent dynamically discovers work and current material schemas, performs bounded native edits and observes the actual medium through the shared application.",
+      "story_ids": ["PX01", "KN02", "UI01", "UI05", "UI06", "AG09"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "AIKit repertoire resolution and O:I state/action/observation are reused; no second index, renderer, simulation/audio owner or arbitrary unchecked dispatcher.",
+        "Actual full intended authoring coverage: objects/pins/forms, sources/layers, forces/material/topology/resonance, space/camera, entity/scene sequence, automation/manual takeover, capture/placement.",
+        "Inspect scope, units, hard bounds, driver/blend, base/evaluated state, identity, currentness and unavailable controls from native metadata rather than stale Skill tables.",
+        "Read/search, preview, edit, perform, save and publication remain different effects; invoke rechecks exact ref/revision and current authority.",
+        "Preserve batch atomicity, concurrent human edits, meaningful interruption and actual engine observation; accepted JSON or a debug-only route does not prove the public faculty."
+      ]
+    },
+    {
+      "id": "vakcraft65:curated-invocation",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §9.5; QL Vāk workflow §6,VW5",
+      "requirement": "A curated work or practice can be found by name/action/mood/gesture and reused flexibly in a later context without losing identity, lineage or permitted variation.",
+      "story_ids": ["PX05", "PX04", "KN01", "KN09", "UI01", "UI02"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "Keep Expression/Profile/Scene/Edition, Method/Action practice and cue as related native objects, not duplicate stores or identical roles.",
+        "Named work remains ordinary authoring; proven praxis uses existing = name/Inbox/Skill/Method/proof/catalogue and source-owner decisions.",
+        "Fresh agent resolves and performs on changed subject/parameters/placement, preserves original edition and creates a new occasion rather than replaying one canned answer.",
+        "Test ambiguous/colliding names, stale source, unavailable faculty, near-miss and deliberate gesture binding; mood is expressive input, not a psychological diagnosis or universal physics mapping.",
+        "Repertoire stays source-bound and expandable; semantic search or familiarity never grants execution or publication authority."
+      ]
+    },
+    {
+      "id": "vakcraft65:performed-return",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §§9.5–9.6; QL Vāk workflow VW4–5",
+      "requirement": "The actual Factory craft commission performs C′ conduct and the Z cycle, then turns useful evidence into tested later practice.",
+      "story_ids": ["PX05", "PX06", "DV02", "DV08", "WK05", "WR05"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "All six CFP forms receive distinct real conduct; selected CPF/CT/CP/CF/CS alters participation/material/context/passage and retains its source basis.",
+        "Sustained stop halts material changes; a Factory status transition alone is not cancellation proof. Failed/late child returns retain attribution.",
+        "Compose→perform→record→rehear→recompose is based on actual output and correction, with bounded iterations, not cosmetic music or automatic ungranted recursion.",
+        "T/T′ keeps useful concise choices/differences and is consumed into native knowledge/practice, not twelve transcript buckets or hidden-reasoning disclosure.",
+        "Preserve the original failing case; independent verifier rejects disconnected/stale operations; compare revised practice on held-out inputs and record overhead/rejected candidates.",
+        "No automatic human taste/policy/canonical source promotion and no premature human-ratification gate on construction."
+      ]
+    },
+    {
+      "id": "vakcraft65:joined-experience",
+      "source": "vakcraft65",
+      "native_locator": "EXPRESSION-FIELD §9.6; QL Vāk workflow VW6",
+      "requirement": "One real source-bound work remains usable across Factory, Expressions, Technē, Library/page and admitted subtle/shared presentations.",
+      "story_ids": ["UI02", "UI04", "UI06", "KN02", "AG06", "DV08"],
+      "required_evidence": ["C", "P", "M"],
+      "required_branches": [
+        "Consume actual Factory/Day/NOW and current Expression cut; source→Wiki/Knowledge→bounded whole→Expression is the runtime corpus path, not detached generation passed off as integration.",
+        "New UI remains the receiving design; preserve centre Chat/full Run plus Run/Agents/Context and summonable graph/agent depths without another shell.",
+        "Keep canonical subject/scene/edition/session/occasion and private Nara state across deep/source/ambient/page/shared transitions; configuration restore is not exact GPU rewind.",
+        "Omarchy isolated runs use feature-line worktrees shared by actors; sandboxes/disjoint output do not force duplicated worktrees. Preserve Mac/frontend and held QL kernel/install.",
+        "Consume finished carriers and live owner work without reopening K/AW/SF/EX; native/API, new-UI, material and personal assessment keep their real evidence scope."
+      ]
+    }
+  ],
+  "existing_expression_stories": ["EF01", "EF02", "EF04", "EF07", "EF08", "EF09", "EF10"],
+  "delegated_ql_stories": ["UX01", "UX04", "UX05", "UX06", "UX08", "UX09", "UX10", "UX11"],
+  "execution_policy": {
+    "start_workers_on_publication": false,
+    "after_current_churn": true,
+    "parallel_after_shared_boundary": ["native TypeScript lowering/stamp", "live Expression faculties", "clean role/practice delivery"],
+    "runtime_proof_requires": "actual returned native/Factory/Expression cut and real loaded actors/tools",
+    "worktree_unit": "coherent-feature-line",
+    "per_agent_worktree": false,
+    "mathematical_kernel_change": false,
+    "live_machine_change_by_publication": false
+  }
+}
