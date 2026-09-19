@@ -37,7 +37,7 @@ const FactoryCentre=lazy(()=>import("../contributions/factory/FactoryCentre").th
 const SystemPanel=lazy(()=>import("../workspace/SystemPanel").then((module)=>({default:module.SystemPanel})));
 // The mode centre surfaces (workspace/mode.ts) are ordinary bindings in this
 // pane system; each loads with its mode, never at startup.
-const ExpressionsSurface=lazy(()=>import("../expressions/ExpressionsSurface").then((module)=>({default:module.ExpressionsSurface})));
+const PointCloudHost=lazy(()=>import("../expressions/PointCloudHost").then((module)=>({default:module.PointCloudHost})));
 const TechneSurface=lazy(()=>import("../techne/TechneSurface").then((module)=>({default:module.TechneSurface})));
 const EpiLogosSurface=lazy(()=>import("../epilogos/EpiLogosSurface").then((module)=>({default:module.EpiLogosSurface})));
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
@@ -450,7 +450,12 @@ function SurfaceBodyImpl({
       <FactoryCentre key={binding.id} chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>
     </Suspense>
   );
-  if (binding.kind === "expressions") return <ExpressionsSurface binding={binding}/>;
+  // The Expressions centre IS the application (owner ruling 2026-09-19):
+  // the Point-Cloud-Demo workspace hosted as-is, full-screen, its own UI and
+  // Library — served through the owner's oi-material:// file seam under
+  // Tauri (the walk bridge mirrors it under probes). The in-shell
+  // Expressions surface is retired from the centre.
+  if (binding.kind === "expressions") return <PointCloudHost/>;
   if (binding.kind === "techne") return <TechneSurface binding={binding} subject={subject} />;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding} />;
   // Agency manages purpose and usable repertoire; System settings manages the
