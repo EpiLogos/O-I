@@ -203,12 +203,14 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
 
   if (!register) return null;
   // The owner-named open path for a wiki page: the frame's knowledge open
-  // (`oi:epi-open-knowledge` → CradleFrame's openKnowledge). From the Technè
-  // arrangement the page's surface opens into this mode's own tree, which
-  // the mode centre stands in front of — presenting it INSIDE the instrument
-  // needs the frame's portal runtime, named-unimplemented in the kernel's
-  // own expression capabilities ("portal_runtime_open_close"). The panel
-  // names that state; it never fakes a presentation.
+  // (`oi:epi-open-knowledge` → CradleFrame's openKnowledge). The page's
+  // surface opens as a REAL pane placement into this mode's own tree — the
+  // workbench's own grammar carries it (beside/full/detach/re-dock are the
+  // pane's own controls), and the frame leaves a reading trail so the return
+  // chip brings the person back to this instrument. The kernel approves the
+  // prerequisites: its expression-world seam IS the portal runtime
+  // (portal_open/portal_close/portal_redock over the existing Surface host,
+  // disclosed by oi.expression-world-capabilities/v1).
   const openKnowledge = (ref: string, title: string) =>
     window.dispatchEvent(new CustomEvent("oi:epi-open-knowledge", {detail: {ref, title, project: register.project}}));
   // A node's source file opens through the frame's full cross-arrangement
@@ -414,7 +416,7 @@ function WikiSubjectPanel({document, workspaceSubjectRef, onOpenKnowledge, onOpe
     <footer className="wx-subject-tools">
       <button type="button" className="oi-action oi-action-primary" onClick={() => onOpenKnowledge(subject.subject_ref, entity.title)}>Open the page</button>
       {sources[0] && <button type="button" className="oi-action" onClick={() => onOpenSource(sources[0].ref)}>Open the source</button>}
-      <p className="oi-note wx-subject-open-note" data-unavailable="page-presentation">The page opens through the frame's knowledge path into this arrangement's tree; presenting it inside Technè needs the portal runtime — named-unimplemented in the kernel's expression capabilities.</p>
+      <p className="oi-note wx-subject-open-note">The page opens through the frame's knowledge path as a real pane in this arrangement's tree — beside, full, detach and re-dock are the workbench's own controls on it (the kernel's expression-world portal runtime approves the placement).</p>
     </footer>
   </aside>;
 }

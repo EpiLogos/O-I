@@ -5,8 +5,9 @@ import type {ExpressionDocument, SceneBody, SceneTrigger} from "./types";
  * scene's primary body. The engine composition is the only carrier with an
  * admitted live renderer today; every other carrier discloses its placement
  * and the real native open Actions instead of implying a renderer exists.
- * Portal trigger runtime (open/close/re-dock) is owned by the ES4 lane and is
- * disclosed as unsupported-until-connected here, never simulated.
+ * Portal trigger runtime (open/close/re-dock) lives in the expression-world
+ * seam (world.ts — portal_open/portal_close/portal_redock over the existing
+ * Surface host); it is never simulated here.
  */
 export interface SceneBodyDisclosure {
   scene_ref:string;

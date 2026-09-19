@@ -40,8 +40,10 @@ impl TriggerOccasion {
 }
 
 /// SurfacePortal placements through the existing O:I Surface/window host.
-/// The portal open/close runtime itself is a separate owner (ES4 lane);
-/// this relation is the declarative address of the requested placement.
+/// The portal open/close runtime is the expression world seam
+/// (`expression_world::Request::PortalOpen`/`PortalClose`/`PortalRedock`
+/// over the existing Surface host); this relation is the declarative
+/// address of the requested placement.
 #[derive(Clone, Copy, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
 pub enum PortalPlacement {

@@ -445,6 +445,7 @@ pub fn capabilities() -> Value {
             "targets":["expression_operation","portal","native_action","navigate"],
             "expression_operations":["inspect","list","export"],
             "portal_placements":["preview","overlay","beside","full","detached","re-dock"],
+            "portal_runtime":"portal_open/portal_close/portal_redock through the expression world seam over the existing Surface host, canonical target ref preserved — oi.expression-world-capabilities/v1",
             "script_bodies":"refused"},
         "profiles":{"ref_prefix":"profile:","lineage":"parents must be defined first; defaults resolve parents-first and overrides stay legible","budget":64},
         "editions":{"ref_prefix":"edition:","law":"an edition re-opens as a reading; it never opens or rewrites the Expression","budget":64},
@@ -455,7 +456,7 @@ pub fn capabilities() -> Value {
         "save_owner":"central.files.write", "source_mutation":false, "attribution_is_authentication":false,
         "export_audience":"local_private", "dynamic_checkpoint":false,
         "unsupported":["capture","page_embed","projection_publish","domain_state_write","knowledge_query",
-            "portal_runtime_open_close","scene_body_live_render_beyond_engine_composition","asset_binary_storage"],
+            "scene_body_live_render_beyond_engine_composition","asset_binary_storage"],
         "contract":"docs/contracts/EXPRESSION-APPLICATION-V1.md"})
 }
 pub(crate) fn text(value: &str) -> Result<(), String> {

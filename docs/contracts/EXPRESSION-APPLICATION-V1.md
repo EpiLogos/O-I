@@ -224,9 +224,15 @@ over real use, not an advance procurement catalogue and not a second semantic
 store.
 
 **Capability honesty.** `capabilities` names every new operation and change and
-lists as unsupported-until-connected: portal runtime open/close (owned by the
-ES4 world-operations lane), live scene-body rendering beyond the engine
-composition (owned by the Stage/UI lane) and asset binary storage (assets are
-refs into their native owners, never copies). Document limits are unchanged:
+lists as unsupported-until-connected: live scene-body rendering beyond the
+engine composition (owned by the Stage/UI lane) and asset binary storage
+(assets are refs into their native owners, never copies). Portal presentation
+is supported, not claimed: the portal runtime open/close/re-dock is the
+expression-world seam (`portal_open`/`portal_close`/`portal_redock` over the
+existing Surface host with the canonical target ref preserved —
+`oi.expression-world-capabilities/v1`), and the desktop's own pane grammar —
+beside, full, detach, re-dock — is that host's placement mechanism, so a page
+opened from an Expression instrument lands as a real pane in the current
+arrangement's tree. Document limits are unchanged:
 64 Expressions, 64 scenes, 256 entity/relation bindings, 256 changes per
 atomic edit, 512 KiB per document.

@@ -544,7 +544,13 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const expression=(event:Event)=>{const d=detail<{expressionRef?:string;returnTo?:unknown}>(event);if(!d?.expressionRef)return;leave("Reading",d.returnTo);enterModeRef.current("expressions");try{summonExpression(d.expressionRef);}catch(reason){fail(reason);}};
     const examine=(event:Event)=>{const d=detail<{returnTo?:unknown}>(event);leave("Reading",d?.returnTo);enterModeRef.current("techne");};
     const source=(event:Event)=>{const d=detail<{location?:CentralLocation;returnTo?:unknown}>(event);if(!d?.location)return;leave("Reading",d.returnTo);enterModeRef.current("base");void openFileRef.current(d.location).catch(fail);};
-    const knowledgeOpen=(event:Event)=>{const d=detail<{ref?:string;title?:string;project?:string}>(event);if(d?.ref)void openKnowledgeRef.current({kind:"wiki",value:d.ref},d.title??"Wiki",d.project).catch(fail);};
+    // Knowledge opens are cross-mode by the same law as sources: leave a
+    // reading trail first (the return chip brings the person back), then
+    // open or focus the knowledge surface in the CURRENT mode's own tree —
+    // a real pane placement the workbench's own grammar carries, never a
+    // modal dead-end. Sources enter Base because files live there;
+    // knowledge has no home mode, so it lands where the person stands.
+    const knowledgeOpen=(event:Event)=>{const d=detail<{ref?:string;title?:string;project?:string;returnTo?:unknown}>(event);if(!d?.ref)return;leave("Reading",d.returnTo);void openKnowledgeRef.current({kind:"wiki",value:d.ref},d.title??"Wiki",d.project).catch(fail);};
     // Return: pop the newest stop, stand in its mode, hand the place back to its surface.
     const back=()=>{
       const trail=workspaceRef.current.current.context?.trail??[];const stop=trail[trail.length-1];if(!stop)return;
@@ -1016,6 +1022,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const modeCentreBinding=modeCentreKind
     ? Object.values(state.surfaces).find(binding=>binding.kind===modeCentreKind && groupsOf(state.root).some(group=>group.tabs.includes(binding.id)))
     : undefined;
+  // Owner ruling 2026-09-19 (portal prerequisites): the dedicated stage
+  // stands while the mode's tree carries ONLY its centre. The moment the
+  // tree holds any other surface — a knowledge page opened from Instrument
+  // 0, a portal placement — the ordinary Workbench presents that tree: the
+  // centre stays in it as a tab (the same SurfaceBody), and the opened
+  // surface carries the workbench's own placement grammar — beside, full,
+  // detach, re-dock — never a modal dead-end. Closing the extra surfaces
+  // returns the mode to its dedicated stage.
+  const modeSoloStage=!!modeCentreBinding && groupsOf(state.root).every(group=>group.tabs.every(id=>id===modeCentreBinding.id));
   const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project};
   const report=(reason:unknown)=>setWindowError(String(reason instanceof Error?reason.message:reason));
 
@@ -1077,7 +1092,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
-      {state.root && modeCentreBinding ? (
+      {state.root && modeSoloStage && modeCentreBinding ? (
         <div className="mode-stage" data-mode={mode} data-window-corner="true">
           <SurfaceBody binding={modeCentreBinding} onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)} openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} subject={workspace.current.context?.subject} />
         </div>
