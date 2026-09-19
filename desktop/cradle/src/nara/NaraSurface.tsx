@@ -49,6 +49,7 @@ import {voiceBodyFromConstitution,voiceBodySatisfactionReceipt} from "./voiceBod
 import {NaraSpeechBinding,type NaraSpeechRead,type SpeechToolDecision} from "./session";
 import {supportUsable,type SpeechSupport} from "./support";
 import "./nara.css";
+import {putDelegationLedger} from "./delegationLedger";
 
 const PHASE_WORD:Record<NaraSpeechRead["phase"],string>={
   idle:"at rest",listening:"listening",speaking:"speaking",interrupted:"interrupted",completed:"responded",
@@ -532,7 +533,9 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
    const receipt=current.recordDelegation(delegation,{delegation_receipt_ref:`delegation-receipt:${crypto.randomUUID()}`,at:new Date().toISOString()});
    renderFrom();
    setNotice(`Delegated to Epii over ${delegation.scope_refs.length} admitted refs; Nara stays foreground`);
-   setProposals(rows=>[...rows,{delegation:delegation as unknown as Record<string,unknown>,delegation_receipt:receipt,enrichment:null,enrichment_receipt:null}]);
+   const row:ProposalRow={delegation:delegation as unknown as Record<string,unknown>,delegation_receipt:receipt,enrichment:null,enrichment_receipt:null};
+   setProposals(rows=>[...rows,row]);
+   putDelegationLedger({...row,recorded_at:new Date().toISOString()});
   }catch(e){setError(String(e));}
  },[buildTurnContext,renderFrom]);
 
@@ -564,7 +567,9 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     proposed_expressive_act_refs:[],proposed_native_action_refs:[],
     continuing_questions:[],factory_commission_proposal:null,returned_at_unix_ms:Date.now(),
    },{enrichment_receipt_ref:`enrichment-receipt:${crypto.randomUUID()}`,at:new Date().toISOString()});
-   setProposals(rows=>rows.map((candidate,i)=>i===index?{...candidate,enrichment:enrichment??null,enrichment_receipt:receipt}:candidate));
+   const enriched=(rows:ProposalRow[])=>rows.map((candidate,i)=>i===index?{...candidate,enrichment:enrichment??null,enrichment_receipt:receipt}:candidate);
+   setProposals(enriched);
+   putDelegationLedger({...row,recorded_at:new Date().toISOString()});
    renderFrom();
    setNotice(`Epii enrichment ${String(receipt["standing"])} — presented as a proposal; applied: ${String(receipt["applied"])}`);
   }catch(e){setError(String(e));}
