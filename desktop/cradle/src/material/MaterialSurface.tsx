@@ -177,7 +177,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   },[format,htmlFrameLoaded,personalPage,textRevision,hostedExpression,generation,binding.ref,binding.id,transport.kind,baseUrl]);
 
   return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
-    toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
+    toolbar={null} interactive={false} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
     footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={pending} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
   >
     <div ref={containerRef} className="material-rendered-content" aria-busy={pending}>
