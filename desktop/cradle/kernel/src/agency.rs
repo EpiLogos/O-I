@@ -31,7 +31,8 @@ impl Client {
     /// own refusal, never a desktop-fabricated record.
     pub fn task_read(&self, cwd: &Path, agent_session: &str) -> Result<Value, String> {
         let mut command = Command::new(&self.executable);
-        if self.suite_route { command.arg("aikit-session-space"); }
+        if self.suite_route { command.arg("aikit"); }
+        command.arg("session-space");
         if let Some(home) = &self.home { command.env("AIKIT_HOME", home); }
         command.arg("-C").arg(cwd);
         command.args(["encounter-task-read", "--agent-session", agent_session]);
@@ -61,13 +62,11 @@ impl Client {
 }
 
 pub fn executable() -> PathBuf {
-    std::env::var_os("OI_AIKIT_SESSION_SPACE_BIN")
+    // The session-space verbs live in the main aikit binary (O-I #376 fold);
+    // callers prepend the `session-space` subcommand to their native args.
+    std::env::var_os("OI_AIKIT_BIN")
         .map(std::path::PathBuf::from)
-        .or_else(|| {
-            std::env::var_os("OI_AIKIT_BIN")
-                .map(|p| std::path::PathBuf::from(p).with_file_name("aikit-session-space"))
-        })
-        .unwrap_or_else(|| "aikit-session-space".into())
+        .unwrap_or_else(|| "aikit".into())
 }
 
 fn read_project_with(
@@ -78,7 +77,8 @@ fn read_project_with(
     suite_route: bool,
 ) -> Result<Value, String> {
     let mut command = Command::new(executable);
-    if suite_route { command.arg("aikit-session-space"); }
+    if suite_route { command.arg("aikit"); }
+    command.arg("session-space");
     if let Some(home) = home {
         command.env("AIKIT_HOME", home);
     }
@@ -186,7 +186,8 @@ impl Client {
             if !authorized{return Err("Encounter is not attached to this native Project's SessionSpaces".into());}
         }
         let mut command=Command::new(&self.executable);
-        if self.suite_route {command.arg("aikit-session-space");}
+        if self.suite_route {command.arg("aikit");}
+        command.arg("session-space");
         if let Some(home)=&self.home {command.env("AIKIT_HOME",home);}
         command.arg("-C").arg(cwd);
         if matches!(request,EncounterRequest::Start) {command.arg("encounter-start");}

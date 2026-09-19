@@ -1,0 +1,41 @@
+{
+  "when": "2026-09-19T15:47:06.820Z",
+  "desk_url": "http://localhost:1432/",
+  "bridge": "http://127.0.0.1:4233",
+  "empty_state": "no-subject",
+  "closed": [
+    "verso"
+  ],
+  "subject": {
+    "subjectRef": "central:wiki:root",
+    "sceneRef": "expression:techne-m0.central.78478f8e:scene:overview",
+    "worldRoot": "/Users/admin/Central",
+    "project": null,
+    "webSubject": "central:wiki:root",
+    "webRegister": "central",
+    "sceneCount": "8",
+    "sourceCount": "0",
+    "pagePresent": "true",
+    "notices": []
+  },
+  "closed_final": [
+    "verso",
+    "verso"
+  ],
+  "shared_zoom": {
+    "scope": "shared",
+    "unavailable": [
+      "Unavailable — shared-field: no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/sp"
+    ],
+    "sharedGroups": []
+  },
+  "zoom_back": {
+    "scope": "local",
+    "central": true,
+    "web": true
+  },
+  "console_errors": [],
+  "probe_notes": [
+    "In-field clicks (the Epii face button, the wiki whole's entity rows) are programmatic el.click() events: the shell retained-centre park (surface/retention.tsx, in flight with the parent integrator) paints under the mode-stage ground in this dev browser, so hit-tested clicks there are refused. The parent's park fix retires this crutch. Overlays (Library, verso sheet) keep ordinary hit-tested clicks."
+  ]
+}

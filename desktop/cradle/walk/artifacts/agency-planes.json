@@ -1,18 +1,156 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "agency-planes",
-  "generated_at": "2026-09-13T13:30:37.206Z",
+  "generated_at": "2026-09-17T22:19:56.781Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
-    "platform": "darwin"
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "d2115eba7e36982f860a198a90307a9e00dcb874",
+      "tracked_changes": [
+        "desktop/cradle/documents/README.md",
+        "desktop/cradle/documents/forms.json",
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/Rest.tsx",
+        "desktop/cradle/src/agent/AgentLayer.tsx",
+        "desktop/cradle/src/agent/agent.css",
+        "desktop/cradle/src/configuration/configuration.css",
+        "desktop/cradle/src/context/ContextTray.tsx",
+        "desktop/cradle/src/contributions/factory/BuildSurface.tsx",
+        "desktop/cradle/src/contributions/factory/FactoryDevelopmentSurface.tsx",
+        "desktop/cradle/src/contributions/factory/development.css",
+        "desktop/cradle/src/cradle.css",
+        "desktop/cradle/src/encounter/AddressedComposer.tsx",
+        "desktop/cradle/src/encounter/EncounterList.tsx",
+        "desktop/cradle/src/encounter/EncounterSurface.tsx",
+        "desktop/cradle/src/encounter/EncounterView.tsx",
+        "desktop/cradle/src/encounter/encounter.css",
+        "desktop/cradle/src/expression/ExpressionView.tsx",
+        "desktop/cradle/src/instrument/source.ts",
+        "desktop/cradle/src/kernel/KernelProvider.tsx",
+        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx",
+        "desktop/cradle/src/knowledge/SearchOverlay.tsx",
+        "desktop/cradle/src/knowledge/knowledge.css",
+        "desktop/cradle/src/knowledge/search.css",
+        "desktop/cradle/src/material/MaterialSurface.tsx",
+        "desktop/cradle/src/material/material.css",
+        "desktop/cradle/src/receiving/DocumentContributions.tsx",
+        "desktop/cradle/src/receiving/DocumentReturns.tsx",
+        "desktop/cradle/src/receiving/ReturnsTray.tsx",
+        "desktop/cradle/src/rest.css",
+        "desktop/cradle/src/shared/Expression.tsx",
+        "desktop/cradle/src/stage/recipes.ts",
+        "desktop/cradle/src/surface/ContextMenu.tsx",
+        "desktop/cradle/src/surface/SourceSurface.tsx",
+        "desktop/cradle/src/surface/Workbench.tsx",
+        "desktop/cradle/src/surface/keys.ts",
+        "desktop/cradle/src/surface/layout-codec.mjs",
+        "desktop/cradle/src/surface/persist.ts",
+        "desktop/cradle/src/surface/registry.ts",
+        "desktop/cradle/src/surface/types.ts",
+        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx",
+        "desktop/cradle/src/surfaces/navigator/navigator.css",
+        "desktop/cradle/src/visuals/oi-logo-state.json",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/src/workspace/Glyph.tsx",
+        "desktop/cradle/src/workspace/settings/VisualsView.tsx",
+        "desktop/cradle/src/workspace/settings/settings.css",
+        "desktop/cradle/src/workspace/settings/visuals.css",
+        "desktop/cradle/src/workspace/shell.css",
+        "desktop/cradle/src/workspace/store.ts",
+        "desktop/cradle/tests/workspace-continuity.test.mjs",
+        "desktop/cradle/walk/README.md",
+        "desktop/cradle/walk/artifacts/explore-sf1-failure.png",
+        "desktop/cradle/walk/artifacts/explore-sf1.json",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
+        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
+        "desktop/cradle/walk/artifacts/expression-controls.json",
+        "desktop/cradle/walk/artifacts/expression-page-captured-fallback-page.png",
+        "desktop/cradle/walk/artifacts/expression-page-live-reentry.png",
+        "desktop/cradle/walk/artifacts/expression-page-live-return-capture.png",
+        "desktop/cradle/walk/artifacts/expression-page-restored-opening-inline.png",
+        "desktop/cradle/walk/artifacts/expression-page.json",
+        "desktop/cradle/walk/artifacts/expression-world-join-join-front.png",
+        "desktop/cradle/walk/artifacts/expression-world-join-join-verso.png",
+        "desktop/cradle/walk/artifacts/expression-world-join.json",
+        "desktop/cradle/walk/artifacts/factory-development-factory-development-readings.png",
+        "desktop/cradle/walk/artifacts/factory-development-factory-trajectory-rows.png",
+        "desktop/cradle/walk/artifacts/factory-development-failure.png",
+        "desktop/cradle/walk/artifacts/factory-development-workcell-status-beside-factory.png",
+        "desktop/cradle/walk/artifacts/factory-development.json",
+        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
+        "desktop/cradle/walk/artifacts/instrument-host.json",
+        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
+        "desktop/cradle/walk/artifacts/instrument.json",
+        "desktop/cradle/walk/artifacts/navigator-failure.png",
+        "desktop/cradle/walk/artifacts/navigator.json",
+        "desktop/cradle/walk/artifacts/recovery.json",
+        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
+        "desktop/cradle/walk/artifacts/refinement-failure.png",
+        "desktop/cradle/walk/artifacts/refinement-fresh-canvas-refined.png",
+        "desktop/cradle/walk/artifacts/refinement.json",
+        "desktop/cradle/walk/artifacts/rest-desktop-rest.png",
+        "desktop/cradle/walk/artifacts/rest.json",
+        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
+        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
+        "desktop/cradle/walk/artifacts/shell-recovery.json",
+        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
+        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
+        "desktop/cradle/walk/artifacts/surfaces.json",
+        "desktop/cradle/walk/artifacts/system-settings-failure.png",
+        "desktop/cradle/walk/artifacts/system-settings-settings-activity.png",
+        "desktop/cradle/walk/artifacts/system-settings-settings-bootstrap.png",
+        "desktop/cradle/walk/artifacts/system-settings-settings-config.png",
+        "desktop/cradle/walk/artifacts/system-settings-settings-health.png",
+        "desktop/cradle/walk/artifacts/system-settings.json",
+        "desktop/cradle/walk/artifacts/visuals-visuals-expression.png",
+        "desktop/cradle/walk/artifacts/visuals-visuals-panel.png",
+        "desktop/cradle/walk/artifacts/visuals.json",
+        "desktop/cradle/walk/artifacts/welcome-failure.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-entered.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-explosion.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-dark-rest.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-entered.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-explosion.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-light-rest.png",
+        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
+        "desktop/cradle/walk/artifacts/welcome.json",
+        "desktop/cradle/walk/artifacts/workspace-continuity-explore-unavailable-honest.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-restored-after-relaunch.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-returned-to-project.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-sharedfield-surface.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-switched-back.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity-wiki-page-focus.png",
+        "desktop/cradle/walk/artifacts/workspace-continuity.json",
+        "desktop/cradle/walk/expression-resize-integration.mjs",
+        "desktop/cradle/walk/expression-resize-integration.tsx",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/factory-development.mjs",
+        "desktop/cradle/walk/scenarios/recovery.mjs",
+        "desktop/cradle/walk/scenarios/refinement.mjs",
+        "packages/oi-design-system/desktop.css",
+        "packages/oi-design-system/search.css",
+        "packages/oi-design-system/tokens.css"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 16946,
+  "duration_ms": 15944,
   "checks": [
     {
       "ok": true,
@@ -102,7 +240,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T13:30:37.297Z",
+        "mounted_at": "2026-09-17T22:19:56.879Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -113,7 +251,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 27,
+      "duration_ms": 29,
       "data": {
         "file": "agency-planes-activity-empty-honest.png"
       }
@@ -121,7 +259,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 58,
+      "duration_ms": 31,
       "data": {
         "file": "agency-planes-activity-consent-requested.png"
       }
@@ -129,7 +267,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 36,
+      "duration_ms": 38,
       "data": {
         "file": "agency-planes-activity-consent-answered.png"
       }
@@ -137,7 +275,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 30,
       "data": {
         "file": "agency-planes-activity-inspect-deliveries.png"
       }
@@ -145,7 +283,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 23,
+      "duration_ms": 28,
       "data": {
         "file": "agency-planes-activity-context-facts.png"
       }
@@ -153,7 +291,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 21,
+      "duration_ms": 15,
       "data": {
         "file": "agency-planes-activity-thought-tool-wait.png"
       }
@@ -161,7 +299,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 24,
+      "duration_ms": 28,
       "data": {
         "file": "agency-planes-activity-stopped.png"
       }
@@ -169,7 +307,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 14,
+      "duration_ms": 21,
       "data": {
         "file": "agency-planes-activity-fault.png"
       }
@@ -177,7 +315,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 30,
+      "duration_ms": 34,
       "data": {
         "file": "agency-planes-activity-fault-held-seat.png"
       }
@@ -185,7 +323,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 21,
+      "duration_ms": 28,
       "data": {
         "file": "agency-planes-activity-journal.png"
       }

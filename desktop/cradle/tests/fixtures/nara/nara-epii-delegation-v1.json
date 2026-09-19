@@ -1,0 +1,167 @@
+{
+  "schema": "ql.nara-epii-delegation/v1",
+  "purpose": "Nara delegates a deep question to Epii over admitted refs only; the returned enrichment stays basis-bound, refuses undisclosed proposals, and cannot auto-apply once the live encounter has moved on.",
+  "context": {
+    "schema": "ql.nara-dialogue-context/v1",
+    "context_ref": "dialogue-context:fixture-1",
+    "nara_ref": "nara:fixture-a",
+    "subject_ref": "subject:fixture-person",
+    "agent_session_ref": "session:fixture-1",
+    "m4_branch": "embodied",
+    "coordinate_ref": "M4.1.1",
+    "bimba": {
+      "owner_contract_ref": "ql.aw1-rooted-m-world/v1",
+      "registry_revision": "registry:fixture-r7",
+      "selected_source_ref": "bimba:source:M4.1",
+      "direct_canonical_ref": "bimba:#4",
+      "conjugate_canonical_ref": "pratibimba:#4"
+    },
+    "expression_ref": "expression:fixture-1",
+    "expression_revision": "rev-7",
+    "profile_ref": "profile:M4.1",
+    "profile_revision": "prof-2",
+    "scene_ref": "scene:fixture-1",
+    "active_m_focus": "m4",
+    "pointed_ref": "bimba:relation:1",
+    "hovered_ref": null,
+    "pinned_refs": ["bimba:source:M4.1"],
+    "occasion": {
+      "day_ref": "central:day:2026-09-17",
+      "day_revision": "d7",
+      "now_ref": "central:now:fixture",
+      "now_revision": "n3",
+      "admitted_via_ref": "consent:fixture-1"
+    },
+    "disclosed": [
+      {
+        "ref_id": "source:fixture-disclosed-1",
+        "revision": "r1",
+        "standing": "source",
+        "disclosure": "hen-disclosure",
+        "disclosed_via_ref": "hen:disclosure:fixture-1"
+      }
+    ],
+    "available_action_refs": ["action:expression.focus"],
+    "c_prime": {
+      "composition_ref": "composition:fixture-1",
+      "composition_revision": "c1",
+      "participation": "dialogical",
+      "content_type": "CT4b'",
+      "position": "4.4",
+      "frame": "psyche",
+      "thread_form": "CFP0",
+      "sequence": "CS4"
+    },
+    "shared_field": null,
+    "expressive_act": null
+  },
+  "delegation": {
+    "delegation_ref": "delegation:fixture-1",
+    "epii_session_ref": "epii:session:fixture-1",
+    "brief": "What stands behind the pointed relation?",
+    "scope_candidates_admitted": ["source:fixture-disclosed-1"],
+    "scope_candidates_with_undisclosed": ["source:fixture-disclosed-1", "source:fixture-private"],
+    "delegated_at_unix_ms": 15
+  },
+  "enrichment": {
+    "schema": "ql.epii-enrichment/v1",
+    "enrichment_ref": "enrichment:fixture-1",
+    "delegation_ref": "delegation:fixture-1",
+    "basis_context_ref": "dialogue-context:fixture-1",
+    "basis_expression_revision": "rev-7",
+    "coordinate_refs": ["M4.1.1"],
+    "source_refs": ["source:fixture-disclosed-1"],
+    "method_refs": [],
+    "evidence_refs": ["evidence:fixture-1"],
+    "standing": "derived",
+    "synthesis": "The disclosed source bears on the pointed relation through its conjugate face.",
+    "proposed_focus_refs": ["source:fixture-disclosed-1"],
+    "proposed_scene_change_refs": [],
+    "proposed_profile_variant_ref": null,
+    "proposed_expressive_act_refs": [],
+    "proposed_native_action_refs": ["action:expression.focus"],
+    "continuing_questions": ["What does the conjugate face hold?"],
+    "factory_commission_proposal": null,
+    "returned_at_unix_ms": 20
+  },
+  "enrichment_escaping_scope": {
+    "schema": "ql.epii-enrichment/v1",
+    "enrichment_ref": "enrichment:fixture-2",
+    "delegation_ref": "delegation:fixture-1",
+    "basis_context_ref": "dialogue-context:fixture-1",
+    "basis_expression_revision": "rev-7",
+    "coordinate_refs": ["M4.1.1"],
+    "source_refs": ["source:fixture-disclosed-1"],
+    "method_refs": [],
+    "evidence_refs": [],
+    "standing": "derived",
+    "synthesis": "Proposes focus somewhere the delegation never reached.",
+    "proposed_focus_refs": ["profile:somewhere-else"],
+    "proposed_scene_change_refs": [],
+    "proposed_profile_variant_ref": null,
+    "proposed_expressive_act_refs": [],
+    "proposed_native_action_refs": [],
+    "continuing_questions": [],
+    "factory_commission_proposal": null,
+    "returned_at_unix_ms": 21
+  },
+  "moved_context": {
+    "schema": "ql.nara-dialogue-context/v1",
+    "context_ref": "dialogue-context:fixture-2",
+    "nara_ref": "nara:fixture-a",
+    "subject_ref": "subject:fixture-person",
+    "agent_session_ref": "session:fixture-1",
+    "m4_branch": "embodied",
+    "coordinate_ref": "M4.1.1",
+    "bimba": {
+      "owner_contract_ref": "ql.aw1-rooted-m-world/v1",
+      "registry_revision": "registry:fixture-r7",
+      "selected_source_ref": "bimba:source:M4.1",
+      "direct_canonical_ref": "bimba:#4",
+      "conjugate_canonical_ref": "pratibimba:#4"
+    },
+    "expression_ref": "expression:fixture-1",
+    "expression_revision": "rev-8",
+    "profile_ref": "profile:M4.1",
+    "profile_revision": "prof-2",
+    "scene_ref": "scene:fixture-1",
+    "active_m_focus": "m4",
+    "pointed_ref": "bimba:relation:1",
+    "hovered_ref": null,
+    "pinned_refs": ["bimba:source:M4.1"],
+    "occasion": {
+      "day_ref": "central:day:2026-09-17",
+      "day_revision": "d7",
+      "now_ref": "central:now:fixture",
+      "now_revision": "n3",
+      "admitted_via_ref": "consent:fixture-1"
+    },
+    "disclosed": [
+      {
+        "ref_id": "source:fixture-disclosed-1",
+        "revision": "r1",
+        "standing": "source",
+        "disclosure": "hen-disclosure",
+        "disclosed_via_ref": "hen:disclosure:fixture-1"
+      }
+    ],
+    "available_action_refs": ["action:expression.focus"],
+    "c_prime": {
+      "composition_ref": "composition:fixture-1",
+      "composition_revision": "c1",
+      "participation": "dialogical",
+      "content_type": "CT4b'",
+      "position": "4.4",
+      "frame": "psyche",
+      "thread_form": "CFP0",
+      "sequence": "CS4"
+    },
+    "shared_field": null,
+    "expressive_act": null
+  },
+  "expected": {
+    "undisclosed_scope_error_contains": "not admitted",
+    "stale_application_error_contains": "stale Epii enrichment",
+    "escaping_scope_error_contains": "outside the delegated scope"
+  }
+}

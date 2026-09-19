@@ -1,0 +1,42 @@
+{
+  "review_id": "product-fidelity-2026-09-19",
+  "purpose": "Read-only implementation-fidelity review input, not a new Wayfinder, acceptance gate, software manifest or installation receipt.",
+  "captured_on": "2026-09-19",
+  "scope": "Six review desks: O:I integration plus five non-QL native owners. This does not redefine the six native products.",
+  "repository": "EpiLogos/O-I",
+  "report_directory": "docs/reviews/product-fidelity-2026-09-19",
+  "source_baseline_kind": "Published main refs observed sequentially during setup; not certified as a compatible installed suite.",
+  "repositories": {
+    "oi": {"repository":"EpiLogos/O-I","ref":"main","commit":"a1c7010fa290219d58f78ee03f55651ac14ed75d","report":"01-oi.md"},
+    "central": {"repository":"EpiLogos/Central","ref":"main","commit":"0a58a32c7587f5576ace4239a1fd6d9bde868510","report":"02-central.md"},
+    "actuation": {"repository":"EpiLogos/Actuation","ref":"main","commit":"47f4fa3c184850e254ef5089696bf5fbbad907ec","report":"03-actuation.md"},
+    "aikit": {"repository":"EpiLogos/ai-kit","ref":"main","commit":"944e00e1cbec79d4a23b46d78231b78816b5dad5","report":"04-aikit.md"},
+    "factory": {"repository":"EpiLogos/Factory","ref":"main","commit":"bbb8f48943cf1cf398005ae40ee8fa29c111c3a5","report":"05-factory.md"},
+    "workcell": {"repository":"EpiLogos/Workcell","ref":"main","commit":"04160f51d37e78d600f32440b4f5275c02b78e9c","report":"06-workcell.md"}
+  },
+  "protected": {
+    "QL-MEF": "No internal source crawl, changes, branch reconciliation or new architecture specification. Inspect only non-QL owner declarations/consumer boundaries and already published non-QL planning references needed to identify a dependency. Mark deeper QL verification outside this commission.",
+    "ui_and_app": "Existing new parallel UI is the presentation destination; donor app functionality and active pushed UI branches may be read at exact refs. No edits, merges, resets, restarts or replacement UI.",
+    "machines": "No Mac/Omarchy installation, SSH work, host/sandbox mutation, credentials or service manipulation commissioned to these web reviewers. Local cut and live hardening crews continue independently."
+  },
+  "cut_in_progress": {
+    "owner": "https://github.com/EpiLogos/O-I/issues/65",
+    "integration_owner": "https://github.com/EpiLogos/O-I/issues/220",
+    "source": "docs/experience/HARNESS-FIRST-ADOPTION.md",
+    "installation_record": null,
+    "policy": "The native Mac cut is running separately. Do not claim its outcome or block review pending it. Audit these pinned published sources now. Record exact subsequent main/candidate/UI refs separately in each report; synthesis reconciles affected findings to the actual returned cut when available."
+  },
+  "branch_policy": {
+    "baseline_is_immutable_for_this_round": true,
+    "candidate_refs": "Discover currently relevant pushed feature/integration/UI refs from live owner issues and branch/PR metadata. Resolve and record exact commit IDs before reading; read source, not only merge summaries. No unpublished local state is inferred.",
+    "main_vs_candidate": "Report separately: pinned main; reviewed candidate; current source at final delta check; installed/running evidence when actually supplied. An unmerged repair is neither a missing implementation nor proof of installation.",
+    "cross_owner_comparison": "State both producer and consumer revisions. Different valid version contracts are not automatically a defect; identify whether the proposed or installed combination actually composes them."
+  },
+  "report_writes": {
+    "allowed": "Each reviewer writes only its assigned report and, if necessary, a matching -evidence.md annex in this directory. Synthesis writes only SYNTHESIS.md and ALIGNMENT.md here.",
+    "publication": "Main requires pull requests (observed 409 on direct create during setup). Use a narrowly scoped report-only publication branch from current main, native create/update with actual file SHAs, normal PR/checks and merge; read back the assigned file on main. No protection bypass. A report publication branch needs no local code worktree.",
+    "shared_files": "Reviewers must not change this baseline, the shared README, other reports, product code/tests, canonical plans/settings, or issue states.",
+    "not_permitted": "No fixes while auditing, no workflow dispatch or remote compute commissioning, no blind branch merge, and no private deployment data or secrets in committed reports."
+  },
+  "follow_on_workspace_rule": "Implementation uses an existing reusable code worktree per coherent feature/development line, not per reviewer, agent, session, finding or retry. Separate runtime sandboxes do not require duplicated source worktrees."
+}

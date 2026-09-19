@@ -95,7 +95,9 @@ def prove(recorder: c.Recorder) -> list[dict]:
     # unrelated binary bound beside a clean checkout.
     source = Path(recorder.binaries['aikit-task-suite']['source']).resolve()
     target = source / 'target/debug'
-    if paths['aikit-session-space'].resolve() != target / 'aikit-session-space' or paths['aikit-task-suite'].resolve().parent != target / 'deps':
+    # The session-space verbs are folded into the main aikit binary (O-I #376),
+    # so the bound owner entry is that same checkout-built aikit executable.
+    if paths['aikit-session-space'].resolve() != target / 'aikit' or paths['aikit-task-suite'].resolve().parent != target / 'deps':
         raise c.Failure('bind the native suite and session binary built together in this exact checkout; relocated compiler paths are not assumed')
     home = c.fresh_directory(recorder.output / 'isolated-home')
     node = shutil.which('node')

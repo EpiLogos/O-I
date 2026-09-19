@@ -1,0 +1,54 @@
+{
+  "when": "2026-09-19T15:49:32.839Z",
+  "desk_url": "http://localhost:1432/",
+  "bridge": "http://127.0.0.1:4232",
+  "wide": {
+    "total": 8,
+    "visible": 1,
+    "overflow": 7,
+    "height": 24,
+    "chips": [
+      "expression:techne-m0.central.78478f8e:scene:overview"
+    ],
+    "chipTopLines": 1,
+    "reveal": true
+  },
+  "compact": {
+    "total": 8,
+    "visible": 1,
+    "overflow": 7,
+    "height": 24,
+    "chips": [
+      "expression:techne-m0.central.78478f8e:scene:overview"
+    ],
+    "chipTopLines": 1,
+    "reveal": true
+  },
+  "web_row": {
+    "expressionRef": "expression:techne-m0.central.78478f8e",
+    "register": "central",
+    "scenes": "8"
+  },
+  "entered_scene": "expression:techne-m0.central.78478f8e:scene:overview",
+  "gallery": {
+    "view": "gallery",
+    "rows": 50
+  },
+  "query": {
+    "wiki_gallery": 1,
+    "wiki_browse": 1,
+    "none_browse": 0,
+    "none_gallery": 0
+  },
+  "before_held": {
+    "view": "browse",
+    "web": "expression:techne-m0.central.78478f8e",
+    "entered": null
+  },
+  "after_held": {
+    "view": "browse",
+    "web": "expression:techne-m0.central.78478f8e",
+    "entered": null
+  },
+  "console_errors": []
+}

@@ -461,16 +461,21 @@ fn shipped_manifest_declares_only_oi_owned_skills() {
         "oi:skillset:base-guardian"
     );
     assert!(manifest.expected_native_skills.is_empty());
-    // The shipped manifest names the router and suite operator. The retired
-    // Central session strap belongs to Central ground and is delivered through
-    // AIKit's Central binding, not frozen into O:I's guardian registry.
+    // The shipped manifest names the router, the suite operator, and the
+    // Central session strap — all held and projected by O:I (owner ruling
+    // 2026-09-17). Projections are receipt-gated derived copies; cross-product
+    // skill composition beyond this set belongs to AIKit's sets.
     assert_eq!(
         manifest
             .skills
             .iter()
             .map(|skill| skill.skill_ref.as_str())
             .collect::<Vec<_>>(),
-        vec!["oi:skill:operate-suite", "oi:skill:suite-operator"]
+        vec![
+            "oi:skill:operate-suite",
+            "oi:skill:suite-operator",
+            "oi:skill:central-session-strap"
+        ]
     );
     for skill in &manifest.skills {
         assert!(

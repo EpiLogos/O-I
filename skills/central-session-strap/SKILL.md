@@ -3,7 +3,7 @@ name: central-session-strap
 description: Use at session start, resume, compaction recovery or a root/Project scope change in Central, especially before allocating task scratch. Resolve the current World, governing intent, native NOW and applicable practices; a normal authorised repository edit is not an inbox contribution or a reason to move all work into NOW.
 ---
 
-<!-- O:I GUARDIAN SKILL SHIPMENT; original adoption source = central:source:control:root:Control/user/skills/central-session-strap; commissioned 2026-09-06. This repository file remains authoritative for the shipped copy, not the owner's independently edited local repertoire. CAW reconciliation 2026-09-12 preserves that distinction. -->
+<!-- O:I GUARDIAN SKILL SHIPMENT; held and projected by O:I (owner ruling 2026-09-17: "oi holds and projects the strap itself and the skill"); commissioned 2026-09-06. THIS repository file is the strap's authoritative source; every projected copy — ground harness trees, Control staging, AIKit capsules — is derived and receipt-gated. The earlier provenance pointer "original adoption source = central:source:control:root:Control/user/skills/central-session-strap" was stale (no such ref exists in the EpiLogos/Central checkout) and is retired. Owner-ratified edits happen here, never in projections. -->
 
 # Central session strap
 

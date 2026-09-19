@@ -50,6 +50,7 @@ fn guardian_profile_resolves_to_the_shipped_oi_skills_only() {
         vec![
             "oi:skill:operate-suite".to_owned(),
             "oi:skill:suite-operator".to_owned(),
+            "oi:skill:central-session-strap".to_owned(),
         ]
     );
 
@@ -114,7 +115,11 @@ fn guardian_sources_carry_discoverable_frontmatter() {
         .collect();
     assert_eq!(
         names,
-        vec!["oi".to_owned(), "oi-suite-operator".to_owned(),]
+        vec![
+            "oi".to_owned(),
+            "oi-suite-operator".to_owned(),
+            "central-session-strap".to_owned(),
+        ]
     );
 
     // Every shipped source is manifest-referenced and O:I-owned.
@@ -140,23 +145,42 @@ fn guardian_payload_files_ship_beside_a_manifest_skill() {
     // it beside that Skill's SKILL.md. A payload without its Skill (or a
     // Skill whose tooling never ships) is a projection fault.
     let manifest = guardian_manifest().unwrap();
-    // The list may legitimately be empty (the Central session strap retired
-    // from the guardian set); a declared payload must still sit beside a
-    // shipped guardian Skill.
+    // A declared payload must sit inside a shipped guardian Skill's source
+    // directory (beside its SKILL.md, nested reference subdirectories
+    // included), so the projection can place it with that Skill.
     for (path, _) in oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES {
-        let (directory, file) = path.rsplit_once('/').unwrap();
+        let file = path.rsplit('/').next().unwrap();
         assert!(
             !file.is_empty() && file != "SKILL.md",
             "{path} must declare a sibling payload, not the SKILL.md itself"
         );
         assert!(
-            manifest
-                .skills
-                .iter()
-                .any(|skill| skill.source.path == format!("{directory}/SKILL.md")),
-            "payload {path} does not sit beside a shipped guardian Skill"
+            manifest.skills.iter().any(|skill| {
+                skill
+                    .source
+                    .path
+                    .strip_suffix("SKILL.md")
+                    .is_some_and(|directory| path.starts_with(directory))
+            }),
+            "payload {path} does not sit inside a shipped guardian Skill directory"
         );
     }
+    // The `oi` router's claim-reception companion is required shipment: a
+    // packaged copy of the CLI carries it, so the projection can always
+    // deliver the reference its SKILL.md tells the reader to open.
+    let companion = oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES
+        .iter()
+        .find(|(path, _)| *path == "skills/oi/references/claim-reception.md")
+        .unwrap_or_else(|| {
+            panic!("packaged guardian set must ship skills/oi/references/claim-reception.md")
+        });
+    let repo_source =
+        Path::new(env!("CARGO_MANIFEST_DIR")).join("../skills/oi/references/claim-reception.md");
+    assert_eq!(
+        companion.1,
+        fs::read_to_string(repo_source).unwrap(),
+        "shipped companion drifted from the repository source"
+    );
 }
 
 fn ground() -> (TempDir, PathBuf) {
@@ -178,10 +202,10 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
     let (_temp, ground) = ground();
     let report = project_guardian_skillset(&ground, &oi_source_revision()).unwrap();
     assert!(!report.degraded);
-    assert_eq!(report.outcomes.len(), 2);
+    assert_eq!(report.outcomes.len(), 3);
     assert!(report.conflicts().next().is_none());
 
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         for destination in projected_paths(&ground, name) {
             let content = fs::read_to_string(&destination).unwrap();
             // An Agent Skill must open with its frontmatter; the derivation
@@ -212,7 +236,14 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
         }
     }
 
-    for name in ["oi", "oi-suite-operator"] {
+    // `oi` also projects its declared claim-reception sibling;
+    // `oi-suite-operator` and the central session strap project SKILL.md and
+    // their receipt only.
+    for (name, expected_entries) in [
+        ("oi", 3),
+        ("oi-suite-operator", 2),
+        ("central-session-strap", 2),
+    ] {
         for root in GUARDIAN_HARNESS_SKILL_ROOTS {
             let entries: Vec<_> = fs::read_dir(ground.join(root).join(name))
                 .unwrap()
@@ -220,10 +251,28 @@ fn pickup_projects_guardian_set_into_harness_trees_with_receipts() {
                 .collect();
             assert_eq!(
                 entries.len(),
-                2,
-                "{name} projects SKILL.md and its receipt only: {entries:?}"
+                expected_entries,
+                "{name} projects SKILL.md, its receipt and declared payload siblings only: {entries:?}"
             );
         }
+    }
+    // The projected companion is byte-identical with the shipped source: a
+    // payload sibling carries no derivation marker and no receipt.
+    let companion = oi_cli::guardian::GUARDIAN_SKILL_PAYLOAD_FILES
+        .iter()
+        .find(|(path, _)| *path == "skills/oi/references/claim-reception.md")
+        .map(|(_, content)| *content)
+        .expect("the oi router ships its claim-reception companion");
+    for root in GUARDIAN_HARNESS_SKILL_ROOTS {
+        let sibling = ground
+            .join(root)
+            .join("oi")
+            .join("references/claim-reception.md");
+        assert_eq!(
+            fs::read_to_string(&sibling).unwrap(),
+            companion,
+            "{sibling:?} must be byte-identical with the shipped companion"
+        );
     }
 
     // A repeated pickup is stable: unchanged destinations, no conflicts.
@@ -263,6 +312,34 @@ fn pickup_preserves_local_edits_instead_of_clobbering() {
     assert!(report_lines(&report)
         .iter()
         .any(|line| line.contains("warning:")));
+}
+
+/// Mirror a projected Skill directory into an AIKit-style payload store:
+/// every payload file (nested layout preserved) becomes a store copy whose
+/// original position is rewired as a symlink, exactly as a real adoption
+/// relinks the tree it takes ownership of.
+#[cfg(unix)]
+fn rewire_payload_siblings_into_store(source: &Path, store: &Path, managed: &mut Vec<PathBuf>) {
+    for entry in fs::read_dir(source).unwrap().flatten() {
+        let file_name = entry.file_name();
+        if file_name == "SKILL.md" || file_name == "SKILL.md.oi-projection.json" {
+            continue;
+        }
+        let sibling = source.join(&file_name);
+        let mirrored = store.join(&file_name);
+        if entry.file_type().unwrap().is_dir() {
+            fs::create_dir_all(&mirrored).unwrap();
+            rewire_payload_siblings_into_store(&sibling, &mirrored, managed);
+            // The directory keeps whatever the rewired links inside it —
+            // an adoption relinks files, it does not prune scaffolding.
+            let _ = fs::remove_dir(&sibling);
+        } else {
+            fs::copy(&sibling, &mirrored).unwrap();
+            fs::remove_file(&sibling).unwrap();
+            std::os::unix::fs::symlink(&mirrored, &sibling).unwrap();
+            managed.push(sibling);
+        }
+    }
 }
 
 #[cfg(unix)]
@@ -328,16 +405,16 @@ done
 case "${1:-}:${2:-}" in
   adopt:*)
     if [ -n "$YES" ]; then
-      printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"source":"x","namespace":"oi","skills":2,"capsules":["skill/oi/oi","skill/oi/oi-suite-operator"],"applied":true,"ownership":"adopted"}}'
+      printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"source":"x","namespace":"oi","skills":3,"capsules":["skill/oi/oi","skill/oi/oi-suite-operator","skill/oi/central-session-strap"],"applied":true,"ownership":"adopted"}}'
     else
-      printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"source":"x","namespace":"oi","skills":2,"capsules":["skill/oi/oi","skill/oi/oi-suite-operator"],"review_digest":"digest-1","applied":false}}'
+      printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"source":"x","namespace":"oi","skills":3,"capsules":["skill/oi/oi","skill/oi/oi-suite-operator","skill/oi/central-session-strap"],"review_digest":"digest-1","applied":false}}'
     fi
     exit 0 ;;
   set:show)
     printf '%s\n' '{"schema":1,"ok":false,"context":{},"error":{"code":"set.missing","message":"no such set"}}'
     exit 3 ;;
   set:create)
-    printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"name":"oi-guardian","members":2}}'
+    printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"name":"oi-guardian","members":3}}'
     exit 0 ;;
   apply:*)
     printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"generation":"gen-1","replaced":null}}'
@@ -376,11 +453,11 @@ fn bootstrap_hands_the_guardian_set_to_aikit_when_installed() {
     );
     let stdout = String::from_utf8_lossy(&init.stdout);
     assert!(
-        stdout.contains("aikit: adopted 2 guardian capsule(s)"),
+        stdout.contains("aikit: adopted 3 guardian capsule(s)"),
         "{stdout}\naikit calls:\n{aikit_log}"
     );
     assert!(
-        stdout.contains("aikit: SkillSet oi-guardian holds 2 member(s)"),
+        stdout.contains("aikit: SkillSet oi-guardian holds 3 member(s)"),
         "{stdout}"
     );
     assert!(
@@ -419,7 +496,7 @@ fn bootstrap_hands_the_guardian_set_to_aikit_when_installed() {
     );
 
     // The direct harness projection still lands beside the AIKit collection.
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         for destination in projected_paths(&ground, name) {
             assert!(destination.exists(), "missing projection {destination:?}");
         }
@@ -460,7 +537,7 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
     // payload siblings included.
     let mut managed_destinations = Vec::new();
     let mut managed_skill_destinations = Vec::new();
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let projected = projected_paths(&ground, name).remove(0);
         let store = home
             .path()
@@ -477,17 +554,11 @@ fn sync_respects_a_adopted_aikit_managed_tree_instead_of_deadlocking() {
         std::os::unix::fs::symlink(store.join("SKILL.md.oi-projection.json"), &receipt).unwrap();
         managed_destinations.push(projected.clone());
         managed_skill_destinations.push(projected.clone());
-        for entry in fs::read_dir(projected.parent().unwrap()).unwrap().flatten() {
-            let file_name = entry.file_name();
-            if file_name == "SKILL.md" || file_name == "SKILL.md.oi-projection.json" {
-                continue;
-            }
-            let sibling = entry.path();
-            fs::copy(&sibling, store.join(&file_name)).unwrap();
-            fs::remove_file(&sibling).unwrap();
-            std::os::unix::fs::symlink(store.join(&file_name), &sibling).unwrap();
-            managed_destinations.push(sibling);
-        }
+        rewire_payload_siblings_into_store(
+            projected.parent().unwrap(),
+            &store,
+            &mut managed_destinations,
+        );
     }
 
     // A post-adoption aikit whose adopt refuses, like the real one does on a
@@ -504,7 +575,7 @@ case "${1:-}:${2:-}" in
     printf '%s\n' '{"schema":1,"ok":false,"context":{},"error":{"code":"adopt.symlink_not_supported","message":"refusing to adopt a tree it already owns"}}'
     exit 1 ;;
   set:show)
-    printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"name":"oi-guardian","members":2,"projected":[],"withheld":[{"capability":"skill/oi/oi","reason":"x"},{"capability":"skill/oi/oi-suite-operator","reason":"x"}]}}'
+    printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"name":"oi-guardian","members":3,"projected":[],"withheld":[{"capability":"skill/oi/oi","reason":"x"},{"capability":"skill/oi/oi-suite-operator","reason":"x"},{"capability":"skill/oi/central-session-strap","reason":"x"}]}}'
     exit 0 ;;
   apply:*)
     printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"generation":"gen-managed-1"}}'
@@ -536,7 +607,7 @@ exit 2
         "sync should skip adoption on a managed tree: {stdout}"
     );
     assert!(
-        stdout.contains("aikit: SkillSet oi-guardian holds 2 member(s)"),
+        stdout.contains("aikit: SkillSet oi-guardian holds 3 member(s)"),
         "{stdout}"
     );
     assert!(
@@ -602,12 +673,13 @@ adopt_all() {
     [ -f "$d/SKILL.md" ] || continue
     [ -L "$d/SKILL.md" ] && continue
     mkdir -p "$STORE/$name" "$ORIG/$name"
-    for f in "$d"/*; do
-      base=$(basename "$f")
-      cp "$f" "$ORIG/$name/$base"
-      cp "$f" "$STORE/$name/$base"
+    find "$d" -mindepth 1 -type f | while read -r f; do
+      rel=${f#"$d"}
+      mkdir -p "$ORIG/$name/$(dirname "$rel")" "$STORE/$name/$(dirname "$rel")"
+      cp "$f" "$ORIG/$name/$rel"
+      cp "$f" "$STORE/$name/$rel"
       rm "$f"
-      ln -s "$STORE/$name/$base" "$d/$base"
+      ln -s "$STORE/$name/$rel" "$f"
     done
   done
 }
@@ -643,14 +715,15 @@ case "${1:-}:${2:-}" in
     printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"procedures":["prc-guardian"],"count":1}}'
     exit 0 ;;
   procedure:diff)
-    printf '%s\n' "{\"schema\":1,\"ok\":true,\"context\":{},\"data\":{\"diff\":\"procedure prc-guardian (d1) — 11 edits\\nnote: adopt 2 valid Agent Skill(s) from $SRC into the personal registry\"}}"
+    printf '%s\n' "{\"schema\":1,\"ok\":true,\"context\":{},\"data\":{\"diff\":\"procedure prc-guardian (d1) — 11 edits\\nnote: adopt 3 valid Agent Skill(s) from $SRC into the personal registry\"}}"
     exit 0 ;;
   procedure:undo)
     for d in "$ORIG"/*/; do
       name=$(basename "$d")
-      for f in "$d"/*; do
-        base=$(basename "$f")
-        target="$G/.claude/skills/$name/$base"
+      find "$d" -mindepth 1 -type f | while read -r f; do
+        rel=${f#"$d"}
+        target="$G/.claude/skills/$name/$rel"
+        mkdir -p "$(dirname "$target")"
         [ -L "$target" ] && rm "$target"
         cp "$f" "$target"
       done
@@ -658,9 +731,7 @@ case "${1:-}:${2:-}" in
     # The real undo reverses the payload files but leaves the capsule
     # directories they were written into behind.
     if [ -z "$LEAVE_PAYLOAD_CONTENT" ]; then
-      for d in "$STORE"/*/; do
-        [ -d "$d" ] && rm -f "$d"/*
-      done
+      find "$STORE" -mindepth 2 -type f -exec rm {} +
     fi
     printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"procedure":"prc-guardian","undone":11}}'
     exit 0 ;;
@@ -668,7 +739,7 @@ case "${1:-}:${2:-}" in
     printf '%s\n' '{"schema":1,"ok":false,"context":{},"error":{"code":"set.missing","message":"no such set"}}'
     exit 3 ;;
   set:create)
-    printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"name":"oi-guardian","members":2}}'
+    printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"name":"oi-guardian","members":3}}'
     exit 0 ;;
   apply:*)
     printf '%s\n' '{"schema":1,"ok":true,"context":{},"data":{"generation":"gen-refresh-1"}}'
@@ -718,7 +789,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
 
     // The tree is AIKit-owned: every `.claude` destination is a link into
     // the fake payload store.
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let projected = projected_paths(&ground, name).remove(0);
         assert!(
             fs::symlink_metadata(&projected)
@@ -732,7 +803,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     }
 
     // The authoritative source moves on: the managed copies go stale.
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let payload = store.join(name).join("SKILL.md");
         let mut content = fs::read_to_string(&payload).unwrap();
         content.push_str("\nstale drift marker\n");
@@ -757,7 +828,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
         "{stdout}\naikit calls:\n{aikit_log}"
     );
     assert!(
-        stdout.contains("aikit: adopted 2 guardian capsule(s)"),
+        stdout.contains("aikit: adopted 3 guardian capsule(s)"),
         "{stdout}\naikit calls:\n{aikit_log}"
     );
     // The undo left empty capsule scaffolding behind (as the real undo
@@ -765,13 +836,13 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
     // completing the adoption.
     assert_eq!(
         stdout.matches("cleared empty capsule residue").count(),
-        2,
+        3,
         "expected every capsule husk to be cleared:\n{stdout}\naikit calls:\n{aikit_log}"
     );
 
     // The cycle ran in AIKit's own order: find, undo, re-adopt, recompose.
-    // Each refused preview names one capsule husk, so the re-adopt previews
-    // once per husk before the apply lands.
+    // The re-adopt previews once per capsule husk the undo left behind and
+    // once more over the cleared tree before the apply lands.
     let order: Vec<&str> = aikit_log
         .lines()
         .filter_map(|line| {
@@ -808,6 +879,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
             "adopt-preview",
             "adopt-preview",
             "adopt-preview",
+            "adopt-preview",
             "adopt-apply",
             "set",
             "set",
@@ -818,7 +890,7 @@ fn sync_refreshes_a_stale_adopted_tree_through_aikit_procedures() {
 
     // The managed copies are links again, carrying the fresh authoritative
     // bytes, and the payload store was refreshed from them.
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let projected = projected_paths(&ground, name).remove(0);
         assert!(fs::symlink_metadata(&projected)
             .unwrap()
@@ -865,7 +937,7 @@ fn bootstrap_projects_guardian_skillset_into_a_fresh_ground() {
         stdout.contains("guardian SkillSet oi:skillset:base-guardian"),
         "{stdout}"
     );
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         for destination in projected_paths(&ground, name) {
             assert!(destination.exists(), "missing projection {destination:?}");
         }
@@ -925,7 +997,7 @@ fn sync_refuses_to_clear_capsule_residue_that_holds_content() {
 
     // The managed copies go stale, but the undo this time leaves payload
     // content behind: the refused capsule is not empty residue.
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         let payload = store.join(name).join("SKILL.md");
         let mut content = fs::read_to_string(&payload).unwrap();
         content.push_str("\nstale drift marker\n");
@@ -957,7 +1029,7 @@ fn sync_refuses_to_clear_capsule_residue_that_holds_content() {
         !stdout.contains("cleared empty capsule residue"),
         "occupied capsules must never be cleared:\n{stdout}\n{stderr}"
     );
-    for name in ["oi", "oi-suite-operator"] {
+    for name in ["oi", "oi-suite-operator", "central-session-strap"] {
         assert!(
             store.join(name).join("SKILL.md").is_file(),
             "payload content for {name} was destroyed"
