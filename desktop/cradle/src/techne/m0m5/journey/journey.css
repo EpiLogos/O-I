@@ -1,0 +1,478 @@
+/* The Journey instrument (T5) — the .oi-techne visual system through the
+   shared --oi-* tokens only (hosts theme; this surface consumes). */
+
+.techne-journey {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  height: 100%;
+  overflow: auto;
+}
+
+.techne-journey-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-journey-reading {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-transport {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  margin-left: auto;
+}
+
+.techne-journey-stand {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-button {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-accent-ink);
+  background: transparent;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-3);
+  cursor: pointer;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-journey-button:hover:not(:disabled) {
+  border-color: var(--oi-accent);
+}
+
+.techne-journey-button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.techne-journey-button:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-journey-expression {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-journey-expression-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-journey-expression-head code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-rev {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+}
+
+.techne-journey-beats {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  counter-reset: journey-beat;
+}
+
+.techne-journey-beat {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-surface);
+}
+
+.techne-journey-beat[data-current] {
+  border-color: var(--oi-accent);
+}
+
+.techne-journey-beat-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+}
+
+.techne-journey-index {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-title {
+  font-size: var(--oi-type-sm);
+  font-weight: 500;
+}
+
+.techne-journey-move {
+  margin-left: auto;
+  display: flex;
+  gap: var(--oi-space-1);
+}
+
+.techne-journey-move button,
+.techne-journey-pace button {
+  font-size: var(--oi-type-sm);
+  line-height: 1;
+  color: var(--oi-foreground);
+  background: transparent;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: calc(var(--oi-space-1) * 0.5) var(--oi-space-2);
+  cursor: pointer;
+}
+
+.techne-journey-move button:hover:not(:disabled),
+.techne-journey-pace button:hover:not(:disabled) {
+  background: var(--oi-canvas-ground);
+}
+
+.techne-journey-move button:disabled,
+.techne-journey-pace button:disabled {
+  opacity: 0.42;
+  cursor: not-allowed;
+}
+
+.techne-journey-move button:focus-visible,
+.techne-journey-pace button:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-journey-ids {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-journey-ids code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-chips {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-journey-chip {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+}
+
+.techne-journey-chip > span {
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-chip code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-sources {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-journey-sources summary {
+  cursor: pointer;
+}
+
+.techne-journey-sources summary:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-journey-sources ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin: var(--oi-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-journey-source {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-journey-source code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-selector {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-pace {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-pace output {
+  font-family: var(--oi-font-mono);
+  min-width: 2.5ch;
+  text-align: center;
+}
+
+.techne-journey-expression-foot {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-journey-propose {
+  border-color: var(--oi-accent);
+}
+
+.techne-journey-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-journey-receipt {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-type-sm);
+}
+
+.techne-journey-receipt p,
+.techne-journey-receipt ul {
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-journey-receipt code {
+  font-family: var(--oi-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-receipt[data-routed="true"] {
+  border-color: var(--oi-accent);
+}
+
+.techne-journey-cross {
+  display: flex;
+  gap: var(--oi-space-3);
+  align-items: baseline;
+}
+
+/* --- M3′ bridge additions (issue #216): crossing, presence, compose, C′,
+   agency state — same tokens, quiet editorial register --- */
+
+.techne-journey-return {
+  margin: 0;
+  padding: var(--oi-space-2) var(--oi-space-3);
+  border: 1px solid var(--oi-accent);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+}
+
+.techne-journey-actions {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-journey-enter {
+  border-color: var(--oi-accent);
+}
+
+.techne-journey-bridge {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-journey-bridge p {
+  margin: 0;
+}
+
+.techne-journey-compose {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-journey-compose label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-1);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-compose select {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+  background: var(--oi-surface);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: calc(var(--oi-space-1) * 0.5) var(--oi-space-2);
+}
+
+.techne-journey-input {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-foreground);
+  background: var(--oi-surface);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  min-width: 16rem;
+  flex: 1 1 16rem;
+}
+
+.techne-journey-input:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-journey-cprime-edit {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+  padding-top: var(--oi-space-2);
+  border-top: 1px solid var(--oi-hairline-soft);
+}
+
+.techne-journey-cprime-edit label {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-1);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-journey-cprime-edit select {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+  background: var(--oi-surface);
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: calc(var(--oi-space-1) * 0.5) var(--oi-space-2);
+}
+
+.techne-journey-traversal {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-journey-traversal-step {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+}
+
+.techne-journey-traversal-step[data-chord],
+.techne-journey-traversal-step[data-fusion],
+.techne-journey-traversal-step[data-sustained] {
+  border-color: var(--oi-accent);
+}
+
+.techne-journey-traversal-step ul {
+  display: flex;
+  gap: var(--oi-space-2);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  flex-wrap: wrap;
+}
+
+.techne-journey-traversal-step code {
+  font-family: var(--oi-font-mono);
+  overflow-wrap: anywhere;
+}
+
+.techne-journey-agent {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-journey-agent summary {
+  cursor: pointer;
+}
+
+.techne-journey-agent summary:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-journey-agent-state {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  overflow: auto;
+  max-height: 24rem;
+  padding: var(--oi-space-3);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  color: var(--oi-foreground);
+}

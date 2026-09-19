@@ -1,23 +1,109 @@
 /* The Factory development surface's own rules. Chrome composes the desktop
- * grammar (oi-context-head, oi-field/oi-input, oi-action-group/oi-action,
- * oi-ref-row/oi-ref/oi-state, oi-kv, oi-disclosure, oi-note); this file
- * keeps the surface's layout and the host container the owner's own Build
- * surface (captured factory-ui) inhabits. Tokens only. */
-.factory-development{padding:0 22px 18px;display:flex;flex-direction:column;gap:14px;overflow:auto}
-.factory-development-header{margin:0 -22px;padding:0 22px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+ * grammar (oi-context-head, oi-segment, oi-panel-head, oi-row, oi-field/
+ * oi-input, oi-action-group/oi-action, oi-tool, oi-ref-row/oi-ref/oi-state,
+ * oi-kv, oi-disclosure, oi-note, oi-empty); this file keeps the surface's
+ * layout and the host container the owner's own Build surface (captured
+ * factory-ui) inhabits. Tokens only; nothing here moves.
+ *
+ * Construction (owner reference reading, 2026-09-17): section bands carry a
+ * tinted head with a right-aligned status caption; the read forms sit in a
+ * bordered field panel — a labelled grid row per field, the action beside
+ * its field, not a floating paragraph of buttons; journeys/runs/executions
+ * are dense registry rows whose inspect tool reveals on hover/focus, with a
+ * selected/open row keeping the ink rule. Guidance text is a quiet .oi-note,
+ * never full-width prose competing with the data.
+ *
+ * One scroll region: the pane's surface body scrolls; the head and the section
+ * nav stay at its top, and the nav jumps between sections that are all
+ * present — a section is never hidden, so every control stays reachable. */
+.factory-development{min-height:100%;box-sizing:border-box;padding:0 22px 28px;display:flex;flex-direction:column;gap:14px;container-type:inline-size}
+.factory-development-top{position:sticky;top:0;z-index:1;margin:0 -22px;padding:0 22px 8px;background:var(--oi-canvas-ground);border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.factory-development-header{padding:0;min-height:56px}
 .factory-development-header h2{margin:0;font-size:var(--oi-shell-type-body);font-weight:550}
-.factory-development-form{display:flex;flex-direction:column;gap:8px}
-.factory-development-reading h3,.factory-development-status h3,.factory-development-journeys h3,.factory-development-build h3{margin:0 0 6px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
-.factory-development-reading pre,.factory-execution pre{margin:0;padding:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;background:var(--oi-composer-ground);font-size:var(--oi-shell-type-nav);overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
-.factory-development-build label{margin-bottom:6px}
-.factory-journey,.factory-run{border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:8px 10px;display:flex;flex-direction:column;gap:6px}
-.factory-run{margin:6px 0 0 14px}
-.factory-journey .oi-disclosure,.factory-run .oi-disclosure,.factory-execution .oi-disclosure{border-top:0;padding:4px 0}
-.factory-executions{margin:0;padding-left:18px;display:flex;flex-direction:column;gap:6px}
-.factory-execution pre{margin-top:4px;max-height:260px}
-.factory-telemetry{margin-top:6px}
+.factory-development-header small{white-space:normal;line-height:1.45;max-width:78ch;color:var(--oi-muted-2)}
+.factory-development-nav{display:inline-flex;max-width:100%;overflow-x:auto;scrollbar-width:none}
+.factory-development-nav::-webkit-scrollbar{display:none}
+
+/* A titled band: tinted head strip, uppercase eyebrow title left, a status
+ * caption right — the same construction every section head repeats. */
+.factory-section{scroll-margin-top:104px;display:flex;flex-direction:column;min-width:0}
+.factory-section+.factory-section{margin-top:2px}
+.factory-band{margin:0;padding:0 10px;height:30px;min-height:30px;display:flex;align-items:center;gap:8px;background:var(--oi-wash);border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px 6px 0 0}
+.factory-band>.oi-panel-head-title{flex:0 0 auto;margin:0;font-size:var(--oi-shell-type-eyebrow);font-weight:600;letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.factory-band>.factory-band-caption{margin-left:auto;flex:0 0 auto;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);font-variant-numeric:tabular-nums;white-space:nowrap}
+.factory-band>.factory-band-caption[data-attention="true"]{color:var(--oi-accent-ink);font-weight:500}
+.factory-band>.oi-tool,.factory-band>.oi-action{margin-left:auto}
+.factory-band+.factory-panel-body{border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-top:0;border-radius:0 0 6px 6px;padding:10px}
+.factory-section>:is(.oi-note,.oi-empty){margin:8px 0 0;padding:0;line-height:1.6;max-width:78ch}
+
+.factory-development-conversations .project-encounters{display:flex;flex-direction:column;gap:1px;max-width:560px}
+.factory-development-conversations .project-availability{margin:0;padding:3px 8px;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2)}
+.factory-development-conversations .encounter-row[data-readonly="true"]{cursor:default}
+.factory-development-conversations .encounter-row[data-readonly="true"]:hover{background:transparent}
+
+/* The read form: one bordered field panel, a labelled row per field — the
+ * label at the left in the eyebrow register, the input taking the row, its
+ * action immediately beside it. Never a floating label over a borderless box. */
+.factory-development-form{display:flex;flex-direction:column;gap:6px;max-width:640px}
+.factory-field-row{display:grid;grid-template-columns:132px minmax(0,1fr) auto;align-items:center;gap:10px;min-height:30px}
+.factory-field-row>.factory-field-label{flex:none;margin:0;font-size:var(--oi-shell-type-ui);color:var(--oi-muted-2);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.factory-field-row>.oi-input{width:100%}
+.factory-field-row>.oi-action-group{flex:none}
+.factory-development-form>.oi-action-group{align-self:flex-start;margin-top:2px}
+@container (max-width:520px){.factory-field-row{grid-template-columns:1fr;gap:3px}.factory-field-row>.factory-field-label{font-size:var(--oi-shell-type-eyebrow);text-transform:uppercase;letter-spacing:var(--oi-shell-tracking)}}
+
+.factory-development-reading{margin-top:10px}
+.factory-development-reading h3,.factory-development-journeys>.factory-band{margin:0 0 6px}
+.factory-development-reading h3{display:flex;flex-wrap:wrap;align-items:baseline;gap:8px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;color:var(--oi-muted-2)}
+.factory-development-reading h3>.oi-ref{text-transform:none;letter-spacing:0}
+.factory-development-reading pre,.factory-execution pre{margin:0;padding:8px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:6px;background:var(--oi-composer-ground);font-size:var(--oi-shell-type-nav);overflow:auto;max-height:340px;white-space:pre-wrap;overflow-wrap:anywhere}
+
+/* Journeys / runs / executions: dense registry rows in a bordered list body,
+ * not free-floating cards. The inspect tool reveals on hover/focus; an open
+ * (expanded) row keeps a persistent ink rule so state survives the pointer
+ * leaving. */
+.factory-development-journeys{display:flex;flex-direction:column;margin-top:4px}
+.factory-registry{border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px;overflow:hidden}
+.factory-journey{border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.factory-journey:last-child{border-bottom:0}
+.factory-journey,.factory-run{display:flex;flex-direction:column;min-width:0}
+.factory-run{border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);margin:0 0 0 20px}
+.factory-row-head{align-items:center;min-height:30px;padding:0 10px;gap:8px}
+.factory-journey>.factory-row-head,.factory-run>.factory-row-head{cursor:default;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.factory-journey:hover>.factory-row-head,.factory-run:hover>.factory-row-head,
+.factory-journey:focus-within>.factory-row-head,.factory-run:focus-within>.factory-row-head{background:var(--oi-wash)}
+.factory-journey:has(>.oi-disclosure[open])>.factory-row-head,.factory-run:has(>.oi-disclosure[open])>.factory-row-head{box-shadow:inset 2px 0 0 var(--oi-accent)}
+.factory-row-head>.factory-inspect{margin-left:auto;opacity:0;transition:opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.factory-journey:hover>.factory-row-head>.factory-inspect,.factory-run:hover>.factory-row-head>.factory-inspect,
+.factory-row-head>.factory-inspect:focus-visible{opacity:1}
+.factory-journey .oi-disclosure,.factory-run .oi-disclosure,.factory-execution .oi-disclosure{border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft);padding:8px 10px;margin:0}
+.factory-journey>.oi-disclosure:first-child,.factory-run>.oi-disclosure:first-child{border-top:0}
+.factory-run h4{margin:10px 0 4px;font-size:var(--oi-shell-type-eyebrow);letter-spacing:var(--oi-shell-tracking);text-transform:uppercase;font-weight:500;color:var(--oi-muted-2)}
+.factory-run-facts{margin:6px 0}
+.factory-executions{margin:0;padding-left:0;display:flex;flex-direction:column;border:var(--oi-shell-edge) solid var(--oi-hairline-soft);border-radius:6px;overflow:hidden;list-style:none}
+.factory-execution{border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.factory-execution:last-child{border-bottom:0}
+.factory-execution>.factory-row-head{min-height:28px}
+.factory-execution pre{margin-top:0;max-height:260px}
+.factory-telemetry{margin-top:2px}
 .factory-telemetry p{margin:6px 0 0;font-size:var(--oi-shell-type-nav);overflow-wrap:anywhere}
+.factory-development-status .oi-kv{max-width:640px;margin-top:8px}
+
 /* The owner's Build surface inside the host: the host gives it the pane
  * ground and a hairline frame, nothing else; the owner styles its body.
  * The native body disables Actions when no dispatcher is supplied. */
 .factory-build-host{display:flex;flex-direction:column;gap:10px;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:8px;padding:10px;background:var(--oi-canvas-ground)}
+@container (max-width:520px){.factory-development-header small{display:none}.factory-run{margin-left:6px}}
+
+/* The Factory centre home: chat-default composition. */
+.factory-centre { display: grid; gap: 18px; padding: 28px clamp(20px, 6vw, 72px) 48px; max-width: 860px; }
+.factory-centre-head h1 { margin: 2px 0 4px; font-size: 1.45rem; letter-spacing: -.02em; }
+.factory-centre-hint { margin: 0; color: var(--oi-muted, rgba(0,0,0,.55)); }
+.factory-centre-continue { padding: 14px 16px; border: 1px solid var(--oi-rule, rgba(0,0,0,.14)); border-radius: 10px; background: var(--oi-panel, inherit); }
+.factory-centre-continue p { margin: 0; }
+.factory-centre-pick { display: grid; gap: 10px; }
+.factory-centre-pick h2 { margin: 0; font-size: 1.05rem; }
+.factory-centre-debug { margin-top: 8px; }
+.factory-centre-debug > summary { cursor: pointer; color: var(--oi-muted, rgba(0,0,0,.55)); font-size: .8rem; }
+.factory-centre-debug[open] > summary { margin-bottom: 10px; }
+.factory-centre-debug .factory-development { border: 1px dashed var(--oi-rule, rgba(0,0,0,.2)); border-radius: 10px; padding: 12px; }

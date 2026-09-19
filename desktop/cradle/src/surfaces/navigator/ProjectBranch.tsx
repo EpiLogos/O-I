@@ -6,21 +6,26 @@ import { Glyph } from "../../workspace/Glyph";
  * still count as the owner's. Momentum and repeated ticks renew it. */
 const GESTURE_WINDOW_MS=250;
 
-export function ProjectModes({name, mode, onMode}: {name:string; mode:ProjectMode; onMode:(mode:ProjectMode)=>void}) {
+export function ProjectModes({name, mode, current, onMode}: {name:string; mode:ProjectMode; current:boolean; onMode:(mode:ProjectMode)=>void}) {
   return <nav className="project-modes" aria-label={`${name} modes`}>
     {(["chats","files","wiki"] as const).map(value=><button key={value}
       aria-label={`${name}: ${value === "chats" ? "chats and tasks" : value}`}
       title={value === "chats" ? "Chats and tasks" : value === "files" ? "Files" : "Wiki"}
-      aria-pressed={value===mode} onClick={()=>onMode(value)}>
+      /* Owner ruling 2026-09-18: only the row the reader is actually in may
+       * light its mode icon — a row that merely defaults to chats is quiet. */
+      aria-pressed={current && value===mode ? true : undefined} onClick={()=>onMode(value)}>
       <Glyph name={value === "chats" ? "chat" : value === "files" ? "file" : "wiki"} size={12}/>
     </button>)}
   </nav>;
 }
 
-/** Only view state and owner-disclosed content cross this presentation seam. */
-export function ProjectBranch({name,path,selected,navigation,onBrowse,onDisclosure,onMode,onScroll,children}: {
+/** Only view state and owner-disclosed content cross this presentation seam.
+ * The row click is a pure disclosure toggle — one click opens, one click
+ * closes, never an owner call in between; the workspace's project context
+ * follows the work the reader actually opens, not the disclosure itself. */
+export function ProjectBranch({name,path,selected,navigation,onDisclosure,onMode,onScroll,children}: {
   name:string; path:string; selected:boolean; navigation:ProjectNavigation;
-  onBrowse:()=>void; onDisclosure:(expanded:boolean)=>void;
+  onDisclosure:(expanded:boolean)=>void;
   onMode:(mode:ProjectMode)=>void; onScroll:(scroll:number)=>void; children:ReactNode;
 }) {
   const body=useRef<HTMLElement>(null);
@@ -67,10 +72,10 @@ export function ProjectBranch({name,path,selected,navigation,onBrowse,onDisclosu
     return()=>{resized.disconnect();mutated.disconnect();};
   },[path,navigation.expanded,navigation.mode]);
   return <li data-navigation-path={path}>
-    <button data-project-path={path} aria-current={selected ? "true" : undefined} aria-expanded={navigation.expanded} onClick={()=>{if(selected&&navigation.expanded)onDisclosure(false);else onBrowse();}} title={name}>
+    <button data-project-path={path} aria-current={selected ? "true" : undefined} aria-expanded={navigation.expanded} onClick={()=>onDisclosure(!navigation.expanded)} title={name}>
       <span className="project-mark" aria-hidden="true"/><span className="project-name">{name}</span>
     </button>
-    <ProjectModes name={name} mode={navigation.mode??"chats"} onMode={onMode}/>
+    <ProjectModes name={name} mode={navigation.mode??"chats"} current={selected} onMode={onMode}/>
     {navigation.expanded && <section ref={body} className="project-files" aria-label={`${name} navigation`}
       onWheel={gesture} onKeyDown={gesture} onTouchStart={gesture} onTouchMove={gesture} onFocus={gesture} onPointerDown={holdPointer}
       onScroll={event=>{

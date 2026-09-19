@@ -11,6 +11,10 @@ import {Glyph} from "../../../workspace/Glyph";
 import {handToPanelInspect} from "../../../agent/planes/panelInspect";
 import {TrajectoryPlane} from "../../../agent/desk/TrajectoryPlane";
 import type {DeskPlaneProps} from "../../../agent/desk/deskTypes";
+import {SessionCards} from "../components/SessionCards";
+import {SpanDetail} from "../components/SpanDetail";
+import {TraceWaterfall} from "../components/TraceWaterfall";
+import {factoryBuildFixture} from "../fixtures/factory-build";
 import {
   markArrivalsSeen, refusePermission, resolvePermission, retryStep,
   useFactoryFixture, useFactorySelection, type FactoryPanelHost, type FixtureStep,
@@ -22,11 +26,19 @@ const STATUS_GLYPH: Record<string, Parameters<typeof Glyph>[0]["name"]> = {
   queued: "dot", running: "activity", success: "check", fail: "warning", blocked: "stop", cancelled: "stop",
 };
 
-export function RunPlane({subject, accompanying, onMessage, host}: DeskPlaneProps & {host?: FactoryPanelHost}) {
+export function RunPlane({subject, accompanying, onMessage, host, full, withScenarioBar=true}: DeskPlaneProps & {host?: FactoryPanelHost; full?: boolean; withScenarioBar?: boolean}) {
   const fixture = useFactoryFixture();
   const selection = useFactorySelection();
   const fixtureRun = fixture?.run;
   const view = !fixtureRun ? selection?.view : undefined;
+  // The fuller multi-lane monitor (expanded Run): the SSSF optic over the
+  // same run the compact view reads — fixture traces in a labelled scenario,
+  // the owner's own trajectories when the centre has served a real read.
+  const [monitorExecutionRef, setMonitorExecutionRef] = useState<string>();
+  const [monitorSpanRef, setMonitorSpanRef] = useState<string>();
+  const monitorTraces = fixtureRun ? factoryBuildFixture.trajectories : selection?.view?.trajectories;
+  const monitorTrace = monitorTraces?.find(item => item.executionRef === monitorExecutionRef) ?? monitorTraces?.[0];
+  const monitorSpan = monitorTrace?.spans.find(span => span.spanRef === monitorSpanRef);
   const runLabel = fixtureRun?.label ?? view?.run.label;
   const state = fixtureRun?.state ?? view?.run.status;
   const nextDecision = fixtureRun?.nextDecision ?? view?.humanRequests[0]?.question;
@@ -45,7 +57,7 @@ export function RunPlane({subject, accompanying, onMessage, host}: DeskPlaneProp
   const hasCandidates = (fixtureRun?.candidates.length ?? 0) > 0 || (view?.candidates.length ?? 0) > 0;
 
   return <div className="desk-plane factory-side" data-plane="Run" data-fixture={fixtureRun ? fixture.scenario : undefined}>
-    <ScenarioBar />
+    {withScenarioBar && <ScenarioBar />}
 
     {/* --- the run: what this work is, where it stands ---------------------- */}
     <div className="factory-side-run" data-run-state={state}>
@@ -58,11 +70,25 @@ export function RunPlane({subject, accompanying, onMessage, host}: DeskPlaneProp
       {fixtureRun && <p className="factory-side-run-purpose">{fixtureRun.purpose}</p>}
       {nextDecision && <p className="factory-side-decision" role="status"><Glyph name="verify" size={12} />{nextDecision}</p>}
       <div className="oi-action-group factory-side-run-actions">
-        {host?.onExpandPanel && <button className="oi-action" onClick={host.onExpandPanel}><Glyph name="maximise" size={12} />Expand</button>}
+        {host?.onExpandPanel && <button className="oi-action" onClick={host.onExpandPanel} aria-label="Full right region"><Glyph name="expand" size={12} />Expand</button>}
         {host?.onOpenFullRun && <button className="oi-action" onClick={host.onOpenFullRun}><Glyph name="columns" size={12} />Full run</button>}
         {host?.onOpenPlane && hasCandidates && <button className="oi-action" onClick={() => host.onOpenPlane?.("factory-context")}>Compare</button>}
       </div>
     </div>
+
+    {/* --- the fuller multi-lane monitor, only when Run is expanded ----------- */}
+    {full && !!(monitorTraces?.length) && <section className="factory-side-group factory-side-monitor" aria-label="Execution monitor">
+      <h4>Execution monitor</h4>
+      {/* The captured optic's styles are scoped under .fb-build-surface — the
+        monitor mounts inside that scope so the components render as designed. */}
+      <div className="fb-build-surface factory-side-monitor-host">
+        <SessionCards traces={monitorTraces!} selectedExecutionRef={monitorTrace?.executionRef} onSelect={ref => {setMonitorExecutionRef(ref); setMonitorSpanRef(undefined);}}/>
+        {monitorTrace && <div className="factory-side-monitor-track">
+          <TraceWaterfall trace={monitorTrace} selectedSpanRef={monitorSpanRef} onSelectSpan={setMonitorSpanRef}/>
+          {monitorSpan && <SpanDetail span={monitorSpan} onClose={() => setMonitorSpanRef(undefined)}/>}
+        </div>}
+      </div>
+    </section>}
 
     {/* --- decisions: the genuine human attention ---------------------------- */}
     {!!decisions.length && <section className="factory-side-group" aria-label="Decisions">

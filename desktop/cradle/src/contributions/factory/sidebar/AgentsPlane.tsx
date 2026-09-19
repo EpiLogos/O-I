@@ -25,7 +25,7 @@ import {ScenarioBar} from "./ScenarioBar";
  * the desktop seam yet, so no identities are minted here. */
 const GUARDIAN_PRODUCTS = ["Central", "Actuation", "AIKit", "Software Factory", "Workcell", "Quaternal Logic"] as const;
 
-export function AgentsPlane({subject, accompanying, host}: DeskPlaneProps & {host?: FactoryPanelHost}) {
+export function AgentsPlane({subject, host}: DeskPlaneProps & {host?: FactoryPanelHost}) {
   const fixture = useFactoryFixture();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string>();
@@ -79,21 +79,20 @@ export function AgentsPlane({subject, accompanying, host}: DeskPlaneProps & {hos
                   </button>
                 </li>)}
               </ul>
-              : <p className="oi-empty">{query ? "No roster member matches." : "No durable workers yet. Create one above, or work through the project's conversations below."}</p>}
+              : <p className="oi-empty">{query ? "No matches." : "No agents yet."}</p>}
           </section>
 
           <section className="factory-side-group" aria-label="Project conversations">
             <h4>Project conversations</h4>
             {host?.onOpenEncounterRow && project
               ? <EncounterList project={project} variant="panel" onOpen={row => host.onOpenEncounterRow?.(row)} />
-              : <p className="oi-note">The project's attached conversations list needs the browsed project; it is named in the left navigator and the panel head.</p>}
-            {accompanying && <p className="oi-note">Bound conversation: <code className="oi-ref">{accompanying.ref}</code></p>}
+              : <p className="oi-note">Choose a project.</p>}
           </section>
 
           <section className="factory-side-group" aria-label="Product Guardians">
             <h4>Product Guardians</h4>
             <ul className="factory-side-guardians">{GUARDIAN_PRODUCTS.map(name => <li key={name}><Glyph name="factory" size={11} />{name}</li>)}</ul>
-            <p className="oi-note">Six maintained product repertoires, each resolved at its owner. No roster read reaches the desktop seam yet, so no identities or inventories are minted here (handoff §2 — named gap).</p>
+            <p className="oi-note">Roster read not exposed at the desktop seam yet.</p>
           </section>
         </>}
   </div>;
@@ -111,7 +110,7 @@ function CreationForm({kind, fixtureOn, onClose}: {kind: "agent" | "team"; fixtu
     <div className="oi-action-group">
       {fixtureOn
         ? <button className="oi-action" disabled={!name.trim()} onClick={() => { createFixture(kind, name.trim(), purpose.trim()); onClose(); }}>Create (fixture)</button>
-        : <small className="factory-side-gap">Creating a durable named worker needs the native create operation — not exposed to the desktop seam yet (named gap). Existing conversations remain the live roster.</small>}
+        : <small className="factory-side-gap">Native create not exposed yet.</small>}
       <button className="oi-action" onClick={onClose}>Close</button>
     </div>
   </form>;
@@ -152,9 +151,9 @@ function AgentDetail({agent, fixtureOn, host, onBack}: {agent: FixtureAgent; fix
         <input className="oi-input" value={skillQuery} onChange={event => { setSkillQuery(event.target.value); markProposalStale(); }} placeholder="Search skills manually…" aria-label="Search skills" />
         {fixtureOn
           ? <button className="oi-action" disabled={!intent.trim()} onClick={() => proposeSkills(agent.ref, intent.trim())}>Suggest skills</button>
-          : <small className="factory-side-gap">Suggest skills needs AIKit search and a bounded inference at the desktop seam — not exposed yet (named gap). Manual search and select work without a model.</small>}
+          : <small className="factory-side-gap">Native AIKit search not exposed yet.</small>}
       </div>
-      {fixtureOn && <label className="factory-side-intent">Intent for suggestions<textarea className="oi-input" rows={2} value={intent} onChange={event => { setIntent(event.target.value); markProposalStale(); }} placeholder="What should this worker be able to do?" />{intent.trim() && <small className="oi-note">Explicit only — no inference per keystroke. Changing the intent marks an existing proposal stale.</small>}</label>}
+      {fixtureOn && <label className="factory-side-intent">Intent for suggestions<textarea className="oi-input" rows={2} value={intent} onChange={event => { setIntent(event.target.value); markProposalStale(); }} placeholder="What should this worker be able to do?" /></label>}
       {proposal && <div className="factory-side-proposal" data-stale={stale || undefined} role="group" aria-label="Skill proposal">
         <h5>{stale ? "Proposal (stale — the intent or sources moved)" : "Proposed setup — review before applying"}</h5>
         <p className="oi-note">Intent: {proposal.intent}</p>
@@ -176,9 +175,8 @@ function AgentDetail({agent, fixtureOn, host, onBack}: {agent: FixtureAgent; fix
           <span>{capability.name}{capability.target ? <small> → {capability.target}</small> : null}</span>
           <small>{["permission " + capability.permission, capability.availability, capability.state].join(" · ")}</small>
         </li>)}
-        {!agent.capabilities.length && <li className="oi-note">No capabilities disclosed for this worker.</li>}
+        {!agent.capabilities.length && <li className="oi-note">Nothing disclosed.</li>}
       </ul>
-      <p className="oi-note">Permission, availability and projection state are distinct; one green badge is never shown.</p>
     </section>
 
     {!!agent.routines.length && <section className="factory-side-group" aria-label="Routines"><h4>Routines</h4>
@@ -190,7 +188,7 @@ function AgentDetail({agent, fixtureOn, host, onBack}: {agent: FixtureAgent; fix
             <button className="oi-action" onClick={() => toggleRoutine(agent.ref, routine.ref)}>{routine.enabled ? "Pause future" : "Resume"}</button>
             {host?.onOpenPlane && <button className="oi-action" onClick={() => host.onOpenPlane?.("run")}>Open an occurrence in Run</button>}
           </div>}
-          {routine.inFlight && <small className="factory-side-barrier">An occurrence is in flight — pausing future triggers does not cancel it.</small>}
+          {routine.inFlight && <small className="factory-side-barrier">In flight — pausing spares it.</small>}
         </li>)}
       </ul>
     </section>}
@@ -212,13 +210,11 @@ function AgentDetail({agent, fixtureOn, host, onBack}: {agent: FixtureAgent; fix
         <dt>Harness</dt><dd>{agent.setup.harness ?? "not set"}</dd>
         <dt>Environment</dt><dd>{agent.setup.environment ?? "not set"}</dd>
       </dl>
-      <p className="oi-note">Values shown are the worker's declared defaults; the active session's values can differ until its next turn or reload. Open conversation/activity/computer stay Agent-local actions where the app already has them.</p>
     </section>
   </div>;
 }
 
-/** Team detail: members, responsibility, assignments — and the four distinct
- * actions (add / address / assign / delegate) kept visibly different. */
+/** Team detail: members, responsibility and assignments. */
 function TeamDetail({team, agents, fixtureOn, host, onBack}: {team: {ref: string; name: string; purpose: string; lead?: string; members: string[]; assignments: {agentRef: string; work: string; scope: string}[]}; agents: FixtureAgent[]; fixtureOn: boolean; host?: FactoryPanelHost; onBack: () => void}) {
   const [assignment, setAssignment] = useState("");
   const [assignee, setAssignee] = useState(agents[0]?.ref ?? "");
@@ -246,13 +242,6 @@ function TeamDetail({team, agents, fixtureOn, host, onBack}: {team: {ref: string
         <input className="oi-input" value={assignment} onChange={event => setAssignment(event.target.value)} placeholder="The bounded work…" aria-label="Assignment" />
         <button className="oi-action" disabled={!assignment.trim()} onClick={() => { assignWork(team.ref, assignee, assignment.trim()); setAssignment(""); }}>Assign</button>
       </div>}
-      <div className="oi-action-group factory-side-team-actions">
-        <span className="factory-side-step-meta">Add to team</span><small className="factory-side-gap">{fixtureOn ? "pick a roster member" : "native membership op not exposed"}</small>
-        <span className="factory-side-step-meta">Address / invite</span><small className="factory-side-gap">opens the centre chat with To:</small>
-        <span className="factory-side-step-meta">Assign work</span><small className="factory-side-gap">scoped, above</small>
-        <span className="factory-side-step-meta">Delegate bounded task</span><small className="factory-side-gap">authority op not exposed yet</small>
-      </div>
-      <p className="oi-note">Selecting or grouping a member dispatches nothing; addressing is not membership, and membership is not an authority grant.</p>
     </section>
     {host?.onOpenPlane && <div className="oi-action-group"><button className="oi-action" onClick={() => host.onOpenPlane?.("run")}>See the team's run</button></div>}
   </div>;

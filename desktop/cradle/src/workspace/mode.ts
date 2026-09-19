@@ -54,7 +54,7 @@ export const upgradeTabPresentation = (value: unknown): TabPresentation | undefi
  * planes; `Composition` is the Expression composer the panel already hosts.
  * Mode-specific planes (Ta-Onta, Anima, Epii) are supplied by the composition
  * root as extra planes and named here only by id. */
-export type PanelPlane = "Conversation" | "Activity" | "Context" | "Inspect" | "Composition";
+export type PanelPlane = "Chat" | "Activity" | "Context" | "Inspect" | "Composition";
 /** `factory`: Factory's left body — a project-rooted navigator with the same
  * two-way split the World navigator gives a project (Files | Tasks): the
  * chosen project's folder tree, and its tasks — the sessions and chats the
@@ -94,38 +94,48 @@ export interface ModeCuration {
 export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
   base: {
     id: "base", label: "Central", hint: "The Central ground itself — files, editor and the accompanying agent", glyph: "file", left: "world",
-    panel: {agent: "Agent", planes: ["Conversation", "Activity", "Composition", "Context", "Inspect"], extra: []},
+    panel: {agent: "Agent", planes: ["Chat", "Activity", "Composition", "Context", "Inspect"], extra: []},
   },
   factory: {
-    id: "factory", label: "Factory", hint: "Agent conversations and development work", glyph: "factory", left: "factory", centreKind: "factory",
-    // The Factory desk (FACTORY-UI-INTEGRATION-HANDOFF §4/§9, 2026-09-18):
-    // the centre carries the selected Agent/team Chat and the full SSSF
-    // multi-lane Run view; the sidebar is exactly three top-level tabs —
-    // Run (status, decisions, steps, trajectory, checks), Agents (roster,
-    // teams, skills, capabilities, routines, setup), Context (sources,
-    // produced, Needs you). Inspect stays reachable as an action through
-    // oi:panel-inspect, never a fourth tab.
+    id: "factory", label: "Factory", hint: "Desk for whole Runs, Tasks for conversations", glyph: "factory", left: "factory", centreKind: "factory",
+    // The Factory centre (FACTORY-UI-INTEGRATION-HANDOFF §11, 2026-09-18):
+    // Desk is whole-Run-first — the live cross-project Run board, then the
+    // full SSSF view of the selected Run; Tasks is chat-first — the
+    // full-size working chat over the shared conversation primitives. The
+    // left navigator's two entries choose between them. The sidebar is
+    // exactly three top-level tabs — Run (status, decisions, steps,
+    // trajectory, checks), Agents (roster, teams, skills, capabilities,
+    // routines, setup), Context (sources, produced, Needs you) — and its Run
+    // subject follows the work actually selected or bound in either view.
+    // Inspect stays reachable as an action through oi:panel-inspect, never a
+    // fourth tab.
     panel: {agent: "Factory agent", planes: [], extra: ["run", "agents", "factory-context"], conversationInCentre: true},
   },
   expressions: {
     id: "expressions", label: "Expressions", hint: "The living Expressions application, with Anima / Nara", glyph: "field", left: "expression-graph", centreKind: "expressions",
-    panel: {agent: "Anima / Nara", planes: ["Conversation", "Activity", "Context", "Inspect"], extra: ["ta-onta", "anima"]},
+    // Owner direction 2026-09-18, second pass: the chat is one side, and one
+    // icon turns to the other — exactly three views, Run / Agents / Context,
+    // whose content is the Ta-Onta specifics of the Anima mode (S4').
+    // Anima, Aletheia and the project guardians read in Agents; Run passes
+    // through the same run log/track as Factory; Context holds real panes.
+    panel: {agent: "Anima", planes: ["Chat"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
   },
   techne: {
     // Owner direction 2026-09-18: the left body is the wiki map — the web
-    // as its project's own regions, not a file listing.
+    // as its project's own regions, not a file listing. The panel follows
+    // the same three views as Expressions, for the Aletheia mode (S5').
     id: "techne", label: "Technè", hint: "The wiki web, with Epii", glyph: "instrument", left: "wiki-map", centreKind: "techne",
-    panel: {agent: "Epii", planes: ["Conversation", "Activity", "Context", "Inspect"], extra: ["epii"]},
+    panel: {agent: "Aletheia", planes: ["Chat"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
   },
   "epi-logos": {
     id: "epi-logos", label: "Epi-Logos", hint: "The authored world: the essay, Bimba, the Epii material, the products", glyph: "wiki", left: "epi-places", centreKind: "epi-logos",
     // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
     // companion components, curated to this world.
-    panel: {agent: "Nara · Epii", planes: ["Conversation", "Context", "Inspect"], extra: ["anima", "epii"]},
+    panel: {agent: "Nara · Epii", planes: ["Chat", "Context", "Inspect"], extra: ["anima", "epii"]},
   },
   settings: {
     id: "settings", label: "Settings", hint: "System: sources, providers, projection, telemetry, search, history", glyph: "settings", left: "world", centreKind: "system",
-    panel: {agent: "Agent", planes: ["Conversation", "Context", "Inspect"], extra: []},
+    panel: {agent: "Agent", planes: ["Chat", "Context", "Inspect"], extra: []},
   },
 };
 

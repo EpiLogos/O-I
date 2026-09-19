@@ -87,6 +87,12 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   useMaterialContext(containerRef,binding,view);
   const [zoom, setZoom] = useState<number>(savedView.zoom ?? 1);
   const [generation, setGeneration] = useState(0);
+  useEffect(() => {
+    const log = (window as unknown as {__ms?: string[]}).__ms = (window as unknown as {__ms?: string[]}).__ms ?? [];
+    log.push('MS-MOUNT ' + binding.id.slice(0, 6));
+    return () => { log.push('MS-UNMOUNT ' + binding.id.slice(0, 6)); };
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
   // Readiness is generation-scoped and honest (C25): a load event or a late
   // message from a retired generation can neither clear this generation's
   // state nor claim a retired revision ready. A frame load is recorded

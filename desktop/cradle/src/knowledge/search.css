@@ -37,7 +37,8 @@
   gap: var(--oi-desktop-gap);
   border-bottom: var(--oi-shell-edge) solid var(--oi-search-inner-rule);
 }
-.search-glass .search-symbol { width: var(--oi-search-symbol); height: var(--oi-search-symbol); flex: none; color: var(--oi-muted); }
+.search-glass .search-symbol { display: inline-flex; width: var(--oi-search-symbol); height: var(--oi-search-symbol); flex: none; color: var(--oi-muted); }
+.search-glass .search-symbol > svg { width: 100%; height: 100%; }
 .search-glass .search-query input { font-size: var(--oi-search-query-size); color: var(--oi-foreground); line-height: var(--oi-search-line-height); }
 .search-glass .search-query input::placeholder { color: var(--oi-muted); }
 .search-glass .search-query input:focus-visible { outline: none; }

@@ -2,7 +2,6 @@ import {useEffect,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {kernelOp} from "../kernel/bridge";
 import type {NativeDirectory} from "../kernel/types";
-import {Loading} from "../shared/Loading";
 /** Remembered notes, read (the U3.3 named open, queue cell D): a register's
  * remembered ground is plain owner files, listed through the owner's
  * `central.files.list` route and read verbatim through `central.files.read`.
@@ -48,7 +47,7 @@ export function RememberedList({path,label}:{path:string;label:string}) {
  return <div className="project-remembered" data-remembered-list={label} aria-busy={pending}>
   {error?<p className="project-availability" role="status">{error}</p>
    :absent?<p className="project-availability" data-remembered-absent="true">Nothing remembered here yet.</p>
-   :!entries?<Loading label="Reading remembered notes…" scope="surface"/>
+   :!entries?null
    :<details className="remembered-disclosure">
     <summary>Remembered ({entries.entries.length})</summary>
     {entries.entries.length?entries.entries.map(entry=><div key={entry.location.ref} className="remembered-row" data-remembered-row={entry.name}>

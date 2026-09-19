@@ -216,10 +216,13 @@ function restoreBook(parsed: {version?: unknown; active?: unknown; workspaces?: 
     return renamed;
   });
   // The active selection survives when its workspace restored; otherwise
-  // the first restored workspace stands in — the book still opens.
+  // the first restored workspace stands in — the book still opens. The
+  // active workspace is where the person IS: its visit stamp is refreshed
+  // on every load, so the retention warm set always includes it even before
+  // its first in-session activation.
   if (!workspaces.length) throw new Error("Invalid workspace selection");
   const active = workspaces.some((w: Workspace) => w.id === parsed.active) ? parsed.active as string : workspaces[0].id;
-  return { book: { version: 2, active, workspaces }, quarantine };
+  return { book: { version: 2, active, workspaces: workspaces.map(w => w.id === active ? { ...w, lastVisitedAt: Date.now() } : w) }, quarantine };
 }
 function load(): LoadedBook {
   const raw = localStorage.getItem(KEY);

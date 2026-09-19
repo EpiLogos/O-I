@@ -1,0 +1,59 @@
+/* Factory right-desk planes — Trajectory, Skills & tools, Claims & evidence,
+ * Results, and the WorkScope breadcrumb they share. Tokens only; composes the
+ * shared desktop grammar (oi-scroll oi-row oi-panel-head oi-section oi-kv
+ * oi-ref oi-state oi-segment oi-chip oi-empty oi-refusal oi-note oi-action
+ * oi-tool oi-disclosure) and keeps only this desk's own layout, exactly as
+ * agent/agent.css does for the panel chrome. No motion beyond
+ * var(--oi-motion-ui) hover/selection fades — status here is always text.
+ */
+.desk-plane{height:100%;min-height:0;display:flex;flex-direction:column;box-sizing:border-box;font-size:var(--oi-shell-type-ui);color:var(--oi-foreground)}
+.desk-plane>.oi-scroll{flex:1;min-height:0;padding:0 8px 16px}
+
+/* ===== WorkScope breadcrumb ===== */
+.desk-scope{flex:none;display:flex;align-items:center;gap:4px;min-width:0;padding:6px 8px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+.desk-scope::-webkit-scrollbar{display:none}
+.desk-scope-back{flex:none}
+.desk-scope-crumb{flex:none;display:inline-flex;align-items:center;gap:4px;height:22px;padding:0 7px;border:0;border-radius:5px;background:transparent;color:var(--oi-muted-2);font:inherit;font-size:var(--oi-shell-type-meta);white-space:nowrap;cursor:pointer;transition:background var(--oi-motion-ui) var(--oi-motion-ease-out),color var(--oi-motion-ui) var(--oi-motion-ease-out)}
+.desk-scope-crumb:hover:not(:disabled){background:var(--oi-wash);color:var(--oi-accent-ink)}
+.desk-scope-crumb:focus-visible{outline:var(--oi-focus-ring-width) solid var(--oi-accent);outline-offset:-1px}
+.desk-scope-crumb>.oi-eyebrow{margin:0;color:inherit}
+.desk-scope-crumb>code{font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.desk-scope-sep{flex:none;color:var(--oi-muted-3)}
+.desk-scope-empty{flex:1;padding:0 4px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+
+/* ===== Trajectory ===== */
+.desk-trajectory-strip{flex:none;display:flex;align-items:center;gap:8px;padding:5px 10px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.desk-trajectory-strip[data-paused="true"]{color:var(--oi-accent-ink)}
+.desk-trajectory-strip>span{flex:1;min-width:0}
+.desk-trajectory-list{flex:1;min-height:0;overflow:auto;overscroll-behavior:contain;scrollbar-width:thin;outline:none}
+.desk-trajectory-spacer{flex:none}
+.desk-turn-head{position:sticky;top:0;z-index:1;display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;background:var(--oi-agent-ground);border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.desk-row{box-sizing:border-box}
+.desk-row>summary{list-style:none}
+.desk-row>summary::-webkit-details-marker{display:none}
+.desk-row[data-selected="true"]>summary.oi-row{background:var(--oi-wash-strong)}
+.desk-row[data-attention="true"]>summary .desk-row-label{color:var(--oi-accent-ink)}
+.desk-row-label{font-weight:500}
+.desk-row-detail{padding:6px 10px 10px 30px;display:flex;flex-direction:column;gap:6px}
+.desk-row-detail pre{margin:0;max-height:260px;overflow:auto;padding:8px;border-radius:6px;background:var(--oi-wash);font-family:var(--oi-font-mono);font-size:var(--oi-shell-type-meta);white-space:pre-wrap;word-break:break-word}
+.desk-trajectory-empty{padding:20px}
+
+/* ===== Skills & tools ===== */
+.desk-skills-group{margin-top:10px}
+.desk-skills-group>.oi-panel-head{padding-left:0}
+.desk-skills-footer{flex:none;display:flex;justify-content:flex-end;padding:8px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+
+/* ===== Claims & evidence ===== */
+.desk-claim-list{display:flex;flex-direction:column;gap:2px}
+.desk-claim-detail{margin-top:10px;padding-top:10px;border-top:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.desk-claim-block{margin-top:10px}
+.desk-claim-block>h4{margin:0 0 4px;font-size:var(--oi-shell-type-nav);font-weight:550;color:var(--oi-muted-2)}
+.desk-reported-only{padding:8px 0}
+
+/* ===== Results ===== */
+.desk-results-chooser{flex:none;display:flex;flex-direction:column;gap:2px;padding-bottom:6px;border-bottom:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.desk-results-material{flex:1;min-height:0;overflow:auto;padding-top:8px}
+.desk-newer-cue{display:flex;align-items:center;gap:8px;margin:6px 0;padding:6px 8px;border:var(--oi-shell-edge) solid var(--oi-accent-soft);border-radius:6px;font-size:var(--oi-shell-type-meta);color:var(--oi-accent-ink)}
+.desk-newer-cue>span{flex:1}
+.desk-missing-kinds{margin-top:14px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.desk-fixture-label{display:inline-flex;align-items:center;gap:4px;padding:1px 6px;border-radius:4px;background:var(--oi-wash-strong);color:var(--oi-accent-ink);font-size:var(--oi-shell-type-meta)}

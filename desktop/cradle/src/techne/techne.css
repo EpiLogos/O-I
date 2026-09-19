@@ -331,3 +331,130 @@ summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-reg
 .wiki-graph-node[data-selected] text { fill: var(--oi-background, #fff); }
 .wiki-graph-node text { font-size: 0.07px; fill: var(--oi-foreground); pointer-events: none; }
 .wiki-graph figcaption { margin-top: 3px; }
+
+/* ===== the dual-mode surface (owner wayfinder 2026-09-19, PR #387 §11–13)
+ * ONE Expressions system, two full-screen operating cuts around the SAME
+ * stage. The surface is the field: the hosted application fills it in both
+ * cuts; the Technē cut adds the compact HUD, the active lens body, the
+ * shared dock slot, the Epii overlay and the pinned lens tools over it.
+ * Nothing animates; tokens only; the house 24×24 thin-stroke glyphs. ====== */
+
+.tn-dual { position: relative; }
+.tn-stage-frame { position: absolute; inset: 0; inline-size: 100%; block-size: 100%; border: 0; background: var(--oi-surface); }
+.tn-stage-refusal { position: absolute; inset: 0; display: flex; flex-direction: column; justify-content: center; align-items: flex-start; gap: 6px; padding: 24px; max-inline-size: 520px; margin-inline: auto; }
+.tn-stage-refusal > strong { font-size: var(--oi-shell-type-ui); }
+
+/* ---- the Technē HUD (the deep cut's compact persistent strip) -----------
+ * One thin floating row in the shell's own corner grammar: shell.css gives
+ * `.tn-surface > .tn-instruments` the traffic-lights cutout padding when
+ * the surface stands in the mode stage, exactly like every other mode bar. */
+.tn-hud {
+  position: absolute; inset-block-start: 0; inset-inline: 0; z-index: 30;
+  display: flex; align-items: center; gap: 4px;
+  min-block-size: 34px; padding-block: 3px; padding-inline: 10px;
+  border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: color-mix(in srgb, var(--oi-shell-ground, var(--oi-canvas-ground)) 88%, transparent);
+  backdrop-filter: blur(10px);
+  font-size: var(--oi-shell-type-nav); color: var(--oi-foreground);
+}
+.tn-hud-rule { flex: none; inline-size: 1px; block-size: 16px; background: var(--oi-hairline); margin-inline: 3px; }
+
+/* The cut switch: the one immediate, reversible mode control. */
+.tn-hud-switch { flex: none; display: flex; align-items: center; gap: 2px; padding: 2px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px; }
+.tn-hud-switch > button {
+  display: inline-flex; align-items: center; gap: 5px; padding: 3px 10px;
+  border: 0; border-radius: 999px; background: transparent; color: var(--oi-muted-2);
+  font: inherit; font-weight: 550; cursor: pointer;
+}
+.tn-hud-switch > button:hover { color: var(--oi-accent-ink); background: var(--oi-wash); }
+.tn-hud-switch > button[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+
+/* HUD tools: the app's own icon-button grammar, host side. */
+.tn-hud .tn-hud-tool {
+  flex: none; display: inline-flex; align-items: center; justify-content: center;
+  inline-size: 26px; block-size: 26px; padding: 0;
+  border: 0; border-radius: var(--oi-shell-radius-row); background: transparent;
+  color: var(--oi-muted-2); cursor: pointer;
+}
+.tn-hud .tn-hud-tool:hover:not(:disabled), .tn-hud .tn-hud-tool:focus-visible { background: var(--oi-wash); color: var(--oi-accent-ink); }
+.tn-hud .tn-hud-tool:disabled { opacity: .35; cursor: default; }
+.tn-hud .tn-hud-tool[aria-pressed="true"] { background: var(--oi-wash-strong); color: var(--oi-foreground); }
+.tn-hud .tn-hud-tool[data-available="false"] { opacity: .4; }
+
+/* The position readout: what the hosted application actually reported,
+   ellipsised, with the honest absence carrying its own wording. */
+.tn-hud-position { flex: 1 1 0; min-inline-size: 60px; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; text-align: center; color: var(--oi-muted-2); }
+.tn-hud-position[data-reported="false"] { font-style: italic; opacity: .8; }
+
+/* The lens chooser: one compact rail; an empty registry states itself. */
+.tn-hud-lenses { flex: none; display: flex; align-items: center; gap: 2px; }
+.tn-hud-lens[data-active] { background: var(--oi-wash-strong); color: var(--oi-foreground); box-shadow: inset 0 -2px 0 var(--oi-accent); }
+.tn-hud-lens-none { color: var(--oi-muted-2); font-style: italic; padding-inline: 4px; }
+
+.tn-hud-state { flex: none; max-inline-size: 30cqi; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.tn-hud-state[data-disclosure="unavailable"] { color: var(--oi-accent-ink); }
+
+/* ---- the active lens body: the ONLY rich renderer, over the field ------- */
+.tn-lens-stage { position: absolute; inset: 34px 0 0 0; z-index: 20; display: flex; flex-direction: column; background: var(--oi-canvas-ground); }
+.tn-lens-stage > * { flex: 1; min-block-size: 0; min-inline-size: 0; }
+
+/* ---- the shared dock slot (Lens Studio / material depth) ---------------- */
+.tn-dock {
+  position: absolute; inset-block: 34px 0; inset-inline-end: 0; z-index: 28;
+  display: flex; flex-direction: column; min-block-size: 0; max-inline-size: 80%;
+  border-inline-start: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  background: var(--oi-inspector-ground);
+}
+.tn-dock[data-guest="material"] { background: var(--oi-surface, var(--oi-inspector-ground)); }
+.tn-dock-body { flex: 1; min-block-size: 0; display: flex; flex-direction: column; }
+.tn-dock-body > * { flex: 1; min-block-size: 0; }
+.tn-dock-body > p { flex: none; margin: 12px; }
+.tn-dock-notice { position: absolute; inset-block-end: 44px; inset-inline: 12px auto; z-index: 29; max-inline-size: min(440px, 60cqi); }
+
+/* ---- the EXPRESSIONS cut's one floating recall control ------------------
+ * Bottom-right: the app's masthead, tool rail and capture cluster keep
+ * their own corners; the recall never covers them. */
+.tn-cut-recall {
+  position: absolute; inset-block-end: 64px; inset-inline-end: 14px; z-index: 30;
+  display: inline-flex; align-items: center; gap: 5px; padding: 4px 11px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 999px;
+  background: color-mix(in srgb, var(--oi-shell-ground, var(--oi-canvas-ground)) 88%, transparent);
+  backdrop-filter: blur(10px);
+  color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-nav); font-weight: 550; cursor: pointer;
+}
+.tn-cut-recall:hover, .tn-cut-recall:focus-visible { background: var(--oi-wash-strong); color: var(--oi-accent-ink); }
+
+/* ---- Epii: the summonable companion overlay ----------------------------- */
+.tn-epii {
+  position: absolute; inset-block-end: 52px; inset-inline-end: 12px; z-index: 31;
+  inline-size: min(340px, 44cqi); max-block-size: min(420px, 60cqb);
+  display: flex; flex-direction: column; min-block-size: 0;
+  border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px;
+  background: var(--oi-surface); box-shadow: 0 8px 28px rgba(0,0,0,.14);
+  overflow: hidden;
+}
+.tn-epii-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.tn-epii-body { flex: 1; min-block-size: 0; overflow-y: auto; font-size: var(--oi-shell-type-nav); }
+.tn-epii-body .xa-plane { border: 0; }
+
+/* ---- the pinned lens tools (the contextual toolbelt of the deep cut) ---- */
+.tn-toolbelt {
+  position: absolute; inset-block-start: 44px; inset-inline-end: 10px; z-index: 27;
+  display: flex; flex-direction: column; align-items: center; gap: 3px;
+  padding: 5px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px;
+  background: color-mix(in srgb, var(--oi-shell-ground, var(--oi-canvas-ground)) 88%, transparent);
+  backdrop-filter: blur(10px);
+}
+.tn-toolbelt:empty { display: none; }
+
+/* The whole-surface disclosure refusal: one quiet line above the transport. */
+.tn-disclosure-refusal {
+  position: absolute; inset-block-end: 40px; inset-inline-start: 12px; z-index: 26;
+  max-inline-size: min(480px, 60cqi); padding: 3px 9px;
+  border-radius: var(--oi-shell-radius-row); background: var(--oi-wash);
+  color: var(--oi-accent-ink); font-size: var(--oi-shell-type-nav);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .tn-hud, .tn-cut-recall, .tn-toolbelt { backdrop-filter: none; }
+}

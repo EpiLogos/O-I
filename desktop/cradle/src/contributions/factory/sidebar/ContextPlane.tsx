@@ -49,7 +49,6 @@ export function ContextPlane({subject}: DeskPlaneProps & {host?: FactoryPanelHos
 
   return <div className="desk-plane factory-side" data-plane="Context" data-fixture={fixture ? fixture.scenario : undefined}>
     <ScenarioBar />
-    {fixture && <p className="factory-side-fixture" role="note">{`Fixture — not native data · scenario “${fixture.scenario}”`}</p>}
 
     {/* --- Needs you: genuine human-directed returns ------------------------*/}
     <section className="factory-side-group" aria-label="Needs you">
@@ -57,7 +56,7 @@ export function ContextPlane({subject}: DeskPlaneProps & {host?: FactoryPanelHos
       {fixture?.returns.length
         ? fixture.returns.map(entry => <div key={entry.ref} className="factory-side-return" data-return-state={entry.state}>
           <p><strong>{entry.subject}</strong></p>
-          <small>from {entry.from} · native {entry.native}{entry.runRef ? ` · ${entry.runRef}` : ""} · {entry.state}</small>
+          <small>{[entry.from, entry.state].join(" · ")}</small>
           <details className="oi-disclosure"><summary>Open the body</summary><pre>{entry.body}</pre></details>
           {entry.state === "pending review" && <div className="oi-action-group">
             <button className="oi-action" onClick={() => acceptReturn(entry.ref)}>Mark included (fixture)</button>
@@ -72,7 +71,7 @@ export function ContextPlane({subject}: DeskPlaneProps & {host?: FactoryPanelHos
               <button className="oi-action" onClick={() => void openReturn(kernel.transport, project!, entry, setReturnsError)}>Open reading</button>
             </div>
           </div>)
-          : <p className="oi-note">{returnsError ? "Central receiving is not reachable from this project — the tray stays quiet rather than pretending." : returns ? "Nothing is waiting on you. Ordinary progress never becomes an Inbox item." : "Reading the project's receiving state…"}</p>}
+          : <p className="oi-note">{returnsError ? "Central receiving is not reachable." : returns ? "Nothing is waiting on you." : "Reading…"}</p>}
     </section>
 
     {/* --- Sources: what goes in --------------------------------------------*/}
@@ -92,12 +91,11 @@ export function ContextPlane({subject}: DeskPlaneProps & {host?: FactoryPanelHos
             </div>
           </li>)}
         </ul>
-        : <p className="oi-empty">No sources yet. Add one below — inclusion is per-run here, never a grant to every member.</p>)}
+        : <p className="oi-empty">No sources yet.</p>)}
       {!sources && (realView
-        ? <p className="oi-note">The centre's build view carries {realView.project.label}; per-act source disclosure appears with the run's own events.</p>
-        : <p className="oi-empty">No run selected. Sources appear when the work names what it draws on.</p>)}
+        ? <p className="oi-note">Per-act disclosure arrives with the run's events.</p>
+        : <p className="oi-empty">No run selected.</p>)}
       {fixture && <AddSourceForm />}
-      <p className="oi-note">Unlinking removes the reference, never the file; availability, selection and what actually loaded stay distinct.</p>
     </section>
 
     {/* --- Produced: what came back ------------------------------------------*/}
@@ -105,7 +103,7 @@ export function ContextPlane({subject}: DeskPlaneProps & {host?: FactoryPanelHos
       <h4>Produced</h4>
       {fixtureCandidates && (fixtureCandidates.length
         ? <CandidateList candidates={fixtureCandidates} onReuse={ref => reuseAsInput(ref)} />
-        : <p className="oi-empty">Nothing produced yet. The scenario's “Produce artifact” control adds a partial here, as live work would.</p>)}
+        : <p className="oi-empty">Nothing produced yet.</p>)}
       {!fixtureCandidates && (realCandidates.length
         ? <ul className="factory-side-rows">
           {realCandidates.map(candidate => <li key={candidate.candidateRef}>
@@ -116,7 +114,7 @@ export function ContextPlane({subject}: DeskPlaneProps & {host?: FactoryPanelHos
             </button>
           </li>)}
         </ul>
-        : <p className="oi-empty">{realView ? "The owner's run retains no candidates yet." : "No run selected — produced material appears once the run retains it."}</p>)}
+        : <p className="oi-empty">{realView ? "Nothing retained yet." : "No run selected."}</p>)}
     </section>
   </div>;
 }
@@ -142,7 +140,6 @@ function CandidateList({candidates, onReuse}: {candidates: FixtureCandidate[]; o
           <span className="factory-side-row-title">{candidate.label}</span>
           <span className="factory-side-step-meta">{[candidate.status, candidate.revision, candidate.checkStale ? "check stale" : candidate.check ? "checked" : undefined].filter(Boolean).join(" · ")}</span>
         </button>
-        {candidate.git && <small className="factory-side-step-meta">git: {candidate.git.basis} → {candidate.git.target} ({candidate.git.state})</small>}
         <div className="oi-action-group">
           <button className="oi-action" onClick={() => toggle(candidate.ref)}>{compare.includes(candidate.ref) ? "Unselect" : "Select to compare"}</button>
           {onReuse && <button className="oi-action" onClick={() => onReuse(candidate.ref)}>Reuse as input</button>}
@@ -172,6 +169,6 @@ function AddSourceForm() {
         setRef(""); setTitle("");
       }}>Add source</button>
     </div>
-    <small className="oi-note">Held as this view's selection in the fixture — a native source-pool join is a named gap; drag/drop keeps the same seam when it lands.</small>
+    <small className="oi-note">Dev fixture — native source pool not exposed yet.</small>
   </form>;
 }

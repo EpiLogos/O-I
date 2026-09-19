@@ -203,7 +203,7 @@ export type KernelOp =
   | { op: "profile_create"; profile_ref: string; title?: string }
   | { op: "profile_edit"; profile_ref: string; operations: ProfileEditOpWire[] }
   | { op: "config_receipts" }
-  | { op: "files_list"; path: string }
+  | { op: "files_list"; path: string; /** Explicit refresh: bypass the kernel's short-horizon read cache for this one read. */ fresh?: boolean }
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
   | { op: "agency_read"; project: string }
@@ -220,8 +220,8 @@ export type KernelOp =
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
   | { op: "state" }
   | { op: "world_read" }
-  | { op: "world_browse" }
-  | { op: "project_browse"; project: string }
+  | { op: "world_browse"; fresh?: boolean }
+  | { op: "project_browse"; project: string; fresh?: boolean }
   | { op: "project_read"; project: string }
   | { op: "sources_list"; project?: string }
   | { op: "source_open"; source_ref: SourceRef; project?: string }

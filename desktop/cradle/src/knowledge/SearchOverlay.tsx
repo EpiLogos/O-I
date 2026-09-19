@@ -8,6 +8,7 @@ import { searchLeaderLabel } from "./leader";
 import "./knowledge.css";
 import "@epilogos/oi-design-system/search.css";
 import "./search.css";
+import {Glyph} from "../workspace/Glyph";
 
 type ResolutionRow = {
   reference: string;
@@ -188,7 +189,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     }}
     onCancel={event => { event.preventDefault(); if (!composition.current) onClose(); }}>
     <form className="search-query" onSubmit={event => { event.preventDefault(); accept(); }}>
-      <svg className="search-symbol" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" aria-hidden="true"><circle cx="10.5" cy="10.5" r="6.5"/><path d="m16 16 5 5"/></svg>
+      <span className="search-symbol" aria-hidden="true"><Glyph name="search" size={16}/></span>
       <input spellCheck={false} autoComplete="off" autoCorrect="off" autoCapitalize="off" autoFocus
         aria-label="Search or resolve" type="search" disabled={isOpening}
         aria-controls="knowledge-search-results" aria-activedescendant={count && !busy ? `knowledge-search-${selected}` : undefined}

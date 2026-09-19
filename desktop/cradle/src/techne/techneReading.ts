@@ -137,13 +137,28 @@ export function registerTechneReadingProvider(provider: TechneReadingProvider): 
 export function techneReadingProvider(): TechneReadingProvider | undefined { return providers.values().next().value; }
 export function subscribeTechneReadingProviders(listener: () => void): () => void { registryListeners.add(listener); return () => { registryListeners.delete(listener); }; }
 
+/** Re-run the standing disclosure read (additive, 2026-09-19): the reading
+ * basis grew a facet the first read could not carry — the register's
+ * Expression generation opened after the surface mounted, or its revision
+ * advanced. Announcing the registry re-runs every useTechneDisclosure
+ * effect once; the read is the same resolve-once path, now over the fuller
+ * ground. */
+export function refreshTechneDisclosure(): void {
+  announceRegistry();
+}
+
 export const NO_PROVIDER_REASON = "no ql.techne/v1 reading source is registered in this window";
 
-/** What the tab bar stands on for one subject. */
+/** What the tab bar stands on for one subject. `raw` (added additively for
+ * the T3 instrument bridge, 2026-09-19) carries the provider's WIRE payload
+ * verbatim so the m0m5 lens bridge can compose the FULL ql.techne/v1 reading
+ * (whole, temporal, spatial, expressions, actions, …) from what the read
+ * already returned — never a second provider fetch. It is untyped here; the
+ * bridge contract-checks it through `validateReading` before any use. */
 export type TechneDisclosureState =
   | {standing: "no-subject"}
   | {standing: "reading"}
-  | {standing: "read"; reading: TechneReading}
+  | {standing: "read"; reading: TechneReading; raw?: unknown}
   | {standing: "unavailable"; reason: string};
 
 /** Read the selected subject's disclosure through the registered provider.
@@ -169,7 +184,7 @@ export function useTechneDisclosure(subject: TechneSubject | undefined): TechneD
       payload => {
         if (!live) return;
         const parsed = parseTechneReading(payload);
-        setState(parsed ? {standing: "read", reading: parsed} : {standing: "unavailable", reason: `the reading returned by ${provider.ref} did not parse as ${TECHNE_CONTRACT}`});
+        setState(parsed ? {standing: "read", reading: parsed, raw: payload} : {standing: "unavailable", reason: `the reading returned by ${provider.ref} did not parse as ${TECHNE_CONTRACT}`});
       },
       cause => { if (live) setState({standing: "unavailable", reason: cause instanceof Error ? cause.message : String(cause)}); },
     );

@@ -144,6 +144,43 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   useEffect(() => {
     for (const receipt of kernel.receipts) applyReceipt(receipt);
   }, [kernel.receipts]);
+  // A PENDING binding restored after a restart has no in-flight open behind
+  // it — the process that owned the acquisition is gone. Retire each one
+  // exactly once through the ordinary open path: the tab keeps its place in
+  // its own tree and the acquisition + admission run through openFile, which
+  // fills it in place (a file whose read fails shows the BOOT-09 error with
+  // Retry, never a forever-"Opening…" tab).
+  const retiredPending = useRef<Set<SurfaceId>>(new Set());
+  const completeRestoredPending = useCallback(async (workspaceId: string, binding: SurfaceBinding) => {
+    const location = binding.location;
+    if (!location) return;
+    const format = detectFormat({ path: location.path });
+    const isBinary = format === "image" || format === "pdf" || format === "unsupported";
+    try {
+      const reading = isBinary
+        ? await acquireFileBytes(kernel.transport, location)
+        : await acquireFileReading(kernel.transport, location);
+      const opened = await kernel.apply({ op: "surface_open", surface_id: binding.id, kind: "file", source_ref: reading.location.ref, title: binding.title });
+      if (opened?.result !== "surface_opened") throw new Error("Central file surface could not be opened");
+      workspaceRef.current.replaceSurface(workspaceId, { ...binding, pending: undefined, ref: reading.location.ref, title: binding.title, location: reading.location });
+    } catch (error) {
+      setSurfaceErrors(held => ({ ...held, [binding.id]: error instanceof Error ? error.message : String(error) }));
+      workspaceRef.current.replaceSurface(workspaceId, { ...binding, pending: false });
+    }
+  }, [kernel]);
+  useEffect(() => {
+    for (const w of workspace.workspaces) {
+      for (const group of groupsOf(w.layout.root)) {
+        for (const id of group.tabs) {
+          const binding = w.layout.surfaces[id];
+          if (binding?.pending && binding.location && !retiredPending.current.has(id)) {
+            retiredPending.current.add(id);
+            void completeRestoredPending(w.id, binding);
+          }
+        }
+      }
+    }
+  }, [workspace.workspaces, completeRestoredPending]);
   const navigatorOpen = state.agencyDepth === "panel" || state.agencyDepth === "full";
   const setNavigatorOpen = (open: boolean) => setState(s => ({ ...s, agencyDepth: open ? "panel" : "strip" }));
   const navigatorRef = useRef(false);
@@ -1140,7 +1177,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     () => warmWorkspaceTrees(workspace.workspaces, workspace.current.id, mode),
     [workspace.workspaces, workspace.current.id, mode],
   );
-  useEffect(() => { (window as unknown as {__oiWarmTreesDebug?: unknown}).__oiWarmTreesDebug = warmTrees.map(t => ({ key: t.key, presented: t.presented })); }, [warmTrees]);
+  useEffect(() => {
+    const log = (window as unknown as {__oiWarmTreesLog?: unknown[]}).__oiWarmTreesLog = (window as unknown as {__oiWarmTreesLog?: unknown[]}).__oiWarmTreesLog ?? [];
+    log.push(warmTrees.map(t => t.key + (t.presented ? '!' : '')));
+  }, [warmTrees]);
   const curation=MODE_CURATION[mode];
   // Owner correction 2026-09-18: Base keeps the pane/tab workbench; every
   // other mode DEDICATES its view — the mode's own surface, full screen, no

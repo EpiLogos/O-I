@@ -51,11 +51,15 @@ const FOCUSED_INSTRUMENT_CONFIG: NativeConfig = (() => {
 })();
 
 /** The opening flight: the mark first goes relational
- * (attractors on, orbits up) and starts to swirl while still tethered;
- * ~half a second later chaos takes over and the tether cuts — the cloud
- * flies apart before the same field fades to the app. Offsets measure
- * rendered simulation progress, so loading or a suspended window cannot
- * cut the flight short. The choreography is authored stage material. */
+ * (attractors on, orbits up) and swirls while still tethered; chaos then
+ * takes over and the tether cuts — the cloud flies apart and keeps moving
+ * for the whole flight. The release only opens the drift; it never fades
+ * the material, so the particles stay fully alive until the final canvas
+ * fade itself reveals the app. Offsets measure rendered simulation
+ * progress, so loading or a suspended window cannot cut the flight short.
+ * The choreography is authored stage material. Owner ruling 2026-09-17:
+ * the field flies to its full extent and the background then fades
+ * quickly and cleanly — no mid-flight dissolve. */
 const WELCOME_RELATIONAL: NativeConfig = {
   fluid: {
     turbulence: 1.3,
@@ -100,7 +104,6 @@ const WELCOME_CHAOS: NativeConfig = {
 
 const WELCOME_RELEASE: NativeConfig = {
   fluid: { returnSpeed: 0, dispersion: 2.4 },
-  material: { opacity: 0 },
 };
 
 export const RECIPES: Readonly<Record<string, NativeConfig>> = Object.freeze({
@@ -131,12 +134,12 @@ export interface StageSequence {
 
 export const SEQUENCES: Readonly<Record<string, StageSequence>> = Object.freeze({
   "welcome.enter": Object.freeze({
-    duration: 2600,
-    fadeOutFrom: 1900,
+    duration: 3400,
+    fadeOutFrom: 2900,
     steps: Object.freeze([
       Object.freeze({ at: 0, recipe: "welcome.relational", disperse: 1.4, appearance: "host" as const }),
-      Object.freeze({ at: 472, recipe: "welcome.chaos", disperse: 2.6 }),
-      Object.freeze({ at: 1900, recipe: "welcome.release" }),
+      Object.freeze({ at: 1000, recipe: "welcome.chaos", disperse: 2.6 }),
+      Object.freeze({ at: 2900, recipe: "welcome.release" }),
     ]),
   }),
 });

@@ -1,0 +1,474 @@
+/*
+ * The Canvas/Constellation instrument (L5 Technē T2) — cradle chrome over
+ * --oi-* tokens only, in the discipline of the T0 host chrome
+ * (../techne.css). No new colours, no hardcoded chrome: every role is an
+ * existing --oi-* token, and selection follows the house grammar
+ * (data-selected takes the accent, hover takes the wash/ground).
+ */
+
+.techne-canvas {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  flex: 1;
+  min-height: 0;
+}
+
+.techne-canvas-absent {
+  font-size: var(--oi-type-sm);
+  color: var(--oi-muted);
+}
+
+.techne-canvas-toolbar,
+.techne-canvas-nav {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-canvas-spacer {
+  flex: 1;
+}
+
+.techne-canvas-scheme {
+  font-size: var(--oi-type-xs);
+  letter-spacing: var(--oi-tracking-label);
+  text-transform: uppercase;
+  color: var(--oi-muted);
+}
+
+.techne-canvas-scheme[data-scheme="ql-constellation"] {
+  color: var(--oi-foreground);
+}
+
+.techne-canvas-tool {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-accent-ink);
+  background: transparent;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  cursor: pointer;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-canvas-tool:hover:not(:disabled) {
+  border-color: var(--oi-accent);
+}
+
+.techne-canvas-tool:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-canvas-hop {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-accent-ink);
+  background: transparent;
+  border: 1px solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-3);
+  cursor: pointer;
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-canvas-hop:hover {
+  border-color: var(--oi-accent);
+}
+
+.techne-canvas-hop:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+.techne-canvas-hop code {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+}
+
+.techne-canvas-body {
+  display: flex;
+  gap: var(--oi-space-3);
+  flex: 1;
+  min-height: 16rem;
+}
+
+.techne-canvas-stage {
+  flex: 1;
+  min-width: 0;
+  height: 100%;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  touch-action: none;
+  user-select: none;
+}
+
+.techne-canvas-ground {
+  fill: transparent;
+}
+
+/* Edges: the typed relations; labels are the provider vocabulary verbatim. */
+.techne-canvas-edge {
+  cursor: pointer;
+}
+
+.techne-canvas-edge-line {
+  stroke: var(--oi-hairline);
+  stroke-width: 1.5;
+}
+
+.techne-canvas-edge-hit {
+  fill: transparent;
+}
+
+.techne-canvas-edge:hover .techne-canvas-edge-line {
+  stroke: var(--oi-accent);
+}
+
+.techne-canvas-edge[data-selected="true"] .techne-canvas-edge-line {
+  stroke: var(--oi-accent);
+  stroke-width: 2.5;
+}
+
+.techne-canvas-edge-label {
+  font-family: var(--oi-font-mono);
+  font-size: 11px;
+  fill: var(--oi-muted);
+  text-anchor: middle;
+  dominant-baseline: middle;
+  paint-order: stroke;
+  stroke: var(--oi-canvas-ground);
+  stroke-width: 3px;
+}
+
+.techne-canvas-edge:hover .techne-canvas-edge-label,
+.techne-canvas-edge[data-selected="true"] .techne-canvas-edge-label {
+  fill: var(--oi-foreground);
+}
+
+.techne-canvas-edge[data-origin="ql-derived"] .techne-canvas-edge-label {
+  font-style: italic;
+}
+
+/* Nodes: whole at centre, members on the ring, the QL address dashed. */
+.techne-canvas-node {
+  cursor: pointer;
+}
+
+.techne-canvas-node-circle {
+  fill: var(--oi-surface);
+  stroke: var(--oi-foreground);
+  stroke-width: 1.5;
+}
+
+.techne-canvas-node:hover .techne-canvas-node-circle {
+  fill: var(--oi-canvas-ground);
+}
+
+.techne-canvas-node[data-role="whole"] .techne-canvas-node-circle {
+  stroke-width: 2.5;
+}
+
+.techne-canvas-node[data-role="ql-address"] .techne-canvas-node-circle {
+  stroke-dasharray: 3 2;
+}
+
+.techne-canvas-node[data-selected="true"] .techne-canvas-node-circle {
+  stroke: var(--oi-accent);
+  stroke-width: 3;
+}
+
+.techne-canvas-node-label {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  fill: var(--oi-foreground);
+  text-anchor: middle;
+}
+
+.techne-canvas-node[data-role="whole"] .techne-canvas-node-label {
+  font-size: 11px;
+  font-weight: 500;
+}
+
+/* Side panels: provenance one panel away, honest adrift relations. */
+.techne-canvas-side {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  width: min(320px, 36%);
+  overflow: auto;
+}
+
+.techne-canvas-panel {
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  padding: var(--oi-space-3);
+}
+
+.techne-canvas-panel > summary {
+  font-size: var(--oi-type-xs);
+  letter-spacing: var(--oi-tracking-label);
+  text-transform: uppercase;
+  color: var(--oi-muted);
+  cursor: pointer;
+}
+
+.techne-canvas-panel > summary:hover {
+  color: var(--oi-foreground);
+}
+
+.techne-canvas-facts {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin: var(--oi-space-2) 0 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-canvas-facts code {
+  display: block;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+}
+
+.techne-canvas-muted {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-canvas-degraded {
+  margin: 0;
+  padding: var(--oi-space-2) var(--oi-space-3);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  border: 1px dashed var(--oi-hairline);
+  border-radius: var(--oi-shell-radius);
+}
+
+/* Stage wrapper: focusable so keyboard paths (Escape, Delete, arrows) work. */
+.techne-canvas-stage-wrap {
+  display: flex;
+  flex: 1;
+  min-width: 0;
+  min-height: 16rem;
+}
+
+.techne-canvas-stage-wrap:focus-visible {
+  outline: var(--oi-focus-ring-width) solid var(--oi-focus);
+}
+
+/* Tools with an active state (pan / lasso). */
+.techne-canvas-tool[data-active="true"] {
+  border-color: var(--oi-accent);
+  color: var(--oi-foreground);
+}
+
+/* Visual frames: presentation groups, drawn under the nodes. */
+.techne-canvas-frame-box {
+  fill: var(--oi-canvas-ground);
+  fill-opacity: 0.35;
+  stroke: var(--oi-hairline);
+  stroke-dasharray: 6 3;
+  cursor: move;
+}
+
+.techne-canvas-frame:hover .techne-canvas-frame-box {
+  stroke: var(--oi-accent);
+}
+
+.techne-canvas-frame-label {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  fill: var(--oi-muted);
+}
+
+/* Snap guides: drawn while dragging, then dropped. */
+.techne-canvas-guide {
+  stroke: var(--oi-accent);
+  stroke-width: 0.75;
+  stroke-dasharray: 4 4;
+  pointer-events: none;
+}
+
+/* Lasso rubber band. */
+.techne-canvas-lasso {
+  fill: var(--oi-accent);
+  fill-opacity: 0.08;
+  stroke: var(--oi-accent);
+  stroke-width: 1;
+  pointer-events: none;
+}
+
+/* Proposal edges: dashed with a suggestion glyph — visibly NOT semantic
+ * relations until routed. */
+.techne-canvas-proposal-line {
+  stroke: var(--oi-accent);
+  stroke-width: 1.5;
+  stroke-dasharray: 5 4;
+}
+
+.techne-canvas-proposal-edge[data-status="routed"] .techne-canvas-proposal-line {
+  stroke-dasharray: 1 0;
+}
+
+.techne-canvas-proposal-edge[data-status="rejected"] .techne-canvas-proposal-line {
+  stroke: var(--oi-muted-2);
+}
+
+.techne-canvas-proposal-edge[data-unclassified="true"] .techne-canvas-proposal-line {
+  stroke-dasharray: 2 5;
+}
+
+.techne-canvas-proposal-label {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  fill: var(--oi-accent-ink);
+  text-anchor: middle;
+  paint-order: stroke;
+  stroke: var(--oi-canvas-ground);
+  stroke-width: 3px;
+}
+
+/* Proposal rows and status badges: suggestion vs routed is always legible. */
+.techne-canvas-proposal-row {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin-top: var(--oi-space-2);
+  padding-top: var(--oi-space-2);
+  border-top: 1px solid var(--oi-hairline-soft);
+}
+
+.techne-canvas-proposal-type {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+}
+
+.techne-canvas-badge {
+  align-self: flex-start;
+  font-size: var(--oi-type-xs);
+  padding: 0 var(--oi-space-2);
+  border-radius: var(--oi-shell-radius);
+  border: 1px solid var(--oi-hairline);
+  color: var(--oi-muted);
+}
+
+.techne-canvas-badge[data-status="routed"] {
+  color: var(--oi-foreground);
+  border-color: var(--oi-accent);
+}
+
+.techne-canvas-badge[data-status="unclassified"] {
+  border-style: dashed;
+}
+
+.techne-canvas-actions {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--oi-space-1);
+  margin-top: var(--oi-space-2);
+}
+
+.techne-canvas-actions select {
+  max-width: 100%;
+  font-size: var(--oi-type-xs);
+}
+
+.techne-canvas-form {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-2);
+  margin-top: var(--oi-space-2);
+}
+
+.techne-canvas-field {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-canvas-field input,
+.techne-canvas-field select {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+  background: transparent;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-2);
+}
+
+.techne-canvas-frame-row {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  margin-top: var(--oi-space-2);
+}
+
+.techne-canvas-frame-name {
+  flex: 1;
+  min-width: 0;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-foreground);
+  background: transparent;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-1) var(--oi-space-2);
+}
+
+.techne-canvas-view-ref {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  color: var(--oi-foreground);
+  overflow-wrap: anywhere;
+}
+
+.techne-canvas-import {
+  width: 100%;
+  min-height: 6rem;
+  margin-top: var(--oi-space-2);
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  color: var(--oi-muted);
+  background: transparent;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  resize: vertical;
+}
+
+/* The persistent presentation-vs-semantic status line. */
+.techne-canvas-statusline {
+  margin: 0;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+/* Semantic zoom: below the "named" level, labels leave the stage; the
+ * constellation skeleton is the disclosure. */
+.techne-canvas-stage[data-zoom="constellation"] .techne-canvas-node-label {
+  display: none;
+}
+
+@media (max-width: 720px) {
+  .techne-canvas-body {
+    flex-direction: column;
+  }
+
+  .techne-canvas-side {
+    width: 100%;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techne-canvas-tool,
+  .techne-canvas-hop {
+    transition: none;
+  }
+}

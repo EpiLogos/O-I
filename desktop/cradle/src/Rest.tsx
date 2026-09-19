@@ -41,22 +41,24 @@ export function Rest({ project, onWrite, onWiki, onSearch, onExplore }: {
     try { await onWrite(project); } catch (error) { setFailure(String(error instanceof Error ? error.message : error)); }
     finally { setPending(false); }
   };
-  return <section className="fresh-surface" aria-label={groundNeedsAttention ? "Locate your Central ground" : "Empty workspace"}>
+  return <section className="fresh-surface rest-ground" aria-label={groundNeedsAttention ? "Locate your Central ground" : "Empty workspace"}>
     <div>
       {groundNeedsAttention ? <>
-        <h2>Locate your Central ground</h2>
-        <p role="status">{boot.phase === "ground-unrecognised" ? "No default Central selected" : (boot.detail ?? "The default Central ground is not accessible")}</p>
+        <div className="rest-ground-head">
+          <h2>Locate your Central ground</h2>
+          <p role="status" className="rest-ground-status">{boot.phase === "ground-unrecognised" ? "No default Central selected" : (boot.detail ?? "The default Central ground is not accessible")}</p>
+        </div>
         <GroundChooser />
       </> : <WelcomePrompt paused={pending} />}
       {/* Writing never waits for a ground either: the chooser asks for one,
           and the entry to write stays reachable beside it. */}
-      <nav aria-label="Start working">
-        {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} />Open project wiki</button>}
-        <button onClick={onSearch}><Glyph name="search" size={13} />Search <kbd>⌘K</kbd></button>
-        {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} />Explore the open field</button>}
-        <button disabled={pending} onClick={() => void write()}><Glyph name="file" size={13} />{pending ? "Opening…" : "Start writing"}</button>
+      <nav className="rest-actions" aria-label="Start working">
+        {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} /><span>Open project wiki</span></button>}
+        <button onClick={onSearch}><Glyph name="search" size={13} /><span>Search</span><kbd>⌘K</kbd></button>
+        {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} /><span>Explore the open field</span></button>}
+        <button className="rest-action-primary" disabled={pending} onClick={() => void write()}><Glyph name="file" size={13} /><span>{pending ? "Opening…" : "Start writing"}</span></button>
       </nav>
-      {failure && <p className="fresh-refusal" role="alert">{failure}</p>}
+      {failure && <p className="fresh-refusal rest-refusal" role="alert">{failure}</p>}
     </div>
   </section>;
 }

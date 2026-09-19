@@ -185,14 +185,25 @@ const sources=new Map<string,FocusedInstrumentSource>();
 const sourceListeners=new Map<string,Set<()=>void>>();
 const openListeners=new Set<(request:FocusedInstrumentOpenRequest)=>void>();
 
+const registryListeners=new Set<()=>void>();
+
 function announce(ref:string){for(const listener of sourceListeners.get(ref)??[])listener();}
+function announceRegistry(){for(const listener of registryListeners)listener();}
 
 export function registerFocusedInstrumentSource(source:FocusedInstrumentSource):()=>void {
   if(!source.ref.trim())throw new Error("Focused instrument source needs a stable ref");
   if(sources.has(source.ref))throw new Error(`Focused instrument source ${source.ref} is already registered`);
-  sources.set(source.ref,source);announce(source.ref);
-  return()=>{if(sources.get(source.ref)===source){sources.delete(source.ref);announce(source.ref);}};
+  sources.set(source.ref,source);announce(source.ref);announceRegistry();
+  return()=>{if(sources.get(source.ref)===source){sources.delete(source.ref);announce(source.ref);announceRegistry();}};
 }
+
+/** The registered sources, in registration order — refs and titles only. A
+ * host that lists instruments (the Technè switcher, the Epii/Anima receiving
+ * planes) reads this instead of guessing a source ref. */
+export function focusedInstrumentSources():{ref:string;title:string}[]{return [...sources.values()].map(source=>({ref:source.ref,title:source.title}));}
+
+/** Registry membership changes only (a source registered or left). */
+export function subscribeFocusedInstrumentRegistry(listener:()=>void):()=>void{registryListeners.add(listener);return()=>{registryListeners.delete(listener);};}
 
 export function focusedInstrumentSource(ref:string):FocusedInstrumentSource|undefined{return sources.get(ref);}
 
@@ -227,4 +238,4 @@ export function focusedInstrumentBinding(request:FocusedInstrumentOpenRequest):S
   return {id:crypto.randomUUID(),kind:"instrument",ref:request.sourceRef,title:request.title??source?.title??"Epi / Nara"};
 }
 
-export function resetFocusedInstrumentSources(){sources.clear();sourceListeners.clear();openListeners.clear();}
+export function resetFocusedInstrumentSources(){sources.clear();sourceListeners.clear();openListeners.clear();announceRegistry();}

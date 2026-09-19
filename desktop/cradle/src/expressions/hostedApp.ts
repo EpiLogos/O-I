@@ -180,3 +180,83 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
     frame.removeEventListener("load", announce);
   };
 }
+
+// ——— The host↔frame mode channel (the dual-mode cut, wayfinder §11–13) ——
+// The Technē surface and the Expressions centre host the SAME application;
+// the Technē cut asks the application to stand down its physics authoring
+// chrome while its living canvas, current scene, selection and bottom scene
+// transport remain. Two additive messages ride the same named, versioned
+// grammar as the kernel channel — same-origin material frame, explicit kind
+// discrimination, no ambient authority:
+//
+//   host → frame  `{v:1, kind:"host-mode", mode:"expressions"|"techne"}`
+//     — the cut the hosting surface stands in. The application suppresses
+//       its authoring chrome in the "techne" cut and restores it in
+//       "expressions"; it answers every host-mode with a fresh app-state
+//       announcement (the race-free initial read).
+//   host → frame  `{v:1, kind:"host-command", command:"interact"|"select"}`
+//     — the Technē HUD's direct-mode controls drive the application's own
+//       rail tools; the application refuses unknown commands by name.
+//   frame → host  `{v:1, kind:"oi-app-state", state:{...}}`
+//     — the application's position announcement: current expression, scene
+//       (index/count/name/save state), selection names and the honest
+//       absence of anything it does not report.
+
+/** The cut a hosting surface stands the application in. */
+export type HostedAppMode = "expressions" | "techne";
+
+const isHostedAppMode = (value: unknown): value is HostedAppMode => value === "expressions" || value === "techne";
+
+/** Carry one mode into a hosted frame: posted immediately and re-posted on
+ * every frame load (the trackShellCutout law — the frame may boot after the
+ * ask). Returns the teardown. Call from an effect keyed on the mode so every
+ * change re-posts. */
+export function postHostMode(frame: HTMLIFrameElement | null, mode: HostedAppMode): () => void {
+  if (!frame) return () => {};
+  const post = () => {
+    if (isHostedAppMode(mode)) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-mode", mode}, "*");
+  };
+  frame.addEventListener("load", post);
+  post();
+  return () => { frame.removeEventListener("load", post); };
+}
+
+/** The application's position announcement, as the HUD's readout consumes it.
+ * Every facet is what the application actually reported — an absent facet
+ * stays absent (honest absence, never a guessed position). */
+export interface HostedAppState {
+  document?: {id?: string; name?: string};
+  sceneIndex?: number;
+  sceneCount?: number;
+  sceneName?: string;
+  sceneState?: string;
+  selection?: {id: string; name?: string}[];
+  /** The application's active rail tool ("interact" | "select" | …), as the
+   * HUD's direct-mode buttons mirror it. */
+  tool?: string;
+  playing?: boolean;
+  journeyPlaying?: boolean;
+  fieldPaused?: boolean;
+  libraryOpen?: boolean;
+  hostMode?: HostedAppMode;
+}
+
+/** Follow one frame's oi-app-state announcements. Only envelopes from that
+ * frame are accepted. Returns the teardown. */
+export function trackHostedAppState(frame: HTMLIFrameElement | null, onState: (state: HostedAppState) => void): () => void {
+  const handler = (event: MessageEvent) => {
+    if (event.source !== frame?.contentWindow) return;
+    const data = event.data as {v?: unknown; kind?: unknown; state?: unknown} | null;
+    if (!data || typeof data !== "object" || data.v !== KERNEL_CHANNEL_VERSION || data.kind !== "oi-app-state") return;
+    if (!data.state || typeof data.state !== "object") return;
+    onState(data.state as HostedAppState);
+  };
+  window.addEventListener("message", handler);
+  return () => { window.removeEventListener("message", handler); };
+}
+
+/** Post one host→frame message into a hosted frame — the host-command
+ * grammar the Technē HUD's direct-mode controls ride. */
+export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v: number; kind: string} & Record<string, unknown>) {
+  frame?.contentWindow?.postMessage(message, "*");
+}

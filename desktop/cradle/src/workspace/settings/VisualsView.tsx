@@ -61,10 +61,11 @@ function ThemesView({ theme }: { theme: ThemeChoice }) {
   ];
   return <div className="settings-view">
     <p className="settings-native-note">Appearance resolves through the shell's semantic tokens; the expression ink follows the theme unless overridden below.</p>
-    <div className="visuals-row" role="group" aria-label="Appearance">
+    <div className="oi-segment" role="group" aria-label="Appearance">
       {options.map((option) => (
         <button
           key={option.value}
+          type="button"
           aria-pressed={theme === option.value}
           title={option.hint}
           onClick={() => visuals.setTheme(option.value)}
@@ -74,6 +75,19 @@ function ThemesView({ theme }: { theme: ThemeChoice }) {
       ))}
     </div>
   </div>;
+}
+
+/** What the engine control set needs from whoever hosts the field: the
+ * presentation its field actions (disperse, pause, reset, capture) and its
+ * diagnostics operate on. The Settings preview below is one host; the
+ * Expressions centre surface's artboard is another. The controls never
+ * acquire a presentation of their own. */
+export interface ExpressionControlsHost {
+  /** The standing presentation, or null when none stands. Stable identity. */
+  presentation: () => StagePresentation | null;
+  ready: boolean;
+  paused: boolean;
+  onPausedChange: (paused: boolean) => void;
 }
 
 function ExpressionView() {
@@ -88,11 +102,10 @@ function ExpressionView() {
   const [retry, setRetry] = useState(0);
   const [previewPaused, setPreviewPaused] = useState(false);
   const [previewForceMotion, setPreviewForceMotion] = useState(false);
-  const [captureNotice, setCaptureNotice] = useState<string | null>(null);
   const latest = useRef({config, previewPaused, previewForceMotion});
   latest.current = {config, previewPaused, previewForceMotion};
   const surfaceError = stage.error ?? previewError;
-  const readTelemetry = useCallback(() => presentationRef.current?.telemetry() ?? null, []);
+  const currentPresentation = useCallback(() => presentationRef.current, []);
 
   // Acquire the one window stage, then move its existing canvas/context into
   // the preview. Provider readiness retries acquisition; navigation releases
@@ -140,37 +153,45 @@ function ExpressionView() {
 
   return (
     <div className="visuals-expression">
-      <div className="visuals-master">
-        <button
-          className="visuals-master-toggle"
-          aria-pressed={snapshot.enabled}
-          onClick={() => visuals.setEnabled(!snapshot.enabled)}
-        >
-          {snapshot.enabled ? "Expression: On" : "Expression: Off"}
-        </button>
-        <p className="settings-native-note">
-          {snapshot.enabled
-            ? "Expression is enabled. Off removes the renderer entirely — nothing runs hidden."
-            : "Off is absolute: no renderer, no simulation, no resources held."}
-        </p>
-        <label className="visuals-check">
-          <input
-            type="checkbox"
-            checked={snapshot.welcomeEnabled}
-            onChange={(event) => visuals.setWelcomeEnabled(event.target.checked)}
-            disabled={!snapshot.enabled}
-          />
-          Show the welcome mark when the app opens
-        </label>
+      <div className="visuals-master oi-card">
+        <div className="oi-panel-head">
+          <span className="oi-panel-head-title">Expression layer</span>
+          <div className="oi-panel-head-tools">
+            <button
+              type="button"
+              className={snapshot.enabled ? "oi-action oi-action-primary" : "oi-action"}
+              aria-pressed={snapshot.enabled}
+              onClick={() => visuals.setEnabled(!snapshot.enabled)}
+            >
+              {snapshot.enabled ? "Expression: On" : "Expression: Off"}
+            </button>
+          </div>
+        </div>
+        <div className="visuals-master-body">
+          <p className="oi-note">
+            {snapshot.enabled
+              ? "Expression is enabled. Off removes the renderer entirely — nothing runs hidden."
+              : "Off is absolute: no renderer, no simulation, no resources held."}
+          </p>
+          <label className="visuals-check">
+            <input
+              type="checkbox"
+              checked={snapshot.welcomeEnabled}
+              onChange={(event) => visuals.setWelcomeEnabled(event.target.checked)}
+              disabled={!snapshot.enabled}
+            />
+            Show the welcome mark when the app opens
+          </label>
+        </div>
       </div>
 
       {!snapshot.enabled && (
-        <p className="settings-native-note">Turn the expression on to see and shape the field.</p>
+        <p className="oi-empty"><strong>Expression is off.</strong><span>Turn the expression on to see and shape the field.</span></p>
       )}
 
-      {snapshot.enabled && surfaceError && <div role="alert">
+      {snapshot.enabled && surfaceError && <div className="oi-refusal" role="alert">
         <p>The expression preview is unavailable: {surfaceError}</p>
-        {!stage.error && <button onClick={() => setRetry((value) => value + 1)}>Retry preview</button>}
+        {!stage.error && <button type="button" className="oi-action" onClick={() => setRetry((value) => value + 1)}>Retry preview</button>}
       </div>}
 
       {snapshot.enabled && (
@@ -178,7 +199,7 @@ function ExpressionView() {
           {/* The window's production canvas is placed here while acquired. */}
           <div className="visuals-preview">
             <div
-              className={surfaceError ? "visuals-preview-stage visuals-preview-stage-empty" : "visuals-preview-stage"}
+              className={surfaceError ? "visuals-preview-stage visuals-preview-stage-empty oi-card" : "visuals-preview-stage oi-card"}
               ref={containerRef}
               style={{ position: "relative" }}
             />
@@ -192,14 +213,44 @@ function ExpressionView() {
             </label>
           </div>
 
+          <ExpressionControls host={{presentation: currentPresentation, ready: previewReady, paused: previewPaused, onPausedChange: setPreviewPaused}} />
+        </>
+      )}
+    </div>
+  );
+}
+
+/**
+ * The FULL engine control set over the visuals store: text targets, presets,
+ * material, fluid, relational, pointer, morph, field actions, saved states,
+ * config import/export and diagnostics. Every value flows through the
+ * validated visual-preference owner; field actions operate on the HOST's
+ * presentation. It renders a fragment of groups so a host lays them out in
+ * its own container (Settings: the visuals grid; Expressions: the Studio dock).
+ * `editableValues` swaps each slider's read-only value for a direct numeric
+ * entry (the Studio's label–slider–number row).
+ */
+export function ExpressionControls({ host, editableValues = false }: { host: ExpressionControlsHost; editableValues?: boolean }) {
+  const { snapshot } = useVisuals();
+  const config = snapshot.config;
+  const [captureNotice, setCaptureNotice] = useState<string | null>(null);
+  const { presentation, ready, paused, onPausedChange } = host;
+  const readTelemetry = useCallback(() => {
+    try { return presentation()?.telemetry() ?? null; } catch { return null; }
+  }, [presentation]);
+  const slider = (path: string) => <Slider path={path} config={config} editable={editableValues} />;
+  return (
+    <>
           <fieldset className="visuals-group">
-            <legend>Text targets</legend>
+            <legend className="oi-eyebrow">Text targets</legend>
             <GlyphInputs config={config} />
             <WordInput />
             <div className="visuals-charrow" role="group" aria-label="Quick characters">
               {QUICK_CHARS.map((char) => (
                 <button
                   key={char}
+                  type="button"
+                  className="oi-chip"
                   title={`Set both glyph targets to ${char}`}
                   onClick={() => visuals.patchConfig({ glyph: [char, char] })}
                 >
@@ -210,10 +261,10 @@ function ExpressionView() {
           </fieldset>
 
           <fieldset className="visuals-group">
-            <legend>Presets</legend>
+            <legend className="oi-eyebrow">Presets</legend>
             <div className="visuals-presets">
               {PRESETS.map((preset) => (
-                <button key={preset.id} title={preset.description} onClick={() => visuals.patchConfig(preset.config as PointCloudPatch)}>
+                <button key={preset.id} type="button" className="oi-action" title={preset.description} onClick={() => visuals.patchConfig(preset.config as PointCloudPatch)}>
                   {preset.name}
                 </button>
               ))}
@@ -221,7 +272,7 @@ function ExpressionView() {
           </fieldset>
 
           <fieldset className="visuals-group">
-            <legend>Material</legend>
+            <legend className="oi-eyebrow">Material</legend>
             <ToggleRow
               label="Colour"
               value={config.colorMode}
@@ -240,26 +291,27 @@ function ExpressionView() {
               options={[["circle", "Circle"], ["square", "Square"]]}
               onPick={(value) => visuals.patchConfig({ dotShape: value as PointCloudConfig["dotShape"] })}
             />
-            <Slider path="particle.count" config={config} />
-            <Slider path="particle.sizeMin" config={config} />
-            <Slider path="particle.sizeMax" config={config} />
+            {slider("particle.count")}
+            {slider("particle.sizeMin")}
+            {slider("particle.sizeMax")}
           </fieldset>
 
           <fieldset className="visuals-group">
-            <legend>Fluid</legend>
-            <Slider path="fluid.curlScale" config={config} />
-            <Slider path="fluid.curlSpeed" config={config} />
-            <Slider path="fluid.vortexStrength" config={config} />
-            <Slider path="fluid.viscosity" config={config} />
-            <Slider path="fluid.returnSpeed" config={config} />
-            <Slider path="fluid.turbulence" config={config} />
-            <Slider path="fluid.dispersion" config={config} />
+            <legend className="oi-eyebrow">Fluid</legend>
+            {slider("fluid.curlScale")}
+            {slider("fluid.curlSpeed")}
+            {slider("fluid.vortexStrength")}
+            {slider("fluid.viscosity")}
+            {slider("fluid.returnSpeed")}
+            {slider("fluid.turbulence")}
+            {slider("fluid.dispersion")}
           </fieldset>
 
           <fieldset className="visuals-group">
-            <legend>Relational system</legend>
+            <legend className="oi-eyebrow">Relational system</legend>
             <button
-              className="visuals-relational-toggle"
+              type="button"
+              className={config.relational.enabled ? "oi-action oi-action-primary" : "oi-action"}
               aria-pressed={config.relational.enabled}
               onClick={() => visuals.patchConfig({ relational: { enabled: !config.relational.enabled } })}
             >
@@ -271,58 +323,65 @@ function ExpressionView() {
               options={[["orbital", "Orbital"], ["chaos", "Chaos"], ["nbody", "N-body"]]}
               onPick={(value) => visuals.patchConfig({ relational: { mode: value as PointCloudConfig["relational"]["mode"] } })}
             />
-            <Slider path="relational.attractorCount" config={config} />
-            <Slider path="relational.attractorGravity" config={config} />
-            <Slider path="relational.orbitSpeed" config={config} />
-            <Slider path="relational.orbitRadius" config={config} />
-            <Slider path="relational.relationalSpin" config={config} />
-            <Slider path="relational.chaosFactor" config={config} />
-            <Slider path="relational.wanderSpeed" config={config} />
+            {slider("relational.attractorCount")}
+            {slider("relational.attractorGravity")}
+            {slider("relational.orbitSpeed")}
+            {slider("relational.orbitRadius")}
+            {slider("relational.relationalSpin")}
+            {slider("relational.chaosFactor")}
+            {slider("relational.wanderSpeed")}
           </fieldset>
 
           <fieldset className="visuals-group">
-            <legend>Pointer</legend>
+            <legend className="oi-eyebrow">Pointer</legend>
             <ToggleRow
               label="Force"
               value={config.interaction.mode}
               options={[["repel", "Repel"], ["attract", "Attract"], ["vortex", "Vortex"]]}
               onPick={(value) => visuals.patchConfig({ interaction: { mode: value as PointCloudConfig["interaction"]["mode"] } })}
             />
-            <Slider path="interaction.radius" config={config} />
-            <Slider path="interaction.strength" config={config} />
+            {slider("interaction.radius")}
+            {slider("interaction.strength")}
           </fieldset>
 
           <fieldset className="visuals-group">
-            <legend>Morph</legend>
+            <legend className="oi-eyebrow">Morph</legend>
             <button
+              type="button"
+              className={config.autoMorph ? "oi-action oi-action-primary" : "oi-action"}
               aria-pressed={config.autoMorph}
               onClick={() => visuals.patchConfig({ autoMorph: !config.autoMorph })}
             >
               {config.autoMorph ? "Auto-morphing" : "Morph manual"}
             </button>
-            <Slider path="morphProgress" config={config} />
-            <Slider path="autoMorphDuration" config={config} />
+            {slider("morphProgress")}
+            {slider("autoMorphDuration")}
           </fieldset>
 
-          <div className="visuals-actions" role="group" aria-label="Field actions">
-            <button disabled={!previewReady} onClick={() => presentationRef.current?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
+          <div className="oi-action-group visuals-actions" role="group" aria-label="Field actions">
+            <button type="button" className="oi-action" disabled={!ready} onClick={() => presentation()?.command({ type: "disperse", strength: 3.5 })}>Disperse</button>
             <button
-              disabled={!previewReady}
+              type="button"
+              className="oi-action"
+              disabled={!ready}
+              aria-pressed={paused}
               onClick={() => {
-                setPreviewPaused(!previewPaused);
+                onPausedChange(!paused);
               }}
             >
-              {previewPaused ? "Resume simulation" : "Pause simulation"}
+              {paused ? "Resume simulation" : "Pause simulation"}
             </button>
-            <button disabled={!previewReady} onClick={() => presentationRef.current?.command({ type: "reset-field" })}>Reset field</button>
-            <button onClick={() => visuals.resetConfig()}>Restore defaults</button>
+            <button type="button" className="oi-action" disabled={!ready} onClick={() => presentation()?.command({ type: "reset-field" })}>Reset field</button>
+            <button type="button" className="oi-action" onClick={() => visuals.resetConfig()}>Restore defaults</button>
             <button
-              disabled={!previewReady}
+              type="button"
+              className="oi-action"
+              disabled={!ready}
               onClick={() => {
-                const presentation = presentationRef.current;
-                if (!presentation) return;
+                const standing = presentation();
+                if (!standing) return;
                 try {
-                  const canvas = presentation.capture();
+                  const canvas = standing.capture();
                   const url = canvas.toDataURL("image/png");
                   const anchor = window.document.createElement("a");
                   anchor.href = url;
@@ -337,16 +396,14 @@ function ExpressionView() {
               Capture image
             </button>
           </div>
-          {captureNotice && <p role="alert">{captureNotice}</p>}
+          {captureNotice && <p className="oi-refusal" role="alert">{captureNotice}</p>}
 
           <SavedStates states={snapshot.savedStates} />
 
           <ImportExport />
 
           <Diagnostics read={readTelemetry} />
-        </>
-      )}
-    </div>
+    </>
   );
 }
 
@@ -355,7 +412,7 @@ function SavedStates({ states }: { states: SavedState[] }) {
   const [notice, setNotice] = useState<string | null>(null);
   return (
     <fieldset className="visuals-group">
-      <legend>Saved states</legend>
+      <legend className="oi-eyebrow">Saved states</legend>
       <form
         className="visuals-word"
         onSubmit={(event) => {
@@ -365,27 +422,27 @@ function SavedStates({ states }: { states: SavedState[] }) {
           setNotice(`Saved "${name.trim() || "Config"}"`);
         }}
       >
-        <label>Name
-          <input type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="Name this recipe" />
+        <label className="oi-field">Name
+          <input className="oi-input" type="text" value={name} onChange={(event) => setName(event.target.value)} placeholder="Name this recipe" />
         </label>
-        <button type="submit">Save current</button>
+        <button type="submit" className="oi-action">Save current</button>
       </form>
-      {notice && <p className="settings-native-note">{notice}</p>}
+      {notice && <p className="oi-note">{notice}</p>}
       <ul className="visuals-states">
         {states.map((state) => (
-          <li key={state.id}>
-            <span className="visuals-state-name">{state.name}</span>
+          <li key={state.id} className="oi-row">
+            <span className="oi-row-title visuals-state-name">{state.name}</span>
             <span className="visuals-state-actions">
-              <button onClick={() => {
+              <button type="button" className="oi-action" onClick={() => {
                 visuals.loadState(state.id);
                 setNotice(`Loaded "${state.name}"`);
               }}>Load</button>
-              <button onClick={() => {
+              <button type="button" className="oi-action" onClick={() => {
                 void navigator.clipboard?.writeText(visuals.exportState(state.id));
                 setNotice(`Copied "${state.name}" JSON to the clipboard`);
               }}>Copy JSON</button>
               {state.id !== "oi_logo_mark" && (
-                <button onClick={() => visuals.deleteState(state.id)}>Delete</button>
+                <button type="button" className="oi-action" onClick={() => visuals.deleteState(state.id)}>Delete</button>
               )}
             </span>
           </li>
@@ -400,10 +457,10 @@ function GlyphInputs({ config }: { config: PointCloudConfig }) {
   const glyphB = Array.isArray(config.glyph) ? (config.glyph[1] ?? glyphA) : glyphA;
   return (
     <div className="visuals-glyphs">
-      <label>Glyph A
+      <label className="oi-field">Glyph A
         <DebouncedText value={glyphA} onCommit={(value) => visuals.patchPath("glyph.0", value)} placeholder="O" />
       </label>
-      <label>Glyph B
+      <label className="oi-field">Glyph B
         <DebouncedText value={glyphB} onCommit={(value) => visuals.patchPath("glyph.1", value)} placeholder="I" />
       </label>
     </div>
@@ -422,15 +479,16 @@ function WordInput() {
         visuals.patchConfig({ glyph: [word, word] });
       }}
     >
-      <label>Type any word or phrase
+      <label className="oi-field">Type any word or phrase
         <input
+          className="oi-input"
           type="text"
           value={text}
           placeholder="e.g. FLUID, VOID, 42"
           onChange={(event) => setText(event.target.value)}
         />
       </label>
-      <button type="submit" disabled={!text.trim()}>Bake word</button>
+      <button type="submit" className="oi-action" disabled={!text.trim()}>Bake word</button>
     </form>
   );
 }
@@ -442,6 +500,7 @@ function DebouncedText({ value, onCommit, placeholder }: { value: string; onComm
   const timer = useRef<ReturnType<typeof setTimeout>>();
   useEffect(() => () => clearTimeout(timer.current), []);
   return <input
+    className="oi-input"
     type="text"
     value={draft ?? value}
     placeholder={placeholder}
@@ -457,27 +516,58 @@ function DebouncedText({ value, onCommit, placeholder }: { value: string; onComm
   />;
 }
 
-function Slider({ path, config }: { path: string; config: PointCloudConfig }) {
+function Slider({ path, config, editable = false }: { path: string; config: PointCloudConfig; editable?: boolean }) {
   const spec = CONTROL_SCHEMA[path];
   if (!spec) return null;
   const value = readPath(config, path);
+  const commit = (parsed: number) => visuals.patchConfig(pathToPatch(path, parsed));
   return (
     <label className="visuals-slider">
       <span className="visuals-slider-label">{spec.label}</span>
       <input
         type="range"
+        className="oi-range"
         min={spec.min}
         max={spec.max}
         step={spec.step}
         value={typeof value === "number" ? value : spec.min}
         onChange={(event) => {
           const parsed = spec.integer ? parseInt(event.target.value, 10) : parseFloat(event.target.value);
-          visuals.patchConfig(pathToPatch(path, parsed));
+          commit(parsed);
         }}
       />
-      <output className="visuals-slider-value">{typeof value === "number" ? value : "—"}</output>
+      {editable
+        ? <SliderNumber label={spec.label} value={typeof value === "number" ? value : null} min={spec.min} max={spec.max} integer={!!spec.integer} onCommit={commit} />
+        : <output className="visuals-slider-value">{typeof value === "number" ? value : "—"}</output>}
     </label>
   );
+}
+
+/** Direct numeric entry beside a slider (Studio density). The draft commits
+ * on Enter or blur, clamped to the control's own bounds; Escape restores the
+ * owner's value. The owner validates again on write. */
+function SliderNumber({ label, value, min, max, integer, onCommit }: { label: string; value: number | null; min: number; max: number; integer: boolean; onCommit: (value: number) => void }) {
+  const [draft, setDraft] = useState<string | null>(null);
+  const shown = draft ?? (value === null ? "" : String(value));
+  const settle = () => {
+    if (draft === null) return;
+    const parsed = integer ? parseInt(draft, 10) : parseFloat(draft);
+    setDraft(null);
+    if (Number.isFinite(parsed)) onCommit(Math.min(max, Math.max(min, parsed)));
+  };
+  return <input
+    className="visuals-slider-number"
+    type="text"
+    inputMode="decimal"
+    aria-label={`${label} value`}
+    value={shown}
+    onChange={(event) => setDraft(event.target.value)}
+    onBlur={settle}
+    onKeyDown={(event) => {
+      if (event.key === "Enter") { event.preventDefault(); settle(); }
+      else if (event.key === "Escape") { event.preventDefault(); event.stopPropagation(); setDraft(null); }
+    }}
+  />;
 }
 
 function pathToPatch(path: string, value: number): PointCloudPatch {
@@ -495,13 +585,15 @@ function ToggleRow({ label, value, options, onPick }: {
   onPick: (value: string) => void;
 }) {
   return (
-    <div className="visuals-row" role="group" aria-label={label}>
+    <div className="visuals-row">
       <span className="visuals-slider-label">{label}</span>
-      {options.map(([option, optionLabel]) => (
-        <button key={option} aria-pressed={value === option} onClick={() => onPick(option)}>
-          {optionLabel}
-        </button>
-      ))}
+      <div className="oi-segment" role="group" aria-label={label}>
+        {options.map(([option, optionLabel]) => (
+          <button key={option} type="button" aria-pressed={value === option} onClick={() => onPick(option)}>
+            {optionLabel}
+          </button>
+        ))}
+      </div>
     </div>
   );
 }
@@ -511,17 +603,19 @@ function ImportExport() {
   const [failure, setFailure] = useState<string | null>(null);
   return (
     <fieldset className="visuals-group">
-      <legend>Import config JSON</legend>
+      <legend className="oi-eyebrow">Import config JSON</legend>
       <textarea
-        className="visuals-import"
+        className="visuals-import oi-input"
         rows={4}
         value={text}
         placeholder='{"glyph":["O","I"], …} — validated against the shared schema'
         onChange={(event) => setText(event.target.value)}
       />
-      {failure && <p role="alert">{failure}</p>}
-      <div className="visuals-actions">
+      {failure && <p className="oi-refusal" role="alert">{failure}</p>}
+      <div className="oi-action-group visuals-actions">
         <button
+          type="button"
+          className="oi-action oi-action-primary"
           onClick={() => {
             try {
               setFailure(null);
@@ -536,6 +630,8 @@ function ImportExport() {
           Apply JSON
         </button>
         <button
+          type="button"
+          className="oi-action"
           onClick={() => {
             const current = visuals.get();
             void navigator.clipboard?.writeText(JSON.stringify(current.config, null, 2));
@@ -572,9 +668,9 @@ function Diagnostics({ read }: { read: () => unknown }) {
   }, [reading]);
   if (!reading) return null;
   return (
-    <details className="visuals-diagnostics">
+    <details className="visuals-diagnostics oi-disclosure">
       <summary>Diagnostics</summary>
-      <pre>{summary}</pre>
+      <pre className="oi-ref">{summary}</pre>
     </details>
   );
 }

@@ -8,20 +8,40 @@
 .settings-world-facts dt { color: var(--oi-muted-2); }
 .settings-world-facts dd { margin: 0; }
 
-.settings-rail { display: flex; gap: 4px; margin: 12px 0 4px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
-.settings-rail button { background: none; border: none; border-bottom: 2px solid transparent; padding: 6px 10px; cursor: pointer; color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-ui); }
-.settings-rail button[aria-pressed="true"] { border-bottom-color: var(--oi-accent); color: inherit; }
+/* The rail is a plane nav (desktop.css `.oi-plane-nav`): quiet labels, the
+ * current one underlined in ink; hover previews the underline as a hairline. */
+.settings-rail { display: flex; flex-wrap: wrap; gap: 0 4px; margin: 12px 0 4px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.settings-rail button { background: none; border: none; border-bottom: 2px solid transparent; margin-bottom: -1px; padding: 7px 10px 6px; cursor: pointer; color: var(--oi-muted-2); font: inherit; font-size: var(--oi-shell-type-nav); white-space: nowrap; transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.settings-rail button:hover { color: var(--oi-accent-ink); border-bottom-color: var(--oi-hairline); }
+.settings-rail button[aria-pressed="true"] { border-bottom-color: var(--oi-accent); color: var(--oi-accent-ink); }
+.desktop-shell .settings-rail button:focus-visible { outline-offset: calc(0px - var(--oi-focus-ring-width)); }
 
-.product-section > summary { font-size: var(--oi-shell-type-heading); }
+/* Census and owner sections disclose with the shared chevron (desktop.css
+ * `.oi-disclosure`), not the platform's filled triangle; the state label
+ * sits at the row's right end. */
+.system-panel > details > summary { display: flex; align-items: center; gap: 10px; list-style: none; border-radius: var(--oi-shell-radius-row); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.system-panel > details > summary::-webkit-details-marker { display: none; }
+.system-panel > details > summary::before { content: ""; flex: none; width: 6px; height: 6px; margin: 0 3px 0 2px; border-right: 1.25px solid var(--oi-muted-2); border-bottom: 1.25px solid var(--oi-muted-2); transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.system-panel > details[open] > summary::before { transform: rotate(45deg); }
+.system-panel > details > summary:hover::before, .system-panel > details[open] > summary::before { border-color: var(--oi-accent-ink); }
+.system-panel > details > summary > span:last-child { float: none; margin-left: auto; text-align: right; }
+.system-panel > details > summary:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
+/* A pending read inside the panel is a quiet static line, not a headline. */
+.system-panel .oi-loading { padding: 10px 0; gap: 2px; }
+.system-panel .oi-loading-label { font-size: var(--oi-shell-type-nav); font-weight: 400; color: var(--oi-muted-2); }
+.system-panel .oi-loading-detail { font-size: var(--oi-shell-type-ui); color: var(--oi-muted-3); }
+
+.product-section > summary { font-size: var(--oi-shell-type-heading); font-weight: 550; letter-spacing: -.1px; }
+.product-section > summary > span:last-child { font-weight: 400; letter-spacing: 0; }
 .product-about { color: var(--oi-muted-2); margin: 6px 0 12px; max-width: 64ch; }
 .product-block { margin: 10px 0; }
-.product-block h4 { font-size: var(--oi-shell-type-ui); text-transform: uppercase; letter-spacing: .06em; color: var(--oi-muted-2); margin: 0 0 6px; font-weight: 500; }
+.product-block h4 { font-size: var(--oi-shell-type-eyebrow); text-transform: uppercase; letter-spacing: var(--oi-shell-tracking); color: var(--oi-muted-2); margin: 0 0 6px; font-weight: 500; }
 .product-row { display: contents; }
 .product-provenance { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 .product-native-path { color: var(--oi-muted-2); font-style: normal; font-size: var(--oi-shell-type-ui); }
 .product-actions { list-style: none; margin: 0; padding: 0; display: grid; gap: 6px; }
 .product-actions li { display: flex; flex-wrap: wrap; gap: 4px 10px; align-items: baseline; }
-.product-action-availability { font-size: var(--oi-shell-type-ui); border: 1px solid var(--oi-hairline-soft); border-radius: 999px; padding: 1px 8px; color: var(--oi-muted-2); }
+.product-action-availability { font-size: var(--oi-shell-type-meta); border: 1px solid var(--oi-hairline); border-radius: var(--oi-shell-radius-control); padding: 1px 7px; color: var(--oi-muted-2); white-space: nowrap; }
 .product-action-availability.is-missing_native_obligation { border-style: dashed; }
 .product-action-note { flex-basis: 100%; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 .product-empty { color: var(--oi-muted-2); font-style: italic; }
@@ -58,17 +78,18 @@
 .native-setting, .native-setting-row { border-bottom: 1px solid var(--oi-hairline-soft); }
 .native-setting:last-child, .native-setting-row:last-child { border-bottom: none; }
 .native-setting > summary, .native-setting-row { display: flex; flex-wrap: wrap; align-items: baseline; gap: 4px 8px; padding: 5px 0; }
-.native-setting > summary { cursor: pointer; }
+.native-setting > summary { cursor: pointer; border-radius: var(--oi-shell-radius-row); transition: background var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.native-setting > summary:hover { background: var(--oi-wash); }
 .native-setting-title { font-weight: 500; }
 .native-setting-value { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); margin-left: auto; text-align: right; }
 .native-setting-detail { margin: 2px 0 6px; }
 .native-setting-path { margin: 0 0 6px; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
-.native-drift { border: 1px solid currentColor; border-radius: 999px; padding: 1px 7px; font-size: var(--oi-shell-type-eyebrow); text-transform: uppercase; letter-spacing: .06em; line-height: 1.5; }
+.native-drift { border: 1px solid currentColor; border-radius: var(--oi-shell-radius-control); padding: 1px 7px; font-size: var(--oi-shell-type-eyebrow); text-transform: uppercase; letter-spacing: .06em; line-height: 1.5; }
 .native-drift.is-diverged { color: var(--oi-accent); }
 .native-drift.is-staged { color: var(--oi-accent-ink); border-style: dashed; }
 .native-drift.is-unknown { color: var(--oi-muted-3); border-style: dashed; }
 
-.native-axes { display: grid; grid-template-columns: minmax(70px, auto) 1fr; gap: 3px 14px; margin: 0 0 8px; padding: 8px 10px; background: var(--oi-wash); border-radius: var(--oi-radius-xs); font-size: var(--oi-shell-type-ui); }
+.native-axes { display: grid; grid-template-columns: minmax(70px, auto) 1fr; gap: 3px 14px; margin: 0 0 8px; padding: 8px 10px; background: var(--oi-wash); border-radius: 6px; font-size: var(--oi-shell-type-ui); }
 .native-axis-row { display: contents; }
 .native-axes dt { color: var(--oi-muted-2); }
 .native-axes dd { margin: 0; overflow-wrap: anywhere; }
@@ -80,7 +101,7 @@
 .native-degradation { color: var(--oi-muted-2); margin: 3px 0; }
 
 .native-chip-list { display: inline-flex; flex-wrap: wrap; gap: 4px; vertical-align: -2px; }
-.native-chip { border: 1px solid var(--oi-hairline); border-radius: var(--oi-radius-xs); padding: 0 6px; font-size: var(--oi-shell-type-ui); line-height: 1.6; }
+.native-chip { border: 1px solid var(--oi-hairline); border-radius: var(--oi-shell-radius-control); padding: 0 6px; font-size: var(--oi-shell-type-ui); line-height: 1.6; }
 
 .native-table { border-collapse: collapse; width: 100%; margin: 2px 0; font-size: var(--oi-shell-type-ui); }
 .native-table th, .native-table td { text-align: left; padding: 3px 10px 3px 0; border-bottom: 1px solid var(--oi-hairline-soft); vertical-align: top; overflow-wrap: anywhere; }
@@ -91,3 +112,7 @@
 .native-inline-field { display: contents; }
 .native-inline-fields dt { color: var(--oi-muted-2); }
 .native-inline-fields dd { margin: 0; overflow-wrap: anywhere; }
+
+@media (prefers-reduced-motion: reduce) {
+  .settings-rail button, .system-panel > details > summary, .system-panel > details > summary::before, .native-setting > summary { transition: none; }
+}

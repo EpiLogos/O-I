@@ -7,6 +7,7 @@ import {handToPanelInspect} from "../../agent/planes/panelInspect";
 import {buildSnapshot,developmentRead,workcellStatus,type WorkcellStatus} from "./development";
 import {publishFactorySelection} from "./sidebar/sidebarModel";
 import {BuildSurface} from "./BuildSurface";
+import {factoryBuildFixture} from "./fixtures/factory-build";
 import type {FactoryBuildView} from "./types";
 import "./development.css";
 
@@ -120,17 +121,11 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
   catch(error){setBuildView({__refused:String(error)});}
   finally{setBusy(false);}
  };
- // Dev builds open onto the desk: the seeded specimen is read once on mount
- // so the UI can be seen and tested by hand without typing refs. Production
- // keeps the explicit act — nothing reads before the reader asks.
- const readStarted=useRef(false);
- useEffect(()=>{
-  if(!import.meta.env.DEV||readStarted.current)return;
-  readStarted.current=true;
-  if(statePath.trim()&&projectRef.trim()&&runRefInput.trim())void readBuildView();
-  // One-shot on mount; the reader can still re-read explicitly.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
- },[]);
+ // Dev builds open onto the DSH-shaped fixture desk — the maximal native
+ // trajectory from the owner Factory UI package — so the UI can be seen and
+ // tested by hand with realistic density, no kernel read required. An
+ // explicit "Read build view" replaces it with the owner's served view.
+ const loadFixture=import.meta.env.DEV;
  const loadStatus=async()=>{
   setBusy(true);setStatusNote(undefined);
   try{setStatus(await workcellStatus(kernel.transport));}
@@ -153,7 +148,7 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
 
   <section ref={section_("build")} data-section="build" className="factory-section factory-development-build" aria-label="Build view">
    <header className="oi-panel-head factory-band"><h3 className="oi-panel-head-title">Build view</h3>
-    <span className="factory-band-caption">{buildViewOf(buildView)?"read":buildView!==undefined?"refused":"not read"}</span>
+    <span className="factory-band-caption">{buildViewOf(buildView)?"read":loadFixture?"fixture":buildView!==undefined?"refused":"not read"}</span>
    </header>
    <div className="factory-panel-body">
     <div className="factory-development-form">
@@ -164,10 +159,15 @@ export function FactoryDevelopmentSurface({project:projectProp,onOpenEncounter}:
      <div className="oi-action-group"><button className="oi-action" disabled={busy||!statePath.trim()||!projectRef.trim()||!runRefInput.trim()} onClick={()=>void readBuildView()}>Read build view</button></div>
     </div>
     {buildView===undefined&&<p className="oi-note">The desk appears once the owner serves the build view; selecting a span hands it to the panel&apos;s Inspect plane.</p>}
-    {buildViewOf(buildView)?<div className="factory-build-host">
-     <BuildSurface view={buildViewOf(buildView) as FactoryBuildView}/>
-     <details className="oi-disclosure"><summary>Owner payload (verbatim)</summary><DevelopmentReading heading="Build view" data={buildView}/></details>
-    </div>:typeof buildView==="object"&&buildView!==null?<DevelopmentReading heading="Build view" data={buildView}/>:null}
+    {(() => {
+      const served=buildViewOf(buildView);
+      const deskView=served??(loadFixture?factoryBuildFixture:undefined);
+      if(!deskView)return buildView!==undefined?<DevelopmentReading heading="Build view" data={buildView}/>:<p className="oi-note">The desk appears once the owner serves the build view; selecting a span hands it to the panel&apos;s Inspect plane.</p>;
+      return <div className="factory-build-host">
+       <BuildSurface view={deskView}/>
+       {served&&<details className="oi-disclosure"><summary>Owner payload (verbatim)</summary><DevelopmentReading heading="Build view" data={buildView}/></details>}
+      </div>;
+    })()}
    </div>
   </section>
 

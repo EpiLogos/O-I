@@ -1,0 +1,425 @@
+/*
+ * Timeline instrument styles (L5 Technē T3) — scoped to .techne-timeline,
+ * tokens only (var(--oi-*)); the shared techne chrome classes
+ * (.techne-open, .techne-absent, .techne-instruments) are reused, never
+ * edited. Lane-file styles follow the cradle Techne chrome: wash hover,
+ * accent focus, hairline rules.
+ */
+
+.techne-timeline {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+  height: 100%;
+  min-height: 0;
+}
+
+.techne-timeline-head {
+  display: flex;
+  align-items: baseline;
+  gap: var(--oi-space-3);
+  flex-wrap: wrap;
+}
+
+.techne-timeline-reading {
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  overflow-wrap: anywhere;
+}
+
+.techne-timeline-frame {
+  flex: 1;
+  min-height: 12rem;
+  padding: var(--oi-space-2);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+  overflow: auto;
+  resize: both;
+}
+
+.techne-timeline-frame svg {
+  display: block;
+  width: 100%;
+  height: auto;
+  min-width: 640px;
+}
+
+.techne-timeline-controls {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-timeline-zoom-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted-2);
+}
+
+.techne-timeline-notes {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+/* SVG marks. Fill/stroke are presentation attributes here so item kind
+ * colours stay data-driven; selection and focus ride attributes + CSS. */
+
+.techne-timeline .tl-lane-track {
+  fill: transparent;
+  stroke: var(--oi-hairline-soft);
+}
+
+.techne-timeline .tl-lane-label {
+  font-size: 12px;
+  font-weight: 600;
+  fill: var(--oi-foreground);
+}
+
+.techne-timeline .tl-lane-ref {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  fill: var(--oi-muted);
+}
+
+.techne-timeline .tl-axis-line {
+  stroke: var(--oi-hairline);
+}
+
+.techne-timeline .tl-tick-line {
+  stroke: var(--oi-rule);
+}
+
+.techne-timeline .tl-tick-label {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  fill: var(--oi-muted);
+}
+
+.techne-timeline-item {
+  cursor: pointer;
+}
+
+.techne-timeline-item:focus {
+  outline: none;
+}
+
+.techne-timeline-item:focus-visible .tl-shape {
+  stroke: var(--oi-focus);
+  stroke-width: 2px;
+}
+
+.techne-timeline-item[data-selected="true"] .tl-shape {
+  stroke: var(--oi-accent) !important;
+  stroke-width: 2.5px;
+}
+
+.techne-timeline .tl-shape {
+  transition: fill var(--oi-motion-ui) var(--oi-motion-ease-out), stroke var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-timeline-item:hover .tl-shape {
+  stroke: var(--oi-accent);
+}
+
+.techne-timeline .tl-band-label {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  fill: var(--oi-foreground);
+  pointer-events: none;
+}
+
+.techne-timeline .tl-count-pill {
+  fill: var(--oi-canvas-ground);
+  stroke: var(--oi-rule);
+}
+
+.techne-timeline .tl-count-label {
+  font-size: 9px;
+  fill: var(--oi-foreground);
+  pointer-events: none;
+}
+
+.techne-timeline .tl-unpositioned {
+  fill: transparent;
+  stroke: var(--oi-muted);
+  stroke-dasharray: 3 2;
+}
+
+/* ------------------------------------------------------------------ */
+/* M2′ Relation Field (QL-MEF #215) — projection modes, edges, standing */
+/* ------------------------------------------------------------------ */
+
+.techne-projection {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: 999px;
+  padding: 0 var(--oi-space-2);
+}
+
+.techne-mode-bar {
+  display: flex;
+  gap: var(--oi-space-1);
+  flex-wrap: wrap;
+}
+
+.techne-mode {
+  font-size: var(--oi-type-xs);
+  padding: 2px var(--oi-space-2);
+  border: 1px solid var(--oi-hairline);
+  border-radius: 999px;
+  background: transparent;
+  color: var(--oi-muted);
+  cursor: pointer;
+}
+
+.techne-mode[data-active="true"] {
+  color: var(--oi-foreground);
+  border-color: var(--oi-accent);
+}
+
+.techne-mode:disabled {
+  opacity: 0.45;
+  cursor: not-allowed;
+}
+
+.techne-relation-pane {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-3);
+}
+
+.techne-note {
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-arc-field {
+  display: block;
+  width: 100%;
+  height: auto;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-arc {
+  cursor: pointer;
+}
+
+.techne-arc:focus {
+  outline: none;
+}
+
+.techne-arc-path {
+  stroke: var(--oi-muted);
+  stroke-width: 1.2;
+  transition: stroke var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+
+.techne-arc[data-temporal="trans-temporal"] .techne-arc-path {
+  stroke-dasharray: 5 4;
+}
+
+.techne-arc-tip {
+  fill: var(--oi-muted);
+}
+
+.techne-arc:hover .techne-arc-path,
+.techne-arc:focus-visible .techne-arc-path {
+  stroke: var(--oi-accent);
+}
+
+.techne-arc[data-selected="true"] .techne-arc-path {
+  stroke: var(--oi-accent);
+  stroke-width: 2.4;
+}
+
+.techne-arc-node circle {
+  fill: var(--oi-foreground);
+}
+
+.techne-arc-node text {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  fill: var(--oi-muted);
+  pointer-events: none;
+}
+
+/* Standing grammar — the one place edge appearance is bound to epistemic
+ * standing, mechanically (see ./standing.ts). Disputed/mythic never inherit
+ * the sourced stroke; unknown standing stays faint. */
+
+.techne-arc[data-standing="sourced"] .techne-arc-path { stroke: var(--oi-foreground); stroke-width: 1.8; }
+.techne-arc[data-standing="sourced"] .techne-arc-tip { fill: var(--oi-foreground); }
+.techne-arc[data-standing="derived"] .techne-arc-path { stroke-dasharray: 2 3; }
+.techne-arc[data-standing="disputed"] .techne-arc-path { stroke-dasharray: 1 3; }
+.techne-arc[data-standing="mythic"] .techne-arc-path { opacity: 0.65; stroke-dasharray: 6 2 1 2; }
+.techne-arc[data-standing="unavailable"] .techne-arc-path { opacity: 0.5; }
+
+.techne-edge-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+}
+
+.techne-edge-row {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+  font-size: var(--oi-type-xs);
+  padding: var(--oi-space-1) var(--oi-space-2);
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  cursor: pointer;
+}
+
+.techne-edge-row:hover,
+.techne-edge-row:focus-visible {
+  border-color: var(--oi-accent);
+  outline: none;
+}
+
+.techne-edge-row[data-selected="true"] {
+  border-color: var(--oi-accent);
+  background: var(--oi-canvas-ground);
+}
+
+.techne-edge-relation {
+  font-weight: 600;
+}
+
+.techne-edge-flow {
+  display: inline-flex;
+  align-items: center;
+  gap: var(--oi-space-1);
+  overflow-wrap: anywhere;
+}
+
+.techne-edge-arrow {
+  color: var(--oi-muted);
+}
+
+.techne-standing-chip {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  border: 1px solid var(--oi-hairline);
+  border-radius: 999px;
+  padding: 0 var(--oi-space-1);
+  color: var(--oi-muted);
+}
+
+.techne-standing-chip[data-standing="sourced"] { color: var(--oi-foreground); border-color: var(--oi-foreground); }
+.techne-standing-chip[data-standing="derived"] { color: var(--oi-muted); border-style: dashed; }
+.techne-standing-chip[data-standing="authored"] { color: var(--oi-muted); border-style: dotted; }
+.techne-standing-chip[data-standing="disputed"] { color: var(--oi-accent); border-color: var(--oi-accent); border-style: dotted; }
+.techne-standing-chip[data-standing="mythic"] { color: var(--oi-muted); border-style: double; }
+.techne-standing-chip[data-standing="unavailable"] { opacity: 0.6; }
+
+.techne-temporal-chip {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  color: var(--oi-muted-2);
+}
+
+.techne-temporal-chip[data-temporal="trans-temporal"]::before { content: "◇ "; }
+.techne-temporal-chip[data-temporal="unresolved"] { color: var(--oi-accent); }
+
+.techne-derived-chip {
+  font-family: var(--oi-font-mono);
+  font-size: 9px;
+  color: var(--oi-muted-2);
+  border: 1px dashed var(--oi-hairline);
+  border-radius: 999px;
+  padding: 0 var(--oi-space-1);
+}
+
+.techne-chain-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--oi-type-xs);
+  font-family: var(--oi-font-mono);
+}
+
+.techne-chain-ref {
+  background: transparent;
+  border: none;
+  color: var(--oi-foreground);
+  font: inherit;
+  cursor: pointer;
+  text-decoration: underline dotted;
+  padding: 0;
+}
+
+.techne-standing-legend ul {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: 0;
+  padding: 0;
+  list-style: none;
+  font-size: var(--oi-type-xs);
+  color: var(--oi-muted);
+}
+
+.techne-crossing {
+  display: flex;
+  align-items: center;
+  gap: var(--oi-space-2);
+  flex-wrap: wrap;
+}
+
+.techne-structure pre {
+  font-family: var(--oi-font-mono);
+  font-size: 10px;
+  max-height: 16rem;
+  overflow: auto;
+  border: 1px solid var(--oi-hairline-soft);
+  border-radius: var(--oi-shell-radius);
+  padding: var(--oi-space-2);
+}
+
+/* The relation lane on the timeline: bands follow the standing grammar. */
+
+.techne-timeline .tl-relation-band {
+  fill: var(--oi-muted);
+  stroke: var(--oi-foreground);
+  stroke-width: 1;
+}
+
+.techne-timeline-item[data-standing="sourced"] .tl-relation-band { fill: var(--oi-foreground); }
+.techne-timeline-item[data-standing="derived"] .tl-relation-band { fill: transparent; stroke-dasharray: 2 3; }
+.techne-timeline-item[data-standing="disputed"] .tl-relation-band { stroke-dasharray: 1 3; }
+.techne-timeline-item[data-standing="mythic"] .tl-relation-band { opacity: 0.65; stroke-dasharray: 6 2 1 2; }
+.techne-timeline-item[data-standing="unavailable"] .tl-relation-band { opacity: 0.5; }
+.techne-timeline-item[data-selected="true"] .tl-relation-band,
+.techne-timeline-item[data-selected="true"] .tl-relation-unpositioned {
+  stroke: var(--oi-accent) !important;
+  stroke-width: 2.5px;
+}
+
+.techne-timeline .tl-relation-unpositioned {
+  fill: var(--oi-canvas-ground);
+  stroke: var(--oi-muted);
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .techne-timeline .tl-shape { transition: none; }
+  .techne-arc-path { transition: none; }
+}

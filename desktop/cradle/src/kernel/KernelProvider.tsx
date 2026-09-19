@@ -63,6 +63,8 @@ export interface KernelApi {
   /** The last op error through a stable ref — a captured closure reading
    * `opError` can go stale; diagnostics must always name the truth. */
   lastOpError: () => string | null;
+  /** The human's dismissal of the standing op error (footer status). */
+  dismissOpError: () => void;
   apply: (op: KernelOp) => Promise<KernelOutcome | null>;
   refreshListing: () => Promise<void>;
   /** Typed conveniences the surfaces share. */
@@ -115,6 +117,7 @@ export function KernelProvider(props: { children: ReactNode }) {
     lastOpError.current = value;
     setOpError(value);
   }, []);
+  const dismissOpError = useCallback(() => reportOpError(null), [reportOpError]);
   const seenSeq = useRef(0);
   const applySerial = useRef(Promise.resolve());
 
@@ -320,12 +323,23 @@ export function KernelProvider(props: { children: ReactNode }) {
       }
       const backlog = await eventsSince(transport, 1);
       if (alive) admitReceipts(backlog);
+      // Other native windows share this kernel, so pushed receipts mean this
+      // window's pulled state may be behind. The re-pull is coalesced: a
+      // burst of receipts is one trailing `state` read, not one per receipt
+      // (every read is a process spawn on the shared kernel seam).
+      let resync: ReturnType<typeof setTimeout> | null = null;
+      const requestResync = () => {
+        if (resync) clearTimeout(resync);
+        resync = setTimeout(() => {
+          resync = null;
+          if (!alive) return;
+          void kernelOp(transport, { op: "state" }).then(call => { if (alive && call.outcome) merge(call.outcome); });
+        }, 200);
+      };
       subscription = await subscribeTopic(transport, (receipt) => {
         if (!alive) return;
         admitReceipts([receipt]);
-        // Other native windows share this kernel. Pull after their changes;
-        // receipt payloads never become a parallel state store.
-        if(transport.kind==="tauri") void kernelOp(transport,{op:"state"}).then(call=>{if(alive&&call.outcome)merge(call.outcome);});
+        if (transport.kind === "tauri") requestResync();
       });
       if (!alive) subscription?.unsubscribe();
     })();
@@ -347,6 +361,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       opError,
       sourceErrors,
       lastOpError: () => lastOpError.current,
+      dismissOpError,
       apply,
       refreshListing,
       openSource,
@@ -369,6 +384,7 @@ export function KernelProvider(props: { children: ReactNode }) {
       opError,
       sourceErrors,
       apply,
+      dismissOpError,
       refreshListing,
       openSource,
       dayOpen,

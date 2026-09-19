@@ -1,4 +1,3 @@
-import {advanceCompletion} from "./expressionReading";
 import {lazy,Suspense,useCallback,useEffect,useMemo,useRef,useState, type ReactNode} from "react";
 // The Expression composer reaches the engine projection; it loads with the Composition plane, not with the agent layer.
 const ExpressionView=lazy(()=>import("../expression/ExpressionView").then((module)=>({default:module.ExpressionView})));
@@ -11,8 +10,6 @@ import {useKernel} from "../kernel/KernelProvider";
 import {Glyph} from "../workspace/Glyph";
 import {MODE_CURATION,type WorkspaceMode} from "../workspace/mode";
 import {EncounterList, type EncounterRow} from "../encounter/EncounterList";
-import type {FormName} from "@epilogos/oi-design-system/expression";
-import {EncounterSurface} from "../encounter/EncounterSurface";
 import {expressionReadingOf,useEncounterSession} from "../encounter/session";
 import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
 import {encounter} from "../encounter/client";
@@ -32,18 +29,9 @@ import "./agent.css";
  * the resting shape of EVERY mode whose conversation lives in this panel —
  * the curated companion (Agent, Anima/Nara, Epii) presents the same way.
  * `panel` is the full instrument — head, plane nav, Activity / Context /
- * Inspect / Composition and the mode's extra planes. One control turns one
- * into the other; the choice is remembered per mode. A mode whose
- * conversation lives in the centre (Factory) has no chat face and rests on
- * the panel. */
-export type AgentFace="chat"|"panel";
-const FACE_KEY=(mode:WorkspaceMode)=>`oi-agent-face:${mode}`;
-const defaultFace=(mode:WorkspaceMode):AgentFace=>{
-  const curation=MODE_CURATION[mode].panel;
-  return !curation.conversationInCentre&&curation.planes.includes("Conversation")?"chat":"panel";
-};
-const readFace=(mode:WorkspaceMode):AgentFace=>{try{const held=localStorage.getItem(FACE_KEY(mode));return held==="chat"||held==="panel"?held:defaultFace(mode);}catch{return defaultFace(mode);}};
-const writeFace=(mode:WorkspaceMode,face:AgentFace)=>{try{localStorage.setItem(FACE_KEY(mode),face);}catch{/* per-viewer convenience only */}};
+ * Inspect / Composition and the mode's extra planes. The chat is the first
+ * plane of the one strip — there is no second side to flip to. A mode whose
+ * conversation lives in the centre (Factory) offers no Chat plane at all. */
 
 /**
  * FND-02 — the person's own accompanying agent. This is never a subject
@@ -103,8 +91,9 @@ export interface AgentLayerProps {
 }
 
 /** Planes that stay mounted (hidden) once visited, so expanded rows, reviewed
- * revisions, scroll position and the Inspect selection survive plane changes. */
-const KEPT_PLANES=["Activity","Context","Inspect"] as const;
+ * revisions, scroll position and the Inspect selection survive plane changes.
+ * Chat keeps the composer's draft fields alive the same way. */
+const KEPT_PLANES=["Chat","Activity","Context","Inspect"] as const;
 const HANDED_LIMIT=12;
 
 export function AgentLayer({project, subject, history, historyAvailable, accompanying, onAccompanying, full, onFull, mode="base", extraPlanes, plane: controlledPlane, onPlane, onError, onOpenConversation, onOpenSubject, resolveSurface}: AgentLayerProps) {
@@ -119,18 +108,9 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
     const toggle=(event:Event)=>{const detail=(event as CustomEvent<unknown>).detail;if(isChatPreviewDetail(detail))setPreview(detail.open);};
     window.addEventListener(CHAT_PREVIEW_EVENT,toggle);return()=>window.removeEventListener(CHAT_PREVIEW_EVENT,toggle);
   },[]);
-  // --- the face: clean chat or the full panel, remembered per mode --------
-  const [face,setFaceState]=useState<AgentFace>(()=>readFace(mode));
-  useEffect(()=>setFaceState(readFace(mode)),[mode]);
-  const setFace=useCallback((next:AgentFace)=>{setFaceState(next);writeFace(mode,next);},[mode]);
+  // --- one strip: the planes, curated by the mode, one selection away ------
   const [compositionRef,setCompositionRef]=useState<string>();
-  const [listening,setListening]=useState(false);
-  const [arrived,setArrived]=useState(false);
   const [choosing,setChoosing]=useState(false);
-  const [inputArrived,setInputArrived]=useState(false);
-  const inputRevision=useRef<number>();
-  const completion=useRef<number>();
-  const arrivalTimer=useRef<ReturnType<typeof setTimeout>>();
 
   // --- planes: curated by the mode, controlled by the composition root ------
   const offered=useMemo(()=>[
@@ -154,31 +134,15 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const session=useEncounterSession(accompanying?{project:accompanying.project,ref:accompanying.ref,space:accompanying.space}:undefined);
   const sessionState=session?.state;
   const expression=useMemo(()=>expressionReadingOf(sessionState),[sessionState?.status,sessionState?.reading,sessionState?.pending]);
-  useEffect(()=>()=>clearTimeout(arrivalTimer.current),[]);
-  useEffect(()=>{clearTimeout(arrivalTimer.current);completion.current=undefined;inputRevision.current=undefined;setInputArrived(false);setArrived(false);setListening(false);},[accompanying?.ref]);
-  useEffect(()=>{
-    const next=advanceCompletion(completion.current,expression.completed);
-    completion.current=next.highWater;
-    if(!next.arrived)return;
-    clearTimeout(arrivalTimer.current);setArrived(true);
-    arrivalTimer.current=setTimeout(()=>setArrived(false),1200);
-  },[expression.completed]);
-  useEffect(()=>{
-    const prior=inputRevision.current;inputRevision.current=expression.inputRevision;
-    if(prior===undefined||expression.inputRevision===undefined||expression.inputRevision===prior)return;
-    setInputArrived(true);const timer=setTimeout(()=>setInputArrived(false),1200);return()=>clearTimeout(timer);
-  },[expression.inputRevision]);
-  useEffect(()=>{if(plane!=="Conversation")setListening(false);},[plane]);
   // The Expression summon selects Composition and goes full. A mode that does
   // not list Composition still shows it for that visit. In Expressions mode
   // the composition root focuses the centre Expressions surface instead: the
   // panel (Anima) is never displaced and never goes full because of a summon.
   useEffect(()=>{
     if(mode==="expressions")return;
-    const summon=(event:Event)=>{const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);setFace("panel");show("Composition");if(!full)onFull();};
+    const summon=(event:Event)=>{const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);show("Composition");if(!full)onFull();};
     window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);
-  },[mode,full,onFull,show,setFace]);
-  const form:FormName=expression.state==="TurnInFlight"||expression.state==="InterruptRequested"?"searching":arrived?"arrival":listening||inputArrived?"listening":expression.pending||choosing?"presence":"idle";
+  },[mode,full,onFull,show]);
 
   // --- Inspect: the centre → panel hand-off seam (planes/panelInspect.ts) ----
   const [handed,setHanded]=useState<PanelInspectDetail[]>([]);
@@ -190,11 +154,10 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       const key=panelInspectKey(detail);
       setHanded(list=>[detail,...list.filter(item=>panelInspectKey(item)!==key)].slice(0,HANDED_LIMIT));
       setInspect({view:"selected",handedKey:key});
-      setFace("panel");
       show("Inspect");
     };
     window.addEventListener(PANEL_INSPECT_EVENT,take);return()=>window.removeEventListener(PANEL_INSPECT_EVENT,take);
-  },[show,setFace]);
+  },[show]);
   const dismissHanded=(key:string)=>setHanded(list=>list.filter(item=>panelInspectKey(item)!==key));
 
   // --- choosing a conversation: the existing start/read pair -----------------
@@ -212,7 +175,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       onAccompanying(value);
       // Factory relocates the conversation to the centre: its own surface is
       // the chat, bound through accompanying — no encounter tab to open.
-      if(!curation.conversationInCentre&&offered.some(entry=>entry.id==="Conversation"))select("Conversation");
+      if(!curation.conversationInCentre&&offered.some(entry=>entry.id==="Chat"))select("Chat");
     } catch (e) {
       // Choosing a session is panel-level, not a plane's own material: it
       // belongs to the footer status disclosure, never an inline block.
@@ -220,46 +183,19 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
     } finally {setChoosing(false);}
   };
 
-  const binding: SurfaceBinding | undefined = accompanying ? {
-    id: `accompanying:${accompanying.ref}`,
-    kind: "encounter",
-    ref: accompanying.ref,
-    project: accompanying.project,
-    title: "Accompanying agent",
-    encounter: {space: accompanying.space},
-  } : undefined;
-  const hostsConversation=!curation.conversationInCentre&&offered.some(entry=>entry.id==="Conversation");
   const conversation=!accompanying?undefined
     :curation.conversationInCentre?(onOpenConversation?{label:"Open the conversation in the centre",go:()=>onOpenConversation(accompanying)}:undefined)
-    :hostsConversation?{label:"Open the conversation",go:()=>select("Conversation")}:undefined;
+    :undefined;
   const extraBody=extraPlanes?.find(extra=>extra.id===plane&&curation.extra.includes(extra.id))?.body;
-  const needsSession=plane==="Conversation"||plane==="Activity";
   const nav=visiting&&!offered.some(entry=>entry.id===visiting)?[...offered,{id:visiting,label:visiting}]:offered;
 
-  // The clean chat face: the same session, the same start/read choose pair,
-  // the same shared draft — presented as one conversation. Turned inside out
-  // it becomes the panel below; a summoned Composition or a handed Inspect
-  // selection also lands in the panel, since only the panel shows them.
-  const chatFace=face==="chat"&&hostsConversation&&!visiting;
   const Preview=import.meta.env.DEV?ChatPreviewDev:null;
   if(preview&&Preview)return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-face="preview">
     <Suspense fallback={null}><Preview onClose={()=>setPreview(false)}/></Suspense>
   </section>;
-  if(chatFace)return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-face="chat" data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} onFocusCapture={event=>{if((event.target as Element).matches(".chat-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".chat-composer textarea"))setListening(false);}}>
-    {/* The mode's panel sides are continuous grounds (companion-lane law):
-        the chat face carries them as its own slim strip — the conversation
-        is the rest, and a side is one selection away, never hidden behind a
-        chrome-hunt. Selecting one turns the face onto it. */}
-    {offered.filter(entry=>entry.id!=="Conversation").length>0&&
-      <PlaneNav entries={offered.filter(entry=>entry.id!=="Conversation")} current="" onSelect={id=>{show(id);setFace("panel");}}/>}
-    <AgentChat session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={curation.agent} situating={project?`Situated in ${project}`:"Situated in Central"} sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
-      onInsideOut={()=>setFace("panel")} full={full} onFull={onFull} subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
-      onNewChat={()=>onAccompanying(undefined)} onChoose={choose}/>
-  </section>;
 
-  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-face="panel" data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId} onFocusCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(true);}} onBlurCapture={event=>{if((event.target as Element).matches(".encounter-composer textarea"))setListening(false);}}>
-    <SessionHeader agentName={curation.agent} situating={project ? `Situated in ${project}` : "Situated in Central"} form={form} onChat={hostsConversation?()=>{setVisiting(undefined);setFace("chat");}:undefined}
-      listProject={project??accompanying?.project} sessionRef={accompanying?.ref} sessionTitle={accompanying?titles[accompanying.ref]:undefined} session={sessionState} choosing={choosing} onChoose={choose} onRows={learnTitles}/>
+  return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
+    <SessionHeader agentName={curation.agent} situating={project ? `Situated in ${project}` : "Situated in Central"}/>
     <PlaneNav entries={nav} current={plane} onSelect={select}/>
     {/* Factory relocates the conversation to the centre: the panel offers no
         Conversation plane and never a second composer — only the way there. */}
@@ -267,17 +203,18 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       <Glyph name="chat" size={12}/><span>The conversation is in the centre.</span>
     </div>}
     <div className="agent-body">
-      {/* One presenter of the conversation, kept mounted (concealed) while
-          another plane shows so the composer's own fields survive. The
-          observer itself is the shared session — never remounted by a plane
-          or mode change, never duplicated beside a centre tab. */}
-      {binding&&hostsConversation&&<EncounterSurface key={binding.id} binding={{...binding, view: {encounterPlane:"Conversation"}}} onView={()=>{}} presentation={full ? "full" : "side"} concealed={plane!=="Conversation"}/>}
-      {needsSession&&!session&&<NoAccompanying key="none" project={project} onOpen={choose}/>}
+      {/* The Chat plane: the same clean conversation, one view of the strip
+          among Run / Agents / Context — kept mounted (concealed) like the
+          other planes so the composer's own fields survive. The observer is
+          the shared session — never remounted by a plane or mode change. */}
       {KEPT_PLANES.map(name=>{
         if(!visited.current.has(name)||(name!==plane&&!offered.some(entry=>entry.id===name)))return null;
         const hidden=plane!==name;
         return <div key={name} className="agent-plane-host" hidden={hidden} style={hidden?{display:"none"}:undefined}>
-          {name==="Activity"&&session&&<ActivityPlane key={session.state.key} session={session} onInspect={handToPanelInspect} conversation={conversation}/>}
+          {name==="Chat"&&<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={curation.agent} situating={project?`Situated in ${project}`:"Situated in Central"} sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
+            subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
+            onNewChat={()=>onAccompanying(undefined)} onChoose={choose}/>}
+          {name==="Activity"&&(session?<ActivityPlane key={session.state.key} session={session} onInspect={handToPanelInspect} conversation={conversation}/>:<NoAccompanying project={project} onOpen={choose}/>)}
           {name==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying} session={session} onOpenSubject={onOpenSubject}/>}
           {name==="Inspect"&&<InspectPlane full={full} selection={inspect} onSelection={setInspect} handed={handed} onDismiss={dismissHanded} subject={subject} history={history} historyAvailable={historyAvailable} session={session} onOpenSubject={onOpenSubject}/>}
         </div>;
