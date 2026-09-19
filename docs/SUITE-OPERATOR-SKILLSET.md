@@ -4,32 +4,37 @@ O:I composes and explains source-owned procedural competence; it does not become
 
 ## What O:I ships
 
-The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`, TOML because AIKit's authored sets are TOML) declares exactly one profile and three Skills — O:I's own guardian set:
+The shipped manifest (`skills/suite-operator/skillset.toml`, schema `oi.suite-skillset/v1`) declares exactly one profile and two O:I-owned Skills:
 
 ```text
 oi:skillset:base-guardian
   oi:skill:operate-suite          (skills/oi/SKILL.md)
   oi:skill:suite-operator         (skills/suite-operator/SKILL.md)
-  oi:skill:central-session-strap  (skills/central-session-strap/SKILL.md)
 ```
 
-Both entries carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
+**Source correction — 19 September 2026:** the earlier guide incorrectly listed a third frozen Central session-strap member. The current manifest deliberately removed it. Central's session strap remains Central-owned source, received through AIKit's Central binding; it is not copied back into this binary or added to the O:I bootstrap manifest. This repairs the guide to the existing implementation, not a new removal or Skill migration.
+
+Both Skills carry `revision_policy = "resolve_authoritative_installed_revision"`: O:I resolves each Skill's authoritative revision from the installed native owner rather than pinning one by hand. A projected copy carries its source revision in its receipt header; local edits never become authoritative.
 
 A test guards this shape: `shipped_manifest_declares_only_oi_owned_skills` fails if the shipped manifest ever names another product's Skills again. That is deliberate. The manifest once pinned every suite product's Skills; that made it a second registry in a second format, and its silent path drift proved the point.
 
+A bootstrap SkillSet is not an AgentSet. Product Guardian agents and their defaults retain their actual native Central/AIKit identities and source; the existence of these two procedural members neither creates nor starts agents. Explain and resolve selected Guardian/product repertoires through the real owner rather than inferring a roster from this manifest.
+
 ## How the rest of the suite is composed
 
-Each product keeps its Skills as native files in its own repository (Central `skills/`, Quaternal Logic `skills/`, AIKit `registry/`). AIKit is the suite's normal resolver: `aikit source add-directory` discovers those trees, `sync` snapshots them, `aikit trust record` records review, `aikit set create` composes TOML sets across products, and `aikit enable`/scopes project them. O:I routes refs and explains composition; it never registers or pins foreign Skills.
+Each product keeps its Skills as native files in its own repository (Central `skills/`, Quaternal Logic `skills/`, AIKit `registry/`). AIKit is the suite's normal resolver: `aikit source add-directory` discovers those trees, `sync` snapshots them, `aikit trust record` records review, `aikit set create` composes sets across products, and `aikit enable`/scopes project them. O:I routes refs and explains composition; it never registers or pins foreign Skills. Current native help and source contracts determine the actual operation syntax and set representation.
 
-The governing path is now:
+The governing path is:
 
 ```text
 native repository authoritative Skill source
-  -> AIKit source discovery / sync / trust / TOML sets
+  -> AIKit source discovery / sync / trust / sets
   -> scope-enabled projection
-  -> Agent procedural competence
+  -> actual harness activation/loading and demonstrated use
   -> native Capability / Action / authority gate
 ```
+
+For an agent already operating in a person's harness, use [Harness-first adoption](experience/HARNESS-FIRST-ADOPTION.md), registered in #65's existing source map. It carries the complete explained setup, native source adoption, hooks, reload/restart, useful first task and unsupported-target SDK route. Reading that source explicitly in a commissioned bootstrap is not a claim that normal discovery or live loading has already worked.
 
 ## Base versus Root
 
@@ -41,7 +46,7 @@ native repository authoritative Skill source
 
 ## Fallback
 
-Without AIKit, direct projection remains limited in code to O:I/Central Skills. Foreign source-owned Skill bodies are never copied into O:I as a convenience path.
+Without AIKit, direct projection remains limited in code to O:I/Central Skills. Foreign source-owned Skill bodies are never copied into O:I as a convenience path. That limit does not authorise resurrecting a retired frozen Central strap source.
 
 ## Epi experience practices — pending H review
 
@@ -60,7 +65,7 @@ The actual installed AIKit command owns its materialisation format. Spec III
 §§1–1.2 defines sets as folders with optional manifests. The source-pinned
 projection probe uses a writable folder set with `members` created by native
 `set create`; this need not be another hand-maintained TOML manifest. This
-clarifies the format shorthand above without moving registration into O:I.
+clarifies the earlier format shorthand without moving registration into O:I.
 Membership does not enable a capability; explicit scope resolution governs
 actual projection. Current-generation read-back proves delivery, not model
 loading or successful use. The fresh-agent UX01/UX06 walks exercise those later
