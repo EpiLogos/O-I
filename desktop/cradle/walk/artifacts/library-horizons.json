@@ -1,0 +1,64 @@
+{
+  "when": "2026-09-19T13:09:13.833Z",
+  "desk_url": "http://localhost:1421/",
+  "bridge": "http://127.0.0.1:4231",
+  "horizons": [
+    {
+      "section": "collection",
+      "name": "MY WORLD",
+      "active": true
+    },
+    {
+      "section": "collection:web",
+      "name": "O:I WEB",
+      "active": false
+    }
+  ],
+  "my_world_scopes": [
+    {
+      "scope": "current-project",
+      "heading": "Current project / world",
+      "cards": 1
+    },
+    {
+      "scope": "project-collections",
+      "heading": "Project collections",
+      "cards": 3
+    },
+    {
+      "scope": "personal-collections",
+      "heading": "Personal collections",
+      "cards": 32
+    },
+    {
+      "scope": "kernel-held",
+      "heading": "Kernel-held expressions",
+      "cards": 0
+    },
+    {
+      "scope": "curated-corpus",
+      "heading": "Curated Epi-Logos corpus",
+      "cards": 6
+    }
+  ],
+  "shared": {
+    "section": "collection:web",
+    "eyebrow": "O:I WEB / SHARED",
+    "heading": "The shared field.",
+    "note": "Projected worlds are not reachable from this application yet — the SharedField provider is the native owner.Nothing shared is invented here. When a provider is reachable from this application, its worlds appear in this section as cards in the same grammar.",
+    "inventedCards": 0,
+    "filebarGone": true
+  },
+  "back": {
+    "section": "collection",
+    "name": "O:I — the mark",
+    "scopes": 5
+  },
+  "kernel": {
+    "state": "empty",
+    "text": "The kernel holds no expressions yet.",
+    "rows": 0,
+    "refs": []
+  },
+  "console_errors": []
+}
