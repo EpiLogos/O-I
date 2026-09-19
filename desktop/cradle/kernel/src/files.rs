@@ -154,7 +154,7 @@ pub enum MaterialRouteError {
     Forbidden(String),
     NotFound(String),
 }
-fn parent_path(path: &str) -> String {
+pub(crate) fn parent_path(path: &str) -> String {
     match path.rsplit_once('/') {
         Some((parent, _)) => parent.to_owned(),
         None => String::new(),
@@ -184,7 +184,7 @@ pub fn resolve_material(
             ));
         }
         let outcome = kernel
-            .apply(crate::KernelOp::FilesList { path: directory_path.clone() })
+            .apply(crate::KernelOp::FilesList { path: directory_path.clone(), fresh: None })
             .map_err(MaterialRouteError::NotFound)?;
         let directory = match outcome.result {
             crate::KernelOpResult::DirectoryRead { directory } => directory,

@@ -40,7 +40,7 @@ impl Client {
     ) -> Result<Value, Error> {
         if !matches!(
             read,
-            "project" | "journey" | "run" | "workflow-units" | "workflow-unit" | "execution-telemetry" | "commission-read"
+            "project" | "journey" | "run" | "build" | "workflow-units" | "workflow-unit" | "execution-telemetry" | "commission-read"
         ) {
             return Err(incompatible("Unsupported Factory development read"));
         }
@@ -70,25 +70,37 @@ impl Client {
     /// old `--binding` grammar and `build discover` are gone from the owner.
     /// Refs and state path are the caller's disclosure, passed verbatim; the
     /// payload is carried only after its contract schemas are verified.
+    /// `suite_route` follows the caller's executable: through the suite
+    /// executable the product namespace names the route; a direct Factory
+    /// binary must not hear the prefix again (the development arm's own law).
     pub fn build_snapshot(
         &self,
         state_path: &Path,
         project_ref: &str,
         run_ref: &str,
+        suite_route: bool,
     ) -> Result<Value, Error> {
-        let args = [
-            "factory".into(),
+        let mut args: Vec<std::ffi::OsString> = Vec::new();
+        if suite_route {
+            args.push("factory".into());
+        }
+        args.extend([
             "build".into(),
             "snapshot".into(),
             state_path.as_os_str().to_string_lossy().into_owned().into(),
             project_ref.into(),
             run_ref.into(),
             "--json".into(),
-        ];
+        ]);
         let data = invoke(&self.executable, &args, None)?;
+        // The owner CLI serialises this field camelCase (`providerContract`);
+        // both spellings are accepted so the check never outruns the owner.
+        let provider_contract = data
+            .get("providerContract")
+            .or_else(|| data.get("provider_contract"))
+            .and_then(Value::as_str);
         if data.get("contract").and_then(Value::as_str) != Some("factory.build-view/v1")
-            || data.get("provider_contract").and_then(Value::as_str)
-                != Some("factory.build-view-provider/v1")
+            || provider_contract != Some("factory.build-view-provider/v1")
         {
             return Err(incompatible("Unsupported Factory build view"));
         }
