@@ -102,7 +102,7 @@ The existing Workcell design correctly accepts provider-neutral demand and opaqu
 
 The CAW implementation is not just a desired service contract. It includes persistent control, durable intent/publication records, exact-demand idempotency and release/supersession semantics. Its own return correctly refuses to call unknown interrupted provider effects successfully recovered. Known dead owned children and persisted material are recoverable under the documented conditions; ambiguous effects leave a blocking journal. That conservative boundary is valuable and should also govern the newer place fallback paths. [W-caw] [W-73]
 
-Factory consumes this distinction. `ensure_world_ready_for_dispatch` blocks worlds with dispatching/uncertain recovery or release and released/superseded material. Its material retention logic follows validated recovery predecessors, checks owner/world/demand/subject relations, and uses bounded compare-and-swap attempts for receipt bookkeeping. A receipt-store retry is not an instruction to replay the external material effect. [F-admission] [F-material]
+Factory consumes this distinction. `validate_new_work` and its `blocked` predicate block worlds with dispatching/uncertain recovery or release and released/superseded material. Its material retention logic follows validated recovery predecessors, checks owner/world/demand/subject relations, and uses bounded compare-and-swap attempts for receipt bookkeeping. A receipt-store retry is not an instruction to replay the external material effect. [F-admission] [F-material]
 
 ### Source policy and actual enforcement are already connected in part
 
