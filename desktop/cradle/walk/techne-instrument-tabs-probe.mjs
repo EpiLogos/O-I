@@ -29,13 +29,16 @@ const tabIds=await tabs.evaluateAll(nodes=>nodes.map(n=>n.dataset.instrument));
 console.log('tab ids:',tabIds.join(','));
 if(tabIds.join(',')!=='project,canvas,timeline,journey,place,palace')fail('tab order',tabIds.join(','));
 
-// M0′ is the first view: the project tab selected, the material scene mounted.
+// M0′ is the first view: the project tab selected, the WIKI WEB mounted —
+// the arrangement opens onto the web over Central and its projects (owner
+// direction 2026-09-19), no material required.
 const surface=page.locator('.tn-surface');
 const firstSelected=await tabs.first().getAttribute('aria-selected');
 const surfaceInstrument=await surface.getAttribute('data-instrument');
 console.log('first tab selected:',firstSelected,'surface instrument:',surfaceInstrument);
 if(firstSelected!=='true'||surfaceInstrument!=='project')fail('M0 first view',`selected=${firstSelected} instrument=${surfaceInstrument}`);
-if(!await page.locator('.tn-scene').count())fail('M0 scene','the material scene is not mounted');
+if(!await page.locator('.wiki-web').count())fail('M0 wiki web','the wiki web is not mounted as Instrument 0\u2019s opening');
+if(await page.locator('.tn-m0-material').count()===0)fail('M0 material gate','material is required to be in the experience');
 await page.screenshot({path:`${out}/tt-1-m0-first-view.png`});
 
 // The truthful disclosure state line (no subject join, no QL provider wired).
@@ -60,15 +63,21 @@ await page.screenshot({path:`${out}/tt-2-timeline-slot.png`});
 // survive leaving the M0′ tab and returning (the scene store keeps the rest).
 await page.locator('.tn-tabbar [role="tab"][data-instrument="project"]').click();
 await page.waitForTimeout(400);
+// the material depth surfaces itself when material exists; without material
+// the depth stays folded — the wiki web is the experience either way
+const materialDepth=page.locator('.tn-m0-material');
 const lensTool=page.locator('.tn-scene-bar-tools [aria-label="Lens host"]');
-const lensOpen=(await lensTool.getAttribute('aria-pressed'))==='true';
-await page.locator('.tn-tabbar [role="tab"][data-instrument="journey"]').click();
-await page.waitForTimeout(400);
-await page.locator('.tn-tabbar [role="tab"][data-instrument="project"]').click();
-await page.waitForTimeout(400);
-const lensOpenAfter=(await page.locator('.tn-scene-bar-tools [aria-label="Lens host"]').getAttribute('aria-pressed'))==='true';
-console.log('lens host open before/after tab round-trip:',lensOpen,lensOpenAfter);
-if(lensOpen!==lensOpenAfter)fail('state preserved',`lens host was ${lensOpen?'open':'closed'} and returned ${lensOpenAfter}`);
+if(await materialDepth.count()===0){console.log('material depth: folded (no material) — the lens round-trip needs material; skipped in this state');}
+if(await materialDepth.count()){
+  const lensOpen=(await lensTool.getAttribute('aria-pressed'))==='true';
+  await page.locator('.tn-tabbar [role="tab"][data-instrument="journey"]').click();
+  await page.waitForTimeout(400);
+  await page.locator('.tn-tabbar [role="tab"][data-instrument="project"]').click();
+  await page.waitForTimeout(400);
+  const lensOpenAfter=(await page.locator('.tn-scene-bar-tools [aria-label="Lens host"]').getAttribute('aria-pressed'))==='true';
+  console.log('lens host open before/after tab round-trip:',lensOpen,lensOpenAfter);
+  if(lensOpen!==lensOpenAfter)fail('state preserved',`lens host was ${lensOpen?'open':'closed'} and returned ${lensOpenAfter}`);
+}
 
 // The shared tab grammar: pin cycles to unpinned with its reveal edge, and
 // orientation flips to the pinned-vertical list.
@@ -81,7 +90,7 @@ if(!await page.locator('.tn-surface > .tab-reveal-zone').count())fail('reveal ed
 // The reveal answers approach from outside (the pane's own law): the clicked
 // tool keeps focus-within open (the keyboard law), so step away with focus
 // AND pointer, then approach the edge.
-await page.locator('.tn-items').click();
+await page.locator('.wiki-web, .tn-m0').first().click({position:{x:20,y:20}}).catch(()=>{});
 await page.mouse.move(400,600);
 await page.waitForTimeout(400);
 const foldedHeight=await page.locator('.tn-tabbar').evaluate(node=>node.getBoundingClientRect().height);

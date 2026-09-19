@@ -236,3 +236,32 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 .wiki-map-note { margin: 4px 6px 2px 20px; color: var(--oi-muted-2); font-size: 11px; }
 
 @media (prefers-reduced-motion: reduce) { .wiki-map * { transition: none; } }
+
+/* Instrument 0 opens onto the wiki web: registers of the web at centre
+   scale, entries opening their knowledge pages. The material scene is the
+   summoned depth — held at the right edge when material exists, never the
+   gate of the experience. */
+.wiki-web { display: flex; flex-direction: column; gap: 14px; block-size: 100%; min-block-size: 0; overflow-y: auto; padding: 22px clamp(18px, 3vw, 42px) 40px; box-sizing: border-box; }
+.wiki-web-head { display: flex; flex-direction: column; gap: 4px; }
+.wiki-web-head h2 { margin: 0; font-size: 1.15rem; letter-spacing: -.01em; }
+.wiki-web-head p { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
+.wiki-web-registers { display: grid; grid-template-columns: repeat(auto-fill, minmax(300px, 1fr)); gap: 14px; align-items: start; }
+.wiki-web-register { display: flex; flex-direction: column; gap: 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; padding: 14px 16px; }
+.wiki-web-register-head { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; }
+.wiki-web-register-head h3 { margin: 0; font-size: var(--oi-shell-type-ui); font-weight: 600; }
+.wiki-web-count { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.wiki-web-note, .wiki-map-note { margin: 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-nav); }
+.wiki-web-space { display: flex; flex-direction: column; gap: 4px; }
+.wiki-web-space-head { font-size: var(--oi-shell-type-nav); text-transform: uppercase; letter-spacing: var(--oi-shell-tracking, .01em); color: var(--oi-muted-2); padding-block-start: 6px; }
+.wiki-web-space ul { margin: 0; padding: 0; list-style: none; display: flex; flex-direction: column; gap: 2px; }
+.wiki-web-entry { display: flex; align-items: baseline; justify-content: space-between; gap: 10px; inline-size: 100%; padding: 5px 8px; border: 0; border-radius: 6px; background: transparent; font: inherit; font-size: var(--oi-shell-type-ui); text-align: start; cursor: pointer; }
+.wiki-web-entry:hover { background: var(--oi-wash, rgba(127,127,127,.08)); }
+.wiki-web-entry-title { min-inline-size: 0; overflow-wrap: anywhere; }
+.wiki-web-entry-type { flex: none; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
+.tn-m0 { position: relative; display: flex; block-size: 100%; min-block-size: 0; }
+.tn-m0 > .wiki-web { flex: 1; min-inline-size: 0; }
+.tn-m0-material { flex: none; inline-size: min(420px, 38%); display: flex; flex-direction: column; border-inline-start: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-surface, transparent); }
+.tn-m0-material-head { display: flex; align-items: center; justify-content: space-between; padding: 10px 14px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.tn-m0-material > .tn-material-scene, .tn-m0-material > div { flex: 1; min-block-size: 0; overflow-y: auto; }
+.tn-m0[data-material="none"] { display: block; }
+.tn-m0[data-material="none"] > .wiki-web { block-size: auto; }

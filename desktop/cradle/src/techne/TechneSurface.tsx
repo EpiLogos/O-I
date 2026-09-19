@@ -61,6 +61,7 @@ import {registerBuiltInLenses} from "./lenses";
 import {DEEP_INSTRUMENTS, GROUND_INSTRUMENT, deepInstrument, type DeepInstrument} from "./instruments";
 import {selectInstrument, toggleRailOrientation, toggleRailPin, setRailListWidth, useInstrumentRail} from "./instrumentRail";
 import {instrumentStanding, useTechneDisclosure, type TechneDisclosureState} from "./techneReading";
+import {WikiWebBody} from "./WikiWebBody";
 import {TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN} from "../workspace/mode";
 import "./techne.css";
 
@@ -212,15 +213,38 @@ export function TechneSurface({binding, subject}: {binding: SurfaceBinding; subj
     <div className="tn-body" role="tabpanel" id={panelId} aria-labelledby={`${uid}tab-${active.instrument}`}>
       {notice && <p className="oi-refusal tn-notice" role="status">{notice}<button type="button" className="oi-tool" aria-label="Dismiss" onClick={() => setNotice(null)}><Glyph name={ICON.close} size={12}/></button></p>}
       {active.instrument === "project"
-        ? <MaterialSceneBody sceneId={sceneId} project={binding.project}/>
+        ? <Instrument0Body sceneId={sceneId} project={binding.project}/>
         : <InstrumentSlotBody tab={active} disclosure={disclosure} readings={instruments} onNotice={setNotice}/>}
     </div>
   </section>;
 }
 
-/** Instrument 0's body: the source-backed material scene with its lens host.
- * Everything here is the existing implementation, unchanged in behaviour —
- * the tab only decides when it stands in front. */
+/** Instrument 0's body (owner direction 2026-09-19): the arrangement opens
+ * onto the wiki web — Central and its projects as their wikis disclose
+ * them — with no material required to be in the experience. The material
+ * scene and its lens host stay mounted as the summoned depth beside the
+ * web: the navigator's "Add to instrument" still lands here, and the depth
+ * surfaces itself whenever material is present. */
+function Instrument0Body({sceneId, project}: {sceneId: string; project?: string}) {
+  const scene = useMaterialScene(sceneId);
+  const holding = scene.items.length > 0;
+  const [open, setOpen] = useState(holding);
+  useEffect(() => { if (holding) setOpen(true); }, [holding]);
+  return <div className="tn-m0" data-material={holding ? (open ? "open" : "held") : "none"}>
+    <WikiWebBody/>
+    {(holding || open) && <aside className="tn-m0-material" aria-label="Material scene" data-open={open}>
+      <header className="tn-m0-material-head">
+        <span className="oi-eyebrow">Material scene</span>
+        <button type="button" className="oi-tool" aria-label={open ? "Fold the material scene away" : "Open the material scene"} onClick={() => setOpen(value => !value)}>{open ? "–" : "+"}</button>
+      </header>
+      {open && <MaterialSceneBody sceneId={sceneId} project={project}/>}
+    </aside>}
+  </div>;
+}
+
+/** Instrument 0's material depth: the source-backed material scene with its
+ * lens host. Everything here is the existing implementation, unchanged in
+ * behaviour — the depth only decides when it stands in front. */
 function MaterialSceneBody({sceneId, project}: {sceneId: string; project?: string}) {
   const {transport} = useKernel();
   const scene = useMaterialScene(sceneId);
