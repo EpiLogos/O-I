@@ -1,8 +1,16 @@
 /*
  * O:I desktop grammar — the small shared vocabulary of the desktop's
  * chrome, extracted from the patterns the application already repeats
- * (owner revision 2026-09-15). Import tokens.css first. Every value here
- * is a token; there is no colour in this file.
+ * (owner revision 2026-09-15) and evolved toward the Expressions language
+ * (2026-09-17): compact 10–11px UI type with mono for values and refs,
+ * tight menu rows, small quiet icon bodies, segmented toggles, 1px
+ * hairlines, 4–8px radii, slim range sliders, thin region scrollbars, quiet
+ * hover washes, glass popovers, check-marked current menu items, tracked
+ * uppercase micro-labels and right-aligned keyboard hints. Import
+ * tokens.css first. Every value here is a token; there is no colour in
+ * this file. The accent is INK: selection, send and focus are drawn in
+ * foreground strength (--oi-accent / --oi-accent-ink / --oi-wash); no hue
+ * is imported from the reference.
  *
  * The law: a surface keeps its own information architecture and its own
  * class names for its meaning; it composes these classes for its CHROME so
@@ -11,21 +19,73 @@
  * everywhere. A class here never claims a capability: `oi-action` styles
  * a control the owner actually offers.
  *
+ * State is carried by ARIA and data attributes, never by a second visual
+ * class: aria-pressed / aria-checked / aria-selected / aria-current /
+ * aria-expanded / aria-invalid / disabled, plus data-busy, data-attention
+ * and data-state. A selected or pressed state always differs from rest by
+ * more than colour (an ink rule, an inset edge, a border style or a mark).
+ * Resting states are static: the only motion is the short --oi-motion-ui
+ * hover/selection fade, which collapses under prefers-reduced-motion.
+ *
  * Sections
- *   1. quiet actions          .oi-tool  .oi-action  .oi-action-group
- *   2. rows and heads         .oi-tool-row  .oi-context-head  .oi-eyebrow
+ *   1. quiet actions          .oi-tool (.oi-tool-bordered)  .oi-action
+ *                             .oi-action-primary  .oi-action-group
+ *                             .oi-segment
+ *   2. rows and heads         .oi-tool-row  .oi-context-head  .oi-panel-head
+ *                             .oi-eyebrow  .oi-row
  *   3. planes and selection   .oi-plane-nav  (aria-pressed / aria-selected)
  *   4. disclosure             .oi-disclosure  .oi-section
  *   5. reference material     .oi-ref  .oi-ref-row  .oi-kv  .oi-state
- *   6. menus and inputs       .oi-menu  .oi-menu-item  .oi-input
- *   7. sidecars               .oi-sidecar
+ *                             .oi-chip  .oi-kbd
+ *   6. menus and inputs       .oi-menu  .oi-menu-item  .oi-input  .oi-field
+ *                             .oi-range
+ *   7. sidecars and regions   .oi-sidecar  .oi-scroll  .oi-scroll-quiet
+ *                             .oi-status  .oi-resize-handle
  *   8. named states           .oi-empty  .oi-refusal  .oi-note
+ *
+ * New in 2026-09-17 (exact names; compose them without coordination):
+ *   .oi-segment        segmented control. Container role=group|radiogroup;
+ *                      children are `button[aria-pressed]`, `[aria-checked]`
+ *                      or `[aria-selected]`. --oi-shell-segment tall, hairline
+ *                      body, current segment in wash + ink + inset edge.
+ *   .oi-chip           inline token for a ref / source / context item.
+ *                      Optional leading glyph (svg), optional trailing remove
+ *                      `button`; `data-mono="true"` or a `code` child for mono.
+ *                      data-state = pinned (solid edge + upright bar mark) |
+ *                      used (wash + ring mark) | selected (ink double edge) |
+ *                      stale (dashed edge, muted, struck).
+ *   .oi-row            dense list row (--oi-shell-row-dense): leading glyph,
+ *                      `.oi-row-title`, trailing `.oi-row-meta` / small /
+ *                      .oi-state. Hover wash; aria-selected / aria-current
+ *                      selection (wash + ink rule); focus-visible ring;
+ *                      `data-busy="true"` dims the row content and keeps a
+ *                      static label — no spinner.
+ *   .oi-panel-head     compact sub-panel header at --oi-shell-bar: an
+ *                      .oi-eyebrow and/or `.oi-panel-head-title` left, tools
+ *                      right (wrap them in `.oi-panel-head-tools`, or the
+ *                      first control after the title is pushed right).
+ *   .oi-range          slim slider for `input[type=range]`: currentColor
+ *                      track, ink thumb.
+ *   .oi-scroll         region scroller: thin thumb that appears on hover /
+ *                      focus-within; scrolling never chains.
+ *   .oi-scroll-quiet   region scroller with no scrollbar at all (sidebar law).
+ *   .oi-kbd            right-aligned mono keyboard hint.
+ *   .oi-status         one-line panel-foot strip; `data-attention="true"` is
+ *                      the ink register; `data-mono="true"` / code for mono.
+ *   .oi-resize-handle  drag-handle visual: hairline at rest, ink on hover /
+ *                      focus / `data-dragging="true"`, --oi-resize-hit hit
+ *                      area. Default is a vertical line (col-resize);
+ *                      `aria-orientation="horizontal"` is a horizontal line
+ *                      (row-resize). `data-quiet="true"` hides the rest line
+ *                      (cursor-only handles, as the shell's region resizers).
  */
 
 /* ===== 1. quiet actions ================================================= */
 
 /* An icon action: a small quiet body inside a full hit target; ink appears
- * on hover, focus or when pressed/expanded. Never a filled button. */
+ * on hover, focus or when pressed/expanded. Never a filled button. A held
+ * state (pressed / expanded) also carries an inset hairline edge, so it
+ * reads without relying on the wash alone. */
 .oi-tool {
   position: relative;
   flex: none;
@@ -38,12 +98,12 @@
   min-height: var(--oi-shell-control);
   padding: 0;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--oi-shell-radius-control);
   background: transparent;
   color: var(--oi-muted-2);
   font: inherit;
   cursor: pointer;
-  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .oi-tool svg { flex: none; }
 .oi-tool:hover,
@@ -53,11 +113,20 @@
   color: var(--oi-accent-ink);
   background: var(--oi-wash);
 }
+.oi-tool[aria-pressed="true"],
+.oi-tool[aria-expanded="true"] { box-shadow: inset 0 0 0 var(--oi-shell-edge) var(--oi-hairline); }
+.oi-tool:active:not(:disabled) { background: var(--oi-wash-strong); }
 .oi-tool:focus-visible {
   outline: var(--oi-focus-ring-width) solid var(--oi-accent);
   outline-offset: var(--oi-focus-ring-offset);
 }
-.oi-tool:disabled { opacity: 0.4; cursor: default; background: transparent; }
+.oi-tool:disabled, .oi-tool[aria-disabled="true"] { opacity: 0.4; cursor: default; background: transparent; box-shadow: none; }
+.oi-tool[data-busy="true"] { opacity: 0.55; cursor: progress; }
+/* The bordered variant: a small hairline icon button for a strip of
+ * standing toggles (the Expressions menu-bar register). */
+.oi-tool-bordered { box-shadow: inset 0 0 0 var(--oi-shell-edge) var(--oi-hairline); }
+.oi-tool-bordered:hover, .oi-tool-bordered:focus-visible { box-shadow: inset 0 0 0 var(--oi-shell-edge) var(--oi-accent-soft); }
+.oi-tool-bordered[aria-pressed="true"] { color: var(--oi-composer-ground); background: var(--oi-accent); box-shadow: none; }
 
 /* A text action the owner offers: a hairline body on the composer ground.
  * `oi-action-primary` is the one accent-ground control of a group (send,
@@ -66,27 +135,84 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  min-height: 26px;
-  padding: 3px 10px;
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: 7px;
+  min-height: 24px;
+  box-sizing: border-box;
+  padding: 2px 9px;
+  border: var(--oi-shell-edge) solid var(--oi-control-edge, var(--oi-hairline));
+  border-radius: 6px;
   background: var(--oi-composer-ground);
   color: var(--oi-foreground);
   font: inherit;
   font-size: var(--oi-shell-type-nav);
+  line-height: 1.3;
   white-space: nowrap;
   cursor: pointer;
   transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
+.oi-action svg { flex: none; color: var(--oi-muted-2); }
 .oi-action:hover:not(:disabled), .oi-action:focus-visible { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+.oi-action:hover:not(:disabled) svg, .oi-action:focus-visible svg { color: inherit; }
+.oi-action:active:not(:disabled) { background: var(--oi-wash-strong); }
+.oi-action[aria-pressed="true"], .oi-action[aria-expanded="true"] { background: var(--oi-wash); border-color: var(--oi-accent); color: var(--oi-accent-ink); }
 .oi-action:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
-.oi-action:disabled { color: var(--oi-muted-2); cursor: default; }
+.oi-action:disabled { color: var(--oi-muted-2); border-color: var(--oi-hairline-soft); background: transparent; cursor: default; }
+.oi-action[data-busy="true"] { color: var(--oi-muted-2); cursor: progress; }
 .oi-action-primary { background: var(--oi-accent); border-color: var(--oi-accent); color: var(--oi-composer-ground); }
-.oi-action-primary:hover:not(:disabled), .oi-action-primary:focus-visible { background: var(--oi-accent-ink); border-color: var(--oi-accent-ink); }
-.oi-action-primary:disabled { opacity: 0.35; color: var(--oi-composer-ground); }
-.oi-action kbd { font: inherit; font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
+.oi-action-primary svg { color: inherit; }
+.oi-action-primary:hover:not(:disabled), .oi-action-primary:focus-visible, .oi-action-primary:active:not(:disabled) { background: var(--oi-accent-ink); border-color: var(--oi-accent-ink); }
+.oi-action-primary:disabled { opacity: 0.35; background: var(--oi-accent); border-color: var(--oi-accent); color: var(--oi-composer-ground); }
+.oi-action kbd { font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
+.oi-action-primary kbd { color: inherit; opacity: 0.7; }
 /* Contextual action groups wrap; the group never becomes a toolbar. */
-.oi-action-group { display: flex; flex-wrap: wrap; align-items: center; gap: 8px; }
+.oi-action-group { display: flex; flex-wrap: wrap; align-items: center; gap: 6px; }
+
+/* A segmented control: a hairline body whose current segment stands in wash
+ * and ink with an inset edge. The container is role=group or radiogroup; the
+ * state is the child's aria-pressed / aria-checked / aria-selected. */
+.oi-segment {
+  flex: none;
+  display: inline-flex;
+  align-items: stretch;
+  gap: 2px;
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 2px;
+  border: var(--oi-shell-edge) solid var(--oi-control-edge, var(--oi-hairline));
+  border-radius: 7px;
+  background: transparent;
+}
+.oi-segment > button {
+  flex: 0 0 auto;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  gap: 5px;
+  min-width: 22px;
+  /* The control's outer height is --oi-shell-segment: the segment body plus
+   * the container's 2px padding and 1px edge on each side. */
+  height: calc(var(--oi-shell-segment) - 6px);
+  padding: 0 7px;
+  border: 0;
+  border-radius: var(--oi-shell-radius-row);
+  background: transparent;
+  color: var(--oi-muted-2);
+  font: inherit;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1;
+  white-space: nowrap;
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-segment > button svg { flex: none; }
+.oi-segment > button:hover:not(:disabled) { color: var(--oi-accent-ink); background: var(--oi-wash); }
+/* Expressions language: the active segment is ink fill, never a faint wash. */
+.oi-segment > button:is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]),
+.oi-segment > button:is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]):hover:not(:disabled) {
+  color: var(--oi-active-ink, var(--oi-composer-ground));
+  background: var(--oi-active-ground, var(--oi-accent));
+}
+.oi-segment > button:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 1px; }
+.oi-segment > button:disabled { opacity: 0.4; cursor: default; }
 
 /* ===== 2. rows and heads ================================================ */
 
@@ -131,15 +257,97 @@
 .oi-context-head strong { display: block; font-size: var(--oi-shell-type-body); font-weight: 550; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 .oi-context-head small { display: block; margin-top: 3px; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
 
+/* A compact panel header for a sub-panel inside a plane: eyebrow and/or
+ * title at the left, the panel's tools at the right, at the bar height. */
+.oi-panel-head {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  height: var(--oi-shell-bar);
+  min-height: var(--oi-shell-bar);
+  min-width: 0;
+  box-sizing: border-box;
+  padding: 0 6px 0 12px;
+  border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  font-size: var(--oi-shell-type-ui);
+  color: var(--oi-muted-2);
+}
+.oi-panel-head > .oi-eyebrow { flex: none; margin: 0; }
+.oi-panel-head > .oi-panel-head-title {
+  flex: 0 1 auto;
+  min-width: 0;
+  margin: 0;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+  font-size: var(--oi-shell-type-nav);
+  font-weight: 550;
+  color: var(--oi-accent-ink);
+}
+.oi-panel-head > .oi-panel-head-title small { margin-left: 6px; font-weight: 400; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); }
+.oi-panel-head > .oi-panel-head-tools { flex: none; display: flex; align-items: center; gap: 2px; margin-left: auto; }
+.oi-panel-head > :is(.oi-eyebrow, .oi-panel-head-title) + :is(.oi-tool, .oi-action, .oi-segment, .oi-state, .oi-chip) { margin-left: auto; }
+
 /* The tracked-uppercase eyebrow that names a region of a plane. */
 .oi-eyebrow {
   display: block;
   margin: 0 0 8px;
   font-size: var(--oi-shell-type-eyebrow);
+  font-weight: 500;
   letter-spacing: var(--oi-shell-tracking);
   text-transform: uppercase;
   color: var(--oi-muted-2);
 }
+
+/* A dense list row: leading glyph, title, trailing meta/state. */
+.oi-row {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 7px;
+  width: 100%;
+  min-width: 0;
+  height: var(--oi-shell-row-dense);
+  min-height: var(--oi-shell-row-dense);
+  box-sizing: border-box;
+  padding: 0 8px;
+  border: 0;
+  border-radius: var(--oi-shell-radius-row);
+  background: transparent;
+  color: var(--oi-accent-ink);
+  font: inherit;
+  font-size: var(--oi-shell-type-nav);
+  text-align: left;
+  text-decoration: none;
+  cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out), box-shadow var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-row > svg { flex: none; color: var(--oi-muted-2); transition: color var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.oi-row > .oi-row-title { flex: 1; min-width: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oi-row > .oi-row-meta, .oi-row > small, .oi-row > .oi-state {
+  flex: none;
+  margin-left: auto;
+  font-size: var(--oi-shell-type-meta);
+  font-variant-numeric: tabular-nums;
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+}
+.oi-row:hover { background: var(--oi-wash); }
+.oi-row:hover > svg { color: var(--oi-accent-ink); }
+.oi-row:active { background: var(--oi-wash-strong); }
+.oi-row[aria-selected="true"],
+.oi-row[aria-current]:not([aria-current="false"]) {
+  background: var(--oi-wash);
+  box-shadow: inset 2px 0 0 var(--oi-accent);
+}
+.oi-row[aria-selected="true"] > svg,
+.oi-row[aria-current]:not([aria-current="false"]) > svg { color: var(--oi-accent-ink); }
+.oi-row:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: calc(0px - var(--oi-focus-ring-width)); }
+.oi-row:disabled, .oi-row[aria-disabled="true"] { color: var(--oi-muted-2); background: transparent; box-shadow: none; cursor: default; opacity: 0.55; }
+/* Quiet loading: the content dims, the (static) state label stays legible. */
+.oi-row[data-busy="true"] { cursor: progress; }
+.oi-row[data-busy="true"] > :not(.oi-state):not(.oi-row-meta) { opacity: 0.5; }
 
 /* ===== 3. planes and selection ========================================== */
 
@@ -174,11 +382,12 @@
   cursor: pointer;
   transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
-.oi-plane-nav > :is(button, a):hover { color: var(--oi-accent-ink); }
+.oi-plane-nav > :is(button, a):hover { color: var(--oi-accent-ink); border-bottom-color: var(--oi-hairline); }
 .oi-plane-nav > :is(button, a)[aria-pressed="true"],
 .oi-plane-nav > :is(button, a)[aria-selected="true"],
 .oi-plane-nav > :is(button, a)[aria-current] { color: var(--oi-accent-ink); border-bottom-color: var(--oi-accent); }
 .oi-plane-nav > :is(button, a):focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: -2px; }
+.oi-plane-nav > :is(button, a):disabled { color: var(--oi-muted-3); cursor: default; }
 
 /* ===== 4. disclosure ==================================================== */
 
@@ -191,14 +400,16 @@
   display: flex;
   align-items: center;
   gap: 8px;
+  border-radius: var(--oi-shell-radius-row);
   font-size: var(--oi-shell-type-ui);
   color: var(--oi-muted-2);
   overflow-wrap: anywhere;
   transition: color var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .oi-disclosure > summary::-webkit-details-marker { display: none; }
-.oi-disclosure > summary::before { content: ""; flex: none; width: 5px; height: 5px; border-right: 1px solid currentColor; border-bottom: 1px solid currentColor; transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.oi-disclosure > summary::before { content: ""; flex: none; width: 5px; height: 5px; margin: 0 2px 0 1px; border-right: var(--oi-shell-edge) solid currentColor; border-bottom: var(--oi-shell-edge) solid currentColor; transform: rotate(-45deg); transition: transform var(--oi-motion-ui) var(--oi-motion-ease-out); }
 .oi-disclosure[open] > summary::before { transform: rotate(45deg); }
+.oi-disclosure[open] > summary { color: var(--oi-accent-ink); }
 .oi-disclosure > summary:hover, .oi-disclosure > summary:focus-visible { color: var(--oi-accent-ink); }
 .oi-disclosure > summary:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
 .oi-disclosure > summary > .oi-state { margin-left: auto; }
@@ -224,70 +435,281 @@
 /* A state label: quiet, legible, never colour alone. `data-attention` is
  * the one raised register (ink), for a state a person should act on. */
 .oi-state { flex: none; font-size: var(--oi-shell-type-meta); color: var(--oi-muted-2); white-space: nowrap; }
-.oi-state[data-attention="true"] { color: var(--oi-accent-ink); }
+.oi-state[data-attention="true"] { color: var(--oi-accent-ink); font-weight: 500; }
+
+/* A chip: a small inline token for a ref, a source or a context item. The
+ * four states differ by edge and mark, not by colour alone. */
+.oi-chip {
+  display: inline-flex;
+  align-items: center;
+  gap: 5px;
+  max-width: 100%;
+  min-width: 0;
+  height: var(--oi-shell-chip);
+  box-sizing: border-box;
+  padding: 0 7px;
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: var(--oi-shell-radius-control);
+  background: transparent;
+  color: var(--oi-accent-ink);
+  font: inherit;
+  font-size: var(--oi-shell-type-ui);
+  line-height: 1;
+  white-space: nowrap;
+  vertical-align: middle;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out), border-color var(--oi-motion-ui) var(--oi-motion-ease-out), color var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-chip[data-mono="true"], .oi-chip > code { font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-meta); }
+.oi-chip > :not(button):not(svg) { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.oi-chip > svg { flex: none; color: var(--oi-muted-2); }
+.oi-chip > button {
+  flex: none;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  width: 14px;
+  height: 14px;
+  margin-right: -3px;
+  padding: 0;
+  border: 0;
+  border-radius: 3px;
+  background: transparent;
+  color: var(--oi-muted-2);
+  font: inherit;
+  cursor: pointer;
+  transition: color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-chip > button:hover, .oi-chip > button:focus-visible { color: var(--oi-accent-ink); background: var(--oi-wash-strong); }
+.oi-chip > button:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 0; }
+:is(button, a).oi-chip { cursor: pointer; text-decoration: none; }
+:is(button, a).oi-chip:hover { background: var(--oi-wash); border-color: var(--oi-accent-soft); }
+:is(button, a).oi-chip:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 1px; }
+.oi-chip[data-state]::before { flex: none; box-sizing: border-box; }
+/* pinned — held in place: a firmer edge and an upright bar. */
+.oi-chip[data-state="pinned"] { border-color: var(--oi-accent-soft); }
+.oi-chip[data-state="pinned"]::before { content: ""; width: 2px; height: 9px; border-radius: 1px; background: currentColor; }
+/* used — it took part: a wash body and a small ring. */
+.oi-chip[data-state="used"] { background: var(--oi-wash); border-color: var(--oi-hairline-soft); }
+.oi-chip[data-state="used"]::before { content: ""; width: 6px; height: 6px; border: var(--oi-shell-edge) solid currentColor; border-radius: 50%; }
+/* selected — the ink double edge. */
+.oi-chip[data-state="selected"], .oi-chip[aria-pressed="true"], .oi-chip[aria-selected="true"] { background: var(--oi-wash); border-color: var(--oi-accent); box-shadow: inset 0 0 0 var(--oi-shell-edge) var(--oi-accent); }
+/* stale — no longer current: a dashed edge, muted and struck. */
+.oi-chip[data-state="stale"] { border-style: dashed; color: var(--oi-muted-2); text-decoration: line-through; text-decoration-color: var(--oi-muted-3); }
+
+/* A keyboard hint: mono, quiet, pushed to the row's right end. */
+.oi-kbd {
+  flex: none;
+  margin-left: auto;
+  padding-left: 12px;
+  font-family: var(--oi-font-mono);
+  font-size: var(--oi-shell-type-ui);
+  font-style: normal;
+  letter-spacing: 0.02em;
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+}
 
 /* ===== 6. menus and inputs ============================================== */
 
-/* A popover menu on the sidebar ground: the host positions it. */
+/* A popover menu: a glass body over whatever it covers; the host positions
+ * it. Tight rows, a glyph column, mono keyboard hints at the right, and a
+ * drawn check on the current `aria-checked` item. */
 .oi-menu {
   display: grid;
   min-width: 200px;
-  padding: 7px;
+  padding: 4px;
   border: var(--oi-shell-edge) solid var(--oi-hairline);
-  border-radius: 7px;
+  border-radius: var(--oi-shell-radius-menu);
   background: var(--oi-sidebar-ground);
   box-shadow: var(--oi-shadow-menu);
   z-index: var(--oi-z-popover);
+  font-family: var(--oi-font-sans);
+  font-size: var(--oi-shell-type-nav);
+  color: var(--oi-accent-ink);
+}
+@supports ((backdrop-filter: blur(1px)) or (-webkit-backdrop-filter: blur(1px))) {
+  .oi-menu {
+    background: var(--oi-popover-ground-glass);
+    -webkit-backdrop-filter: blur(var(--oi-popover-blur)) saturate(1.3);
+    backdrop-filter: blur(var(--oi-popover-blur)) saturate(1.3);
+  }
 }
 .oi-menu-item {
   display: flex;
   align-items: center;
-  gap: var(--oi-space-2);
+  gap: 8px;
   width: 100%;
-  min-height: 0;
-  padding: 9px;
+  min-height: var(--oi-shell-menu-row);
+  box-sizing: border-box;
+  padding: 4px 8px;
   border: 0;
-  border-radius: 5px;
+  border-radius: var(--oi-shell-radius-row);
   background: transparent;
   text-align: left;
   font: inherit;
-  font-size: var(--oi-shell-type-ui);
+  font-size: var(--oi-shell-type-nav);
   color: var(--oi-accent-ink);
   cursor: pointer;
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
+.oi-menu-item > svg { flex: none; color: var(--oi-muted-2); }
 .oi-menu-item:not(:disabled):hover, .oi-menu-item:not(:disabled):focus-visible { background: var(--oi-wash); outline: none; }
-.oi-menu-item:disabled { color: var(--oi-muted-2); opacity: 0.35; cursor: default; }
-.oi-menu-item kbd { flex: none; margin-left: auto; font: inherit; font-size: var(--oi-shell-type-eyebrow); color: var(--oi-muted-2); }
-.oi-menu > hr { border: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); margin: 5px 0; }
-.oi-menu > .oi-eyebrow { padding: 6px 9px 9px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+.oi-menu-item:not(:disabled):hover > svg, .oi-menu-item:not(:disabled):focus-visible > svg { color: inherit; }
+.oi-menu-item:not(:disabled):active { background: var(--oi-wash-strong); }
+.oi-menu-item:disabled { color: var(--oi-muted-2); opacity: 0.4; cursor: default; }
+.oi-menu-item kbd, .oi-menu-item .oi-kbd { flex: none; margin-left: auto; padding-left: 12px; font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-ui); letter-spacing: 0.02em; color: var(--oi-muted-2); }
+/* The current item of a checkable set: a wash body and a drawn check at the
+ * row's right end (its slot is reserved on every checkable item, so labels
+ * and hints stay in one column). */
+.oi-menu-item[aria-checked]::after { content: ""; flex: none; width: 4px; height: 8px; margin: -2px 3px 0 6px; border: solid transparent; border-width: 0 1.4px 1.4px 0; transform: rotate(45deg); }
+.oi-menu-item[aria-checked]:not(:has(kbd, .oi-kbd))::after { margin-left: auto; }
+.oi-menu-item[aria-checked="true"] { background: var(--oi-wash); }
+.oi-menu-item[aria-checked="true"]::after { border-color: currentColor; }
+.oi-menu > hr { border: 0; border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft); margin: 4px; }
+.oi-menu > .oi-eyebrow { padding: 6px 8px 4px; margin: 0; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
 
 /* A text input on the composer ground. */
 .oi-input {
   box-sizing: border-box;
   min-width: 0;
-  padding: 5px 8px;
-  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  min-height: var(--oi-shell-control);
+  padding: 4px 8px;
+  border: var(--oi-shell-edge) solid var(--oi-control-edge, var(--oi-hairline));
   border-radius: 6px;
   background: var(--oi-composer-ground);
   color: var(--oi-foreground);
   font: inherit;
   font-size: var(--oi-shell-type-body);
+  transition: border-color var(--oi-motion-ui) var(--oi-motion-ease-out), background var(--oi-motion-ui) var(--oi-motion-ease-out);
 }
 .oi-input::placeholder { color: var(--oi-muted-3); }
+.oi-input:hover:not(:disabled):not(:focus-visible) { border-color: var(--oi-accent-soft); }
 .oi-input:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 0; border-color: var(--oi-accent-soft); }
+.oi-input:disabled { color: var(--oi-muted-2); background: transparent; cursor: default; }
+.oi-input[aria-invalid="true"] { border-color: var(--oi-accent); box-shadow: inset 2px 0 0 var(--oi-accent); }
+.oi-input[data-mono="true"] { font-family: var(--oi-font-mono); font-size: var(--oi-shell-type-nav); }
 .oi-field { display: flex; flex-direction: column; gap: 3px; font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
 
-/* ===== 7. sidecars ====================================================== */
+/* A slim range slider: a currentColor hairline track and a small ink thumb
+ * ringed in the ground so it reads on any plane. */
+.oi-range {
+  -webkit-appearance: none;
+  appearance: none;
+  min-width: 0;
+  height: 18px;
+  margin: 0;
+  padding: 0;
+  border: 0;
+  background: transparent;
+  color: var(--oi-muted-2);
+  cursor: pointer;
+}
+.oi-range::-webkit-slider-runnable-track { height: var(--oi-range-track); border-radius: var(--oi-radius-pill); background: currentColor; opacity: 0.45; transition: opacity var(--oi-motion-ui) var(--oi-motion-ease-out); }
+.oi-range:hover::-webkit-slider-runnable-track, .oi-range:focus-visible::-webkit-slider-runnable-track { opacity: 0.7; }
+.oi-range::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  appearance: none;
+  width: var(--oi-range-thumb);
+  height: var(--oi-range-thumb);
+  margin-top: calc((var(--oi-range-track) - var(--oi-range-thumb)) / 2);
+  border: 1.5px solid var(--oi-composer-ground);
+  border-radius: 50%;
+  background: var(--oi-accent);
+  box-shadow: var(--oi-shadow-plane);
+  box-sizing: border-box;
+}
+.oi-range::-moz-range-track { height: var(--oi-range-track); border-radius: var(--oi-radius-pill); background: currentColor; opacity: 0.45; }
+.oi-range::-moz-range-thumb { width: var(--oi-range-thumb); height: var(--oi-range-thumb); border: 1.5px solid var(--oi-composer-ground); border-radius: 50%; background: var(--oi-accent); box-shadow: var(--oi-shadow-plane); box-sizing: border-box; }
+.oi-range:active::-webkit-slider-thumb { background: var(--oi-accent-ink); }
+.oi-range:focus-visible { outline: none; }
+.oi-range:focus-visible::-webkit-slider-thumb { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 1px; }
+.oi-range:focus-visible::-moz-range-thumb { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: 1px; }
+.oi-range:disabled { opacity: 0.4; cursor: default; }
+
+/* ===== 7. sidecars and regions ========================================== */
 
 /* An inspector / sidecar body: one scroll owner, prose measure. */
 .oi-sidecar { flex: 1; min-height: 0; overflow: auto; padding: 20px; font-size: var(--oi-shell-type-body); line-height: 1.6; }
 .oi-sidecar h2 { margin: 0 0 18px; font-size: var(--oi-shell-type-title); font-weight: 500; }
 .oi-sidecar p { overflow-wrap: anywhere; }
 
+/* A region that owns its scrolling: a thin thumb that appears while the
+ * region is hovered or holds focus, and scrolling that never chains into
+ * the plane behind it. (WebKit/Chromium draw the 4px bar from the
+ * ::-webkit-scrollbar rules; the standard properties are only given to
+ * engines without them, because setting both disables the thin bar.) */
+.oi-scroll { overflow: auto; overscroll-behavior: contain; }
+.oi-scroll::-webkit-scrollbar { width: var(--oi-scrollbar-size); height: var(--oi-scrollbar-size); }
+.oi-scroll::-webkit-scrollbar-track, .oi-scroll::-webkit-scrollbar-corner { background: transparent; }
+.oi-scroll::-webkit-scrollbar-thumb { border-radius: var(--oi-scrollbar-size); background: transparent; }
+.oi-scroll:is(:hover, :focus-within)::-webkit-scrollbar-thumb { background: var(--oi-scrollbar-thumb); }
+.oi-scroll::-webkit-scrollbar-thumb:hover, .oi-scroll::-webkit-scrollbar-thumb:active { background: var(--oi-scrollbar-thumb-strong); }
+@supports not selector(::-webkit-scrollbar) {
+  .oi-scroll { scrollbar-width: thin; scrollbar-color: transparent transparent; }
+  .oi-scroll:is(:hover, :focus-within) { scrollbar-color: var(--oi-scrollbar-thumb) transparent; }
+}
+/* The quiet scroller: the wheel and trackpad scroll it, no bar is drawn. */
+.oi-scroll-quiet { overflow: auto; overscroll-behavior: contain; scrollbar-width: none; }
+.oi-scroll-quiet::-webkit-scrollbar { display: none; width: 0; height: 0; }
+
+/* A one-line status strip for a panel foot. */
+.oi-status {
+  flex: none;
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  min-width: 0;
+  min-height: var(--oi-shell-status);
+  box-sizing: border-box;
+  padding: 0 10px;
+  border-top: var(--oi-shell-edge) solid var(--oi-hairline-soft);
+  font-size: var(--oi-shell-type-meta);
+  color: var(--oi-muted-2);
+  white-space: nowrap;
+  overflow: hidden;
+}
+.oi-status > * { min-width: 0; overflow: hidden; text-overflow: ellipsis; }
+.oi-status > svg, .oi-status > button { flex: none; overflow: visible; }
+.oi-status[data-mono="true"], .oi-status code, .oi-status .oi-ref { font-family: var(--oi-font-mono); font-size: inherit; }
+.oi-status[data-attention="true"] { color: var(--oi-accent-ink); box-shadow: inset 2px 0 0 var(--oi-accent); }
+
+/* The shared drag-handle visual: a hairline inside a wider hit area; ink
+ * while hovered, focused or dragged. */
+.oi-resize-handle {
+  position: relative;
+  flex: none;
+  align-self: stretch;
+  width: var(--oi-resize-hit);
+  margin: 0 calc((1px - var(--oi-resize-hit)) / 2);
+  padding: 0;
+  border: 0;
+  background: transparent;
+  cursor: col-resize;
+  touch-action: none;
+  z-index: 2;
+}
+.oi-resize-handle::after {
+  content: "";
+  position: absolute;
+  top: 0;
+  bottom: 0;
+  left: calc((var(--oi-resize-hit) - 1px) / 2);
+  width: var(--oi-shell-edge);
+  background: var(--oi-hairline);
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-resize-handle[aria-orientation="horizontal"] { width: auto; height: var(--oi-resize-hit); margin: calc((1px - var(--oi-resize-hit)) / 2) 0; cursor: row-resize; }
+.oi-resize-handle[aria-orientation="horizontal"]::after { top: calc((var(--oi-resize-hit) - 1px) / 2); bottom: auto; left: 0; right: 0; width: auto; height: var(--oi-shell-edge); }
+.oi-resize-handle[data-quiet="true"]::after { background: transparent; }
+.oi-resize-handle:is(:hover, :focus-visible, [data-dragging="true"])::after { background: var(--oi-accent); }
+.oi-resize-handle:focus-visible { outline: none; }
+
 /* ===== 8. named states ================================================== */
 
 /* Absence is a named state with a next action, not a spinner. */
-.oi-empty { display: flex; flex-direction: column; gap: 12px; padding: 20px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.oi-empty { display: flex; flex-direction: column; align-items: flex-start; gap: 10px; padding: 20px; font-size: var(--oi-shell-type-ui); line-height: 1.55; color: var(--oi-muted-2); }
+.oi-empty > strong, .oi-empty > h3 { margin: 0; font-size: var(--oi-shell-type-nav); font-weight: 550; color: var(--oi-accent-ink); }
+.oi-empty > p { margin: 0; overflow-wrap: anywhere; }
 /* An owner refusal or error, verbatim: a left ink rule on the wash. It is
  * the shape every `role="alert"` in the desktop takes. */
 .oi-refusal, .oi-desktop [role="alert"] {
@@ -297,6 +719,7 @@
   border-radius: 4px;
   background: var(--oi-wash);
   font-size: var(--oi-shell-type-ui);
+  line-height: 1.5;
   color: var(--oi-accent-ink);
   overflow-wrap: anywhere;
 }
@@ -306,7 +729,58 @@
 @media (pointer: coarse) {
   .oi-tool { width: 36px; height: 36px; min-width: 36px; min-height: 36px; }
   .oi-action { min-height: 32px; }
+  .oi-segment > button { min-width: 36px; height: 30px; }
+  .oi-row, .oi-menu-item { min-height: 36px; height: auto; }
+  .oi-chip { height: 28px; }
+  .oi-chip > button { width: 24px; height: 24px; }
+  .oi-resize-handle { --oi-resize-hit: 17px; }
+}
+/* Transparency and contrast preferences get a solid popover. */
+@media (prefers-reduced-transparency: reduce), (prefers-contrast: more), (forced-colors: active) {
+  .oi-menu { background: var(--oi-sidebar-ground); -webkit-backdrop-filter: none; backdrop-filter: none; }
+}
+/* Forced colours erase washes: selection keeps a system edge instead. */
+@media (forced-colors: active) {
+  .oi-row[aria-selected="true"], .oi-row[aria-current]:not([aria-current="false"]),
+  .oi-segment > button:is([aria-pressed="true"], [aria-checked="true"], [aria-selected="true"]),
+  .oi-tool[aria-pressed="true"], .oi-menu-item[aria-checked="true"],
+  .oi-chip[data-state="selected"] { outline: 1px solid Highlight; outline-offset: -1px; }
 }
 @media (prefers-reduced-motion: reduce) {
-  .oi-tool, .oi-action, .oi-plane-nav > button, .oi-plane-nav > a, .oi-disclosure > summary, .oi-disclosure > summary::before { transition: none; }
+  .oi-tool, .oi-action, .oi-segment > button, .oi-row, .oi-row > svg, .oi-chip, .oi-chip > button, .oi-menu-item, .oi-input,
+  .oi-plane-nav > button, .oi-plane-nav > a, .oi-disclosure > summary, .oi-disclosure > summary::before,
+  .oi-range::-webkit-slider-runnable-track, .oi-resize-handle::after { transition: none; }
 }
+
+
+/* ===== Expressions alignment (2026-09-17) ================================
+ * Read from the running Expressions application's stylesheet. The active tool
+ * is ink fill on an 8px body; a floating card is glass that turns solid under
+ * the hand; a panel head is a 500/13px title over a hairline; inputs are
+ * paper boxes with 4px corners; the slider is a thin track with a solid ink
+ * thumb. */
+.oi-tool { border-radius: 7px; }
+.oi-tool[aria-pressed="true"], .oi-tool[aria-checked="true"],
+.oi-tool[aria-pressed="true"]:hover, .oi-tool[aria-checked="true"]:hover {
+  color: var(--oi-active-ink, var(--oi-composer-ground));
+  background: var(--oi-active-ground, var(--oi-accent));
+}
+.oi-card {
+  border: var(--oi-shell-edge) solid var(--oi-hairline);
+  border-radius: 8px;
+  background: var(--oi-card-glass, var(--oi-sidebar-ground));
+  -webkit-backdrop-filter: blur(var(--oi-card-blur, 10px));
+  backdrop-filter: blur(var(--oi-card-blur, 10px));
+  transition: background var(--oi-motion-ui) var(--oi-motion-ease-out);
+}
+.oi-card:hover, .oi-card:focus-within { background: var(--oi-card-solid, var(--oi-sidebar-ground)); }
+.oi-panel-head { padding: 0 8px 0 14px; min-height: 42px; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline); }
+.oi-panel-head > .oi-panel-head-title { font-size: 13px; font-weight: 500; letter-spacing: 0; text-transform: none; color: var(--oi-accent-ink); }
+.oi-input { padding: 6px 7px; border-radius: 4px; font-size: 12px; font-variant-numeric: tabular-nums; }
+.oi-input[type="number"] { text-align: right; }
+.oi-menu { border-radius: 8px; }
+.oi-range::-webkit-slider-runnable-track { opacity: 0.28; }
+.oi-range::-webkit-slider-thumb { border: 0; background: var(--oi-accent-ink); box-shadow: none; }
+.oi-range::-moz-range-track { opacity: 0.28; }
+.oi-range::-moz-range-thumb { border: 0; background: var(--oi-accent-ink); box-shadow: none; }
+@media (prefers-reduced-motion: reduce) { .oi-card { transition: none; } }

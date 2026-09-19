@@ -91,6 +91,28 @@ test('a pane tree restores: groups, splits, weights; unknown tabs refuse the gro
   assert.equal(badWeights.weights, undefined, 'weights that do not match the children are dropped, not clamped into being');
 });
 
+test('every kind the Workbench mounts round-trips, so an open tab never sends the book to recovery', () => {
+  // Regression: `factory` was mounted but not restorable — a saved workspace
+  // with the Factory development tab open dropped the binding on decode and
+  // the store refused the whole book ("Some saved surface bindings could not
+  // be restored"). The mode centre surfaces join under the same law.
+  for (const [kind, title] of [['factory', 'Factory development'], ['expressions', 'Expressions'], ['techne', 'Technè'], ['system', 'System'], ['explore', 'Explore']]) {
+    const restored = validBinding({ id: `ws:${kind}`, kind, title });
+    assert.ok(restored, `${kind} binding restores`);
+    assert.equal(restored.kind, kind);
+    const pane = validPane({ type: 'group', id: 'g', tabs: [`ws:${kind}`], pinned: [], active: `ws:${kind}` }, { [`ws:${kind}`]: restored });
+    assert.equal(pane.active, `ws:${kind}`, `${kind} stays the active tab of its pane`);
+  }
+});
+
+test('a pane restores its own tab pin state; unknown names are dropped', () => {
+  const surfaces = { a: validBinding({ id: 'a', kind: 'system', title: 'System' }) };
+  const pane = validPane({ type: 'group', id: 'g', tabs: ['a'], pinned: [], active: 'a', tabPresentation: 'unpinned', tabPinOrientation: 'vertical' }, surfaces);
+  assert.equal(pane.tabPresentation, 'unpinned'); assert.equal(pane.tabPinOrientation, 'vertical');
+  const odd = validPane({ type: 'group', id: 'g', tabs: ['a'], pinned: [], active: 'a', tabPresentation: 'sideways', tabPinOrientation: 'diagonal' }, surfaces);
+  assert.equal(odd.tabPresentation, undefined); assert.equal(odd.tabPinOrientation, undefined);
+});
+
 test('unowned kinds and malformed records refuse honestly', () => {
   assert.equal(validBinding(null), null);
   assert.equal(validBinding({ id: 'x' }), null, 'no id/kind/title, no binding');

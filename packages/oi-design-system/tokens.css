@@ -309,6 +309,25 @@
   --oi-motion-ui: 120ms;               /* hover, selection, menu */
   --oi-motion-ease-out: cubic-bezier(0.2, 0.7, 0.2, 1);
   --oi-motion-ease-spring: cubic-bezier(0.34, 1.2, 0.64, 1);
+  /* Shared component language (additive, 2026-09-17) — the geometry the
+   * desktop.css primitives draw with (.oi-row .oi-segment .oi-chip .oi-menu
+   * .oi-range .oi-scroll .oi-resize-handle). No existing role changes. */
+  --oi-shell-row-dense: 28px;          /* .oi-row: a dense list row */
+  --oi-shell-segment: 24px;            /* .oi-segment: the control's outer height */
+  --oi-shell-chip: 20px;               /* .oi-chip body */
+  --oi-shell-status: 22px;             /* .oi-status: a panel-foot strip */
+  --oi-shell-menu-row: 26px;           /* .oi-menu-item / context-menu row */
+  --oi-shell-radius-control: 5px;      /* icon/text control body */
+  --oi-shell-radius-row: 4px;          /* rows, segments, menu items */
+  --oi-shell-radius-menu: 8px;         /* popover / menu body */
+  --oi-popover-blur: 18px;             /* backdrop blur behind a glass popover */
+  --oi-popover-ground-glass: rgba(247, 247, 244, 0.9);
+  --oi-scrollbar-size: 4px;            /* .oi-scroll: thin region scrollbar */
+  --oi-scrollbar-thumb: rgba(22, 22, 20, 0.2);
+  --oi-scrollbar-thumb-strong: rgba(22, 22, 20, 0.38);
+  --oi-range-track: 2.5px;             /* .oi-range: slim slider track */
+  --oi-range-thumb: 10px;
+  --oi-resize-hit: 9px;                /* .oi-resize-handle: hit area around its hairline */
 }
 @media (prefers-reduced-motion: reduce) {
   .oi-desktop { --oi-motion-plane: 0.01ms; --oi-motion-ui: 0.01ms; }
@@ -362,6 +381,9 @@
   --oi-shadow-menu: 0 10px 40px rgba(0, 0, 0, 0.5), 0 1px 2px rgba(0, 0, 0, 0.4);
   --oi-shadow-overlay: 0 20px 70px rgba(0, 0, 0, 0.55);
   --oi-shadow-drawer: -10px 0 25px rgba(0, 0, 0, 0.35);
+  --oi-popover-ground-glass: rgba(24, 24, 23, 0.88);
+  --oi-scrollbar-thumb: rgba(233, 233, 228, 0.18);
+  --oi-scrollbar-thumb-strong: rgba(233, 233, 228, 0.36);
   --oi-accent-ground: var(--oi-surface);
   --oi-mark-yellow: rgba(233, 197, 75, 0.3);
   --oi-mark-green: rgba(128, 184, 140, 0.3);
@@ -380,3 +402,59 @@
 .oi-surface-warm-dark { --oi-surface: #292622; --oi-foreground: #e8dfd0; }
 
 .oi-surface-contrast { --oi-surface: #fff; --oi-foreground: #252525; }
+
+/* ===========================================================================
+ * Expressions alignment (owner direction 2026-09-17). The running Expressions
+ * application is the desktop's design source; these values are read from its
+ * actual stylesheet (field-studies-journeys/src/workspace.css — `--ui-*`,
+ * `.hud-panel`, `.icon-button.active`, the range/number controls), not from
+ * a description of it. What it changes, everywhere at once:
+ *   - the type scale sits one step up (its 9 / 10 / 11 / 12 / 13 ladder);
+ *   - secondary text is legible ink-grey (#66685f), not a faded grey;
+ *   - panels are 8px cards; glass grounds for floating chrome;
+ *   - the ACTIVE control is drawn in ink fill (see desktop.css).
+ * Role names are unchanged; geometry pinned by walks (tab bar, workbench bar,
+ * footer, gutter) is untouched.
+ */
+.oi-desktop {
+  /* Base readability (owner direction 2026-09-18): the whole shell reads one
+   * type step up, and rows, controls and hit targets gain their step of room
+   * to match. Role names unchanged; pinned walk geometry (tab bar, footer,
+   * gutter) untouched. */
+  --oi-shell-type-eyebrow: 10px;
+  --oi-shell-type-meta: 11px;
+  --oi-shell-type-ui: 12px;
+  --oi-shell-type-nav: 13px;
+  --oi-shell-type-body: 14px;
+  --oi-shell-type-prose: 15px;
+  --oi-shell-row: 32px;
+  --oi-shell-row-lg: 34px;
+  --oi-shell-row-dense: 30px;
+  --oi-shell-control: 28px;
+  --oi-shell-hit: 30px;
+  --oi-shell-segment: 26px;
+  --oi-shell-chip: 22px;
+  --oi-shell-status: 24px;
+  --oi-shell-menu-row: 28px;
+  --oi-shell-tracking: 0.13em;
+  --oi-muted-2: #66685f;
+  --oi-muted-3: #8d8f85;
+  --oi-hairline: #d5d6ce;
+  --oi-control-edge: #bcbdb3;          /* the edge of a thing you can press or type in: one step firmer than a rule */
+  --oi-wash: #e9eae2;
+  --oi-shell-radius: 8px;
+  --oi-card-glass: rgba(246, 245, 240, 0.56);
+  --oi-card-solid: rgba(246, 245, 240, 0.97);
+  --oi-card-blur: 10px;
+  --oi-active-ground: var(--oi-accent-ink);      /* ink fill of the active control */
+  --oi-active-ink: var(--oi-composer-ground);
+}
+.oi-desktop[data-theme="dark"] {
+  --oi-muted-2: #a6a6a6;
+  --oi-muted-3: #6f6f6a;
+  --oi-hairline: #333331;
+  --oi-control-edge: #474744;
+  --oi-wash: #202020;
+  --oi-card-glass: rgba(0, 0, 0, 0.42);
+  --oi-card-solid: rgba(10, 10, 10, 0.97);
+}

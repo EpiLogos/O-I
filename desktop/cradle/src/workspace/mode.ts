@@ -50,10 +50,10 @@ export const upgradeTabPresentation = (value: unknown): TabPresentation | undefi
   return TAB_PRESENTATIONS.includes(value as TabPresentation) ? value as TabPresentation : undefined;
 };
 
-/** The common panel's planes. `Conversation`…`Inspect` are the encounter's own
- * planes; `Composition` is the Expression composer the panel already hosts.
- * Mode-specific planes (Ta-Onta, Anima, Epii) are supplied by the composition
- * root as extra planes and named here only by id. */
+/** The panel's BUILT-IN plane names — the planes whose bodies the panel
+ * itself owns (`AgentLayer`). A curation's `planes` may interleave these with
+ * composition-root ids; anything outside this set must be listed in `extra`
+ * to render at all. */
 export type PanelPlane = "Chat" | "Activity" | "Context" | "Inspect" | "Composition";
 /** `factory`: Factory's left body — a project-rooted navigator with the same
  * two-way split the World navigator gives a project (Files | Tasks): the
@@ -80,10 +80,14 @@ export interface ModeCuration {
   panel: {
     /** The panel head's name for the accompanying agent in this mode. */
     agent: string;
-    /** Planes offered, in order. The first is the mode's resting plane. */
-    planes: readonly PanelPlane[];
-    /** Ids of composition-root-supplied extra planes this mode shows, in
-     * order, after `planes`. */
+    /** The ONE plane strip, in the mode's own order — built-in planes
+     * ("Chat"…, whose bodies the panel owns) and composition-root ids
+     * interleaved exactly as the mode curates them. The first is the mode's
+     * resting plane. */
+    planes: readonly string[];
+    /** Which of `planes` are composition-root-supplied ids: the gate that
+     * keeps a named id from rendering an empty host when the composition
+     * root supplied no body for it. */
     extra: readonly string[];
     /** Factory relocates the conversation to the centre: the panel then
      * offers no Conversation plane of its own, and never a second composer. */
@@ -94,7 +98,16 @@ export interface ModeCuration {
 export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
   base: {
     id: "base", label: "Central", hint: "The Central ground itself — files, editor and the accompanying agent", glyph: "file", left: "world",
-    panel: {agent: "Agent", planes: ["Chat", "Activity", "Composition", "Context", "Inspect"], extra: []},
+    // Owner direction 2026-09-19: the Central panel takes the same core shape
+    // as the other modes — Chat, Run, Agents, Context — with Run and Agents
+    // the shared planes (the same run log/track; the roster with the real
+    // project conversations). Context stays the panel's own doc-forward
+    // subject/session reading: the canvas pane belongs to the centre in this
+    // mode, never to the sidebar. Activity folds into Run's live log (the
+    // same consolidation Factory made); Inspect stays an action
+    // (oi:panel-inspect) and the Expression summon visits Composition —
+    // neither is a tab.
+    panel: {agent: "Agent", planes: ["Chat", "run", "agents", "Context"], extra: ["run", "agents"]},
   },
   factory: {
     id: "factory", label: "Factory", hint: "Desk for whole Runs, Tasks for conversations", glyph: "factory", left: "factory", centreKind: "factory",
@@ -109,7 +122,7 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     // subject follows the work actually selected or bound in either view.
     // Inspect stays reachable as an action through oi:panel-inspect, never a
     // fourth tab.
-    panel: {agent: "Factory agent", planes: [], extra: ["run", "agents", "factory-context"], conversationInCentre: true},
+    panel: {agent: "Factory agent", planes: ["run", "agents", "factory-context"], extra: ["run", "agents", "factory-context"], conversationInCentre: true},
   },
   expressions: {
     id: "expressions", label: "Expressions", hint: "The living Expressions application, with Anima / Nara", glyph: "field", left: "expression-graph", centreKind: "expressions",
@@ -118,20 +131,20 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     // whose content is the Ta-Onta specifics of the Anima mode (S4').
     // Anima, Aletheia and the project guardians read in Agents; Run passes
     // through the same run log/track as Factory; Context holds real panes.
-    panel: {agent: "Anima", planes: ["Chat"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
+    panel: {agent: "Anima", planes: ["Chat", "ta-run", "ta-onta-agents", "ta-onta-context"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
   },
   techne: {
     // Owner direction 2026-09-18: the left body is the wiki map — the web
     // as its project's own regions, not a file listing. The panel follows
     // the same three views as Expressions, for the Aletheia mode (S5').
-    id: "techne", label: "Technè", hint: "The wiki web, with Epii", glyph: "instrument", left: "wiki-map", centreKind: "techne",
-    panel: {agent: "Aletheia", planes: ["Chat"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
+    id: "techne", label: "Technè", hint: "The same living field, the deep cut — with Epii", glyph: "instrument", left: "expression-graph", centreKind: "techne",
+    panel: {agent: "Aletheia", planes: ["Chat", "ta-run", "ta-onta-agents", "ta-onta-context"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
   },
   "epi-logos": {
     id: "epi-logos", label: "Epi-Logos", hint: "The authored world: the essay, Bimba, the Epii material, the products", glyph: "wiki", left: "epi-places", centreKind: "epi-logos",
     // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
     // companion components, curated to this world.
-    panel: {agent: "Nara · Epii", planes: ["Chat", "Context", "Inspect"], extra: ["anima", "epii"]},
+    panel: {agent: "Nara · Epii", planes: ["Chat", "Context", "Inspect", "anima", "epii"], extra: ["anima", "epii"]},
   },
   settings: {
     id: "settings", label: "Settings", hint: "System: sources, providers, projection, telemetry, search, history", glyph: "settings", left: "world", centreKind: "system",

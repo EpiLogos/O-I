@@ -155,6 +155,7 @@ function renderAll(){if(studioDocked&&studioOpen&&beltOpen){beltWasOpen=true;bel
  document.querySelector('[data-action="capture-options"]')?.setAttribute('aria-expanded',String(captureOpen));
  if(libraryOpen)renderLibrary();
  renderText();renderInspector();renderLive();renderTimeline();renderShapePicker();setHint();transportUI();orbitControl.render();overlayDirty=true;needsFrame=true;
+ announceHostState();
 }
 /** The scene's automation layers. One-shots fire on the engine runtime clock
  *  (addressed by cycle clock, so linked groups arm correctly); cycles ride the
@@ -409,6 +410,8 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'present':presenting=true;selected=[];shapePickerOpen=false;renderAll();break;
  case 'exit-present':presenting=false;renderAll();break;
  case 'library':case 'preset-browser':case 'keep':openLibrary();break;
+ case 'deep-verso':hostRequest({request:'summon',kind:'verso'});break;
+ case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
  case 'close-library':closeLibrary();break;
  case 'library-section':librarySection=el.dataset.section as 'collection'|'about';renderLibrary();$('library-page').scrollTop=0;break;
@@ -656,13 +659,71 @@ window.addEventListener('resize',()=>{if(recorder.active){recorder.stop();toast(
 // addendum 2026-09-19): the host posts the live cutout width/height so the
 // masthead aligns with the shell's traffic-lights corner cutout. Standalone,
 // the CSS defaults hold.
-window.addEventListener('message',ev=>{const d=ev.data as {type?:string;width?:number;height?:number}|null;
+//
+// The host↔frame MODE channel (owner wayfinder 2026-09-19, PR #387 §11–13):
+// one Expressions system, two operating cuts. The hosting surface posts
+// {v:1,kind:'host-mode',mode} — in the "techne" cut the application stands
+// its physics authoring chrome down (a body class; workspace.css hides it)
+// while the living canvas, the current scene, the selection and the bottom
+// scene transport remain; "expressions" restores the full HUD. The host also
+// drives the rail's primary direct modes through {v:1,kind:'host-command'}.
+// Every host-mode message is answered with a fresh oi-app-state announcement
+// (hostedApp.trackHostedAppState), which is also the race-free initial read.
+let hostMode:'expressions'|'techne'='expressions';
+let livedRailHTML='';
+// The DEEP cut tools — the same rail element, the deep working set (owner
+// wayfinder §13: reuse the rail's grammar, change the working tools). The
+// lens chooser joins when the lens island lands; only real tools ship.
+const DEEP_TOOLS:[string,string,string,string?][]=[
+  ['tool-interact','pointer','Interact / navigate','data-rail="interact" aria-pressed="false"'],
+  ['tool-select','select','Select','data-rail="select" aria-pressed="false"'],
+  ['library','library','Library — the map of the field'],
+  ['deep-verso','wiki','Verso — the subject\u2019s account and sources'],
+  ['deep-lived','field','Expressions — the lived cut'],
+];
+function renderRail(){
+  const rail=document.getElementById('tool-rail');
+  if(!rail)return;
+  if(!livedRailHTML)livedRailHTML=rail.innerHTML;
+  rail.innerHTML=hostMode==='techne'
+    ?DEEP_TOOLS.map(([a,i,l,extra])=>ib(a,i,l,extra??'')).join('<span class="toolbar-divider" aria-hidden="true"></span>')
+    :livedRailHTML;
+}
+function hostRequest(payload:{request:string;mode?:string;kind?:string}){
+ if(window.parent===window)return;
+ try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
+}
+function announceHostState(){
+ if(window.parent===window)return;
+ try{
+  const s=scene();
+  const state={document:{id:store.document.id,name:store.document.name},sceneIndex,sceneCount:store.document.scenes.length,sceneName:s.name,sceneState:sceneSaveState(store.document,s),
+   selection:selected.map(id=>{const e=scene().entities.find(v=>v.id===id);return {id,name:e?e.name:undefined};}),tool,playing:scenePlaying,journeyPlaying,fieldPaused,libraryOpen,hostMode};
+  window.parent.postMessage({v:1,kind:'oi-app-state',state},'*');
+ }catch{/* nothing is announced rather than a wrong position */}
+}
+function setHostMode(mode:'expressions'|'techne'){
+ if(hostMode===mode)return;
+ hostMode=mode;
+ document.body.classList.toggle('oi-host-techne',mode==='techne');
+ renderRail();
+ renderAll();
+}
+window.addEventListener('message',ev=>{const d=ev.data as {type?:string;width?:number;height?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   document.documentElement.style.setProperty('--shell-cutout-w',Math.max(0,d.width)+'px');
   document.documentElement.style.setProperty('--shell-cutout-h',Math.max(24,d.height)+'px');
-}});
+  return;
+ }
+ if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){setHostMode(d.mode);announceHostState();return;}
+ if(d&&d.v===1&&d.kind==='host-command'){
+  if(d.command==='interact'||d.command==='select')activateRail(d.command);
+  else console.warn('[oi] refused host command: '+String(d.command));
+  return;
+ }
+});
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},dispose:()=>{cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},dispose:()=>{cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 const qs=new URLSearchParams(location.search);
 // A hosted deep link (the app's own ?journey/?scene idiom): open a named
 // expression from the browser library, the featured set or the starters —

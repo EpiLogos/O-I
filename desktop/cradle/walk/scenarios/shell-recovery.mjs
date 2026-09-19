@@ -54,12 +54,15 @@ export default async function run({page,baseUrl,channel,check,shot,provision:p})
   await page.waitForTimeout(250);
   check(JSON.stringify((await channel('read.layout')).data.layout.root)===JSON.stringify(before.root),'Responsive transitions preserve the pane tree');
   check((await channel('read.layout')).data.layout.agencyDepth===before.agencyDepth,'Overlay preserves intended sidebar depth');
-  await page.getByRole('button',{name:'System',exact:true}).click();
+  await page.getByRole('button',{name:'Settings',exact:true}).click();
   await page.getByRole('region',{name:'System composition'}).waitFor();
   await page.waitForFunction(()=>document.querySelector('.system-panel')?.getAttribute('aria-busy')==='false');
   await shot('system-1280');
   await page.setViewportSize({width:900,height:760});await shot('system-900');
   await page.emulateMedia({reducedMotion:'reduce'});
+  // Under the dedicated-mode law Settings owns the centre full screen; the
+  // tabbed workbench returns on Base.
+  await page.keyboard.press('Meta+Alt+1');await page.waitForTimeout(500);
   await page.getByRole('tab').first().click();
   check(await page.locator('.spatial-feedback').count()===0,'Point-cloud proposals are not mounted in production');
 }

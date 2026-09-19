@@ -21,8 +21,10 @@ const RELATED_SYSTEMS = ["Central", "Actuation", "AIKit", "Software Factory", "W
 export interface TaPaneOpens {
   sideHost?:ReactNode;
   /** The side pane's live tabs — the actually active context (terminal
-   * processes, files, browser panes), selectable. */
-  sideTabs?:{id:string;title:string;kind:string;active:boolean}[];
+   * processes, files, browser panes), selectable — plus the mode tree's
+   * hidden tabs (owner ruling 2026-09-19): they surface here marked as
+   * workspace-held while the mode's dedicated stage stands. */
+  sideTabs?:{id:string;title:string;kind:string;active:boolean;canvas?:"panel"|"workspace"}[];
   activateTab?:(id:string)=>void;
 }
 

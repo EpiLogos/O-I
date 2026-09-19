@@ -16,7 +16,6 @@ export interface PanelSubject { ref?: string; kind?: string; title: string; proj
 
 const ExpressionGraphNavigator = lazy(() => import("../expressions/ExpressionGraphNavigator").then(module => ({default: module.ExpressionGraphNavigator})));
 const MaterialNavigator = lazy(() => import("../techne/MaterialNavigator").then(module => ({default: module.MaterialNavigator})));
-const WikiMapNavigator = lazy(() => import("../techne/WikiMapNavigator").then(module => ({default: module.WikiMapNavigator})));
 const EpiPlacesNavigator = lazy(() => import("../epilogos/EpiPlacesNavigator").then(module => ({default: module.EpiPlacesNavigator})));
 const AnimaPlane = lazy(() => import("../expressions/AnimaPlanes").then(module => ({default: module.AnimaPlane})));
 const EpiiPlane = lazy(() => import("../techne/EpiiPlane").then(module => ({default: module.EpiiPlane})));
@@ -38,21 +37,20 @@ const AgentsPlane = lazy(() => import("../contributions/factory/sidebar/AgentsPl
 const ContextPlane = lazy(() => import("../contributions/factory/sidebar/ContextPlane").then(module => ({default: module.ContextPlane})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
-export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onOpenWiki, onMessage}: {
+export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onMessage}: {
   mode: WorkspaceMode;
   project?: string;
   onOpenExpressions: (expressionRef?: string) => void;
   onOpenTechne?: () => void;
   onOpenPlace: (place: {family: string; ref: string; title: string}) => void;
   onOpenFile: (location: CentralLocation) => Promise<void> | void;
-  onOpenWiki: (ref: string, title: string, project?: string) => void;
   onMessage: (message: string) => void;
 }) {
   return <Suspense fallback={null}>
     {mode === "expressions"
       ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
       : mode === "epi-logos" ? <EpiPlacesNavigator onOpenPlace={onOpenPlace} onMessage={onMessage}/>
-      : mode === "techne" ? <WikiMapNavigator project={project} onOpenWiki={onOpenWiki} onMessage={onMessage}/>
+      : mode === "techne" ? <ExpressionGraphNavigator onOpenExpressions={onOpenExpressions} onOpenTechne={onOpenTechne} onMessage={onMessage}/>
       : <MaterialNavigator project={project} onOpenFile={onOpenFile} onMessage={onMessage}/>}
   </Suspense>;
 }
@@ -72,6 +70,16 @@ export function ContextPaneMount({opens}:{opens?:TaPaneOpens}) {
  * app-level ways a Factory control reaches the rest of the shell; `opens`
  * lends the centre canvas's own pane openings to the Ta-Onta Context. */
 export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, accompanying?: PanelAccompanying, onMessage?: (message: string) => void, host?: FactoryPanelHost, full?: boolean, opens?: TaPaneOpens): {id: string; label: string; body: ReactNode}[] {
+  // Central (owner direction 2026-09-19): the panel's core shape matches the
+  // other modes — Run and Agents are the shared planes (the same run
+  // log/track; the roster with the real project conversations, opened the
+  // ordinary way). No Factory host chrome rides along — no Expand, no Full
+  // run, no plane switching, no dev scenario bar. Context is NOT supplied
+  // here: it stays the panel's own doc-forward plane, curated in the mode.
+  if (mode === "base") return [
+    {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} full={full} withScenarioBar={false}/></Suspense>},
+    {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} withScenarioBar={false} host={host ? {onOpenEncounterRow: host.onOpenEncounterRow} : undefined}/></Suspense>},
+  ];
   if (mode === "factory") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host} full={full}/></Suspense>},
     {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host}/></Suspense>},

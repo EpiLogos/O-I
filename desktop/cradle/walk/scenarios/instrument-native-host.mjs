@@ -65,7 +65,9 @@ export default async function run({page,baseUrl,check,shot,channel}){
     await region.getByRole("button",{name:"Open Epii composition",exact:true}).click();
     await page.getByRole("button",{name:"New Expression",exact:true}).waitFor();
     check((await channel("invoke.kernel_op",[{op:"expression",request:{operation:"list"}}])).data.outcome.data.expressions.length===0,"Summoning Epii alone creates no Expression identity or Agent loop");
-    await page.getByRole("button",{name:"Restore right region",exact:true}).click();
+    // The panel carries no restore control (the shell owns the region):
+    // Escape is the way full steps back down to panel.
+    await page.keyboard.press("Escape");
     await region.getByRole("button",{name:"Compose safe cues",exact:true}).click();
     const editor=page.locator('.agent-layer .expression-editor');
     await editor.locator('h4').filter({hasText:"Nara · safe cues"}).waitFor();

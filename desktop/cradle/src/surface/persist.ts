@@ -46,6 +46,11 @@ export function decodeLayout(value: unknown): LayoutState {
       }
     }
     const root = asPane(parsed.root, surfaces);
+    // The sidebar's own pane canvas (the Context plane hosts it) restores
+    // under the same pane law as the root tree — and it is a group by
+    // construction: an invalid record or a split is no canvas, never a guess.
+    const sidePanePane = asPane(parsed.sidePane, surfaces);
+    const sidePane = sidePanePane?.type === "group" ? sidePanePane : undefined;
     const closedStack = Array.isArray(parsed.closedStack)
       ? (parsed.closedStack as unknown[]).filter(
           (id): id is SurfaceId =>
@@ -80,7 +85,7 @@ export function decodeLayout(value: unknown): LayoutState {
     const detached = Array.isArray(parsed.detached) ? parsed.detached.filter((d): d is NonNullable<LayoutState["detached"]>[number] => !!d && typeof d === "object" && typeof d.surfaceId === "string" && !!surfaces[d.surfaceId] && typeof d.groupId === "string" && Number.isInteger(d.index) && d.index >= 0 && typeof d.pinned === "boolean") : [];
     if (!root) {
       // Austere rest: no chrome, depth clamped, nothing carried visually.
-      return { ...freshLayout(), mode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions, accompanying, detached, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
+      return { ...freshLayout(), mode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
     }
     let focusedGroupId =
       typeof parsed.focusedGroupId === "string" && contains(root, parsed.focusedGroupId)
@@ -91,6 +96,7 @@ export function decodeLayout(value: unknown): LayoutState {
     const state: LayoutState = {
       mode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions,
       accompanying,
+      sidePane,
       subjectPlanes,windowBounds,
       detached,
       maximizedGroupId: typeof parsed.maximizedGroupId === "string" && groupsOf(root).some(g => g.id === parsed.maximizedGroupId) ? parsed.maximizedGroupId : undefined,

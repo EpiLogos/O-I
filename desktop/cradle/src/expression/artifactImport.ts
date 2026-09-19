@@ -22,8 +22,10 @@ import type {ExpressionDocument, Parameter} from "./types";
 import {nativeSnapshotToJourney, nativeExport, importDocuments, type NativeConfig, type StageScene} from "@epilogos/oi-design-system/expressions-engine/shell/nativeBridge.mjs";
 
 const WORLD_SCALE = 400; // the instrument's stage unit (nativeParameters.ts)
-/** The kernel's own parameter bounds (kernel/src/expression.rs). */
-const BOUNDS = {x: [-1600, 1600], y: [-1600, 1600], z: [-1600, 1600], scale: [0.05, 4], share: [0, 1]} as const;
+/** The kernel's own parameter bounds (kernel/src/expression.rs); share
+ * follows the engine's journey law (model.ts: finite(e.share, 0, 1000)) —
+ * the accepted corpus legitimately composes share values above 1. */
+const BOUNDS = {x: [-1600, 1600], y: [-1600, 1600], z: [-1600, 1600], scale: [0.05, 4], share: [0, 1000]} as const;
 
 export interface ArtifactSceneProjection {
   sceneRef: string;

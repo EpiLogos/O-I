@@ -11,7 +11,9 @@
   },
   "bundle": {
     "active": true,
-    "targets": ["appimage"],
+    "targets": [
+      "appimage"
+    ],
     "icon": [
       "icons/icon.png"
     ]
@@ -27,7 +29,14 @@
         "height": 820,
         "minWidth": 360,
         "minHeight": 560,
-        "resizable": true
+        "resizable": true,
+        "transparent": true,
+        "windowEffects": {
+          "effects": [
+            "sidebar"
+          ],
+          "state": "active"
+        }
       }
     ],
     "security": {
