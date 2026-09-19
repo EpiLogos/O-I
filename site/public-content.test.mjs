@@ -53,14 +53,12 @@ test('human authorship remains a developed provenance relation, not generic pers
   assert.match(human, /human authorship → durable source → selective operative use → action and encounter → returned evidence → human Recognition and revision/);
   assert.match(human, /Generated interpretation is not authored source/);
   assert.match(human, /Retrieval is not permission/);
-
   const central = sectionBody('products', 'central');
   assert.match(central, /authored source/);
   assert.match(central, /observed state/);
   assert.match(central, /generated material/);
   assert.match(central, /Natural prose is first-class/);
   assert.match(central, /human acceptance/);
-
   const research = sectionBody('research', 'human-authorship');
   assert.match(research, /Where should the human enter an agentic system/);
   assert.match(research, /smallest relevant part of durable ground/);
@@ -90,12 +88,13 @@ test('founding positions carry the same positive world, authorship and collectiv
 });
 
 test('first-contact copy carries the world-making proposition and local-to-shared movement', () => {
-  assert.match(sectionBody('home', 'what'), /^### \[title\] O:I maps what it means for an AI agent to have a world\.$/m);
+  assert.match(sectionBody('home', 'what'), /^### \[title\] A world to act within\. A way to understand it\.$/m);
   assert.match(sectionBody('home', 'existing-world'), /^### \[title\] Start where you are\.$/m);
   assert.match(sectionBody('home', 'existing-world'), /principles, preferences, project purposes, rules and ways of working/i);
   assert.match(sectionBody('home', 'field'), /Minimal O:I: durable ground \+ actuated model capacity/);
-  assert.match(sectionBody('home', 'centres'), /mapping what constitutes having-a-world for an AI agent/);
-  assert.match(sectionBody('home', 'shared'), /local agent world → selective Projection → Shared Field → encounter by another world/);
+  assert.match(sectionBody('home', 'centres'), /Each product develops one of these relations/);
+  assert.match(sectionBody('home', 'shared'), /Enter an Expression, change your view, follow a Scene, turn to its source/);
+  assert.match(sectionBody('oi', 'name'), /constituted means through which a Life encounters and acts within a World/);
   assert.match(sectionBody('shared-field', 'intro'), /^### \[title\] A world, defined for agents\.$/m);
   assert.match(sectionBody('shared-field', 'co-internality'), /legibility without capture/);
 });

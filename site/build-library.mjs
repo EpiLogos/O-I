@@ -11,7 +11,7 @@ import { projectExpression } from '../shared-field/expression-projection.mjs';
 
 export const PRODUCT_IDS = ['central','actuation','aikit','factory','workcell','ql'];
 const hash = value => createHash('sha256').update(value).digest('hex');
-const plain = text => text.replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/[*`]/g,'').trim();
+const plain = text => text.replace(/\[([^\]]+)\]\([^)]*\)/g,'$1').replace(/[*`]/g,'').replace(/^#{1,6}\s+/gm,'').trim();
 const content = node => [node.body,...node.children.flatMap(n=>['## '+n.title,n.body,...n.children.flatMap(c=>['### '+c.title,c.body])])].filter(Boolean).join('\n\n');
 const refFor = path => `source:oi:public-site:${path}`;
 const material = (glyph,x=0,y=0,scale=1)=>Object.fromEntries(Object.entries({glyph,x,y,z:0,scale,share:1}).map(([k,value])=>[k,{value,automation:null}]));

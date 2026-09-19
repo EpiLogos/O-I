@@ -32,6 +32,9 @@ export class PublicField {
  setScene(composition,ref,camera){
   const changed=this.scene?.id!==ref;
   this.scene=projectComposition(composition,ref);this.revision=composition.revision;
+  // A paused/reduced-motion Scene choice displays that configuration immediately.
+  // Library, source and camera crossings never reset the resident particles.
+  if(changed&&!this.playing)this.resetOnNextFrame=true;
   if(changed){this.camera=defaultCamera();if(camera)this.camera={...this.camera,...camera};else if(this.scene.entities.length===1){const p=this.scene.entities[0].position;this.camera.zoom=1.5;this.fitPoint=p;}else this.camera.zoom=.85;}
   this.schedule();
  }
@@ -48,6 +51,7 @@ export class PublicField {
   try{
    if(this.fitPoint){const p=project(this.fitPoint,{...this.camera,panX:0,panY:0},this.width,this.height);this.camera.panX=this.width*.51-p.x;this.camera.panY=this.height*.48-p.y;this.fitPoint=null;}
    this.adapter.render({scene:this.scene,delta,authoringRevision:this.revision,camera:this.camera,pointer:{active:false,world:{x:0,y:0,z:0}},selectedIds:this.selected,scaffold:'off'});
+   if(this.resetOnNextFrame){this.resetOnNextFrame=false;this.adapter.command({type:'reset-field'});this.adapter.render({scene:this.scene,delta:0,authoringRevision:this.revision,camera:this.camera,pointer:{active:false,world:{x:0,y:0,z:0}},selectedIds:this.selected,scaffold:'off'});}
    this.frames++;this.canvas.dataset.rendered='true';this.canvas.dataset.frames=String(this.frames);
    this.onPositions(this.scene.entities.map(e=>({ref:e.id,...project(e.position,this.camera,this.width,this.height)})));
    this.onTick(delta);

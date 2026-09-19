@@ -1,3 +1,5 @@
 .sn__library{margin-left:auto;margin-right:2rem;font-size:.8rem;letter-spacing:.06em;text-decoration:none;color:inherit}
 .sn__library:hover{text-decoration:underline;text-underline-offset:.3em}
 @media(max-width:600px){.sn__library{margin-right:1rem}}
+/* Compact controls retain both their icon and explicit accessible name. */
+@media(max-width:700px){.library-host .reader-library>.library-icon,.library-host .read-source-action>.library-icon,.library-host .return-field>.library-icon{display:inline-flex}}
