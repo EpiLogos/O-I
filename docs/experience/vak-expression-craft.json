@@ -2,15 +2,33 @@
   "purpose": "Source-mapped Vāk Expression craft under O-I#65, not a new campaign, runtime schema or capability registry.",
   "story_source": "docs/experience/EXPRESSION-FIELD.md",
   "families": [],
-  "standing": "owner-directed intended-experience clarification, 2026-09-19; native TypeScript admission, role loading and live tool support require execution evidence",
+  "standing": "owner-directed intended-experience clarification, 2026-09-19; Factory-owned TypeScript admission, optional Vāk projection, role loading and live tool support require execution evidence",
   "runtime_or_human_acceptance": false,
   "obligation_sources": {
     "vakcraft65": {
       "source_ref": "docs/experience/EXPRESSION-FIELD.md#9-vāk-authored-craft-real-participants-and-live-repertoire",
       "issue": "https://github.com/EpiLogos/O-I/issues/65",
       "implementation_wayfinder": "https://github.com/EpiLogos/QL-MEF/blob/main/docs/integrations/epi-logos/VAK-EXPRESSION-WORKFLOW-WAYFINDER.md",
-      "policy": "Read complete EF stories and the source-owned S′/C′/role field; the compact TypeScript specimen is not the full Vāk registry or a shipped SDK. Current author correction separates lean runtime instruction, typed undertaking, live faculties and development records."
+      "implementation_wayfinder_scope": "optional Vāk/domain projection and expressive proving, not generic Factory authoring ownership",
+      "factory_authority": "https://github.com/EpiLogos/Factory/blob/main/docs/program/NATIVE-WORKFLOW-AUTHORING.md",
+      "factory_issues": [195, 197, 198, 199, 143, 145],
+      "policy": "Read complete EF stories and the source-owned S′/C′/role field. Base typed workflow authoring, compilation, first source stamp and source-to-SSSF/native-trace publication belong to Factory; QL/Vāk/Epi remain optional interpretations through it. The compact QL TypeScript specimen is not a generic SDK or the full Vāk registry. Preserve lean runtime instruction, typed undertaking, live faculties and development records as distinct."
     }
+  },
+  "factory_native_authoring": {
+    "owner_repository": "EpiLogos/Factory",
+    "source_path": "docs/program/NATIVE-WORKFLOW-AUTHORING.md",
+    "generic_faculties": ["TypeScript workflow source", "schema and validation", "deterministic native lowering", "compiled workflow-unit identity", "first authored source basis", "source-to-attempt public correlation"],
+    "requires_ql": false,
+    "requires_epi_roles": false,
+    "requires_claude": false,
+    "requires_dsh": false,
+    "ql_role": "optional source-qualified domain types, interpretation, roles and lawful conduct over native Factory contracts",
+    "dsh_role": "retain actual native SessionEvent/trajectory/composition evidence when the execution uses DSH; do not fabricate or require it for generic operation",
+    "ui_source": "docs/experience/FACTORY-UI-INTEGRATION-HANDOFF.md",
+    "correlation": ["authored source revision/digest and unit locator", "compiled WorkflowUnit and Run/frontier", "ExecutionDisposition and actual attempt", "Actuation Activity and native session/trace/tool event", "artifact/evidence/Return", "exact original source basis"],
+    "source_is_runtime_telemetry": false,
+    "live_execution_claimed": false
   },
   "required_obligation_ids": [
     "vakcraft65:lean-language",
@@ -39,16 +57,18 @@
     {
       "id": "vakcraft65:first-source-stamp",
       "source": "vakcraft65",
-      "native_locator": "EXPRESSION-FIELD §9.2; QL Vāk workflow §§1–2,VW1",
-      "requirement": "A readable TypeScript Vāk definition becomes attributable native workflow ground before the commissioned Factory undertaking acts.",
-      "story_ids": ["DV02", "DV03", "GV03", "UI04"],
+      "native_locator": "EXPRESSION-FIELD §§9.2,9.7; Factory NATIVE-WORKFLOW-AUTHORING §§1–5; QL Vāk workflow VW1 domain adapter",
+      "requirement": "Factory's generic TypeScript workflow definition becomes attributable native source ground before execution; optional Vāk interpretation uses that same route and source-to-trajectory relation.",
+      "story_ids": ["DV02", "DV03", "GV03", "UI04", "UI06"],
       "required_evidence": ["D", "C", "P"],
       "required_branches": [
-        "Lower through existing QL bindings and native Factory WorkflowSource/CompiledWorkflow, preserving source/import/compiler/native semantic digests and subject/whole/Return.",
+        "Factory owns generic typed authoring/schema/lowering, WorkflowSource/CompiledWorkflow and first-source stamp. Prove ordinary single-agent and plural workflows with QL/Epi/Claude absent before optional domain conformance.",
+        "Optional QL/Vāk source-qualified interpretation supplements the native source/import/compiler/semantic basis; it does not own the frontend, impose its roster or remint a Run/unit/attempt.",
         "No second scheduler or copied authority/store; actual bodies/tools/currentness and permissions resolve independently at dispatch.",
         "Restricted deterministic source admission: no ambient network, environment, clock, arbitrary eval or side effects while merely compiling.",
         "Preserve harmless-source versus semantic-change identity, invalid composition, missing role/capability, revision conflict and genuine stamped recomposition.",
-        "Provider-neutral native source can project to Claude or other admitted bodies; the person may commission in natural language without writing TypeScript."
+        "Provider-neutral native source can project to Claude or other admitted bodies; the person may commission in natural language without writing TypeScript.",
+        "Public source → compiled unit → Run → actual attempt → native tool/log/evidence → source traversal works in both directions through SSSF/TUI/agent consumers; authored intention is not observed telemetry."
       ]
     },
     {
@@ -59,7 +79,7 @@
       "story_ids": ["AG01", "AG03", "AG04", "AG07", "AG09", "UI04"],
       "required_evidence": ["C", "P"],
       "required_branches": [
-        "Preserve the constitutional seven hosted by Anima and six existing specialists; Aletheia is the Return organ, not an eighth peer, and Techne stays Pleroma's atomic-skill substrate.",
+        "For the Epi projection preserve the constitutional seven hosted by Anima and six existing specialists; Aletheia is the Return organ, not an eighth peer, and Techne stays Pleroma's atomic-skill substrate. Generic Factory participants require no Epi roster.",
         "Each selected participant has native identity/source, delegation purpose, limited context, actual tools/Skills, effects, body requirement, return and stop bounds.",
         "Available field is not compulsory fan-out; verify actual plural work when required, exact predecessor material for chains and independent fusion/verification.",
         "Target-native delegation/nesting limits and lost providers are explicit; model change does not remint the semantic actor or hide a failed child.",
@@ -115,13 +135,14 @@
     {
       "id": "vakcraft65:joined-experience",
       "source": "vakcraft65",
-      "native_locator": "EXPRESSION-FIELD §9.6; QL Vāk workflow VW6",
-      "requirement": "One real source-bound work remains usable across Factory, Expressions, Technē, Library/page and admitted subtle/shared presentations.",
+      "native_locator": "EXPRESSION-FIELD §§9.6–9.7; Factory NATIVE-WORKFLOW-AUTHORING §§4–7; QL Vāk workflow VW6",
+      "requirement": "One real source-bound work remains usable across Factory source/SSSF/native trajectory, Expressions, Technē, Library/page and admitted subtle/shared presentations.",
       "story_ids": ["UI02", "UI04", "UI06", "KN02", "AG06", "DV08"],
       "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Consume actual Factory/Day/NOW and current Expression cut; source→Wiki/Knowledge→bounded whole→Expression is the runtime corpus path, not detached generation passed off as integration.",
-        "New UI remains the receiving design; preserve centre Chat/full Run plus Run/Agents/Context and summonable graph/agent depths without another shell.",
+        "New UI remains the receiving design: Desk/full Run and Tasks/working chat with Run/Agents/Context. Preserve source/compiled-unit/attempt selection and summonable graph/agent depth without another shell.",
+        "Prove no-QL/no-DSH source-to-SSSF/portable-trace use. When DSH actually executes, retain its native SessionEvent/trajectory/fingerprint; thin targets disclose missing detail. Per-owner cursors, late events and historical source bases survive replay/reconnect.",
         "Keep canonical subject/scene/edition/session/occasion and private Nara state across deep/source/ambient/page/shared transitions; configuration restore is not exact GPU rewind.",
         "Omarchy isolated runs use feature-line worktrees shared by actors; sandboxes/disjoint output do not force duplicated worktrees. Preserve Mac/frontend and held QL kernel/install.",
         "Consume finished carriers and live owner work without reopening K/AW/SF/EX; native/API, new-UI, material and personal assessment keep their real evidence scope."
@@ -133,7 +154,7 @@
   "execution_policy": {
     "start_workers_on_publication": false,
     "after_current_churn": true,
-    "parallel_after_shared_boundary": ["native TypeScript lowering/stamp", "live Expression faculties", "clean role/practice delivery"],
+    "parallel_after_shared_boundary": ["Factory-owned generic TypeScript authoring/stamp/publication", "optional QL Vāk adapter", "live Expression faculties", "clean role/practice delivery"],
     "runtime_proof_requires": "actual returned native/Factory/Expression cut and real loaded actors/tools",
     "worktree_unit": "coherent-feature-line",
     "per_agent_worktree": false,
