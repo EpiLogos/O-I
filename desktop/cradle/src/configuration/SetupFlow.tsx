@@ -126,7 +126,7 @@ export function SetupFlow({controller, native, startAtReview = false, onClose, o
 
     {state.step === "review" && <section aria-label="Reviewed native plan">
       {state.bundle?.plans.map(plan => <PlanView key={plan.plan_id} plan={plan} setting={settings[plan.setting_ref]}/>)}
-      {state.bundle?.errors.map((error, index) => <p key={index} role="alert" className="config-error" data-error-code={error.error_code}>{error.error_code}: {error.message}</p>)}
+      {state.bundle?.errors.map((error, index) => <p key={index} role="alert" className="config-error" data-error-code={error.error.error_code}>{error.error_code}: {error.message}</p>)}
       {!state.busy && state.bundle && !controller.canApply() && <p className="config-muted">Apply is unavailable: the plan is incomplete, refused or expired. A fresh plan and explicit application are required; a successful subset is never silently applied.</p>}
       <div className="config-drawer-actions">
         <button type="button" disabled={locked} onClick={() => controller.back()}>Back to settings</button>
@@ -310,6 +310,7 @@ export function ChangeSetView({changeset, receipts}: {changeset: ChangeSetDocume
 /** One real, optional first use. It opens a native source, not a sample,
  * Agent conversation or new renderer; Track 1 retains normal pane routing. */
 function FirstSourceAction({native}: {native: SetupNative}) {
+  const sourceId = useId();
   const [listing, setListing] = useState<SourceListingState | null>(null);
   const [selected, setSelected] = useState("");
   const [buffer, setBuffer] = useState<SourceBufferState | null>(null);
@@ -332,12 +333,11 @@ function FirstSourceAction({native}: {native: SetupNative}) {
     {error && <p role="alert">{error}</p>}
     {listing && <>
       {typeof listing.availability === "object" && <p role="status">{"unavailable" in listing.availability ? listing.availability.unavailable.reason : listing.availability.ground_only.reason}</p>}
-      <label>Native source
-        <select className="config-input" value={selected} disabled={pending} onChange={event => {setSelected(event.target.value); setBuffer(null);}}>
-          <option value="">Choose a source…</option>
-          {listing.sources.map(source => <option value={source.ref} key={source.ref}>{source.path}</option>)}
-        </select>
-      </label>
+      <label htmlFor={sourceId}>Native source</label>
+      <select id={sourceId} className="config-input" value={selected} disabled={pending} onChange={event => {setSelected(event.target.value); setBuffer(null);}}>
+        <option value="">Choose a source…</option>
+        {listing.sources.map(source => <option value={source.ref} key={source.ref}>{source.path}</option>)}
+      </select>
       {!listing.sources.length && <p>No sources were returned. This is a native empty/degraded listing, not demonstration content.</p>}
       <button type="button" disabled={pending || !selected} onClick={() => void run(true)}>Open selected source</button>
     </>}
