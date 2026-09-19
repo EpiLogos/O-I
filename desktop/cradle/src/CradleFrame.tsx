@@ -15,8 +15,10 @@ import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,type WorkspaceMode} from "./workspace/mode";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {ModeLeftBody,modeExtraPlanes} from "./workspace/modeBodies";
+import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
+import {GroupPane} from "./surface/Workbench";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -737,11 +739,66 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(opened?.result!=="surface_opened")throw new Error("Browser surface could not be opened");
     setState(s=>openBinding(s,binding));
   };
+  /** A terminal pane in the centre canvas — the same open the shell's own
+   * actions use, lent to the Ta-Onta Context plane. */
+  const openTerminal = (project?:string) => {
+    const id=crypto.randomUUID();
+    const scope=project??workspaceRef.current.current.project??undefined;
+    const binding:SurfaceBinding={id,kind:"terminal",title:"Terminal",project:scope,terminal:{cwd:terminalCwd(scope)}};
+    setState(s=>openBinding(s,binding));
+  };
+  /** The right panel's own pane (the Context plane hosts it): a REAL
+   * TabGroupPane from the existing pane logic — the same tab strip, +,
+   * surfaces and chrome the centre panes use — never tiled. Opening gates
+   * through the same kernel surface_open; pop-out moves a tab into the
+   * centre tree through the ordinary openBinding docking path. */
+  const openInSidePane = async (binding:SurfaceBinding, op:"surface_open"|"none") => {
+    if(op==="surface_open"){
+      const opened=await kernel.apply({op:"surface_open",surface_id:binding.id,kind:binding.kind,source_ref:binding.ref,title:binding.title});
+      if(opened?.result!=="surface_opened")throw new Error("The pane could not be opened in the sidebar");
+    }
+    setState(s=>{
+      const pane=s.sidePane??{type:"group" as const,id:"side-panel",tabs:[],pinned:[],active:null};
+      return {...s,surfaces:{...s.surfaces,[binding.id]:binding},sidePane:{...pane,tabs:[...pane.tabs,binding.id],active:binding.id}};
+    });
+  };
+  /** The pane actions of the side pane, against the side group — never the
+   * centre tree. Anything the side pane does not own falls through to the
+   * frame's own execute. */
+  const sideExecute=(action:string,arg?:import("./surface/types").ActionArg)=>{
+    const pane=stateRef.current.sidePane;if(!pane)return;
+    const want=(arg as {surfaceId?:string})?.surfaceId;const surfaceId=typeof want==="string"?want:undefined;
+    if(action==="surface.activate"&&surfaceId&&pane.tabs.includes(surfaceId)){setState(s=>s.sidePane?{...s,sidePane:{...s.sidePane,active:surfaceId}}:s);return;}
+    if(action==="surface.open"){const id=crypto.randomUUID();const scope=workspaceRef.current.current.project??undefined;const binding:SurfaceBinding={id,kind:"blank",title:"New tab",project:scope};void openInSidePane(binding,"none").catch(report);return;}
+    if(action==="surface.close"&&surfaceId){
+      const id=surfaceId;if(!pane.tabs.includes(id))return;
+      void kernel.apply({op:"surface_close",surface_id:id}).catch(()=>{});
+      setState(s=>{
+        if(!s.sidePane)return s;
+        const tabs=s.sidePane.tabs.filter(t=>t!==id);
+        const surfaces={...s.surfaces};delete surfaces[id];
+        return {...s,surfaces,sidePane:tabs.length?{...s.sidePane,tabs,pinned:s.sidePane.pinned.filter(p=>p!==id),active:s.sidePane.active===id?(tabs[0]??null):s.sidePane.active}:undefined};
+      });
+      return;
+    }
+    if(action==="surface.detach"){
+      const id=pane.active;if(!id)return;
+      const binding=stateRef.current.surfaces[id];if(!binding)return;
+      setState(s=>{
+        if(!s.sidePane)return s;
+        const tabs=s.sidePane.tabs.filter(t=>t!==id);
+        return openBinding({...s,sidePane:tabs.length?{...s.sidePane,tabs,pinned:s.sidePane.pinned.filter(p=>p!==id),active:s.sidePane.active===id?(tabs[tabs.length-1]??null):s.sidePane.active}:undefined},binding);
+      });
+      return;
+    }
+    execute(action,arg);
+  };
   useEffect(()=>{
     if(kernel.transport.kind!=="tauri")return;
     const reconcile=()=>{
       const layouts=[stateRef.current,...workspaceRef.current.workspaces.filter(w=>w.id!==workspaceRef.current.current.id).map(w=>w.layout)];
       const live=layouts.flatMap(layout=>[...groupsOf(layout.root).flatMap(g=>g.tabs),...(layout.detached??[]).map(d=>d.surfaceId)]);
+      if(stateRef.current.sidePane)live.push(...stateRef.current.sidePane.tabs);
       void import("@tauri-apps/api/core").then(({invoke})=>Promise.all([invoke("browser_reconcile",{live}),invoke("terminal_reconcile",{live})])).catch(reason=>setWindowError(String(reason)));
     };
     const title=(event:Event)=>{const reading=(event as CustomEvent<{id:string;title:string;url:string}>).detail;
@@ -926,7 +983,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const arrangementDispatch = useRef<(action:string)=>void>(()=>{});
   arrangementDispatch.current = action => {
     if(action==="workspace.new-tab"){openFresh();return;}
-    if(action==="workspace.terminal"){const id=crypto.randomUUID();const project=workspaceRef.current.current.project??undefined;const binding:SurfaceBinding={id,kind:"terminal",title:"Terminal",project,terminal:{cwd:terminalCwd(project)}};setState(s=>openBinding(s,binding));return;}
+    if(action==="workspace.terminal"){openTerminal();return;}
     if(action==="workspace.browser-address"){const address=document.querySelector<HTMLInputElement>('.pane[data-focused="true"] .browser-address');if(address){address.focus();address.select();}else void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
     if(action==="workspace.browser"){void openBrowser().catch(reason=>setWindowError(String(reason)));return;}
     if(action==="workspace.recover"){workspace.showRecovery();return;}
@@ -1001,9 +1058,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
       choosing={factoryChoosing}
       variant="centre"
-      onInsideOut={()=>setState(s=>({...s,rightDepth:s.rightDepth==="collapsed"?"panel":s.rightDepth}))}
-      full={false}
-      onFull={()=>setState(s=>({...s,rightDepth:"full"}))}
       subject={{title:subjectTitle,location:subjectBinding?.location}}
       onMessage={message=>setWindowError(message)}
       onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
@@ -1031,7 +1085,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // detach, re-dock — never a modal dead-end. Closing the extra surfaces
   // returns the mode to its dedicated stage.
   const modeSoloStage=!!modeCentreBinding && groupsOf(state.root).every(group=>group.tabs.every(id=>id===modeCentreBinding.id));
-  const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project};
+  const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location};
   const report=(reason:unknown)=>setWindowError(String(reason instanceof Error?reason.message:reason));
 
   // Close the menu on any pointerdown outside it.
@@ -1073,7 +1127,22 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     onExpandPanel:()=>setState(s=>s.rightDepth==="full"?s:{...s,rightDepth:"full"}),
     onOpenPlane:plane=>setState(s=>s.panelPlanes?.factory===plane?s:{...s,panelPlanes:{...s.panelPlanes,factory:plane}}),
     onOpenEncounterRow:(row:EncounterRow)=>void openEncounter(row).catch(report)};
-  const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full")} onError={report}
+  // The centre canvas's own pane openings, lent to the Ta-Onta Context plane
+  // (expressions / techne): hold the open file in the panel, or open a file,
+  // a browser or a terminal in the centre exactly as the shell does.
+  const taPaneOpens:TaPaneOpens={
+    sideHost:(()=>{const sideGroup=state.sidePane??{type:"group" as const,id:"side-panel",tabs:[],pinned:[],active:null};return
+      <GroupPane group={sideGroup} pane={sideGroup} state={state} menuOpen={!!menu} execute={sideExecute}
+        kernelDirty={ref=>!!ref&&!!kernel.snapshot.buffers[ref]?.dirty} openBindingMenu={openBindingMenu} openFrameMenu={openFrameMenu}
+        openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore}
+        onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)}
+        openEncounter={row=>openEncounter(row).catch(report)}
+        factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
+        subject={workspace.current.context?.subject}
+        nativeWindows={kernel.transport.kind==="tauri"}
+        workspaceName={workspace.current.name}/>})(),
+  };
+  const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
     resolveSurface={id=>stateRef.current.surfaces[id]??Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces))[id]}
@@ -1090,7 +1159,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         right={agentLayer}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
-        recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh}
+        recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {state.root && modeSoloStage && modeCentreBinding ? (
         <div className="mode-stage" data-mode={mode} data-window-corner="true">

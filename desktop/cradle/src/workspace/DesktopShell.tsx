@@ -1,5 +1,4 @@
 import {useShellGeometry} from "./geometry";
-import {requestResizeExpression} from "../shared/Expression";
 import { lazy, Suspense, useEffect, useLayoutEffect, useRef, useState, type ReactNode, type Dispatch, type SetStateAction } from "react";
 const SystemPanel=lazy(()=>import("./SystemPanel").then((module)=>({default:module.SystemPanel})));
 import type { AgencyDepth, LayoutState } from "../surface/types";
@@ -7,6 +6,8 @@ import type { Workspace } from "./store";
 import "./shell.css";
 import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
+import { WorldModeStrip } from "../surfaces/navigator/WorldNavigator";
+import { MODE_CURATION, TREE_MODES, type TabPresentation, type WorkspaceMode } from "./mode";
 
 type Side = "left" | "right";
 const FOOTER_KEY="oi-shell-footer.v2";
@@ -18,12 +19,30 @@ interface Props {
   onRecover:()=>void;
   onToggleNavigator: () => void; onCloseNavigator: () => void;
   native: boolean; arrangementActions: ReactNode;
+  /** The workspace mode. One shell serves every mode: the mode changes what
+   * the three regions are curated to show, never the shell, the pane system
+   * or the sessions inside them. The mode strip itself lives at the World
+   * navigator's bottom row; the footer menu here is the fallback while the
+   * navigator is not shown. */
+  mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void;
+  onLibrary?: () => void;
+  world?: "central" | "epi-logos"; onLeaveWorld?: () => void;
+  returnTo?: { mode: WorkspaceMode; label: string }; onReturn?: () => void;
+  onTabPresentation: (presentation: TabPresentation) => void;
   subject: { ref?: string; title: string; context: ReactNode; history?: ReactNode };
   /** FND-02: when provided, replaces the right region's legacy plane body
    * (the accompanying agent layer owns its own header/planes/composer). */
   right?: ReactNode;
   namingRequest: "create" | "rename" | null; onNamingHandled: () => void;
-  error: string | null; navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
+  error: string | null; onErrorDismiss?: () => void;
+  /** The workspace-recovery state surfaces only here, inside the footer
+   * status menu — nothing of the shell ever renders above the shell. */
+  recovery?: { reason: string; key?: string } | null;
+  /** Epi-Logos: a whole-app world state, disclosed and toggled here in the
+   * footer (owner ruling 2026-09-18) — never a mode entry or a page. */
+  epiLogos?: boolean; onEpiLogosToggle?: () => void;
+  onRecoverAvailable?: () => void; onStartFresh?: () => void; /** One click reloads the workspace (owner ruling 2026-09-19) — the message row and its dismissal both route here while a load failure stands. */ onReload?: () => void;
+  navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
 }
 export function DesktopShell(p: Props) {
   const host = useRef<HTMLDivElement>(null);
@@ -46,6 +65,23 @@ export function DesktopShell(p: Props) {
   // every width change after that animates normally.
   const [booted, setBooted] = useState(false);
   useEffect(() => { const frame = requestAnimationFrame(() => setBooted(true)); return () => cancelAnimationFrame(frame); }, []);
+  // Mode switches get one small quiet token-motion: the centre and the left
+  // body settle in over the shared UI duration. One finite Web Animation per
+  // switch — no timers, no listeners, nothing scheduled once it ends — and it
+  // is static under reduced motion. The cold-boot particle flight stays the
+  // opening's alone; a switch has no physics of its own.
+  const enteredMode = useRef(p.mode);
+  useLayoutEffect(() => {
+    if (enteredMode.current === p.mode) return;
+    enteredMode.current = p.mode;
+    if (matchMedia("(prefers-reduced-motion: reduce)").matches) return;
+    const duration = parseFloat(getComputedStyle(host.current!).getPropertyValue("--oi-motion-plane")) || 200;
+    const played = ['[data-region="centre"]', '[data-region="left"] .desktop-side-content'].flatMap(selector => {
+      const node = host.current?.querySelector<HTMLElement>(selector);
+      return node?.animate ? [node.animate([{ opacity: 0.35 }, { opacity: 1 }], { duration, easing: "cubic-bezier(0.2, 0.7, 0.2, 1)" })] : [];
+    });
+    return () => played.forEach(animation => animation.cancel());
+  }, [p.mode]);
   const subjectKey = p.subject.ref ?? "none";
   const plane = p.layout.subjectPlanes?.[subjectKey] ?? "context";
   const setPlane = (value: "context" | "history" | "system") => p.setLayout(held=>({...held,subjectPlanes:{...held.subjectPlanes,[subjectKey]:value}}));
@@ -90,9 +126,14 @@ export function DesktopShell(p: Props) {
   const overlayLeft = width < 640 && navigatorOverlay;
   const leftWidth = Math.min(leftDefault, Math.max(200, width - (overlayLeft ? 40 : 440)));
   const leftVisible = intended("left") === "panel" && width >= 640;
-  const availableRight = width - (leftVisible ? leftWidth : 0) - 452;
-  const overlayRight = tier === "drawer" || availableRight < 240;
-  const rightRoom = overlayRight ? Infinity : availableRight;
+  // Canvas modes (expressions, techne) play well with the agent floating
+  // over the field — a working canvas is not "components". Component modes
+  // (factory, settings, base, epi-logos) PUSH instead: the centre yields
+  // room to the panel, never the panel over the working UI.
+  const canvasCentre = p.mode === "expressions" || p.mode === "techne";
+  const availableRight = width - (leftVisible ? leftWidth : 0) - (canvasCentre ? 452 : 8);
+  const overlayRight = (tier === "drawer" || availableRight < 240) && canvasCentre;
+  const rightRoom = overlayRight ? Infinity : Math.max(availableRight, 240);
   const rightDefault = l.rightWidth ?? (tier === "wide" ? 320 : 260);
   const rightWidth = overlayRight ? Math.min(rightDefault, Math.max(240, width - 40)) : Math.min(rightDefault, Math.max(240, rightRoom));
   const depth = (side: Side): AgencyDepth => {
@@ -157,11 +198,29 @@ export function DesktopShell(p: Props) {
   });
   const clampWidth = (side: Side, value: number) => Math.max(side === "left" ? 200 : 240, Math.min(side === "left" ? Math.min(600,overlayLeft?width-40:width-440-(rightOpen&&!overlayRight?rightWidth:0)) : Math.min(720,overlayRight?width-40:width-440-(leftOpen?leftWidth:0)), value));
   const resize = (side: Side, value: number) => p.setLayout(s => ({ ...s, [side === "left" ? "leftWidth" : "rightWidth"]: clampWidth(side, value) }));
+  /** Drop the persisted width override: the region returns to its tier default. */
+  const resetWidth = (side: Side) => p.setLayout(s => { const next = { ...s }; if (side === "left") delete next.leftWidth; else delete next.rightWidth; return next; });
+  /** Live width readout while a drag is in flight — one small badge at the
+   * separator, so the size being chosen is visible while it is chosen. */
+  const [resizeFeedback, setResizeFeedback] = useState<{side: Side; width: number} | null>(null);
+  const endDrag = (e: { currentTarget: HTMLElement; pointerId: number }) => {
+    e.currentTarget.releasePointerCapture?.(e.pointerId);
+    delete e.currentTarget.dataset.dragging;
+    if (host.current) delete host.current.dataset.resizing;
+    document.documentElement.style.removeProperty("cursor"); document.documentElement.style.removeProperty("user-select");
+    setResizeFeedback(null);
+  };
+  const regionWidth = (side: Side) => host.current?.querySelector<HTMLElement>(`[data-region="${side}"]`)?.getBoundingClientRect().width;
   const separator = (side: Side) => <div className={`region-resizer ${side}`} role="separator" aria-label={`Resize ${side} region`} aria-orientation="vertical"
     aria-valuenow={side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320}
     aria-valuemin={side === "left" ? 200 : 240} aria-valuemax={side === "left" ? 600 : 720} tabIndex={0}
-    onKeyDown={e => { if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); const before=e.currentTarget.getBoundingClientRect(); resize(side, (side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320) + (e.key === "ArrowRight" ? 16 : -16) * (side === "left" ? 1 : -1)); requestResizeExpression(e.currentTarget,before); } }}
-    onPointerDown={e => { e.preventDefault(); stopGeometry(); e.currentTarget.setPointerCapture(e.pointerId); e.currentTarget.dataset.dragging = "true"; if(host.current)host.current.dataset.resizing=side; document.documentElement.style.cursor="col-resize"; document.documentElement.style.userSelect="none"; }}
+    title="Drag to resize · double-click resets · arrow keys adjust · Home resets"
+    onKeyDown={e => {
+      if (e.key === "ArrowLeft" || e.key === "ArrowRight") { e.preventDefault(); resize(side, (side === "left" ? l.leftWidth ?? 240 : l.rightWidth ?? 320) + (e.key === "ArrowRight" ? 16 : -16) * (side === "left" ? 1 : -1)); }
+      else if (e.key === "Home") { e.preventDefault(); resetWidth(side); }
+    }}
+    onDoubleClick={() => resetWidth(side)}
+    onPointerDown={e => { e.preventDefault(); stopGeometry(); e.currentTarget.setPointerCapture(e.pointerId); e.currentTarget.dataset.dragging = "true"; if(host.current)host.current.dataset.resizing=side; document.documentElement.style.cursor="col-resize"; document.documentElement.style.userSelect="none"; const current=Math.round(regionWidth(side)??0); setResizeFeedback({side,width:current}); e.currentTarget.setAttribute("aria-valuenow",String(current)); }}
     onPointerMove={e => {
       if (!e.currentTarget.hasPointerCapture(e.pointerId)) return;
       const box = host.current!.getBoundingClientRect();
@@ -171,22 +230,19 @@ export function DesktopShell(p: Props) {
       host.current?.style.setProperty(side === "left" ? "--desktop-left-target" : "--desktop-right-target", `${value}px`);
       if(side==="right"&&!overlayRight)host.current?.style.setProperty("--desktop-right-space",`${value}px`);
       e.currentTarget.setAttribute("aria-valuenow", String(Math.round(value)));
+      setResizeFeedback({side, width: Math.round(value)});
     }}
     onPointerUp={e => {
-      const box = host.current!.getBoundingClientRect();
-      const value = clampWidth(side, side === "left" ? e.clientX - box.left : box.right - e.clientX);
-      e.currentTarget.releasePointerCapture(e.pointerId);
-      delete e.currentTarget.dataset.dragging;
-      if(host.current)delete host.current.dataset.resizing; document.documentElement.style.removeProperty("cursor"); document.documentElement.style.removeProperty("user-select");
+      const value = clampWidth(side, regionWidth(side) ?? 0);
+      endDrag(e);
       resize(side, value);
     }}
     onLostPointerCapture={e=>{
       if(!e.currentTarget.dataset.dragging)return;
-      delete e.currentTarget.dataset.dragging;
-      if(host.current)delete host.current.dataset.resizing; document.documentElement.style.removeProperty("cursor"); document.documentElement.style.removeProperty("user-select");
-      const region=e.currentTarget.closest<HTMLElement>(".desktop-side");
-      if(region)resize(side,region.getBoundingClientRect().width);
-    }} />;
+      const value = clampWidth(side, regionWidth(side) ?? 0);
+      endDrag(e);
+      resize(side, value);
+    }}>{resizeFeedback?.side === side && <span className="region-resize-badge" role="status" aria-label={`${resizeFeedback.width} pixels wide`}>{resizeFeedback.width}</span>}</div>;
   const ref = p.subject.ref;
   const left = depth("left"), right = depth("right");
   const leftOpen=left==="panel"||left==="full";
@@ -211,7 +267,7 @@ export function DesktopShell(p: Props) {
   // as a broken counter, not a state. Name it, matching the reference
   // vocabulary's "1 group" / "Focused view" register.
   const groupCount = groupsOf(l.root).length;
-  return <div ref={host} className="desktop-shell" data-native={p.native} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
+  return <div ref={host} className="desktop-shell" data-native={p.native} data-mode={p.mode} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
@@ -221,14 +277,24 @@ export function DesktopShell(p: Props) {
       <input aria-label="Workspace name" autoFocus value={name} onChange={e => setName(e.target.value)} />
       <button type="submit">{naming === "create" ? "Create workspace" : "Save name"}</button><button type="button" onClick={() => setNaming(null)}>Cancel</button>
     </form>}
-    {p.error && <p role="alert">{p.error}</p>}
     <div className="desktop-regions" data-right-full={right === "full"} data-left-full={left === "full"} data-boot={!booted}>
       {overlayLeft && <button className="region-scrim" aria-label="Close Central overlay" onClick={closeNavigator}/> }
       <aside className={`desktop-side left depth-${left}`} data-region="left" data-depth={left} data-overlay={overlayLeft} aria-hidden={!leftOpen} aria-label="World region">
         {<>
           <div className="desktop-side-content">
-          <div className="central-heading"><svg viewBox="0 0 24 24" width="21" height="21" fill="none" stroke="currentColor" strokeWidth="1.2" aria-hidden="true"><path d="M3 6h7l2 2h9v12H3z"/></svg><div><strong>My O:I</strong><small>Personal ground</small></div></div>
-          {p.navigator(null)}</div>{left === "panel" && separator("left")}
+          <div className="central-heading"><Glyph name="folder" size={19}/><div><strong>My O:I</strong><small>Personal ground</small></div>{p.onLibrary&&<button aria-label="Library" title={`Library — scoped to ${MODE_CURATION[p.mode].label} (⌘⌥L)`} onClick={p.onLibrary}><Glyph name="wiki" size={15}/></button>}</div>
+          {/* WORLD CONTEXT rides beside the modes: the selected world stays
+            * named in every mode until the person leaves it, and a
+            * drill-through's route back is one control, in the same place. */}
+          {(p.world==="epi-logos"||p.returnTo)&&<div className="world-context" aria-label="World context">
+            {p.world==="epi-logos"&&<span className="world-context-world"><Glyph name="wiki" size={12}/><span>Within Epi-Logos</span><button className="oi-tool" aria-label="Leave the Epi-Logos world" title="Leave the Epi-Logos world" onClick={p.onLeaveWorld}><Glyph name="close" size={10}/></button></span>}
+            {p.returnTo&&<button className="world-context-return" onClick={p.onReturn} title={`Return to ${p.returnTo.label} (${MODE_CURATION[p.returnTo.mode].label})`}><Glyph name="arrow" size={12}/><span>Return to {p.returnTo.label}</span></button>}
+          </div>}
+          {p.navigator(null)}
+          {/* The strip lives in the World navigator's bottom row; a mode whose
+            * own left body replaces that navigator keeps the same strip here. */}
+          {MODE_CURATION[p.mode].left!=="world"&&<div className="world-system mode-strip-host"><WorldModeStrip mode={p.mode} onMode={p.onMode}/><span className="world-mode-separator" aria-hidden="true"/><button type="button" className="world-system-settings" onClick={()=>p.onMode("settings")} aria-label="System" title="System"><Glyph name="settings" size={14}/></button></div>}
+          </div>{left === "panel" && separator("left")}
         </>}
       </aside>
       <main className="desktop-centre" data-region="centre" aria-label="Workspace canvas">
@@ -266,8 +332,39 @@ export function DesktopShell(p: Props) {
             <button className="oi-menu-item" aria-label="New workspace" onClick={() => { setName(""); setNaming("create"); }}>New workspace</button>
             <button className="oi-menu-item" aria-label="Rename workspace" onClick={() => { setName(p.workspace.name); setNaming("rename"); }}>Rename workspace</button>
             <button className="oi-menu-item" onClick={p.onRecover}>Recover saved arrangement</button>
+            {/* The mode strip lives at the World navigator's bottom; these keep
+              * every mode and tab presentation reachable while the navigator is
+              * not shown — collapsed sidebar, or a mode whose left body replaces
+              * it. */}
+            <hr/>
+            <span className="oi-eyebrow">Mode</span>
+            {TREE_MODES.map((id,index)=><button key={id} className="oi-menu-item" role="menuitemradio" aria-checked={p.mode===id} onClick={()=>p.onMode(id)}><Glyph name={MODE_CURATION[id].glyph} size={13}/>{MODE_CURATION[id].label}<kbd>⌘⌥{index+1}</kbd></button>)}
+            <hr/>
+            <span className="oi-eyebrow">Tabs</span>
+            {([["pinned-horizontal","Pin tabs horizontally"],["pinned-vertical","Pin tabs vertically"],["unpinned","Unpin tabs"]] as const).map(([id,label])=><button key={id} className="oi-menu-item" role="menuitemradio" aria-checked={(groupsOf(l.root).find(g=>g.id===l.focusedGroupId)?.tabPresentation??"pinned-horizontal")===id} onClick={()=>p.onTabPresentation(id)}>{label}</button>)}
           </div></details>
+          <button type="button" className="footer-epi oi-tool" aria-pressed={p.epiLogos===true}
+            aria-label="Epi-Logos world" title={p.epiLogos?"Epi-Logos world is active — leave the world":"Enter the Epi-Logos world"}
+            onClick={p.onEpiLogosToggle}><Glyph name="epi" size={12}/></button>
+          {/* Owner ruling 2026-09-17: ALL workspace messaging — errors and
+           * the recovery state alike — lives hidden here, in the status
+           * disclosure at the row's right end. Nothing renders above the
+           * app; a standing message only marks the arrow. */}
+          <details className="desktop-menu footer-status" data-attention={!!p.error || !!p.recovery}>
+            <summary aria-label={p.recovery ? `Workspace messages. Recovery standing: ${p.recovery.reason}` : p.error ? `Workspace messages. 1 standing: ${p.error}` : "Workspace messages"}><Glyph name="down" size={10}/></summary>
+            <div className="oi-menu">
+              {p.recovery && <>
+                <p className="footer-status-message" role="alert">{p.recovery.reason}</p>
+                <button className="oi-menu-item" disabled={!p.recovery.key} onClick={p.onRecoverAvailable}>Recover available workspaces</button>
+                <button className="oi-menu-item" onClick={p.onStartFresh}>Start a fresh arrangement</button>
+              </>}
+              {p.error
+                ? <div className="footer-status-message" role="alert"><span>{p.error}</span><button className="footer-status-dismiss" aria-label="Dismiss message" onClick={p.onErrorDismiss}><Glyph name="close" size={10}/></button></div>
+                : !p.recovery && <p className="footer-status-message" role="status">No workspace messages.</p>}
+            </div>
+          </details>
           <button className="footer-pin oi-tool" aria-label={footerPinned?"Unpin workspace footer":"Pin workspace footer"} aria-pressed={footerPinned} onClick={()=>{const next=!footerPinned;setFooterPinned(next);try{localStorage.setItem(FOOTER_KEY,next?"pinned":"revealed");}catch{}}}><Glyph name="pin"/></button>
         </footer></div>
   </div>;
 }
+
