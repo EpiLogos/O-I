@@ -225,6 +225,24 @@ impl Manager {
 
 #[cfg(test)]
 mod tests {
+    #[test]
+    fn native_source_numbers_preserve_binary64_across_every_json_boundary() {
+        // Captured real-source values which the default fast parser rounded by
+        // one ULP. Native basis readback must not rewrite retained evidence.
+        let values = [12.743725967790677_f64, -0.000011802825996413943_f64,
+            0.9747255095605911_f64, 0.19773633068574678_f64,
+            -0.013338354703560323_f64];
+        for expected in values {
+            let mut value = serde_json::json!({"source": expected, "ref": "Pṛthivī"});
+            for _ in 0..5 {
+                let mut bytes = serde_json::to_vec(&value).unwrap(); bytes.push(b'\n');
+                value = super::line(&mut std::io::Cursor::new(bytes)).unwrap();
+                assert_eq!(value["source"].as_f64().unwrap().to_bits(), expected.to_bits());
+                assert_eq!(value["ref"], "Pṛthivī");
+            }
+        }
+    }
+
     use super::*;
     #[test] fn source_correspondence_is_not_inferred() {
         assert!(presentation(&json!({"units_per_metre":400,"slots_a":[0,1],"slots_b":[1,0]})).is_ok());

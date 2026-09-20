@@ -53,9 +53,9 @@ try{
  await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'expressions'},'*'));
  await frame.locator('summary').filter({hasText:'Native domain controls'}).click();
  await frame.locator('[name="native-rna"]').selectOption('true');await frame.locator('[data-native="transcription"]').click();
- await frame.waitForFunction(()=>document.querySelector('[data-transcription]')?.textContent.includes('ACU'));
+ await frame.waitForFunction(()=>document.querySelector('[data-transcription]')?.textContent.includes('ACU')&&document.querySelector('[data-native-field]')?.getAttribute('aria-busy')==='false');
  await frame.locator('[name="native-row"]').fill('4');await frame.locator('[data-native="row"]').click();
- await frame.waitForFunction(()=>document.querySelector('[data-carrier]')?.getAttribute('y2')==='-1');
+ await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native()?.domain?.m1.row12===4&&document.querySelector('[data-carrier]')?.getAttribute('y2')==='-1'&&document.querySelector('[data-native-field]')?.getAttribute('aria-busy')==='false');
  assert.equal(owner.sources.current.input.m1.row12,4);report.checks.push('native transcription and carrier reach visible form output via native controls');
  await frame.locator('[name="native-damping"]').fill('0.75');await frame.locator('[data-native="damping"]').click();
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.target_b[2]===300);

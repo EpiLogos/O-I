@@ -52,9 +52,11 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  const query=<T extends HTMLElement>(selector:string)=>panel.querySelector<T>(selector)!;
  const update=()=>{
   const reading=controller.reading;
+  panel.setAttribute("aria-busy",String(busy));
+  for(const input of panel.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>("input,select,textarea"))input.disabled=busy;
   domainView.update(reading.domain,reading.presented_clock,reading.status,reading.native?.presented?.generation);
   const stamp=JSON.stringify(reading.domain);
-  if(reading.domain&&domainStamp!==stamp){
+  if(reading.domain&&domainStamp!==stamp&&!busy){
    domainStamp=stamp;
    query<HTMLInputElement>('[name="native-row"]').value=String(reading.domain.m1.row12);
    query<HTMLInputElement>('[name="native-tick"]').value=String(reading.domain.m1.tick12);
@@ -67,16 +69,23 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   query('output[data-native-status]').textContent=reading.reason??`${reading.status} · ${reading.presentation_mode} · ${reading.native?.acknowledged?.generation??'—'} / ${reading.native?.acknowledged?.samples_elapsed??'—'}`;
   if(panel.open)query('pre[data-native-reading]').textContent=JSON.stringify(reading,null,2);
   query<HTMLButtonElement>('[data-native="connect"]').disabled=busy||!source||!['manual','unavailable'].includes(reading.status)||!!reading.lease;
-  for(const command of ['hold','resume','mute','scale','follow','operate','inspect','checkpoint','restore','row','tick','transcription','damping','axis'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=busy||!reading.lease||reading.status==='unavailable';
+  for(const command of ['resume','mute','scale','follow','operate','inspect','checkpoint','restore','row','tick','transcription','damping','axis'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=busy||!reading.lease||reading.status==='unavailable';
  };
  controller.onChange=update;
  const click=async(event:Event)=>{
-  const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button[data-native]');if(!button||busy)return;
+  const button=(event.target as HTMLElement).closest<HTMLButtonElement>('button[data-native]');if(!button)return;
   const operation=button.dataset.native;
+  // Stop/release remain operable while a native reply is pending. They do not
+  // replay a write, and the controller's lifetime/hold fence rejects old work.
+  if(operation==='hold'){controller.hold();update();return;}
+  if(operation==='disconnect'){await controller.release();update();return;}
+  if(busy)return;
+  // Capture the person's input before any returned basis updates the form.
+  const submitted=Object.fromEntries([...panel.querySelectorAll<HTMLInputElement|HTMLSelectElement|HTMLTextAreaElement>('[name]')].map(input=>[input.name,input.value]));
   busy=true;update();
   try{
    if(operation==='source'){
-    const path=query<HTMLInputElement>('[name="native-path"]').value.trim();
+    const path=submitted["native-path"].trim();
     const value=await port.request({operation:'source',path});const binding=JSON.parse(value.content);
     if(binding.schema!=='oi.native-expression-binding/v1')throw new Error('Source is not an oi.native-expression-binding/v1 document');
     const rate=binding.host?.field?.sample_rate;
@@ -84,23 +93,21 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
     source={path,revision:value.revision,sampleRate:rate};query('output[data-native-source]').textContent=`${path} · ${value.revision} · ${rate} Hz`;
     query<HTMLInputElement>('[name="native-scale"]').value=String(binding.presentation?.units_per_metre);
    }else if(operation==='connect'){
-    if(!source||source.path!==query<HTMLInputElement>('[name="native-path"]').value.trim())throw new Error('Reread the selected binding source before connecting');
+    if(!source||source.path!==submitted["native-path"].trim())throw new Error('Reread the selected binding source before connecting');
     await controller.connect(source.path,source.revision,source.sampleRate);muted=true;query('[data-native="mute"]').textContent='Unmute';onResumeApplication();
-   }else if(operation==='hold')controller.hold();
-   else if(operation==='resume'){await controller.resume();onResumeApplication();}
+   }else if(operation==='resume'){await controller.resume();onResumeApplication();}
    else if(operation==='mute'){muted=!muted;controller.setMuted(muted);button.textContent=muted?'Unmute':'Mute';}
-   else if(operation==='disconnect')await controller.release();
-   else if(operation==='scale')controller.setScale(Number(query<HTMLInputElement>('[name="native-scale"]').value));
+   else if(operation==='scale')controller.setScale(Number(submitted["native-scale"]));
    else if(operation==='follow'){controller.followDomain();query<HTMLInputElement>('[name="native-scale"]').value=String(controller.reading.presentation_units_per_metre);}
-   else if(operation==='operate')await controller.operate(JSON.parse(query<HTMLTextAreaElement>('[name="native-command"]').value));
-   else if(operation==='tick')await controller.editBasis({kind:'carrier-tick',tick12:Number(query<HTMLInputElement>('[name="native-tick"]').value)});
-   else if(operation==='row')await controller.editBasis({kind:'harmonic-row',row12:Number(query<HTMLInputElement>('[name="native-row"]').value)});
-   else if(operation==='transcription')await controller.editBasis({kind:'transcription',rna:query<HTMLSelectElement>('[name="native-rna"]').value==='true'});
-   else if(operation==='damping')await controller.editBasis({kind:'damping',mode_ref:query<HTMLSelectElement>('[name="native-mode"]').value,per_second:Number(query<HTMLInputElement>('[name="native-damping"]').value)});
+   else if(operation==='operate')await controller.operate(JSON.parse(submitted["native-command"]));
+   else if(operation==='tick')await controller.editBasis({kind:'carrier-tick',tick12:Number(submitted["native-tick"])});
+   else if(operation==='row')await controller.editBasis({kind:'harmonic-row',row12:Number(submitted["native-row"])});
+   else if(operation==='transcription')await controller.editBasis({kind:'transcription',rna:submitted["native-rna"]==='true'});
+   else if(operation==='damping')await controller.editBasis({kind:'damping',mode_ref:submitted["native-mode"],per_second:Number(submitted["native-damping"])});
    else if(operation==='axis'){
-    const turns=query<HTMLInputElement>('[name="native-turns"]').value.trim(),half_degrees=Number(query<HTMLInputElement>('[name="native-phase"]').value);
+    const turns=submitted["native-turns"].trim(),half_degrees=Number(submitted["native-phase"]);
     if(!/^(0|-?[1-9][0-9]*)$/.test(turns)||BigInt(turns)<-(1n<<63n)||BigInt(turns)>(1n<<63n)-1n||!Number.isInteger(half_degrees)||half_degrees<0||half_degrees>719)throw new Error('Native phase requires exact i64 turns and 0–719 half-degrees');
-    await controller.operate({operation:'set-axis',axis:Number(query<HTMLSelectElement>('[name="native-axis"]').value),phase:{turns,half_degrees}});
+    await controller.operate({operation:'set-axis',axis:Number(submitted["native-axis"]),phase:{turns,half_degrees}});
    }
    else if(operation==='inspect')query('pre[data-native-sources]').textContent=JSON.stringify(await controller.inspectSources(),null,2);
    else if(operation==='checkpoint')await controller.saveCheckpoint();
