@@ -1,0 +1,247 @@
+name: Bounded adoption native repair
+on:
+  push:
+    branches: [agent/adoption-lifecycle-20260920]
+    paths: [.github/workflows/adoption-native-repair.yml]
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.repository == 'EpiLogos/O-I' && github.ref == 'refs/heads/agent/adoption-lifecycle-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+          fetch-depth: 2
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: cli
+      - name: Exact-parent bounded source repair
+        run: |
+          set -euo pipefail
+          test "$(git rev-parse HEAD^)" = c796313a5d7de1466d2de7d1ad750443d637d8c0
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          expected = {
+              'cli/src/setup.rs':'db5eb60',
+              'cli/src/setup_command.rs':'8267c59',
+              'cli/src/setup_terminal.rs':'beba4cc',
+              'cli/tests/setup_lifecycle.rs':'c63de3e',
+              'desktop/cradle/kernel/src/setup.rs':'ba6295b',
+              '.github/workflows/verify.yml':'88820b6',
+          }
+          for path, blob in expected.items():
+              assert subprocess.check_output(['git','hash-object',path],text=True).startswith(blob), path
+          def replace(text, old, new):
+              assert text.count(old) == 1, old
+              return text.replace(old,new,1)
+          p=Path('cli/src/setup.rs'); s=p.read_text()
+          s=replace(s, '    let needs_ground = selected.iter().any(|id| id == "central") || adds_desktop;', '''    let needs_ground = selected.iter().any(|id| id == "central") || adds_desktop;
+              if selection.remove_products.iter().any(|id| id == "central")
+                  && (adds_desktop || (discovery.desktop["state"] == "installed" && selection.desktop != DesktopChoice::Remove))
+              {
+                  result.blocked.push("Central backs Desktop. Retain Central or explicitly remove Desktop in this same reviewed plan.".into());
+              }''')
+          s=replace(s, '#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]\npub struct StepRecord {', '''/// Independent observations never replace an operation's original receipt.
+          #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+          pub struct StepReadback {
+              pub observed_at_unix_ms: u64,
+              pub reading: Option<Value>,
+              pub error: Option<String>,
+          }
+          #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+          pub struct StepRecord {''')
+          s=replace(s, '    pub receipt: Option<Value>,\n    pub message:', '''    pub receipt: Option<Value>,
+              #[serde(default)]
+              pub invocation_error: Option<String>,
+              #[serde(default)]
+              pub readbacks: Vec<StepReadback>,
+              pub message:''')
+          s=replace(s, '                receipt: None,\n                message:', '                receipt: None,\n                invocation_error: None,\n                readbacks: Vec::new(),\n                message:')
+          s=replace(s, '''                        if let Some(receipt) = journal.records[index].receipt.as_mut() {
+                                      receipt["verification"] = reading;
+                                  }'''.replace('                                      ','                            ').replace('                                  }','                        }'), '''                        journal.records[index].readbacks.push(StepReadback { observed_at_unix_ms: now, reading: Some(reading), error: None });''')
+          s=replace(s, '''                    Err(error) => {
+                                  journal.records[index].message = Some(format!("The operation returned,'''.replace('                                  ','                        '), '''                    Err(error) => {
+                                  journal.records[index].readbacks.push(StepReadback { observed_at_unix_ms: now, reading: None, error: Some(error.clone()) });
+                                  journal.records[index].message = Some(format!("The operation returned,'''.replace('                                  ','                        '))
+          s=replace(s, '                journal.records[index].state = StepState::Unknown;\n                journal.records[index].message', '                journal.records[index].state = StepState::Unknown;\n                journal.records[index].invocation_error = Some(error.clone());\n                journal.records[index].message')
+          start=s.index('                journal.records[index].receipt = Some(\n                    json!({"recovered_by"')
+          end=s.index('\n            }\n            Err(_) => {',start)
+          s=s[:start]+'                journal.records[index].readbacks.push(StepReadback { observed_at_unix_ms: now, reading: Some(reading), error: None });'+s[end:]
+          s=replace(s, '            Err(_) => {\n                journal.records[index].state = match', '            Err(error) => {\n                journal.records[index].readbacks.push(StepReadback { observed_at_unix_ms: now, reading: None, error: Some(error) });\n                journal.records[index].state = match')
+          p.write_text(s)
+          p=Path('cli/src/setup_command.rs');s=p.read_text()
+          s=replace(s, '            plan.check_review(&approval, now)?;', '''            if let Err(reason) = plan.check_review(&approval, now) {
+                          return Ok(json!({"schema":adoption::SCHEMA,"disposition":"not_applied", "write_started":false,"review_token":plan.review_token,"reason":reason,"replayed":false}));
+                      }''')
+          for name in ['setup_interactive','setup_credentials_terminal','setup_configure_terminal']:
+              s=replace(s,f'return {name}();',f'return setup_terminal_finish({name}());')
+          p.write_text(s)
+          p=Path('cli/src/setup_terminal.rs');s=p.read_text()
+          s=replace(s, '// No raw-mode dependency. EOF/back/cancel never submits an operation.', '''// EOF/cancel exits the interaction; Back returns without submitting a form.
+          #[derive(Debug, PartialEq, Eq)]
+          enum SetupTerminalError { Cancelled, Failed(String) }
+          impl From<String> for SetupTerminalError { fn from(s: String) -> Self { Self::Failed(s) } }
+          impl From<&str> for SetupTerminalError { fn from(s: &str) -> Self { Self::Failed(s.into()) } }
+          fn setup_terminal_finish(result: Result<i32, SetupTerminalError>) -> Result<i32, String> {
+              match result {
+                  Ok(code) => Ok(code),
+                  Err(SetupTerminalError::Cancelled) => { println!("Setup cancelled. No new operation was submitted."); Ok(0) }
+                  Err(SetupTerminalError::Failed(message)) => Err(message),
+              }
+          }
+          fn setup_answer(line: Option<&str>, default: Option<&str>) -> Result<Option<String>, SetupTerminalError> {
+              let Some(line) = line else { return Err(SetupTerminalError::Cancelled); };
+              let answer = line.trim();
+              if matches!(answer, "q" | "quit" | "cancel") { return Err(SetupTerminalError::Cancelled); }
+              if matches!(answer, "b" | "back") { return Ok(None); }
+              Ok(Some(if answer.is_empty() { default.unwrap_or_default() } else { answer }.into()))
+          }''')
+          for old,new in [('Result<Option<String>, String>','Result<Option<String>, SetupTerminalError>'),('Result<Option<usize>, String>','Result<Option<usize>, SetupTerminalError>'),('Result<(), String>','Result<(), SetupTerminalError>'),('Result<Option<Value>, String>','Result<Option<Value>, SetupTerminalError>')]: s=s.replace(old,new)
+          for name in ['setup_interactive','setup_begin_work','setup_configure_terminal','setup_credentials_terminal']: s=replace(s,f'fn {name}() -> Result<i32, String>',f'fn {name}() -> Result<i32, SetupTerminalError>')
+          a=s.index('        return Ok(None);',s.index('fn setup_ask')); b=s.index('\n}\nfn setup_choose',a)
+          s=s[:a]+'''        return setup_answer(None, default);
+              }
+              setup_answer(Some(&line), default)'''+s[b:]
+          s=replace(s,'    loop {\n        let status = setup_handle','    let mut selection = AdoptionSelection::default();\n    \'entry: loop {\n        let status = setup_handle')
+          s=replace(s,'setup_discovery(&AdoptionSelection::default())?','setup_discovery(&selection)?')
+          a=s.index('        let mut selection = AdoptionSelection {');b=s.index('\n        if choice.hosted',a)
+          s=s[:a]+'''        if selection.composition != choice.id {
+                      selection.composition = choice.id.clone();
+                      selection.products.clear();
+                  }'''+s[b:]
+          a=s.index('        if choice.id == "custom" {');b=s.index('        let Some(desktop)',a)
+          s=s[:a]+replace(s[a:b], '                else {\n                    break;\n                };','                else {\n                    continue \'entry;\n                };')+s[b:]
+          a=s.index('        let Some(desktop)')
+          s=s[:a]+'''        let managed = discovery.products.iter().filter(|p| p.managed).collect::<Vec<_>>();
+                  if !managed.is_empty() {
+                      loop {
+                          let labels = managed.iter().map(|p| format!("{} {}", if selection.remove_products.contains(&p.id) { "[remove]" } else { "[keep]" }, p.title))
+                              .chain(std::iter::once("Continue without other removals".into())).collect::<Vec<_>>();
+                          let Some(index) = setup_choose("Optional receipt-owned removals (human source is retained)", &labels)? else { continue 'entry; };
+                          if index == managed.len() { break; }
+                          let id = &managed[index].id;
+                          if selection.remove_products.contains(id) { selection.remove_products.retain(|p| p != id); }
+                          else { selection.remove_products.push(id.clone()); }
+                      }
+                  }
+          '''+s[a:]
+          s=replace(s,'Some(&discovery.suggested_ground)','selection.ground.as_deref().or(Some(&discovery.suggested_ground))')
+          s=replace(s,'setup_make_plan(selection, prelocal_now_ms()','setup_make_plan(selection.clone(), prelocal_now_ms()')
+          s=replace(s,'"aikit".into(), "tui".into()','"aikit".into(), "ui".into()')
+          s=replace(s,'.args(["aikit", "tui"])','.args(["aikit", "ui"])')
+          s=replace(s,'    )?\n}\nfn setup_terminal_value','    )?.map_err(SetupTerminalError::from)\n}\nfn setup_terminal_value')
+          s+='''
+          #[cfg(test)]
+          mod setup_terminal_navigation_tests {
+              use super::*;
+              #[test]
+              fn cancel_and_eof_never_mean_accept_or_back() {
+                  for answer in [None, Some("q"), Some("quit\\n"), Some(" cancel ")] {
+                      assert_eq!(setup_answer(answer, Some("apply")), Err(SetupTerminalError::Cancelled));
+                  }
+                  assert_eq!(setup_answer(Some("back"), None), Ok(None));
+                  assert_eq!(setup_answer(Some("b"), Some("apply")), Ok(None));
+                  assert_eq!(setup_answer(Some(""), Some("keep")), Ok(Some("keep".into())));
+                  assert_eq!(setup_answer(Some("apply"), None), Ok(Some("apply".into())));
+              }
+          }
+          ''';p.write_text(s)
+          p=Path('cli/tests/setup_lifecycle.rs');s=p.read_text();s+='''
+          #[test]
+          fn recovery_keeps_original_receipts_and_failed_observations() {
+              let p=planned(); let mut owner=Owner::new(p.clone()); owner.unreadable=true;
+              let mut store=MemoryStore::default();
+              let j=apply(&mut owner,&mut store,p.clone(),&p.review_token,1001).unwrap();
+              assert_eq!(j.records[0].receipt,Some(json!({"native_receipt":0})));
+              assert_eq!(j.records[0].readbacks[0].error.as_deref(),Some("owner unavailable"));
+              let original=j.records[0].receipt.clone();
+              let j=recheck(&mut owner,&mut store,j,1100).unwrap(); owner.unreadable=false;
+              let j=recheck(&mut owner,&mut store,j,1200).unwrap();
+              let j=recheck(&mut owner,&mut store,j,1300).unwrap();
+              assert_eq!(j.records[0].receipt,original); assert_eq!(j.records[0].readbacks.len(),4);
+              assert!(j.records[0].readbacks[0].error.is_some()); assert!(j.records[0].readbacks[1].error.is_some());
+              assert_eq!(j.records[0].readbacks[2].reading,Some(json!({"actual_effect":0})));
+              assert_eq!(j.records[0].state,StepState::Verified); assert_eq!(owner.invocations,1);
+          }
+          #[test]
+          fn independent_readback_retains_a_lost_receipt_and_invocation_failure() {
+              let p=planned(); let mut owner=Owner::new(p.clone()); owner.fail_invocation=Some(1);
+              let mut store=MemoryStore::default(); let j=apply(&mut owner,&mut store,p.clone(),&p.review_token,1001).unwrap();
+              let error=j.records[0].invocation_error.clone(); assert!(error.is_some());
+              let j=recheck(&mut owner,&mut store,j,1100).unwrap(); assert!(j.records[0].receipt.is_none());
+              assert_eq!(j.records[0].invocation_error,error);
+              assert_eq!(j.records[0].readbacks[0].reading,Some(json!({"actual_effect":0})));
+              assert_eq!(j.records[0].state,StepState::Verified); assert_eq!(owner.invocations,1);
+          }
+          #[test]
+          fn old_journals_remain_readable_without_losing_receipts() {
+              let p=planned(); let mut owner=Owner::new(p.clone());
+              let j=apply(&mut owner,&mut MemoryStore::default(),p.clone(),&p.review_token,1001).unwrap();
+              let mut old=serde_json::to_value(&j).unwrap();
+              for r in old["records"].as_array_mut().unwrap() { let r=r.as_object_mut().unwrap(); r.remove("readbacks"); r.remove("invocation_error"); }
+              let restored:Journal=serde_json::from_value(old).unwrap();
+              assert!(restored.records.iter().all(|r|r.readbacks.is_empty()));
+              assert_eq!(restored.records[0].receipt,j.records[0].receipt);
+          }
+          #[test]
+          fn removing_central_cannot_strand_desktop() {
+              let mut d=discovery(); d.desktop=json!({"state":"installed"});
+              for p in &mut d.products { p.managed=true; p.present=true; p.registered=true; }
+              let mut selection=Selection{composition:"custom".into(),products:vec![],remove_products:vec!["central".into()],..Default::default()};
+              let blocked=plan(selection.clone(),d.clone(),Ok(None),1000).unwrap();
+              assert!(blocked.blocked.iter().any(|r|r.contains("Central backs Desktop")));
+              selection.desktop=DesktopChoice::Remove;
+              let allowed=plan(selection,d,Ok(Some(json!({"remove":"owned desktop"}))),1000).unwrap();
+              assert!(allowed.blocked.is_empty(),"{:?}",allowed.blocked);
+              let desktop=allowed.steps.iter().position(|s|s.operation==Operation::RemoveDesktop).unwrap();
+              let central=allowed.steps.iter().position(|s|s.operation==Operation::RemoveProduct{product:"central".into()}).unwrap();
+              assert!(desktop<central);
+          }
+          ''';p.write_text(s)
+          p=Path('desktop/cradle/kernel/src/setup.rs');p.write_text(replace(p.read_text(),'Some(0 | 1 | 2)','Some(0..=2)'))
+          p=Path('.github/workflows/verify.yml');s=p.read_text();a=s.index('          # Bootstrap establishes a default work-placement policy');b=s.index('          # Fresh-ground machine adoption',a)
+          s=s[:a]+'''          # Installation is not Recognition of new Agent authority. Preserve
+                    # ordinary Project/doctor checks, and assert no fabricated grants.
+                    assert list((root / "Control/user").iterdir()) == [], "unapproved Control/user mutation"
+                    relations_path = root / "Control/relations/source-relations.json"
+                    relations = json.load(open(relations_path)) if relations_path.exists() else {"relations": []}
+                    assert not any("work-placement-policy" in r.get("roles", []) or "native-action-authority" in r.get("roles", []) for r in relations["relations"]), "installation fabricated authority Recognition"
+          '''.replace('                    ','          ')+s[b:];p.write_text(s)
+          changed=set(subprocess.check_output(['git','diff','--name-only'],text=True).splitlines())
+          assert changed==set(expected), changed
+          PY
+          rustfmt --edition 2021 cli/src/setup.rs cli/src/setup_command.rs cli/src/setup_terminal.rs cli/tests/setup_lifecycle.rs desktop/cradle/kernel/src/setup.rs
+          git diff --check
+          git diff > /tmp/adoption-native-repair.patch
+      - name: Compile and test the native implementation before publishing
+        run: |
+          set -euo pipefail
+          cargo test --manifest-path cli/Cargo.toml --locked --all-targets 2>&1 | tee /tmp/adoption-repair-tests.log
+          cargo clippy --manifest-path cli/Cargo.toml --locked --all-targets -- -D warnings 2>&1 | tee /tmp/adoption-repair-clippy.log
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked 2>&1 | tee /tmp/adoption-repair-kernel.log
+          cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets -- -D warnings
+      - name: Commit bounded source and remove this one-shot writer
+        run: |
+          set -euo pipefail
+          git rm .github/workflows/adoption-native-repair.yml
+          git add cli/src/setup.rs cli/src/setup_command.rs cli/src/setup_terminal.rs cli/tests/setup_lifecycle.rs desktop/cradle/kernel/src/setup.rs .github/workflows/verify.yml
+          git diff --cached --check
+          git config user.name 'O:I adoption implementation'
+          git config user.email 'noreply@openai.com'
+          git commit -m 'fix(adoption): preserve native receipts, terminal cancellation and exact installation scope'
+          git rev-parse HEAD | tee /tmp/adoption-repair-head.txt
+          git push origin HEAD:refs/heads/agent/adoption-lifecycle-20260920
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adoption-native-repair-${{ github.run_id }}
+          path: /tmp/adoption-*
+          retention-days: 5
