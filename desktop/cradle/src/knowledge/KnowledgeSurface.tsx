@@ -7,6 +7,8 @@ import {graphAddress,isHostedNode,readGraph,type GraphNode,type GraphReading} fr
 import {sharedField,type SharedFieldReading} from "./shared-field";
 import {freeGraphRegion,useDetailGeometry} from "./detailGeometry";
 import {accommodate,unaccommodate} from "./camera";
+import {GraphFilters} from "./GraphFilters";
+import {filterGraph,restoreGraphFilters,restoreSavedGraphViews,type GraphFilters as GraphFilterState,type SavedGraphView} from "./filters";
 import {GraphCanvas} from "./GraphCanvas";
 import {useLayout} from "./useLayout";
 import {NodeDetails,ReadingBody,type OpenKnowledge} from "./NodeDetails";
@@ -15,16 +17,17 @@ import {useFrameSample} from "./useFrameSample";
 import {KnowledgeExpression} from "./KnowledgeExpression";
 import {Loading} from "../shared/Loading";
 import "./knowledge.css";
+import "./filters.css";
 import {Glyph} from "../workspace/Glyph";
 
 type Camera={zoom:number;x:number;y:number};
-type Visit={query:string;selected?:string;camera:Camera;overviewCamera?:Camera};
-type Travel={visits:Visit[];index:number};
+type Visit={query:string;selected?:string;camera:Camera;overviewCamera?:Camera;filters?:GraphFilterState};
+type Travel={visits:Visit[];index:number;saved?:SavedGraphView[]};
 const origin=():Camera=>({zoom:1,x:0,y:0});
 function restore(id:string):Travel {
   try {
     const saved=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-travel.v1:${id}`)??"null");
-    if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return saved;
+    if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return {...saved,saved:restoreSavedGraphViews(saved.saved)};
     const camera=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-view.v1:${id}`)??"null");
     if(camera&&[camera.zoom,camera.x,camera.y].every(Number.isFinite)&&camera.zoom>=.15&&camera.zoom<=4)return {visits:[{query:"",camera}],index:0};
   }catch{/* Invalid view state never alters an owner reading. */}
@@ -35,6 +38,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const [travel,setTravel]=useState(()=>restore(binding.id));
   const visit=travel.visits[travel.index];
   const {camera}=visit;
+  const filters=useMemo(()=>restoreGraphFilters(visit.filters),[visit.filters]);
   const [detailNode,setDetailNode]=useState<GraphNode>();
   const [reading,setReading]=useState<KnowledgeReading>();
   // A hosted node (Shared Field) reads through the kernel's shared_field op
@@ -55,16 +59,21 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const grouped=useMemo(()=>subjects(model),[model]);
   const nodes=useMemo(()=>grouped.map(s=>s.node),[grouped]);
   const visibleModel=useMemo(()=>model?{...model,nodes}:undefined,[model,nodes]);
-  const focused=useMemo(()=>neighbourhood(model,visit.selected),[model,visit.selected]);
+  const filtered=useMemo(()=>visibleModel?filterGraph(visibleModel,filters,visit.selected):undefined,[visibleModel,filters,visit.selected]);
+  const displayedModel=useMemo(()=>visibleModel&&filtered?{...visibleModel,nodes:filtered.nodes,edges:filtered.edges}:undefined,[visibleModel,filtered]);
+  const focused=useMemo(()=>neighbourhood(displayedModel,visit.selected),[displayedModel,visit.selected]);
   // Exact-ref grouping is visual only; all owner rows remain in detail disclosures.
   // Missing endpoints remain explicit in each subject’s related list.
   const layout=useLayout(visibleModel);
   const positions=layout.points;
+  const displayedPositions=useMemo(()=>{const byRef=new Map(nodes.map((node,i)=>[node.ref,positions[i]]));return filtered?.nodes.map(node=>byRef.get(node.ref)!)??[];},[nodes,positions,filtered]);
+  const changeFilters=(value:GraphFilterState)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,filters:restoreGraphFilters(value)}:v)}));
+  const saveViews=(saved:SavedGraphView[])=>setTravel(t=>({...t,saved:restoreSavedGraphViews(saved)}));
   const region=detailNode?freeGraphRegion(detailGeometry.rect,extent):visit.selected?{x:0,y:0,...extent}:undefined;
   const anchor=positions[nodes.findIndex(node=>node.ref===visit.selected)]??{x:400,y:260};
   const presentation=region?accommodate(camera,anchor,region,extent):camera;
   const setCamera=(change:(camera:Camera)=>Camera)=>setTravel(t=>({...t,visits:t.visits.map((v,i)=>i===t.index?{...v,camera:change(v.camera)}:v)}));
-  const push=(next:Visit)=>setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),next].slice(-32);return {visits,index:visits.length-1};});
+  const push=(next:Visit)=>setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),next].slice(-32);return {...t,visits,index:visits.length-1};});
   const back=(delta:number)=>{setDetailNode(undefined);focusContent.current=true;setTravel(t=>({...t,index:Math.max(0,Math.min(t.visits.length-1,t.index+delta))}));};
   useEffect(()=>{const release=(event:Event)=>{if(event instanceof StorageEvent?event.key!==`oi-cradle.knowledge-travel.v1:${binding.id}`:(event as CustomEvent).detail!==binding.id)return;setDetailNode(undefined);setTravel(restore(binding.id));};window.addEventListener("oi:graph-release",release);window.addEventListener("storage",release);return()=>{window.removeEventListener("oi:graph-release",release);window.removeEventListener("storage",release);};},[binding.id]);
   const latestTravel=useRef(travel);latestTravel.current=travel;
@@ -95,16 +104,26 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     return()=>{active=false;};
   },[model,detailNode,visit.selected,travel.index,binding.ref,binding.project,generation,transport]);
   useEffect(()=>{if(focusContent.current&&(reading||readError)){focusContent.current=false;content.current?.focus({preventScroll:true});}},[reading,readError]);
-  const open=useCallback((node:GraphNode)=>{setDetailNode(node);setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),{...t.visits[t.index],selected:node.ref,overviewCamera:t.visits[t.index].overviewCamera??t.visits[t.index].camera,camera:{...t.visits[t.index].camera,zoom:Math.max(.75,t.visits[t.index].camera.zoom),x:0,y:0}}].slice(-32);return {visits,index:visits.length-1};});},[]);
+  const open=useCallback((node:GraphNode)=>{setDetailNode(node);setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),{...t.visits[t.index],selected:node.ref,overviewCamera:t.visits[t.index].overviewCamera??t.visits[t.index].camera,camera:{...t.visits[t.index].camera,zoom:Math.max(.75,t.visits[t.index].camera.zoom),x:0,y:0}}].slice(-32);return {...t,visits,index:visits.length-1};});},[]);
   const release=()=>{if(!visit.selected&&!detailNode)return;setDetailNode(undefined);push({...visit,selected:undefined,camera:visit.overviewCamera??visit.camera,overviewCamera:undefined});};
   const related=detailNode?model?.edges.filter(e=>e.from_ref===detailNode.ref||e.to_ref===detailNode.ref)??[]:[];
   const commitCamera=(next:{zoom:number;x:number;y:number})=>{const camera=region?unaccommodate(next,anchor,region,extent):next;const current=latestTravel.current;const updated={...current,visits:current.visits.map((v,i)=>i===current.index?{...v,camera}:v)};latestTravel.current=updated;setTravel(updated);persist();};
 
-  const fitView=()=>{if(!positions.length)return;const left=Math.min(...positions.map(p=>p.x)),right=Math.max(...positions.map(p=>p.x)),top=Math.min(...positions.map(p=>p.y)),bottom=Math.max(...positions.map(p=>p.y));const zoom=Math.max(.15,Math.min(2,(extent.width-96)/Math.max(1,right-left),(extent.height-96)/Math.max(1,bottom-top)));setDetailNode(undefined);push({...visit,selected:undefined,overviewCamera:undefined,camera:{zoom,x:(400-(left+right)/2)*zoom,y:(260-(top+bottom)/2)*zoom}});};
+  const fitView=()=>{
+    if(!displayedPositions.length)return;
+    let left=Infinity,right=-Infinity,top=Infinity,bottom=-Infinity;
+    for(const point of displayedPositions){left=Math.min(left,point.x);right=Math.max(right,point.x);top=Math.min(top,point.y);bottom=Math.max(bottom,point.y);}
+    const zoom=Math.max(.15,Math.min(2,(extent.width-96)/Math.max(1,right-left),(extent.height-96)/Math.max(1,bottom-top)));
+    const fitted={zoom,x:(400-(left+right)/2)*zoom,y:(260-(top+bottom)/2)*zoom};
+    setDetailNode(undefined);
+    setCamera(()=>visit.selected?unaccommodate(fitted,anchor,{x:0,y:0,...extent},extent):fitted);
+  };
   return <section className="knowledge-surface" aria-label="Knowledge surface" aria-busy={busy}>
     {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
-      <GraphCanvas nodes={nodes} positions={positions} model={model} camera={presentation} selected={visit.selected} focused={focused} minZoom={.15} maxZoom={4} onCamera={commitCamera} onOpen={open} onClear={release}/>
+      <GraphCanvas nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={.15} maxZoom={4} onCamera={commitCamera} onOpen={open} onClear={release}/>
+      {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} filters={filters} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews}/>}
+      {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.15,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
       {model&&visit.selected&&nodes.find(node=>node.ref===visit.selected)&&<div className="knowledge-expression-bar" style={detailNode&&region?{left:region.x+8,top:region.y+8,right:extent.width-region.x-region.width+8,bottom:extent.height-region.y-region.height+8}:undefined}><div className="knowledge-expression-selection oi-action-group"><button className="oi-action" aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button className="oi-action" aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button></div><KnowledgeExpression surface={binding.id} project={binding.project} address={graphAddress(nodes.find(node=>node.ref===visit.selected)!)} locus={nodes.find(node=>node.ref===visit.selected)!} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref)??[])} follow={follow}/></div>}
       {detailNode&&<NodeDetails node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}

@@ -6,12 +6,13 @@ export interface GraphProvenance {source:string;revision?:string;detail?:string[
 /** Hosted kinds are the Shared Field's own Explore entry kinds prefixed
  * `hosted-` (kernel `graph.rs`, input 3); their refs are world-qualified. */
 export type HostedGraphKind="hosted-central-world"|"hosted-wiki-space"|"hosted-wiki-node"|"hosted-curated-artifact"|"hosted-contribution";
-export interface GraphNode {ref:string;kind:"wiki-space"|"wiki-node"|"file"|"flow"|"skill"|"knowledge-subject"|HostedGraphKind;label:string;native_owner:string;provenance:GraphProvenance;actions:string[]}
+export interface GraphNode {ref:string;kind:"wiki-space"|"wiki-node"|"file"|"flow"|"skill"|"knowledge-subject"|HostedGraphKind;label:string;native_owner:string;provenance:GraphProvenance;actions:string[];tags?:string[];aliases?:string[]}
 /** Wiki relations are the owner's four spellings; hosted Explore relations
  * arrive verbatim (`wiki.contains`, `oi.world/wiki-space`, `oi.world/artifact`, …). */
 export interface GraphEdge {relation:"space-child-space"|"space-node"|"node-space"|"node-source"|(string&{});from_ref:string;to_ref:string;provenance:GraphProvenance}
 export type GraphInput = {state:"available";owner_operation:string;detail?:string}|{state:"unavailable"|"deferred";owner_operation:string;detail:string};
-export interface GraphReading {schema:"oi.cradle.graph-reading/v1";nodes:GraphNode[];edges:GraphEdge[];inputs:Record<"central_wiki"|"aikit_resolution"|"shared_field",GraphInput>;counts:{spaces:number;wiki_nodes:number;knowledge_rows:number;hosted_rows?:number;nodes:number;edges:number}}
+export interface GraphFormation {ref:string;members:{ref:string;role?:string}[];shape_ref?:string}
+export interface GraphReading {formations?:GraphFormation[];truncated?:boolean;schema:"oi.cradle.graph-reading/v1";nodes:GraphNode[];edges:GraphEdge[];inputs:Record<"central_wiki"|"aikit_resolution"|"shared_field",GraphInput>;counts:{spaces:number;wiki_nodes:number;knowledge_rows:number;hosted_rows?:number;nodes:number;edges:number}}
 /** A node the hosted Shared Field disclosed: read through the kernel's
  * `shared_field` op, never through a local knowledge address. */
 export const isHostedNode=(node:Pick<GraphNode,"native_owner">)=>node.native_owner==="shared-field";

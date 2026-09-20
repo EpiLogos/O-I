@@ -1,10 +1,41 @@
-import {useEffect,useState} from 'react';
+import {useEffect,useMemo,useRef,useState} from 'react';
 import type {GraphReading} from './graph';
 import type {Point} from './layout';
-const empty:Point[]=[];
-/** Cancel obsolete layout work; the UI never runs the spatial solver. */
+import {pointsForReading,topologyKey} from './layoutIdentity';
+
+/** One worker per live graph view. Publication is generation-checked and prior
+ * positions remain usable while changed topology is solved. */
 export function useLayout(reading:GraphReading|undefined):{points:Point[];error?:string} {
-  const [result,setResult]=useState<{reading:GraphReading;points:Point[];error?:string}>();
-  useEffect(()=>{if(!reading)return;let worker:Worker;try{worker=new Worker(new URL('./layout.worker.ts',import.meta.url),{type:'module'});worker.onmessage=(event:MessageEvent<{points?:Point[];error?:string}>)=>{setResult({reading,points:event.data.points??[],error:event.data.error});worker.terminate();};worker.onerror=event=>{setResult({reading,points:[],error:event.message||'Graph layout failed'});worker.terminate();};worker.postMessage(reading);}catch(error){setResult({reading,points:[],error:String(error)});return;}return()=>worker.terminate();},[reading]);
-  return result&&result.reading===reading?result:{points:empty};
+  const worker=useRef<Worker>();
+  const generation=useRef(0);
+  const pending=useRef<{generation:number;reading:GraphReading}>();
+  const [result,setResult]=useState<{positions:Map<string,Point>;error?:string}>(()=>({positions:new Map()}));
+  const key=useMemo(()=>reading?topologyKey(reading):undefined,[reading]);
+  const latest=useRef(reading);latest.current=reading;
+  useEffect(()=>{
+    let instance:Worker;
+    try {
+      instance=new Worker(new URL('./layout.worker.ts',import.meta.url),{type:'module'});
+      worker.current=instance;
+      instance.onmessage=(event:MessageEvent<{generation:number;points?:Point[];error?:string}>)=>{
+        const request=pending.current;
+        if(!request||request.generation!==event.data.generation)return;
+        const points=event.data.points;
+        if(event.data.error||!points||points.length!==request.reading.nodes.length){
+          setResult(current=>({...current,error:event.data.error??'Graph layout returned mismatched points'}));return;
+        }
+        setResult({positions:new Map(request.reading.nodes.map((node,index)=>[node.ref,points[index]])),error:undefined});
+      };
+      instance.onerror=event=>setResult(current=>({...current,error:event.message||'Graph layout failed'}));
+    } catch(error) {setResult(current=>({...current,error:String(error)}));return;}
+    return()=>{++generation.current;pending.current=undefined;worker.current=undefined;instance.terminate();};
+  },[]);
+  useEffect(()=>{
+    const current=latest.current;
+    if(!current||!worker.current)return;
+    const id=++generation.current;
+    pending.current={generation:id,reading:current};
+    worker.current.postMessage({generation:id,reading:current});
+  },[key]);
+  return {points:pointsForReading(reading,result.positions),error:result.error};
 }
