@@ -50,7 +50,7 @@ try{
   for(const m of r.members){assert.equal(m.id,m.content.id);const p=manifestPath.slice(0,manifestPath.lastIndexOf('/'))+'/'+m.file;assert.deepEqual(m.content,JSON.parse(files.get(p)));assert.equal((await readFile(transport,m.location)).content,files.get(p));}
   firstMember??=r.members[0];corpora.push({manifest:manifestPath,manifestRevision:r.basis.revision,subjects:r.members.map(m=>({id:m.id,ref:m.location.ref,revision:m.source_revision})),directoryRef:nativeDirectory.location.ref});
  }
- check('every committed collection member matches its native source, content and revision',corpora.reduce((n,c)=>n+c.subjects.length,0)===49);
+ check('every committed collection member matches its native source, content and revision (40 legacy + 9 essay/rooms + 43 E0 corpus = 92)',corpora.reduce((n,c)=>n+c.subjects.length,0)===92);
  // Production native collection operation through Central file CAS. The real
  // authored manifest/member bytes above are not reduced to a toy schema.
  const name=realManifests[0],manifestPath='Work/O-I/desktop/cradle/expressions-app/'+name;

@@ -1,0 +1,1237 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-avatar-image-mask-idol",
+  "name": "Avatar · image · mask · idol",
+  "description": "The authored ecology in sequence: presence becoming addressable, the image gathering force, the mask's passage into self-administration, the idol's closure, the counterfeit and the liar's dividend, and regard returning through the form.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-ava-0-avatar",
+      "name": "Presence becomes addressable through a form",
+      "character": "A face turns towards someone; a name lets the person be called again; a role gives an undertaking a recognisable place. The form's finitude lets encounter occur here, between these participants.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e516",
+          "name": "the avatar — descent into a form that can act",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.433,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Avatar",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st559",
+                "text": "Avatar",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e517",
+          "name": "the commissioned representative — authority within a commission, answerable to what was entrusted",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st560",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e518",
+          "name": "the prompt already a determination — A28's recursive relation",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st561",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0–#1 · the four-office ecology; A28 authored ground and positional delegation",
+          "title": "Presence becomes addressable through a form",
+          "italic": "The avatar embodies effective finite presence: not made unreal by having an appearance, but given an occasion on which it can matter — and answer for what the representation does.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Presence becomes addressable through a form. A face turns towards someone; a name lets that person be called again; a gesture carries an intention into a shared situation; a role gives an undertaking a recognisable place. Someone can now be met, remembered, trusted, opposed or answered. The whole begins with this gift of mediation: a person does not first become complete in isolation and then add a public mask — language, expression, histories of recognition and shared practices participate in the life that appears. Yet no achieved presentation finishes that life: the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "person named can answer differently; the one approached through a role can question what the role permits. In this authored use, descent names the movement into a form that can act — a voice rather than every possible voice, an entrusted representative rather than an undertaking with no bearer. A representative can speak authoritatively within a commission while the statement remains answerable to what was entrusted; even the original instruction is already a formulation — A28 grounds the recursive relation, authority exact and effective without becoming absolute sourcehood.\n\nOccurrences: the naming and role (#0, taken up as mask at #3); the entrusted commission (#1, returned at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ava-1-image",
+      "name": "The image gathers force",
+      "character": "Attention returns to it; desire organises around it; a picture that once expressed a situation becomes a measure for the next. The Bimba/pratibimba recursion gives real local authority.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e519",
+          "name": "the image — gathering attention, desire, expectation",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.27,
+            "z": 0
+          },
+          "size": {
+            "x": 0.491,
+            "y": 0.491
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.8,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st562",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e520",
+          "name": "the organising complex — the field of response around a consequential formation",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st563",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e521",
+          "name": "Bimba locally · pratibimba widely — authority with a determinate scope",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "C38",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st564",
+                "text": "C38",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e522",
+          "name": "the test — can the encountered source still alter what the image means?",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "?",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st565",
+                "text": "?",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Symbolon Dynamics; the Neumann ground; A20's authority test",
+          "title": "The image gathers force",
+          "italic": "The decisive change is in authority: whether the encountered source can still alter what the image is allowed to mean and do — a vivid image is not thereby an idol.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The image makes presence available under a particular arrangement — faithful without being exhaustive; selection gives recognition its precision. The source/reflection distinction has direction: a reflection can be encountered first in time while remaining dependent on what it reflects; within a declared Context Frame an achieved image can genuinely occupy Bimba, the local original, while remaining pratibimba relative to wider sources — authority real at the scale of the inquiry, and idolisation beginning when it prevents its own source relation from being questioned. The image gathers force: attention returns to it, desire and fear organise around it, expectations make",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "some possibilities vivid. Symbolon Dynamics gives the native reciprocal movement — archetypal capacity, particular image and organising complex with different offices. The Neumann whole grounds the archetypal structuration through which the ecology takes form. Libido, prāṇa and Śakti name different registers of efficacy — psychic investment, living circulation, manifestation-power — coordinated in Taylor's synthesis without a common physical measurement. A form that has held a life together has a claim upon attention; the test is what this coherence can receive: if every encounter must confirm it, apparent fidelity protects the image from the relation that made it significant.\n\nOccurrences: the gathered attention and valuation (#2, captured at #4); the libido/prāṇa/Śakti registers (#2); the Bimba office (#1, returned at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ava-2-mask",
+      "name": "The mask: participation becoming self-administration",
+      "character": "The mask opens doors while narrowing what can pass through them; Number Six stages the distinction sharply.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2e2e2e",
+          "#6b6b6b",
+          "#b0413e",
+          "#e3ddd0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e523",
+          "name": "the mask — the interface of participation",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.261,
+            "y": 0.313
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st566",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e524",
+          "name": "the anticipated count — editing what can be shown; the unapproved response as defect",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": 0.25,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#b0413e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st567",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e525",
+          "name": "Number Six — the assigned number; Two's office changing; One questioned",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "6",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st568",
+                "text": "6",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the Prisoner appointment; the chameleon seam held for its own recovery",
+          "title": "The mask: participation becoming self-administration",
+          "italic": "The mask demonstrates access conditioned on presentation: what began as an interface becomes an internal criterion — and replacing an administrator does not alone make the governing relation answerable.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The image becomes a mask when it offers a way to enter a social field: language, manner, clothing, credentials and the expectations of a role make someone legible. A mask can protect an intimacy, sustain a public obligation, let a person exercise capacities that would otherwise have no recognised place — learning to wear it is an achievement of participation, with no demand for complete exposure. The pressure appears when access depends upon the presentation so completely that its bearer must administer life according to the recognising field's measure: the person anticipates what will count, edits what can be shown, and may receive an unapproved response as a defect in the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "self. The mask continues to open doors while narrowing the life that can pass through them. The Prisoner stages the distinction sharply: the abducted agent designated Number Six, the office of Number Two changing occupants, Number One the question — numbering gives the administrative office continuity while giving the captive an identity the institution can administer; the question about power's source is diverted into power's classification of the questioner. Fall Out returns the question through masks and Six's own face, then through an unresolved London return. The Fanonian and biographical development of the chameleon seam is held for a separate source-bearing recovery.\n\nDeclared cross-story: the Prisoner and Daphne and Job appointments of the quilt's ecology, each whole retaining its own home. ↳ Occurrences: the opening doors and narrowing life (#3); Six's assigned number (#3, whole at the-prisoner).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ava-3-idol",
+      "name": "The idol closes the path through the image",
+      "character": "The bearer visible, perhaps more widely represented, while losing the ability to change the terms of the representation. Daphne's laurel; Job's protected account; the deepfake forges provenance itself.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e526",
+          "name": "the laurel — the emblem continuing after the living withdrawal",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st569",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e527",
+          "name": "the protected account — contradiction classified as the judged person's defect",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.156,
+            "y": 0.156
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st570",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e528",
+          "name": "the deepfake — a counterfeit Symbolon: body joined to utterance, source to sign, forged",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.38,
+            "z": 0
+          },
+          "size": {
+            "x": 0.361,
+            "y": 0.361
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st571",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e529",
+          "name": "the liar's dividend — counterfeiting making the genuine record refusable",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∴",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st572",
+                "text": "∴",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · the Ovid, Job and deepfake appointments; A18's fabricated slash; A32's next encounter",
+          "title": "The idol closes the path through the image",
+          "italic": "The deepfake demonstrates the closure at the claimed seam itself: not merely a false proposition but forged provenance — and then the possibility of counterfeiting becomes a reason to refuse the genuine instance.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The idol closes the path through the image: the bearer remains visible, perhaps more widely represented than before, while losing the ability to change the terms under which the representation acts. The category is permitted to know the person before encounter; contrary speech is classified as further evidence. Ovid's sequence gives continued efficacy a body: Daphne's prior refusal and Peneus's grant precede the pursuit; the changed body still feels, recoils from the kiss, and is claimed for Apollo's emblems — with the seeming assent retained and neither detail authorising uncomplicated consent. The emblem's power continues after possession of the living other has failed. Job tests a different image: an account of",
+          "x": 0.04,
+          "y": 0.42,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "divine justice defended by making Job the guilty person it needs; the whirlwind changes the field, the friends are rebuked, restoration passes through his intercession — the protected-account reading follows who can be heard; Jung's §§614–617 comparison keeps its own attributed office. The deepfake carries the closure into the claimed seam itself: a fabricated recording forges the apparent provenance by which a proposition asks to be trusted — a disclosed fiction has a different source claim. The second-order mechanism, often named the liar's dividend, follows: once fabrication is available as explanation, a real witness can be dismissed as another synthetic appearance. No prevalence or documented case is established here.\n\nDeclared cross-story: the Apollo–Eros–Daphne–Peneus whole figures emblematic possession after withdrawal; the Job whole figures the witness the protected account must hear. ↳ Occurrences: the laurel's continuation (#4); the protected account (#4); the forged provenance and the dividend (#4, returned at #5→0).",
+          "x": 0.545,
+          "y": 0.42,
+          "width": 570,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ava-5-return",
+      "name": "Regard returns through the form",
+      "character": "The answer need not confirm the first question. Maintained personhood: continuity of address without ownership of the person addressed.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e530",
+          "name": "regard — the disclosed criterion and the answer that can change it",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.41,
+            "z": 0
+          },
+          "size": {
+            "x": 0.678,
+            "y": 0.575
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st573",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e531",
+          "name": "the entrusted avatar remaining powerful — source office inspectable and revisable (A28)",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A28",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st574",
+                "text": "A28",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e532",
+          "name": "withdrawal as an answer the representation must learn to receive",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "←",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st575",
+                "text": "←",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e533",
+          "name": "the Symbol/Account/Trust circuit — all four operations through the ecology",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "ΣΛΤ",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st576",
+                "text": "ΣΛΤ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · the Arbitration field at register 3; A27, A30; the Neumann relation without ego-chronology",
+          "title": "Regard returns through the form",
+          "italic": "The whole returns-to its consumers as Mytheme: the tellings make the relations lived and legible — and the image's continuing integrity lies in allowing the life it carries to answer back.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Regard returns through the form to the participant who can answer it. The answer need not confirm the first question: it can disclose an omitted circumstance, refuse an imposed role, correct an attributed statement, or show that the criterion itself misnamed the encounter. Maintained personhood does not require an essence displayed without mediation; it requires that continuity of address not become ownership of the person addressed. The Arbitration field qualifies the movement at register 3; the Symbol/Account/Trust field carries all four operations: identify what the form claims to bear, make the claim inspectable, let reliance permit correction and refusal, and return",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the image's effects to the conditions of its next use. An entrusted avatar can remain powerful with its source office inspectable and revisable; a mask can continue to enable participation while its bearer exceeds and alters its terms; an image can remain beloved while acquiring another meaning. Withdrawal can itself be the answer the representation must learn to receive. The person, the image and the shared field return changed and still distinct: A27 grounds unity without possession; A30 extends the way one encounter enters several participants' later conditions; the Neumann relation returns through differentiated participation without making ego chronology the limit.\n\nOccurrences: the four offices' return (#0–#4, #5→0); the entrusted commission (#1, #5→0); the counterfeit's consequence for the next encounter (#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

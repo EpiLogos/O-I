@@ -1,0 +1,1797 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-s-products",
+ "name": "Return of Zero — S, World and Life: the product field",
+ "description": "The whole product field and its six products, each holding its whole assigned MEF lens pair — both lens bodies, not labels.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "s",
+   "name": "S — World and Life",
+   "character": "The whole product field: one Life, one World, six offices.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s-envelope",
+     "name": "World and Life",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.52,
+      "y": 1.52
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-envelope-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s-prod-0",
+     "name": "S0 office",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-prod-0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s-prod-1",
+     "name": "S1 office",
+     "kind": "formation",
+     "position": {
+      "x": -0.29301270189221934,
+      "y": 0.18999999999999997,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-prod-1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s-prod-2",
+     "name": "S2 office",
+     "kind": "formation",
+     "position": {
+      "x": -0.2930127018922193,
+      "y": -0.31000000000000005,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-prod-2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s-prod-3",
+     "name": "S3 office",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.56,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-prod-3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s-prod-4",
+     "name": "S4 office",
+     "kind": "formation",
+     "position": {
+      "x": 0.5730127018922192,
+      "y": -0.3100000000000002,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-prod-4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s-prod-5",
+     "name": "S5 office",
+     "kind": "formation",
+     "position": {
+      "x": 0.5730127018922193,
+      "y": 0.19,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s-prod-5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S · ARGUED · product-field",
+     "title": "S — World and Life",
+     "italic": "Members S0–S5 · Arguments A26 A26′ A27 A27′ A29 A29′ A30 A30′ A35 · Concepts C14 C41 C42 C45 C51 C56 C64",
+     "body": "",
+     "x": 0.033,
+     "y": 0.045,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A Life discloses its World through the means by which it lives. Objective Internality names this constituted means; Subjective Immediacy names the knower; World names the known; Life / Mind holds the whole relation. Six developed aspects: Central, meaningful continuity; Actuation, living articulation; AIKit, potency; Software Factory, transformation; Workcell, situated existence; Quaternal Logic, Transcendent Relation. Read together they are offices of paradigmatic existence — paradigm is not a seventh product.",
+     "x": 0.033,
+     "y": 0.38,
+     "width": 560,
+     "size": 15,
+     "align": "left"
+    },
+    {
+     "id": "pairs",
+     "visible": true,
+     "kicker": "",
+     "title": "The whole assigned pairs — each product a whole subject",
+     "italic": "",
+     "body": "S0 Central × L0 Quaternal / L5′ Divine Logos · S1 Actuation × L1 Causal / L4′ Scientific · S2 AIKit × L2 Logical / L3′ Chronological · S3 Factory × L3 Processual / L2′ Alchemical-Elemental · S4 Workcell × L4 Phenomenological / L1′ Phenomenal · S5 QL × L5 Para Vāk / L0′ Archetypal-Numerical.",
+     "x": 0.033,
+     "y": 0.74,
+     "width": 700,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "s0",
+   "name": "S0 — Central: meaningful continuity",
+   "character": "S0: both lens bodies held as one paired disclosure.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s0-e0",
+     "name": "S0 lens formation 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.34,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s0-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s0-e1",
+     "name": "S0 lens formation 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.68,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s0-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s0-e2",
+     "name": "S0 lens formation 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.06,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s0-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S0 · ARGUED · M37",
+     "title": "S0 — Central: meaningful continuity",
+     "italic": "MEF pair L0 Quaternal × L5′ Divine Logos · movement M37 · parent S",
+     "body": "",
+     "x": 0.033,
+     "y": 0.04,
+     "width": 440,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Central is meaningful continuity: the intelligible ground a Life carries from one encounter into another. Continuity here is not merely persistence of bytes or recollection of prior states. A Life carries commitments, projects, histories, names, unfinished questions, inheritances, promises and interpretations. These make a later event intelligible as *this* continuation rather than an unrelated occurrence.",
+     "x": 0.57,
+     "y": 0.06,
+     "width": 430,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens1",
+     "visible": true,
+     "kicker": "L0 Quaternal: ground becomes sayable",
+     "title": "",
+     "italic": "",
+     "body": "Why recalls originating pressure and reason. What identifies the articulated matter. How preserves the operative means and history through which it came to be. Whom/Which/When keeps source, addressee, selection and temporal situation from disappearing into a placeless statement. Where/Why-for restores situation and telos. Why-so/Why-not returns the formed account to its alternatives, exclusions and reasons for commitment.",
+     "x": 0.033,
+     "y": 0.57,
+     "width": 390,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens2",
+     "visible": true,
+     "kicker": "L5′ Divine Logos: ground lives by disclosure and return",
+     "title": "",
+     "italic": "",
+     "body": "Arche is the originating ground or commission from which a meaningful line begins. Apokalypsis is its disclosure: what becomes available from that ground. Dynamis is the potency carried forward by what has been disclosed. Sophia is understanding that integrates disclosure without pretending to exhaust its source. Parousia is presence: what has become actually available here. Epi-Logos is reflective return, where the carried account is revisited through what later encounter has made visible.",
+     "x": 0.51,
+     "y": 0.57,
+     "width": 400,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "s1",
+   "name": "S1 — Actuation: living articulation",
+   "character": "S1: both lens bodies held as one paired disclosure.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s1-e0",
+     "name": "S1 lens formation 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.34,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s1-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s1-e1",
+     "name": "S1 lens formation 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.68,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s1-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s1-e2",
+     "name": "S1 lens formation 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": 0.56,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s1-e2-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S1 · ARGUED · M38",
+     "title": "S1 — Actuation: living articulation",
+     "italic": "MEF pair L1 Causal × L4′ Scientific · movement M38 · parent S",
+     "body": "",
+     "x": 0.033,
+     "y": 0.04,
+     "width": 440,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Actuation is the living articulation of an internality: its event-substance. A life perceives, differentiates, imagines, speaks and acts; through these events its world takes on a particular form and its later possibilities change. An act is intelligible through what occasions it, what it works upon, how it takes form, what it is for and what it changes.",
+     "x": 0.57,
+     "y": 0.06,
+     "width": 430,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens1",
+     "visible": true,
+     "kicker": "L1 Causal",
+     "title": "",
+     "italic": "",
+     "body": "Svātantrya is the originating freedom through which articulation is possible. Material is that upon which the present determination works. Efficient is the activity effecting the change. Formal is the organisation by which this becomes this act rather than another. Final is its end or containing purpose. Will gathers the determination into a committed movement and returns its consequence to the possibility of further articulation.",
+     "x": 0.033,
+     "y": 0.57,
+     "width": 390,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens2",
+     "visible": true,
+     "kicker": "L4′ Scientific",
+     "title": "",
+     "italic": "",
+     "body": "Prompt occasions a directed act. Traces retain what actually happened and under which conditions. Challenges bring contrary evidence, resistance and excluded alternatives into the inquiry. Patterns disclose relations across those traces and differences. Discovery changes what the inquiry knows or can do. Insight integrates that change into the understanding from which another act begins.",
+     "x": 0.51,
+     "y": 0.57,
+     "width": 400,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "s2",
+   "name": "S2 — AIKit: potency",
+   "character": "S2: both lens bodies held as one paired disclosure.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s2-e0",
+     "name": "S2 lens formation 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.34,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.42,
+      "y": 0.42
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s2-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s2-e1",
+     "name": "S2 lens formation 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.68,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s2-e1-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s2-e2",
+     "name": "S2 lens formation 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.06,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s2-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S2 · ARGUED · M39",
+     "title": "S2 — AIKit: potency",
+     "italic": "MEF pair L2 Logical × L3′ Chronological · movement M39 · parent S",
+     "body": "",
+     "x": 0.033,
+     "y": 0.04,
+     "width": 440,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "AIKit is potency: the changing horizon of what a Life can know, express, reach and bring to bear. Capacity in this sense is not an inventory of tools. A capacity may exist yet be unavailable here; available yet irrelevant; relevant yet forbidden; permitted yet unselected; selected yet unable to become operative.",
+     "x": 0.57,
+     "y": 0.06,
+     "width": 430,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens1",
+     "visible": true,
+     "kicker": "L2 Logical: capacity includes absence, ambiguity and silence",
+     "title": "",
+     "italic": "",
+     "body": "The Logical lens gives tetralemmaic ground · IS · IS-NOT · BOTH · NEITHER · SILENCE. IS names what is presently available as an operative determination. IS-NOT names what is excluded or unavailable under the current conditions. BOTH keeps co-presence where two capacities genuinely apply together. NEITHER holds a case current distinctions do not yet decide. SILENCE preserves the possibility that the right operation is not yet articulation.",
+     "x": 0.033,
+     "y": 0.57,
+     "width": 390,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens2",
+     "visible": true,
+     "kicker": "L3′ Chronological: powers arise, mature, recede and return",
+     "title": "",
+     "italic": "",
+     "body": "A power can first be latent as Spirit, enter emergence in Spring, become readily operative in Summer, pass into evaluation and harvesting in Autumn, recede or become unavailable in Winter, and be retained or transformed within a new whole as Life/Aufhebung. The pair makes temporality internal to what capacity means; development can require relinquishment.",
+     "x": 0.51,
+     "y": 0.57,
+     "width": 400,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "s3",
+   "name": "S3 — Software Factory: transformation",
+   "character": "S3: both lens bodies held as one paired disclosure.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s3-e0",
+     "name": "S3 lens formation 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.34,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "cymatic",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s3-e0-step0",
+        "text": "",
+        "shape": "cymatic",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s3-e1",
+     "name": "S3 lens formation 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.68,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.42,
+      "y": 0.42
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s3-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s3-e2",
+     "name": "S3 lens formation 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.06,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s3-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S3 · ARGUED · M40",
+     "title": "S3 — Software Factory: transformation",
+     "italic": "MEF pair L3 Processual × L2′ Alchemical-Elemental · movement M40 · parent S",
+     "body": "",
+     "x": 0.033,
+     "y": 0.04,
+     "width": 440,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Software Factory is transformation: the process through which intention, action, encounter and learning become changed form. Development is not merely production of artifacts. Something is wanted, a possibility is entertained, a form is attempted, actuality resists or confirms it, and what happened is gathered back into the conditions of what can happen next.",
+     "x": 0.57,
+     "y": 0.06,
+     "width": 430,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens1",
+     "visible": true,
+     "kicker": "L3 Processual: desire enters actuality",
+     "title": "",
+     "italic": "",
+     "body": "Concrescent desire is the lure or pressure by which something wants to become. Actual occasion is the concrete event in which that possibility is attempted. Ingression is the entry of possible form into actuality. Eternal objects name the available forms through which the occasion can take shape. Community integration asks whether the resulting form can enter the wider world that must sustain it. Satisfaction/Perishing names both completion and passage into inherited condition.",
+     "x": 0.033,
+     "y": 0.57,
+     "width": 390,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens2",
+     "visible": true,
+     "kicker": "L2′ Alchemical-Elemental: transformation has a material grammar",
+     "title": "",
+     "italic": "",
+     "body": "Aether is the open field of possibility in which the work can begin. Earth gives resistance, material, inherited body and constraint. Water carries flow, adaptation and mixture. Air mediates, communicates, abstracts and relates. Fire transforms through energetic difference, conflict, testing and irreversible passage. Salt precipitates the attained form: the result that can persist, circulate and become material for another becoming.",
+     "x": 0.51,
+     "y": 0.57,
+     "width": 400,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "s4",
+   "name": "S4 — Workcell: situated existence",
+   "character": "S4: both lens bodies held as one paired disclosure.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s4-e0",
+     "name": "S4 lens formation 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.34,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s4-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s4-e1",
+     "name": "S4 lens formation 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.68,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.42,
+      "y": 0.42
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s4-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s4-e2",
+     "name": "S4 lens formation 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.06,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s4-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S4 · ARGUED · M41",
+     "title": "S4 — Workcell: situated existence",
+     "italic": "MEF pair L4 Phenomenological × L1′ Phenomenal · movement M41 · parent S",
+     "body": "",
+     "x": 0.033,
+     "y": 0.04,
+     "width": 440,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Workcell is situated existence: the concrete here in which a Life finds itself, encounters resistance, becomes available to others and makes activity materially consequential. Situation is not an accessory added to an otherwise complete subject. A Life is already somewhere: embodied, temporal, exposed to conditions it did not wholly choose, enabled by some relations and constrained by others.",
+     "x": 0.57,
+     "y": 0.06,
+     "width": 430,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens1",
+     "visible": true,
+     "kicker": "L4 Phenomenological: thrown into a world",
+     "title": "",
+     "italic": "",
+     "body": "Being names the fact that the Life is already there before any inventory of its local resources. Thrownness names inherited circumstance not wholly self-authored. Being-there is the concrete localisation of that existence. Temporality means the situation has a before and after. Care names involvement: some things matter from here. Releasement opens the possibility of loosening a present grasp so another relation can become available.",
+     "x": 0.033,
+     "y": 0.57,
+     "width": 390,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens2",
+     "visible": true,
+     "kicker": "L1′ Phenomenal: the aperture of encounter",
+     "title": "",
+     "italic": "",
+     "body": "Introversion · Sensation · Feeling · Thinking · Intuition · Extroversion name differentiated modes through which a situated Life encounters itself and World. Input channels, telemetry, logs, local state, inference and output can be organised into an aperture; that does not establish that sensation or feeling is phenomenally present. The pair remains broader than its technical refraction.",
+     "x": 0.51,
+     "y": 0.57,
+     "width": 400,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "s5",
+   "name": "S5 — Quaternal Logic: Transcendent Relation",
+   "character": "S5: both lens bodies held as one paired disclosure.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "s5-e0",
+     "name": "S5 lens formation 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.34,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.5,
+      "y": 0.5
+     },
+     "rotation": 0,
+     "shape": "yantra",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s5-e0-step0",
+        "text": "",
+        "shape": "yantra",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s5-e1",
+     "name": "S5 lens formation 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.68,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.32,
+      "y": 0.36
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "6",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s5-e1-step0",
+        "text": "6",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "s5-e2",
+     "name": "S5 lens formation 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": 0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.06,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "s5-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "S5 · ARGUED · M42",
+     "title": "S5 — Quaternal Logic: Transcendent Relation",
+     "italic": "MEF pair L5 Para Vāk × L0′ Archetypal-Numerical · movement M42 · parent S",
+     "body": "",
+     "x": 0.033,
+     "y": 0.04,
+     "width": 440,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Quaternal Logic is Transcendent Relation: the movement through which a whole differentiates without ceasing to be whole, and through which differentiated beings remain related to the larger fields in which their distinctions arise. Transcendence here does not require a final exterior standing over the relation.",
+     "x": 0.57,
+     "y": 0.06,
+     "width": 430,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens1",
+     "visible": true,
+     "kicker": "L5 Para Vāk: articulation from the unconditioned toward manifest distinction",
+     "title": "",
+     "italic": "",
+     "body": "Anuttara/Asambhava · Para Vāk · Paśyantī · Madhyamā · Vaikharī · Mātṛkā: from what is prior to determinate articulation, through undivided word/power, vision, interior differentiation and expressed articulation, to the matrix through which signs proliferate. A spoken word is not the beginning of differentiation but a late explicit form of the movement by which a field takes form as distinction.",
+     "x": 0.033,
+     "y": 0.57,
+     "width": 390,
+     "size": 14,
+     "align": "left"
+    },
+    {
+     "id": "lens2",
+     "visible": true,
+     "kicker": "L0′ Archetypal-Numerical: one becomes articulated whole",
+     "title": "",
+     "italic": "",
+     "body": "Unity is undivided holding. Duality differentiates poles. Triad introduces mediation by which difference becomes intelligible. Quaternity stabilises a structured field. Pentad develops a further relational determination or centre of transformation. Hexad articulates a whole capable of recursive return: the two singles {0,1} and their four pairings give 2 + 2² = 4 + 2 = 6.",
+     "x": 0.51,
+     "y": 0.57,
+     "width": 400,
+     "size": 14,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}
