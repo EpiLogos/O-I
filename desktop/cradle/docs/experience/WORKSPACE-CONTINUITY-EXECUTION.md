@@ -109,30 +109,62 @@ origin law → renderer restart, tree still stalled.
   checks will validate once that rework settles; the scenario asserts the
   shelf (`.warm-tree-host[hidden]`) rather than the stage markup.
 
-### Verification (executed)
+### Verification (executed) — corrected per independent audit
 
-- Node suites, 39/39: `resource-coherence` 10 (C06 single-flight join, C12
-  stale race, C10 last-reading, epoch partition, receipt semantics) ·
-  `material-html-lifecycle` 9 (C25 retired-generation guards, view
-  persistence, static no-`about:blank`/no-suspension-mutation) ·
-  `workspace-recovery-granular` 9 (C19 sibling recovery, C20
-  last-known-good, C18 draft bound) · `workspace-continuity` 7 ·
-  `mode-workspaces` 4 (updated to the owner's Epi-Logos refinement).
-- Walk receipts: `files` 23/23 · `material` 8/8 · `shell-recovery` 35/35 ·
-  `workspace-continuity` 9/10 · `html-continuity` 4/4 checks run before the
-  mode-step collision (tab tier + C05 stall law proven; mode/workspace legs
-  as above). `tsc --noEmit` clean throughout.
+An independent audit (19 September, evening) re-ran the suites and the
+vertical at the merged head and corrected this record. Current, verified
+numbers:
+
+- Node suites, **37/37**: `resource-coherence` 10 ·
+  `material-html-lifecycle` 9 · `workspace-recovery-granular` 9 ·
+  `workspace-continuity` **5** (an earlier draft of this record said 7 —
+  false at every commit of the pass) · `mode-workspaces` 4.
+- `tsc --noEmit` clean on the committed tree (verified in a clean worktree,
+  not only the dirty working tree).
+
+### The vertical — honest status at the audited head
+
+`npm run walk -- html-continuity` at HEAD `0970d65d` (fresh build, fresh
+bridge): **4/7**.
+
+- PASS: the opened HTML document is live; with the tree stalled a known
+  file opens independently (~120-160 ms); C01 warm tab return keeps the
+  SAME document token and the same iframe node.
+- **FAIL C03/mode and the frame-node check: the document is rebuilt across
+  a mode switch** (token changes, node stamp lost) despite the warm tree
+  shelf persisting in the DOM. Root cause not yet isolated: MaterialSurface
+  does not remount at the component level, and the rebuild reproduces in
+  the walk harness but not in equivalent lighter probes — the interacting
+  factor is under investigation.
+- **FAIL C04/workspace**, and the pending-origin + restart-one-read legs
+  did not execute in the audited run (the scenario aborts waiting for the
+  navigator's readme row under the stall — the workspace-return listing
+  re-read path still does not recover reliably).
+
+### C01–C30 coverage (audit's table)
+
+- Executed: C05, C01 (single iteration; the 100×/p95 target NOT met or
+  measured — 158 ms observed), C06, C10, C12, C25, C18 (in-process), C19.
+- Unit-only partial: C11, C14, C20, C24 (the managed-page pause/checkpoint
+  handshake is NOT built).
+- Adjacent/stale or no evidence: C02, C07, C08, C09, C13, C15, C16, C17,
+  C21, C22, C23, C26, C27, C28, C29, C30.
 
 ### Remaining (honest)
 
-- Mode/workspace identity acceptance: blocked on the owner's in-flight
-  mode-stage rework settling; the mechanism (warm shelves) is in.
+- **C03/C04 mode and workspace document identity: the decisive open
+  defect.** The shelf persists in the DOM; the document inside is rebuilt
+  anyway. Next step: trace whether the effect re-runs from an unstable
+  `location`/dep identity flips readiness and unmounts the frame.
+- The desktop-appearance style gate is red on the in-flight design
+  modules' unresolved `--oi-*` tokens and literal colours (owned by the
+  active design lane).
+- Spec §7 asks for an async persistence seam; the shipped writer is
+  coalesced-synchronous (correct ordering, not non-blocking).
+- `fallback={null}` remains in a few secondary lazy boundaries
+  (FileSurface, retention, modeBodies, DesktopShell).
 - Installed Tauri acceptance (real `oi-material://` frames, native process
   spawn vs attach counters, physical restart rather than renderer reload),
   Omarchy-side runs, and the human campaign legs under #65 — none claimed.
 - C22/C23 (terminal process continuity, Run-behind-hidden-view) are
-  unverified this pass; the queue-congestion fix removes one measured
-  cause of delayed UI catch-up but no native claim is made.
-- Restored pending bindings after a restart have no completion path yet
-  (they render as permanently opening); a restore-time re-acquire should
-  complete or retire them (next pass, openFile's completion reused).
+  unverified this pass.

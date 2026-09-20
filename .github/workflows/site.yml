@@ -52,6 +52,8 @@ jobs:
             ../shared-field/aikit-contribution-field.test.mjs \
             ../shared-field/native-action-binding.test.mjs \
             public-content.test.mjs \
+            library.test.mjs \
+            publication.test.mjs \
             projection-renderer.test.mjs \
             self-other-read-model.test.mjs \
             field-proof-read-model.test.mjs \
@@ -74,11 +76,38 @@ jobs:
           spacetime --version | tee /tmp/spacetimedb-version.txt
           grep -q '2.8.1' /tmp/spacetimedb-version.txt
       - run: npm install --no-audit --no-fund
-      - name: Build live Explore client and site
+      - name: Verify the full live Explore client build separately
         env:
           VITE_OI_SPACETIMEDB_URI: ${{ vars.OI_SPACETIMEDB_URI }}
           VITE_OI_SPACETIMEDB_DATABASE: ${{ vars.OI_SPACETIMEDB_DATABASE }}
         run: npm run build
+      - name: Build the admitted public reading edition for deployment
+        # No live-service variables, author-machine endpoint or raw public/data
+        # folder enters this separate build. Track 3 inputs must be native
+        # revision-pinned producer outputs selected before this step.
+        run: npm run build:public
+      - name: Verify the public receiving route before publication
+        run: |
+          python -m pip install playwright==1.51.0 pillow
+          python -m playwright install --with-deps chromium
+          mkdir -p evidence/library
+          git rev-parse HEAD > evidence/library/commit.txt
+          node tests/publication-fixtures.mjs > evidence/library/publication-test-fixture.json
+          npm run preview -- --host 127.0.0.1 --port 4173 > evidence/library/server.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          result=0
+          python tests/library-acceptance.py || result=1
+          python tests/library-regressions.py || result=1
+          python tests/publication-acceptance.py || result=1
+          exit "$result"
+      - name: Retain publication verification separately from deployable files
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: public-reading-verification-${{ github.sha }}
+          path: site/evidence/library/
+          if-no-files-found: ignore
+          retention-days: 14
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'
         uses: actions/configure-pages@v5
       - if: github.event_name == 'push' && github.ref == 'refs/heads/main'

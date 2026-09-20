@@ -430,3 +430,14 @@ body.night #app select{color-scheme:dark}
 #physis-panel .physis-media a{color:var(--ink);text-decoration:none}
 #physis-panel .control{margin-top:14px}
 body.presentation #physis-panel,body.library-open #physis-panel{display:none}
+
+/* The Technē cut (host↔frame mode channel, owner wayfinder 2026-09-19
+   §11–13): the host's Technē mode asks the application to stand its physics
+   authoring chrome down while the living canvas, the current scene, the
+   selection and the bottom scene strip/transport remain. The masthead (rail,
+   workspace menus, history/capture), the toolbelt, Studio, the pointer/view
+   controls, the orbit controller, the coordinates readout, the context and
+   sequence panels, the composition/capture panels and the Library page are
+   authoring chrome; the transport (nav.instrument) is the scene grammar and
+   stays. The class carries the whole decision — no state changes, so the
+   cut is perfectly reversible and the HUD returns exactly as it was. */

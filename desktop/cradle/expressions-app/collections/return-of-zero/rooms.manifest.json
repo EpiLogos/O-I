@@ -1,0 +1,65 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-19T21:17:41.716Z",
+  "source": "Return of Zero — published rooms surfaces",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/collections/return-of-zero"
+    ],
+    "ground": "EpiLogos/Point-Cloud-Demo production/return-of-zero (E0 corpus) + EpiLogos/Antykathera-Essay-Work sources at dbf3b17 (sha-verified at export)",
+    "exported_at": "2026-09-19T21:17:41.716Z",
+    "generator": {
+      "name": "scripts/export-return-of-zero-publication.mjs",
+      "revision": "track3-2026-09-19"
+    },
+    "source_revision": {
+      "repo": "EpiLogos/Antykathera-Essay-Work",
+      "commit": "dbf3b17"
+    }
+  },
+  "featured": [
+    {
+      "id": "roz-room-00-integral-threshold",
+      "name": "Return of Zero · Room 1 of 8 · §0/1 — The Integral Threshold",
+      "file": "rooms/roz-room-00-integral-threshold.journey.json"
+    },
+    {
+      "id": "roz-room-01-differentiating-mind",
+      "name": "Return of Zero · Room 2 of 8 · §0 — Differentiating Mind",
+      "file": "rooms/roz-room-01-differentiating-mind.journey.json"
+    },
+    {
+      "id": "roz-room-02-return-of-zero",
+      "name": "Return of Zero · Room 3 of 8 · §1 — The Return of Zero",
+      "file": "rooms/roz-room-02-return-of-zero.journey.json"
+    },
+    {
+      "id": "roz-room-03-two-logics",
+      "name": "Return of Zero · Room 4 of 8 · §2 — Two Logics of Two",
+      "file": "rooms/roz-room-03-two-logics.journey.json"
+    },
+    {
+      "id": "roz-room-04-mathematical-substrate",
+      "name": "Return of Zero · Room 5 of 8 · §3 — Mathematical Substrate",
+      "file": "rooms/roz-room-04-mathematical-substrate.journey.json"
+    },
+    {
+      "id": "roz-room-05-psychoid-flowering",
+      "name": "Return of Zero · Room 6 of 8 · §4 — Psychoid Flowering",
+      "file": "rooms/roz-room-05-psychoid-flowering.journey.json"
+    },
+    {
+      "id": "roz-room-06-objective-internality",
+      "name": "Return of Zero · Room 7 of 8 · §5 — Objective Internality",
+      "file": "rooms/roz-room-06-objective-internality.journey.json"
+    },
+    {
+      "id": "roz-room-07-instrument-returns",
+      "name": "Return of Zero · Room 8 of 8 · §5→0 — Epi-Logos and 4:2 Technē — The Instrument Returns",
+      "file": "rooms/roz-room-07-instrument-returns.journey.json"
+    }
+  ]
+}

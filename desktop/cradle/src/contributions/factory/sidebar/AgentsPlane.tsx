@@ -25,7 +25,7 @@ import {ScenarioBar} from "./ScenarioBar";
  * the desktop seam yet, so no identities are minted here. */
 const GUARDIAN_PRODUCTS = ["Central", "Actuation", "AIKit", "Software Factory", "Workcell", "Quaternal Logic"] as const;
 
-export function AgentsPlane({subject, host}: DeskPlaneProps & {host?: FactoryPanelHost}) {
+export function AgentsPlane({subject, host, withScenarioBar=true}: DeskPlaneProps & {host?: FactoryPanelHost; withScenarioBar?: boolean}) {
   const fixture = useFactoryFixture();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string>();
@@ -39,7 +39,7 @@ export function AgentsPlane({subject, host}: DeskPlaneProps & {host?: FactoryPan
   const project = subject.project;
 
   return <div className="desk-plane factory-side" data-plane="Agents" data-fixture={agents.length ? fixture?.scenario : undefined}>
-    <ScenarioBar />
+    {withScenarioBar && <ScenarioBar />}
     {agent
       ? <AgentDetail agent={agent} fixtureOn={!!fixture} host={host} onBack={() => setSelected(undefined)} />
       : team

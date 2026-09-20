@@ -54,18 +54,25 @@ export interface SuspensionDisclosure {
    * beats a false "suspended" (C24 never labels CSS hiding as execution
    * suspension). */
   suspended: boolean;
+  /** The viewport observation has reported at least once. Until it has, a
+   * freshly mounted surface cannot know whether it is presented or a
+   * restart-restored inactive tab (the observation is asynchronous by one
+   * frame). Consumers may hold optional pre-presentation work (a first
+   * owner acquisition) behind it. */
+  observed: boolean;
 }
 
 export function useSuspensionDisclosure(view: string): SuspensionDisclosure {
   const containerRef = useRef<HTMLDivElement>(null);
   const [intersecting, setIntersecting] = useState(true);
+  const [observed, setObserved] = useState(false);
   const [documentVisible, setDocumentVisible] = useState(() => typeof document === "undefined" || document.visibilityState === "visible");
   useEffect(() => {
     const node = containerRef.current;
     if (!node || typeof IntersectionObserver === "undefined") return;
     const observer = new IntersectionObserver(entries => {
       const entry = entries[entries.length - 1];
-      if (entry) setIntersecting(entry.isIntersecting);
+      if (entry) { setIntersecting(entry.isIntersecting); setObserved(true); }
     }, { threshold: 0 });
     observer.observe(node);
     return () => observer.disconnect();
@@ -75,7 +82,7 @@ export function useSuspensionDisclosure(view: string): SuspensionDisclosure {
     document.addEventListener("visibilitychange", onVisibility);
     return () => document.removeEventListener("visibilitychange", onVisibility);
   }, []);
-  return { containerRef, suspended: !intersecting || !documentVisible };
+  return { containerRef, suspended: !intersecting || !documentVisible, observed };
 }
 
 // ---------------------------------------------------------------------------

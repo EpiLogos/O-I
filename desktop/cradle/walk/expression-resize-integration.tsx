@@ -18,7 +18,7 @@ function Shell(){
  useEffect(()=>{(window as any).resizeIntegration={inspect:()=>(stage.inspect() as any).overlay,layout:()=>layout};},[stage,layout]);
  const execute=(ref:string,arg?:Parameters<typeof executeFrameAction>[2])=>setLayout(s=>executeFrameAction(s,ref,arg));
  const workspace={id:'resize-integration',name:'Resize integration',layout,writing:''};
- return <DesktopShell layout={layout} setLayout={setLayout} workspace={workspace} workspaces={[workspace]} activate={()=>{}} create={()=>{}} rename={()=>{}} onRecover={()=>{}} onToggleNavigator={()=>{}} onCloseNavigator={()=>{}} native={false} arrangementActions={null} subject={{title:'',context:null}} right={<></>} namingRequest={null} onNamingHandled={()=>{}} error={null} navigator={()=>null}>
+ return <DesktopShell mode="base" onMode={()=>{}} onTabPresentation={()=>{}} layout={layout} setLayout={setLayout} workspace={workspace} workspaces={[workspace]} activate={()=>{}} create={()=>{}} rename={()=>{}} onRecover={()=>{}} onToggleNavigator={()=>{}} onCloseNavigator={()=>{}} native={false} arrangementActions={null} subject={{title:'',context:null}} right={<></>} namingRequest={null} onNamingHandled={()=>{}} error={null} navigator={()=>null}>
   <Workbench workspaceName={workspace.name} state={layout} execute={execute} menuOpen={false} nativeWindows={false} onView={()=>{}} openBindingMenu={()=>{}} openFrameMenu={()=>{}} openSource={()=>{}} openKnowledge={async()=>{}}/>
  </DesktopShell>;
 }

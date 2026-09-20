@@ -39,10 +39,12 @@ import {
   materialUrl,
   relayKernelChannel,
   trackShellCutout,
+  postHostMode,
+  type HostedAppMode,
 } from "./hostedApp";
 import "./point-cloud-host.css";
 
-export function PointCloudHost() {
+export function PointCloudHost({mode = "expressions"}: {mode?: HostedAppMode}) {
   const kernel = useKernel();
   const [entry, setEntry] = useState<NativeFileEntry | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
@@ -91,6 +93,35 @@ export function PointCloudHost() {
     return relayKernelChannel(node, kernel.transport);
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, kernel.transport]);
+
+  // The operating cut (the cradle's own workspace modes carry it): the
+  // binding's kind IS the cut — the Technē centre presents this application
+  // in its deep state, the Expressions centre in its lived state. Each
+  // centre's instance parks suspended in the warm park across switches.
+  useEffect(() => {
+    const node = frame.current;
+    return node ? postHostMode(node, mode) : undefined;
+  }, [mode, state]);
+
+  // The deep cut's requests ride back through the host: a workspace-mode
+  // switch goes to the shell's own mode pipeline (enterMode); a summon asks
+  // for the verso account overlay. Nothing here opens a second UI — the
+  // events land in the seams that already exist.
+  useEffect(() => {
+    const handler = (event: MessageEvent) => {
+      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string}} | null;
+      if (!data || data.v !== 1 || data.kind !== "host-request") return;
+      if (event.source !== frame.current?.contentWindow) return;
+      if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
+        window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
+      }
+      if (data.request === "summon" && data.detail?.kind) {
+        window.dispatchEvent(new CustomEvent("oi:techne-summon", {detail: {kind: data.detail.kind}}));
+      }
+    };
+    window.addEventListener("message", handler);
+    return () => window.removeEventListener("message", handler);
+  }, []);
 
   return <div className="pcd-host" aria-label="O:I Expressions application" data-state={state}>
     {state === "reading" && <p className="oi-note" role="status">Opening the Expressions application…</p>}

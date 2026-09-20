@@ -179,7 +179,16 @@ export function useTechneDisclosure(subject: TechneSubject | undefined): TechneD
     const provider = techneReadingProvider();
     if (!provider) { setState({standing: "unavailable", reason: NO_PROVIDER_REASON}); return; }
     let live = true;
-    setState({standing: "reading"});
+    // Stale-while-revalidate (additive, 2026-09-19): a registry-driven
+    // re-read of the SAME subject (refreshTechneDisclosure — the register's
+    // Expression generation opened or advanced) keeps the standing reading
+    // visible while it flies; downgrading to "reading" would unmount the
+    // mounted lens mid-work and reset the person's entry state. Only a
+    // subject change downgrades to the honest loading state.
+    setState(current => {
+      const sameSubject = current.standing === "read" && current.reading.subject.subjectRef === (subject.ref?.trim() || subject.title);
+      return sameSubject ? current : {standing: "reading"};
+    });
     void provider.read(subject).then(
       payload => {
         if (!live) return;
@@ -189,9 +198,10 @@ export function useTechneDisclosure(subject: TechneSubject | undefined): TechneD
       cause => { if (live) setState({standing: "unavailable", reason: cause instanceof Error ? cause.message : String(cause)}); },
     );
     return () => { live = false; };
-  // The joined identity is the dependency: the same subject by value must not
-  // re-read, and the registry generation re-runs the effect when providers change.
-  // eslint-disable-next-line react-hooks/exhaustive-deps
+    // The joined identity is the dependency: the same subject by value must
+    // not re-read, and the registry generation re-runs the effect when
+    // providers change or a refresh is asked for.
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [identity, registry]);
   return state;
 }

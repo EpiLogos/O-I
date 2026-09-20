@@ -1,0 +1,102 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "nara-stage-focus",
+  "generated_at": "2026-09-19T16:47:58.476Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience",
+      "repository_head": "1dd133b522544cd420c5a08890934d8eb4af72eb",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/agent-dictation-honest-states.png",
+        "desktop/cradle/walk/artifacts/agent-dictation-transcript-landed.png",
+        "desktop/cradle/walk/artifacts/agent-dictation.json",
+        "desktop/cradle/walk/artifacts/nara-speech-nara-joined-world.png",
+        "desktop/cradle/walk/artifacts/nara-speech.json",
+        "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
+        "desktop/cradle/walk/artifacts/nara-stage-focus.json"
+      ],
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/.worktrees/thread4-nara-speech-experience/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 15811,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The real Expression stage is bound and inspectable"
+    },
+    {
+      "ok": true,
+      "label": "Present on stage mounts the app's live Expression presentation"
+    },
+    {
+      "ok": true,
+      "label": "The live stage selection starts empty (the document names no focus)"
+    },
+    {
+      "ok": true,
+      "label": "Nara attaches to the resolved text body beside the live stage"
+    },
+    {
+      "ok": true,
+      "label": "A Nara-returned select focus action moved the REAL Expression stage selection",
+      "data": {
+        "selection": [
+          "expression:nara-stage-1789836478478:entity:person"
+        ],
+        "presentation": [
+          {
+            "id": "expression-application",
+            "plane": "overlay"
+          }
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The same focus is committed semantically through the kernel seam",
+      "data": {
+        "revision": 3
+      }
+    },
+    {
+      "ok": true,
+      "label": "A Nara-returned highlight focus action moved the live stage selection to the highlighted locus",
+      "data": {
+        "selection": [
+          "expression:nara-stage-1789836478478:entity:earth"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "The highlight moved the presentation only: no Expression revision was committed",
+      "data": {
+        "revision": 4
+      }
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 49,
+      "data": {
+        "file": "nara-stage-focus-nara-stage-focus.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "nara-stage-focus-nara-stage-focus.png"
+  ]
+}

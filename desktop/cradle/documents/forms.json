@@ -61,11 +61,11 @@
       "label": "Yoshimoto Cube",
       "family": "Yoshimoto Cube",
       "hint": "Spatial and relational reading",
-      "file": null,
+      "file": "ql-yoshimoto-cube.html",
       "templateRef": "oi.template/yoshimoto",
       "version": null,
-      "standing": "intake-required",
-      "source": "owner-supplied ql-data-structure.zip; semantic rebuild 2026-07-30; preserve lawful mechanism and teaching"
+      "standing": "retained-source",
+      "source": "recovered 2026-09-17 byte-exact from the owner-supplied ql-data-structure.zip (Work/personal/Nara-Personal/random-works; zip and extracted tree identical), impl/examples/out/name-power-yoshimoto.html — the post-rebuild build of the 2026-07-30 Symbolonic Weave semantic rebuild; carries no ql-template meta tag (recorded as received); preserve lawful mechanism and teaching"
     },
     {
       "kind": "document-epi-card",
@@ -76,7 +76,7 @@
       "templateRef": "oi.template/epi-card",
       "version": null,
       "standing": "intake-required",
-      "source": "EpiLogos/Antykathera-Essay-Work/submission-package/epi-card-system-v1"
+      "source": "spec verified 2026-09-17: Antykathera-Essay-Work/submission-package/epi-card-system-v1 complete (SPEC.md, contracts, ui/epi-card.d.ts); the only real implementation on disk is the <epi-card> web component in recovery bundle epi-card-local-branches-2026-09-10.bundle branch codex/epi-card-card-contract (packages/card: src/epi-card.ts, demo harness, print-proof evidence); no self-contained retained-source form HTML exists yet — nothing fabricated to fill this slot"
     }
   ]
 }

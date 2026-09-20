@@ -44,7 +44,7 @@ export interface SpeechConstitutionFacts {
   connection:{kind:"stateless"}|{kind:"connected";reconnect:string|null};
   interruption:SpeechSupport;
   provider_binding:{provider_ref:string;provider_session_ref?:string|null;transport_connection_ref?:string|null;material_binding_ref?:string|null;facts:Record<string,unknown>};
-  conditions?:{condition:"degraded"|"unavailable";reason:string}[];
+  conditions?:{condition:"degraded"|"unavailable";reason:string;field?:string}[];
   usage_evidence_refs?:string[];
   provenance:{source_refs?:string[]};
   resolved_at:string;
@@ -122,6 +122,10 @@ export function validateSpeechConstitution(value:unknown):SpeechConstitutionFact
       requireObject(condition,"condition");
       if(condition["condition"]!=="degraded"&&condition["condition"]!=="unavailable")throw new Error("condition must be degraded or unavailable");
       wireText(condition["reason"],"condition reason");
+      // The read model's own which-seam name (`modality-credential`,
+      // `modality-availability`) may travel with the condition so the gap is
+      // named exactly as the document disclosed it.
+      if(condition["field"]!=null)wireText(condition["field"],"condition field");
     }
   }
   if(v["usage_evidence_refs"]!=null){
@@ -295,18 +299,51 @@ export function constitutionFromAikitResolution(identities:ConstitutionIdentitie
   const reconnect=kind==="connected"?wireText(connectionRaw?.["reconnect"]??"unsupported","reconnect"):null;
   if(reconnect!=null&&!(RECONNECTS as readonly string[]).includes(reconnect))throw new Error(`unknown reconnect support ${reconnect}`);
   const interruption:SpeechSupport=interaction["barge-in"];
-  const conditions:{condition:"degraded"|"unavailable";reason:string}[]=[];
+  // Body conditions come only from body-scoped unavailabilities. The read
+  // model's access-profile entries (`material-control-access`,
+  // `model-interior-access`) are facts about desktop control, not about
+  // whether the body can speak — they stay in the access profile and are
+  // never absorbed into body conditions, so a hosted body is not recorded
+  // unusable merely because the desktop cannot reach its console.
+  const conditions:{condition:"degraded"|"unavailable";reason:string;field?:string}[]=[];
+  const BODY_CONDITION_FIELDS=new Set(["modality-credential","modality-availability"]);
   if(Array.isArray(unavailable))for(const entry of unavailable as Record<string,unknown>[]){
-    conditions.push({condition:"unavailable",reason:wireText(entry["reason"],"unavailability reason")});
+    const field=typeof entry["field"]==="string"?wireText(entry["field"],"unavailability field"):null;
+    if(field!=null&&!BODY_CONDITION_FIELDS.has(field))continue;
+    conditions.push({condition:"unavailable",reason:wireText(entry["reason"],"unavailability reason"),...(field?{field}:{})});
   }
-  if(contract&&contract["availability"]==="unavailable"&&!conditions.some(c=>c.condition==="unavailable")){
-    conditions.push({condition:"unavailable",reason:"the resolved surface declares itself unavailable"});
+  // Availability is serialized as a tagged object (`{"state":…}`); older
+  // documents may carry a bare string. Either way, a degraded or unavailable
+  // surface is a named condition, never a silent reduction.
+  const availabilityState=(contract&&contract["availability"]&&typeof contract["availability"]==="object"&&!Array.isArray(contract["availability"])
+    ?(contract["availability"] as Record<string,unknown>)["state"]
+    :contract?.availability) as unknown;
+  const availabilityReason=(contract&&contract["availability"]&&typeof contract["availability"]==="object"&&!Array.isArray(contract["availability"])
+    ?(contract["availability"] as Record<string,unknown>)["reason"]:null) as unknown;
+  if(availabilityState==="unavailable"&&!conditions.some(c=>c.condition==="unavailable")){
+    conditions.push({condition:"unavailable",field:"modality-availability",
+      reason:typeof availabilityReason==="string"&&availabilityReason.trim()?availabilityReason:"the resolved surface declares itself unavailable"});
   }
+  if(availabilityState==="degraded"&&!conditions.some(c=>c.condition==="degraded")){
+    conditions.push({condition:"degraded",field:"modality-availability",
+      reason:typeof availabilityReason==="string"&&availabilityReason.trim()?availabilityReason:"the resolved surface declares itself degraded"});
+  }
+  // Credential ref/presence facts travel as scalars (the owner's facts law):
+  // the condition vocabulary (`not-required | required | satisfied`) plus the
+  // hint and binding ref. Presence facts only — never secret material.
+  const credentialRaw=contract&&contract["credential"]&&typeof contract["credential"]==="object"&&!Array.isArray(contract["credential"])
+    ?contract["credential"] as Record<string,unknown>:null;
+  const credentialCondition=(()=>{
+    const stated=credentialRaw?.["condition"];
+    return typeof stated==="string"&&(["not-required","required","satisfied"] as readonly string[]).includes(stated)?stated:null;
+  })();
+  const credentialHint=credentialCondition&&typeof credentialRaw?.["hint"]==="string"&&credentialRaw["hint"].trim()?credentialRaw["hint"]:null;
+  const credentialBindingRef=credentialCondition&&typeof credentialRaw?.["binding_ref"]==="string"&&credentialRaw["binding_ref"].trim()?credentialRaw["binding_ref"]:null;
   const providerRef=contract?wireText(contract["provider"]??"provider:unresolved","provider"):stagedProviderFallback(document);
   const constitution:SpeechConstitutionFacts={
     schema:SPEECH_CONSTITUTION_VERSION,
     ...identities,
-    model_relation:reduceModelRelation(document,relation,staged),
+    model_relation:reduceModelRelation(document,relation),
     access_profile:reduceAccessProfile(relation),
     input_modalities:input,output_modalities:output,
     transforms:Object.keys(transforms).length?transforms:undefined,
@@ -323,7 +360,13 @@ export function constitutionFromAikitResolution(identities:ConstitutionIdentitie
         provider_native_surface:contract?.provider_native_surface??"unresolved",
         provider_revision:contract?.provider_revision??null,
         credential_scope:contract&&Object.prototype.hasOwnProperty.call(contract,"credential_scope")?(contract as unknown as Record<string,unknown>)["credential_scope"]:"unresolved",
-        composed_basis:staged["basis"]??[],
+        // The composed basis travels in provenance.source_refs; provider
+        // facts stay scalars (the owner's facts admission refuses arrays).
+        ...(credentialCondition?{
+          credential_condition:credentialCondition,
+          ...(credentialHint?{credential_hint:credentialHint}:{}),
+          ...(credentialBindingRef?{credential_binding_ref:credentialBindingRef}:{}),
+        }:{}),
       },
     },
     conditions:conditions.length?conditions:undefined,
@@ -342,7 +385,7 @@ export function aikitResolutionRef(readModelRef:string,revision:string):string {
 /** Reduce the AIKit read model into the model-relation shape a
  * constitution admits (Actuation `validate_model_relation`): refs and
  * owner facts only — never the raw contract with its credential objects. */
-function reduceModelRelation(document:Record<string,unknown>,relation:Record<string,unknown>|null,staged:AikitComposedModality):Record<string,unknown> {
+function reduceModelRelation(document:Record<string,unknown>,relation:Record<string,unknown>|null):Record<string,unknown> {
   const stageRelations=Array.isArray(document["stages"])
     ?(document["stages"] as Record<string,unknown>[]).map(stage=>requireObject(stage["relation"],"stage relation"))
     :[];
@@ -351,8 +394,6 @@ function reduceModelRelation(document:Record<string,unknown>,relation:Record<str
   const engine=first?requireObject(first["engine"],"engine reading"):null;
   const material=first?requireObject(first["materialisation"],"materialisation reading"):null;
   const surfaceReading=first?requireObject(first["model_surface"],"model surface reading"):null;
-  const facts:Record<string,unknown>={composed_basis:staged["basis"]??[]};
-  if(stageRelations.length)facts.stage_components=(document["stages"] as Record<string,unknown>[]).map(stage=>stage["component"]);
   return {
     schema:"actuation.instantiation/v1",
     model_ref:wireText(modelRef,"model_ref"),

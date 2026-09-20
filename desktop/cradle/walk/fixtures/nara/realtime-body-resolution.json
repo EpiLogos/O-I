@@ -23,9 +23,9 @@
           "interaction": ["full-duplex-realtime", "vad-turn-detection", "barge-in", "final-transcripts", "partial-transcripts", "tool-requests", "structured-events"],
           "degraded_interaction": {},
           "transport": "websocket", "connection": {"kind": "connected", "reconnect": "resumable"},
-          "credential_scope": "bearer", "availability": "available",
+          "credential_scope": "bearer", "availability": {"state": "available"},
           "provider": "provider:ai-kit", "provider_native_surface": "desktop-realtime", "provider_revision": "r2",
-          "credential": {"state": "declared", "scope": "bearer"}, "constraints": {}, "provenance": ["walk-fixture"]
+          "credential": {"condition": "satisfied", "hint": "provider:voice inference credential", "binding_ref": "credential-binding:walk-realtime"}, "constraints": {}, "provenance": ["walk-fixture"]
         }
       }
     },

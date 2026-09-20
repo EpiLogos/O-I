@@ -9,8 +9,10 @@ export default defineConfig({
   base: './',
   plugins: [react()],
   resolve: {
+    dedupe: ['three','react','react-dom'],
     alias: {
       '@': fileURLToPath(new URL('./src', import.meta.url)),
+      'three': fileURLToPath(new URL('./node_modules/three', import.meta.url)),
     },
   },
   build: {
@@ -18,6 +20,7 @@ export default defineConfig({
       input: {
         main: resolve(siteRoot, 'index.html'),
         shell: resolve(siteRoot, 'shell.html'),
+        library: resolve(siteRoot, 'library.html'),
         oi: resolve(siteRoot, 'oi.html'),
         products: resolve(siteRoot, 'products.html'),
         sharedField: resolve(siteRoot, 'shared-field.html'),

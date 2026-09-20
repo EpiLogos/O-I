@@ -34,9 +34,9 @@ const RAIL:{id:SettingsView;label:string;hint:string}[] = [
 ];
 
 const VIEW_HEAD:Record<SettingsView,{label:string;line:string}> = {
-  settings:{label:"Settings",line:"Everything the products let you change, in one place. Changes wait in the tray until you apply them."},
-  system:{label:"System",line:"What is installed, what is working, and what each product is doing — read honestly, changed only through its owner."},
-  visuals:{label:"Visuals",line:"Themes and the visual expression layer."},
+  settings:{label:"Settings",line:""},
+  system:{label:"System",line:""},
+  visuals:{label:"Visuals",line:""},
 };
 
 export function SettingsPageV2() {
@@ -107,7 +107,7 @@ export function SettingsPageV2() {
     <nav className="settings-rail" aria-label="Settings surfaces">
       {RAIL.map(item=><button key={item.id} aria-pressed={view===item.id} title={item.hint} onClick={()=>setView(item.id)}>{item.label}</button>)}
     </nav>
-    <div className="settings-page-head"><h2>{head.label}</h2><p>{head.line}</p></div>
+    <div className="settings-page-head"><h2>{head.label}</h2></div>
     {view==="settings"&&<SettingsHome census={reading}/>}
     {view==="system"&&<SystemHome
       reading={reading}

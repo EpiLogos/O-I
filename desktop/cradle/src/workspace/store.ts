@@ -50,6 +50,18 @@ export interface WorldContext {
 }
 const TRAIL_LIMIT = 24;
 const text = (value: unknown, max = 512): string | undefined => typeof value === "string" && value.length > 0 && value.length <= max ? value : undefined;
+/** A workspace the person stands in has, by that fact, been visited: the
+ * retention warm set (surface/retention.tsx) keeps only workspaces with a
+ * `lastVisitedAt` stamp, and `activate` stamps on every switch — but the
+ * BOOT workspace is active without a switch ever having happened. Without
+ * this stamp its trees fall out of the warm set the moment the person
+ * first leaves it, and leaving unmounts its live documents — the exact
+ * destruction the warm set exists to prevent. Every book constructor
+ * passes through this so the invariant "the active workspace was visited"
+ * holds from the first render. */
+function stampActiveVisited(book: WorkspaceBook): WorkspaceBook {
+  return { ...book, workspaces: book.workspaces.map(w => w.id === book.active ? { ...w, lastVisitedAt: w.lastVisitedAt ?? Date.now() } : w) };
+}
 export function decodeWorldContext(raw: unknown): WorldContext | undefined {
   if (!raw || typeof raw !== "object") return undefined;
   const r = raw as Record<string, unknown>;
@@ -251,7 +263,7 @@ function load(): LoadedBook {
     const parsed=JSON.parse(legacyRaw);legacy=decodeWorkspaceLayout(parsed);
     if(!parsed || typeof parsed!=="object" || !parsed.surfaces || Object.keys(parsed.surfaces).length!==Object.keys(legacy.surfaces).length || (parsed.root&&!legacy.root))throw new Error("Legacy arrangement could not be restored");
   }
-  return { book: { version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: { ...initialLayout(), ...(legacy.root ? scopeLegacyIds(legacy,"root") : {}) } }] }, quarantine: [] };
+  return { book: stampActiveVisited({ version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: { ...initialLayout(), ...(legacy.root ? scopeLegacyIds(legacy,"root") : {}) } }] }), quarantine: [] };
 }
 export function useWorkspaces() {
   // Save-path errors and per-workspace quarantine notes are separate
@@ -277,7 +289,7 @@ export function useWorkspaces() {
         setQuarantine(outcome.quarantine.join(" "));
       }
       return outcome.book;
-    } catch(error) { try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});} return { version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: initialLayout() }] }; }
+    } catch(error) { try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});} return stampActiveVisited({ version: 2, active: "root", workspaces: [{ id: "root", name: "Central", writing: "", layout: initialLayout() }] }); }
   });
   const current = book.workspaces.find(w => w.id === book.active)!;
   // The file tree's listing cache keys on the workspace: switching releases.
@@ -381,7 +393,7 @@ export function useWorkspaces() {
    * flushed FIRST — the retry must read what was actually done, not what
    * had been written when the timer last fired. */
   const reload=()=>{flushNow();try{const outcome=load();setBook(outcome.book);setRecovery(null);setSaveError(null);if(outcome.quarantine.length){try{preservePresentation(KEY,outcome.quarantine.join(" "));}catch{}setQuarantine(outcome.quarantine.join(" "));}else setQuarantine(null);}catch(error){try{const record=preservePresentation(localStorage.getItem(KEY)?KEY:"oi-cradle.layout.v1",String(error));setRecovery({reason:String(error),key:record.key});}catch{setRecovery({reason:"Recovery data could not be copied. Original workspace storage is protected."});}}};
-  const startFresh=()=>{if(recovery&&!recovery.key)return;setBook({version:2,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]});setRecovery(null);};
+  const startFresh=()=>{if(recovery&&!recovery.key)return;setBook(stampActiveVisited({version:2,active:"root",workspaces:[{id:"root",name:"Central",writing:"",layout:initialLayout()}]}));setRecovery(null);};
   const recoverAvailable=()=>{
     const saved=latestRecovery();if(!saved)return;
     try {
@@ -392,7 +404,7 @@ export function useWorkspaces() {
         return carryLegacyWriting({id,name:typeof w.name==="string"?w.name:`Recovered ${index+1}`,project:typeof w.project==="string"?w.project:undefined,centralFiles:w.centralFiles===true,projectNavigation,writing:typeof w.writing==="string"?w.writing:"",writingMode:false,layout:scopeLegacyIds(decodeWorkspaceLayout(w.layout),id,true)});
       });
       if(!restored.length){setSaveError("No complete workspace records could be recovered. The original bytes remain retained.");return;}
-      setBook(book=>({version:2,active:restored[0].id,workspaces:[...book.workspaces.filter(workspace=>workspace.id!=="recovery"||!!workspace.writing),...restored]}));setRecovery(null);
+      setBook(book=>stampActiveVisited({version:2,active:restored[0].id,workspaces:[...book.workspaces.filter(workspace=>workspace.id!=="recovery"||!!workspace.writing),...restored]}));setRecovery(null);
     }catch{setSaveError("The retained data is not readable as workspace records. It remains preserved for recovery.");}
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setSaveError("There is no retained workspace recovery record on this device.");};

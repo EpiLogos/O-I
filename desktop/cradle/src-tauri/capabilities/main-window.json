@@ -23,7 +23,8 @@
     "allow-terminal-resize",
     "allow-terminal-checkpoint",
     "allow-terminal-reconcile",
-    "allow-expression-walk-observation"
+    "allow-expression-walk-observation",
+    "core:window:allow-set-theme"
   ],
   "webviews": [
     "main",

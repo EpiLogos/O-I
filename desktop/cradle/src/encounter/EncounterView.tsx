@@ -1,10 +1,12 @@
 import {useLayoutEffect,useMemo,useRef,useState,type ReactNode} from "react";
 import type {A2aDifference,A2aPeerFields,EncounterReading,EncounterStatus,JournalPage,PermissionDecision} from "./client";
 import {Glyph} from "../workspace/Glyph";
-import {useVoiceDictation} from "../agent/chat/voice";
 import {ContextFacts,DeliveryRegistrations,NowRecords,OwnerActions,RawDisclosure,SessionFacts} from "./InspectParts";
 import {sessionStateLabel} from "./session";
 import {parseContextItems,removeContextItem,type ContextItem} from "../context/contextItems";
+import {DictationSession,type DictationOutcome,type DictationRefusal} from "../dictation/client";
+import {dictationCopy} from "../dictation/copy";
+import {readDictationStipulation} from "../dictation/store";
 import "./encounter.css";
 /** Rendering and interaction only; AIKit owns transcript, consent and shared draft.
  * `presentation`: "tab" is the canvas-surface shape (own heading + plane nav);
@@ -16,7 +18,6 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   const composerInput=useRef<HTMLTextAreaElement>(null);
   // Voice dictation parity with the agent-panel composer: the same webview
   // speech engine writing the same shared draft, an honest gap where absent.
-  const voice=useVoiceDictation(onDraft,()=>draft);
   // A concealed view keeps no layout, so its scroll offset is gone when it
   // returns: re-follow on reveal as well as on new material.
   useLayoutEffect(()=>{const element=transcript.current;if(element&&following.current)element.scrollTop=element.scrollHeight;},[reading,plane,concealed]);
@@ -30,6 +31,81 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
   const action=(name:string)=>reading?.actions?.find(action=>action.ref===`aikit.encounter.${name}`);
   // Missing owner Actions are unknown authority, never permission to act.
   const allowed=(name:string,_legacy:boolean)=>action(name)?.enabled===true;
+  // --- Dictation (local): the agent-chat microphone is an INPUT AID, not a
+  // voice mode. It captures to the user's own loopback speech server and
+  // places the transcript in the owner-owned draft as editable text; it
+  // never sends, and it is not Nara — Nara's chat-voice dialogue is its own
+  // mode with its own constitution (docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md).
+  // Every failure is a named state; nothing is faked. ---
+  const [dictation,setDictation]=useState<{state:"idle"|"recording"|"transcribing"|"service-down"|"mic-denied"|"mic-unavailable"|"failed"|"empty"|"landed";notice?:{role:"status"|"alert";text:string}}>({state:"idle"});
+  const dictationSession=useRef<DictationSession|null>(null);
+  // A press while the capture is still opening must stop THAT capture, not
+  // fall into "no capture was running" — the starting promise is the seam.
+  const dictationStarting=useRef<Promise<void>|null>(null);
+  const dictationRefusalNotice=(refusal:DictationRefusal):{role:"status"|"alert";text:string}=>{
+   switch(refusal.kind){
+    case "service-down":return {role:"alert",text:dictationCopy("serviceDown",{url:readDictationStipulation().stt_url})};
+    case "mic-denied":return {role:"alert",text:dictationCopy("micDenied")};
+    case "mic-unavailable":return {role:"alert",text:dictationCopy("micUnavailable")};
+    case "empty":return {role:"status",text:dictationCopy("empty")};
+    case "failed":return {role:"alert",text:dictationCopy("failed",{detail:refusal.detail})};
+   }
+  };
+  // The transcript lands at the caret as ordinary draft text — the same
+  // door typed input uses — so the person can amend it before sending.
+  const insertTranscript=(text:string)=>{
+   const element=composerInput.current;
+   const start=element&&element.selectionStart!==undefined?element.selectionStart:draft.length;
+   const end=element&&element.selectionEnd!==undefined?element.selectionEnd:start;
+   const before=draft.slice(0,start);
+   const after=draft.slice(end);
+   const glue=before.length>0&&!/\s$/.test(before)?" ":"";
+   const tail=after.length>0&&!/^\s/.test(after)?" ":"";
+   onDraft(`${before}${glue}${text}${tail}${after}`);
+   const caret=start+glue.length+text.length+tail.length;
+   requestAnimationFrame(()=>{const node=composerInput.current;if(node){node.focus();node.setSelectionRange(caret,caret);}});
+  };
+  const handleDictationOutcome=(outcome:DictationOutcome)=>{
+   if(outcome.kind==="transcript"){
+    insertTranscript(outcome.text);
+    setDictation({state:"landed",notice:{role:"status",text:dictationCopy("landed")}});
+   }else{
+    setDictation({state:outcome.kind,notice:dictationRefusalNotice(outcome)});
+   }
+  };
+  const stopDictation=async()=>{
+   const starting=dictationStarting.current;dictationStarting.current=null;
+   let session=dictationSession.current;
+   if(!session&&starting){
+    // The capture was still opening: give it its outcome first. If it was
+    // refused, the named refusal already stands — there is nothing to stop.
+    try{await starting;session=dictationSession.current;}
+    catch{dictationSession.current=null;return;}
+   }
+   dictationSession.current=null;
+   if(!session){setDictation({state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:"no capture was running"})}});return;}
+   setDictation({state:"transcribing",notice:{role:"status",text:dictationCopy("transcribing")}});
+   try{handleDictationOutcome(await session.end());}
+   catch(error){setDictation({state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(error)})}});}
+  };
+  const toggleDictation=async()=>{
+   if(dictation.state==="transcribing")return;
+   if(dictation.state==="recording"){await stopDictation();return;}
+   setDictation({state:"recording",notice:{role:"status",text:dictationCopy("recording")}});
+   const session=new DictationSession();
+   const starting=session.begin().then(()=>{
+    dictationSession.current=session;
+   }).catch(refusal=>{
+    dictationSession.current=null;dictationStarting.current=null;
+    setDictation(refusal&&typeof refusal==="object"&&"kind"in refusal&&["service-down","mic-denied","mic-unavailable","failed","empty"].includes(String(refusal.kind))
+      ?{state:(refusal as DictationRefusal).kind,notice:dictationRefusalNotice(refusal as DictationRefusal)}
+      :{state:"failed",notice:{role:"alert",text:dictationCopy("failed",{detail:String(refusal)})}});
+    throw refusal;
+   });
+   dictationStarting.current=starting;
+   try{await starting;}
+   catch{ /* the refusal is already rendered */ }
+  };
   // The Activity plane keeps the provider's working material — thinking, tools,
   // consent, stops, failures, turn boundaries — and leaves only the two
   // conversational kinds to the Conversation plane.
@@ -98,9 +174,11 @@ export function EncounterView({title,plane,onPlane,reading,status,draft,pending,
       {!connected&&<div className="encounter-connect"><span>Connect a native provider</span>{providers.map(provider=><button key={provider.id} disabled={pending||!allowed("open",true)} title={action("open")?.reason??undefined} onClick={()=>onProvider(provider.id)}>{provider.label}</button>)}{!providers.length&&<p>No ACP provider configured in AIKit.</p>}{resume&&<div className="encounter-resume"><p>The owner holds a recorded native session for this conversation, so a fresh open is refused. Reconnecting resumes that exact recorded identity — nothing is replaced or silently created.</p><button disabled={pending} aria-label="Reconnect recorded session" onClick={()=>onReconnect(resume.provider)}>Reconnect recorded session ({resume.provider})</button></div>}</div>}
       <ContextLedger draft={draft} reading={reading} editable={!!reading&&allowed("draft",true)} onDraft={onDraft}/>
       <textarea ref={composerInput} disabled={!reading||!allowed("draft",true)} aria-label="Message" value={draft} onChange={event=>onDraft(event.target.value)} rows={3}/>
-      <div className="encounter-composer-actions">
-        <button type="button" className="encounter-voice" aria-pressed={voice.listening} aria-label={voice.listening?"Stop voice input":"Voice input"} title={voice.supported?(voice.listening?"Stop dictation":"Dictate into the message"):(voice.error??"Voice input is not available in this webview yet")} data-listening={voice.listening||undefined} onClick={voice.toggle}><Glyph name="mic" size={13}/></button>
-        {voice.error&&<span role="alert" className="encounter-voice-error">{voice.error}</span>}
+      {/* Dictation (local): a named state line whenever dictation is not at
+        * rest — the honest gap words land here verbatim (dictation/copy.ts). */}
+      <div className="encounter-composer-actions" data-dictation-state={dictation.state}>
+        {dictation.notice&&<p className="encounter-dictation-line" role={dictation.notice.role} data-dictation-line={dictation.state}>{dictation.notice.text}</p>}
+        <button className="encounter-dictate" data-dictation-state={dictation.state} disabled={!reading||!allowed("draft",true)||dictation.state==="transcribing"} aria-pressed={dictation.state==="recording"} aria-label={dictation.state==="recording"?dictationCopy("buttonRecording"):dictation.state==="transcribing"?dictationCopy("buttonTranscribing"):dictationCopy("buttonIdle")} title={dictation.state==="recording"?dictationCopy("buttonRecording"):dictation.state==="transcribing"?dictationCopy("buttonTranscribing"):`${dictationCopy("buttonIdle")} — click to start; the transcript lands as editable text and is never sent by itself`} onClick={()=>void toggleDictation()}><Glyph name="mic" size={13}/><span className="sr-only">{dictationCopy("buttonIdle")}</span></button>
         <button className="encounter-latest" onClick={latest}>Latest</button>
         <span role="status">{pending?"Updating…":""}</span>
         {running

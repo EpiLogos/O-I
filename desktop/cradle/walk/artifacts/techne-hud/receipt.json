@@ -1,0 +1,190 @@
+{
+  "when": "2026-09-19T19:10:22.872Z",
+  "desk_url": "http://localhost:1434/",
+  "bridge": "http://127.0.0.1:4245",
+  "switches": 6,
+  "probe_notes": [
+    "HUD clicks are programmatic el.click() events: the shell retained-centre park (surface/retention.tsx, in flight with the parent integrator) paints under the mode-stage ground in this dev browser, so hit-tested clicks are refused. The parent's park fix retires this crutch.",
+    "Screenshots are taken with the mode-stage ground made transparent in this browser session only (paint-through), so the dual-mode HUD and the hosted field are visible in the receipts."
+  ],
+  "checks": [
+    {
+      "ok": true,
+      "label": "the surface stands in the Technē cut first",
+      "data": "data-cut=techne"
+    },
+    {
+      "ok": true,
+      "label": "the app wears the Technē suppression class"
+    },
+    {
+      "ok": true,
+      "label": "the masthead and tool rail are stood down",
+      "data": "masthead=hidden rail=hidden"
+    },
+    {
+      "ok": true,
+      "label": "toolbelt, Studio and Library are stood down",
+      "data": "toolbelt=hidden inspector=hidden library=hidden"
+    },
+    {
+      "ok": true,
+      "label": "the living canvas and the scene transport REMAIN",
+      "data": "transport=visible canvas=visible"
+    },
+    {
+      "ok": true,
+      "label": "exactly one field canvas",
+      "data": "1"
+    },
+    {
+      "ok": true,
+      "label": "the HUD position readout reports the app state",
+      "data": "O:I — the mark · scene 1/2 — Day · Saved"
+    },
+    {
+      "ok": true,
+      "label": "the readout names the scene position",
+      "data": "O:I — the mark · scene 1/2 — Day · Saved"
+    },
+    {
+      "ok": true,
+      "label": "exactly one hosted frame (no duplicate stage)",
+      "data": "1 hosted frame(s)"
+    },
+    {
+      "ok": true,
+      "label": "the chosen lens body mounts as the primary surface"
+    },
+    {
+      "ok": true,
+      "label": "Face returns the bare field"
+    },
+    {
+      "ok": true,
+      "label": "the HUD names the disclosure state exactly",
+      "data": "disclosure available · central.co…"
+    },
+    {
+      "ok": true,
+      "label": "the Library summon presents the Library overlay"
+    },
+    {
+      "ok": true,
+      "label": "the verso summon presents the verso overlay"
+    },
+    {
+      "ok": true,
+      "label": "the search summon presents the Library gallery"
+    },
+    {
+      "ok": true,
+      "label": "the summon contract completes: presented and reported closed",
+      "data": "{\"opened\":[\"library\",\"verso\",\"search\"],\"closed\":[\"library\",\"verso\",\"search\"]}"
+    },
+    {
+      "ok": true,
+      "label": "the Select control drives the app rail (host-command)",
+      "data": "tool=select"
+    },
+    {
+      "ok": true,
+      "label": "the Interact control drives the app rail (host-command)",
+      "data": "tool=interact"
+    },
+    {
+      "ok": true,
+      "label": "the EXPRESSIONS cut restores the full app HUD",
+      "data": "masthead=visible hostMode=expressions"
+    },
+    {
+      "ok": true,
+      "label": "the floating recall control stands in the expressions cut"
+    },
+    {
+      "ok": true,
+      "label": "the pin gesture dispatched through the app rail and canvas"
+    },
+    {
+      "ok": true,
+      "label": "the dirty edit lands (a pin placed through the rail)",
+      "data": "2 → 3 entities"
+    },
+    {
+      "ok": true,
+      "label": "a second scene stands open",
+      "data": "sceneIndex=1"
+    },
+    {
+      "ok": true,
+      "label": "switch 1: techne cut holds stage, edit and scene",
+      "data": "cut=techne tag=the-one-stage frames=1 scene=1 entities=3 mode=techne"
+    },
+    {
+      "ok": true,
+      "label": "switch 2: expressions cut holds stage, edit and scene",
+      "data": "cut=expressions tag=the-one-stage frames=1 scene=1 entities=3 mode=expressions"
+    },
+    {
+      "ok": true,
+      "label": "switch 3: techne cut holds stage, edit and scene",
+      "data": "cut=techne tag=the-one-stage frames=1 scene=1 entities=3 mode=techne"
+    },
+    {
+      "ok": true,
+      "label": "switch 4: expressions cut holds stage, edit and scene",
+      "data": "cut=expressions tag=the-one-stage frames=1 scene=1 entities=3 mode=expressions"
+    },
+    {
+      "ok": true,
+      "label": "switch 5: techne cut holds stage, edit and scene",
+      "data": "cut=techne tag=the-one-stage frames=1 scene=1 entities=3 mode=techne"
+    },
+    {
+      "ok": true,
+      "label": "switch 6: expressions cut holds stage, edit and scene",
+      "data": "cut=expressions tag=the-one-stage frames=1 scene=1 entities=3 mode=expressions"
+    },
+    {
+      "ok": true,
+      "label": "the walk ends by returning to the Technē cut",
+      "data": "data-cut=techne"
+    },
+    {
+      "ok": true,
+      "label": "no orphan rAF loops across the switches",
+      "data": "2 loop(s) before → 2 after"
+    },
+    {
+      "ok": true,
+      "label": "after the walk the Technē cut still suppresses and reports",
+      "data": "scene=\"Night\""
+    },
+    {
+      "ok": true,
+      "label": "Epii summons as an overlay"
+    },
+    {
+      "ok": true,
+      "label": "Epii leaves on demand"
+    },
+    {
+      "ok": true,
+      "label": "the source depth (material scene) summons into the dock"
+    },
+    {
+      "ok": true,
+      "label": "host and frame quiet",
+      "data": "0 environmental resource-load note(s)"
+    }
+  ],
+  "console_errors": [],
+  "environmental_notes": 0,
+  "screenshots": [
+    "01-techne-cut.png",
+    "02-expressions-cut.png",
+    "03-after-switch-walk.png",
+    "04-epii-summon.png",
+    "05-source-depth.png"
+  ]
+}

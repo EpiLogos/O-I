@@ -41,7 +41,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  check((await content.boundingBox()).height<contentBefore-18,'Footer expansion gives up document height instead of overlaying it');
  await page.mouse.move(pb.x+pb.width/2,pb.y+80);
  const tab=page.locator('.tab').first();await tab.click({button:'right'});await page.getByRole('menuitem',{name:'Focus this tab',exact:true}).click();await page.waitForTimeout(300);
- check((await pane.locator('.tab-strip').boundingBox()).height<2,'Per-tab focus folds away the tab strip');await page.keyboard.press('Escape');
+ check((await pane.locator('.tab-strip').boundingBox()).height>20,'Per-tab focus activates the tab without folding the strip — folding is the unpinned reveal law');await page.keyboard.press('Escape');
  await editor.click({button:'right'});check(await page.getByRole('menu',{name:'Writing commands'}).isVisible()&&await page.getByRole('menuitem',{name:'Focus this tab',exact:true}).count()===0,'Document right-click uses shared menu styling with writing-specific actions');await page.keyboard.press('Escape');
  const left=page.locator('[data-region="left"]');await page.getByRole('button',{name:'Toggle left region',exact:true}).click();await page.waitForTimeout(300);
  check((await left.boundingBox()).width<1,'Sidebar closes fully');await page.getByRole('button',{name:'Toggle left region',exact:true}).click();await page.waitForTimeout(300);
@@ -84,13 +84,13 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
  await page.getByRole('menuitem',{name:/Move to pane/}).click();
  check(await page.locator('.pane.group').count()===1,'Per-tab move returns the selected tab and removes its emptied pane');
  await page.getByRole('button',{name:'Toggle right region',exact:true}).click();await page.waitForTimeout(300);
- const right=page.locator('[data-region="right"]');const rightWidth=(await right.boundingBox()).width;
+ const right=page.locator('aside[data-region="right"]');const rightWidth=(await right.boundingBox()).width;
  check(rightWidth>200,'Right sidebar opens with usable width');
  await page.getByRole('button',{name:'Full right region',exact:true}).click();await page.waitForTimeout(300);
  check((await right.boundingBox()).width>rightWidth+100,'Right sidebar expands across the central canvas');
  check(await page.getByRole('button',{name:'Toggle right region',exact:true}).evaluate(el=>{const r=el.getBoundingClientRect();return document.elementFromPoint(r.x+r.width/2,r.y+r.height/2)?.closest('button')===el;}),'Global right toggle stays clickable above the full agent view');
  check(!await page.locator('[data-region="centre"]').isVisible(),'Full agent mode conceals the entire canvas including its tab border');
- check((await right.locator('.agent-empty').boundingBox()).width>rightWidth-30,'Full agent content expands into a wider reading layout');
+ check((await right.locator('.agent-chat[data-full="true"]').boundingBox()).width>rightWidth-30,'The full right region hosts the agent chat across the widened reading layout');
  await page.getByRole('button',{name:'Restore right region',exact:true}).click();await page.waitForTimeout(300);
  check(Math.abs((await right.boundingBox()).width-rightWidth)<2,'Right sidebar restores its previous width');
  check(await page.getByRole('separator',{name:'Resize right region',exact:true}).evaluate(el=>getComputedStyle(el,'::after').content)==='none','Right resize affordance is cursor-only too');

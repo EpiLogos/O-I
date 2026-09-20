@@ -21,6 +21,7 @@
         } catch (e) {}
         var dark = theme === "dark" || (theme === "system" && matchMedia("(prefers-color-scheme: dark)").matches);
         if (dark) document.body.setAttribute("data-theme", "dark");
+        if (window.__TAURI_INTERNALS__ || navigator.userAgent.includes("Tauri")) document.documentElement.classList.add("tauri");
         var completed = false;
         try { completed = !!sessionStorage.getItem("oi-cradle.welcome.v1"); } catch (e) {}
         if (!window.__OI_DETACHED__ && !completed && !(saved && (saved.enabled === false || saved.welcomeEnabled === false))) {

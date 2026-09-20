@@ -112,11 +112,17 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const [compositionRef,setCompositionRef]=useState<string>();
   const [choosing,setChoosing]=useState(false);
 
-  // --- planes: curated by the mode, controlled by the composition root ------
-  const offered=useMemo(()=>[
-    ...curation.planes.map(id=>({id:id as string,label:id as string})),
-    ...curation.extra.flatMap(id=>{const extra=extraPlanes?.find(candidate=>candidate.id===id);return extra?[{id:extra.id,label:extra.label}]:[];}),
-  ],[curation,extraPlanes]);
+  // --- planes: one strip, curated in the mode's own order -------------------
+  // `curation.planes` interleaves built-in planes (bodies owned here) with
+  // composition-root ids; a composition-root id is offered only when its body
+  // was actually supplied, and takes the extra's label.
+  const offered=useMemo(()=>curation.planes
+    .map(id=>{
+      const extra=extraPlanes?.find(candidate=>candidate.id===id);
+      if(!curation.extra.includes(id))return {id,label:id};
+      return extra?{id,label:extra.label}:undefined;
+    })
+    .filter((entry):entry is {id:string;label:string}=>!!entry),[curation,extraPlanes]);
   const [ownPlane,setOwnPlane]=useState<string>();
   /** A plane shown for this visit though the mode does not list it (a
    * summoned Composition). Choosing any listed plane ends the visit. */

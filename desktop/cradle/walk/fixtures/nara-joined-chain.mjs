@@ -28,6 +28,8 @@ const {
   takeChoreographyStep,completeChoreographyStep,interruptChoreography,
 } = await import("../../src/nara/expressiveAct.ts");
 const {NaraSpeechBinding} = await import("../../src/nara/session.ts");
+const {naraBodyState,holdToTalkLive} = await import("../../src/nara/bodyState.ts");
+const {voiceBodyFromConstitution,voiceBodySatisfactionReceipt,dialogicalFloor} = await import("../../src/nara/voiceBody.ts");
 
 const bridgeUrl=process.argv[2];
 if(!bridgeUrl)throw new Error("usage: nara-joined-chain.mjs <bridgeUrl>");
@@ -136,6 +138,34 @@ await check("Canonical Nara attaches to the resolved text-capable body (honest c
   return read;
 });
 
+// The caller-side satisfaction bridge (#336 follow-up): the desktop reduces
+// its own constructed speech constitution to the QL voice-body declaration
+// and evaluates the authored dialogical floor. Floor unmet is a fact, named
+// gap by gap — never softened.
+const textFloorReceipt=voiceBodySatisfactionReceipt({
+  satisfaction_ref:`voice-body-satisfaction:${crypto.randomUUID()}`,
+  nara_ref:"nara:desktop-walk",
+  reduction:voiceBodyFromConstitution({constitution:constitutionText,nara_ref:"nara:desktop-walk"}),
+  evaluated_at:new Date().toISOString(),
+});
+await check("The text body fails the QL dialogical floor on the five body facts; per-turn context push is met",()=>{
+  assert.equal(textFloorReceipt.satisfied,false);
+  assert.equal(textFloorReceipt.unmet.length,5,"duplex, barge-in, manual interrupt, structured channel, reconnect status reporting");
+  assert.deepEqual(textFloorReceipt.unmet,[
+    "duplex: requires at least streamed-turn-taking, body discloses unknown",
+    "barge-in: required supported, body discloses unsupported",
+    "manual interrupt: required supported, body discloses unsupported",
+    "structured event channel: required supported, body discloses unsupported",
+    "reconnect status reporting: required supported, body discloses unsupported",
+  ]);
+  // The floor's refreshable requirement is met by the composition's own
+  // structural fact: the host recomposes the bounded context each turn.
+  assert.equal(textFloorReceipt.declaration.context_refresh,"push-on-change");
+  assert.equal(textFloorReceipt.reduction.context_refresh.source,"composition");
+  assert.ok(!textFloorReceipt.unmet.some(line=>line.includes("context refresh")),"context refresh is met, never named as a gap");
+  return textFloorReceipt;
+});
+
 // Exact point: the ref enters Nara's bounded context.
 const pointedDeixis=buildDeixisRequest({
   deixis_ref:`deixis:${crypto.randomUUID()}`,
@@ -230,6 +260,23 @@ await check("Body change recorded without reminting Nara; new capabilities discl
   assert.equal(change.agent_ref,"agent:nara");
   assert.equal(binding.read().realtime_capable,true);
   return change.delta;
+});
+const realtimeFloorReceipt=voiceBodySatisfactionReceipt({
+  satisfaction_ref:`voice-body-satisfaction:${crypto.randomUUID()}`,
+  nara_ref:"nara:desktop-walk",
+  reduction:voiceBodyFromConstitution({constitution:constitutionRealtime,nara_ref:"nara:desktop-walk"}),
+  evaluated_at:new Date().toISOString(),
+});
+await check("The realtime body meets the QL dialogical floor; push-on-change over the structured event channel is the named basis",()=>{
+  assert.equal(realtimeFloorReceipt.satisfied,true,"refreshable is met: host push rides the proven structured event channel");
+  assert.deepEqual(realtimeFloorReceipt.unmet,[]);
+  assert.equal(realtimeFloorReceipt.declaration.duplex,"full-duplex");
+  assert.equal(realtimeFloorReceipt.declaration.barge_in,"supported");
+  assert.equal(realtimeFloorReceipt.declaration.reconnect_status_reporting,"supported");
+  assert.equal(realtimeFloorReceipt.declaration.context_refresh,"push-on-change");
+  assert.equal(realtimeFloorReceipt.reduction.context_refresh.source,"interaction.structured-events + interaction.tool-requests");
+  assert.match(realtimeFloorReceipt.reduction.context_refresh.note,/structured event channel/,"the verdict carries its basis, not just the verdict");
+  return realtimeFloorReceipt;
 });
 
 // One reversible ExpressiveAct with speech; interrupt holds both together.
@@ -390,6 +437,72 @@ binding.updateContext({...binding.contextNow,expression_revision:String(document
 await check("Stale Epii enrichment refuses auto-application after the world moved",()=>{
   assert.ok(throws(()=>applyGate(delegation,enrichment,binding.contextNow),/stale Epii enrichment/));
   return {live_revision:binding.contextNow.expression_revision,basis:enrichment.basis_expression_revision};
+});
+
+// The option+gap law (#336): a credential-gated body is constituted as an
+// OPTION — the gap and credential condition named exactly as the documents
+// disclose them — and no speech affordance presents itself as live. Swapping
+// back to the text-only body names the speech body absent. The same Nara
+// continues through both changes.
+const gatedResolution=JSON.parse(readFileSync(`${fixtureRoot}gated-body-resolution.json`,"utf8")).resolution;
+const constitutionGated=constitutionFromAikitResolution({
+  constitution_ref:`speech-constitution:${crypto.randomUUID()}`,
+  agent_ref:constitutionRealtime.agent_ref,agency_ref:constitutionRealtime.agency_ref,
+  world_binding_ref:constitutionRealtime.world_binding_ref,
+  agent_session_ref:`agent-session:${crypto.randomUUID()}`,
+  body_ref:"model:desktop-speech-gated",
+},gatedResolution,new Date().toISOString());
+const gatedChange=binding.reconnect({
+  change_ref:`speech-constitution-change:${crypto.randomUUID()}`,
+  next_constitution:constitutionGated,
+  next_context:buildContext(document,{agent_session_ref:constitutionGated.agent_session_ref}),
+  reason:"credential-gated body resolved; canonical Nara continues",
+  evidence_refs:["walk:fixture:gated-body-resolution.json"],
+  at:new Date().toISOString(),
+});
+await check("A credential-gated body renders as an OPTION with the gap named exactly as disclosed; no speech affordance presents as live",()=>{
+  const state=naraBodyState(constitutionGated);
+  assert.equal(state.state,"option");
+  assert.equal(state.usable,false);
+  assert.match(state.line,/speech body present as an option \(not usable today\)/);
+  assert.deepEqual(state.gaps.map(gap=>gap.line),
+    ["unavailable (modality-credential): the surface needs a credential it does not have bound: provider:voice inference credential"]);
+  assert.equal(state.credential.line,"credential condition required — provider:voice inference credential");
+  assert.equal(holdToTalkLive(constitutionGated),false,"hold-to-talk never presents as live while the body is gated");
+  const read=binding.read();
+  assert.equal(read.speech_capable,false);
+  assert.equal(read.text_capable,false,"the recorded-unavailable body carries no usable text path either");
+  assert.equal(gatedChange.delta.speech_capable_before,true,"the realtime body was live before the gated body arrived");
+  assert.equal(binding.read().nara_ref,"nara:desktop-walk","Nara continues unchanged across the gated body");
+  return {state:state.state,line:state.line,gaps:state.gaps.map(gap=>gap.line),credential:state.credential.line};
+});
+const absentConstitution=constitutionFromAikitResolution({
+  constitution_ref:`speech-constitution:${crypto.randomUUID()}`,
+  agent_ref:constitutionGated.agent_ref,agency_ref:constitutionGated.agency_ref,
+  world_binding_ref:constitutionGated.world_binding_ref,
+  agent_session_ref:`agent-session:${crypto.randomUUID()}`,
+  body_ref:"model:desktop-text",
+},textResolution,new Date().toISOString());
+const absentChange=binding.reconnect({
+  change_ref:`speech-constitution-change:${crypto.randomUUID()}`,
+  next_constitution:absentConstitution,
+  next_context:buildContext(document,{agent_session_ref:absentConstitution.agent_session_ref}),
+  reason:"text-only body resolved; canonical Nara continues",
+  evidence_refs:["walk:fixture:text-body-resolution.json"],
+  at:new Date().toISOString(),
+});
+await check("Swapping to the text-only body renders ABSENT with the named gap; the affordance stays honest and Nara continues",()=>{
+  const state=naraBodyState(absentConstitution);
+  assert.equal(state.state,"absent");
+  assert.equal(state.text_capable,true,"the text-capable Nara is constituted, not broken");
+  assert.equal(state.line,"speech body absent (text-capable Nara); a speech body may be constituted or swapped later without changing Nara");
+  assert.equal(holdToTalkLive(absentConstitution),false);
+  const read=binding.read();
+  assert.equal(read.speech_capable,false);
+  assert.equal(read.text_capable,true);
+  assert.equal(absentChange.delta.body_changed,true);
+  assert.equal(binding.read().nara_ref,"nara:desktop-walk");
+  return {state:state.state,line:state.line,text_capable:read.text_capable};
 });
 
 process.stdout.write(`\n${JSON.stringify({schema:"oi.cradle.walk.nara-joined/v1",expression_ref:expressionRef,checks})}\n`);

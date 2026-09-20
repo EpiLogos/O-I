@@ -90,6 +90,9 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
   let stallEnabled = false;
 
   await page.goto(baseUrl);
+  await page.waitForSelector('.desktop-shell', { timeout: 30000 });
+  await page.waitForTimeout(1500);
+  await shot('boot-state');
   const nav = page.getByRole('complementary', { name: 'World navigator' });
   await nav.locator('[data-project-path="Work/Continuity"]').click();
   if ((await nav.getByRole('button', { name: 'Continuity: files', exact: true }).getAttribute('aria-pressed')) !== 'true') {
