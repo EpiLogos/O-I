@@ -5,6 +5,7 @@ pub const PACKAGE_SCHEMA: &str = "oi.package/v1";
 pub const PACKAGE_RECEIPT_SCHEMA: &str = "oi.package-receipt/v1";
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct PackageManifest {
     pub schema: String,
     pub package_ref: String,
@@ -24,6 +25,7 @@ pub struct PackageManifest {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct PackageSource {
     pub kind: String,
     pub locator: String,
@@ -31,12 +33,14 @@ pub struct PackageSource {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct SuiteRequirement {
     pub product: String,
     pub minimum_version: String,
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct PackageContribution {
     pub contribution_ref: String,
     pub target_product: String,
@@ -51,6 +55,7 @@ pub struct PackageContribution {
 }
 
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
 pub struct NativeVerificationDeclaration {
     pub operation: String,
     #[serde(default, skip_serializing_if = "Option::is_none")]

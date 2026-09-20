@@ -51,7 +51,7 @@ export function SkillSearch({
 
   if (!bound) {
     return <div className="oi-refusal" data-agency-search-unavailable>
-      No Skill search source is registered — AIKit's search/discovery seam (AIKit #34/#118/#122) supplies it. Manual entry of a known Skill ref is not offered without it.
+      No Skill search source is registered — AIKit's search/discovery seam (AIKit issues 34/118/122) supplies it. Manual entry of a known Skill ref is not offered without it.
     </div>;
   }
 

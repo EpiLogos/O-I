@@ -1,7 +1,15 @@
-.welcome-prompt{display:grid;place-items:center;width:100%;min-height:3em;color:var(--oi-accent-ink);text-align:center}
-.welcome-prompt h2{grid-area:1/1;max-width:100%;margin:0;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere}
-.welcome-prompt[data-tone="quiet"] h2{color:var(--oi-muted)}
-.welcome-prompt[data-tone="warm"] h2{color:var(--oi-accent-ink)}
-.welcome-prompt[data-tone="playful"] h2{color:var(--oi-meta-relation)}
-@media(prefers-reduced-motion:no-preference){.welcome-prompt[data-rotating="true"] h2{animation:welcome-prompt-in var(--oi-motion-normal) var(--oi-motion-ease)}}
+/* The rolling welcome prompt. The stage is one grid cell holding BOTH the
+ * active heading and the invisible reserve of every eligible phrase, so the
+ * row is always as tall as the tallest statement at the current width — a
+ * rotation onto a longer (up to three-line) phrase changes which text is
+ * visible, never the box height. Nothing beside or below is displaced. */
+.welcome-prompt-roller{display:grid;justify-items:stretch;width:100%;min-height:3em;color:var(--oi-accent-ink);text-align:center}
+.welcome-prompt-roller>*{grid-area:1/1;min-width:0}
+.welcome-prompt-roller h2{margin:0;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere}
+.welcome-prompt-roller .welcome-prompt-reserve{visibility:hidden;pointer-events:none;user-select:none;font:inherit;font-size:var(--oi-shell-type-title);line-height:1.5;overflow-wrap:anywhere}
+.welcome-prompt-roller .welcome-prompt-reserve span{display:block}
+.welcome-prompt-roller[data-tone="quiet"] h2{color:var(--oi-muted)}
+.welcome-prompt-roller[data-tone="warm"] h2{color:var(--oi-accent-ink)}
+.welcome-prompt-roller[data-tone="playful"] h2{color:var(--oi-meta-relation)}
+@media(prefers-reduced-motion:no-preference){.welcome-prompt-roller[data-rotating="true"] h2{animation:welcome-prompt-in var(--oi-motion-normal) var(--oi-motion-ease)}}
 @keyframes welcome-prompt-in{from{opacity:0;transform:translateY(.18em)}to{opacity:1;transform:translateY(0)}}

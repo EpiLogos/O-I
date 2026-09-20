@@ -3,16 +3,14 @@ import { Glyph } from "./workspace/Glyph";
 import { useKernel } from "./kernel/KernelProvider";
 import { GroundChooser } from "./workspace/GroundChooser";
 import { WelcomePrompt } from "./flow/WelcomePrompt";
+
 import "./flow/flow.css";
 
 /**
- * Empty workspace (brief FND-01 A9 / "Where the running app is ahead of the
- * studies"). There is exactly ONE first-state composition — the fresh-surface
- * page, shared with FreshSurface (same section composition, same rolling
- * WelcomePrompt). The old study-era "A space for your work" parallel was
- * removed; this pane keeps its three real entries — it never fabricates a
- * fourth. `title` stays in the prop contract (Cradle.tsx still passes the
- * workspace name) but is not shown.
+ * Empty workspace: ordinary activities first. The native source chooser and
+ * existing open/search/write callbacks remain authoritative; no placeholder
+ * binding or native document is minted just to render this resting surface.
+ * `title` remains in the public prop contract for existing callers.
  *
  * Writing is not a mode this pane owns. "Start writing" opens writing kept on
  * this device — no Flow, no file, no Day is minted as a side effect of
@@ -41,21 +39,21 @@ export function Rest({ project, onWrite, onWiki, onSearch, onExplore }: {
     try { await onWrite(project); } catch (error) { setFailure(String(error instanceof Error ? error.message : error)); }
     finally { setPending(false); }
   };
-  return <section className="fresh-surface rest-ground" aria-label={groundNeedsAttention ? "Locate your Central ground" : "Empty workspace"}>
+  return <section className="fresh-surface rest-ground" aria-label={groundNeedsAttention ? "Connect your Central workspace" : "Empty workspace"}>
     <div>
       {groundNeedsAttention ? <>
         <div className="rest-ground-head">
-          <h2>Locate your Central ground</h2>
-          <p role="status" className="rest-ground-status">{boot.phase === "ground-unrecognised" ? "No default Central selected" : (boot.detail ?? "The default Central ground is not accessible")}</p>
+          <h2>Connect your Central workspace</h2>
+          <p role="status" className="rest-ground-status">{boot.phase === "ground-unrecognised" ? "Choose the Central workspace that holds your files" : (boot.detail ?? "The default Central ground is not accessible")}</p>
         </div>
         <GroundChooser />
-      </> : <WelcomePrompt paused={pending} />}
+      </> : <header className="welcome-prompt"><WelcomePrompt placement="returning"/><p>Start a draft, find a source, or open your library.</p></header>}
       {/* Writing never waits for a ground either: the chooser asks for one,
           and the entry to write stays reachable beside it. */}
       <nav className="rest-actions" aria-label="Start working">
-        {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} /><span>Open project wiki</span></button>}
+        {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} /><span>Open wiki</span></button>}
         <button onClick={onSearch}><Glyph name="search" size={13} /><span>Search</span><kbd>⌘K</kbd></button>
-        {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} /><span>Explore the open field</span></button>}
+        {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} /><span>Browse library</span></button>}
         <button className="rest-action-primary" disabled={pending} onClick={() => void write()}><Glyph name="file" size={13} /><span>{pending ? "Opening…" : "Start writing"}</span></button>
       </nav>
       {failure && <p className="fresh-refusal rest-refusal" role="alert">{failure}</p>}

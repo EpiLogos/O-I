@@ -4,8 +4,7 @@
  *
  *   Settings — change how the world behaves: search, edit, apply.
  *   System   — read how the world is doing: the census, its honesty, setup.
- *   Visuals  — appearance and expression (the expression system's home
- *              until it moves to its own place; untouched by this design).
+ *   Visuals  — supported appearance preferences; Expressions has its own home.
  *
  * Every value on the System surface carries its provenance and honest
  * availability; the Settings surface renders the owner-disclosed
@@ -14,6 +13,7 @@
  * to change?" — neither tries to be the other.
  */
 import {useEffect,useState} from "react";
+import {Glyph} from "../../Glyph";
 import {useKernel} from "../../../kernel/KernelProvider";
 import {kernelOp} from "../../../kernel/bridge";
 import {encounter} from "../../../encounter/client";
@@ -30,7 +30,7 @@ import "../settings-v2.css";
 const RAIL:{id:SettingsView;label:string;hint:string}[] = [
   {id:"settings",label:"Settings",hint:"Change how the world behaves — search everything, edit, apply"},
   {id:"system",label:"System",hint:"How the world is doing — what's installed, what's running, what needs attention"},
-  {id:"visuals",label:"Visuals",hint:"Appearance and expression — themes and the visual layer"},
+  {id:"visuals",label:"Visuals",hint:"Theme and opening preferences"},
 ];
 
 const VIEW_HEAD:Record<SettingsView,{label:string;line:string}> = {
@@ -104,9 +104,12 @@ export function SettingsPageV2() {
   const refreshAll = ()=>{void read();void readNative();};
   const head = VIEW_HEAD[view];
   return <section className="system-panel" aria-label="Settings and system" aria-busy={pending}>
+    <div className="settings-workspace-toolbar">
+    <button type="button" className="settings-return" onClick={() => window.dispatchEvent(new Event("oi:close-settings"))}><Glyph name="back" size={14}/><span>Back to work</span></button>
     <nav className="settings-rail" aria-label="Settings surfaces">
       {RAIL.map(item=><button key={item.id} aria-pressed={view===item.id} title={item.hint} onClick={()=>setView(item.id)}>{item.label}</button>)}
     </nav>
+    </div>
     <div className="settings-page-head"><h2>{head.label}</h2></div>
     {view==="settings"&&<SettingsHome census={reading}/>}
     {view==="system"&&<SystemHome

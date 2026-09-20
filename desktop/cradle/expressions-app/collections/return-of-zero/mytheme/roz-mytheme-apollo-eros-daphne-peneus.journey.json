@@ -1,0 +1,1775 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-apollo-eros-daphne-peneus",
+  "name": "Apollo · Eros/Cupid · Daphne · Peneus",
+  "description": "The Ovidian whole: Python and the games, the boast, two contrary arrows, Daphne's granted wish, the pursuit, the transformation with its beating heart and recoil, the laurel's public office, and appropriation after withdrawal.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-ovid-0-python",
+      "name": "Python, the games, and the boast",
+      "character": "The violent achievement joins its public commemoration before the laurel exists; the victor then disputes a boy's right to the bow.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#7a2e1d",
+          "#3f5a36",
+          "#c99a3c",
+          "#d9cdb4"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e147",
+          "name": "Python — terror spread across the mountainside",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.68,
+            "y": 0.34
+          },
+          "rotation": 12,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st159",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e148",
+          "name": "Apollo — the bow formerly used on deer and goats",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Apollo",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st160",
+                "text": "Apollo",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e149",
+          "name": "Pythian games — oak leaves, no laurel yet",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.9,
+            "y": 0.9
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st161",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e150",
+          "name": "Cupid bending his bow",
+          "kind": "formation",
+          "position": {
+            "x": 0.72,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.42,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Cupid",
+          "share": 1,
+          "tint": "#7a2e1d",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st162",
+                "text": "Cupid",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Met. 1.416–465 (paraphrased, Miller 2nd ed. 1921)",
+          "title": "Python, the games, and the boast",
+          "italic": "The opening already joins violent achievement to public memory — and the quarrel over the bow is the causal entrance to the pursuit, not an ornament.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "After the flood the earth brings forth living forms; its fertility also produces Python, a terror to the restored peoples. Apollo kills him with a bow previously used against deer and goats, almost exhausting his quiver, and institutes the Pythian games so time cannot erase the deed — oak leaves for victors, laurel not yet existing. Still proud, Apollo sees Cupid bending his bow and disputes the boy's right to it: his own arrows subdued the monstrous serpent; Cupid should be content to kindle love with a torch. Cupid answers: Apollo's arrows strike other creatures; his can strike Apollo. Ovid names Cupid's anger as the cause of what follows.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: Python and the mountain terror (#0); the quiver nearly emptied (#0); oak crowns, laurel absent (#0); the boast and the retort (#0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ovid-1-arrows",
+      "name": "Two contrary arrows; Daphne's wish granted",
+      "character": "The golden arrow pierces Apollo to the marrow; the leaden arrow drives love from Daphne — and before that blow the record carries her woodland life and her father's granted request.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#7a2e1d",
+          "#3f5a36",
+          "#c99a3c",
+          "#d9cdb4"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e151",
+          "name": "golden arrow — excites love",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "→",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st163",
+                "text": "→",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e152",
+          "name": "leaden arrow — drives love away",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.08
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "→",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st164",
+                "text": "→",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e153",
+          "name": "Apollo — pierced to the marrow",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.084
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Apollo",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st165",
+                "text": "Apollo",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e154",
+          "name": "Daphne — wandering woods; the fillet in her hair; refusing suitors",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.56,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Daphne",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st166",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e155",
+          "name": "Peneus — yields the request for perpetual virginity",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#2b6b6b",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st167",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Met. 1.466–489",
+          "title": "Two contrary arrows; Daphne's wish granted",
+          "italic": "The order matters: the poem narrates Cupid's blow before her woodland orientation — both facts must survive: imposed aversion, and a determinate wish her father accepted.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "From Parnassus Cupid takes two arrows with contrary effects: one golden and sharply pointed, exciting love; one leaden and blunt, driving love away. He strikes Daphne with the latter and pierces Apollo to the marrow. The poem then gives Daphne a life this desire will interrupt: secluded woodland, hunted spoils, the example of unmarried Phoebe; many suitors refused. Peneus",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "reminds her she owes him a son-in-law; she puts her arms around his neck and asks for perpetual virginity, invoking Diana's granted precedent. Peneus yields. The order matters: her wishes are established before Apollo projects marriage onto her, and reducing her to the arrow's negative charge would discard her activity, her preferred world and her address to her father.\n\nOccurrences: the two arrows and their strokes (#1); Phoebe/Diana as model and precedent (#1); Peneus' yielded permission (#1, recalled at #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ovid-2-pursuit",
+      "name": "The pursuit: speech fails, speed decides",
+      "character": "The god who assigned Cupid the torch now burns within that office; his healing cannot cure its master; the hound and hare specify their different aims.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#7a2e1d",
+          "#3f5a36",
+          "#c99a3c",
+          "#d9cdb4"
+        ],
+        "material": "round",
+        "params": {
+          "speed": 0.85,
+          "dispersion": 0.1
+        }
+      },
+      "entities": [
+        {
+          "id": "e156",
+          "name": "Apollo — hope; breath reaching her hair",
+          "kind": "formation",
+          "position": {
+            "x": -0.4,
+            "y": -0.09,
+            "z": 0
+          },
+          "size": {
+            "x": 0.425,
+            "y": 0.153
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Apollo",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st168",
+                "text": "Apollo",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e157",
+          "name": "Daphne — fear; exhausted, denied rest",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Daphne",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st169",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e158",
+          "name": "his self-listing: Delphi, Claros, Tenedos, Patara; Jupiter's son; prophecy, song, healing",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.125,
+            "y": 0.125
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚕",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st170",
+                "text": "⚕",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e159",
+          "name": "the failed self-cure — another arrow has wounded him more surely",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✕",
+          "share": 1,
+          "tint": "#7a2e1d",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st171",
+                "text": "✕",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e160",
+          "name": "Gallic hound and hare — hunter seeks prey, hare seeks safety",
+          "kind": "formation",
+          "position": {
+            "x": 0.66,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◌◌",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st172",
+                "text": "◌◌",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Met. 1.490–542 (q002)",
+          "title": "The pursuit: speech fails, speed decides",
+          "italic": "The concern changes the desired pace of the chase while leaving pursuit itself in place — competence and claimed jurisdiction come apart.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Apollo sees Daphne, desires marriage, hopes — and his own prophetic powers mislead him about that hope. Ovid's fire similes: stubble after harvest, a hedge set alight by a traveller's torch. His attention makes a beloved image from features — hair imagined better arranged, what is hidden imagined more beautiful still. She runs. He calls that he is no enemy: lambs flee wolves, deer lions, doves eagles; he fears she will fall or be scratched; she should",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "run more slowly so he can pursue more slowly. He offers his identity — Delphi, Claros, Tenedos, Patara; Jupiter's son; prophecy, song, accurate archery, healing herbs — and meets the limit that another arrow has wounded him more surely than his art can cure. She leaves the speech unfinished; even her flight increases her attraction. The hound and hare simile: he runs on hope, she on fear; his breath reaches her hair, denying her exhausted body its rest.\n\nOccurrences: the burning similes (#2); the imagined arranged hair (#2); the slower-pursuit proposal (#2, compared at A31); the failed self-cure (#2); breath at her hair and neck (#2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ovid-3-tree",
+      "name": "The transformation — and the wood that shrank",
+      "character": "Bark encloses, hair becomes foliage, feet fasten into roots; the heart still beats under the fresh bark. Miller at 1.556: \"But even the wood shrank from his kisses.\"",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3f5a36",
+          "#7a2e1d",
+          "#c99a3c",
+          "#d9cdb4"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e161",
+          "name": "Daphne — pursued → tree",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Daphne",
+          "share": 2,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st174",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.111
+                  },
+                  "rotation": 0,
+                  "tint": "#3f5a36",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st175",
+                "text": "",
+                "shape": "triangle",
+                "hold": 2.8,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.614
+                  },
+                  "rotation": 0,
+                  "tint": "#3f5a36",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st176",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.6,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.111
+                  },
+                  "rotation": 0,
+                  "tint": "#3f5a36",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e162",
+          "name": "the beating heart under the fresh bark",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.098,
+            "y": 0.098
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♡",
+          "share": 1,
+          "tint": "#7a2e1d",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st177",
+                "text": "♡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e163",
+          "name": "\"even the wood shrank from his kisses\" (1.556)",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⤫",
+          "share": 1,
+          "tint": "#7a2e1d",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st178",
+                "text": "⤫",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e164",
+          "name": "Peneus' waters — the addressed rescue",
+          "kind": "formation",
+          "position": {
+            "x": -0.66,
+            "y": -0.34,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#2b6b6b",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st179",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e165",
+          "name": "her radiance remaining in the changed form",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": 0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✧",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st180",
+                "text": "✧",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Met. 1.543–556 (q002, q003)",
+          "title": "The transformation — and the wood that shrank",
+          "italic": "Rescue has a cost which a general word such as \"withdrawal\" must continue to carry — each conversion alters a capacity the chase had used or threatened.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Her strength spent, Daphne sees Peneus's waters and calls on her father: destroy the beauty through which she has pleased too much. Transformation answers bodily: heaviness seizes her limbs; bark encloses her soft body; hair becomes foliage; arms become branches; feet that had just run so quickly fasten into sluggish roots; a crown of leaves takes the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "place of her head, her radiance remaining in the changed form. Apollo still loves her: his hand against the trunk feels a heart beating under the fresh bark; he embraces the branches as limbs and kisses the tree. Miller's sentence is exact at 1.556: \"But even the wood shrank from his kisses.\" The changed form still gives resistance a bodily expression.\n\nOccurrences: the addressed appeal to Peneus (#1, #3); bark, foliage, branches, roots, leaf-crown (#3); the beating heart (#3); the shrinking wood (#3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ovid-4-laurel",
+      "name": "The laurel's public office",
+      "character": "\"Since Daphne cannot be his bride, she will be his tree.\" Laurel joins hair, lyre, quiver, triumphs, and Augustus's doorposts; the branches incline and the summit seems to nod in assent.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3f5a36",
+          "#7a2e1d",
+          "#c99a3c",
+          "#d9cdb4"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e166",
+          "name": "the laurel — Apollo's tree: hair, lyre, quiver",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.365,
+            "y": 0.522
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.8,
+          "tint": "#3f5a36",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st181",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e167",
+          "name": "triumphal processions and the Capitol",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st182",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e168",
+          "name": "Augustus's doorposts — flanking the civic oak",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.19,
+            "z": 0
+          },
+          "size": {
+            "x": 0.255,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≤≥",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st183",
+                "text": "≤≥",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e169",
+          "name": "the seeming nod of assent — retained with the recoil, neither cancelling the other",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↘",
+          "share": 1,
+          "tint": "#7a2e1d",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st184",
+                "text": "↘",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Met. 1.557–567 (q003)",
+          "title": "The laurel's public office",
+          "italic": "The tree enters the signs by which achievements and offices become publicly visible — the enduring emblem and the accomplished encounter are different things to account for.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Apollo declares what the tree will become for him: since Daphne cannot be his bride, she will be his tree. Laurel will belong to his hair, lyre and quiver; it will accompany Roman generals through triumph, guard Augustus's doorposts flanking the civic oak, and keep perpetual green in correspondence with his unshorn youth. The offices he named during the chase acquire a permanent emblem from",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the body that escaped them. Ovid ends with a further movement: the laurel inclines its new branches, its leafy summit seeming to nod like a head in assent. This follows the recoil; neither moment cancels the other — the final seeming assent belongs to the narrator's presentation of a changed body's motion, and it gives the ending a difficulty that disappears only if the last lines are cut away.\n\nOccurrences: the bride/tree declaration (#4); lyre, quiver, triumphs, Capitol, doorposts (#4); the nod after the recoil (#3, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ovid-5-return",
+      "name": "Appropriation after withdrawal",
+      "character": "The image remains powerful where the hoped-for encounter failed. A20: cultural efficacy cannot by itself establish the image's fidelity to what it represents.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3f5a36",
+          "#7a2e1d",
+          "#c99a3c",
+          "#d9cdb4"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e170",
+          "name": "the emblem travelling into public life",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.859,
+            "y": 0.614
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st185",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e171",
+          "name": "the tree that resisted — heart, recoil — inside the emblem's history",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.17,
+            "y": 0.17
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♡",
+          "share": 1,
+          "tint": "#7a2e1d",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st186",
+                "text": "♡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e172",
+          "name": "A20 image/valuation/possession — the ratified return",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A20",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st187",
+                "text": "A20",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e173",
+          "name": "A27 self and other — another can appear in my world without becoming mine to complete",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A27",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st188",
+                "text": "A27",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · the ratified whole seam; A20, A27 (human-amplified: yes); C21, C27; movement 35",
+          "title": "Appropriation after withdrawal",
+          "italic": "The laurel figures symbolic appropriation persisting after the living source withdraws — Apollo fails to obtain Daphne as bride and establishes the changed form as his tree, emblem and public honour.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The authored interpretation begins from the complete sequence: Apollo figures measure, illumination, delineation and communicable form, and his pursuit shows those capacities gathered around an image which begins to dictate the terms on which its living source is admitted (human-amplified: yes, from the ratified whole seam). Cupid's retaliation exposes the archer as susceptible to a power he dismissed; the opposed charges are the fallen accounting of two ones in Draft 3's authored reading (human-amplified: yes), without identifying this retaliatory Cupid with the full native",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "office of Eros. The laurel's afterlife figures the exact further operation: appropriation after withdrawal (human-amplified: yes). \"Withdrawal\" names the loss of availability in the form pursued — it does not deny the heart, recoil or seeming nod; \"appropriation\" names the judgment of the transition into emblem. A20 receives: cultural efficacy cannot establish the image's fidelity; A27: another can appear in my world without becoming mine to complete. Reading the honoured leaf with pursuit, exhaustion, heart and recoil retains the sign's costs (A35 comparison, human-amplified: no).\n\nDeclared cross-story: Daphne ↔ the Apollo/Dionysus bracket (movement 35 keeps its own philosophical relation; no resolution is imported); laurel's honours vs the narrative origin (A29 comparison, human-amplified: no). ↳ Occurrences: heart and recoil inside the public sign (#3–#5→0); the emblem's Roman future (#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

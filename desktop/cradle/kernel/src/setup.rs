@@ -74,7 +74,7 @@ fn decode_reply(code: Option<i32>, bytes: &[u8]) -> Result<Value, String> {
     }
     // Exit 1 describes retained partial/unknown results; exit 2 a native refusal.
     // Neither becomes a success nor loses the owner's recovery document.
-    if !matches!(code, Some(0 | 1 | 2)) {
+    if !matches!(code, Some(0..=2)) {
         return Err(
             "Native setup ended without a conclusive status. Recheck; no write was retried.".into(),
         );

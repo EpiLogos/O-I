@@ -1,0 +1,2487 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-neumann-images",
+  "name": "Neumann images and plate relations",
+  "description": "The shared archetypal whole in sequence: the round, its metabolism, the world-parent separation with the paśu correction, the twins' signed alternative, the hero's two emancipations and Osiris transformation, centroversion, the performable paper scene, the self-rolling wheel, and the return bond.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-neu-0-round",
+      "name": "The world has parents before the person who distinguishes them",
+      "character": "The round holds their possibility together: womb, egg, enclosing waters, the serpent with its tail in its mouth.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e298",
+          "name": "the round — enclosing outline carrying the life that will differentiate it",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.914,
+            "y": 0.914
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 2.2,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st325",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e299",
+          "name": "womb · egg · waters · uroboros — the held possibilities",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.361,
+            "y": 0.361
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.25,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st326",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e300",
+          "name": "the future ego — dependent before it can represent the dependence",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.1,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "·",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st327",
+                "text": "·",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Neumann's creation sequence; the essay's structural priority of relation",
+          "title": "The world has parents before the person who distinguishes them",
+          "italic": "The whole carries shared archetypal structuration — genesis, world-parent relation, opposition, differentiation, separation and renewed interplay — through which situated tellings become comparable.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "In Neumann's creation sequence, heaven and earth, nourishment and danger, containing body and emerging child have yet to acquire the separateness through which a world becomes inhabitable. The round holds their possibility together; its apparently enclosed outline carries the life that will differentiate it. The future ego depends upon this containing life before it can represent that dependence. In the first round the paternal and maternal are",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "still together: calling the uroboros mother emphasises enclosure and nurture; calling it the unity of the parents emphasises the difference it contains before that difference becomes opposition for a subject — distinguishable relations a single outline cannot settle. The source's stadial claim remains attributable to Neumann; the essay's structural priority of relation does not require every person or society to pass through one historical sequence.\n\nOccurrences: the round's outline and contents (#0); the parental unity before opposition (#0, differentiated at #2); the dependent ego (#0, becoming centre at #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-1-metabolism",
+      "name": "The round lives by taking into itself",
+      "character": "Mouth meets tail; hunger prevents an inert totality; the Great Mother's two faces; nourishment against Saturnine monopoly; centroversion audible already.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e301",
+          "name": "mouth and tail — eater and eaten in one body",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.62,
+            "y": 0.62
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.8,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st328",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e302",
+          "name": "hunger — systole and diastole of the round",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⇅",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st329",
+                "text": "⇅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e303",
+          "name": "the Great Mother — life-giver and devourer; ambivalence of a changing relation",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.106,
+            "y": 0.106
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☾",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st330",
+                "text": "☾",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e304",
+          "name": "Prajāpati's self-offering; horse/universe (p.29); Bhairava at p.27 — Mono–Śiva receiving Poly–Śakti",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "प्र",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st331",
+                "text": "प्र",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e305",
+          "name": "Saturnine devouring — intake without renewed birth (C26)",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♄",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st332",
+                "text": "♄",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the digestive leads pp.27–33; samāveśa (human-amplified: yes); C26 monoisation",
+          "title": "The round lives by taking into itself",
+          "italic": "The image demonstrates receiving as an operation: what is received must be capable of transforming the receiver and returning as generative capacity — incorporation becomes counter-generation when the centre monopolises renewal.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The round lives by taking into itself: mouth meets tail, hunger prevents an inert totality, and the digestive and generative images at pp.27–33 give it interior movement — intake and expenditure, birth and reabsorption, systole and diastole. As the Great Mother becomes the first object-face of the unconscious, what gives birth also has power to take back; nurturing and terrible aspects belong to a relation whose terms are changing. The Prajāpati lead at p.29 gives the pressure a transmitted form — creation as offering to himself, horse and",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "universe joined; at p.27 Taylor brings Bhairava and Śaiva devouring into the same inquiry: Mono–Śiva receives and assimilates Poly–Śakti forms, whose integration can issue in samāveśa (human-amplified: yes for this authored assimilation relation). The authored refraction sharpens nourishment against monopoly: the Saturnine devourer takes without permitting new birth — incorporation becomes counter-generation when the receiving centre monopolises the power of renewed emergence. Centroversion is already audible: a destination beyond escape.\n\nOccurrences: mouth/tail and hunger (#0–#1); the Mother's two faces (#1); Prajāpati and the horse/universe (#1, nested encounter); the Śaiva assimilation relation (#1); Saturnine counter-generation (#1, developed in the uroboros whole).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-2-separation",
+      "name": "Separation of the World Parents — and the paśu correction",
+      "character": "Heaven distinguishable from earth; the androgyne recognises itself, then divides; Taylor's correction: I-am recognition precedes separation into husband and wife.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e306",
+          "name": "sky lifting from earth — the interval in which a world can appear",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 1.105,
+            "y": 0.368
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st333",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e307",
+          "name": "the primordial person — recognises, then divides",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.43,
+            "z": 0
+          },
+          "size": {
+            "x": 0.361,
+            "y": 0.469
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 1.6,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st335",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.361,
+                    "y": 0.361
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st336",
+                "text": "◘◘",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.361,
+                    "y": 0.145
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st337",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.6,
+                "transition": 1.5,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.361,
+                    "y": 0.361
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e308",
+          "name": "light entering — above/below, before/behind, I and you, sacred and profane (pp.106–109)",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☀",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st338",
+                "text": "☀",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e309",
+          "name": "the paśu correction — prakāśa–vimarśa does not first arise when an ego takes possession (p.105)",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "प",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st339",
+                "text": "प",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e310",
+          "name": "Māyā as operative measure — productive, dangerous when it conceals dependence (C14)",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st340",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · the p.105 transmitted creation scene; C14/C15/C16; A09 (human-amplified: yes for the correction)",
+          "title": "Separation of the World Parents — and the paśu correction",
+          "italic": "The correction qualifies the return: the acquisition of a determinate I is a real formation that cannot retrospectively produce the awareness through which the acquisition appears.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Separation opens the interval in which a world can appear: heaven distinguishable from earth, light entering the space between. The transmitted creation scene at the p.105 lead requires its own sequence: the primordial person recognises itself, then divides into the paired figure of man and woman previously held as if in an embrace — self-recognition precedes sexual separation, so the androgyne performs a relational office. Neumann stresses the achievement of ego identity, the I am I; Taylor's response separates that",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "achievement from the more primordial self-recognition: prakāśa–vimarśa does not first arise when an ego takes possession of an identity; the finite experiencer and its inner instrument are determinations within the field of appearing (human-amplified: yes for this explicit correction). Light brings an oriented world — above and below, I and you, sacred and profane; a measure both reveals a field and selects what will count within it (Māyā, C14). The 4+2 appointment at p.108: night at #0, day at #5, four directions at #1–#4.\n\nOccurrences: the parental separation (#0, #2); the embrace, division and changed relation (#2); the oriented world's boundaries (#2); the day/night/four-directions 4+2 (#2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-2b-twins",
+      "name": "The twins — and the signed alternative",
+      "character": "Ohrmazd and Ahriman: the broken halves of a prior 0 become enemies when division denies their belonging. (-1)/(+1) retains polarity; addition cancels; subtraction appropriates.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e311",
+          "name": "the prior 0 — their shared genesis",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.11,
+            "z": 0
+          },
+          "size": {
+            "x": 0.261,
+            "y": 0.261
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.2,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st341",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e312",
+          "name": "Ohrmazd — the light half",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.19,
+            "z": 0
+          },
+          "size": {
+            "x": 0.255,
+            "y": 0.255
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☀",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st342",
+                "text": "☀",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e313",
+          "name": "Ahriman — the dark half",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☾",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st343",
+                "text": "☾",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e314",
+          "name": "(-1)/(+1) — each keeps its sign across the relation",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.66,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "(-1)/(+1)",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st344",
+                "text": "(-1)/(+1)",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e315",
+          "name": "(-1)+(+1)=0 cancels · (-1)-(+1)=-2 appropriates · (+1)-(-1)=+2 appropriates",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.68,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "+ − ·−",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st345",
+                "text": "+ − ·−",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · core theorem IV; Q27 energetics and Neumann return; A13/A18 (human-amplified: yes)",
+          "title": "The twins — and the signed alternative",
+          "italic": "The image demonstrates the changed operator: through the slash their different valences keep one ground; addition cancels them; subtraction lets one side take the span as its own.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The twins give separation's danger two faces within one genesis. Taylor's core theorem names the Ohrmazd/Ahriman appointment: the broken halves of a prior 0 become enemies when their division is made to deny their belonging. Q27 grounds the same operation at the good/evil twins: their opposition has real force; what changes is how the relation between them is held. Through the slash their different valences still have one ground. When the stroke becomes addition between isolated signs, (-1)+(+1)=0, the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "meeting cancels them; when subtraction, (-1)-(+1)=-2 or (+1)-(-1)=+2, one side takes the span as its own, the other encountered only as what must disappear. The return has to preserve the two who can recognise their shared genesis: blending them destroys the difference through which recognition occurs; victory as abolishing the other's ground perpetuates the divorce; the prior 0 returns as their condition, not the null result of their collision. No independent Zurvanite telling or historical orthodoxy is asserted.\n\nOccurrences: the prior 0 and its broken halves (#2); the three arithmetic results (#2, shared with the Māyā and uroboros wholes); the recognition question (#2, returning at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-3-hero",
+      "name": "The hero's two emancipations; the captive and treasure; Osiris",
+      "character": "Slaying of the mother, then of the father — keeping both in sequence makes emancipation answerable to the actual formation of a centre, not the replacement of one captor by another.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e316",
+          "name": "the hero born within the opened world",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.136,
+            "y": 0.136
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚔",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st346",
+                "text": "⚔",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e317",
+          "name": "the maternal struggle — the engulfing origin",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.44
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st347",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e318",
+          "name": "the paternal struggle — the authority that could arrest emergence",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st348",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e319",
+          "name": "the captive, the treasure, liberation — tested by what release makes possible",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.36
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st349",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e320",
+          "name": "the Osiris transformation — death preventing closure as victorious identity",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.47,
+            "z": 0
+          },
+          "size": {
+            "x": 0.491,
+            "y": 0.491
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st350",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Neumann's sequence; the essay's authored pressure on liberation; C21/A20",
+          "title": "The hero's two emancipations; the captive and treasure; Osiris",
+          "italic": "Heroic efficacy is judged by the relation it makes possible, including the freedom of what it encounters — a captive liberated into another possession would leave the deeper problem intact.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The hero is born within the world opened by the separation. Neumann's sequence carries two emancipations: slaying of the mother, then slaying of the father. The maternal struggle addresses the engulfing origin; the paternal struggle addresses the authority that could arrest emergence in an inherited order. Stopping after escape from the mother would let the father's law inherit enclosure's power; keeping both makes emancipation answerable to the actual formation of a centre. The violence belongs to the mythic telling — differentiation from an overwhelming archetypal claim — and Neumann's historically",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "gendered morphology remains visible as his account. The captive, treasure and liberation follow: heroic efficacy has to be judged by the relation it makes possible, including the freedom of what it encounters — the essay's authored pressure, not a missing passage. The Osiris division carries the culminating transformation office: death and transformation prevent the movement from closing as the hero's permanent occupancy of a victorious identity; detailed Osiris episodes require separately recovered primary tellings. The hero/spiritual-avatar question stays open (human-amplified: no for closing it).\n\nOccurrences: the two emancipations in sequence (#3); the captive and treasure (#3); the Osiris transformation office (#3); the open hero/avatar question (#3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-4-paper",
+      "name": "The paper scene — the return made performable",
+      "character": "Write 1. Attend to the paper and write 0. Inscribe the slash. The written 0/1 is itself a figure; erase it — the capacity for appearing, distinguishing and writing is not cancelled.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#f2eee2",
+          "#141220",
+          "#c9a227",
+          "#4b3f63"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e321",
+          "name": "the blank sheet",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.37,
+            "z": 0
+          },
+          "size": {
+            "x": 0.983,
+            "y": 0.614
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 0.8,
+          "tint": "#f2eee2",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st351",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e322",
+          "name": "write 1 · 0 · slash · erase",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.37,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "1",
+          "share": 1.8,
+          "tint": "#141220",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st353",
+                "text": "1",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.123,
+                    "y": 0.172
+                  },
+                  "rotation": 0,
+                  "tint": "#141220",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st354",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.209,
+                    "y": 0.172
+                  },
+                  "rotation": 0,
+                  "tint": "#141220",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st355",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.1,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.209,
+                    "y": 0.172
+                  },
+                  "rotation": 0,
+                  "tint": "#141220",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st356",
+                "text": "",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.123,
+                    "y": 0.123
+                  },
+                  "rotation": 0,
+                  "tint": "#141220",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e323",
+          "name": "the capacity that remains — not the literal substance of awareness",
+          "kind": "formation",
+          "position": {
+            "x": 0.68,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st357",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e324",
+          "name": "uroboric incest vs enacted erasure — dissolution that leaves a reader able to begin again (p.17)",
+          "kind": "formation",
+          "position": {
+            "x": -0.66,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↺",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st358",
+                "text": "↺",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Taylor's paper/mark/slash/erasure operation (human-amplified: yes); A11/C49; A12",
+          "title": "The paper scene — the return made performable",
+          "italic": "Erasure changes what dissolution can accomplish: uroboric reabsorption surrenders the differentiated position; the enacted erasure leaves a reader able to begin again with knowledge of the inscription's dependence.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Taylor's paper scene makes the return performable. Begin with a blank sheet. Write 1. Attend to the paper on which the mark appears and write 0; attend to the act that distinguishes and relates them and inscribe the slash. The written 0/1 is now itself a determinate figure on the sheet — it too can be taken as 1 relative to the field through which it appears. Erase it: what disappears is the inscription; the capacity for appearing, distinguishing and writing has not been cancelled by the disappearance of this",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "form. The sheet is an image within that capacity, not its literal substance. The p.17 encounter connects uroboric incest and erasure: the 1 slipping back into 0 becomes performable on the page, and the enacted erasure leaves a reader able to begin again — the sacred marriage retaining its distinct office of differentiated partners. The scene figures the Two Ones and returns-to Mono/Poly: the first mark opens the possibility of a world of marks whose common condition does not become one giant object beside them.\n\nOccurrences: the written 1, 0 and slash (#4); the erased figure and remaining capacity (#4); the incest/erasure connection at p.17 (#4); the wheel's continuing composition (next).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-4b-wheel",
+      "name": "The self-rolling wheel — continuing self-composition",
+      "character": "En-Soph, plenitude and nothingness beside the wheel: the formed round must keep being made; its movement is the winding of a relation, not a finished circle bestowed once.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e325",
+          "name": "the self-rolling wheel",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 1.8,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st360",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.676,
+                    "y": 0.676
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st361",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.676,
+                    "y": 0.676
+                  },
+                  "rotation": 90,
+                  "tint": "#4b3f63",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st362",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.2,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.676,
+                    "y": 0.676
+                  },
+                  "rotation": 180,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e326",
+          "name": "En-Soph — plenitude and nothingness at the p.18 lead",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "אין סוף",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st363",
+                "text": "אין סוף",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e327",
+          "name": "the renewed inscription — the paper's capacity meeting the wheel's motion",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✎",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st364",
+                "text": "✎",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e328",
+          "name": "neither perpetual motion nor a topology theorem",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st365",
+                "text": "∅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · the p.18 encounter; Text/Texture appointment (human-amplified: yes)",
+          "title": "The self-rolling wheel — continuing self-composition",
+          "italic": "The wheel extends continuing formation from its exact p.18 office: a locally completed round retaining the passage through which it was made — the opening constitutive without becoming surface.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The next page lead gives the renewed act a moving image. Taylor's p.18 encounter places En-Soph, plenitude and nothingness beside the wheel, then follows its rolling as continuing self-composition about the unobjectified opening. The formed round must keep being made; its movement is the winding and weaving of a relation, not a finished circle bestowed once and left inert. The paper's capacity for another inscription and the wheel's continuing composition meet at this renewal:",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "each achieved figure belongs to the field through which another figure can appear. The wheel returns-to the uroboros's interposition — a locally completed round can retain the passage through which it was made and return with a difference; the opening remains constitutive without becoming another patch of surface. En-Soph's historical terminology and Neumann's exact wording retain their independent standing; neither perpetual mechanical motion nor a topology theorem is established.\n\nDeclared cross-story: the wheel ↔ the uroboros whole's interposition; the toroidal correction with Anuttara owning the opening and Māyā the measure (not the hole). ↳ Occurrences: En-Soph at the −/− office of the ratified recapitulation (#4b, with tohubohu at p.106); the rolling composition (#4b).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-neu-5-return",
+      "name": "The return bond — knowing-as-cutting answerable to knowing-with",
+      "character": "Even denial takes place through the field it denies. The eightfold recapitulation complete; the coequal Name and Power series; the sign becomes Symbol again.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141220",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e329",
+          "name": "the shared genesis — indelible bond of the marriage image",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.666,
+            "y": 0.666
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.8,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st366",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e330",
+          "name": "the cut and the bond — A13's two logics",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.27,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.086
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "/‑",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st367",
+                "text": "/‑",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e331",
+          "name": "Name: Truth, Mind, Word, Logos, Son, Image",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Name",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st368",
+                "text": "Name",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e332",
+          "name": "Power: Play, Need, Sacrifice, Decision, Love, Work",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Power",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st369",
+                "text": "Power",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e333",
+          "name": "A35/A36 — compassion to origins; the sign becoming Symbol again",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.37,
+            "z": 0
+          },
+          "size": {
+            "x": 0.135,
+            "y": 0.135
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↺",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st370",
+                "text": "↺",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · A13, A04, A19–A21, A23, A26, A27, A34–A36; the Homologia/Analogia field; C21/C32",
+          "title": "The return bond — knowing-as-cutting answerable to knowing-with",
+          "italic": "The whole returns-to the two logics with the exact difference: polar distinction is necessary; its collapse into cancellation or appropriation is a different operation — separation's return must preserve the achievement.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The separation returns as a question of love or war. Taylor's p.121 encounter makes knowing-as-cutting answerable to knowing-with: a distinction can individuate two terms in their relation, or claim its cut has abolished what relates them. The marriage image bears the indelible bond of shared genesis; even denial takes place through the field it denies. A13 receives the exact difference: (-1)+(+1)=0 cancels the signed terms; the subtractions appropriate; the native (0/1)/(1/0) retains the directions together. The differentiated world now sees its own means of seeing (A04, C09); Gebser's account compares",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "without a blanket stage identity (human-amplified: no). A19/A20/A21 receive the centre's power to discriminate, the image's office and recognition; C21/C32 the living symbol and the archetype. A23/A27: trust and the other without possession. A26/A34: centre and world forming together, order of dependence without private-ego manufacture. A35: compassion as sensitivity to origins — nourishment, deprivation, separation, labour. A36: the sign becomes Symbol again without ceasing to be sign. The scaffold's unratified equivalences remain human-amplified: no; the eightfold refraction stands human-amplified: yes.\n\nOccurrences: the marriage bond and shared genesis (#0, #5→0); the Name and Power series (#5→0); the paper scene's return into another act (#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

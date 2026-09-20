@@ -1,0 +1,996 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-goethe-permanence-change",
+  "name": "Goethe — Permanence in Change",
+  "description": "The complete German lyric in five movements: the blossom already falling, fruit and river, the changed perceiver, the named wave, and the joining of beginning and end.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-goe-0-blossom",
+      "name": "The wish for one hour — and the west wind",
+      "character": "The mild west wind shakes down a shower of blossom: the force carrying beauty away is gentle, and the loss begins within the weather of its flourishing.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2f3a26",
+          "#7c8b3f",
+          "#c9a227",
+          "#e9e2cf"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e373",
+          "name": "blossom falling",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "❀",
+          "share": 1.6,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st414",
+                "text": "❀",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.184,
+                    "y": 0.184
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st415",
+                "text": "❀ ❀",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.123
+                  },
+                  "rotation": 0,
+                  "tint": "#7c8b3f",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st416",
+                "text": "❀",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.16,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e374",
+          "name": "the mild west wind — the gentle force of loss",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#7c8b3f",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st417",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e375",
+          "name": "the shade just enjoyed — autumn already seen within it",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☂",
+          "share": 1,
+          "tint": "#2f3a26",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st418",
+                "text": "☂",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Dauer im Wechsel, lines 1–8 (Klett witness; Nims translation uncollated)",
+          "title": "The wish for one hour — and the west wind",
+          "italic": "The opening demonstrates a wish already answered by loss: spring's passing is felt from inside the pleasure it gives.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The speaker asks for one hour in which the early blessing could be held. Already the mild west wind shakes down a shower of blossom; the force carrying beauty away is gentle, and the loss begins within the weather that belongs to its flourishing. Green foliage offers another pleasure — its shade just enjoyed — but the speaker sees autumn within that present gift: the leaves will turn pale",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "and a storm will scatter them. The first eight lines move through a wish, an accomplished loss, a question about enjoyment and an anticipated loss. The whole follows all forty German lines in the Klett 2010 witness, citing the Frankfurt edition of 1988; the project's alias \"Permanence and Change\" names the same poem, and Nims's page 169 remains uncollated — the account uses the German whole.\n\nOccurrences: the blossom-shower (#0); the west wind (#0); the shade and anticipated storm (#0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-goe-1-river",
+      "name": "Fruit, valley, river",
+      "character": "Whoever wants the fruit must reach promptly; every downpour changes the beloved valley; one does not swim in the same river twice.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2f3a26",
+          "#7c8b3f",
+          "#c9a227",
+          "#e9e2cf"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e376",
+          "name": "the fruit — ripening and germination overlapping",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.07,
+            "z": 0
+          },
+          "size": {
+            "x": 0.172,
+            "y": 0.172
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "❧",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st419",
+                "text": "❧",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e377",
+          "name": "the valley — addressed as one's own, changed by every rain",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#7c8b3f",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st420",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e378",
+          "name": "the river — the swimmer never in the same water twice",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 1.2,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#2b6b6b",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st421",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · lines 9–16",
+          "title": "Fruit, valley, river",
+          "italic": "The stanza demonstrates different temporal movements held together — arriving, receiving and passing — before the one who notices change becomes its subject.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The second stanza answers the wish to hold with an instruction to take one's share: whoever wants the fruit must reach for it promptly, ripening and germination overlapping — what passes includes both the loss of a present gift and the advent of another. Rain enlarges the movement from plant to landscape: every downpour changes the beloved valley, yet affection gives no exemption from alteration. Then the river: one does not swim in the same river a second time. The swimmer participates bodily in what had been observed from shade and bank; water carries the scene forward through a medium that cannot be kept for a repeat encounter.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the prompt reaching (#1); the rains on the valley (#1); the second swim (#1, echoed by the wave at #3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-goe-2-body",
+      "name": "The changing eyes; the lip, the foot, the hand",
+      "character": "Walls and palaces are seen with different eyes; the lip that found healing, the foot bold on the cliff, the hand that did good — all changed.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2f3a26",
+          "#7c8b3f",
+          "#c9a227",
+          "#e9e2cf"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e379",
+          "name": "walls and palaces — rock-solid, seen with changing eyes",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.23,
+            "y": 0.287
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#2f3a26",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st422",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e380",
+          "name": "the cliff — the foot's remembered daring, the chamois's boldness",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#7c8b3f",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st423",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e381",
+          "name": "lip · foot · hand — the articulated bodily form declared changed",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∘△✋",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st424",
+                "text": "∘△✋",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2–#3 · lines 17–32",
+          "title": "The changing eyes; the lip, the foot, the hand",
+          "italic": "The poem carries the person who wanted to retain the blossom into the very loss desire first placed before itself — no immovable observer stands outside the changes.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The poem turns on the addressee: walls and palaces appear rock-solid, but they are continually seen with different eyes — recognition has a history on the observer's side. The stanza then leaves the spectator's eyes for bodily powers remembered through their acts: the lip that once found healing in a kiss has passed away; the foot that tested itself against the cliff with a chamois's",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "boldness; the hand once willing and gentle in doing good. Kindness belongs to the history of this body alongside pleasure and daring. Then the name remains where its bearer has altered: what now calls itself by that name arrived like a wave and hurries toward the element — water entering the description of the named person, a recognisable designation continuing across a succession it cannot arrest.\n\nOccurrences: the changing eyes on the walls (#2); the cliff and the chamois-foot (#2); the doing-good hand (#3); the wave and the element (#3, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-goe-4-muses",
+      "name": "Beginning and end joined; content and form",
+      "character": "The Muses' favour: what the breast carries and what the mind forms have distinct places — Den Gehalt in deinem Busen / Und die Form in deinem Geist.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2f3a26",
+          "#7c8b3f",
+          "#c9a227",
+          "#e9e2cf"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e382",
+          "name": "beginning and end drawn together — faster than objects flee",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.27,
+            "y": 0.086
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊙⊙",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st425",
+                "text": "⊙⊙",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e383",
+          "name": "the Muses — favour promising something imperishable; thanks asked",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♪",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st426",
+                "text": "♪",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e384",
+          "name": "der Gehalt im Busen — the content borne inwardly",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♥",
+          "share": 1,
+          "tint": "#7c8b3f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st427",
+                "text": "♥",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e385",
+          "name": "die Form im Geist — the formed expression carrying the relation onward",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 45,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#2f3a26",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st428",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · lines 33–40; the verified German closing words",
+          "title": "Beginning and end joined; content and form",
+          "italic": "The lyric demonstrates its own answer: the poem has carried blossom, valley, swimmer, changing eyes and the named wave into one formed sequence — the opening wish returns changed by the poem that answered it.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The final stanza gives another imperative: beginning and end are to draw together into one, faster than the objects themselves flee past the addressee. The opening asked that an early blessing stay for an hour; the ending asks for an act of gathering across passage. The Muses enter: their favour promises something imperishable, and thanks are asked. The closing lines distinguish what is carried in the breast from its form in the mind — Den Gehalt in deinem Busen / Und die Form in deinem Geist. The content borne inwardly and the form through which it is",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "apprehended have distinct places in the achieved whole. The promise remains the Muses': no sequel restores the earlier body or stops the valley's change; continuation is given through what the closing distinction makes available. The appointed relation is One in change, returning to the native Two Ones (human-amplified: yes): change reaches the perceiver, the body and the named identity; the concluding unity must receive those differences if it is to receive the poem at all. Equating poetic water with QL's 0 would add a symbol-key the appointment does not supply.\n\nOccurrences: the joined beginning and end (#0, #4); the Muses and thanks (#4); the breast/mind distinction (#4); the wave's element (#3, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

@@ -1,9 +1,10 @@
-import {useEffect, useRef, useState, useSyncExternalStore} from "react";
+import {useId, useEffect, useRef, useState, useSyncExternalStore} from "react";
 import {AdoptionController, type DesktopChoice} from "./adoptionController";
 export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, onApplied}: {
   controller: AdoptionController; chooseGround?: () => Promise<string | null>;
   onClose: () => void; onConfigure: () => void; onApplied: () => void;
 }) {
+  const fieldId = useId();
   const state = useSyncExternalStore(controller.subscribe, controller.getSnapshot, controller.getSnapshot);
   const heading = useRef<HTMLHeadingElement>(null);
   const reported = useRef<string>();
@@ -32,17 +33,17 @@ export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, on
       <button type="button" disabled={locked} onClick={() => void controller.refresh()}>Recognise again</button>
       <fieldset disabled={locked || !state.discovery}>
         <legend>Choose a useful composition</legend>
-        <label>Composition<select value={state.selection.composition} onChange={event => controller.select({composition: event.target.value, products: [], remove_products: [], desktop: "keep", bundle: null, bundle_sha256: null})}>
+        <label htmlFor={`${fieldId}-composition`}>Composition</label><select id={`${fieldId}-composition`} value={state.selection.composition} onChange={event => controller.select({composition: event.target.value, products: [], remove_products: [], desktop: "keep", bundle: null, bundle_sha256: null})}>
           {state.discovery?.choices.map(row => <option key={row.id} value={row.id}>{row.title}</option>)}
-        </select></label><p>{choice?.description}</p>
+        </select><p>{choice?.description}</p>
         {choice?.hosted ? <p>This is browser reading, not a local installation. The published site's Library is the entry; visiting it grants no local authority.</p> : <>
           {choice?.id === "custom" && <fieldset><legend>Individual products</legend>{state.discovery?.products.map(product => <label key={product.id}><input type="checkbox" checked={state.selection.products.includes(product.id)} onChange={event => controller.select({products: event.target.checked ? [...state.selection.products, product.id] : state.selection.products.filter(id => id !== product.id)})}/>{product.title} — {product.purpose}</label>)}</fieldset>}
-          <label>Central directory<input value={state.selection.ground ?? ""} onChange={event => controller.select({ground: event.target.value})} placeholder={state.discovery?.suggested_ground}/></label>
+          <label htmlFor={`${fieldId}-ground`}>Central directory</label><input id={`${fieldId}-ground`} value={state.selection.ground ?? ""} onChange={event => controller.select({ground: event.target.value})} placeholder={state.discovery?.suggested_ground}/>
           {chooseGround && <button type="button" onClick={() => {setPickerError(undefined); void chooseGround().then(path => {if (path) controller.select({ground: path});}).catch(error => setPickerError(String(error)));}}>Choose Central folder…</button>}
           <p>Select an existing recognised root, or a new empty directory. Existing content will not be overwritten.</p>
-          <label>Desktop<select value={state.selection.desktop} onChange={event => controller.select({desktop: event.target.value as DesktopChoice})}>
+          <label htmlFor={`${fieldId}-desktop`}>Desktop</label><select id={`${fieldId}-desktop`} value={state.selection.desktop} onChange={event => controller.select({desktop: event.target.value as DesktopChoice})}>
             <option value="keep">Keep its current state</option><option value="add">Add Desktop</option><option value="remove">Remove Desktop; keep the World</option>
-          </select></label>
+          </select>
           {(state.selection.desktop === "add" || choice?.id === "00/00") && state.discovery?.desktop.state !== "installed" && <div>
             <button type="button" onClick={() => void controller.prepareDesktop()}>Prepare verified Desktop download</button>
             <p>{state.selection.bundle ? "A checksum-qualified native bundle is prepared. Installation still requires review." : "Preparing downloads the native offer to staging. Nothing is installed by this button."}</p>

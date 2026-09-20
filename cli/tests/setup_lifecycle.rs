@@ -589,3 +589,119 @@ fn original_owner_failures_survive_the_journal() {
         .contains("Native operation:"));
     assert_eq!(journal.records[0].state, StepState::Unknown);
 }
+
+#[test]
+fn recovery_keeps_original_receipts_and_failed_observations() {
+    let p = planned();
+    let mut owner = Owner::new(p.clone());
+    owner.unreadable = true;
+    let mut store = MemoryStore::default();
+    let j = apply(&mut owner, &mut store, p.clone(), &p.review_token, 1001).unwrap();
+    assert_eq!(j.records[0].receipt, Some(json!({"native_receipt":0})));
+    assert_eq!(
+        j.records[0].readbacks[0].error.as_deref(),
+        Some("owner unavailable")
+    );
+    let original = j.records[0].receipt.clone();
+    let j = recheck(&mut owner, &mut store, j, 1100).unwrap();
+    owner.unreadable = false;
+    let j = recheck(&mut owner, &mut store, j, 1200).unwrap();
+    let j = recheck(&mut owner, &mut store, j, 1300).unwrap();
+    assert_eq!(j.records[0].receipt, original);
+    assert_eq!(j.records[0].readbacks.len(), 4);
+    assert!(j.records[0].readbacks[0].error.is_some());
+    assert!(j.records[0].readbacks[1].error.is_some());
+    assert_eq!(
+        j.records[0].readbacks[2].reading,
+        Some(json!({"actual_effect":0}))
+    );
+    assert_eq!(j.records[0].state, StepState::Verified);
+    assert_eq!(owner.invocations, 1);
+}
+#[test]
+fn independent_readback_retains_a_lost_receipt_and_invocation_failure() {
+    let p = planned();
+    let mut owner = Owner::new(p.clone());
+    owner.fail_invocation = Some(1);
+    let mut store = MemoryStore::default();
+    let j = apply(&mut owner, &mut store, p.clone(), &p.review_token, 1001).unwrap();
+    let error = j.records[0].invocation_error.clone();
+    assert!(error.is_some());
+    let j = recheck(&mut owner, &mut store, j, 1100).unwrap();
+    assert!(j.records[0].receipt.is_none());
+    assert_eq!(j.records[0].invocation_error, error);
+    assert_eq!(
+        j.records[0].readbacks[0].reading,
+        Some(json!({"actual_effect":0}))
+    );
+    assert_eq!(j.records[0].state, StepState::Verified);
+    assert_eq!(owner.invocations, 1);
+}
+#[test]
+fn old_journals_remain_readable_without_losing_receipts() {
+    let p = planned();
+    let mut owner = Owner::new(p.clone());
+    let j = apply(
+        &mut owner,
+        &mut MemoryStore::default(),
+        p.clone(),
+        &p.review_token,
+        1001,
+    )
+    .unwrap();
+    let mut old = serde_json::to_value(&j).unwrap();
+    for r in old["records"].as_array_mut().unwrap() {
+        let r = r.as_object_mut().unwrap();
+        r.remove("readbacks");
+        r.remove("invocation_error");
+    }
+    let restored: Journal = serde_json::from_value(old).unwrap();
+    assert!(restored.records.iter().all(|r| r.readbacks.is_empty()));
+    assert_eq!(restored.records[0].receipt, j.records[0].receipt);
+}
+#[test]
+fn removing_central_cannot_strand_desktop() {
+    let mut d = discovery();
+    d.desktop = json!({"state":"installed"});
+    for p in &mut d.products {
+        p.managed = true;
+        p.present = true;
+        p.registered = true;
+    }
+    let mut selection = Selection {
+        composition: "custom".into(),
+        products: vec![],
+        remove_products: vec!["central".into()],
+        ..Default::default()
+    };
+    let blocked = plan(selection.clone(), d.clone(), Ok(None), 1000).unwrap();
+    assert!(blocked
+        .blocked
+        .iter()
+        .any(|r| r.contains("Central backs Desktop")));
+    selection.desktop = DesktopChoice::Remove;
+    let allowed = plan(
+        selection,
+        d,
+        Ok(Some(json!({"remove":"owned desktop"}))),
+        1000,
+    )
+    .unwrap();
+    assert!(allowed.blocked.is_empty(), "{:?}", allowed.blocked);
+    let desktop = allowed
+        .steps
+        .iter()
+        .position(|s| s.operation == Operation::RemoveDesktop)
+        .unwrap();
+    let central = allowed
+        .steps
+        .iter()
+        .position(|s| {
+            s.operation
+                == Operation::RemoveProduct {
+                    product: "central".into(),
+                }
+        })
+        .unwrap();
+    assert!(desktop < central);
+}

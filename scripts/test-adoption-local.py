@@ -38,15 +38,16 @@ def protocol(oi: Path, home: Path, request: dict) -> tuple[int, dict]:
     return result.returncode, value
 
 
-def terminal_cancel(oi: Path, home: Path) -> dict:
+def terminal_walk(oi: Path, home: Path, dialogue: list[tuple[bytes, bytes]], name: str) -> dict:
+    """Drive the actual TTY; each answer waits for its own newly emitted prompt."""
     master, slave = pty.openpty()
     env = {"HOME": str(home), "OI_HOME": str(home / "config"),
            "OI_DATA_HOME": str(home / "data"), "PATH": "", "TERM": "xterm-256color"}
+    before = {str(p.relative_to(home)): digest(p.read_bytes()) for p in home.rglob("*") if p.is_file()}
     process = subprocess.Popen([str(oi), "setup"], stdin=slave, stdout=slave,
                                stderr=slave, env=env, cwd=home, start_new_session=True)
     os.close(slave)
-    output = bytearray()
-    sent = False
+    output = bytearray(); pending = bytearray(); answered = 0
     try:
         deadline = time.monotonic() + 30
         while time.monotonic() < deadline:
@@ -57,26 +58,60 @@ def terminal_cancel(oi: Path, home: Path) -> dict:
                     break
                 if not chunk:
                     break
-                output.extend(chunk)
+                output.extend(chunk); pending.extend(chunk)
                 if len(output) > 1024 * 1024:
                     raise AssertionError("Unexpected unbounded terminal output")
-                if b"Choose a number" in output and not sent:
-                    os.write(master, b"q\n")
-                    sent = True
+                if answered < len(dialogue) and dialogue[answered][0] in pending:
+                    os.write(master, dialogue[answered][1])
+                    pending.clear(); answered += 1
             if process.poll() is not None:
                 break
-        process.wait(timeout=2)
-        if process.returncode != 0 or not sent:
-            raise AssertionError(f"Terminal cancel failed: exit={process.returncode}, prompt={sent}")
-        if (home / "config").exists() or (home / "data").exists():
-            raise AssertionError("Cancelling clean setup wrote native state")
-        return {"name": "actual-terminal-cancel", "passed": True,
-                "transcript_sha256": digest(bytes(output)), "bytes": len(output)}
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired as error:
+            raise AssertionError(f"{name}: stalled after {answered}/{len(dialogue)} answers; transcript hash={digest(bytes(output))}") from error
+        if process.returncode != 0 or answered != len(dialogue):
+            raise AssertionError(f"{name}: exit={process.returncode}, answered={answered}/{len(dialogue)}; transcript hash={digest(bytes(output))}")
+        after = {str(p.relative_to(home)): digest(p.read_bytes()) for p in home.rglob("*") if p.is_file()}
+        if before != after or (home / "config").exists() or (home / "data").exists():
+            raise AssertionError("Navigating/cancelling setup changed the disposable World")
+        return {"name": name, "passed": True, "transcript_sha256": digest(bytes(output)), "bytes": len(output)}
     finally:
         if process.poll() is None:
-            process.kill()
-            process.wait()
+            process.kill(); process.wait()
         os.close(master)
+
+
+def terminal_cancel(oi: Path, home: Path) -> dict:
+    return terminal_walk(oi, home, [(b"Choose a number", b"q\n")], "actual-terminal-cancel")
+
+
+def terminal_nested_checks(oi: Path, home: Path, discovery: dict) -> list[dict]:
+    # Derive composition indexes from the real owner. No copied product catalogue.
+    custom = next(i + 1 for i, c in enumerate(discovery["choices"]) if c["id"] == "custom")
+    choose = b"Choose a number"
+    prefix = [(choose, b"1\n"), (choose, f"{custom}\n".encode())]
+    checks = []
+    for label, answer in [("cancel", b"cancel\n"), ("EOF", b"\x04")]:
+        checks.append(terminal_walk(oi, home, prefix + [(choose, answer)], "nested-product-" + label))
+    checks.append(terminal_walk(oi, home, prefix + [(choose, b"b\n"),
+        (b"What would be useful now?", b"q\n")], "product-Back-returns-to-entry"))
+    # Explicit removal of absent Desktop permits a review without installing
+    # a product; an entirely empty selection is correctly blocked by the owner.
+    proceed = f'{len(discovery["products"]) + 1}\n'.encode()
+    checks.append(terminal_walk(oi, home, prefix + [(choose, proceed), (choose, b"3\n"),
+        (b"Central directory", b"\n"), (b"Type apply", b"q\n")], "cancel-at-reviewed-effects"))
+    return checks
+
+
+def write_private_report(path: Path, report: dict) -> None:
+    """Never overwrite an earlier failure or follow a report symlink."""
+    path = path.expanduser().absolute()
+    path.parent.mkdir(parents=True, exist_ok=True, mode=0o700)
+    flags = os.O_WRONLY | os.O_CREAT | os.O_EXCL | getattr(os, "O_NOFOLLOW", 0)
+    fd = os.open(path, flags, 0o600)
+    with os.fdopen(fd, "w") as out:
+        json.dump(report, out, indent=2); out.write("\n"); out.flush(); os.fsync(out.fileno())
 
 
 def main() -> int:
@@ -92,6 +127,8 @@ def main() -> int:
     resolved = shutil.which(args.oi) if "/" not in args.oi else args.oi
     if not resolved or not Path(resolved).is_file():
         parser.error("Supply an existing O:I executable")
+    if args.output.exists() or args.output.is_symlink():
+        parser.error("Choose a new evidence file; earlier receipts are never overwritten")
     oi = Path(resolved).resolve()
     report = {"schema": "oi.adoption-local-check/v1", "scope": "actual CLI in disposable HOME; not product installation",
               "candidate_sha256": digest(oi.read_bytes()),
@@ -108,6 +145,7 @@ def main() -> int:
             assert not (clean / "config").exists() and not (clean / "data").exists()
             report["checks"].append({"name": "clean-actual-discovery-no-write", "passed": True})
             report["checks"].append(terminal_cancel(oi, clean))
+            report["checks"].extend(terminal_nested_checks(oi, clean, value["discovery"]))
             # All compositions remain real native plans. Missing optional owners
             # may block an operation, never become fake installed capabilities.
             for choice in value["discovery"]["choices"]:
@@ -160,8 +198,7 @@ def main() -> int:
     except Exception as error:
         report["failure"] = f"{type(error).__name__}: {error}"
     finally:
-        args.output.parent.mkdir(parents=True, exist_ok=True)
-        args.output.write_text(json.dumps(report, indent=2) + "\n")
+        write_private_report(args.output, report)
         print(json.dumps({"passed": report["passed"], "report": str(args.output), "checks": len(report["checks"])}))
     return code
 

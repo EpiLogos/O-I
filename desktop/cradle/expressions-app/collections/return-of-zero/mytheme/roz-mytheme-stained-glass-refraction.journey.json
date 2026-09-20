@@ -1,0 +1,1351 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-stained-glass-refraction",
+  "name": "Stained Glass — Originating Light, Spectrum, Panes, Seams, and Returning Recognition",
+  "description": "The authored optical movement: light entering a made aperture, the implicated spectrum, panes and seams as refractive apparatus, the changing projection disclosing the construction, and recognition returning to the aperture.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-gla-0-aperture",
+      "name": "Light entering a made aperture",
+      "character": "Sun, aperture, glass, seams, room and viewer belong to one event; what is prior in being is later in recognition.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141118",
+        "palette": [
+          "#c9a227",
+          "#141118",
+          "#4a5d7e",
+          "#a5623a",
+          "#3c6e71"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e534",
+          "name": "the originating light — priority over the projected image",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.07,
+            "z": 0
+          },
+          "size": {
+            "x": 0.184,
+            "y": 0.184
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☀",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st577",
+                "text": "☀",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e535",
+          "name": "the window — panes and lead as a made aperture",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.614,
+            "y": 0.798
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st578",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e536",
+          "name": "the cast image — pratibimba in the room where someone encounters it",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.6
+          },
+          "rotation": 0,
+          "shape": "yantra",
+          "text": "",
+          "share": 1.4,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st579",
+                "text": "",
+                "shape": "yantra",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e537",
+          "name": "Bimba / pratibimba — the Original prior in being, later in recognition",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "B/p",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st580",
+                "text": "B/p",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Q27's two contributions (human-amplified: yes)",
+          "title": "Light entering a made aperture",
+          "italic": "The whole embodies constructing from diaphaneity: composing a work so its originating relation becomes perceptible through the differences of its materials.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Light enters a room through a window assembled from differently coloured panes. The panes give it determinate passages; the lead holds their boundaries; an image falls into the interior where someone can encounter it. The visible colour carries the work of relations the colour alone cannot display completely. This is Frank Taylor's authored Mytheme of constructing from diaphaneity — no",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "historical window or sacred programme reconstructed. The originating light has priority over the projected image, yet the viewer encounters the image first and follows its differences back: what is prior in being can be later in recognition. Bimba names the Original order; pratibimba names its determinate display; neither viewer nor maker supplies the Original by finishing the picture.\n\nOccurrences: the light, aperture and cast image (#0, transformed at #4); the encounter-first asymmetry (#0, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-gla-1-spectrum",
+      "name": "The spectrum implicated in the light",
+      "character": "QL figures the full ordered spectrum immanent to the light; the pane gives a difference a passage — it does not first create the capacity for difference.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141118",
+        "palette": [
+          "#c9a227",
+          "#141118",
+          "#4a5d7e",
+          "#a5623a",
+          "#3c6e71",
+          "#8c3b2e"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e538",
+          "name": "the white light carrying plenitude — the possibility of differentiated colour",
+          "kind": "formation",
+          "position": {
+            "x": -0.4,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.43,
+            "y": 0.43
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.75,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st581",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e539",
+          "name": "the ordered spectrum — QL as harmonic articulation of the source",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 0.9
+          },
+          "rotation": 0,
+          "shape": "cymatic",
+          "text": "",
+          "share": 1.6,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st582",
+                "text": "",
+                "shape": "cymatic",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e540",
+          "name": "no pane numbered, traditioned or coloured by decree",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅#",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st583",
+                "text": "∅#",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the corrected Q27 assignment; the native theorem spine",
+          "title": "The spectrum implicated in the light",
+          "italic": "The assignment demonstrates the immanence: QL belongs to the originating light as its harmonic articulation — spectral language attributes no optics to a Śaiva author, and no pane receives a permanent number.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The white light carries plenitude: its apparent unity holds the possibility of differentiated colour together with the relations through which the colours belong to one field. Within Taylor's optic this full ordered spectrum figures QL — immanent to the originating light as its harmonic articulation. The pane gives a difference a passage; it does not first create the capacity for difference in a contentless source. The native theorem spine grounds the relation formally: the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "parent phases bearing the complete positional field in inverse orientations, the First Spanda's source-to-expression and return-to-recognition joined through their interference term. The optical whole makes implicated fullness and differentiated return visible, leaving the equations' derivation in the theorem field. QL's sixfold body and eight-determination traversal remain distinct from the number of panes: none requires a pane to receive a permanent number, tradition or colour.\n\nOccurrences: the plenitude and its spectrum (#1, differentiated at #2); the First Spanda's interference term (#1); the pane-count independence (#1, #2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-gla-2-seams",
+      "name": "Colour acquires a passage; the joins stay visible",
+      "character": "MEF figures the panes, media, angles, densities and joins; the lead carries provenance, discontinuity, translation limits, contradiction, changes of register.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141118",
+        "palette": [
+          "#c9a227",
+          "#141118",
+          "#4a5d7e",
+          "#a5623a",
+          "#3c6e71",
+          "#8c3b2e"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e541",
+          "name": "panes — transmission and obstruction, not an opaque mosaic",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.532,
+            "y": 0.62
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st584",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e542",
+          "name": "the lead cames — holding neighbours in relation while marking where one passage ends",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.41,
+            "z": 0
+          },
+          "size": {
+            "x": 0.469,
+            "y": 0.599
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st585",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e543",
+          "name": "MEF — the refractive operation of declared media, angles, transformations, exclusions",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "MEF",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st586",
+                "text": "MEF",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e544",
+          "name": "the correction — the lead to the apparatus; QL to the light; MEF not an outside authority",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≠",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st587",
+                "text": "≠",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Q27:2937–2950 governing the assignments (human-amplified: yes); C39",
+          "title": "Colour acquires a passage; the joins stay visible",
+          "italic": "The seams embody method: choosing and joining materials already determines how the source can become visible — a source enters because its operation changes what the whole can disclose.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Each pane has a material, density, colour and angle: placement permits some transmission, bends or colours what passes, leaves something obstructed. Removing every difference in pursuit of neutrality would also remove the transformations through which the composition becomes articulate. The original quilt distinguishes the window from an opaque mosaic: the mosaic arranges fragments into a surface image; the window works through transmission and obstruction as well as arrangement. The lead cames carry the joins — holding neighbouring panes in relation while marking where one",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "passage ends and another begins; in the epistemic construction the seams retain source provenance, historical discontinuity, translation limits, contradiction and changes of register. These figure MEF, whose office C39 defines: a lens changes a question, a permissible inference or an act of judgment while keeping its conditions inspectable. The correction matters at the material seam itself: the lead is assigned to the refractive apparatus and QL to the light's harmonic order — MEF makes distinctions available within that order without standing outside it as a certifying superior.\n\nOccurrences: the pane placements (#2); the lead's held joins (#2, reused at #4's comparison); the corrected apparatus/light assignment (#2, carried through #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-gla-3-projection",
+      "name": "The image appears; changing light discloses the construction",
+      "character": "The situated projection implicates its viewer; as sun, pane, angle, room and viewer change, the display changes — a later view reveals what an earlier arrangement withheld.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141118",
+        "palette": [
+          "#c9a227",
+          "#141118",
+          "#4a5d7e",
+          "#a5623a",
+          "#3c6e71",
+          "#8c3b2e"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e545",
+          "name": "the changing projection",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 1.8,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st589",
+                "text": "",
+                "shape": "yantra",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.552,
+                    "y": 0.552
+                  },
+                  "rotation": 0,
+                  "tint": "#a5623a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st590",
+                "text": "",
+                "shape": "yantra",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.552,
+                    "y": 0.552
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st591",
+                "text": "",
+                "shape": "yantra",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.552,
+                    "y": 0.552
+                  },
+                  "rotation": 0,
+                  "tint": "#a5623a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e546",
+          "name": "the invested viewer — body, position, attention, concern entering what is seen",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st592",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e547",
+          "name": "the 180°→360° contextual turn — positions and transitions held together",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "360°",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st593",
+                "text": "360°",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e548",
+          "name": "the atlas complement — charts and transitions retain what light-through-glass cannot do",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Atlas",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st594",
+                "text": "Atlas",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3–#4 · P5's invested reading; Gebser pp.1–3, 11–21, 255–58; A04; A16/A22; Symbolon Dynamics",
+          "title": "The image appears; changing light discloses the construction",
+          "italic": "Recognition proceeds through exact differences among the projections towards the order they disclose — neither averaging differences nor adding them into a final picture.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The coloured display is produced through the relation of light and made aperture, appearing in an interior and encountered from a position. Looking only at the glass recovers matter and arrangement while missing the event of transmission; looking only at the cast image conceals the glass, its joins and placement. The situated image is pratibimba, and its danger begins when availability becomes a claim to possess the source. The viewer is implicated: body, position, attention and concern enter what is seen — P5's demand for an invested reading of text and subtext. As sun, pane, angle, room and viewer change, the projected colour",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "changes: a later display makes visible a region previously obscured and can expose an aberration the first view concealed. The order recognisable across the transformations belongs to Bimba/QL; the appearances remain pratibimbas. The 180°→360° movement names the contextual turn — the first-, second- and third-person positions ceasing to claim isolated completeness as their joint conditions become available. The atlas carries the complementary discipline: a chart-transition is not light passing through glass; each whole retains the operation the other cannot perform; an attractor organising trajectories is not an atlas of charts.\n\nOccurrences: the changing sun and revealed region (#4); the implicated viewer (#3, #4); the atlas/window distinction (#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-gla-5-return",
+      "name": "Recognition returns to the aperture",
+      "character": "A seam examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment. The luminous image and its historical limits.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#141118",
+        "palette": [
+          "#c9a227",
+          "#141118",
+          "#4a5d7e",
+          "#a5623a",
+          "#3c6e71",
+          "#8c3b2e"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e549",
+          "name": "the window — its determinacy retained, recognition giving it return",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.6,
+            "z": 0
+          },
+          "size": {
+            "x": 0.489,
+            "y": 0.62
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st595",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e550",
+          "name": "Dyczkowski's limits — the lattice window; the mirror losing the external object; vimarśa's self-apprehending power",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "¶",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st596",
+                "text": "¶",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e551",
+          "name": "Bohm — resonant-with, not extraction; no optical proof",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉◉",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st597",
+                "text": "◉◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e552",
+          "name": "C09/C37/C39 and M05/M30/M36 — the declared returns",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "M05",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st598",
+                "text": "M05",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · the source boundaries; the declared returns to C09, C37, C39, M05, M30, M36",
+          "title": "Recognition returns to the aperture",
+          "italic": "The whole returns-to its movements without substituting the image for derivations, warrants or tests: an essay section can carry the whole relational movement from its own angle — QL's native recursion supplying the capacity.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The viewer returns to the window with a changed understanding: what first appeared as a self-contained pattern now discloses the source, selected passages and boundaries of its appearing. A seam can be examined, a source reread, a translation qualified, a lens repositioned, an exclusion allowed to affect the next judgment. The Original remains prior throughout; within a declared Context Frame the achieved map can genuinely serve as local Bimba while remaining pratibimba relative to wider sources, and returned evidence can correct that local Bimba itself. The historical limits are kept: Dyczkowski's lattice-window",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "image gives a neighbouring account of light appearing diverse through limiting conditions; the mirror analogy expressly loses the external object ordinary reflection requires; an inert mirror can display without knowing — Vimarśa names the self-apprehending power; the sun outside this authored window supplies no warrant for a metaphysical source outside Consciousness. Bohm is Resonant with, not an extraction; Gebser used through page-specific paraphrase; no additional symbolism assigned to particular colours or panes. The complete construction returns-to C09, C37 and C39, and to M05, M30 and M36 as the declared movements.\n\nOccurrences: the examined seam and reread source (#2, #5→0); the local-Bimba office (#4, #5→0); the declared movement returns (#5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

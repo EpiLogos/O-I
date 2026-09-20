@@ -318,6 +318,13 @@ pub fn plan(
     }
     let adds_desktop = selection.desktop == DesktopChoice::Add || choice.id == "00/00";
     let needs_ground = selected.iter().any(|id| id == "central") || adds_desktop;
+    if selection.remove_products.iter().any(|id| id == "central")
+        && (adds_desktop
+            || (discovery.desktop["state"] == "installed"
+                && selection.desktop != DesktopChoice::Remove))
+    {
+        result.blocked.push("Central backs Desktop. Retain Central or explicitly remove Desktop in this same reviewed plan.".into());
+    }
     if adds_desktop
         && !selected.iter().any(|id| id == "central")
         && !discovery
@@ -395,10 +402,21 @@ pub enum StepState {
     Refused,
     Unknown,
 }
+/// Independent observations never replace an operation's original receipt.
+#[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
+pub struct StepReadback {
+    pub observed_at_unix_ms: u64,
+    pub reading: Option<Value>,
+    pub error: Option<String>,
+}
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct StepRecord {
     pub state: StepState,
     pub receipt: Option<Value>,
+    #[serde(default)]
+    pub invocation_error: Option<String>,
+    #[serde(default)]
+    pub readbacks: Vec<StepReadback>,
     pub message: Option<String>,
 }
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
@@ -417,6 +435,8 @@ impl Journal {
             .map(|_| StepRecord {
                 state: StepState::Pending,
                 receipt: None,
+                invocation_error: None,
+                readbacks: Vec::new(),
                 message: None,
             })
             .collect();
@@ -517,11 +537,18 @@ pub fn apply<R: Runtime, S: JournalStore>(
                 match runtime.verify(step, &journal.plan, journal.records[index].receipt.as_ref()) {
                     Ok(reading) => {
                         journal.records[index].state = StepState::Verified;
-                        if let Some(receipt) = journal.records[index].receipt.as_mut() {
-                            receipt["verification"] = reading;
-                        }
+                        journal.records[index].readbacks.push(StepReadback {
+                            observed_at_unix_ms: now,
+                            reading: Some(reading),
+                            error: None,
+                        });
                     }
                     Err(error) => {
+                        journal.records[index].readbacks.push(StepReadback {
+                            observed_at_unix_ms: now,
+                            reading: None,
+                            error: Some(error.clone()),
+                        });
                         journal.records[index].message = Some(format!("The operation returned, but independent native readback did not verify: {error}. Recheck; do not replay the write."));
                     }
                 }
@@ -532,6 +559,7 @@ pub fn apply<R: Runtime, S: JournalStore>(
             }
             Err(error) => {
                 journal.records[index].state = StepState::Unknown;
+                journal.records[index].invocation_error = Some(error.clone());
                 journal.records[index].message = Some(format!("Native operation: {error}. Earlier effects are retained. Inspect and recheck the owner's state; this write will not be retried."));
                 store.save(&journal)?;
                 break;
@@ -561,11 +589,18 @@ pub fn recheck<R: Runtime, S: JournalStore>(
             Ok(reading) => {
                 journal.records[index].state = StepState::Verified;
                 journal.records[index].message = None;
-                journal.records[index].receipt = Some(
-                    json!({"recovered_by":"independent-native-readback","verification":reading}),
-                );
+                journal.records[index].readbacks.push(StepReadback {
+                    observed_at_unix_ms: now,
+                    reading: Some(reading),
+                    error: None,
+                });
             }
-            Err(_) => {
+            Err(error) => {
+                journal.records[index].readbacks.push(StepReadback {
+                    observed_at_unix_ms: now,
+                    reading: None,
+                    error: Some(error),
+                });
                 journal.records[index].state = match journal.records[index].state {
                     StepState::Running | StepState::Unknown => StepState::Unknown,
                     _ => StepState::Applied,
