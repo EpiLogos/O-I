@@ -13,80 +13,26 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
+          fetch-depth: 3
           persist-credentials: false
-      - name: Verify exact final file bytes and create blobs only
+      - name: Run the immutable reviewed builder with exact whitespace
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           python3 - <<'PY'
-          import pathlib,subprocess,hashlib,base64,json,urllib.request,os,re
-          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          import subprocess,textwrap
+          parent='cba859e8bc6ccdf800f09968a0f5596102542373'
           helper='.github/workflows/w5-final-source.yml'
-          assert git('rev-parse','HEAD^')=='3559077f879d53595d3a58697a16b2749ceffc67'
-          assert git('diff','--name-only','HEAD^','HEAD')==helper
-          def api(path,body=None):
-              req=urllib.request.Request('https://api.github.com/repos/EpiLogos/O-I/'+path,data=None if body is None else json.dumps(body).encode(),headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'},method='GET' if body is None else 'POST')
-              with urllib.request.urlopen(req,timeout=30) as response:return json.load(response)
-          expected={'.github/workflows/native-expression-backcheck.yml':'8967c8de29c57b20f060beeaab05d9c24e2b2d91','.wayfinder/maps/expression-production-suite.md':'2ca75fd045202db56eefc082ec6dd0a4c2ad29aa','desktop/cradle/expressions-app/src/App.tsx':'88b286c0e4eb5327346ead6b9e1014c3de0a98b7','desktop/cradle/expressions-app/src/components/ChakraPanel.tsx':'21528dbab46fa1df44b9fc45416926fcfef5533d','desktop/cradle/expressions-app/src/components/ColorSystemPanel.tsx':'e25f9bc0060e6340793d9e495ea34ad37d12bc06','desktop/cradle/expressions-app/src/components/PointCloudComponent.tsx':'fd8fa634a8cf2e768eaba0069beaf7598a9e91c5','desktop/cradle/expressions-app/src/engine/snapshot.ts':'eb18201c2da150117aed15913dff8e20cfd051b9','desktop/cradle/src-tauri/tauri.conf.json':'8128ea48ca7e3ff58ae518cfea208dc802451062','desktop/cradle/tests/native-expression-final.test.mjs':'c8653eb0a560f7b8aac4eba6cd12e3221390720a','desktop/cradle/tests/native-expression-legacy-browser.mjs':'3d466465e1d4233d553366f3fa60decff546594b','desktop/cradle/tests/theme-prepaint-csp.mjs':'2acd866a837a3cd20fb7f38dacef0c615f0bdc51'}
-          app=pathlib.Path('desktop/cradle/expressions-app')
-          p=app/'src/components/PointCloudComponent.tsx';s=p.read_text();s=s.replace('  getEngine: () => PointCloudField | null;','  getEngine: () => PointCloudField | null;\n  // These operations already delegate to the resident engine below.\n  setActiveEntity: PointCloudField[\'setActiveEntity\'];\n  resetField: PointCloudField[\'resetField\'];\n  getEntityCentre: PointCloudField[\'getEntityCentre\'];');p.write_text(s)
-          p=app/'src/components/ColorSystemPanel.tsx';s=p.read_text().replace("import { CurvedSlider } from './CurvedSlider';","import { ParamRow } from './ParamRow';")
-          s,n=re.subn(r'<CurvedSlider\b[\s\S]*?/>',lambda m:m[0].replace('<CurvedSlider','<ParamRow').replace('\n              isLight={isLight}','').replace('\n          isLight={isLight}','').replace('\n            isLight={isLight}',''),s);assert n==11;p.write_text(s)
-          p=app/'src/components/ChakraPanel.tsx';s=p.read_text().replace('${st.name}', 'Resonance ${st.index + 1}').replace('backgroundColor: st.color', "backgroundColor: 'currentColor'").replace('{st.name}','{`Resonance ${st.index + 1}`}');p.write_text(s)
-          p=app/'src/App.tsx';s=p.read_text().replace("import { isLightHex } from './engine/colorPalettes';","import { isLightHex } from './engine/colorPalettes';\nimport { downloadSnapshot } from './engine/snapshot';")
-          old="        onTakeSnapshot={() => {\n          if (engine) {\n            engine.captureSnapshot('png', 1.0);\n            triggerToast('High-resolution PNG downloaded');\n          }\n        }}"
-          new="        onTakeSnapshot={async () => {\n          if (!engine) { triggerToast('The field is not ready to capture.'); return; }\n          try {\n            await downloadSnapshot(engine);\n            triggerToast('PNG export started');\n          } catch (error) {\n            triggerToast(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`);\n          }\n        }}"
-          assert old in s;s=s.replace(old,new);p.write_text(s)
-          (app/'src/engine/snapshot.ts').write_text("import type { PointCloudField } from './PointCloudField';\nimport { download, png } from '../../field-studies-journeys/src/capture';\n\n/** Capture the resident field through its existing bounded renderImage path.\n * This neither advances physics nor resets the scene. Keep encoding errors\n * visible to the caller and start a download only after a real PNG exists. */\nexport async function downloadSnapshot(\n  engine: Pick<PointCloudField, 'canvas' | 'renderImage'>,\n): Promise<void> {\n  const image = engine.renderImage(engine.canvas.width, engine.canvas.height);\n  const blob = await png(image);\n  download(blob, 'expression.png');\n}\n")
-          p=pathlib.Path('desktop/cradle/src-tauri/tauri.conf.json');s=p.read_text();code=re.findall(r'<script>([\s\S]*?)</script>',pathlib.Path('desktop/cradle/index.html').read_text())[0];digest=base64.b64encode(hashlib.sha256(code.encode()).digest()).decode();s,n=re.subn(r"'sha256-[A-Za-z0-9+/=]+'",f"'sha256-{digest}'",s);assert n==1;p.write_text(s)
-          p=pathlib.Path('desktop/cradle/tests/theme-prepaint-csp.mjs');s=p.read_text().replace("chromium.launch({headless: true})", "chromium.launch({headless: true, ...(process.env.CHROMIUM_PATH ? {executablePath: process.env.CHROMIUM_PATH} : {})})");p.write_text(s)
-          for path in ['desktop/cradle/tests/native-expression-final.test.mjs','desktop/cradle/tests/native-expression-legacy-browser.mjs']:
-              assert not pathlib.Path(path).exists();pathlib.Path(path).write_bytes(base64.b64decode(api('git/blobs/'+expected[path])['content']))
-          p=pathlib.Path('.github/workflows/native-expression-backcheck.yml');s=p.read_text().replace('          npx tsc --noEmit\n','          npm run build\n').replace('Retained legacy React shell lint (original failures remain failing)','Complete retained React shell lint');marker='      - name: Native kernel regressions';s=s.replace(marker,'      - name: Retained shell controls and exact native CSP\n        if: always()\n        env:\n          NATIVE_EXPRESSION_OUT: /tmp/w5-checks/legacy-browser\n        run: |\n          set -o pipefail\n          cd desktop/cradle\n          node --test tests/native-expression-final.test.mjs 2>&1 | tee /tmp/w5-checks/csp-hash.log\n          node tests/theme-prepaint-csp.mjs 2>&1 | tee /tmp/w5-checks/csp-browser.log\n          node tests/native-expression-legacy-browser.mjs 2>&1 | tee /tmp/w5-checks/legacy-browser.log\n'+marker);p.write_text(s)
-          p=pathlib.Path('.wayfinder/maps/expression-production-suite.md');s=p.read_text();s+='''
-
-
-          ### Final repository-side repair before local integration
-
-          The final continuation retains the accepted native producer/relay contracts and
-          repairs the retained React shell rather than waiving its lint. Exact replay of
-          both `a222c8b` and `9926f4d` produced **22 TypeScript diagnostics** with identical
-          text; the previous PR summary's count of 42 was incorrect. Existing imperative
-          methods are now declared in the component ref; colour ranges use the existing
-          `ParamRow` (including negative speed and degree ranges); physical resonance
-          anchors receive view labels, not fabricated semantic name/colour fields; PNG
-          capture uses the already-bounded `renderImage` and existing PNG/download helper.
-          Render/encoding failures remain failures and cannot announce a successful export.
-
-          The broader desktop job actually failed the **pre-paint CSP** assertion, not the
-          previously reported mobile-overflow check. Its returned job log was accessible;
-          only an incorrect artifact-ID download returned 404. The exact inline bootstrap
-          had changed while its allowed script hash had not. The hash is reconciled
-          without changing bootstrap meaning, widening script permissions, or introducing
-          `unsafe-inline`/`unsafe-eval`. `native-expression-final.test.mjs` guards source
-          and built script bytes; the existing `theme-prepaint-csp.mjs` checks actual
-          browser enforcement and still refuses changed scripts.
-
-          `native-expression-legacy-browser.mjs` exercises real retained React controls,
-          resident-engine ref delegation, GPU-state-preserving PNG capture, and rendering/
-          encoding refusals. The native-backcheck workflow runs it alongside all original
-          checks, full build, full retained-shell lint and both CSP regressions. Exact-head
-          results belong to the final #419 receipt, not to this source declaration.
-          Browser execution in the web work container was denied by its administrator
-          policy; no policy was altered. Hosted GitHub CI is the separate execution venue.
-
-          This closes neither native arbitrary mesh/physical-crease output nor detached
-          outer-shell continuity by assertion. Those remain the concrete production and
-          integrated-runtime obligations in the table above. Existing native work is not
-          replaced by invented physical correspondence. Local integration must reconcile
-          its newer source cut, review this PR and run the committed opt-in packet; no
-          local suite has been accessed or installed by this continuation.
-          ''';p.write_text(s)
-          changed=set(git('diff','--name-only').splitlines())|set(git('ls-files','--others','--exclude-standard').splitlines());assert changed==set(expected),(changed,set(expected))
-          for path,sha in expected.items():
-              data=pathlib.Path(path).read_bytes();actual=hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest();assert actual==sha,(path,actual,sha)
-          for path,sha in expected.items():
-              actual=api('git/blobs',{'content':base64.b64encode(pathlib.Path(path).read_bytes()).decode(),'encoding':'base64'})['sha'];assert actual==sha
-          print(json.dumps({'parent':git('rev-parse','HEAD'),'base_tree':git('rev-parse','HEAD^{tree}'),'changed':expected,'remove':helper,'ref_updated':False},indent=2))
+          def git(*args):return subprocess.check_output(['git',*args],text=True).strip()
+          assert git('rev-parse','HEAD^')==parent
+          assert git('rev-parse',parent+':'+helper)=='0d26ec49d46502d6b8df6a0346efbbbb2e07c1ba'
+          raw=subprocess.check_output(['git','show',parent+':'+helper],text=True)
+          code=textwrap.dedent(raw.split("          python3 - <<'PY'\n",1)[1].rsplit('          PY\n',1)[0])
+          before="git('rev-parse','HEAD^')=='3559077f879d53595d3a58697a16b2749ceffc67'"
+          assert code.count(before)==1
+          code=code.replace(before,"git('rev-parse','HEAD^^')=='3559077f879d53595d3a58697a16b2749ceffc67'")
+          before="s+='''\n\n\n### Final repository-side repair before local integration"
+          assert code.count(before)==1
+          code=code.replace(before,"s+='''\n\n### Final repository-side repair before local integration")
+          exec(compile(code,'verified-w5-builder','exec'))
           PY
