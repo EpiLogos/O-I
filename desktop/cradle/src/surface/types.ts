@@ -57,6 +57,14 @@ export interface SurfaceBinding {
   terminal?: {cwd?:string};
   flow?: {flowRef:string;path:string};
   view?: {graphOrigin?:string;knowledgePlane?: "graph"|"page";encounterPlane?: "Conversation"|"Activity"|"Context"|"Inspect"};
+  /** The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
+   * where the hosted application stands, written by its stage slot from the
+   * application's own hosted-state announcements, debounced, on change
+   * only. A REF into the person's saved work — the expression id the app's
+   * own `?expression=` boot grammar resolves — never a copy of app content.
+   * On a restart the stage slot deep-links the remounted application to it,
+   * after — never gating — the app's own boot recovery. */
+  engine?: {expressionRef: string; documentId?: string; revision?: string};
   location?: import("../kernel/types").CentralLocation;
   /** SF1: a projected subject pinned as its own Surface (kind
    * 'presentation') carries the exact World/Projection/Presentation/

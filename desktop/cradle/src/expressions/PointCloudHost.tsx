@@ -39,17 +39,36 @@ import {
   materialUrl,
   relayKernelChannel,
   trackShellCutout,
+<<<<<<< HEAD
+  trackHostedAppState,
+  postHostMode,
+  type HostedAppMode,
+  type HostedAppState,
+} from "./hostedApp";
+import "./point-cloud-host.css";
+
+export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: {mode?: HostedAppMode; deepLink?: string; onHostedState?: (state: HostedAppState) => void}) {
+=======
   postHostMode,
   type HostedAppMode,
 } from "./hostedApp";
 import "./point-cloud-host.css";
 
 export function PointCloudHost({mode = "expressions"}: {mode?: HostedAppMode}) {
+>>>>>>> origin/main
   const kernel = useKernel();
   const [entry, setEntry] = useState<NativeFileEntry | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
   const [reason, setReason] = useState<string | undefined>();
   const frame = useRef<HTMLIFrameElement | null>(null);
+  // The restart checkpoint's deep link (MODE-ENGINE-STATE-PERSISTENCE
+  // §7.2), minted ONCE at mount: the checkpoint may keep changing while the
+  // application is mounted, but the frame's URL must never change after
+  // boot — reassigning an iframe's src re-navigates it, the exact defect
+  // this track exists to prevent. A mount-time capture is a boot-time hint
+  // only; the application applies it after its own boot recovery and is
+  // free to ignore it.
+  const [bootQuery] = useState(() => (deepLink ? `?expression=${encodeURIComponent(deepLink)}` : ""));
 
   useEffect(() => {
     let alive = true;
@@ -71,9 +90,9 @@ export function PointCloudHost({mode = "expressions"}: {mode?: HostedAppMode}) {
 
   const src = entry
     ? kernel.transport.kind === "tauri"
-      ? materialUrl(entry.location)
+      ? materialUrl(entry.location, "", bootQuery)
       : kernel.transport.kind === "bridge"
-        ? `${kernel.transport.url}/material/${encodeURIComponent(JSON.stringify(entry.location))}/`
+        ? `${kernel.transport.url}/material/${encodeURIComponent(JSON.stringify(entry.location))}/${bootQuery}`
         : undefined
     : undefined;
 
@@ -94,6 +113,19 @@ export function PointCloudHost({mode = "expressions"}: {mode?: HostedAppMode}) {
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, kernel.transport]);
 
+<<<<<<< HEAD
+  // The checkpoint channel: the application's oi-app-state announcements
+  // (current expression, scene, selection — its own position, in its own
+  // grammar) reach the stage slot's checkpoint effect when one is mounted.
+  useEffect(() => {
+    const node = frame.current;
+    if (!node || state !== "ready" || !onHostedState) return;
+    return trackHostedAppState(node, onHostedState);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [state, onHostedState]);
+
+=======
+>>>>>>> origin/main
   // The operating cut (the cradle's own workspace modes carry it): the
   // binding's kind IS the cut — the Technē centre presents this application
   // in its deep state, the Expressions centre in its lived state. Each

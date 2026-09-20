@@ -1,7 +1,11 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "html-continuity",
+<<<<<<< HEAD
+  "generated_at": "2026-09-20T10:43:18.388Z",
+=======
   "generated_at": "2026-09-19T20:45:30.985Z",
+>>>>>>> origin/main
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,6 +15,23 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/oi-ci-check",
+<<<<<<< HEAD
+      "repository_head": "225416260f292fbf57ada98416d9246712262a29",
+      "tracked_changes": [
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/cradle.css",
+        "desktop/cradle/src/expressions/PointCloudHost.tsx",
+        "desktop/cradle/src/surface/Workbench.tsx",
+        "desktop/cradle/src/surface/layout-codec.mjs",
+        "desktop/cradle/src/surface/retention.tsx",
+        "desktop/cradle/src/surface/types.ts",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/src/workspace/store.ts",
+        "desktop/cradle/tests/workspace-continuity.test.mjs",
+        "desktop/cradle/walk/artifacts/mode-engine-state.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/mode-engine-state.mjs"
+=======
       "repository_head": "0970d65d55224ccd158f2ac5ef94aaea21ee57f3",
       "tracked_changes": [
         "desktop/cradle/src/material/MaterialSurface.tsx",
@@ -31,6 +52,7 @@
         "desktop/cradle/walk/artifacts/workspace-continuity-wiki-page-focus.png",
         "desktop/cradle/walk/artifacts/workspace-continuity.json",
         "desktop/cradle/walk/scenarios/html-continuity.mjs"
+>>>>>>> origin/main
       ],
       "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -38,8 +60,13 @@
     }
   },
   "passed": false,
+<<<<<<< HEAD
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/private/tmp/oi-ci-check/desktop/cradle/walk/scenarios/html-continuity.mjs:237:70)\n    at async runScenario (/private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:427:5)\n    at async file:///private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:503:18",
+  "duration_ms": 34039,
+=======
   "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/private/tmp/oi-ci-check/desktop/cradle/walk/scenarios/html-continuity.mjs:234:70)\n    at async runScenario (/private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:418:5)\n    at async file:///private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:494:18",
   "duration_ms": 34759,
+>>>>>>> origin/main
   "checks": [
     {
       "ok": true,
@@ -47,7 +74,11 @@
       "data": {
         "identity": {
           "title": "Continuity specimen",
+<<<<<<< HEAD
+          "token": "qd912coa5a.1789901000284",
+=======
           "token": "26y85pzkeuq.1789850732891",
+>>>>>>> origin/main
           "stamp": "n0"
         }
       }
@@ -56,15 +87,24 @@
       "ok": true,
       "label": "With the tree stalled, opening a known file still completes (the file path never waits on the tree)",
       "data": {
+<<<<<<< HEAD
+        "ms": 62
+=======
         "ms": 155
+>>>>>>> origin/main
       }
     },
     {
       "ok": true,
       "label": "C01/tab: the warm tab return is the SAME document instance (token kept, no reload)",
       "data": {
+<<<<<<< HEAD
+        "before": "qd912coa5a.1789901000284",
+        "after": "qd912coa5a.1789901000284"
+=======
         "before": "26y85pzkeuq.1789850732891",
         "after": "26y85pzkeuq.1789850732891"
+>>>>>>> origin/main
       }
     },
     {
@@ -75,6 +115,28 @@
       }
     },
     {
+<<<<<<< HEAD
+      "ok": true,
+      "label": "C03/mode: the HTML document survives a mode switch away and back — same document, not a rebuild",
+      "data": {
+        "token": "qd912coa5a.1789901000284",
+        "first": "qd912coa5a.1789901000284"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The mode switch parks and re-adopts the same frame node",
+      "data": {
+        "stamp": "n0"
+      }
+    },
+    {
+      "ok": true,
+      "label": "C04/workspace: returning to the workspace restores the SAME HTML document — the warm set spans workspaces",
+      "data": {
+        "token": "qd912coa5a.1789901000284",
+        "first": "qd912coa5a.1789901000284"
+=======
       "ok": false,
       "label": "C03/mode: the HTML document survives a mode switch away and back — same document, not a rebuild",
       "data": {
@@ -101,6 +163,7 @@
       "data": {
         "token": "tzsf9s2ljmp.1789850735330",
         "first": "26y85pzkeuq.1789850732891"
+>>>>>>> origin/main
       }
     }
   ],
@@ -108,7 +171,19 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
+      "duration_ms": 53,
+      "data": {
+        "file": "html-continuity-boot-state.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 41,
+=======
       "duration_ms": 74,
+>>>>>>> origin/main
       "data": {
         "file": "html-continuity-html-open.png"
       }
@@ -116,7 +191,11 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
+      "duration_ms": 45,
+=======
       "duration_ms": 67,
+>>>>>>> origin/main
       "data": {
         "file": "html-continuity-tab-return.png"
       }
@@ -124,7 +203,11 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
+      "duration_ms": 43,
+=======
       "duration_ms": 84,
+>>>>>>> origin/main
       "data": {
         "file": "html-continuity-mode-return.png"
       }
@@ -132,16 +215,27 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
+      "duration_ms": 34,
+=======
       "duration_ms": 85,
+>>>>>>> origin/main
       "data": {
         "file": "html-continuity-workspace-return.png"
       }
     }
   ],
   "metrics": {
+<<<<<<< HEAD
+    "warm_tab_return_ms": 88
+  },
+  "screenshots": [
+    "html-continuity-boot-state.png",
+=======
     "warm_tab_return_ms": 206
   },
   "screenshots": [
+>>>>>>> origin/main
     "html-continuity-html-open.png",
     "html-continuity-tab-return.png",
     "html-continuity-mode-return.png",

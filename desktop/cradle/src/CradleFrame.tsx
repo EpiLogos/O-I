@@ -20,6 +20,10 @@ import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarMode
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
 import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} from "./surface/retention";
+<<<<<<< HEAD
+import type {HostedAppState} from "./expressions/hostedApp";
+=======
+>>>>>>> origin/main
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -1359,10 +1363,49 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // living in THAT MODE'S OWN TREE (surface/retention.tsx centreBindingOf).
   // The slot mounts the body directly — no adoption, no DOM move — so a
   // mode round trip flips visibility and the hosted application keeps its
+<<<<<<< HEAD
+  // document and in-memory state. A centre opened outside its own mode's
+  // tree is pane-tab-presented: the pane's own wrapper mounts the body in
+  // place (surface/retention.tsx, spec §7.1 — the park is retired).
+  const stageCentres=STAGE_MODES.map(stageMode=>({mode:stageMode,binding:centreBindingOf(workspace.current,mode,stageMode)}));
+  const modeCentreBinding=stageCentres.find(centre=>centre.mode===mode)?.binding;
+  // The hosted engine's checkpoint (§7.2): the stage slot follows the
+  // application's own oi-app-state announcements and writes the current
+  // expression ref onto the binding — debounced, and only on change —
+  // through the store's surfaceEngine. The checkpoint is a REF into the
+  // person's saved work (the id the app's own ?expression= boot grammar
+  // resolves), never a copy of app content; writing it never gates or
+  // blocks the application. The Technè centre is the same hosted
+  // application in its deep cut, so the same checkpoint covers it; the
+  // wiki-projection state elsewhere in Technè is kernel-backed and needs
+  // no renderer checkpoint.
+  const engineWrites=useRef(new Map<string,{timer?:number;last?:string}>());
+  const writeEngineCheckpoint=useCallback((bindingId:string,state:HostedAppState)=>{
+    const documentId=state.document?.id;
+    if(!documentId)return;
+    const checkpoint={expressionRef:documentId,documentId};
+    const key=JSON.stringify(checkpoint);
+    const entry=engineWrites.current.get(bindingId);
+    if(entry?.last===key)return;
+    if(entry?.timer)window.clearTimeout(entry.timer);
+    const timer=window.setTimeout(()=>{
+      engineWrites.current.set(bindingId,{timer:undefined,last:key});
+      workspaceRef.current.surfaceEngine(workspaceRef.current.current.id,bindingId,checkpoint);
+    },400);
+    engineWrites.current.set(bindingId,{timer,last:entry?.last});
+  },[]);
+  const engineCallbacks=useRef(new Map<string,(state:HostedAppState)=>void>());
+  const engineCallbackFor=useCallback((bindingId:string)=>{
+    let callback=engineCallbacks.current.get(bindingId);
+    if(!callback){callback=(state:HostedAppState)=>writeEngineCheckpoint(bindingId,state);engineCallbacks.current.set(bindingId,callback);}
+    return callback;
+  },[writeEngineCheckpoint]);
+=======
   // document and in-memory state. The park keeps only pane-tab-presented
   // centres (a centre opened outside its own mode's tree).
   const stageCentres=STAGE_MODES.map(stageMode=>({mode:stageMode,binding:centreBindingOf(workspace.current,mode,stageMode)}));
   const modeCentreBinding=stageCentres.find(centre=>centre.mode===mode)?.binding;
+>>>>>>> origin/main
   // Owner ruling 2026-09-19 (portal prerequisites): the dedicated stage
   // stands while the mode's tree carries ONLY its centre. The moment the
   // tree holds any other surface — a knowledge page opened from Instrument
@@ -1455,7 +1498,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       <ExpressionLayout layout={state}/>
       <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
-        factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
@@ -1473,9 +1515,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (
+<<<<<<< HEAD
+          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
+            {binding && <StageCentreMark binding={binding} presented={presented}/>}
+            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
+=======
           <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
             {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}/>}
+>>>>>>> origin/main
           </div>
         );
       })}
