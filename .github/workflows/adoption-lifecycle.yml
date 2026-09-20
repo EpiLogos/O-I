@@ -1,0 +1,33 @@
+name: Adoption lifecycle
+on:
+  push:
+    branches: [agent/adoption-lifecycle-20260920]
+  pull_request:
+    paths:
+      - '.github/workflows/adoption-lifecycle.yml'
+      - 'desktop/cradle/src/configuration/**'
+      - 'desktop/cradle/tests/*adoption*'
+      - 'desktop/cradle/walk/*adoption*'
+      - 'src/**'
+      - 'tests/**'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retain exact tracked source (no runtime, credentials or installed-state claim)
+        run: |
+          git rev-parse HEAD > "$RUNNER_TEMP/adoption-source-head.txt"
+          git archive --format=tar HEAD | gzip > "$RUNNER_TEMP/adoption-source.tar.gz"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: adoption-source
+          path: |
+            ${{ runner.temp }}/adoption-source.tar.gz
+            ${{ runner.temp }}/adoption-source-head.txt
+          retention-days: 3
