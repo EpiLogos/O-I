@@ -67,7 +67,8 @@ class ExperienceMapTests(unittest.TestCase):
         module = json.loads(path.read_text())
         self.assertEqual(module["families"], [])
         expected = {f"wc65:WC{i:02}" for i in range(1, 16)}
-        self.assertEqual(set(module["required_obligation_ids"]), expected)
+        adaptive = {f"adaptive65:AP{i:02}" for i in range(1, 9)}
+        self.assertEqual(set(module["required_obligation_ids"]), expected | adaptive)
         obligations = [o for o in result["inherited_obligations"] if o["id"].startswith("wc65:")]
         self.assertEqual({o["id"] for o in obligations}, expected)
         stories = {s["id"] for s in result["stories"]}
