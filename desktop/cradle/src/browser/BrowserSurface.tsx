@@ -1,3 +1,4 @@
+import {EditorIcon} from "../editor/EditorIcon";
 import {useEffect,useRef,useState} from "react";
 import {invoke} from "@tauri-apps/api/core";
 import {listen} from "@tauri-apps/api/event";
@@ -138,16 +139,16 @@ export function BrowserSurface({binding}:{binding:SurfaceBinding}) {
   return <section className="browser-surface" aria-label="Browser surface">
     <form className="browser-toolbar" onSubmit={e=>void navigate(e)}>
       <span className="browser-tools">
-        <button type="button" aria-label="Back" disabled={!reading} onClick={()=>act("back")}>←</button>
-        <button type="button" aria-label="Forward" disabled={!reading} onClick={()=>act("forward")}>→</button>
-        <button type="button" aria-label={reading?.loading?"Stop loading":"Reload page"} disabled={!reading} onClick={()=>act(reading?.loading?"stop":"reload")}>{reading?.loading?"×":"↻"}</button>
+        <button type="button" aria-label="Back" disabled={!reading} onClick={()=>act("back")}><EditorIcon name="back"/></button>
+        <button type="button" aria-label="Forward" disabled={!reading} onClick={()=>act("forward")}><EditorIcon name="arrow"/></button>
+        <button type="button" aria-label={reading?.loading?"Stop loading":"Reload page"} disabled={!reading} onClick={()=>act(reading?.loading?"stop":"reload")}><EditorIcon name={reading?.loading?"close":"refresh"}/></button>
       </span>
       <input ref={input} className="browser-address" aria-label="Web address" placeholder="Enter a web address" value={address} onChange={e=>setAddress(e.target.value)} onFocus={e=>{editing.current=true;e.target.select();}} onBlur={()=>{editing.current=false;requestAnimationFrame(()=>{if(reading&&!(document.activeElement as HTMLElement)?.closest(".browser-toolbar"))setAddress(reading.url);});}} autoFocus={!target} spellCheck={false}/>
       <span className="browser-tools">
         <button type="submit" disabled={!native||!address.trim()}>Go</button>
-        <button type="button" aria-label="Text mode" aria-pressed={contextMode==="off"} onClick={()=>setContextMode("off")}>✎</button>
-        <button type="button" aria-label="Context mode" aria-pressed={contextMode!=="off"} disabled={!reading} onClick={()=>setContextMode('components')}>@</button>
-        {contextMode!=="off"&&<button type="button" onMouseDown={e=>e.preventDefault()} onClick={attachContext}>Attach selection</button>}
+        <button type="button" aria-label="Browse normally" aria-pressed={contextMode==="off"} onClick={()=>setContextMode("off")}><EditorIcon name="file"/></button>
+        <button type="button" aria-label="Pick page component for context" aria-pressed={contextMode!=="off"} disabled={!reading} onClick={()=>setContextMode('components')}><EditorIcon name="inspect"/></button>
+        <button type="button" aria-label="Add page selection to context" title="Add selection to context" disabled={!reading} onMouseDown={e=>e.preventDefault()} onClick={attachContext}><EditorIcon name="context"/></button>
         <select aria-label="Browser profile" value={profile} onChange={e=>void switchProfile(e.target.value as Profile)}><option value="temporary">Temporary</option><option value="personal">Personal</option></select>
         <select aria-label="Browser zoom" value={zoom} onChange={e=>{const value=Number(e.target.value);void control("zoom",{zoom:value}).catch(reason=>setError(String(reason)));}}>{[.5,.75,1,1.25,1.5,2].map(v=><option key={v} value={v}>{v*100}%</option>)}</select>
       </span>

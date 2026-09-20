@@ -1295,3 +1295,17 @@ projection-preservation assertions and sampler/camera containment pass;
 TypeScript and production build pass. Exact commands, visual evidence and
 limits are in `desktop/cradle/walk/artifacts/UI-COMPONENTS-CONTINUATION-2026-09-15.md`.
 Parent integration owns final mainline convergence and #65 retains human acceptance.
+
+
+### 2026-09-20 — Canvas editor/context implementation continuation
+
+Base O:I a222c8b; branch agent/canvas-editor-context-20260920. Scope and original-unit mappings: .wayfinder/maps/canvas-editor-context.md. Existing ContextTray is the mount, ContextPlane is the receiving surface. No CradleFrame, workspace store, shared tokens or Agent chat rewrite.
+
+| Recovered gap | Returned implementation | Standing |
+|---|---|---|
+| Text-only commands and limited format controls | shared icon/keyboard commands, exact Markdown edits, language/wrap/fold/navigation and source/rendered/split | code; 19 deterministic contracts pass |
+| Global picker mode and distribution modal | normal selection action, explicit component picker, compact prepared rows, view-only retained cues | code; interactive CI pending |
+| Quote-only attachment identity | native AIKit prepared snapshots, UTF-16 ranges, real parser/AST/renderer, CAS and session/project isolation | AIKit 5b896d7; 12 native regressions and CLI check pass |
+| Context omitted or stale at send | same conversation send revalidates native digest and exact source/observation, explicit captured-snapshot review, native legacy-call refusal | native deterministic proof; joined browser CI pending |
+
+Full TypeScript and Vite production build pass in the source sandbox; nine existing material-lifecycle tests also pass (28 total JS contracts). Browser navigation in this container is blocked by environment policy; no bypass was attempted and a blank/error capture is not UX evidence. GitHub-hosted controlled browser proof is the next receiving check. Owner machines, installed providers and H acceptance remain untouched. Root-Central/no-Project dispatch, installed Tauri browser/window/Flow-Day export and real provider/Return acceptance are not claimed closed by this increment.

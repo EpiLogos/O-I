@@ -1,3 +1,4 @@
+import {PreparedContextView} from "../../context/PreparedContextView";
 import {useMemo,useState,type ReactNode} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {Glyph} from "../../workspace/Glyph";
@@ -39,7 +40,8 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
   session?:EncounterSessionHandle;onOpenSubject?:(subject:AgentSubject)=>void;
 }) {
   return <div className="agent-context agent-plane oi-sidecar oi-scroll" data-plane="Context">
-    <SubjectContext key={subject.ref ?? "none"} subject={subject} history={history} historyAvailable={historyAvailable} onOpenSubject={onOpenSubject}/>
+    <PreparedContextView project={accompanying?.project??subject.project} session={accompanying?.ref} onOpenSubject={onOpenSubject}/>
+    <details className="oi-disclosure"><summary>Current source</summary><SubjectContext key={subject.ref ?? "none"} subject={subject} history={history} historyAvailable={historyAvailable} onOpenSubject={onOpenSubject}/></details>
     {session
       ? <SessionContext key={session.state.key} session={session}/>
       : <div className="agent-section oi-section"><h3>Session context</h3><p className="oi-note">No conversation is bound, so there is no draft, task basis or delivery to read context from.</p></div>}
@@ -96,13 +98,14 @@ function SessionContext({session}:{session:EncounterSessionHandle}) {
   const stale=(item:ContextItem)=>{const buffer=item.origin?kernel.snapshot.buffers[item.origin]:undefined;return !!buffer&&!!item.revision&&buffer.base_revision!==item.revision;};
   return <>
     <div className="agent-section oi-section" data-context="selected">
-      <h3>Selected <span className="oi-state">in the shared draft · not sent</span></h3>
+      <h3>Legacy draft attachments <span className="oi-state">in the shared draft · not sent</span></h3>
       {selected.length
         ? <ul className="agent-context-items">{selected.map((item,index)=><ContextRow key={index} item={item} state={stale(item)?"stale":"selected"} note={stale(item)?"The source has changed since this selection.":undefined} onRemove={editable?()=>actions.change(removeContextItem(state.draft,item)):undefined}/>)}</ul>
-        : <p className="oi-note" data-state="nothing-selected">Nothing is selected. Context mode in a surface attaches a selection to this session&apos;s draft; it is sent only when the draft is.</p>}
+        : <p className="oi-note" data-state="nothing-selected">No legacy text attachments. Prepared source selections appear above and are validated when you explicitly send.</p>}
     </div>
     <div className="agent-section oi-section" data-context="used">
       <h3>Carried <span className="oi-state">owner records only</span></h3>
+      {(state.reading?.prepared_context_receipts??[]).map(receipt=><details key={receipt.cursor}><summary>{receipt.items.length} selections · submission {receipt.cursor}</summary><p className="oi-note">Recorded submission, not proof of current provider memory.</p>{receipt.items.map(item=><p className="oi-ref" key={item.id}>{item.title} · {item.source_ref} · {item.source_revision}</p>)}</details>)}
       {sent.length>0&&<><p className="oi-eyebrow">Sent in recorded messages on this page</p>
         <ul className="agent-context-items">{sent.map(({item,blockId},index)=><ContextRow key={`${blockId}-${index}`} item={item} state="used" note={`message block ${blockId}`}/>)}</ul></>}
       {carriedPackets.length>0&&<><p className="oi-eyebrow">Addressed deliveries from this window</p>

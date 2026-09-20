@@ -176,7 +176,7 @@ export function useMaterialReadiness(generation: number): MaterialReadiness {
 // ---------------------------------------------------------------------------
 // The persisted view record — Rendered|Source plus preview zoom, per binding.
 
-export type MaterialView = "rendered" | "source";
+export type MaterialView = "rendered" | "source" | "split";
 
 export const MATERIAL_ZOOM_STEPS: readonly number[] = [.5, .75, 1, 1.25, 1.5, 2];
 
@@ -205,7 +205,7 @@ export function parseMaterialViewPrefs(raw: string | null): Partial<MaterialView
     if (typeof value !== "object" || value === null) return {};
     const record = value as Record<string, unknown>;
     const prefs: Partial<MaterialViewPrefs> = {};
-    if (record.view === "rendered" || record.view === "source") prefs.view = record.view;
+    if (record.view === "rendered" || record.view === "source" || record.view === "split") prefs.view = record.view;
     if (typeof record.zoom === "number" && MATERIAL_ZOOM_STEPS.includes(record.zoom)) prefs.zoom = record.zoom;
     return prefs;
   } catch {

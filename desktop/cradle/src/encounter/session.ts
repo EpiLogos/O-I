@@ -1,3 +1,4 @@
+import {reviewedContext,nativeContext,announceContext,clearSnapshotApprovals} from "../context/nativeContext";
 /**
  * One observer per encounter session.
  *
@@ -207,7 +208,11 @@ class EncounterSession implements EncounterSessionActions {
   if(!this.allowed("prompt")||this.dirty||this.saving||this.sending||this.failed)return;
   this.sending=true;const submitted=this.input;this.begin();this.set({error:undefined});
   try{
-   const response=await this.call<{draft:Draft}>({action:"prompt",agent_session:this.state.agentSession,draft_revision:this.canonical.revision});
+   const supportsContext=this.state.reading?.actions?.some(action=>action.ref==="aikit.encounter.context"&&action.enabled);
+   const context=supportsContext?await reviewedContext(this.transport,this.state.project,this.state.agentSession):undefined;
+   const response=await this.call<{draft:Draft}>(context?{action:"prompt-context",agent_session:this.state.agentSession,draft_revision:this.canonical.revision,context}:{action:"prompt",agent_session:this.state.agentSession,draft_revision:this.canonical.revision});
+   clearSnapshotApprovals();
+   if(context)void nativeContext(this.transport,this.state.project,this.state.agentSession).then(value=>announceContext(this.state.project,value)).catch(()=>{});
    this.canonical=response.draft;
    if(this.input===submitted){this.input=response.draft.text;this.set({draft:response.draft.text});}else{this.dirty=true;}
    this.set({status:await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession})});
