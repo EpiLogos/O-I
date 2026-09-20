@@ -84,8 +84,15 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // (cradle.css pane law), so hover first, then read it — exact match,
   // because "Unsaved" contains "saved" as a substring.
   const waitStatus = async (text, timeout = 60000) => {
-    await page.locator('.pane.focused .native-file-surface footer.editor-footer').hover();
-    return page.locator('.pane.focused .native-file-surface footer span', { hasText: new RegExp(`^${text}$`) }).waitFor({ timeout });
+    // No hover reveal: the pane footer follows focus and is pinned up by the
+    // pane's own bottom-right dot. Pin it, read the exact status, release it.
+    const dot = page.locator('.pane.focused [data-pane-footer-dot]');
+    if ((await dot.getAttribute('aria-pressed')) !== 'true') await dot.click();
+    try {
+      return await page.locator('.pane.focused .native-file-surface footer span', { hasText: new RegExp(`^${text}$`) }).waitFor({ timeout });
+    } finally {
+      if ((await dot.getAttribute('aria-pressed')) === 'true') await dot.click();
+    }
   };
   const save = () => page.keyboard.press('Meta+s');
   const toSource = async () => {
