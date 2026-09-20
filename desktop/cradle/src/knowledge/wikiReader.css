@@ -15,3 +15,9 @@
 .wiki-selection-tools span { font-size:.8rem; max-width:15rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
 .wiki-link-preview { position:sticky; bottom:.5rem; padding:.8rem; max-height:18rem; overflow:auto; border:1px solid var(--oi-relation); border-radius:.5rem; background:var(--oi-canvas-ground); z-index:7; font-size:.85rem; }
 .wiki-link-preview header { display:flex; justify-content:space-between; gap:1rem; }.wiki-link-preview p { white-space:pre-wrap; }.wiki-backlinks { margin-top:1.8rem; border-top:1px solid var(--oi-relation); padding-top:.7rem; font-size:.9rem; }.wiki-backlinks blockquote { margin:.3rem 0 .8rem; font-size:.85rem; color:var(--oi-muted); }
+.wiki-source-tools { margin:.5rem 0; }
+.wiki-source-tools > span { margin-left:.6rem; font-size:.8rem; color:var(--oi-muted); }
+.wiki-source-editor { height:min(70vh,46rem); min-height:20rem; display:flex; flex-direction:column; margin:1rem 0; border:1px solid var(--oi-relation); }
+.wiki-source-editor > * { flex:1; min-height:0; }
+.wiki-reader:has(.wiki-source-editor) > .wiki-prose,.wiki-reader:has(.wiki-source-editor) > .wiki-backlinks { display:none; }
+.knowledge-surface { flex:1; width:100%; }
