@@ -32,97 +32,36 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
-      # Temporary, owner-authorised CLI delivery route on this isolated branch.
-      # No shared branch, PR merge, user machine or force push is involved.
-      - name: Finish bounded command wiring on the isolated branch
+      # Temporary scoped CLI delivery; removed before review-ready promotion.
+      - name: Repair the recovered branch compilation
         if: github.event_name == 'push' && github.ref == 'refs/heads/agent/adoption-lifecycle-20260920'
         shell: bash
         run: |
           set -euo pipefail
           python3 - <<'PY'
           from pathlib import Path
-          p = Path('cli/src/main.rs')
-          text = p.read_text()
-          if 'include!("setup_command.rs");' not in text:
-              assert text.count('    include!("config_command.rs");') == 1
-              text = text.replace('    include!("config_command.rs");', '    include!("config_command.rs");\n    include!("setup_command.rs");\n    include!("setup_terminal.rs");')
-          elif 'include!("setup_terminal.rs");' not in text:
-              text = text.replace('    include!("setup_command.rs");', '    include!("setup_command.rs");\n    include!("setup_terminal.rs");')
-          p.write_text(text)
-          p = Path('cli/src/frontdoor.rs')
-          text = p.read_text()
-          if 'if command == Some("setup")' not in text:
-              anchor = '    if command == Some("ground") {'
-              assert text.count(anchor) == 1
-              text = text.replace(anchor, '''    if command == Some("setup") {
-                  return match command_setup(args.get(1..).unwrap_or_default()) {
-                      Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
-                      Err(message) => { eprintln!("oi: setup: {message}"); ExitCode::from(2) }
-                  };
-              }
-          ''' + anchor)
-              anchor = '                println!("  oi ground status|bind'
-              assert text.count(anchor) == 1
-              text = text.replace(anchor, '                println!("  oi setup                      recognise, choose, review, install, verify and configure through native owners");\n' + anchor)
-          p.write_text(text)
-          p = Path('cli/src/context_frames.rs')
-          text = p.read_text()
-          if 'pub const LEGACY_LOCAL_LEARNING' not in text:
-              before = 'name: "Central + Quaternal Logic",\n        products: Some(&[0, 5]),'
-              assert text.count(before) == 1
-              text = text.replace(before, 'name: "Hosted Library / learning",\n        products: None,')
-              anchor = '/// Look up an install mode by its frame notation.'
-              assert text.count(anchor) == 1
-              text = text.replace(anchor, '''/// Historical unversioned local 5/0 receipts keep their original meaning.
-          /// Current product presence never proves hosted Library availability.
-          pub const LEGACY_LOCAL_LEARNING: InstallMode = InstallMode {
-              frame: "5/0",
-              name: "Historical local Central + Quaternal Logic request",
-              products: Some(&[0, 5]),
-          };
-
-          /// Resolve persisted requests without silently reinterpreting old records.
-          pub fn recorded_install_mode(frame: &str, set_by: &str) -> Option<&'static InstallMode> {
-              if frame == "5/0" && !set_by.contains("oi.engagement/2026-09-18") {
-                  Some(&LEGACY_LOCAL_LEARNING)
-              } else {
-                  install_mode_by_frame(frame)
-              }
-          }
-
-          ''' + anchor)
-              text = text.replace('            (&[0, 5][..], "5/0"),\n', '')
-              text = text.replace('let learning = install_mode_for(&[0, 5]).unwrap();\n        assert_eq!(learning.products, Some(&[0u8, 5][..]));', 'assert_eq!(install_mode_for(&[0, 5]), None);\n        let learning = install_mode_by_frame("5/0").unwrap();\n        assert_eq!(learning.products, None);\n        assert_eq!(recorded_install_mode("5/0", "oi mode set").unwrap().products, Some(&[0u8, 5][..]));\n        assert_eq!(recorded_install_mode("5/0", "oi setup (oi.engagement/2026-09-18)").unwrap().products, None);')
-          p.write_text(text)
-          # Historical verification consumes the versioned request, not the new
-          # hosted entry's empty installation closure.
-          p = Path('cli/src/suite_v2.rs')
-          text = p.read_text().replace('oi_cli::context_frames::install_mode_by_frame(&requested.frame)', 'oi_cli::context_frames::recorded_install_mode(&requested.frame, &requested.set_by)')
-          p.write_text(text)
+          p = Path('cli/src/setup_command.rs')
+          s = p.read_text()
+          s = s.replace('json!(receipt.bundle_sha256)', 'json!(receipt.bundle.sha256)')
+          p.write_text(s)
           p = Path('cli/src/current_world.rs')
-          text = p.read_text()
-          # Presence alone is no longer allowed to invent a hosted encounter.
-          text = text.replace('            (&["central", "quaternal-logic"], "5/0"),\n', '')
-          start = text.index('    fn learning_mode_composition_has_no_agent_development_stack_requirement()')
-          end = text.index('\n    #[test]', start)
-          part = text[start:end].replace('Some("5/0")', 'None')
-          text = text[:start] + part + text[end:]
-          p.write_text(text)
+          s = p.read_text()
+          s = s.replace('let cases: [(&[&str], &str); 5] = [', 'let cases: [(&[&str], &str); 4] = [')
+          p.write_text(s)
           PY
-          rustfmt --edition 2021 --config skip_children=true cli/src/setup.rs cli/src/setup_command.rs cli/src/setup_terminal.rs cli/tests/setup_lifecycle.rs cli/src/main.rs cli/src/lib.rs cli/src/context_frames.rs
-          git add cli/src/main.rs cli/src/frontdoor.rs cli/src/context_frames.rs cli/src/current_world.rs cli/src/suite_v2.rs cli/src/setup.rs cli/src/setup_command.rs cli/src/setup_terminal.rs cli/src/lib.rs cli/tests/setup_lifecycle.rs
+          git add cli/src/setup_command.rs cli/src/current_world.rs
           if ! git diff --cached --quiet; then
             git config user.name 'O:I adoption implementation'
             git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'feat(setup): wire native and terminal adoption with current hosted semantics'
+            git commit -m 'fix(adoption): verify native Desktop bundle and retain four local composition cases'
             git push origin HEAD:refs/heads/agent/adoption-lifecycle-20260920
           fi
-      - name: Record the exact tested source
+      - name: Record exact source and controlled dependencies
         if: always()
         run: |
           mkdir -p /tmp/adoption-evidence
           git rev-parse HEAD | tee /tmp/adoption-evidence/head.txt
-          git archive --format=tar HEAD cli .github/workflows/adoption-lifecycle.yml | gzip > /tmp/adoption-evidence/native-source.tar.gz
+          git archive --format=tar HEAD cli desktop/cradle/src desktop/cradle/kernel desktop/cradle/tests desktop/cradle/walk/configuration-setup.test.mjs desktop/cradle/package.json desktop/cradle/package-lock.json desktop/cradle/tsconfig.json desktop/cradle/vite.config.ts desktop/packages docs .wayfinder skills scripts .github/workflows | gzip > /tmp/adoption-evidence/source.tar.gz
       - name: Adoption controller and real CLI tests
         run: |
           set -o pipefail
@@ -137,11 +76,23 @@ jobs:
         run: |
           set -o pipefail
           cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings 2>&1 | tee /tmp/adoption-evidence/clippy.log
-      - name: Retain executable and formatter for bounded offline checks
+      - name: Retain controlled executable and formatter
         if: always()
         run: |
           if test -f cli/target/debug/oi; then cp cli/target/debug/oi /tmp/adoption-evidence/oi; strip /tmp/adoption-evidence/oi; fi
           cp "$(rustup which rustfmt)" /tmp/adoption-evidence/rustfmt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Recover the existing configuration regression dependencies
+        if: always()
+        working-directory: desktop/cradle
+        run: |
+          npm ci --no-audit --no-fund
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-setup.test.mjs > /tmp/adoption-evidence/configuration-tests.log 2>&1
+          tar czf /tmp/adoption-evidence/node-modules.tar.gz node_modules
       - uses: actions/upload-artifact@v4
         if: always()
         with:
