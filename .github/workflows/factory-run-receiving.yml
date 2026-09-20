@@ -23,12 +23,12 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Execute production read/transport regression suite
+      - name: Execute production read/transport regression suites
         working-directory: desktop/cradle
         run: |
           set -o pipefail
           mkdir -p tests/artifacts/factory-run
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/factory-run-receiving.test.mjs | tee tests/artifacts/factory-run/receiving.txt
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/factory-run-*.test.mjs | tee tests/artifacts/factory-run/receiving.txt
       - name: Preserve the pre-repair identity failure (not the acceptance result)
         working-directory: desktop/cradle
         run: |
