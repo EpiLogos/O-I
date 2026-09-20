@@ -1,0 +1,28 @@
+name: Central desktop source walk
+on:
+  push:
+    branches: [agent/w2-central-day-source-20260920]
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/central/**'
+      - 'desktop/cradle/walk/central-*'
+      - '.github/workflows/central-desktop-source-walk.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retain exact tracked source (no local runtime or private ground)
+        run: |
+          mkdir -p "$RUNNER_TEMP/central-source"
+          git archive HEAD | gzip > "$RUNNER_TEMP/central-source/oi-source.tar.gz"
+          git rev-parse HEAD > "$RUNNER_TEMP/central-source/source-revision.txt"
+      - uses: actions/upload-artifact@v4
+        with:
+          name: central-desktop-source-${{ github.sha }}
+          path: ${{ runner.temp }}/central-source
+          retention-days: 3
