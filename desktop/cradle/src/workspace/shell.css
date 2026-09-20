@@ -569,8 +569,12 @@ html, body, #root, .desktop-shell { overflow: clip; }
 }
 /* Sidebar dividers harmonised with the glass: light grey in dark mode
    (never black), a soft grey in light mode. */
-:root { --oi-side-divider: color-mix(in srgb, var(--oi-ink) 18%, transparent); }
-.oi-desktop[data-theme="dark"] { --oi-side-divider: color-mix(in srgb, var(--oi-foreground) 22%, transparent); }
+:root {
+  --oi-side-divider: color-mix(in srgb, var(--oi-ink) 18%, transparent);
+}
+.oi-desktop[data-theme="dark"] {
+  --oi-side-divider: color-mix(in srgb, var(--oi-foreground) 22%, transparent);
+}
 .desktop-shell .desktop-side :is(.workspace-name, .central-heading, .world-system, .world-navigator) { border-color: var(--oi-side-divider); }
 .desktop-regions {
   background: transparent;

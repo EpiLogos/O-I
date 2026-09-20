@@ -1,8 +1,8 @@
 /*
  * The Place instrument (T4) — styles inside the opt-in `.oi-techne` scope
  * (packages/oi-design-system/techne.css, imported by PlaceInstrument.tsx).
- * Tokens only: `var(--oi-*)` and `var(--oi-techne-*)`; role names never
- * change between themes.
+ * Tokens only: `var(--oi-*)` references and the techne-scoped `--oi-techne-*`
+ * names; role names never change between themes.
  */
 
 .techne-place {
@@ -248,7 +248,7 @@
   font-family: var(--oi-font-mono);
   font-size: 10px;
   padding: 1px 6px;
-  border: 1px solid var(--oi-border, currentColor);
+  border: 1px solid currentColor;
   border-radius: 8px;
   color: var(--oi-foreground);
 }
