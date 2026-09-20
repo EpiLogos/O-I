@@ -64,14 +64,18 @@ export class AdoptionController {
   start(): Promise<void> {return this.starting ??= this.refresh();}
   async refresh(): Promise<void> {
     if (this.state.busy) return;
-    this.set({busy: "reading", error: undefined, plan: undefined});
+    // Keep the reviewed identity while any dispatched effect is unresolved.
+    // The latest journal may belong to a different client; it is not an answer
+    // to this client's lost request merely because it is the latest record.
+    this.set({busy: "reading", error: undefined, ...(this.state.unresolved ? {} : {plan: undefined})});
     try {
       const status = checked(await this.native.request({action: "status"}));
       const reply = checked(await this.native.request({action: "discover", ground: this.state.selection.ground}));
       if (!reply.discovery) throw new Error("Native World discovery is incomplete.");
       this.set({discovery: reply.discovery, selection: {...this.state.selection, ground: this.state.selection.ground ?? reply.discovery.bound_ground ?? reply.discovery.suggested_ground}, initialized: true});
       if (status.journal) this.acceptResult(status);
-      else this.set({step: this.state.unresolved ? "result" : "selection"});
+      else if (this.state.unresolved) throw new Error("No matching native journal was returned. The reviewed operation remains unresolved; no write will be retried.");
+      else this.set({step: "selection"});
     } catch (error) {this.set({error: String(error)});}
     finally {this.set({busy: null});}
   }
@@ -113,6 +117,12 @@ export class AdoptionController {
     const allowed = ["verified", "not_applied", "partially_applied", "outcome_unknown", "hosted_entry"];
     if (!reply.disposition || !allowed.includes(reply.disposition)) throw new Error("Native installation returned no supported disposition. Recheck its journal; do not repeat the write.");
     const journal = reply.journal;
+    const expectedToken = this.state.unresolved
+      ? this.state.plan?.review_token ?? this.state.journal?.plan.review_token
+      : undefined;
+    if (expectedToken && journal && journal.plan?.review_token !== expectedToken) {
+      throw new Error("The native journal no longer names this reviewed operation. Inspect native history before another write.");
+    }
     if (journal && (journal.schema !== "oi.adoption-journal/v1" || journal.plan?.schema !== "oi.adoption-plan/v1" || !Array.isArray(journal.records) || !Array.isArray(journal.plan.steps) || journal.records.length !== journal.plan.steps.length || journal.records.some(record => !["pending", "running", "applied", "verified", "refused", "unknown"].includes(record.state)))) throw new Error("Native recovery journal is incomplete.");
     // A success label, an empty transport reply or a foreign status can never
     // release an uncertain write. Receipt-bearing verification stays native.
@@ -120,7 +130,7 @@ export class AdoptionController {
     if (reply.disposition === "verified" && journal?.records.some(record => record.state !== "verified")) throw new Error("Native verification is incomplete.");
     if (reply.disposition === "not_applied" && !journal && reply.write_started !== false) throw new Error("Native refusal did not establish that no write started.");
     if (reply.disposition === "hosted_entry" && (journal || this.state.plan?.selection.composition !== "5/0")) throw new Error("A hosted-entry reply cannot clear a local installation.");
-    this.set({journal: journal ?? undefined, disposition: reply.disposition, unresolved: unresolved(reply), error: reply.reason, step: "result"});
+    this.set({...(journal ? {plan: journal.plan, selection: structuredClone(journal.plan.selection)} : {}), journal: journal ?? undefined, disposition: reply.disposition, unresolved: unresolved(reply), error: reply.reason, step: "result"});
   }
   async apply(): Promise<void> {
     if (!this.canApply()) return;

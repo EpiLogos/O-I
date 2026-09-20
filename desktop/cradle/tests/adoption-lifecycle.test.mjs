@@ -8,6 +8,7 @@ function harness(options = {}) {
   const discovery = {schema:'oi.setup/v1',basis:'native-basis',target:'linux/x86_64',bound_ground:null,suggested_ground:'/test/Central',selected_ground:null,ground:{outcome:'new'},desktop:{state:'absent'},warnings:[],products:[],choices:[{id:'0/1/2',title:'Existing tools',description:'Retain this World',products:[],hosted:false},{id:'5/0',title:'Read',description:'Hosted',products:[],hosted:true}]};
   const native = {async request(request) {
     calls.push(clone(request));
+    if (request.action === 'status' && options.statusReply) return options.statusReply();
     if (request.action === 'status') return {schema:'oi.setup/v1',journal,disposition:journal?'outcome_unknown':undefined};
     if (request.action === 'discover') return {schema:'oi.setup/v1',discovery};
     if (request.action === 'prepare_desktop') return {schema:'oi.setup/v1',bundle:'/native/staging/Desktop.zip',sha256:'a'.repeat(64)};
@@ -69,4 +70,41 @@ test('hosted reading can only finish the hosted no-local-effect plan',async()=>{
 });
 test('production adapter uses fixed kernel operation and disconnected handler fails',async()=>{
   const calls=[];const native=createAdoptionNative(async op=>{calls.push(op);return {outcome:{result:'setup_reading',data:{schema:'oi.setup/v1'}}}});await native.request({action:'status'});assert.deepEqual(calls,[{op:'setup',request:{action:'status'}}]);await assert.rejects(createAdoptionNative(async()=>({outcome:null,error:'disconnected'})).request({action:'status'}),/disconnected/);await assert.rejects(createAdoptionNative(async()=>({outcome:{result:'other'}})).request({action:'status'}),/unavailable/);
+});
+
+for (const kind of ['foreign', 'absent', 'unattributed-refusal']) {
+  test(`refresh cannot clear a lost write with ${kind} history`, async () => {
+    const h = harness({lost:true}); await review(h); await h.controller.apply();
+    const reviewed = clone(h.controller.getSnapshot().plan);
+    h.options.statusReply = () => kind === 'foreign'
+      ? {schema:'oi.setup/v1',disposition:'verified',journal:{schema:'oi.adoption-journal/v1',plan:{...reviewed,review_token:'someone-else'},records:[{state:'verified'}]}}
+      : kind === 'absent' ? {schema:'oi.setup/v1',disposition:'not_started'}
+      : {schema:'oi.setup/v1',disposition:'not_applied',write_started:false};
+    await h.controller.refresh();
+    assert.equal(h.controller.getSnapshot().plan.review_token, reviewed.review_token);
+    assert.equal(h.controller.getSnapshot().unresolved, true);
+    assert.equal(h.controller.back(), false);
+    await h.controller.apply(); assert.equal(h.count('apply'), 1);
+    h.options.readback = {schema:'oi.setup/v1',disposition:'verified',journal:{schema:'oi.adoption-journal/v1',plan:{...reviewed,review_token:'someone-else'},records:[{state:'verified'}]}};
+    await h.controller.recheck(); assert.equal(h.controller.getSnapshot().unresolved, true);
+    h.options.readback.journal.plan.review_token = reviewed.review_token;
+    await h.controller.recheck(); assert.equal(h.controller.getSnapshot().unresolved, false);
+    assert.equal(h.count('apply'), 1);
+  });
+}
+test('a resumed journal restores its reviewed selection, not default composition', async () => {
+  const h = harness({lost:true}); await h.controller.start();
+  h.controller.select({composition:'custom',products:['central'],ground:'/retained/root',desktop:'remove'});
+  await h.controller.plan(); await h.controller.apply();
+  const next = new AdoptionController(h.native, () => 100); await next.start();
+  assert.deepEqual(next.getSnapshot().selection, h.controller.getSnapshot().selection);
+  assert.equal(next.getSnapshot().plan.review_token, h.controller.getSnapshot().plan.review_token);
+});
+test('failed discovery does not erase the reviewed operation awaiting readback', async () => {
+  const h=harness({lost:true}); await review(h); await h.controller.apply();
+  const token=h.controller.getSnapshot().plan.review_token;
+  const request=h.native.request; h.native.request=async r=>{if(r.action==='discover')throw Error('offline');return request(r)};
+  await h.controller.refresh();
+  assert.equal(h.controller.getSnapshot().plan.review_token, token);
+  assert.equal(h.controller.getSnapshot().unresolved, true);
 });
