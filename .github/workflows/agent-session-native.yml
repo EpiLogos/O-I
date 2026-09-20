@@ -19,12 +19,21 @@ jobs:
     timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
       - name: Install desktop dependencies
         working-directory: desktop/cradle
         run: npm ci
+      - name: Local packet validation (no live credentials or model)
+        id: packet
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: |
+          python3 tests/agent-native-live.test.py
+          python3 tests/agent-native-live.py --help
       - name: Controller fault regressions
         id: controller
         continue-on-error: true
@@ -55,5 +64,5 @@ jobs:
           path: desktop/cradle/tests/agent-native-results/
           retention-days: 7
       - name: Preserve all original failing gates
-        if: steps.controller.outcome != 'success' || steps.browser.outcome != 'success' || steps.build.outcome != 'success' || steps.kernel.outcome != 'success'
+        if: steps.packet.outcome != 'success' || steps.controller.outcome != 'success' || steps.browser.outcome != 'success' || steps.build.outcome != 'success' || steps.kernel.outcome != 'success'
         run: exit 1
