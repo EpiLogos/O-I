@@ -1,0 +1,53 @@
+name: Factory Run receiving
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/contributions/factory/**'
+      - 'desktop/cradle/tests/factory-run-*'
+      - 'desktop/cradle/walk/factory-run-*'
+      - '.github/workflows/factory-run-receiving.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: factory-run-receiving-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  receiving:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Execute production read/transport regression suite
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          mkdir -p tests/artifacts/factory-run
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/factory-run-receiving.test.mjs | tee tests/artifacts/factory-run/receiving.txt
+      - name: Preserve the pre-repair identity failure (not the acceptance result)
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          file=src/contributions/factory/run-expression.ts
+          cp "$file" "$RUNNER_TEMP/run-expression-repaired.ts"
+          trap 'cp "$RUNNER_TEMP/run-expression-repaired.ts" "$file"' EXIT
+          git show a222c8bdf46a7b2146084770b704dfbe83ce5027:desktop/cradle/src/contributions/factory/run-expression.ts > "$file"
+          set +e
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test --test-name-pattern='native punctuation, reserved root' tests/factory-run-receiving.test.mjs > tests/artifacts/factory-run/original-failure.txt 2>&1
+          status=$?
+          set -e
+          cat tests/artifacts/factory-run/original-failure.txt
+          test "$status" -ne 0
+          grep -q 'ERR_ASSERTION' tests/artifacts/factory-run/original-failure.txt
+          printf '%s\n' "$status" > tests/artifacts/factory-run/original-failure.exit
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-run-receiving-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/factory-run
+          if-no-files-found: error
