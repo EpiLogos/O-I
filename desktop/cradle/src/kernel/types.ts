@@ -216,6 +216,7 @@ export type KernelOp =
   | {op:"factory_build_snapshot";project?:string;state_path:string;project_ref:string;run_ref:string}
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
   | {op:"workcell_status_read"}
+  | {op:"central";project:string|null;request:import("../central/client").CentralRequest}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
@@ -283,6 +284,7 @@ export type KernelOpResult =
   | { result:"factory_attempt_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
   | { result:"day_reading";data:unknown }
+  | { result:"central_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
   | { result: "state"; snapshot: KernelSnapshotState }

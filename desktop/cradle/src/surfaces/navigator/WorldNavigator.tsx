@@ -1,6 +1,7 @@
+import {CentralGround} from "../../central/CentralGround";
+import {openDay} from "../../central/client";
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {RememberedList} from "../../context/RememberedList";
-import {ReturnsTray} from "../../receiving/ReturnsTray";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
 import type { CentralLocation } from "../../kernel/types";
@@ -18,12 +19,13 @@ const ROW_GLYPH = 13;
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onOpenToday, activeEncounterRef, onMessage }: { onExplore?:()=>void;mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut?: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch?: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlowInstance?: (row:import("../../flow/instances").FlowInstanceRow)=>Promise<void>; onNewFlow?: ()=>void; onMessage?: (message: string) => void }) {
+export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, activeEncounterRef, onMessage }: { onExplore?:()=>void;mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut?: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch?: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlowInstance?: (row:import("../../flow/instances").FlowInstanceRow)=>Promise<void>; onNewFlow?: ()=>void; onMessage?: (message: string) => void }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [error,setError] = useState<string>();
   const openWiki = (ref:string,title:string,project?:string) => {setError(undefined);void onOpenWiki(ref,title,project).catch(e=>setError(String(e)));};
   const [pending, setPending] = useState(false);
+  const [groundOpen,setGroundOpen] = useState(true);
   const [fileRefresh,setFileRefresh] = useState(0);
   const [directoryRefs,setDirectoryRefs] = useState<Record<string,string>>({});
   const entered = useRef(false);
@@ -75,7 +77,7 @@ export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centr
   // Owner ruling 2026-09-18: a project row is a disclosure, not a register
   // choice. Opening and closing are instant local state; the workspace's
   // project context follows the work the reader actually opens (a chat, a
-  // file), and Overview names the root register explicitly.
+  // file), and Central names the root register explicitly.
   const changeMode = (path:string, project:string|undefined, mode:ProjectMode) => {
     const key = keyFor(path);
     if (key) onNavigationChange(key,{mode,expanded:true,locationPath:path});
@@ -95,15 +97,16 @@ export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centr
     <div className="world-scroll">
     {workspaceSelector}
     <section className="central-operating-region" aria-label="Central operating spaces">
-    <div className="central-mode-row"><button className="world-root" aria-label="Browse Central root" aria-current={!selected ? "true" : undefined} onClick={() => void load()}><Glyph name="home" size={ROW_GLYPH}/><span>Overview</span></button>{modes("","Central")}</div>
-    {onOpenToday&&<div className="central-mode-row"><button className="today-open" aria-label="Open today" onClick={()=>void onOpenToday().catch(reason=>setError(String(reason)))}><Glyph name="today" size={ROW_GLYPH}/><span>Today</span></button></div>}
+    <div className="central-mode-row"><button className="world-root" aria-label="Browse Central root" aria-current={!selected ? "true" : undefined} onClick={() => {setGroundOpen(true);void load().catch(e=>setError(String(e)));}}><Glyph name="home" size={ROW_GLYPH}/><span>Central</span></button>{modes("","Central")}</div>
+    {<div className="central-mode-row"><button className="today-open" aria-label="Open today" onClick={()=>{setGroundOpen(true);void openDay(kernel.transport,null).then(value=>onOpenFile(value.location)).catch(reason=>setError(String(reason)));}}><Glyph name="today" size={ROW_GLYPH}/><span>Today</span></button></div>}
     {/* SF1: Explore is a whole-world destination at the same altitude as
-        Overview and Today — the open/shared field, not a Project mode and
+        Central and Today — the open/shared field, not a Project mode and
         not System. Opening it leaves the local arrangement untouched. */}
     {onExplore&&<div className="central-mode-row"><button className="explore-open" aria-label="Open Explore" onClick={onExplore}><Glyph name="explore" size={ROW_GLYPH}/><span>Explore</span></button></div>}
       {/* The mode IS Central: its region never collapses to nothing. While
         * the world mapping is absent it says so here, in place — the rows
         * appear the moment the reading lands. */}
+      {groundOpen&&<CentralGround project={null} refresh={fileRefresh} onOpenFile={onOpenFile}/>}
       {!root && <p className="project-reading" role="status">{pending ? "Reading Central…" : "Central's world mapping is not read yet — Refresh reads it"}</p>}
       {root && <>
         {/* Owner direction 2026-09-18: the Control tree is ONE space — the
@@ -138,7 +141,7 @@ export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centr
               onExpansion={directories=>change({directories})}/>}
             {navigation.mode === "wiki" && <button className="project-wiki-link" disabled={!wiki} onClick={()=>openWiki(wiki!,`${project.name} wiki`,project.name)}><Glyph name="wiki" size={12}/><span>{wiki ? `${project.name} neighbourhood` : "No wiki declared"}</span></button>}
             {(navigation.mode??"chats") === "chats" && <><EncounterList project={project.name} onOpen={onOpenEncounter} activeRef={activeEncounterRef}/><RememberedList path={`Work/${project.name}/ProjectCentral/agents/remembered`} label={project.name}/></>}
-            <ReturnsTray project={project.name} refresh={fileRefresh}/>
+            <details><summary>{project.name} Day / NOW / Returns</summary><CentralGround project={project.name} refresh={fileRefresh} onOpenFile={onOpenFile}/></details>
           </ProjectBranch>;
         })}
       </ul></>

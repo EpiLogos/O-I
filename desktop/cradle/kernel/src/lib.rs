@@ -34,6 +34,7 @@ pub mod expression_profile;
 pub mod expression_transport;
 pub mod expression_trigger;
 pub mod flow;
+pub mod central;
 pub mod history;
 pub mod knowledge;
 pub mod shared_field;
@@ -272,6 +273,8 @@ pub enum KernelOp {
     /// DayRef) through the owner. The disclosure carries the Day source's
     /// canonical ref — the only identity the desktop opens it by.
     DayRead { #[serde(default)] day_ref: Option<String> },
+    /// Finite Central root/project navigation and native Day operations.
+    Central { #[serde(default)] project: Option<String>, request: central::Request },
     /// Open the Day document's source buffer through the owner's Day route.
     /// There is no project-scoped source read for a root-register source:
     /// the buffer is built from `central.day.read`'s own disclosure.
@@ -498,6 +501,7 @@ pub enum KernelOpResult {
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
     DayReading {data:serde_json::Value},
+    CentralReading {data:serde_json::Value},
     FileOperation {data:serde_json::Value},
     NativeOwnerReading {owner:String,data:Option<serde_json::Value>,failure:Option<serde_json::Value>},
     GroundReading {reading:serde_json::Value},
@@ -889,39 +893,15 @@ impl Kernel {
                 let data=self.client.run("central.day.read",serde_json::Value::Object(input)).map_err(|e|e.to_string())?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::DayReading {data}})
             }
+            KernelOp::Central {project, request} => {
+                let data=central::operate(&self.client, project.as_deref(), &request)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::CentralReading {data}})
+            }
             KernelOp::DaySourceOpen {day_ref} => {
-                // The owner's Day route is the only reader of a
-                // root-register Day source: the buffer is built from
-                // `central.day.read`'s own disclosure — its canonical ref,
-                // revision and content — never a path-derived ref.
-                let mut input=serde_json::Map::new();
-                input.insert("project".to_owned(),serde_json::Value::Null);
-                if let Some(day_ref)=day_ref { input.insert("day_ref".to_owned(),serde_json::Value::String(day_ref)); }
-                let data=self.client.run("central.day.read",serde_json::Value::Object(input)).map_err(|e|e.to_string())?;
-                let source_ref=data["source"]["ref"].as_str().ok_or("Central's Day reading disclosed no source ref")?.to_owned();
-                let path=data["source"]["path"].as_str().ok_or("Central's Day reading disclosed no source path")?.to_owned();
-                let revision=data["revision"]["revision"].as_str().ok_or("Central's Day reading disclosed no source revision")?.to_owned();
-                let content=data["content"].as_str().ok_or("Central's Day reading disclosed no content")?.to_owned();
-                let buffer=SourceBuffer {
-                    source_ref: source_ref.clone(),
-                    project: String::new(),
-                    world_ref: String::new(),
-                    project_ref: None,
-                    content: content.to_owned(),
-                    saved_content: content.to_owned(),
-                    base_revision: revision.to_owned(),
-                    dirty: false,
-                    conflict: None,
-                    path: Some(path),
-                    root_register: true,
-                };
-                self.buffers.insert(source_ref.clone(),buffer.clone());
-                let receipt=self.log.record(KernelEvent::SourceOpened {
-                    source: source_semantic_ref(&source_ref,Some(&buffer.base_revision)).unwrap_or_else(|_| fallback_source_ref(&source_ref)),
-                    revision: buffer.base_revision.clone(),
-                    summary: format!("Opened from the owner's Day reading at revision {} ({} bytes).",short_revision(&buffer.base_revision),buffer.content.len()),
-                });
-                Ok(KernelOpOutcome {receipts:vec![receipt],result:KernelOpResult::SourceOpened {buffer}})
+                let day=central::day(&self.client, None, day_ref.as_deref())?;
+                let document=central::day_document(&day)?;
+                let source_ref=document["source"]["ref"].as_str().ok_or("Day document has no source")?;
+                self.source_open(None,source_ref)
             }
             KernelOp::Knowledge { project, request } => {
                 // Central discloses the scope; renderer-supplied filesystem paths
@@ -1225,12 +1205,12 @@ impl Kernel {
         // The cradle holds unsaved work: opening the same ref again reveals
         // the existing buffer — it never clobbers a dirty layer.
         let held = self.buffers.get(source_ref).cloned();
+        let route = held.as_ref().map(|b| b.project.clone()).unwrap_or_else(|| project.unwrap_or("").to_owned());
+        let project = if route.is_empty() { None } else { Some(route.as_str()) };
         if let Some(buffer) = &held {
-            // A root-register buffer (the Day, opened through the owner's Day
-            // route) is also served from its held state: its re-read route
-            // (`projectcentral.source.read`) is project-scoped by
-            // registration and cannot serve this ref.
-            if buffer.dirty || buffer.root_register {
+            // Reopening preserves unsaved work. A clean root buffer is read
+            // from its exact native SourceRef just like a child source.
+            if buffer.dirty {
                 return Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::SourceOpened {
@@ -1248,7 +1228,7 @@ impl Kernel {
             .as_ref()
             .map(|buffer| buffer.base_revision != reading.revision.revision)
             .unwrap_or(true);
-        let route = project.unwrap_or(self.client.configured_project()).to_owned();
+        let route = project.unwrap_or("").to_owned();
         let buffer = self.sync_buffer_from_reading(&reading, true, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
@@ -1285,14 +1265,14 @@ impl Kernel {
             source_ref: source_ref.clone(),
             project: project.to_owned(),
             world_ref: reading.world_ref.clone(),
-            project_ref: self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).ok().and_then(|v| v.pointer("/manifest/project_id").and_then(serde_json::Value::as_str).map(str::to_owned)),
+            project_ref: if project.is_empty() { None } else { self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).ok().and_then(|v| v.pointer("/manifest/project_id").and_then(serde_json::Value::as_str).map(str::to_owned)) },
             content,
             saved_content: reading.content.clone(),
             base_revision: reading.revision.revision.clone(),
             dirty,
             conflict: None,
             path: Some(reading.source.path.clone()),
-            root_register: false,
+            root_register: reading.world_ref == "control:root",
         };
         self.buffers.insert(source_ref, buffer.clone());
         buffer
@@ -1335,8 +1315,9 @@ impl Kernel {
         let Some(buffer) = self.buffers.get(source_ref) else {
             return Err(format!("no open buffer for `{source_ref}`; nothing to save"));
         };
-        let route = if buffer.project.is_empty() { project.unwrap_or(self.client.configured_project()) } else { &buffer.project }.to_owned();
-        let project = Some(route.as_str());
+        let route = buffer.project.clone();
+        let _ = project; // The held source, not current navigation, owns routing.
+        let project = if buffer.root_register { None } else { Some(route.as_str()) };
         let expected = buffer.base_revision.clone();
         let content = buffer.content.clone();
         match self.client.source_write(
@@ -1463,16 +1444,9 @@ impl Kernel {
         project: Option<&str>,
         source_ref: &str,
     ) -> Result<KernelOpOutcome, String> {
-        // A root-register buffer (the Day, opened through the owner's Day
-        // route) re-reads through that same route: the project-scoped
-        // `projectcentral.source.read` cannot serve its ref, so without this
-        // branch an external Day change could never reach the open surface.
-        if self.buffers.get(source_ref).map(|b| b.root_register).unwrap_or(false) {
-            return self.day_reread(source_ref);
-        }
-        let route = self.buffers.get(source_ref).map(|b| b.project.as_str()).filter(|p| !p.is_empty())
-            .or(project).unwrap_or(self.client.configured_project()).to_owned();
-        let project = Some(route.as_str());
+        let route = self.buffers.get(source_ref).map(|b| b.project.clone())
+            .unwrap_or_else(|| project.unwrap_or("").to_owned());
+        let project = if route.is_empty() { None } else { Some(route.as_str()) };
         let had_conflict = self
             .buffers
             .get(source_ref)
@@ -1499,86 +1473,6 @@ impl Kernel {
                 summary: format!(
                     "Re-read the canonical layer: now based on revision {}.",
                     short_revision(&reading.revision.revision)
-                ),
-            })
-        });
-        Ok(KernelOpOutcome {
-            receipts: receipt.into_iter().collect(),
-            result: KernelOpResult::SourceReread { buffer },
-        })
-    }
-
-    /// Re-read a root-register Day buffer through the owner's own Day route
-    /// (`central.day.read`, explicit-null project). The carrier identity is
-    /// the held document's own `day_ref` — without it the owner would read
-    /// today's carrier, which may already be a different source; that
-    /// mismatch is refused, never silently swapped into this buffer.
-    fn day_reread(&mut self, source_ref: &str) -> Result<KernelOpOutcome, String> {
-        let Some(held) = self.buffers.get(source_ref) else {
-            return Err(format!(
-                "no open buffer for `{source_ref}`; a buffer exists only after the source is opened"
-            ));
-        };
-        let day_ref = serde_json::from_str::<serde_json::Value>(&held.content)
-            .ok()
-            .and_then(|doc| doc.get("day_ref").and_then(|v| v.as_str()).map(str::to_owned));
-        let mut input = serde_json::Map::new();
-        input.insert("project".to_owned(), serde_json::Value::Null);
-        if let Some(day_ref) = &day_ref {
-            input.insert("day_ref".to_owned(), serde_json::Value::String(day_ref.clone()));
-        }
-        let data = self
-            .client
-            .run("central.day.read", serde_json::Value::Object(input))
-            .map_err(|e| e.to_string())?;
-        let disclosed_ref = data["source"]["ref"]
-            .as_str()
-            .ok_or("Central's Day reading disclosed no source ref")?;
-        if disclosed_ref != source_ref {
-            return Err(format!(
-                "the Day route names a different carrier than this buffer holds ({disclosed_ref}); re-open through Today — this surface keeps its own identity"
-            ));
-        }
-        let revision = data["revision"]["revision"]
-            .as_str()
-            .ok_or("Central's Day reading disclosed no source revision")?
-            .to_owned();
-        let path = data["source"]["path"]
-            .as_str()
-            .ok_or("Central's Day reading disclosed no source path")?
-            .to_owned();
-        let content = data["content"]
-            .as_str()
-            .ok_or("Central's Day reading disclosed no content")?
-            .to_owned();
-        let had_conflict = held.conflict.is_some();
-        let moved = held.base_revision != revision;
-        // Same law as a project re-read: a clean buffer mirrors the canonical
-        // content; a dirty buffer keeps its content and only rebases.
-        let buffer = {
-            let buffer = self.buffers.get_mut(source_ref).expect("held above");
-            let was_dirty = buffer.dirty;
-            buffer.saved_content = content.clone();
-            buffer.base_revision = revision.clone();
-            buffer.path = Some(path);
-            if !was_dirty {
-                buffer.content = content;
-            }
-            if buffer.content == buffer.saved_content {
-                buffer.dirty = false;
-            }
-            buffer.conflict = None;
-            buffer.clone()
-        };
-        let changed = moved || had_conflict;
-        let receipt = changed.then(|| {
-            self.log.record(KernelEvent::SourceOpened {
-                source: source_semantic_ref(source_ref, Some(&revision))
-                    .unwrap_or_else(|_| fallback_source_ref(source_ref)),
-                revision: revision.clone(),
-                summary: format!(
-                    "Re-read the Day through the owner's Day route: now based on revision {}.",
-                    short_revision(&revision)
                 ),
             })
         });

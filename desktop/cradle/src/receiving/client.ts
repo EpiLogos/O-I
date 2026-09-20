@@ -10,11 +10,11 @@ export type ReceivingRequest =
   | {kind:"review";return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}
   | {kind:"include";return_ref:string;expected_return_revision:string;expected_source_revision:string}
   | {kind:"recover";return_ref:string;expected_return_revision:string}
-  | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:string};
+  | {kind:"mutate-field";source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown};
 export type ReceivingWireRequest=
  | {List:{after?:number;limit?:number}}|{Read:{return_ref:string}}|{Submit:{producer_key:string;source_ref:string;document_id:string;expected_source_revision:string;occurred_at_unix_seconds:number;task_ref?:string;proposal:Record<string,unknown>}}
  | {Document:{source_ref:string;document_id:string}}|{Review:{return_ref:string;expected_return_revision:string;disposition:"accepted"|"rejected";expected_source_revision?:string}}|{Include:{return_ref:string;expected_return_revision:string;expected_source_revision:string}}
- | {Recover:{return_ref:string;expected_return_revision:string}}|{MutateField:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:string}};
+ | {Recover:{return_ref:string;expected_return_revision:string}}|{MutateField:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown}};
 export function receivingWire(request:ReceivingRequest):ReceivingWireRequest{switch(request.kind){
  case"list":return {List:{after:request.after,limit:request.limit}};
  case"read":return {Read:{return_ref:request.return_ref}};
@@ -44,7 +44,7 @@ export async function receiving<T>(transport:KernelTransportStatus,project:strin
  * `field.set` (the die face's write route). The owner CAS-checks
  * `expected_revision`, refuses non-human authors by its own law, and
  * deduplicates on `request_id`; its receipt carries the advanced revision. */
-export async function mutateField(transport:KernelTransportStatus,project:string|null,input:{source_ref:string;document_id:string;expected_revision:string;field_id:string;value:string}):Promise<{operation_receipt?:{revision?:string;status?:string};[key:string]:unknown}> {
+export async function mutateField(transport:KernelTransportStatus,project:string|null,input:{source_ref:string;document_id:string;expected_revision:string;field_id:string;value:unknown}):Promise<{operation_receipt?:{revision?:string;status?:string};[key:string]:unknown}> {
   const request_id=`req/desktop-${typeof crypto!=="undefined"&&"randomUUID" in crypto?crypto.randomUUID():Date.now().toString(36)+Math.random().toString(36).slice(2)}`;
   return receiving(transport,project,{kind:"mutate-field",...input,request_id});
 }

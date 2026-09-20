@@ -11,6 +11,8 @@ export interface DayReading {
   content: string;
   temporal: {day_ref: string; civil_date: string; lifecycle?: string} & Record<string, unknown>;
   today?: {day_ref: string; civil_date: string};
+  document_state?: "ready"|"uninitialised";
+  document?: import("../receiving/client").DocumentReading|null;
 }
 export async function dayRead(transport:KernelTransportStatus,dayRef?:string):Promise<DayReading> {
   const result=await kernelOp(transport,{op:"day_read",...(dayRef?{day_ref:dayRef}:{})});

@@ -1,7 +1,7 @@
 //! Read the owner's durable, source-scoped change records. No desktop journal.
+use crate::flow::{CentralClient, OwnerCallError};
 use serde::{Deserialize, Serialize};
 use serde_json::json;
-use crate::flow::{CentralClient, OwnerCallError};
 
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 pub struct SourceChange {
@@ -36,18 +36,41 @@ struct Horizon {
     automatic_agent_or_model_invocation: bool,
 }
 
-pub fn read(client: &CentralClient, project: &str, source_ref: &str) -> Result<SourceHistory, OwnerCallError> {
+pub fn read(
+    client: &CentralClient,
+    project: &str,
+    source_ref: &str,
+) -> Result<SourceHistory, OwnerCallError> {
     // Recheck the owner's current retrieval gate, even for a held buffer.
-    client.source_read(Some(project), source_ref)?;
+    let project = if project.is_empty() {
+        None
+    } else {
+        Some(project)
+    };
+    client.source_read(project, source_ref)?;
     let value = client.run("projectcentral.change.horizon", json!({"project": project}))?;
-    let horizon: Horizon = serde_json::from_value(value).map_err(|error| OwnerCallError::Malformed {
-        detail: format!("decode Central source history: {error}"),
-    })?;
-    if horizon.schema != "central.source-change-horizon/v1" || horizon.automatic_agent_or_model_invocation {
-        return Err(OwnerCallError::Malformed { detail: "unsupported Central change horizon".into() });
+    let horizon: Horizon =
+        serde_json::from_value(value).map_err(|error| OwnerCallError::Malformed {
+            detail: format!("decode Central source history: {error}"),
+        })?;
+    if horizon.schema != "central.source-change-horizon/v1"
+        || horizon.automatic_agent_or_model_invocation
+    {
+        return Err(OwnerCallError::Malformed {
+            detail: "unsupported Central change horizon".into(),
+        });
     }
-    let mut changes: Vec<_> = horizon.changes.into_iter().filter(|c| c.source_ref == source_ref).collect();
+    let mut changes: Vec<_> = horizon
+        .changes
+        .into_iter()
+        .filter(|c| c.source_ref == source_ref)
+        .collect();
     changes.sort_by_key(|c| std::cmp::Reverse(c.cursor));
-    Ok(SourceHistory { source_ref: source_ref.into(), world_ref: horizon.world_ref,
-        provider: horizon.provider, cursor: horizon.cursor, changes })
+    Ok(SourceHistory {
+        source_ref: source_ref.into(),
+        world_ref: horizon.world_ref,
+        provider: horizon.provider,
+        cursor: horizon.cursor,
+        changes,
+    })
 }
