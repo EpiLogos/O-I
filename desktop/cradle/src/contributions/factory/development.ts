@@ -11,6 +11,17 @@ export async function developmentRead<T=unknown>(transport:KernelTransportStatus
   if(result.error || result.outcome?.result!=="factory_development_reading")throw new Error(result.error??"Factory development reading is unavailable");
   return result.outcome.data as T;
 }
+/** The whole SSSF attempt reading (`factory attempt read <state> <run-ref>`
+ * → `factory.attempt-reading/v1`): legs, attempts, verifications and the
+ * readable Return, carried verbatim after the kernel verifies its contract.
+ * This is the Run-in-Expressions evidence leg — the desktop reads it, it
+ * never manufactures one. */
+export async function attemptRead<T=unknown>(transport:KernelTransportStatus,statePath:string,runRef:string):Promise<T> {
+  const result=await kernelOp(transport,{op:"factory_attempt_read",state_path:statePath,run_ref:runRef});
+  if(result.error || result.outcome?.result!=="factory_attempt_reading")throw new Error(result.error??"Factory attempt reading is unavailable");
+  return result.outcome.data as T;
+}
+
 /** Workcell's own placement/status reading (`workcell status --json`). */
 export interface WorkcellStatus {health:string;offers:number;providers:number;state_root:string;workcell_ref:string;ok?:boolean}
 export async function workcellStatus(transport:KernelTransportStatus):Promise<WorkcellStatus> {

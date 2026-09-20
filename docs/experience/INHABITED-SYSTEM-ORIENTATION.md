@@ -1,16 +1,32 @@
 # Inhabited system orientation — how to enter, develop and test the whole
 
-**Standing:** owner-directed orientation/index, 16 September 2026.  
-**Campaign owner:** O:I #65 and `docs/experience/README.md`.  
+**Standing:** owner-directed orientation/index, amended 19 September 2026.  
+**Campaign owner:** O:I #65 and `docs/experience/README.md`; native promotion joins remain #220.  
 **Purpose:** keep the person and fresh Agents oriented across the final parallel development campaigns without creating another master architecture, evidence store or acceptance programme.
 
-This document does not replace the UX specifications, product Wayfinders or native implementation owners. It tells an entrant **which world they are in, which sources govern the experience, which campaign a piece of work belongs to, and how the two active development campaigns converge into the one inhabited-system proving channel.**
+This document does not replace the UX specifications, product Wayfinders or native implementation owners. It tells an entrant **which world they are in, which sources govern the experience, which bounded track owns the work, and how those tracks return to the one inhabited-system proving channel.**
 
-The target is now singular:
+## Current owner direction — two outcomes, three Mac tracks
 
-> **an inhabited, self-hosting O:I development world which can take its own remaining acceptance backlog as work.**
+The two near-term outcomes are both required:
 
-That is the threshold between constructing the organs of the system and living inside the system while reality hardens it.
+**A. Installable, configurable, useful native products and O:I, including actual Factory self-inhabitation.** A discovered descriptor, populated settings page, queued Run or fixture success does not complete this outcome. A real bounded O:I improvement must travel through Factory's native authored source, Commission/Run, execution, artifacts and independent Return; the person must be able to use and recover the selected installed composition.
+
+**B. The complete source-backed Epi/Wiki/Expression/Technè corpus experience and its real hosted publication.** A first scene or sample passage proves only that slice. Preserve the full corpus scope in #366/#352/#335, QL-MEF #201 and the existing Epi source owners, and the hosted `5/0` encounter in #268/[INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md). Publication means a served, source/version-bound edition reached through the real Library/Expression reader in a clean browser, not merely a local build or deployment plan.
+
+| Bounded Mac track | Native responsibility and integration boundary |
+|---|---|
+| **1 — O:I/Desktop/whole-product UX** | Current shell, application integration, complete human flows and actual Mac UX proof. Retains the unpublished #375 UI-function landing, shared routing/store/styles and the chosen current app. |
+| **2 — S0–S4 functionality/performance/Factory + Run-in-Expressions** | Native product operations, installation/configuration/lifecycle, functional and performance repairs, Factory self-inhabitation and the real Run source-to-result path. Supplies native contracts/adapters to Track 1, not a competing shell. |
+| **3 — QL-MEF/Expressions/Technè/Nara/Epii** | QL/domain facilities, source-backed full corpus, Expression/Technè/Nara/Epii experience and its hosted publication joins. Shares the existing renderer/Library/source field; does not create another app or corpus store. |
+
+**The primary checkout counts within three O:I Mac trees total. Each native repository has one owner checkout. There is no fourth Mac verifier tree.** Independent verification is an office and a clean affected test/episode, not permission to create another checkout. Claims name disjoint files and branches before shared-code edits; Track 1 performs shell integration. Preserve unpublished, dirty and untracked work.
+
+Omarchy supplies **bounded independent work and Bimba/SharedField hosting**. Its own install, sandbox, native shell and physical-host claims still need their own evidence. They do **not** gate unrelated Mac implementation or useful native work. This supersedes the older Mac→Omarchy harmonise/inhabit-before-Mac progression in this orientation and the 18 September sandbox-default campaign wording. Historical receipts and material obligations remain valid at their stated cuts.
+
+The existing **Day/NOW foundation gate remains in force for broad dependent fan-out**. Independent bounded implementation, tests and the work making that foundation true continue now. No additional whole-suite audit or planning approval gate precedes useful work.
+
+The human setup contribution is [O:I #406](https://github.com/EpiLogos/O-I/pull/406), through the existing #299 configuration plane/#109 native engagement and [consumer seam](../cradle/08-WAVE-5-CONSUMER-SEAM.md#8-human-setup-and-recovery-consumer--19-september-2026). Its tests and native/Mac interaction obligations do not stand in for either complete outcome above.
 
 ---
 
@@ -47,7 +63,7 @@ For orientation, read only to the depth the present work requires:
 
 - `docs/experience/FACTORY-AGENCY.md` — how Factory and ordinary Agency inhabit the desktop without turning it into a monitor.
 - `docs/experience/SESSION-GROUNDING.md` — source, SessionSpace, place, authority, body, recovery, remote continuity and Factory grounding.
-- AIKit's current TUI/human-experience specifications — direct work, Worlds, Work, Knowledge, History and real places.
+- AIKit `docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md` — direct work, Worlds, Work, Knowledge, History and real terminal places.
 
 ### Expression / deep Epi experience
 
@@ -56,7 +72,7 @@ For orientation, read only to the depth the present work requires:
 - QL-MEF `docs/L5-TECHNE-DUAL-READING-LOCK.md` — one M′ field, 3:3 Expression and 4:2 Technē.
 - QL-MEF `docs/integrations/epi-logos/TA-ONTA-VAK-COMPOSITIONAL-EXECUTION-LOCK.md` — the shared Vāk → C′ → Ta-Onta → native performance → Aletheia Return language.
 
-The last two are now on QL-MEF `main` through the accepted #209 merge. They crown the architecture; they do not create another application shell.
+The last two are on QL-MEF `main` through the accepted #209 merge. They crown the architecture; they do not create another application shell. **For the latest application-level M4′/M5′ clarification, consume the Epi lane's coordinated source amendment through [QL-MEF #201](https://github.com/EpiLogos/QL-MEF/issues/201) and [O:I #375](https://github.com/EpiLogos/O-I/issues/375), alongside the existing [Technē-mode source amendment #387](https://github.com/EpiLogos/O-I/pull/387).** Track 3 returns the exact amended source/revision there. Do not promote the older instrument-level diagram below into a competing application mapping, equate installation variants with M′ modes, or assert that an unreturned amendment is merged. This is a source join, not another approval gate on unrelated setup/native work.
 
 ---
 
@@ -69,17 +85,16 @@ Do not treat the remaining Wayfinders as competing endings.
                                    │
           ┌────────────────────────┼────────────────────────┐
           │                        │                        │
-          │                        │                        │
-   CAMPAIGN A                CAMPAIGN B              CENTRAL CHANNEL
-   HARMONISE +               EXPRESSION +             #65 C0–C5
-   SELF-STRAP                TECHNĒ / CORPUS           inhabited proving
+   OUTCOME A                 OUTCOME B              CENTRAL CHANNEL
+   USEFUL NATIVE             EXPRESSION /            #65 C0–C5
+   WORLD + SELF-HOST         TECHNĒ / FULL CORPUS     inhabited proving
           │                        │                        │
           └────────────────────────┴───────────────┬────────┘
                                                   │
                                          one submission candidate
 ```
 
-They answer different questions:
+The three bounded Mac tracks above contribute to these outcomes; they are not three new programmes.
 
 ```text
 A — can the suite become one reproducible, native, self-hosting world?
@@ -95,55 +110,47 @@ No fourth campaign is required.
 
 ---
 
-# 3 — Campaign A: harmonise, inhabit, self-host
+# 3 — Campaign A: useful native products and actual self-hosting
 
-This campaign makes the world dependable enough that the world can begin developing itself.
-
-The governing movement is:
+This campaign makes the world dependable enough that the world can begin developing itself. Tracks 1 and 2 progress on the Mac without waiting for unrelated Omarchy proving:
 
 ```text
-HARMONISE
-Mac + Omarchy receive the same exact candidate / receipts
+current native implementation + intended installation composition
         ↓
-INHABIT
-O:I desktop + native Omarchy + Herdr + Gateway + real Surfaces
+human setup / ordinary useful action / native readback / recovery
         ↓
-SELF-HOST
 Factory performs one real bounded O:I change end-to-end
         ↓
-TURN INWARD
 remaining #65 discrepancies become commissioned work
         ↓
-HARDEN
-ordinary use + stress + failure → owner repair → replay
+ordinary use + stress + failure → owner repair → independent replay
         ↓
-FREEZE
-one accepted submission-scoped candidate
-        ↓
-HOST + SUBMIT
+freeze the evidenced submission scope; host and submit
 ```
 
-## Current threshold
+## Preserved 16 September threshold record — not the current execution order
 
-The meaningful connective edge is deliberately small:
-
-| Relation | Current standing | What moves it forward |
+| Relation | Standing recorded on 16 September | Native obligation retained |
 |---|---|---|
-| Exact suite cut | O:I #347 has proved managed update/apply/rollback on the primary Mac | exercise and accept the same managed-update path on Omarchy; receipts become the candidate identity |
-| Open place semantics | AIKit #320 is accepted/merged; a SessionPlan can name open place technologies including `herdr` | land/reconcile the actual public Herdr adapter/route over that registry and exercise it as an ordinary SessionSpace place |
-| Native Omarchy inhabitation | O:I #159 carries the complete host/shell/Hyprland/Quickshell/Herdr/Gateway relation | physically run it: placement, scratchpad, Attention deep links, restart/relogin and reconcile on the actual reference world |
-| Factory connected execution | accepted C′/CFP execution already exists in Factory; Workcell placement and Actuation/Gateway seams exist | complete one real Commission → admitted Agency/Session → execution → artifacts/evidence → independent Return from inside the inhabited world |
-| Campaign ownership | #65 already owns C0–C5 | after the first self-hosted act, let Factory carry failed #65 rounds instead of making the person a cross-product scheduler |
+| Exact suite cut | O:I #347 proved managed update/apply/rollback on the primary Mac | exercise and accept the managed-update path on Omarchy for its own candidate identity; this is not a prerequisite for unrelated Mac work |
+| Open place semantics | AIKit #320 accepted/merged; a SessionPlan can name open place technologies including `herdr` | reconcile and exercise the actual public Herdr route as an ordinary SessionSpace place |
+| Native Omarchy inhabitation | O:I #159 carries host/shell/Hyprland/Quickshell/Herdr/Gateway | its physical placement, scratchpad, Attention, restart/relogin and reconcile walk remains a bounded Omarchy claim |
+| Factory connected execution | accepted C′/CFP execution, Workcell placement and Actuation/Gateway seams exist | perform one real Commission → admitted Agency/Session → execution → artifacts/evidence → independent Return from inside the inhabited world |
+| Campaign ownership | #65 owns C0–C5 | after the first self-hosted act, Factory carries failed #65 rounds rather than making the person a cross-product scheduler |
+
+These dated observations are not a fresh census or a declaration of today's installed state. Recover the actual implementation and selected native cut before diagnosing a gap.
 
 The **SELF-HOST** transition is the phase boundary. Before it, we are still connecting the organism. After it, testing and repair are themselves ordinary activities of the organism.
 
+The current Run-in-Expressions join consumes Factory's `docs/program/NATIVE-WORKFLOW-AUTHORING.md` (Factory #249) and O:I `EXPRESSION-FIELD.md` §§9.2/9.6/9.7 (#403), as coordinated in #375. Generic typed authoring, compiled WorkflowUnit identity and the first authored Run/Commission stamp are native Factory responsibilities. Optional Vāk/QL enrichment is not a prerequisite for a base Factory Run. Preserve exact source revision/unit → actual Run/frontier/attempt → native Session trace/tool result → artifact/Return, in both directions. Track 1 mounts this in the current Desk/Tasks and Run/Agents/Context surface; Track 2 supplies the operations; Track 3 supplies domain facilities where selected.
+
 ---
 
-# 4 — Campaign B: Expression / Technē / Atelier / corpus
+# 4 — Campaign B: Expression / Technē / Atelier / complete hosted corpus
 
-This campaign remains parallel. It should not hold self-hosting hostage to completion of every publication scene.
+This campaign remains parallel. It should not hold self-hosting hostage to completion of every publication scene, and a working setup/Factory slice does not excuse an incomplete corpus.
 
-The architecture is now fixed as one M′ field with two readings:
+The following is the **16 September instrument-level dual-reading reference**. Application-level M4′/M5′ follows the coordinated Epi source amendment referenced in §1; this orientation does not independently remap it.
 
 ```text
 3:3 EXPRESSION                        4:2 TECHNĒ
@@ -182,9 +189,13 @@ Point-Cloud is the live Atelier. Anima's `composition`, `material`, `temporal` a
 
 The deep instrument suite is not another product universe. It matures the professional apertures over Project/Wiki, Canvas, Relation/Timeline, Journey, Places/World and Palace while retaining native owners and shared subject identity.
 
-### Content body
+### Content body and publication
 
 Essay arguments, concepts, Bimba local wholes/depths, S-nodes, pedagogical scenes and their content-local glyph/image/ASCII material are a real production workload. Once Factory self-hosting is available, this is an ideal long-running developmental/creative workload for the system itself.
+
+Keep the #375 full-source requirement: the Antykathera / Return of Zero corpus, all four source registers and A/A′/C/A/C/S concept records; Epii M5-1 and the Antichrist Research Canvas remain distinct authored sources. Preserve source identity, revision, provenance, bounded selection and real producer routes through Wiki → Expression → WorldPresentation/Projection. A page card, sample graph or generic scene is not a substitute for the source-backed body.
+
+Use the same accepted Library/Expression renderer and admitted editions for desktop and the hosted `5/0` reader. A clean-browser check must enter the served Library, open the published source/Expression, follow a deep link, return/back, inspect provenance/version and encounter truthful missing/private/unavailable states. Visitors do not install Central/QL/O:I or supply API keys merely to read. Optional Nara/Epii or shared participation keeps its real capability and consent boundaries. Omarchy's Bimba/SharedField hosting is a bounded deployment contribution, not a gate on independent Mac corpus production. Actual hosted URLs and served edition/source revisions return to the existing #65/native publication record, not a new evidence store.
 
 ### EX/SF standing
 
@@ -248,13 +259,13 @@ A failed joined walk names a native owner; it does not create an O:I-local dupli
 
         PRIMARY MAC                         OMARCHY
         ───────────                         ───────
-        principal working locus             persistent Reference World
-        Central root/source                 exact managed candidate
-        O:I desktop                         Omarchy/Hyprland/Quickshell
-        ordinary local development          Herdr + Workcell
-        direct Agent/harness work           resident Agency / providers
-        candidate control/review            Gateway / services
-        human UX / Recognition              SharedField / recovery
+        three bounded O:I trees total       bounded independent work
+        primary is one of the three         Bimba / SharedField hosting
+        T1 whole-product UX/integration     own native/reference proofs
+        T2 S0–S4 / Factory / Run             own safely allocated sandboxes
+        T3 QL / Epi / corpus                no unrelated Mac progress gate
+        one owner checkout/native repo
+        no fourth verifier checkout
                  │                             │
                  └──── same semantic world ────┘
                       refs · Agency · Sessions
@@ -263,7 +274,7 @@ A failed joined walk names a native owner; it does not create an O:I-local dupli
 
 The Mac and Omarchy are not two independent O:I installations conceptually. They are two material loci inside one personal Workcell/development world. The candidate receipt tells us what software cut each locus is running; canonical refs tell us what subject/Agency/session is continuing; material placement says where execution actually resides.
 
-Remote access is not automatic execution migration. Moving/focusing a Surface does not mint a new session. The system must remain able to tell those differences.
+Remote access is not automatic execution migration. Moving/focusing a Surface does not mint a new session. The system must remain able to tell those differences. This GitHub planning/implementation contribution grants no connection to or mutation of either person's machine; actual machine actions remain separately authorised local work.
 
 ---
 
@@ -374,34 +385,28 @@ The human's office is then meaningful: use the thing, redirect it, reject it, or
 
 ---
 
-# 9 — Current “next gate” view
+# 9 — Current next work — bounded parallel progress
 
-For a human or lead Agent asking **what should we do next?**, use this order:
+For a human or lead Agent asking **what should we do next?**, select the affected track rather than reinstate the old Omarchy-first chain:
 
 ```text
-1. Finish the harmonised candidate
-   #347 Omarchy managed-update proof
+Track 1: integrate real human setup/recovery and whole-product UX in the
+         current app; perform the exact affected Mac interaction checks.
 
-2. Make Herdr an ordinary executable place
-   consume merged AIKit #320 through the real public Herdr route
+Track 2: return selected native install/config/functional/performance joins;
+         perform a real self-hosted Factory act and Run-in-Expressions path.
 
-3. Inhabit Omarchy physically
-   #159 native shell/desktop/place/Gateway/relogin/reconcile walk
+Track 3: deliver full source-backed Epi/Wiki/Expression/Technè experience,
+         consume the coordinated M4′/M5′ amendment and publish real editions.
 
-4. Perform the first true self-hosted Factory act
-   one genuine O:I discrepancy → repair → independent Return
+Omarchy: bounded independent native work and Bimba/SharedField hosting;
+         return only the material/hosting claims actually exercised there.
 
-5. Hand the remaining #65 rounds to that machinery
-   the system starts carrying its own hardening backlog
-
-6. Keep Expression/Technē/Atelier/corpus work running in parallel
-   use the same UX spine and C0–C5 acceptance channel
-
-7. Freeze only after the joined world, recovery and human-lived claims
-   have the evidence appropriate to the submission scope
+#65/#220: consume native returns and preserve the Day/NOW gate on broad
+          dependent fan-out; no extra audit or approval phase before work.
 ```
 
-That is the shortest path to the new development mode.
+Freeze only after the joined world, recovery, complete corpus/publication and human-lived claims have evidence appropriate to the submission scope. A blocked dependency pauses its dependent episode, not every track.
 
 ---
 
@@ -415,9 +420,9 @@ The final cut is where two streams meet:
                     /               \
           INHABITED PLATFORM       CONTENT BODY
           ──────────────────       ────────────
-          exact suite cut          essay Expressions
+          exact suite cut          complete essay Expressions
           self-hosting Factory     Bimba/local-whole Expressions
-          Mac ↔ Omarchy            required S/material
+          actual material joins    required S/material
           real UX campaign         curated key scenes
           failure/recovery         assets + fallbacks
           QL/Nara/Technē proof     source/provenance
@@ -429,6 +434,6 @@ The final cut is where two streams meet:
                          SUBMIT
 ```
 
-The hard developmental boundary is reached when the exact suite can harmonise onto the two material loci, inhabit the reference world natively, commission and independently Return a real repair to itself, and then drive the remaining C0–C5 hardening while the person supplies the genuinely human judgements.
+The hard developmental boundary is reached when the selected installed compositions support useful work and recovery, the world can commission and independently Return a real repair to itself, and the complete required corpus is actually experienced and published through the existing source/Library/Expression route. Two-locus and hosting claims retain their own material evidence; they are not a blanket preliminary gate on the Mac tracks.
 
 At that point foundational construction is over. Remaining work is candidate hardening and content finishing inside the system we built.

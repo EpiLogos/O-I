@@ -114,7 +114,9 @@ class HarnessFirstAdoptionSourceTests(unittest.TestCase):
         guide = (ROOT / "docs/SUITE-OPERATOR-SKILLSET.md").read_text(encoding="utf-8")
         self.assertIn("two O:I-owned Skills", guide)
         manifest = (ROOT / "skills/suite-operator/skillset.toml").read_text(encoding="utf-8")
-        self.assertNotIn('skill_ref = "oi:skill:central-session-strap"', manifest)
+        # Owner ruling 2026-09-17: O:I holds and projects the Central session
+        # strap itself, so the guardian manifest ships central-session-strap.
+        self.assertIn('skill_ref = "oi:skill:central-session-strap"', manifest)
 
 
 if __name__ == "__main__":

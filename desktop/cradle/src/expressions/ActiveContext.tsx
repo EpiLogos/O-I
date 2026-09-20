@@ -5,8 +5,11 @@ import {Glyph,type GlyphName} from "../workspace/Glyph";
  * lanes with icons, one selectable row each. The pane canvas above is
  * height-bounded; this component is where the tabs the composition root
  * manages behind the scenes show and are focused. Persistent: it reads the
- * layout's own side pane, so its contents survive restarts. */
-export interface ActiveContextTab { id: string; title: string; kind: string; active: boolean }
+ * layout's own side pane, so its contents survive restarts. The mode tree's
+ * hidden tabs surface here too (owner ruling 2026-09-19), marked as
+ * workspace-held — visible state, managed by the agent while the mode's
+ * dedicated stage stands. */
+export interface ActiveContextTab { id: string; title: string; kind: string; active: boolean; canvas?: "panel"|"workspace" }
 
 const LANES:{label:string;icon:GlyphName;kinds:string[]}[]=[
   {label:"Terminals",icon:"terminal",kinds:["terminal"]},
@@ -25,8 +28,9 @@ export function ActiveContext({tabs,onActivate}:{tabs?:ActiveContextTab[];onActi
       <h4><Glyph name={lane.icon} size={12}/>{lane.label}</h4>
       <ul className="factory-side-rows">
         {lane.rows.map(tab=><li key={tab.id}>
-          <button className="factory-side-row" data-active={tab.active||undefined} onClick={()=>onActivate?.(tab.id)}>
+          <button className="factory-side-row" data-active={tab.active||undefined} data-canvas={tab.canvas} title={tab.canvas==="workspace"?"Held in the workspace's own panes — the mode stands full-page over them; the agent manages these.":undefined} onClick={()=>onActivate?.(tab.id)}>
             <span className="factory-side-row-title">{tab.title}</span>
+            {tab.canvas==="workspace"&&<span className="factory-side-step-meta">workspace</span>}
           </button>
         </li>)}
       </ul>

@@ -1,7 +1,11 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "mode-engine-state",
+<<<<<<< HEAD
   "generated_at": "2026-09-20T10:52:23.259Z",
+=======
+  "generated_at": "2026-09-20T04:08:14.217Z",
+>>>>>>> origin/main
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,6 +15,7 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/oi-ci-check",
+<<<<<<< HEAD
       "repository_head": "225416260f292fbf57ada98416d9246712262a29",
       "tracked_changes": [
         "desktop/cradle/src/CradleFrame.tsx",
@@ -23,15 +28,25 @@
         "desktop/cradle/src/workspace/DesktopShell.tsx",
         "desktop/cradle/src/workspace/store.ts",
         "desktop/cradle/tests/workspace-continuity.test.mjs",
+=======
+      "repository_head": "ab989c389c58d9f7a6228542126ee5ed8cb8635a",
+      "tracked_changes": [
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/cradle.css",
+>>>>>>> origin/main
         "desktop/cradle/walk/artifacts/html-continuity-failure.png",
         "desktop/cradle/walk/artifacts/html-continuity-html-open.png",
         "desktop/cradle/walk/artifacts/html-continuity-mode-return.png",
         "desktop/cradle/walk/artifacts/html-continuity-tab-return.png",
         "desktop/cradle/walk/artifacts/html-continuity-workspace-return.png",
         "desktop/cradle/walk/artifacts/html-continuity.json",
+<<<<<<< HEAD
         "desktop/cradle/walk/artifacts/mode-engine-state.json",
         "desktop/cradle/walk/run.mjs",
         "desktop/cradle/walk/scenarios/mode-engine-state.mjs"
+=======
+        "desktop/cradle/walk/retention-probe.mjs"
+>>>>>>> origin/main
       ],
       "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -40,14 +55,22 @@
   },
   "passed": true,
   "error": null,
+<<<<<<< HEAD
   "duration_ms": 17359,
+=======
+  "duration_ms": 9656,
+>>>>>>> origin/main
   "checks": [
     {
       "ok": true,
       "label": "The Expressions application is live, stamped, and holds in-app state (its Library open)",
       "data": {
         "present": true,
+<<<<<<< HEAD
         "token": "21jjj5rkq07.1789901546840",
+=======
+        "token": "7vnqr88cdx.1789877297936",
+>>>>>>> origin/main
         "libraryOpen": true,
         "hostMode": "expressions"
       }
@@ -62,7 +85,11 @@
       "label": "Technè presents the deep cut of the application and holds its own in-app state",
       "data": {
         "present": true,
+<<<<<<< HEAD
         "token": "zg9s2caniud.1789901549529",
+=======
+        "token": "nrwg01wmfaq.1789877301642",
+>>>>>>> origin/main
         "libraryOpen": true,
         "hostMode": "techne"
       }
@@ -71,8 +98,13 @@
       "ok": true,
       "label": "RETURN/Expressions: the SAME application document came back (token kept — the frame never re-navigated)",
       "data": {
+<<<<<<< HEAD
         "before": "21jjj5rkq07.1789901546840",
         "after": "21jjj5rkq07.1789901546840"
+=======
+        "before": "7vnqr88cdx.1789877297936",
+        "after": "7vnqr88cdx.1789877297936"
+>>>>>>> origin/main
       }
     },
     {
@@ -87,8 +119,13 @@
       "ok": true,
       "label": "RETURN/Technè: the SAME application document came back (token kept)",
       "data": {
+<<<<<<< HEAD
         "before": "zg9s2caniud.1789901549529",
         "after": "zg9s2caniud.1789901549529"
+=======
+        "before": "nrwg01wmfaq.1789877301642",
+        "after": "nrwg01wmfaq.1789877301642"
+>>>>>>> origin/main
       }
     },
     {
@@ -96,7 +133,11 @@
       "label": "RETURN/Technè: the in-app state survived — the Library is still open",
       "data": {
         "present": true,
+<<<<<<< HEAD
         "token": "zg9s2caniud.1789901549529",
+=======
+        "token": "nrwg01wmfaq.1789877301642",
+>>>>>>> origin/main
         "libraryOpen": true,
         "hostMode": "techne"
       }
@@ -110,8 +151,12 @@
         "stamped": [
           "expressions",
           "techne"
+<<<<<<< HEAD
         ],
         "parks": 0
+=======
+        ]
+>>>>>>> origin/main
       }
     },
     {
@@ -124,6 +169,7 @@
     },
     {
       "ok": true,
+<<<<<<< HEAD
       "label": "The park layer is gone from the shell entirely (spec §7.1)",
       "data": {
         "frames": 2,
@@ -281,6 +327,8 @@
     },
     {
       "ok": true,
+=======
+>>>>>>> origin/main
       "label": "No page errors across the whole journey",
       "data": []
     }
@@ -289,7 +337,11 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
       "duration_ms": 54,
+=======
+      "duration_ms": 62,
+>>>>>>> origin/main
       "data": {
         "file": "mode-engine-state-expressions-marked.png"
       }
@@ -297,7 +349,11 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
       "duration_ms": 47,
+=======
+      "duration_ms": 48,
+>>>>>>> origin/main
       "data": {
         "file": "mode-engine-state-techne-marked.png"
       }
@@ -305,7 +361,11 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
       "duration_ms": 48,
+=======
+      "duration_ms": 40,
+>>>>>>> origin/main
       "data": {
         "file": "mode-engine-state-expressions-returned.png"
       }
@@ -313,6 +373,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
       "duration_ms": 55,
       "data": {
         "file": "mode-engine-state-techne-returned.png"
@@ -355,15 +416,29 @@
     "mode_round_trip_survivals": 4,
     "pane_tab_survivals": 2,
     "restart_expression_restored": 1
+=======
+      "duration_ms": 45,
+      "data": {
+        "file": "mode-engine-state-techne-returned.png"
+      }
+    }
+  ],
+  "metrics": {
+    "mode_round_trip_survivals": 4
+>>>>>>> origin/main
   },
   "screenshots": [
     "mode-engine-state-expressions-marked.png",
     "mode-engine-state-techne-marked.png",
     "mode-engine-state-expressions-returned.png",
+<<<<<<< HEAD
     "mode-engine-state-techne-returned.png",
     "mode-engine-state-pane-tab-marked.png",
     "mode-engine-state-pane-tab-returned.png",
     "mode-engine-state-checkpointed.png",
     "mode-engine-state-restored-after-restart.png"
+=======
+    "mode-engine-state-techne-returned.png"
+>>>>>>> origin/main
   ]
 }

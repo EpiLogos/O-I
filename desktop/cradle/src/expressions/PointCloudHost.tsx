@@ -39,6 +39,7 @@ import {
   materialUrl,
   relayKernelChannel,
   trackShellCutout,
+<<<<<<< HEAD
   trackHostedAppState,
   postHostMode,
   type HostedAppMode,
@@ -47,6 +48,14 @@ import {
 import "./point-cloud-host.css";
 
 export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: {mode?: HostedAppMode; deepLink?: string; onHostedState?: (state: HostedAppState) => void}) {
+=======
+  postHostMode,
+  type HostedAppMode,
+} from "./hostedApp";
+import "./point-cloud-host.css";
+
+export function PointCloudHost({mode = "expressions"}: {mode?: HostedAppMode}) {
+>>>>>>> origin/main
   const kernel = useKernel();
   const [entry, setEntry] = useState<NativeFileEntry | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
@@ -104,6 +113,7 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, kernel.transport]);
 
+<<<<<<< HEAD
   // The checkpoint channel: the application's oi-app-state announcements
   // (current expression, scene, selection — its own position, in its own
   // grammar) reach the stage slot's checkpoint effect when one is mounted.
@@ -114,6 +124,8 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: 
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [state, onHostedState]);
 
+=======
+>>>>>>> origin/main
   // The operating cut (the cradle's own workspace modes carry it): the
   // binding's kind IS the cut — the Technē centre presents this application
   // in its deep state, the Expressions centre in its lived state. Each
