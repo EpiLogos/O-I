@@ -1,0 +1,31 @@
+name: W5 final source recovery
+on:
+  pull_request:
+    paths: ['.github/workflows/w5-final-source.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    if: github.event.pull_request.head.repo.full_name == 'EpiLogos/O-I' && github.event.pull_request.head.ref == 'agent/w5-native-expression-backcheck-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Retain tracked exact source only
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-final-source
+          git rev-parse HEAD > /tmp/w5-final-source/head.txt
+          git archive HEAD desktop/cradle packages/oi-design-system .wayfinder/maps/expression-production-suite.md docs/EXPRESSION-PRODUCTION-SUITE-ALIGNMENT.md .github/workflows/native-expression-backcheck.yml | gzip > /tmp/w5-final-source/source.tar.gz
+          git archive a222c8bdf46a7b2146084770b704dfbe83ce5027 desktop/cradle/expressions-app | gzip > /tmp/w5-final-source/baseline.tar.gz
+          sha256sum /tmp/w5-final-source/*.tar.gz > /tmp/w5-final-source/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w5-final-source-${{ github.event.pull_request.head.sha }}
+          path: /tmp/w5-final-source
+          retention-days: 1
+          if-no-files-found: error
