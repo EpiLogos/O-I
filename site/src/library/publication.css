@@ -13,3 +13,13 @@
 @media(prefers-reduced-motion:reduce){.native-public-library *,.published-shelf *{scroll-behavior:auto!important;animation:none!important;transition:none!important}}
 /* Depth controls stay reachable without scrolling away from the reading place. */
 .native-public-library .publication-depth{position:sticky;top:0;z-index:15;background:var(--paper,#f4f2ec);padding:.6rem 0;margin-top:1rem;box-shadow:0 1px 0 var(--line,#d8d4cc)}
+
+.publication-pagination{display:flex;align-items:center;justify-content:space-between;flex-wrap:wrap;gap:1rem;margin:2rem 0;padding:1rem 0;border-top:1px solid var(--line,#d8d4cc)}
+.publication-pagination a{padding:.6rem .2rem}.publication-count{font-size:.85rem;opacity:.8}
+.publication-resident[hidden]{display:none!important}
+
+.publication-standing{max-width:52rem;margin:1.5rem 0;padding:1rem 0;border-top:1px solid var(--line,#d8d4cc)}
+.publication-standing summary{cursor:pointer;font-size:1rem;font-weight:500;line-height:1.5}
+.publication-standing h3{margin:1.6rem 0 .5rem;font-size:1rem;font-weight:600}
+.publication-standing p{font-size:.95rem!important;line-height:1.7!important;opacity:.85}
+.publication-standing summary:focus-visible{outline:2px solid currentColor;outline-offset:4px}

@@ -1,0 +1,674 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-lenses-aphorism",
+ "name": "Return of Zero — Lenses and the Aphorism",
+ "description": "Two episteme lenses as refractions of source discipline and native operation, and the complete Investigation and Faith aphorism.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "lens-baudrillard",
+   "name": "Baudrillard — Simulation and the Account’s Return",
+   "character": "A refracting lens: source discipline and native operation overlapping in one aperture.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "lens-baudrillard-src",
+     "name": "source discipline",
+     "kind": "formation",
+     "position": {
+      "x": -0.1,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 1.04
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "lens-baudrillard-src-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "lens-baudrillard-nat",
+     "name": "native operation",
+     "kind": "formation",
+     "position": {
+      "x": 0.44,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 1.04
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "lens-baudrillard-nat-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "lens-baudrillard-overlap",
+     "name": "the refraction",
+     "kind": "formation",
+     "position": {
+      "x": 0.17,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "lens-baudrillard-overlap-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "lens-baudrillard · ARGUED",
+     "title": "Baudrillard — Simulation and the Account’s Return",
+     "italic": "Paraphrased selected Baudrillard passages; Argued from native account/source relations; Offered comparative extensions",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "An account can change the conditions under which its next statement becomes credible. A profile affects access; access changes conduct; recorded conduct appears to confirm the profile. The profile has acted within its object’s world. Whether it describes that world faithfully remains a further question.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "lens-foucault",
+   "name": "Foucault — Knowledge, Power, and the Authority to Return",
+   "character": "A refracting lens: source discipline and native operation overlapping in one aperture.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "lens-foucault-src",
+     "name": "source discipline",
+     "kind": "formation",
+     "position": {
+      "x": -0.1,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 1.04
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "lens-foucault-src-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "lens-foucault-nat",
+     "name": "native operation",
+     "kind": "formation",
+     "position": {
+      "x": 0.44,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 1.04
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "lens-foucault-nat-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "lens-foucault-overlap",
+     "name": "the refraction",
+     "kind": "formation",
+     "position": {
+      "x": 0.17,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "lens-foucault-overlap-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "lens-foucault · ARGUED",
+     "title": "Foucault — Knowledge, Power, and the Authority to Return",
+     "italic": "Argued from",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "An account exercises authority when it helps determine what can appear as a case, who can speak about it, and what can be done to the person it describes. This lens follows that operation in the episteme register. Its aperture is the encounter between a practice of knowing and the relations that make its objects actionable. Its question reaches beyond the accuracy of a completed description to the authority acquired through describing.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "aphorism-investigation-and-faith",
+   "name": "Investigation and Faith",
+   "character": "Two limits and the living investigation between them.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "aph-bar-l",
+     "name": "approachable limit",
+     "kind": "formation",
+     "position": {
+      "x": -0.36,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.09,
+      "y": 1.16
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "aph-bar-l-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "aph-bar-r",
+     "name": "absolute limit",
+     "kind": "formation",
+     "position": {
+      "x": 0.64,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.09,
+      "y": 1.16
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "aph-bar-r-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "aph-field",
+     "name": "the investigation between",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.24,
+      "y": 1.24
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.3,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "aph-field-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "aph-core",
+     "name": "faith continuing through",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "aph-core-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "aphorism-investigation-and-faith · ARGUED",
+     "title": "Investigation and Faith",
+     "italic": "Returns through A03 to C04 / C48 · carried by the Symbol / Account / Trust whole-field",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "“The approachable limit is the basis of investigation; the absolute limit is the basis of faith; the limit of investigation is the limit of determination; the limit of faith is never to be determined.”\n\nInvestigation approaches something that can become more determinate. An omitted observation can be made, a claim examined, an instrument's conditions exposed, a frame revised. The resulting knowledge changes what can next be asked and done. Approach names this positive capacity to enter a question and make a difference within it.",
+     "x": 0.033,
+     "y": 0.4,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}

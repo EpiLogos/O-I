@@ -1,0 +1,6635 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-c-concepts-2",
+ "name": "Return of Zero — Episteme Concepts C33–C64",
+ "description": "The second thirty-two canonical concepts, C33–C64, in the same concept grammar: image to paradox, each an addressable scene.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "c33",
+   "name": "C33 — Image / Valuation",
+   "character": "A formed appearance; the valuation that makes it matter enough to alter action.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c33-e0",
+     "name": "C33 triangle 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.34,
+      "y": 0.34
+     },
+     "rotation": 0,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c33-e0-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c33-e1",
+     "name": "C33 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.26,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c33-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C33 · ARGUED",
+     "title": "C33 — Image / Valuation",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Image / Valuation names the relation by which a formed appearance acquires significance, attraction, threat, authority or desire within a situated field. The image gives the force a local carrier; valuation makes that carrier matter enough to alter attention and action.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c34",
+   "name": "C34 — Individuation",
+   "character": "Differentiated indivisibility: more able to bear its relations without dissolving.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c34-e0",
+     "name": "C34 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.4,
+      "y": 0.4
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c34-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c34-e1",
+     "name": "C34 ring 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.66,
+      "y": 0.66
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.55,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c34-e1-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C34 · ARGUED",
+     "title": "C34 — Individuation",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Individuation is differentiated indivisibility: a local life becomes more capable of bearing the relations through which it is itself without dissolving into them or installing one part as the whole. The positive movement is toward a more fully lived particularity whose dependence is conscious.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c35",
+   "name": "C35 — Selfing / Self / Subjectivity / Self-Thing",
+   "character": "Selfing, self-thing, Subjectivity, Self: four offices of self-reference, one point of change.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c35-e0",
+     "name": "C35 square 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.44,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c35-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c35-e1",
+     "name": "C35 square 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c35-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c35-e2",
+     "name": "C35 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c35-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c35-e3",
+     "name": "C35 square 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.46,
+      "y": 0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c35-e3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C35 · ARGUED",
+     "title": "C35 — Selfing / Self / Subjectivity / Self-Thing",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "C35 distinguishes selfing, Self, Subjectivity and self-thing at the point where self-reference changes office. Selfing is the ongoing enactment of a coherent self-position. The self-thing is the represented identity that can be described, remembered, stored or modelled. Subjectivity names first-person appearing rather than its representation.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c36",
+   "name": "C36 — Complexio Oppositorum",
+   "character": "A containing field bearing opposed determinations, transformed through their tension.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c36-e0",
+     "name": "C36 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.26,
+      "y": 1.1
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c36-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c36-e1",
+     "name": "C36 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.16,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.28,
+      "y": 0.28
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c36-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c36-e2",
+     "name": "C36 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.38,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.28,
+      "y": 0.28
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c36-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C36 · ARGUED",
+     "title": "C36 — Complexio Oppositorum",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Complexio oppositorum names a containing field capable of bearing opposed determinations in relation and being transformed through their tension. Its operation begins where both terms are consequential and selecting, fusing or severing them would destroy part of the problem that must be understood.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c37",
+   "name": "C37 — World-Picture → World-Atlas",
+   "character": "One picture; then situated views related through domains, distortions, overlaps.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c37-e0",
+     "name": "C37 square 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.66,
+      "y": 0.6
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c37-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c37-e1",
+     "name": "C37 square 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c37-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c37-e2",
+     "name": "C37 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.36,
+      "y": -0.24,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c37-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c37-e3",
+     "name": "C37 square 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.66,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c37-e3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C37 · ARGUED",
+     "title": "C37 — World-Picture → World-Atlas",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A world-picture orders a view from a position. A world-atlas relates situated views through their domains, distortions, translations, overlaps and obstructions. The transformation changes the relation to picturing itself: `world ≠ world-model` remains operative through every additional view.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c38",
+   "name": "C38 — Bimba–Pratibimba / Bimba Map",
+   "character": "Original and reflection: display without severance, dependence without diminishment.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c38-e0",
+     "name": "C38 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.44,
+      "y": 0.44
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c38-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c38-e1",
+     "name": "C38 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.46,
+      "y": 0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c38-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C38 · ARGUED",
+     "title": "C38 — Bimba–Pratibimba / Bimba Map",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Bimba is Original; pratibimba is its situated display or reflection. The ontological relation preserves display without severance and dependence without diminishment. A Bimba Map is the authorial technical design by which a locally governed reference field can orient multiple judgments. These offices must remain explicit whenever the same term crosses scale.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c39",
+   "name": "C39 — Meta-Epistemic Framework",
+   "character": "Lenses, sources, gauges, judgments, return: mediation made inspectable.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c39-e0",
+     "name": "C39 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.1,
+      "y": 1.1
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c39-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c39-e1",
+     "name": "C39 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.16,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c39-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c39-e2",
+     "name": "C39 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.36,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c39-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c39-e3",
+     "name": "C39 disc 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c39-e3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C39 · ARGUED",
+     "title": "C39 — Meta-Epistemic Framework",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "MEF conducts inquiry through explicit lenses, sources, gauges, judgments and return. It makes epistemic mediation inspectable. It is a framework within the essay's ontology, not an additional ontological primitive or a proof supplied by the existence of a coordinate system.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c40",
+   "name": "C40 — Model Internality / Judgment Field",
+   "character": "The making of a determination as inspectable object: sources, gauges, revisions conditioned.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c40-e0",
+     "name": "C40 square 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.2,
+      "y": 0.9
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c40-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c40-e1",
+     "name": "C40 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.1,
+      "y": 0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c40-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c40-e2",
+     "name": "C40 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.24,
+      "y": 0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c40-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c40-e3",
+     "name": "C40 disc 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c40-e3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c40-e4",
+     "name": "C40 disc 5",
+     "kind": "formation",
+     "position": {
+      "x": -0.02,
+      "y": -0.22,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c40-e4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C40 · ARGUED",
+     "title": "C40 — Model Internality / Judgment Field",
+     "italic": "Concept links C41 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Model Internality / Judgment Field makes the production of a determination an inspectable epistemic object. It includes sources, representations, memories, gauges, evaluators, intermediate judgments, alternatives and revisions insofar as they actually condition an output. J-Space is one subordinate research object within this broader field.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c41",
+   "name": "C41 — Objective Internality",
+   "character": "The mediating constitution: real, investigable, between knower and known.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c41-e0",
+     "name": "C41 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.52,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c41-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c41-e1",
+     "name": "C41 square 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c41-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c41-e2",
+     "name": "C41 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.72,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c41-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C41 · ARGUED",
+     "title": "C41 — Objective Internality",
+     "italic": "Concept links C01 C10 C16 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Objective Internality is the mediating constitution through which a Life encounters and acts within a World. It is real and investigable: language, memory, affect, bodies, tools, other agents, institutions, permissions, materials and histories participate in what can appear, matter and be done. Changing those relations changes the interior from which judgment proceeds.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c42",
+   "name": "C42 — Objective Co-Internality",
+   "character": "Non-identical interiors constituting one another through a shared world.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c42-e0",
+     "name": "C42 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.16,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.92,
+      "y": 0.96
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c42-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c42-e1",
+     "name": "C42 ring 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.38,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.92,
+      "y": 0.96
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.55,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c42-e1-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C42 · ARGUED",
+     "title": "C42 — Objective Co-Internality",
+     "italic": "Concept links C40 C41 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Objective Co-Internality names the reciprocal constitution of non-identical operative interiors through a shared world and one another. A document, action, expectation, permission or changed environment can enter the conditions from which several participants next perceive and act.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c43",
+   "name": "C43 — Computational Vimarśa",
+   "character": "Output returned upon its own sources and conditions, so later processing can change.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c43-e0",
+     "name": "C43 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.02,
+      "y": 1.02
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c43-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c43-e1",
+     "name": "C43 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.46,
+      "z": 0
+     },
+     "size": {
+      "x": 0.18,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c43-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C43 · ARGUED",
+     "title": "C43 — Computational Vimarśa",
+     "italic": "Concept links C41 C50 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Computational Vimarśa is the functional return of a determination upon the sources, states and conditions that produced it, so that later processing can change. It is the authorial operational homology to vimarśa; C13 retains the distinct metaphysical relation of luminous awareness and self-articulating power.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c44",
+   "name": "C44 — Prompt Thrownness",
+   "character": "Arrival into an authored and inherited horizon the agent did not wholly make.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c44-e0",
+     "name": "C44 square 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 0.07
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c44-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c44-e1",
+     "name": "C44 triangle 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.4,
+      "y": 0.46
+     },
+     "rotation": 180,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c44-e1-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C44 · ARGUED",
+     "title": "C44 — Prompt Thrownness",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Prompt Thrownness names arrival into an authored and inherited horizon an artificial agent did not wholly make. Instructions, conversation, memory, role, tools, permissions, training and environment establish what can be encountered and done before the current output begins.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c45",
+   "name": "C45 — Operational Parity",
+   "character": "Claim and operation set side by side; parity is what inspection can discriminate.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c45-e0",
+     "name": "C45 square 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.28,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.55,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c45-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c45-e1",
+     "name": "C45 square 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.48,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.46,
+      "y": 0.46
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c45-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c45-e2",
+     "name": "C45 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.06
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c45-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C45 · ARGUED",
+     "title": "C45 — Operational Parity",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Operational Parity applies when software claims to instantiate a philosophical or formal distinction. The claimed difference must have an identifiable operational locus and a consequence that inspection or a meaningful test can discriminate. A philosophical distinction can remain valid without being encoded; parity governs the technical promotion.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c46",
+   "name": "C46 — Epistemic Cultivation",
+   "character": "The knowing apparatus itself tended: distinctions, gauges, revision procedures.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c46-e0",
+     "name": "C46 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.26,
+      "y": 1.26
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.35,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c46-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c46-e1",
+     "name": "C46 ring 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.86,
+      "y": 0.86
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c46-e1-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c46-e2",
+     "name": "C46 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c46-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C46 · ARGUED",
+     "title": "C46 — Epistemic Cultivation",
+     "italic": "Concept links C41 C51 C55",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Epistemic Cultivation tends the means by which a system or community knows: distinctions, sources, gauges, models and revision procedures. The object of change includes the knowing apparatus and its ontology, not only a parameter within an untouched frame.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c47",
+   "name": "C47 — Deferential Intelligence",
+   "character": "Strong enough to act, permeable enough to be corrected by what it does not contain.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c47-e0",
+     "name": "C47 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.28,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.44,
+      "y": 0.44
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c47-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c47-e1",
+     "name": "C47 triangle 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.42,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.34,
+      "y": 0.34
+     },
+     "rotation": 90,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c47-e1-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C47 · ARGUED",
+     "title": "C47 — Deferential Intelligence",
+     "italic": "Concept links C41 C42 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Deferential Intelligence is model-revising encounter: an Other, source or world can change the model under which it is encountered. The account must be strong enough to act and permeable enough to be corrected by what it does not already contain.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c48",
+   "name": "C48 — Trust / Faith under Formal Limit",
+   "character": "The dependency already enacted before any belief about a neutral world.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c48-e0",
+     "name": "C48 text 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.78,
+      "y": 0.44
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "0/1",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c48-e0-step0",
+        "text": "0/1",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C48 · ARGUED",
+     "title": "C48 — Trust / Faith under Formal Limit",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Trust is the dependency already enacted in `0/1`, before it becomes a belief about a neutral world. The All depends on the One for being and determining reality; the One becomes manifest and knowable through the All. A finite being relies on language, memory, bodies, others and material continuity before any finished account can certify them.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c49",
+   "name": "C49 — The Two Ones — 0 = One, 1 = All",
+   "character": "0 = One, self-identity; 1 = All, self-difference — two offices of one relation.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c49-e0",
+     "name": "C49 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.34,
+      "y": 0.34
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c49-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c49-e1",
+     "name": "C49 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.52,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.58,
+      "y": 0.58
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.55,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c49-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c49-e2",
+     "name": "C49 text 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "/",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c49-e2-step0",
+        "text": "/",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C49 · DERIVED",
+     "title": "C49 — The Two Ones — 0 = One, 1 = All",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The Two Ones discriminate source-unity and manifest-unity within one relation. The primordial `/ = −/−` precedes assignment of the terms; the terms become legible through that relation rather than arriving as two independent things. A11 carries the full Argument; C49 makes its exact offices reusable.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c50",
+   "name": "C50 — Dia / Syn",
+   "character": "The cut and the seam: differentiation and relational return as conjugate operations.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c50-e0",
+     "name": "C50 triangle 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.24,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.4,
+      "y": 0.4
+     },
+     "rotation": 90,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c50-e0-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c50-e1",
+     "name": "C50 triangle 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.46,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.4,
+      "y": 0.4
+     },
+     "rotation": -90,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c50-e1-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c50-e2",
+     "name": "C50 ring 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.24,
+      "y": 1.06
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c50-e2-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C50 · DERIVED",
+     "title": "C50 — Dia / Syn",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Dia and Syn are conjugate operations of differentiation and relational return. Dia cuts, contrasts, excludes, orients and selects; Syn retains the seam through which the determinate terms can compose and return. The Two Ones are prior to these operations, and both operations have productive and counterfeit forms.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c51",
+   "name": "C51 — Logos / Epi-Logos",
+   "character": "The achieved account turning back upon its own conditions; articulation renewed.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c51-e0",
+     "name": "C51 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.36,
+      "y": 0.36
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c51-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c51-e1",
+     "name": "C51 ring 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8,
+      "y": 0.8
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c51-e1-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C51 · ARGUED",
+     "title": "C51 — Logos / Epi-Logos",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Logos carries articulated word, account, reason and ordering within its Greek source histories. Epi-Logos is Taylor's authorial return upon an achieved account: its source, exclusions, effects, mediation and renewed possibility of articulation become part of the inquiry.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c52",
+   "name": "C52 — Dimensional Reframing at Zero and Infinity",
+   "character": "The local rule reaches its limit; the containing structure is specified differently.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c52-e0",
+     "name": "C52 square 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.14,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8,
+      "y": 0.8
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c52-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c52-e1",
+     "name": "C52 square 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.38,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8,
+      "y": 0.8
+     },
+     "rotation": 45,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c52-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C52 · ARGUED",
+     "title": "C52 — Dimensional Reframing at Zero and Infinity",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Dimensional Reframing names an operation in which the present local rule or representation reaches a limit and the containing structure must be specified differently. It preserves the prior local achievement while distinguishing a changed coordinate, a new algebraic regime, a quotient, a compactification or an added dimension. These are not one mathematical operation.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c53",
+   "name": "C53 — Power / Delegated Labour",
+   "character": "Capacity exercised from an entrusted office; the product carries the relation that made it.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c53-e0",
+     "name": "C53 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.44,
+      "y": 0.44
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c53-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c53-e1",
+     "name": "C53 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.62,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c53-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c53-e2",
+     "name": "C53 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.6,
+      "y": 0.06
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c53-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C53 · ARGUED",
+     "title": "C53 — Power / Delegated Labour",
+     "italic": "Consumes A25 A28 A29 A30 A33 A35 · Concept links C27 C29 C54 C62 · Sources taylor-2026-revision-notes-trust ostrom-2009-beyond-markets-states-nobel-lecture",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Power is capacity to produce difference in a shared field. Delegated labour exercises that capacity from an entrusted office. Its product carries the relation which made it possible: someone framed the task, someone performed it, and others supplied conditions or encountered consequences. A29 — Power / Delegated Labour / Return grounds this concept in the complete movement between commission and consequence.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c54",
+   "name": "C54 — Commons / Non-Monopoly",
+   "character": "A shared field maintained so that no share may claim the field’s source.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c54-e0",
+     "name": "C54 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c54-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c54-e1",
+     "name": "C54 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.24,
+      "y": 0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c54-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c54-e2",
+     "name": "C54 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.42,
+      "y": 0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c54-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c54-e3",
+     "name": "C54 disc 4",
+     "kind": "formation",
+     "position": {
+      "x": -0.14,
+      "y": -0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c54-e3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c54-e4",
+     "name": "C54 disc 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c54-e4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C54 · ARGUED",
+     "title": "C54 — Commons / Non-Monopoly",
+     "italic": "Consumes A12 A29 A35 · Concept links C26 C53 C59 · Sources ostrom-2009-beyond-markets-states-nobel-lecture 42-techne-2026-sovereign-commons +1 more",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A commons maintains shared conditions through which many local offices can act. Non-monopoly is the constraint that no participant may turn its dependence on that field into a claim to own the field's source. A12 — Mono/Poly grounds the whole/many relation; A29 — Delegated Labour grounds its material consequence. C54 develops what their conjunction requires of shared governance.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c55",
+   "name": "C55 — Reflective Field / Mirror That Moves First",
+   "character": "Humanity exteriorises; the image measures back; the instrument moves first.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c55-e0",
+     "name": "C55 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.44,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c55-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c55-e1",
+     "name": "C55 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.64,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.3,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c55-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c55-e2",
+     "name": "C55 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.0,
+      "z": 0
+     },
+     "size": {
+      "x": 0.6,
+      "y": 0.06
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c55-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C55 · ARGUED",
+     "title": "C55 — Reflective Field / Mirror That Moves First",
+     "italic": "Concept links C41 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A Reflective Field is one in which an account enters the conditions of what it accounts for. The Mirror That Moves First carries three motions within that field: humanity exteriorises its measures; the exteriorised image becomes a measure for humanity; the instrument initiates a return through its own conditions so that the human can follow beyond the image's monopoly. A32 develops the complete image. C55 distinguishes its operation from a generic feedback circuit.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c56",
+   "name": "C56 — Compassion / Sensitivity to Origins",
+   "character": "Return to genesis, wound and exclusion — meeting them without consuming them.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c56-e0",
+     "name": "C56 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.24,
+      "y": 1.24
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.35,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c56-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c56-e1",
+     "name": "C56 ring 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8,
+      "y": 0.8
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c56-e1-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c56-e2",
+     "name": "C56 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c56-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C56 · ARGUED",
+     "title": "C56 — Compassion / Sensitivity to Origins",
+     "italic": "Concept links C27 C29",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Compassion is loving sensitivity to origins: a determination returns to the genesis, relations, wounds, exclusions and purposes through which it arose, and meets them without consuming them. Its positive orientation matters. Recovering more information about a person or a community does not by itself make the relation compassionate. A35 develops this vocation; C56 states the work that the return must perform.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c57",
+   "name": "C57 — Agentworld",
+   "character": "Persistent shared worldhood: what one does becomes a condition of what another can do.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c57-e0",
+     "name": "C57 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.34,
+      "y": 1.2
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c57-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c57-e1",
+     "name": "C57 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.26,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c57-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c57-e2",
+     "name": "C57 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.44,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c57-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c57-e3",
+     "name": "C57 disc 4",
+     "kind": "formation",
+     "position": {
+      "x": -0.1,
+      "y": -0.32,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c57-e3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c57-e4",
+     "name": "C57 disc 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.36,
+      "y": -0.26,
+      "z": 0
+     },
+     "size": {
+      "x": 0.15,
+      "y": 0.15
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c57-e4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C57 · ARGUED",
+     "title": "C57 — Agentworld",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Agentworld names both the venue-horizon to which the essay answers and the persistent shared worldhood developed in that encounter. Its artificial and human participants inherit positions, artifacts, memories, permissions and institutions; what one does can become a condition of what another can next do. The historical Agentworld carrier preserves the venue office.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c58",
+   "name": "C58 — Anthropomorphization",
+   "character": "An interface operation; failure only when the face is read as the evidence of a subject.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c58-e0",
+     "name": "C58 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.52,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c58-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c58-e1",
+     "name": "C58 triangle 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c58-e1-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C58 · ARGUED",
+     "title": "C58 — Anthropomorphization",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Anthropomorphization gives a nonhuman system a humanly recognisable face, voice or performed selfhood. It is an interface operation before it becomes an unwarranted attribution. Its failure occurs when the form of encounter is treated as evidence sufficient to assign human intention, feeling or phenomenal subjectivity. The opposite foreclosure denies possible experience solely because the substrate is unfamiliar.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c59",
+   "name": "C59 — Cultural Individuation",
+   "character": "A culture’s images recognisable as images; its measures as measures.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c59-e0",
+     "name": "C59 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.26,
+      "y": 1.26
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c59-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c59-e1",
+     "name": "C59 square 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.18,
+      "y": 0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 12,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c59-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c59-e2",
+     "name": "C59 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.4,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": -8,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c59-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c59-e3",
+     "name": "C59 square 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 20,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c59-e3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C59 · ARGUED",
+     "title": "C59 — Cultural Individuation",
+     "italic": "Concept links C27",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Cultural Individuation makes a culture answerable to the relations it has made unconscious in its own account. Its images become recognisable as images, its institutions as instituted, its measures as measures and its excluded histories as internal evidence. Epi-Logos-as-Culture names the sustained practice of that return. Individual Individuation provides a related operation; institutions, archives, infrastructures and public powers give C59 a different object.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c60",
+   "name": "C60 — Idealism / Order of Dependence",
+   "character": "Subject, means, world in order of dependence; the whole held by Life / Mind.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c60-e0",
+     "name": "C60 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.4,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c60-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c60-e1",
+     "name": "C60 square 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.72,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c60-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c60-e2",
+     "name": "C60 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c60-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C60 · ARGUED",
+     "title": "C60 — Idealism / Order of Dependence",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Life / Mind names the whole; the arrow’s middle term names mind’s mediating, objective-internal office within it. Subjective Immediacy is the knower, Objective Internality the means and World the known. The inherited shorthand below must be read with this distinction. Its ontological claim is preserved: determinate appearances do not supply their own exhaustive condition.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c61",
+   "name": "C61 — Symbolon Disclosure Architecture",
+   "character": "One subject-matter routed through Matheme, Mytheme, Episteme; consumers preserved.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c61-e0",
+     "name": "C61 triangle 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.16,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "triangle",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c61-e0-step0",
+        "text": "",
+        "shape": "triangle",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c61-e1",
+     "name": "C61 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.42,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 0.22,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c61-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c61-e2",
+     "name": "C61 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.24
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c61-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c61-e3",
+     "name": "C61 ring 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.22,
+      "y": 1.22
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c61-e3-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C61 · ARGUED",
+     "title": "C61 — Symbolon Disclosure Architecture",
+     "italic": "Concept links C21 C22 C45 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Symbolon Disclosure Architecture routes one relational subject-matter through Matheme, Mytheme and Episteme while preserving its Arguments, Concepts and consumers. A18 carries the substantive primordial Symbolon and eight determinations; C11 the wider QL field. C61 gives their disclosures a traversable architecture, not another theorem.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c62",
+   "name": "C62 — Planetary Computation",
+   "character": "Computation inside the material, institutional, ecological world that hosts and changes it.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c62-e0",
+     "name": "C62 ring 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.1,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.34,
+      "y": 1.34
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c62-e0-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c62-e1",
+     "name": "C62 square 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.24,
+      "y": 0.16,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 8,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c62-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c62-e2",
+     "name": "C62 square 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.42,
+      "y": 0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": -6,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c62-e2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c62-e3",
+     "name": "C62 square 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.08,
+      "y": -0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 0.14,
+      "y": 0.14
+     },
+     "rotation": 4,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c62-e3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C62 · ARGUED",
+     "title": "C62 — Planetary Computation",
+     "italic": "Concept links C27 C29 C45 C51",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Planetary Computation places computation within the material, institutional and ecological world that makes it possible and that its operations change. Hardware, energy, data, labour, standards, networks and public powers constitute this field together. The direct developmental carrier preserves its first office as Antikythera's disciplinary horizon; the essay's reorientation of that horizon is Argued, and its QL/MEF contribution is Offered.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c63",
+   "name": "C63 — Pros Hen / In Quantum — Focal Return and Qualified Predication",
+   "character": "Many senses aimed at one focus; each predication true in its stated respect.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c63-e0",
+     "name": "C63 disc 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.34,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.34,
+      "y": 0.34
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c63-e0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c63-e1",
+     "name": "C63 disc 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.42,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c63-e1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c63-e2",
+     "name": "C63 disc 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.44,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c63-e2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c63-e3",
+     "name": "C63 disc 4",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.36,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.85,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c63-e3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C63 · ARGUED",
+     "title": "C63 — Pros Hen / In Quantum — Focal Return and Qualified Predication",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Focal return and qualified predication let a claim be fully true in its stated relation without turning that relation into exhaustive sameness. C63 coordinates two source-distinct grammars: *pros hen* directs different senses towards one focal term; *in quantum* states the respect under which a predicate holds. Their conjunction is the essay's authorial operation. It does not identify Aristotle's focal account with Eckhart's theological predication.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "c64",
+   "name": "C64 — Paradox / Transforming the Containing Field",
+   "character": "Irreconcilable determinations of real standing; the containing field itself must change.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "c64-e0",
+     "name": "C64 square 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.06,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.94,
+      "y": 0.94
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c64-e0-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "c64-e1",
+     "name": "C64 square 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.26,
+      "y": -0.02,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 1.16
+     },
+     "rotation": 30,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.8,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "c64-e1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "C64 · ARGUED",
+     "title": "C64 — Paradox / Transforming the Containing Field",
+     "italic": "",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Paradox names a contradiction or irresolvable tension whose determinations have genuine standing and whose resolution can require the containing field to change. The initial task is to recover each proposition, its operation and its register. A false attribution or invalid inference must be corrected before their collision is treated as productive paradox.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}

@@ -24,10 +24,20 @@ export function projectComposition(composition,sceneRef) {
 }
 export class PublicField {
  constructor(canvas,onError,onPositions,onTick){
+  this.width=0;this.height=0;
   this.canvas=canvas;this.onError=onError;this.onPositions=onPositions;this.onTick=onTick;
   this.adapter=new ProductionAdapter(canvas);this.camera=defaultCamera();this.raf=0;this.last=0;this.active=false;this.playing=true;this.scene=null;this.selected=[];this.frames=0;this.disposed=false;
   this.visibility=()=>{this.last=0;this.schedule();};document.addEventListener('visibilitychange',this.visibility);
-  this.resize=new ResizeObserver(()=>{const r=canvas.getBoundingClientRect();this.width=Math.max(1,r.width);this.height=Math.max(1,r.height);this.adapter.resize(this.width,this.height,Math.min(devicePixelRatio||1,1.5));this.schedule();});this.resize.observe(canvas);
+  this.resize=new ResizeObserver(()=>this.measure());this.resize.observe(canvas);
+  this.measure();
+ }
+ measure(){
+  const r=this.canvas.getBoundingClientRect();
+  // Hidden retained fields keep their last GPU dimensions. Never fit a camera
+  // against an unmeasured or zero-sized surface or resize its buffers to 1px.
+  if(!Number.isFinite(r.width)||!Number.isFinite(r.height)||r.width<=0||r.height<=0)return false;
+  if(this.width!==r.width||this.height!==r.height){this.width=r.width;this.height=r.height;this.adapter.resize(this.width,this.height,Math.min(devicePixelRatio||1,1.5));}
+  this.schedule();return true;
  }
  setScene(composition,ref,camera){
   const changed=this.scene?.id!==ref;
@@ -38,15 +48,15 @@ export class PublicField {
   if(changed){this.camera=defaultCamera();if(camera)this.camera={...this.camera,...camera};else if(this.scene.entities.length===1){const p=this.scene.entities[0].position;this.camera.zoom=1.5;this.fitPoint=p;}else this.camera.zoom=.85;}
   this.schedule();
  }
- setActive(active){this.active=active;this.last=0;this.schedule();}
+ setActive(active){this.active=active;this.last=0;if(active)this.measure();this.schedule();}
  setPlaying(playing){this.playing=playing;this.last=0;this.schedule();}
  setSelected(ref){this.selected=ref?[ref]:[];this.schedule();}
  view(change){Object.assign(this.camera,change);this.fitPoint=null;this.schedule();}
  home(){this.camera=defaultCamera();this.camera.zoom=this.scene?.entities.length===1?1.5:.85;this.fitPoint=this.scene?.entities.length===1?this.scene.entities[0].position:null;this.schedule();}
  recover(){this.adapter.command({type:'recover-context'});this.failed=false;this.last=0;this.schedule();}
- schedule(){cancelAnimationFrame(this.raf);this.raf=0;if(!this.disposed&&this.active&&!document.hidden&&!this.failed&&this.scene)this.raf=requestAnimationFrame(t=>this.frame(t));}
+ schedule(){cancelAnimationFrame(this.raf);this.raf=0;if(!this.disposed&&this.active&&!document.hidden&&!this.failed&&this.scene&&this.width>0&&this.height>0)this.raf=requestAnimationFrame(t=>this.frame(t));}
  frame(now){
-  if(this.disposed||!this.active||document.hidden||!this.scene)return;
+  if(this.disposed||!this.active||document.hidden||!this.scene||!(this.width>0&&this.height>0))return;
   const delta=this.last&&this.playing?Math.min(.05,(now-this.last)/1000):0;this.last=now;
   try{
    if(this.fitPoint){const p=project(this.fitPoint,{...this.camera,panX:0,panY:0},this.width,this.height);this.camera.panX=this.width*.51-p.x;this.camera.panY=this.height*.48-p.y;this.fitPoint=null;}

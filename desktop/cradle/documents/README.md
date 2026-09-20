@@ -63,6 +63,12 @@ references). It carries **no** `ql-template` meta tag and stamps no version —
 it is recorded as received; the roster keeps `version: null` and the
 `oi.template/yoshimoto` ref.
 
+**Withdrawn from the offered roster (2026-09-20, owner decision):** the
+desktop's document-form chooser offers exactly four types — Day, Flow,
+Beings and Things. The cube entry stays in `forms.json` as declared scope
+with `file: null` (never advertised as UI) and its retained source bytes
+stay in this directory unchanged.
+
 ## Epi-Card verification (2026-09-17) — no retained source exists
 
 Every named lead was checked on this machine; no self-contained Epi-Card form

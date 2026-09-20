@@ -1,0 +1,2118 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-pauli-egg-dream",
+  "name": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+  "description": "The seven pictures in sequence: the egg laid and self-divided, the egg found in the dreamer's hand, the division that keeps wholeness, four eggs become expressions, the conjugate quotient, and the spoken circle.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-pauli-0-background",
+      "name": "A physicist meets his concepts in a dream",
+      "character": "Background physics: physical concepts appearing spontaneously in dreams, in a qualitative symbolic sense — received before it is chosen.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e242",
+          "name": "the dreamer — Pauli, after the Kepler work, mid-March 1948",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.116
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "W.P.",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st260",
+                "text": "W.P.",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e243",
+          "name": "background physics — concepts arriving unbidden",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "ψ",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st261",
+                "text": "ψ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e244",
+          "name": "the companion dream — Göttingen; the hydrogen ground state; brass tones on a metal plate",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♭",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st262",
+                "text": "♭",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e245",
+          "name": "Fierz's note — an undated typescript, an outline not a finished publication",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✎",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st263",
+                "text": "✎",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · \"Modern Examples of 'Background Physics'\", Atom and Archetype, pp. 192–196",
+          "title": "A physicist meets his concepts in a dream",
+          "italic": "The dream sequence demonstrates symbolic description arriving in a mode the dreamer did not consciously choose — and his initial finding of it offensive to scientific habit.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Pauli's egg dream is a sequence of seven pictures. He introduces \"background physics\" as physical concepts appearing spontaneously in dreams in a qualitative, symbolic sense — initially offensive to his scientific habits, then an inquiry into the psychic activity of such images and the archetypal background of scientific concepts, explicitly distinguished from a formulated body of scientific truths. Two related dreams fall in an interval",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "of four days in mid-March, after the Kepler work; the later 60P letter dates the first to 1948 and the essay to June 1948. Göttingen belongs to the companion dream, with the announcement of a fundamental change in the hydrogen atom's ground state and brass tones engraved on a metal plate. The egg dream names no city, room or landscape; its space is enacted by arrival, approach and the discovery of something already in the dreamer's hand.\n\nOccurrences: the seven-picture sequence (#0–#3); the mid-March pairing and its retrospective dating (#0); the Göttingen companion dream kept distinct (#0); Fierz's undated typescript (#0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pauli-1-selfdivision",
+      "name": "Pictures 1–2: the egg laid; the egg divides itself",
+      "character": "The first division happens before the dreamer intervenes; one has become two while each remains presented as an egg.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e246",
+          "name": "the woman with the bird — unnamed; their action brings the egg",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.111
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♀♿",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st264",
+                "text": "♀♿",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e247",
+          "name": "picture 1 — the single egg, awaiting what will happen",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.405
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st265",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e248",
+          "name": "picture 2 — the egg divides itself",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.15,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.65
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 1.5,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st267",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.46
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st268",
+                "text": "⬮⬮",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.42,
+                    "y": 0.16
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st269",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.46
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e249",
+          "name": "no good egg and evil egg — no conflict between them",
+          "kind": "formation",
+          "position": {
+            "x": 0.68,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≠",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st270",
+                "text": "≠",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · pp. 192–193; the diagrams as visually checked",
+          "title": "Pictures 1–2: the egg laid; the egg divides itself",
+          "italic": "The dream demonstrates plurality made before agency appears: the division occurs without Pauli's reported intervention.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Picture 1: a woman comes with a bird; the bird lays a large egg. The account gives neither the woman's name nor the bird's species — nothing in the later formula retroactively supplies them a historical identity. The first diagram shows the single egg, its enclosing outline still the form of one thing awaiting what will happen. Picture 2: the egg",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "divides itself into two. Pauli's grammatical distinction matters — this division occurs without his reported intervention. Two complete egg outlines stand beside one another; they are not described as a good and an evil egg, and no conflict occurs between them. What changes is the field of the image: one has become two while each remains presented as an egg.\n\nOccurrences: the woman and bird's arrival and laying (#1, no further actions); the self-division (#1); the two-whole-eggs result (#1, mirrored consciously at #2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pauli-2-hand",
+      "name": "Pictures 3–4: the egg in his own hand; division that keeps wholeness",
+      "character": "The dreamer goes closer, finds a blue-shelled egg already held, divides it — and the two miraculously remain whole.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e250",
+          "name": "pictures 1–2 — the spontaneous pair above",
+          "kind": "formation",
+          "position": {
+            "x": -0.3,
+            "y": -0.11,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.084
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⬮⬮",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st271",
+                "text": "⬮⬮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e251",
+          "name": "picture 3 — the blue-shelled egg in his hand",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.19,
+            "z": 0
+          },
+          "size": {
+            "x": 0.306,
+            "y": 0.408
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.6,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st272",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e252",
+          "name": "picture 4 — divided, both whole",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.65
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⬮",
+          "share": 1.4,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st274",
+                "text": "⬮",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st275",
+                "text": "⬮⬮",
+                "shape": "text",
+                "hold": 2.8,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.34,
+                    "y": 0.14
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st276",
+                "text": "⬮",
+                "shape": "text",
+                "hold": 2.2,
+                "transition": 1.3,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.2,
+                    "y": 0.2
+                  },
+                  "rotation": 0,
+                  "tint": "#3c6e71",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e253",
+          "name": "the marvel — two eggs, not two broken portions",
+          "kind": "formation",
+          "position": {
+            "x": 0.7,
+            "y": 0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✦",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st277",
+                "text": "✦",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e254",
+          "name": "the dreamer — approaches, notices, participates",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st278",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · p. 193",
+          "title": "Pictures 3–4: the egg in his own hand; division that keeps wholeness",
+          "italic": "The scene passes from watching a division to performing one upon what he holds — the event on which his later commentary concentrates.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Picture 3: Pauli goes closer and notices another egg in his hand, this one with a blue shell. The account does not say he manufactures it or takes it from the first pair; the diagram adds the third beneath the two above, changing both the number of visible terms and the dreamer's position among them. Picture 4: he divides this last egg into two; they miraculously remain whole, and he now has two",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "blue-shelled eggs. The source records preservation through division as the marvel: two eggs, not two broken portions requiring an invented repair; no hatching, no discarded shell. The two pairs have related but distinct histories — one from spontaneous change witnessed, one from his recognition and action. Its force would disappear if the four eggs were introduced at once as an emblem with four fixed meanings.\n\nOccurrences: the approach and the noticed egg (#2); the performed division and preserved wholeness (#2); the two origins of the four eggs (#1–#2, retained at #4–#5).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pauli-3-quotient",
+      "name": "Pictures 5–6: four eggs become expressions; the conjugate quotient",
+      "character": "The duplicated cos/sin rows form a relation of conjugate expressions — the cosine the same, the imaginary sine term changing sign.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e255",
+          "name": "picture 5 — four expressions, two rows: cos(δ/2) sin(δ/2) / cos(δ/2) sin(δ/2)",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.365,
+            "y": 0.073
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "cos sin",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st279",
+                "text": "cos sin",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e256",
+          "name": "picture 6 — the quotient [cos+i·sin]/[cos−i·sin], modulus one in the denominator",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.68,
+            "y": 0.136
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "ᵉⁱδ/²⁄ₑ⁻ⁱδ/²",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st280",
+                "text": "ᵉⁱδ/²⁄ₑ⁻ⁱδ/²",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e257",
+          "name": "no shell-to-function assignment is added",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅→",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st281",
+                "text": "∅→",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e258",
+          "name": "the opposing signs retained in one relation",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "±",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st282",
+                "text": "±",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · p. 193; the printed arrangement",
+          "title": "Pictures 5–6: four eggs become expressions; the conjugate quotient",
+          "italic": "The dream's organisation changes from four displayed terms into a single relation that retains their opposing signs — an ordinary, well-defined complex-number operation.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Picture 5: the four eggs change into four mathematical expressions, printed as two rows each holding a cosine term on the left and a sine term on the right. The duplicated terms preserve the paired arrangement while changing the medium of the scene; the picture does not assign each shell colour to a function, so no such assignment is added. Picture 6: the terms give the quotient with cos(δ/2)+i·sin(δ/2) over cos(δ/2)−i·sin(δ/2) — the cosine the same while the imaginary sine term changes sign; for real δ the denominator has modulus one. The dream's organisation has changed from four displayed terms into a single relation retaining their opposing signs.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the four-eggs-to-expressions transformation (#3, from the four of #1–#2); the conjugate quotient (#3); the retained opposing signs (#3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pauli-3b-circle",
+      "name": "Picture 7: he speaks, and the circle appears",
+      "character": "Pauli speaks for the first time: the expression is e^{iδ}; the formula vanishes and a circle appears. Speech enters at the end.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e259",
+          "name": "formula → circle",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.37,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "e^{iδ}",
+          "share": 2,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st284",
+                "text": "e^{iδ}",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.111
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st285",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.676,
+                    "y": 0.676
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st286",
+                "text": "e^{iδ}",
+                "shape": "text",
+                "hold": 2.6,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.307,
+                    "y": 0.111
+                  },
+                  "rotation": 0,
+                  "tint": "#e8e2d0",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e260",
+          "name": "the spoken recognition — the dreamer's first speech",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "❝",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st287",
+                "text": "❝",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e261",
+          "name": "the unit circle — a point for fixed angle, the circle as the angle varies",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.398,
+            "y": 0.398
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st288",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e262",
+          "name": "no eighth scene — no return of the woman and bird",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅⁺",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st289",
+                "text": "∅⁺",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · p. 193; diagrams visually checked in the consulted PDF",
+          "title": "Picture 7: he speaks, and the circle appears",
+          "italic": "The completion demonstrates the history it carries: the final image is circular rather than the initial egg outline, and no unreported eighth scene is needed.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Picture 7: Pauli speaks for the first time in this dream. He identifies the expression with e^{iδ} and names the circle; the formula vanishes and a circle appears. The explanation makes the step explicit: the quotient equals e^{iδ/2} over e^{−iδ/2}, which is e^{iδ} — for a fixed real angle a point on the unit circle; as the angle varies, the circle. The distinction keeps the operation exact while preserving what Pauli recognises. The account reports neither a return of the woman and bird nor a restart of the first picture; the completion has the history of differentiation and conscious action within it.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the spoken naming (#3); the vanishing formula and appearing circle (#3); the seven-picture cardinality retained (#0–#3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pauli-4-commentary",
+      "name": "Pauli reads the part played by consciousness",
+      "character": "The spontaneous pair read as a ground state; his participation produces the quaternity through a reflection of duality; the Maria Prophetissa comparison is his; he refuses a finished interpretation.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e263",
+          "name": "the ground state — the spontaneous pair",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.086
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⬮⬮",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st290",
+                "text": "⬮⬮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e264",
+          "name": "conscious intervention — noticing and dividing what he already holds",
+          "kind": "formation",
+          "position": {
+            "x": 0.15,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉✂",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st291",
+                "text": "◉✂",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e265",
+          "name": "the imaginary unit's symbolic office — opposites combined into the form read as wholeness",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "i",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st292",
+                "text": "i",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e266",
+          "name": "the refusal — further progress in the sciences would be required",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st293",
+                "text": "∅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e267",
+          "name": "Neumann's round compared — no egg-to-stage assignment",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st294",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · p. 195; pp. 190, 195–196; the harmonised source programme; A19/A16 comparisons",
+          "title": "Pauli reads the part played by consciousness",
+          "italic": "The commentary proves-discloses conscious participation as the change producing the quaternity — while refusing to present a finished interpretation of the two dreams.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Pauli's commentary joins the two dreams through the intervention absent from the initial pair: the spontaneous pair read as a ground state, his participation in Pictures 3 and 4 as the change producing the quaternity through a reflection of duality. He relates the sequence to the axiom attributed to Maria Prophetissa, mediated through Jung's Psychology and Alchemy — his comparison, not an independently verified ancient attribution. He gives the imaginary unit a symbolic office permitting paired opposites to combine",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "into the form he reads as wholeness, and refuses a finished interpretation: further progress in the sciences would be required. Around the essay he distinguishes physical process from psychic symbolic use — a faster process is not more conscious — and marks the limits of physics within life; mathematics has qualitative resources, topology among them, whose symbolic possibilities he considers unfinished. The Neumann whole is compared as shared structuration; a new exact egg-to-stage assignment is human-amplified: no.\n\nOccurrences: the ground-state reading of pictures 1–2 (#1, #4); the intervention reading of 3–4 (#2, #4); the i-office (#3, #4); the refused finished interpretation (#4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pauli-5-return",
+      "name": "Return: the recovered telling and its authorial office",
+      "character": "He has received, approached, noticed, divided and finally spoken. What arrives without choice becomes an operation in which he participates.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e268",
+          "name": "the circle — the dream's end, exact in its own scope",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.41,
+            "z": 0
+          },
+          "size": {
+            "x": 0.626,
+            "y": 0.626
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st295",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e269",
+          "name": "the four eggs with two different origins — retained",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⬮⬮⬮⬮",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st296",
+                "text": "⬮⬮⬮⬮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e270",
+          "name": "X/x is Taylor's — seven pictures and four eggs count no eightfold identity",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "X/x",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st297",
+                "text": "X/x",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e271",
+          "name": "A19 comparison — the observer brought into the operation he first receives as scene",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.06,
+            "z": 0
+          },
+          "size": {
+            "x": 0.156,
+            "y": 0.073
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A19",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st298",
+                "text": "A19",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · the harmonised quilt line 840/881; A16's complex-phase aperture; human-amplified flags local",
+          "title": "Return: the recovered telling and its authorial office",
+          "italic": "The ending places the dreamer in a different relation to the first appearance — the whole-form QL refraction is developed while its external dependencies are identified.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The recovered primary telling supplies the seven pictures; the exact separate Taylor egg-specific commentary remains an authorial-carrier debt. Taylor's core theorem field grounds the native relation including all eight determinations — X/x is Taylor's notation, and the egg dream does not supply it: neither seven pictures nor four eggs count as an independently established identity with the eight determinations or the six positions. A19's comparison — the observer",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "brought into the operation he first receives as a scene before him — is human-amplified: no for the newly specified edge. A16's complex-phase aperture makes the retained-modulus/changed-angle distinction exact without identifying a unit circle with a torus or a theory of psychic causation; the exact egg-to-QL symbolic map remains human-amplified: no. Human-amplified: yes for the already adopted whole-before-fragments programme office; no new symbolic identity is ratified here.\n\nOccurrences: the seven pictures' cardinality (#0–#3, #5→0); the four eggs' two origins (#1–#2, #5→0); the spoken circle (#3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

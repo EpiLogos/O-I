@@ -2,6 +2,7 @@ import { useState } from "react";
 import { Glyph } from "./workspace/Glyph";
 import { useKernel } from "./kernel/KernelProvider";
 import { GroundChooser } from "./workspace/GroundChooser";
+import { WelcomePrompt } from "./flow/WelcomePrompt";
 
 import "./flow/flow.css";
 
@@ -46,7 +47,7 @@ export function Rest({ project, onWrite, onWiki, onSearch, onExplore }: {
           <p role="status" className="rest-ground-status">{boot.phase === "ground-unrecognised" ? "Choose the Central workspace that holds your files" : (boot.detail ?? "The default Central ground is not accessible")}</p>
         </div>
         <GroundChooser />
-      </> : <header className="welcome-prompt"><h2>What would you like to work on?</h2><p>Start a draft, find a source, or open your library.</p></header>}
+      </> : <header className="welcome-prompt"><WelcomePrompt placement="returning"/><p>Start a draft, find a source, or open your library.</p></header>}
       {/* Writing never waits for a ground either: the chooser asks for one,
           and the entry to write stays reachable beside it. */}
       <nav className="rest-actions" aria-label="Start working">
