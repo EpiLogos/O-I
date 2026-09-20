@@ -498,9 +498,25 @@ fn hand_guardian_to_aikit(
 
 /// Run the bootstrap's cognition step: project the shipped guardian SkillSet
 /// onto the ground, then hand it to AIKit.
+///
+/// The direct projection must succeed — those are the guardian Skills on the
+/// ground. The AIKit handoff is a convenience: when AIKit already owns the
+/// guardian capsule (a re-init on a machine whose AIKit adopted it from another
+/// ground), the handoff is effectively already done, so an
+/// `adopt.destination_exists` refusal is benign and must not abort ground
+/// establishment. Other handoff failures still surface.
 fn run_guardian_pickup(path: &Path) -> Result<(), String> {
     let report = project_guardian(path)?;
-    hand_guardian_to_aikit(path, &report)
+    match hand_guardian_to_aikit(path, &report) {
+        Ok(()) => Ok(()),
+        Err(reason) if reason.contains("destination_exists") => {
+            println!(
+                "  guardian SkillSet already owned by AIKit; handoff skipped (run 'oi skills sync' to refresh it)."
+            );
+            Ok(())
+        }
+        Err(reason) => Err(reason),
+    }
 }
 
 /// Re-project the guardian SkillSet onto the configured personal ground and
@@ -609,6 +625,10 @@ fn command_migrate_placement(args: &[OsString]) -> Result<i32, String> {
     })?;
 
     println!("Placed work tree: {}", target.display());
+    // Bring the placed project into the ground's work-placement policy so agents
+    // can work in it immediately — running migrate is the person's act of
+    // bringing it in. Best-effort: never fails the completed placement.
+    ensure_project_in_placement(&executable, &ground, &name.to_string_lossy());
     println!("No Project, Factory, AIKit, or Workcell object was created or renamed.");
     println!("Derived systems that remember the old path may now need an explicit refresh.");
     Ok(0)

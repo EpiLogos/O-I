@@ -8,62 +8,8 @@ export type ContentNode = {
   children: ContentNode[];
 };
 
-type MutableContentNode = Omit<ContentNode, 'body' | 'children'> & {
-  bodyLines: string[];
-  children: MutableContentNode[];
-};
-
-const headingPattern = /^(#{1,4})\s+\[([a-z0-9-]+)\]\s+(.+?)\s*$/i;
-
-function parsePublicContent(source: string): ContentNode[] {
-  const root: MutableContentNode = {
-    id: '__root__',
-    title: 'root',
-    level: 0,
-    bodyLines: [],
-    children: [],
-  };
-  const stack: MutableContentNode[] = [root];
-
-  for (const line of source.split(/\r?\n/)) {
-    const match = line.match(headingPattern);
-    if (match) {
-      const level = match[1].length;
-      const node: MutableContentNode = {
-        id: match[2],
-        title: match[3].trim(),
-        level,
-        bodyLines: [],
-        children: [],
-      };
-
-      while (stack.length > 1 && stack[stack.length - 1].level >= level) {
-        stack.pop();
-      }
-
-      stack[stack.length - 1].children.push(node);
-      stack.push(node);
-      continue;
-    }
-
-    if (stack.length > 1) {
-      stack[stack.length - 1].bodyLines.push(line);
-    }
-  }
-
-  const freeze = (node: MutableContentNode): ContentNode => ({
-    id: node.id,
-    title: node.title,
-    level: node.level,
-    body: node.bodyLines
-      .filter((line) => line.trim() !== '---')
-      .join('\n')
-      .trim(),
-    children: node.children.map(freeze),
-  });
-
-  return root.children.map(freeze);
-}
+// The build and browser consume the same parser, not two copies of the prose.
+import { parsePublicContent } from './public-parser.mjs';
 
 function findChild(parent: ContentNode, id: string): ContentNode | undefined {
   return parent.children.find((node) => node.id === id);

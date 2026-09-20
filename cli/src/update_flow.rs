@@ -556,24 +556,56 @@ fn print_plan_report(entries: &[PlanEntry], drift: &[String], channel: UpdateCha
     updates
 }
 
-fn acquire_update_lock(data_root: &Path) -> Result<PathBuf, String> {
+/// A managed-update lock held by the operating system for the updater's
+/// lifetime. The file is diagnostics only: if the holder is killed, the OS
+/// releases the advisory lock and the next run recovers without manual
+/// deletion.
+#[derive(Debug)]
+struct UpdateLockGuard {
+    path: PathBuf,
+    // The value is intentionally unread: keeping the file open retains the
+    // operating-system lock until this guard drops.
+    #[allow(dead_code)]
+    file: fs::File,
+}
+
+impl UpdateLockGuard {
+    fn path(&self) -> &Path {
+        &self.path
+    }
+}
+
+fn acquire_update_lock(data_root: &Path) -> Result<UpdateLockGuard, String> {
+    use std::io::Write;
+
     let lock = updates_receipts_dir(data_root).join("update.lock");
     fs::create_dir_all(updates_receipts_dir(data_root))
-        .map_err(|error| format!("cannot create {}: {error}", updates_receipts_dir(data_root).display()))?;
-    match fs::OpenOptions::new().write(true).create_new(true).open(&lock) {
-        Ok(mut file) => {
-            use std::io::Write;
+        .map_err(|error| format!("cannot acquire update lock {}: {error}", lock.display()))?;
+    let file = fs::OpenOptions::new()
+        .read(true)
+        .write(true)
+        .create(true)
+        .truncate(false)
+        .open(&lock)
+        .map_err(|error| format!("cannot acquire update lock {}: {error}", lock.display()))?;
+    match file.try_lock() {
+        Ok(()) => {
+            let mut file = file;
+            file.set_len(0)
+                .map_err(|error| format!("cannot acquire update lock {}: {error}", lock.display()))?;
             let _ = writeln!(file, "{}", std::process::id());
-            Ok(lock)
+            Ok(UpdateLockGuard { path: lock, file })
         }
-        Err(error) if error.kind() == std::io::ErrorKind::AlreadyExists => {
+        Err(std::fs::TryLockError::WouldBlock) => {
             let holder = fs::read_to_string(&lock).unwrap_or_default();
             Err(format!(
-                "another managed update holds {} (pid {}); remove the lock only if no update is running",
+                "another managed update holds {} (pid {}); wait for that update to finish",
                 lock.display(), holder.trim(),
             ))
         }
-        Err(error) => Err(format!("cannot acquire update lock {}: {error}", lock.display())),
+        Err(std::fs::TryLockError::Error(error)) => {
+            Err(format!("cannot acquire update lock {}: {error}", lock.display()))
+        }
     }
 }
 
@@ -823,7 +855,7 @@ fn command_update_apply(
         save_composition(&composition)?;
         Ok(updated)
     })();
-    let _ = fs::remove_file(&lock);
+    let _ = fs::remove_file(lock.path());
     let updated = outcome?;
     if !json_mode && !updated.is_empty() {
         println!("Managed update complete (channel {}): {} product(s) swapped atomically; receipts at {}.",
@@ -934,7 +966,7 @@ fn command_update_rollback(json_mode: bool) -> Result<i32, String> {
         save_composition(&composition)?;
         Ok(restored)
     })();
-    let _ = fs::remove_file(&lock);
+    let _ = fs::remove_file(lock.path());
     let restored = outcome?;
     if json_mode {
         println!("{}", serde_json::to_string_pretty(&json!({
@@ -1272,6 +1304,21 @@ mod update_flow_tests {
         assert_eq!(by_main.revision, accepted);
         assert!(resolve_desired_cut("tool", &checkout, Some("HEAD")).is_err(),
             "a candidate must be 'main' or an exact commit id");
+    }
+
+    #[test]
+    fn an_interrupted_update_lock_recovers_without_manual_deletion() {
+        let data = tempfile::tempdir().unwrap();
+        let first = acquire_update_lock(data.path()).unwrap();
+        let lock_path = first.path().to_path_buf();
+        assert!(lock_path.is_file());
+
+        // Dropping the guard stands in for holder death: the diagnostic file
+        // may remain, but the operating system no longer holds the lock.
+        drop(first);
+        let second = acquire_update_lock(data.path())
+            .expect("a released advisory lock must not become a permanent recovery barrier");
+        assert_eq!(second.path(), lock_path.as_path());
     }
 
     #[test]

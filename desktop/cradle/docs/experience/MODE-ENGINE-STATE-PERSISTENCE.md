@@ -4,6 +4,10 @@ Status: commissioned design for implementation. Owner report: switching to
 and from the Expressions and Technè engines loses their state — the engines
 reboot instead of resuming.
 
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
 LANDED 2026-09-20: the first pass (§1–6, per-mode persistent stage slots)
 and the second pass (§7/§8) are both implemented on this branch. §7.1: the
 park is retired — `SurfaceBody` mounts `ModeCentreBody` directly (a
@@ -22,6 +26,11 @@ kernel-backed and needed no renderer checkpoint. Evidence:
 pending-origin/restart legs stand down at the documented pre-existing
 navigator-listing stall, WORKSPACE-CONTINUITY-EXECUTION).
 
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> origin/main
+>>>>>>> origin/main
 ## 1. Root cause (suspected, verify first)
 
 The mode-centre retention park (`src/surface/retention.tsx`) keeps centre
@@ -129,6 +138,10 @@ a stage slot owns). `CentreOutlet` remains for pane-tab presentation.
   app's Save into its kernel-backed documents is its own feature).
 - Pane-tab-presented centres' move-reload residual.
 - The C-matrix's native legs (C07/C21/C22/C23) — unchanged.
+<<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
 
 ## 7. Second pass — commissioned 2026-09-19 (owner directive: these are not residuals)
 
@@ -181,3 +194,8 @@ restart, not just mode round trips. The app already deep-links its entry
   checkpointed ref) via the app's own deep-link.
 - All prior acceptance (10/10 mode-engine-state, 13/13 html-continuity,
   37+/39 node suites, tsc, no double mounts) stays green.
+<<<<<<< HEAD
+=======
+=======
+>>>>>>> origin/main
+>>>>>>> origin/main
