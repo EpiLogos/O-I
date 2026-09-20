@@ -90,7 +90,10 @@ export function switchWorkspaceMode(workspace: Workspace, next: WorkspaceMode): 
   if (from === next || !TREE_MODES.includes(next)) return workspace;
   const { [next]: saved, ...rest } = { ...workspace.modeLayouts, [from]: { ...workspace.layout, modeRegions: undefined } };
   const base: LayoutState = saved ?? { ...initialLayout(), rightDepth: next === "base" ? "collapsed" : "panel" };
-  const layout: LayoutState = { ...base, ...sharedAcrossModes(workspace.layout), mode: next === "base" ? undefined : next, modeRegions: undefined };
+  const layout: LayoutState = { ...base, ...sharedAcrossModes(workspace.layout), mode: next === "base" ? undefined : next, modeRegions: undefined,
+    // System/Settings uses the whole workspace on entry. The previous tree,
+    // focus and side-region depths remain exactly where they were saved.
+    ...(next === "settings" ? { agencyDepth: "collapsed", rightDepth: "collapsed", settingsReturnMode: from as Exclude<WorkspaceMode, "settings"> } : {}) };
   const context: WorldContext | undefined = next === "epi-logos" ? { ...workspace.context, world: "epi-logos" } : workspace.context;
   return { ...workspace, layout, modeLayouts: rest, context };
 }

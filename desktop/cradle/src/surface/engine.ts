@@ -8,7 +8,6 @@
 
 import {
   AGENCY_DEPTHS,
-  type AgencyDepth,
   type Dir,
   type LayoutState,
   type Pane,
@@ -47,6 +46,21 @@ export function groupsOf(pane: Pane | null): TabGroupPane[] {
   return pane.children.flatMap(groupsOf);
 }
 
+/** The upper boundary leaf. h = side by side, v = stacked. Positive split
+ * weights change size, never which child touches an outside corner. A valid
+ * maximise mask makes its one visible group own BOTH upper corners. */
+export function upperCornerGroupId(state: Pick<LayoutState, "root" | "maximizedGroupId">, side: "left" | "right"): string | null {
+  if (state.maximizedGroupId && groupsOf(state.root).some(g => g.id === state.maximizedGroupId)) return state.maximizedGroupId;
+  const visit = (pane: Pane | null): string | null => {
+    if (!pane) return null;
+    if (pane.type === "group") return pane.id;
+    const children = pane.dir === "h" && side === "right" ? [...pane.children].reverse() : pane.children;
+    for (const child of children) { const id = visit(child); if (id) return id; }
+    return null;
+  };
+  return visit(state.root);
+}
+
 export function contains(pane: Pane, id: string): boolean {
   if (pane.type === "group") return pane.id === id;
   return pane.children.some((c) => contains(c, id));
@@ -76,15 +90,32 @@ function prune(pane: Pane | null, reservedGroups: ReadonlySet<string> = new Set(
   return { ...pane, children, weights: pane.weights ? surviving.map(entry => entry.weight) : undefined };
 }
 
-/** Finalise a state around a new root: fix focus, clamp depth at rest. */
+/** Presentation invariants, shared by mutations and persisted restoration:
+ * - every nonempty group presents a member; empty groups present null;
+ * - pins are a subset, and an empty destination ceases to be empty when filled;
+ * - focus/maximise/tab-focus never point into a pruned group or closed tab;
+ * - no content and no detached native view means genuine rest (root = null).
+ * This repairs membership only. It does not recreate bindings, reset a book,
+ * touch document models, or discard the closed-content recovery stack. */
+export function reconcileLayout(state: LayoutState): LayoutState {
+  const normalize = (g: TabGroupPane): TabGroupPane => {
+    const tabs = [...new Set(g.tabs)].filter(id => !!state.surfaces[id]);
+    const pinned = [...new Set(g.pinned)].filter(id => tabs.includes(id));
+    const active = g.active && tabs.includes(g.active) ? g.active : tabs[0] ?? null;
+    return { ...g, tabs, pinned, active, emptySlot: !tabs.length && g.emptySlot ? true : undefined };
+  };
+  let root = prune(state.root ? mapPane(state.root, normalize) : null, new Set(state.detached?.map(entry => entry.groupId)));
+  if (root && !groupsOf(root).some(g => g.tabs.length) && !state.detached?.length) root = null;
+  const groups = groupsOf(root);
+  const focusedGroupId = groups.find(g => g.id === state.focusedGroupId)?.id ?? groups[0]?.id ?? null;
+  const live = new Set(groups.flatMap(g => g.tabs));
+  return { ...state, root, focusedGroupId,
+    maximizedGroupId: groups.some(g => g.id === state.maximizedGroupId) ? state.maximizedGroupId : undefined,
+    focusedTabId: state.focusedTabId && live.has(state.focusedTabId) ? state.focusedTabId : undefined };
+}
+
 function withRoot(state: LayoutState, root: Pane | null): LayoutState {
-  const pruned = prune(root, new Set(state.detached?.map(entry => entry.groupId)));
-  let focusedGroupId = state.focusedGroupId;
-  if (!pruned) focusedGroupId = null;
-  else if (!focusedGroupId || !contains(pruned, focusedGroupId))
-    focusedGroupId = groupsOf(pruned)[0].id;
-  const agencyDepth: AgencyDepth = state.agencyDepth;
-  return { ...state, root: pruned, focusedGroupId, agencyDepth };
+  return reconcileLayout({ ...state, root });
 }
 
 // ---------------------------------------------------------------------------
@@ -205,8 +236,16 @@ export function openBinding(
   state: LayoutState,
   binding: SurfaceBinding,
 ): LayoutState {
+  // A binding can have one placement in the centre tree. Reopening an
+  // already live binding activates it rather than creating a duplicate tab.
+  if (groupOf(state, binding.id)) return activateSurface({ ...state, surfaces: { ...state.surfaces, [binding.id]: binding } }, binding.id);
+  const targetBefore = focusedGroup(state);
+  const placeholder = targetBefore?.active ? state.surfaces[targetBefore.active] : undefined;
+  if (binding.kind === "blank" && placeholder?.kind === "blank") return state;
+  const consume = placeholder?.kind === "blank" && !targetBefore?.pinned.includes(placeholder.id) ? placeholder.id : undefined;
   const surfaces = { ...state.surfaces, [binding.id]: binding };
-  const base: LayoutState = { ...state, surfaces };
+  if (consume) delete surfaces[consume]; // Only an unowned opener, never closed document content.
+  const base: LayoutState = { ...state, surfaces, closedStack: state.closedStack.filter(id => id !== binding.id && id !== consume) };
   if (!state.root) {
     const g: TabGroupPane = {
       type: "group",
@@ -215,14 +254,14 @@ export function openBinding(
       pinned: [],
       active: binding.id,
     };
-    return { ...base, root: g, focusedGroupId: g.id };
+    return withRoot({ ...base, focusedGroupId: g.id }, g);
   }
   const target = focusedGroup(base);
   if (!target) return base;
   const root = mapPane(base.root!, (g) =>
-    g.id === target.id ? { ...g, tabs: [...g.tabs, binding.id], active: binding.id, emptySlot: undefined } : g,
+    g.id === target.id ? { ...g, tabs: consume ? g.tabs.map(id => id === consume ? binding.id : id) : [...g.tabs, binding.id], active: binding.id, emptySlot: undefined } : g,
   );
-  return { ...base, root, focusedGroupId: target.id };
+  return withRoot({ ...base, focusedGroupId: target.id }, root);
 }
 
 function removeTab(g: TabGroupPane, id: SurfaceId): TabGroupPane {
@@ -278,8 +317,13 @@ export function closeSurface(state: LayoutState, id: SurfaceId): LayoutState {
   const g = groupOf(state, id);
   if (!g || g.pinned.includes(id)) return state;
   const root = mapPane(state.root!, (x) => (x.id === g.id ? removeTab(x, id) : x));
-  const closedStack = [...state.closedStack, id];
-  return withRoot({ ...state, closedStack }, root);
+  // A dismissed opener has no content to recover. Real closed documents
+  // retain their binding and re-open stack, including unsaved-draft identity.
+  const blank = state.surfaces[id]?.kind === "blank";
+  const closedStack = [...state.closedStack.filter(old => old !== id), ...(!blank ? [id] : [])];
+  const surfaces = blank ? { ...state.surfaces } : state.surfaces;
+  if (blank) delete surfaces[id];
+  return withRoot({ ...state, surfaces, closedStack }, root);
 }
 
 /** Dismiss only an intentionally empty destination, never a detached view's slot. */
@@ -415,7 +459,7 @@ export function moveTab(
     g.id === to.id ? insertTab(g, id, beforeId, carryPinned) : g,
   );
   const next = withRoot(state, root);
-  return { ...next, focusedGroupId: to.id };
+  return { ...next, focusedGroupId: to.id, maximizedGroupId: state.maximizedGroupId ? to.id : undefined };
 }
 
 // ---------------------------------------------------------------------------
@@ -478,12 +522,12 @@ export function activateSurface(state: LayoutState, id: SurfaceId): LayoutState 
   const g = groupOf(state, id);
   if (!g) return state;
   const root = mapPane(state.root!, (x) => (x.id === g.id ? { ...x, active: id } : x));
-  return { ...state, root, focusedGroupId: g.id };
+  return { ...state, root, focusedGroupId: g.id, maximizedGroupId: state.maximizedGroupId ? g.id : undefined };
 }
 
 export function focusGroup(state: LayoutState, groupId: string): LayoutState {
   if (!state.root || !contains(state.root, groupId)) return state;
-  return { ...state, focusedGroupId: groupId };
+  return { ...state, focusedGroupId: groupId, maximizedGroupId: state.maximizedGroupId ? groupId : undefined };
 }
 
 /** Cycle the active tab within the focused group (visual order). */

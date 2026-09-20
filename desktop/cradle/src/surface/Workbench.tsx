@@ -25,7 +25,7 @@ import { SourcesIndex } from "./SourcesIndex";
 import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
-import { contains, groupsOf, renderOrder } from "./engine";
+import { contains, groupsOf, renderOrder, upperCornerGroupId } from "./engine";
 // Expensive bodies load on first use, not at startup: the terminal (xterm),
 // the browser attachment, Explore and its presentation renderers, the
 // knowledge graph and its layout worker, the Factory contribution and the
@@ -235,7 +235,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       className={`pane group${focused ? " focused" : ""}`}
       data-pane="group"
       data-group-id={group.id}
-      data-window-corner={groupsOf(state.root).filter(g=>!state.maximizedGroupId||g.id===state.maximizedGroupId)[0]?.id===group.id}
+      data-window-corner={upperCornerGroupId(state, "right") === group.id}
+      data-window-corner-left={upperCornerGroupId(state, "left") === group.id}
       data-focused={focused}
       data-tab-focus={!!active&&state.focusedTabId===active}
       data-tab-presentation={tabPresentation}

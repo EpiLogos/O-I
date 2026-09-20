@@ -131,3 +131,20 @@
 @media (prefers-reduced-motion: reduce) {
   .config-input, .config-mini, .config-drawer-actions button, .profiles-list > button, .profile-detail-actions button { transition: none; }
 }
+
+/* Shared layout only. The SetupFlow controller owns validation, review,
+   cancellation, native apply/readback and its retained draft. */
+.config-drawer { box-sizing: border-box; inset: 16px 0; margin-inline: auto; width: min(960px, calc(100% - 32px)); max-width: calc(100% - 32px); grid-template-columns: minmax(0, 1fr); justify-items: stretch; padding: clamp(12px, 3vw, 24px); scrollbar-gutter: stable; }
+.config-drawer :is(section, form, fieldset, label, details, div, nav, dl) { box-sizing: border-box; min-width: 0; max-width: 100%; }
+.config-drawer fieldset { min-inline-size: 0; margin: 8px 0; padding: 12px 0; border: 0; border-top: 1px solid var(--oi-hairline-soft); }
+.config-drawer legend { max-width: 100%; padding: 0; white-space: normal; overflow-wrap: anywhere; }
+.config-drawer :is(input, select, textarea) { box-sizing: border-box; min-width: 0; max-width: 100%; }
+.config-drawer :is(p, dd, li, code, span) { overflow-wrap: anywhere; }
+.config-drawer :is(header, .config-plan-facts > div, .config-changeset-head) { flex-wrap: wrap; gap: 6px 12px; }
+.config-drawer pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; max-height: none; overflow: visible; }
+.config-drawer :is(.config-plan, .config-changeset) { width: 100%; }
+@media (max-width: 600px) {
+  .config-drawer { inset-block: 8px; width: calc(100% - 16px); max-width: calc(100% - 16px); }
+  .config-drawer :is(.config-plan-facts > div, .config-scope, .config-new-profile) { flex-direction: column; align-items: stretch; }
+  .config-drawer :is(.config-plan-facts dt, .config-plan-facts dd) { min-width: 0; }
+}
