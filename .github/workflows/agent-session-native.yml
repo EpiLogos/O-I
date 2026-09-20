@@ -15,7 +15,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.head_ref || github.ref_name }}
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -31,35 +31,27 @@ jobs:
           test "$GITHUB_REF_NAME" = agent/native-agent-session-20260920
           mkdir -p /tmp/agent-publication
           git rev-parse HEAD > /tmp/agent-publication/before-head.txt
-          python3 - <<'PY'
-          import base64,hashlib,lzma,pathlib,re,subprocess
-          part=pathlib.Path('.github/agent-creation.part1')
-          if part.exists():
-              encoded=part.read_text()+pathlib.Path('.github/agent-creation.part2').read_text()
-              patch=lzma.decompress(base64.b64decode(encoded))
-              assert hashlib.sha256(patch).hexdigest()=='e34e6f9ca67fc79b7142fa0c392bc6c13a00bc593193813b23ccabd3f62c29a2'
-              paths=re.findall(rb'^diff --git a/(.*?) b/(.*?)$',patch,re.M)
-              assert len(paths)==28 and all(a==b for a,b in paths)
-              assert all(a.startswith(b'desktop/cradle/') and b'..' not in a for a,b in paths)
-              target=pathlib.Path('desktop/cradle/kernel/src/agent_definition.rs')
-              assert subprocess.check_output(['git','hash-object',str(target)]).decode().strip()=='e9937e82fd93d8ac6233061bbfa600fcf01ec0b9'
-              pathlib.Path('/tmp/agent-publication/previous-agent-definition.rs').write_bytes(target.read_bytes())
-              target.unlink()
-              p=pathlib.Path('/tmp/agent-publication/creation.patch');p.write_bytes(patch)
-              subprocess.run(['git','apply','--check',str(p)],check=True)
-              subprocess.run(['git','apply',str(p)],check=True)
-              subprocess.run(['rustfmt','--edition','2021','--config','skip_children=true',str(target),'desktop/cradle/kernel/tests/agent_definition_gate.rs'],check=True)
-              subprocess.run(['git','add',*[a.decode() for a,b in paths]],check=True)
-              subprocess.run(['git','rm','.github/agent-creation.part1','.github/agent-creation.part2'],check=True)
-              subprocess.run(['git','config','user.name','Epii'],check=True)
-              subprocess.run(['git','config','user.email','agent-session@users.noreply.github.com'],check=True)
-              subprocess.run(['git','commit','-m','feat(agent): connect native definition acceptance and Direct-session composer with recovery'],check=True)
-              subprocess.run(['git','push','origin','HEAD:refs/heads/agent/native-agent-session-20260920'],check=True)
+          if test -f .github/finish-agent-consumer.py; then
+            python3 .github/finish-agent-consumer.py
+            python3 .github/finish-agent-consumer-tests.py
+            rustfmt --edition 2021 --config skip_children=true desktop/cradle/kernel/src/agent_definition.rs desktop/cradle/kernel/tests/agent_definition_gate.rs
+            python3 - <<'PY'
+          import subprocess
+          paths=set(subprocess.check_output(['git','diff','--name-only']).decode().splitlines())
+          allowed={'desktop/cradle/kernel/src/agency.rs','desktop/cradle/kernel/src/agent_definition.rs','desktop/cradle/kernel/tests/agent_definition_gate.rs','desktop/cradle/src/agency/nativeAgent.ts','desktop/cradle/src/agency/NativeAgentLauncher.tsx','desktop/cradle/src/agency/agentSetup.ts','desktop/cradle/src/agency/AgentSetupReturn.tsx','desktop/cradle/src/agent/chat/AgentChat.tsx','desktop/cradle/src/workspace/settings/v2/SettingsHome.tsx','desktop/cradle/src/workspace/settings/v2/SettingsPageV2.tsx','desktop/cradle/tests/agent-native-creation-browser.tsx','desktop/cradle/tests/agent-native-creation-browser.mjs'}
+          assert paths<=allowed, paths-allowed
+          subprocess.run(['git','add',*sorted(paths),'desktop/cradle/src/agency/nativeAgentReadiness.ts','desktop/cradle/tests/agent-native-readiness.test.mjs'],check=True)
           PY
+            git rm .github/finish-agent-consumer.py .github/finish-agent-consumer-tests.py
+            git config user.name Epii
+            git config user.email agent-session@users.noreply.github.com
+            git commit -m 'feat(agent): connect effective native Skills, explicit World readiness and targeted setup return'
+            git push origin HEAD:refs/heads/agent/native-agent-session-20260920
+          fi
       - name: Retain actual source and any interrupted patch
         if: always()
         run: |
-          mkdir -p desktop/cradle/tests/agent-native-results
+          mkdir -p desktop/cradle/tests/agent-native-results /tmp/agent-publication
           git rev-parse HEAD > desktop/cradle/tests/agent-native-results/source-revision.txt
           git diff > desktop/cradle/tests/agent-native-results/uncommitted.patch
           git archive --format=tar.gz HEAD > /tmp/agent-publication/source.tar.gz
@@ -71,7 +63,7 @@ jobs:
         continue-on-error: true
         shell: bash
         working-directory: desktop/cradle
-        run: node --experimental-strip-types --test tests/agent-native-model.test.mjs tests/agent-native-creation.test.mjs tests/agent-native-delivery.test.mjs 2>&1 | tee tests/agent-native-results/controllers.log
+        run: node --experimental-strip-types --test tests/agent-native-model.test.mjs tests/agent-native-creation.test.mjs tests/agent-native-delivery.test.mjs tests/agent-native-readiness.test.mjs 2>&1 | tee tests/agent-native-results/controllers.log
       - name: Local acceptance packet checks (not live models)
         id: packet
         continue-on-error: true
@@ -79,7 +71,9 @@ jobs:
         working-directory: desktop/cradle
         run: |
           python3 tests/agent-native-live.test.py 2>&1 | tee tests/agent-native-results/packet.log
+          python3 tests/agent-native-local.test.py 2>&1 | tee tests/agent-native-results/creation-packet.log
           python3 tests/agent-native-live.py --help
+          python3 tests/agent-native-local.py --help
       - name: Browser runtime
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium
@@ -103,14 +97,18 @@ jobs:
         shell: bash
         working-directory: desktop/cradle/kernel
         run: cargo test --locked --test agent_native_gate --test agent_definition_gate 2>&1 | tee ../tests/agent-native-results/kernel.log
-      - name: Full kernel regressions and strict lint
+      - name: Full kernel regressions without early target termination
         id: allkernel
         continue-on-error: true
         shell: bash
         working-directory: desktop/cradle/kernel
-        run: |
-          cargo test --locked 2>&1 | tee ../tests/agent-native-results/kernel-all.log
-          cargo clippy --all-targets --locked -- -D warnings 2>&1 | tee ../tests/agent-native-results/kernel-clippy.log
+        run: cargo test --locked --all-targets --no-fail-fast 2>&1 | tee ../tests/agent-native-results/kernel-all.log
+      - name: Strict kernel lint independently of test outcome
+        id: lint
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle/kernel
+        run: cargo clippy --all-targets --locked -- -D warnings 2>&1 | tee ../tests/agent-native-results/kernel-clippy.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -122,5 +120,9 @@ jobs:
       - name: Preserve failed and skipped gates
         if: always()
         env:
-          OUTCOMES: ${{ steps.controller.outcome }},${{ steps.packet.outcome }},${{ steps.browser.outcome }},${{ steps.build.outcome }},${{ steps.kernel.outcome }},${{ steps.allkernel.outcome }}
-        run: test "$OUTCOMES" = 'success,success,success,success,success,success'
+          OUTCOMES: ${{ steps.publish.outcome }},${{ steps.controller.outcome }},${{ steps.packet.outcome }},${{ steps.browser.outcome }},${{ steps.build.outcome }},${{ steps.kernel.outcome }},${{ steps.allkernel.outcome }},${{ steps.lint.outcome }}
+        run: |
+          case "$OUTCOMES" in
+            success,success,success,success,success,success,success,success|skipped,success,success,success,success,success,success,success) exit 0 ;;
+            *) exit 1 ;;
+          esac
