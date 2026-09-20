@@ -1,52 +1,20 @@
-/**
- * The Nara↔Epii delegation ledger — one shared reading of the delegation and
- * enrichment receipts the Nara surface records (`session.recordDelegation` /
- * `recordEnrichment`, the ql.nara-epii-delegation/v1 + ql.epii-enrichment/v1
- * contracts). The Nara surface remains the only WRITER (it owns the dialogue
- * context a delegation is derived from); the Technè Epii plane and any other
- * panel read the same receipts here instead of keeping a second truth.
- *
- * Module-level external store, same pattern as the dual-mode cut store:
- * bounded to the most recent entries, listeners notified on change, every
- * read guarded. This is a READING of receipts — not authority, not a second
- * session store, and it never applies an enrichment (retained-not-applied is
- * the contract; applying stays a Nara-surface action over its own context).
+/** Historical unscoped reader retained for consumer compatibility.
+ * Personal delegation/result content must NOT be broadcast to a generic
+ * Technè panel or diagnostics. NaraRuntime retains its own private inquiry
+ * reading for the selected encounter. Explicit cross-plane sharing needs an
+ * owner-admitted scoped reading; knowing a ref is not a disclosure grant.
  */
-
 export interface DelegationLedgerEntry {
-  delegation: Record<string, unknown>;
-  delegation_receipt: Record<string, unknown>;
-  enrichment: Record<string, unknown> | null;
-  enrichment_receipt: Record<string, unknown> | null;
-  recorded_at: string;
+  delegation:Record<string,unknown>;
+  delegation_receipt:Record<string,unknown>;
+  enrichment:Record<string,unknown>|null;
+  enrichment_receipt:Record<string,unknown>|null;
+  recorded_at:string;
 }
-
-const MAX_ENTRIES = 64;
-
-let entries: DelegationLedgerEntry[] = [];
-const listeners = new Set<() => void>();
-
-const emit = () => { for (const listener of [...listeners]) listener(); };
-
-export function subscribeDelegationLedger(listener: () => void): () => void {
-  listeners.add(listener);
-  return () => { listeners.delete(listener); };
-}
-
-export function delegationLedger(): DelegationLedgerEntry[] {
-  return entries;
-}
-
-const delegationRefOf = (entry: DelegationLedgerEntry): string =>
-  typeof entry.delegation?.delegation_ref === "string" ? entry.delegation.delegation_ref : "";
-
-/** Record (or replace — same delegation_ref means the same delegation whose
- * enrichment later arrived) one ledger entry. Called by the Nara surface at
- * the moment it records the receipt through its own session. */
-export function putDelegationLedger(entry: DelegationLedgerEntry): void {
-  const ref = delegationRefOf(entry);
-  const next = entries.filter(existing => delegationRefOf(existing) !== ref);
-  next.unshift(entry);
-  entries = next.slice(0, MAX_ENTRIES);
-  emit();
+const EMPTY:DelegationLedgerEntry[]=[];
+Object.freeze(EMPTY);
+export function delegationLedger():DelegationLedgerEntry[]{return EMPTY;}
+export function subscribeDelegationLedger(_listener:()=>void):()=>void{return()=>{};}
+export function putDelegationLedger(_entry:DelegationLedgerEntry):never {
+  throw new Error("Unscoped personal delegation publication is forbidden; retain the result in its own Nara encounter");
 }

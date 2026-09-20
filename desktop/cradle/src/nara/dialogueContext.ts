@@ -448,7 +448,7 @@ export function buildEpiiDelegation(input:{delegation_ref:string;context:NaraDia
   const context=validateDialogueContext(input.context);
   wireText(input.delegation_ref,"delegation reference");
   wireText(input.epii_session_ref,"Epii AgentSession reference");
-  if(input.epii_session_ref===context.nara_ref)throw new Error("Epii AgentSession must remain distinct from the delegating Nara");
+  if(input.epii_session_ref===context.nara_ref||input.epii_session_ref===context.agent_session_ref)throw new Error("Epii AgentSession must remain distinct from the delegating Nara");
   wireLongText(input.brief,"delegation brief",MAX_BRIEF_LEN);
   const scopeRefs=admitRefs(context,input.scope_candidates);
   if(context.bimba==null)throw new Error("dialogue context carries no Bimba selection to delegate against");
@@ -589,6 +589,9 @@ export function applyGate(delegation:EpiiDelegation,enrichment:EpiiEnrichment,cu
   validateEpiiEnrichment(enrichment);
   validateDialogueContext(current);
   if(enrichment.delegation_ref!==delegation.delegation_ref)throw new Error("enrichment answers another delegation");
+  if(enrichment.basis_context_ref!==delegation.basis.context_ref||enrichment.basis_expression_revision!==delegation.basis.expression_revision)throw new Error("enrichment is not bound to the original delegation basis");
+  if(delegation.state.state==="withdrawn")throw new Error("withdrawn delegation cannot be applied");
+  if(delegation.state.state==="returned"&&delegation.state.enrichment_ref!==enrichment.enrichment_ref)throw new Error("another enrichment was received for this delegation");
   if(current.nara_ref!==delegation.nara_ref)throw new Error("application context belongs to another Nara");
   if(delegation.basis.expression_ref!==current.expression_ref)throw new Error("delegation basis names another Expression");
   if(delegation.basis.profile_ref!==current.profile_ref||delegation.basis.profile_revision!==current.profile_revision)throw new Error("delegation basis is not on the current profile standing");
@@ -598,6 +601,7 @@ export function applyGate(delegation:EpiiDelegation,enrichment:EpiiEnrichment,cu
   if(enrichment.basis_expression_revision!==current.expression_revision){
     throw new Error(`stale Epii enrichment: produced against Expression revision ${enrichment.basis_expression_revision} which can no longer auto-apply to live revision ${current.expression_revision}`);
   }
+  if(current.context_ref!==delegation.basis.context_ref)throw new Error("stale dialogue context: the permitted selection or source basis changed");
   for(const proposal of enrichment.proposed_focus_refs){
     const inScope=delegation.scope_refs.some(scope=>scope===proposal);
     const cited=enrichment.coordinate_refs.some(coordinate=>coordinate===proposal);

@@ -22,3 +22,7 @@
 .nara-proposal-facts dd{margin:0}
 .nara-surface pre{font-size:var(--oi-desktop-type-caption);overflow-x:auto;background:var(--oi-canvas-ground);padding:var(--oi-desktop-gap-sm);border-radius:4px}
 .nara-surface section h3{margin:0 0 var(--oi-desktop-gap-sm);font-size:var(--oi-desktop-type-body)}
+.nara-draft-label{display:flex;flex:1;flex-direction:column;gap:var(--oi-desktop-gap-sm)}
+.nara-surface textarea{min-height:4rem;resize:vertical;max-width:100%}
+.nara-surface [role="log"]{max-height:24rem;overflow:auto;overflow-wrap:anywhere;white-space:pre-wrap}
+.nara-surface .nara-proposal-facts dd{overflow-wrap:anywhere}
