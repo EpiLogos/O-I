@@ -126,6 +126,8 @@ def main() -> int:
                 prior = json.loads(args.prior_receipt.read_text())
                 if prior.get("schema") != receipt["schema"] or prior.get("standing") != "source-return-observed":
                     raise CheckFailed("Prior receipt does not prove a completed source-return check.")
+                if prior.get("probe_token_sha256") == fingerprint(token):
+                    raise CheckFailed("Reopening needs a fresh probe nonce, not a value the session already saw.")
                 session("reconnect", space=args.space, provider=args.provider, cwd=str(cwd))
             before = session("view")
             connection = before.get("connection") or {}

@@ -256,3 +256,141 @@ Each unit returns the native operation that now works, exact changed source, req
 
 The native lead finishes by giving the UI lead a usable current producer cut and completing the joined native flow. The UI lead completes the accepted experience against that cut. Independent verification follows the same real work across both. Remaining human judgement or genuinely unavailable material is named precisely; no passing provider slice closes the larger Factory, #158 or #65 programmes.
 
+
+## 15. Native Agent/session consumer delivery — 20 September 2026
+
+**Bounded delivery, not closure of SG12 or the requested Agent-creation path.**
+Review O:I [#424](https://github.com/EpiLogos/O-I/pull/424), based explicitly on
+`agent/expression-world-convergence-20260917` at `060f0165a8ecbdc2fb3bece48c7c4d48d05e2610`.
+Native dependency: AIKit [#356](https://github.com/EpiLogos/ai-kit/pull/356).
+Claims and current integration receipts remain on #220; #65's installed cut is
+not silently replaced by either PR. Neither PR is merged or installed by this lane.
+
+### Delivered contract and remaining obligations
+
+The actual composer reads model choices from the exact resident native session,
+not a universal renderer catalogue. ACP's advertised configuration selectors can
+be changed after native confirmation; a reported model alone cannot establish a
+writable selector. Pi's resident adapter remains read-only where its native path
+supports only launch-time selection. Older producers without the added capability
+field remain read-only. Effective policy pins constrain selection without hiding
+the harness's own catalogue. Model preference grants no Actuation authority.
+
+Model writes carry the previously observed native session identity. Stale reads
+cannot repopulate a changed session; lost or contradictory acknowledgements are
+unknown and are never automatically replayed. The native bridge checks the real
+Project/SessionSpace attachment on both Open and Reconnect. Failed or unknown
+connection states are not a green badge. Native provider refresh does not clear
+the existing composer draft. This is not yet an exact System setup deep-link.
+
+Still open in the owning Agent lane: purpose/name/scope to a native definition or
+proposal, explicit human acceptance, persisted Agent roster readback, and usable
+session admission; exact setup-route return to the preserved draft; effective
+context/skill and brokered-child delivery proof; addressed-turn unknown-outcome
+reconciliation. Central's generated/unrecognised proposal is not human acceptance
+and must not be promoted into one by this renderer. No replacement Guardians,
+renderer-only Agent registry or Factory ancestry are introduced. D retains general
+installation/System forms; E retains Factory; the existing Context/editor writer
+retains its selected-source contract. These are unfinished obligations, not reasons
+to classify working native capability as absent or to close them with a fixture.
+
+### Executed evidence and retained failures
+
+Production controller tests: 13 passing, including stale native identity,
+out-of-order reads, policy pins, read-only harnesses, lost/contradictory selection
+acknowledgement and no automatic replay. The production kernel subprocess gate
+has three passing tests for model dispatch and exact-space reconnect refusal.
+Four Chromium scenarios exercise the actual ChatComposer and native controller:
+advertised choices, draft preservation, unknown configuration outcome and honest
+read-only/fault states. The production desktop build passed at
+`c9d0bd40c6ffe765548c2aaf7c277b03e9401e3a`, run `35486790994`.
+
+AIKit's real adapter/host/EncounterService tests exercise fragmented stdio, partial
+streams, tool permission denial, cancellation, disconnect, lost acknowledgement,
+stale identity and exact native reopening. Scoped format/adapter/handler checks
+passed at `744a757ff886d11cacc04c8fb73d22869d6fcf52`, run `35486523805`.
+Current-head full CI remains separately inspectable on each PR; this dated receipt
+does not turn a historical scoped pass into current-head full acceptance.
+
+Retain original runs: AIKit `35485755570` failed two controlled selector cases
+because the test peer omitted the required model category. Correcting the wire
+input added a missing-category negative case; it did not relax the native parser.
+AIKit `35486135920` failed formatting; `35486730690` lacked rustfmt for the pinned
+toolchain; `35486730700` caught a documentation-list lint under full Clippy.
+O:I `35486188885` stopped on an ambiguous patch assertion before committing;
+`35486629892` exposed a missing dev-preview interface implementation and a browser
+assertion preceding React's render. The fixes preserve the production interface,
+read-only dev preview and original behavioural assertions. No original failure
+is relabelled as a pass.
+
+Packet run `35487328960` passed its seven Python checks but its push was rejected
+because the CI token cannot update workflow files. The connected GitHub API
+published that workflow change separately; the source patch was retained and
+reapplied without changing workflow permissions or weakening any test.
+
+### Bounded local packet — explicit execution by local integration
+
+`desktop/cradle/tests/agent-native-live.py` defaults to read-only native discovery.
+It is deliberately an **existing-session** packet, not a fake completion of new
+Agent creation. Obtain the actual installed `oi` candidate path, Project ref,
+SessionSpace ref, attached AgentSession ref and provider ID from their real native
+readings. Use an idle admitted session with no retained draft; the check refuses
+to overwrite one. The person grants any required native permission in Cradle.
+No key is entered into chat, this script, a profile, a receipt or browser storage.
+
+From `desktop/cradle`, with those real values assigned in the local shell:
+
+```sh
+python3 tests/agent-native-live.test.py
+python3 tests/agent-native-live.py --oi "$OI_CANDIDATE" --cwd "$PROJECT_DIR" \
+  --project-ref "$PROJECT_REF" --space "$SPACE_REF" --session "$SESSION_REF" \
+  --provider "$PROVIDER_ID" --receipt "$PREFLIGHT_RECEIPT"
+```
+
+Create a permitted non-sensitive probe file inside that Project, with first line
+`OI_AGENT_PROBE_` followed by a newly generated random 32-digit hexadecimal value.
+Do not put that line in the conversation or any model prompt. Explicit live opt-in:
+
+```sh
+python3 tests/agent-native-live.py --oi "$OI_CANDIDATE" --cwd "$PROJECT_DIR" \
+  --project-ref "$PROJECT_REF" --space "$SPACE_REF" --session "$SESSION_REF" \
+  --provider "$PROVIDER_ID" --source "$PROBE_FILE" --live \
+  --receipt "$FIRST_LIVE_RECEIPT"
+```
+
+This may incur an actual provider charge. The packet submits one bounded source-read
+task. Its prompt contains only the permitted path, not the token. Only a new
+assistant return containing the source's token, with the same native identity and
+idle completion, satisfies this check. Native permission requests are never
+auto-approved. A timeout/disconnect is retained as unknown without replay, service
+killing or implicit cancellation. Receipts contain hashes, OS/release/architecture
+and bounded outcomes, not transcripts, key material or private device names.
+
+Close and reopen the actual UI through the supported native path. Where the
+adapter supports explicit resume after its process ends, use local integration's
+supported stop/reopen procedure, not a replacement session. Change the probe to a
+**new token** and run the same live command with `--resume` and
+`--prior-receipt "$FIRST_LIVE_RECEIPT"`, choosing a new `--receipt` path. The native
+session identity must match the prior receipt. The script never restarts or
+installs the product itself. UI close/reopen, native process resume and cross-machine
+continuity are different observations; do not collapse them.
+
+For hardware checks open `tests/agent-native-device.html` in the actual candidate's
+HTML surface and select that surface explicitly. Record five seconds by pressing
+the button, stop, play it, and record the human listening result. Audio stays only
+in page memory; there is no upload, persistence or synthetic microphone substitute.
+Permission denial and unavailable capture are retained. Running the page in an
+ordinary browser proves only that browser, not Cradle. This page does not establish
+native dictation, Agent voice interaction or the Mac UI walk.
+
+The remaining Mac walk must create and accept a real Agent, read it back, connect
+an eligible harness, verify effective scoped material/skills, deny one real request,
+finish useful source-dependent work and reopen it without losing the composer.
+Record native keyboard/focus/window interaction and actual voice integration
+separately. Until the unfinished creation/setup path is implemented, record that
+step as blocked, not successful. No live model, microphone, installed candidate or
+human acceptance has been observed by this remote implementation session.
+
+Both required near-term outcomes remain: installable/self-inhabiting technology
+**and** the complete source-backed published corpus. This section adds no master
+programme, machine checkout, Agent identity store or parallel publication corpus.
