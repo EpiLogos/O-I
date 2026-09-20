@@ -56,18 +56,21 @@ jobs:
           tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist
       - name: Build the actual integrated cradle
         run: npm --prefix desktop/cradle run build
-      - name: Exercise the existing engine and knowledge correspondence
+      - name: Exercise native occurrence bindings and stale proposal refusal
         working-directory: desktop/cradle
         run: |
           node tests/expression-engine.mjs
           node tests/knowledge-expression.mjs
-      - name: Prove the no-subject entrance in the real mounted body
+          node tests/techne-field-bindings.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs
+      - name: Prove entrance and actual relation drawing with disconnected-binding negatives
         working-directory: desktop/cradle
         env:
           TECHNE_EVIDENCE_DIR: ${{ runner.temp }}/techne-evidence/browser
         run: |
           npx playwright install --with-deps chromium
           node tests/techne-entry-browser.mjs
+          node tests/techne-field-browser.mjs
       - name: Retain exact sources, dependency graph and execution receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -101,7 +104,7 @@ jobs:
               cp target/debug/ctrl "$RUNNER_TEMP/techne-native/"
           - owner: ai-kit
             repository: EpiLogos/ai-kit
-            ref: 99306d858c255fa258d8cc419b314a433d3f92a4
+            ref: 37994265f5727af50ec6446687ed629dde047412
             commands: |
               cargo build --locked -p aikit-cli --bins
               cp target/debug/aikit "$RUNNER_TEMP/techne-native/"
