@@ -1,0 +1,62 @@
+name: Wiki constellation integration
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/knowledge/**'
+      - 'desktop/cradle/src/techne/**'
+      - 'desktop/cradle/kernel/src/graph.rs'
+      - 'desktop/cradle/kernel/src/knowledge.rs'
+      - 'desktop/cradle/tests/wiki-*'
+      - '.github/workflows/wiki-constellation.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: wiki-constellation-${{ github.event.pull_request.number }}
+  cancel-in-progress: true
+
+jobs:
+  wiki:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Install the declared Cradle dependencies
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Check the complete Cradle TypeScript graph
+        working-directory: desktop/cradle
+        run: npx tsc --noEmit
+      - name: Preserve exact public source and test dependencies for reproducible review
+        if: always()
+        shell: bash
+        run: |
+          mkdir -p /tmp/wiki-evidence
+          git rev-parse HEAD > /tmp/wiki-evidence/source-revision.txt
+          python3 - <<'PY'
+          import pathlib, subprocess, tarfile
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          suffixes = {'.ts', '.tsx', '.js', '.mjs', '.cjs', '.rs', '.toml', '.lock', '.json', '.css', '.html', '.md', '.yml', '.yaml', '.py', '.glsl', '.vert', '.frag', '.wgsl', '.svg'}
+          with tarfile.open('/tmp/wiki-evidence/source.tar.gz', 'w:gz') as out:
+              for name in paths:
+                  p = pathlib.Path(name)
+                  if p.is_file() and not p.is_symlink() and (p.suffix in suffixes or p.name.startswith('.gitignore')):
+                      out.add(p, arcname=name, recursive=False)
+          PY
+          if [ -d desktop/cradle/node_modules ]; then
+            tar -czf /tmp/wiki-evidence/cradle-dependencies.tar.gz desktop/cradle/node_modules
+          fi
+          sha256sum /tmp/wiki-evidence/*.tar.gz > /tmp/wiki-evidence/SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiki-exact-cut-${{ github.run_id }}
+          path: /tmp/wiki-evidence/
+          retention-days: 7
