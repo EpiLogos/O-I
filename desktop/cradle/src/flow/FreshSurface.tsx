@@ -4,13 +4,14 @@ import type {SurfaceBinding} from "../surface/types";
 import "./flow.css";
 import {Glyph} from "../workspace/Glyph";
 import {DOCUMENT_FORMS} from "./documentForms";
+import {WelcomePrompt} from "./WelcomePrompt";
 export function FreshSurface({binding}:{binding:SurfaceBinding}){
  const kernel=useKernel();const [project,setProject]=useState(binding.project??"");
  const [busy,setBusy]=useState(false);const [error,setError]=useState<string>();
  useEffect(()=>{const done=(event:Event)=>{const detail=(event as CustomEvent<{id:string;error?:string}>).detail;if(detail.id===binding.id){setBusy(false);setError(detail.error);}};window.addEventListener("oi:fresh-result",done);return()=>window.removeEventListener("oi:fresh-result",done);},[binding.id]);
  const choose=(kind:string)=>{if(busy)return;setBusy(true);setError(undefined);window.dispatchEvent(new CustomEvent("oi:fresh-choice",{detail:{id:binding.id,kind,project:project||undefined}}));};
  return <section className="fresh-surface" aria-label="New tab"><div>
-  <header className="welcome-prompt"><h2>What would you like to work on?</h2><p>Write something new, find a source, or open a working tool.</p></header>
+  <header className="welcome-prompt"><WelcomePrompt placement="opening"/><p>Write something new, find a source, or open a working tool.</p></header>
   <nav className="rest-actions" aria-label="Start working">
    <button disabled={busy} onClick={()=>choose("flow")}><Glyph name="file" size={13}/><span>Start writing</span></button>
    <button disabled={busy} onClick={()=>choose("search")}><Glyph name="search" size={13}/><span>Search</span></button>

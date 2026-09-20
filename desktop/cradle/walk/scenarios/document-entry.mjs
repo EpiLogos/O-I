@@ -74,7 +74,9 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   const newBlankTab = async (via = 'keyboard') => {
     if (via === 'keyboard') await page.keyboard.press('Meta+t');
     else await page.locator('.pane.focused .strip-open').click();
-    await page.locator('.pane.focused .fresh-surface').waitFor({ timeout: 15000 });
+    await page.locator('.pane.focused .fresh-surface:not(.rest-ground)').waitFor({ timeout: 15000 });
+    const disclosure = page.locator('.pane.focused .fresh-more');
+    if (!(await disclosure.evaluate((el) => el.open))) await disclosure.locator('summary').click();
     await page.locator('.pane.focused .fresh-docforms button').first().waitFor({ timeout: 5000 });
   };
   // Save through the surface's own keyboard path (⌘S); the footer status
@@ -107,10 +109,11 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   // --- 4+2: the Day die opens as its real file -----------------------------
   await newBlankTab();
   const formButtons = await page.locator('.pane.focused .fresh-docforms button').allTextContents();
-  check(formButtons.length === 2 && formButtons.some(t => t.includes('0/1')) && formButtons.some(t => t.includes('4+2')),
-    'The blank tab offers exactly the two supplied document forms', { formButtons });
+  check(formButtons.length === 4 && formButtons.some(t => t.includes('Flow')) && formButtons.some(t => t.includes('Day'))
+      && formButtons.some(t => t.includes('Beings')) && formButtons.some(t => t.includes('Things')),
+    'The blank tab offers exactly the four document types — Day, Flow, Beings, Things (the cube is withdrawn)', { formButtons });
 
-  await page.locator('.pane.focused .fresh-docforms button', { hasText: '4+2' }).click();
+  await page.locator('.pane.focused .fresh-docforms button', { hasText: 'Day' }).click();
   await page.locator('.tab[data-title="ql-daily-die.html"][data-active="true"]').waitFor({ timeout: 20000 });
   await page.locator('.pane.focused .material-surface').waitFor({ timeout: 20000 });
   check(await page.locator('.pane.focused iframe.material-frame').getAttribute('sandbox') === 'allow-scripts allow-forms allow-downloads',
@@ -183,7 +186,7 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
 
   // --- 0/1: Dialogue · Flow · Journal, chosen from the keyboard ----------
   await newBlankTab('strip');
-  await page.locator('.pane.focused .fresh-docforms button', { hasText: '0/1' }).focus();
+  await page.locator('.pane.focused .fresh-docforms button', { hasText: 'Flow' }).focus();
   await page.keyboard.press('Enter');
   await page.locator('.tab[data-title="ql-dialogue-flow.html"][data-active="true"]').waitFor({ timeout: 20000 });
   const dialogue = page.frameLocator('.pane.focused iframe.material-frame');
@@ -218,7 +221,7 @@ export default async function run({ page, baseUrl, provision, check, shot }) {
   rmSync(join(provision.documentsDir, 'ql-daily-die.html'));
   await newBlankTab('strip');
   await page.locator('.pane.focused .fresh-docforms button', { hasText: '4+2' }).click();
-  const alert = page.locator('.pane.focused .fresh-surface p[role="alert"]');
+  const alert = page.locator('.pane.focused .fresh-surface:not(.rest-ground) p[role="alert"]');
   await alert.waitFor({ timeout: 20000 });
   const message = await alert.textContent();
   check(message.includes('desktop/cradle/documents') && message.includes('ql-daily-die.html') && message.includes('4+2'),

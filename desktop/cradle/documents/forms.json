@@ -18,9 +18,9 @@
   "forms": [
     {
       "kind": "document-01",
-      "label": "0/1",
+      "label": "Flow",
       "family": "Flow / Dialogue",
-      "hint": "Dialogue · Flow · Journal",
+      "hint": "Dialogue · Flow · Journal (0/1)",
       "file": "ql-dialogue-flow.html",
       "templateRef": "ql-template:dialogue-flow",
       "version": "0.1",
@@ -28,9 +28,9 @@
     },
     {
       "kind": "document-42",
-      "label": "4+2",
+      "label": "Day",
       "family": "Day / 4+2",
-      "hint": "Day die",
+      "hint": "The six-position Day die (4+2)",
       "file": "ql-daily-die.html",
       "templateRef": "ql-template:daily-die",
       "version": "0.3",
@@ -61,11 +61,11 @@
       "label": "Yoshimoto Cube",
       "family": "Yoshimoto Cube",
       "hint": "Spatial and relational reading",
-      "file": "ql-yoshimoto-cube.html",
+      "file": null,
       "templateRef": "oi.template/yoshimoto",
       "version": null,
       "standing": "retained-source",
-      "source": "recovered 2026-09-17 byte-exact from the owner-supplied ql-data-structure.zip (Work/personal/Nara-Personal/random-works; zip and extracted tree identical), impl/examples/out/name-power-yoshimoto.html — the post-rebuild build of the 2026-07-30 Symbolonic Weave semantic rebuild; carries no ql-template meta tag (recorded as received); preserve lawful mechanism and teaching"
+      "source": "recovered 2026-09-17 byte-exact from the owner-supplied ql-data-structure.zip (Work/personal/Nara-Personal/random-works; zip and extracted tree identical), impl/examples/out/name-power-yoshimoto.html — the post-rebuild build of the 2026-07-30 Symbolonic Weave semantic rebuild; carries no ql-template meta tag (recorded as received); preserve lawful mechanism and teaching Withdrawn from the offered roster by owner decision 2026-09-20 — the offered document types are Day, Flow, Beings and Things; the retained source bytes stay in documents/ unchanged, recorded here as declared scope that is not available UI."
     },
     {
       "kind": "document-epi-card",
