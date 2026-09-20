@@ -66,7 +66,10 @@ def terminal_walk(oi: Path, home: Path, dialogue: list[tuple[bytes, bytes]], nam
                     pending.clear(); answered += 1
             if process.poll() is not None:
                 break
-        process.wait(timeout=2)
+        try:
+            process.wait(timeout=2)
+        except subprocess.TimeoutExpired as error:
+            raise AssertionError(f"{name}: stalled after {answered}/{len(dialogue)} answers; transcript hash={digest(bytes(output))}") from error
         if process.returncode != 0 or answered != len(dialogue):
             raise AssertionError(f"{name}: exit={process.returncode}, answered={answered}/{len(dialogue)}; transcript hash={digest(bytes(output))}")
         after = {str(p.relative_to(home)): digest(p.read_bytes()) for p in home.rglob("*") if p.is_file()}
@@ -93,9 +96,10 @@ def terminal_nested_checks(oi: Path, home: Path, discovery: dict) -> list[dict]:
         checks.append(terminal_walk(oi, home, prefix + [(choose, answer)], "nested-product-" + label))
     checks.append(terminal_walk(oi, home, prefix + [(choose, b"b\n"),
         (b"What would be useful now?", b"q\n")], "product-Back-returns-to-entry"))
-    # Keep no products, no Desktop, stop at final review: review is not approval.
+    # Explicit removal of absent Desktop permits a review without installing
+    # a product; an entirely empty selection is correctly blocked by the owner.
     proceed = f'{len(discovery["products"]) + 1}\n'.encode()
-    checks.append(terminal_walk(oi, home, prefix + [(choose, proceed), (choose, b"1\n"),
+    checks.append(terminal_walk(oi, home, prefix + [(choose, proceed), (choose, b"3\n"),
         (b"Central directory", b"\n"), (b"Type apply", b"q\n")], "cancel-at-reviewed-effects"))
     return checks
 
