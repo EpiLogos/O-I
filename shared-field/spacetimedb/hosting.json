@@ -7,7 +7,8 @@
     "local": {
       "server": "local",
       "uri": "ws://127.0.0.1:3000",
-      "database": "oi-shared-field-lane"
+      "database": "oi-shared-field-lane-2",
+      "note": "renamed 2026-09-20: previous oi-shared-field-lane is orphaned on the local server (owner credential lost; reset refused 403). See ag-lifecycle campaign record."
     },
     "ci": {
       "server": "local",

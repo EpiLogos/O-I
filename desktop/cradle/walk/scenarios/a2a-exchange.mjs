@@ -153,7 +153,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const detail=returns.locator(".return-detail");await detail.waitFor();
   const detailText=await detail.innerText();
   check(detailText.includes("Agent — agent:reader-walk"),"The A2A return's producer is the receiving participant");
-  check(detailText.includes("A2A exchange")&&detailText.includes(difference.exchange_ref)&&detailText.includes("a2a-task:peer-1"),"The return discloses its A2A lineage — the exchange and the task it came back as");
+  check(detailText.toLowerCase().includes("exchange with a peer")&&detailText.includes(difference.exchange_ref)&&detailText.includes("a2a-task:peer-1"),"The return discloses its A2A lineage — the exchange and the task it came back as");
   check(detailText.includes(reply),"The exact peer reply is shown before any decision");
   await returns.getByRole("button",{name:"Accept current basis"}).click();
   await page.waitForFunction(()=>document.querySelector(".document-returns .return-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});

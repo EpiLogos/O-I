@@ -213,8 +213,8 @@ function AgencyA2a({seed,a2a,onSend}:{seed:string;a2a:{busy:boolean;difference?:
   const [peerAgent,setPeerAgent]=useState("");const [peerEndpoint,setPeerEndpoint]=useState("");
   const [peerCard,setPeerCard]=useState("");const [peerAvailability,setPeerAvailability]=useState("online");
   const difference=a2a.difference;
-  return <section className="encounter-a2a" aria-label="A2A exchange with a peer agent">
-    <header><strong>A2A exchange with a peer agent</strong><small>Protocol A2A v1, HTTP+JSON. Nothing reaches the network until you send; the peer&apos;s Agent Card must advertise exactly the published interface.</small></header>
+  return <section className="encounter-a2a" aria-label="Ask another agent">
+    <header><strong>Ask another agent</strong><small>Nothing is sent until you send it. The other agent must answer as exactly the agent you addressed, and its reply waits for your review — nothing is applied on arrival.</small></header>
     <p className="encounter-a2a-quote">{seed}</p>
     {difference
       ? <div className="encounter-a2a-difference" data-a2a-difference={JSON.stringify(difference)}>
