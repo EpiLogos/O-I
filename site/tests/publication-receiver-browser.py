@@ -1,5 +1,7 @@
 """Public receiver regression on real browser components; synthetic input is intercepted only here."""
 import json
+import io
+from PIL import Image
 import os
 import subprocess
 from pathlib import Path
@@ -57,6 +59,16 @@ with sync_playwright() as pw:
     page.get_by_role('link',name='Expression',exact=True).click()
     canvas=page.locator('.native-stage canvas[data-rendered="true"]')
     expect(canvas).to_be_visible(timeout=45000)
+    # Canvas pixels, not a data-rendered flag, must prove a visible native field.
+    def assert_ink():
+        pixels=Image.open(io.BytesIO(canvas.screenshot())).convert('RGB')
+        dark=sum(1 for r,g,b in pixels.getdata() if max(r,g,b)<180)
+        assert dark>250, f'Native field is blank or off-screen: only {dark} ink pixels'
+        target=page.locator('.field-object').first.bounding_box()
+        box=canvas.bounding_box()
+        assert target and box and box['x']<target['x']<box['x']+box['width'] and box['y']<target['y']<box['y']+box['height'], 'Native selection target is not inside its measured field'
+    assert_ink()
+    canvas.screenshot(path=str(OUT/'native-publication-field.png'))
     canvas.evaluate("node=>node.dataset.residentMarker='same-native-instance'")
     expect(page.get_by_role('button',name='Play field motion',exact=True)).to_be_visible()
     page.get_by_role('link',name='Return to Fixture subject at the same reading position').click()
@@ -64,6 +76,7 @@ with sync_playwright() as pw:
     expect(canvas).to_be_hidden()
     page.get_by_role('link',name='Expression',exact=True).click()
     expect(canvas).to_be_visible();expect(canvas).to_have_attribute('data-resident-marker','same-native-instance')
+    assert_ink()
     page.locator('.field-object').first.click()
     expect(page.locator('[data-reading-at="17"]')).to_be_in_viewport()
     passed('actual native field remains resident but hidden between depths; selecting the same subject retains its paragraph')

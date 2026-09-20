@@ -55,11 +55,23 @@ jobs:
           python tests/publication-acceptance.py || result=1
           python tests/publication-receiver-browser.py || result=1
           exit "$result"
+      - name: Observe the candidate public Pages endpoint without deployment
+        if: always()
+        working-directory: site
+        run: |
+          mkdir -p evidence/receiver
+          set +e
+          node verify-public-edition.mjs --url https://epilogos.github.io/O-I/ --out evidence/receiver/deployed-byte-receipt.json > evidence/receiver/deployed-observation.log 2>&1
+          observed=$?
+          printf '{"acceptance_exit":%s,"standing":"observation-only; inspect strict verifier result"}\n' "$observed" > evidence/receiver/deployed-observation-status.json
+          cat evidence/receiver/deployed-observation.log
+          # This is not a deployment gate for this preview branch. A nonzero
+          # strict verifier result remains NOT ACCEPTED in the receipt.
       - name: Retain exact-head evidence, never stage it as public site data
         if: always()
         uses: actions/upload-artifact@v4
         with:
-          name: publication-receiver-${{ github.sha }}
+          name: publication-receiver-${{ github.event.pull_request.head.sha || github.sha }}
           path: |
             site/evidence/receiver/
             site/evidence/library/
