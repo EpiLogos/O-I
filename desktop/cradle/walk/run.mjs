@@ -75,7 +75,10 @@ const SCENARIOS = {
   "nara-stage-focus": { module: "scenarios/nara-stage-focus.mjs", kernel: true, aliases: ["nara-stage"] },
 <<<<<<< HEAD
 =======
+<<<<<<< HEAD
+=======
 
+>>>>>>> origin/main
 >>>>>>> origin/main
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },

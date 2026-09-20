@@ -4,7 +4,11 @@
 <<<<<<< HEAD
   "generated_at": "2026-09-19T23:15:23.979Z",
 =======
+<<<<<<< HEAD
+  "generated_at": "2026-09-19T23:15:23.979Z",
+=======
   "generated_at": "2026-09-19T21:14:00.244Z",
+>>>>>>> origin/main
 >>>>>>> origin/main
   "environment": {
     "base_url": "http://localhost:4373",
@@ -16,6 +20,9 @@
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
       "repository_head": "f234bad2cdcf0289fb03edf21d3b33dc909f66b0",
       "tracked_changes": [
         "desktop/cradle/src/CradleFrame.tsx",
@@ -37,6 +44,8 @@
         "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
         "desktop/cradle/walk/artifacts/nara-stage-focus.json",
         "desktop/cradle/walk/run.mjs"
+<<<<<<< HEAD
+=======
 =======
       "repository_head": "ab053b8768a0dfc911e3922ac408b6492d1a4a31",
       "tracked_changes": [
@@ -192,6 +201,7 @@
         "packages/oi-design-system/search.css",
         "packages/oi-design-system/tokens.css"
 >>>>>>> origin/main
+>>>>>>> origin/main
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -203,7 +213,11 @@
 <<<<<<< HEAD
   "duration_ms": 27966,
 =======
+<<<<<<< HEAD
+  "duration_ms": 27966,
+=======
   "duration_ms": 28213,
+>>>>>>> origin/main
 >>>>>>> origin/main
   "checks": [
     {
@@ -215,8 +229,13 @@
           "context_id": "ctx_01M2XZ7XGBJ1AKD71P12S8WN19",
           "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-hMXuIe/Work/EssayCorpus",
 =======
+<<<<<<< HEAD
+          "context_id": "ctx_01M2XZ7XGBJ1AKD71P12S8WN19",
+          "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-hMXuIe/Work/EssayCorpus",
+=======
           "context_id": "ctx_01M2XR9MC9FSA5TSHSZAW925JG",
           "project_root": "/private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-LskuEF/Work/EssayCorpus",
+>>>>>>> origin/main
 >>>>>>> origin/main
           "session_id": null
         },
@@ -225,6 +244,9 @@
             "ProjectMap CodeIndex provider absent",
             "Central identity manifest absent; no nara entity materialised",
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
             "project-root anchor wiki:node:project-root/essaycorpus is absent from Work/EssayCorpus's canonical wiki; no folder subjects compiled",
             "ProjectMap CodeIndex unavailable: no canonical Project identity",
             "Work/EssayCorpus: 723 unresolved targets across 2516 occurrences pending (per-target detail: knowledge status)"
@@ -12742,6 +12764,8 @@
               ],
               "unresolved_targets": 723
             }
+<<<<<<< HEAD
+=======
 =======
             "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-LskuEF/Work/EssayCorpus: [[../arguments/A31-Deferential-Intelligence.md]] from central:project-source:essay-corpus-walk:03a758d8b173d834 (references) is not yet resolved",
             "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-LskuEF/Work/EssayCorpus: [[../arguments/A31-Deferential-Intelligence.md]] from central:project-source:essay-corpus-walk:03a758d8b173d834 (references) is not yet resolved",
@@ -16545,6 +16569,7 @@
             "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-LskuEF/Work/EssayCorpus: [[symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/SOURCE]] from central:project-source:essay-corpus-walk:fb1f0dfd3e1d2e7d (references) is not yet resolved",
             "ProjectMap CodeIndex unavailable: no canonical Project identity"
 >>>>>>> origin/main
+>>>>>>> origin/main
           ],
           "code": null,
           "project_map": true,
@@ -16570,6 +16595,9 @@
             },
             {
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
               "available": false,
               "capabilities": {
                 "fulltext": false,
@@ -16590,7 +16618,10 @@
               "version_drift": false
             },
             {
+<<<<<<< HEAD
 =======
+=======
+>>>>>>> origin/main
 >>>>>>> origin/main
               "available": true,
               "capabilities": {
@@ -16619,12 +16650,17 @@
             "available": true,
             "index": {
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
               "backlinks": 1284,
               "edges": 1284,
               "frames": 0,
               "nodes": 0,
               "readings": 0,
               "revision": "bd678553fca5aff00e06b93ff58b6512783d40efff48b78fe648071871dd1162",
+<<<<<<< HEAD
+=======
 =======
               "backlinks": 0,
               "edges": 0,
@@ -16632,6 +16668,7 @@
               "nodes": 0,
               "readings": 0,
               "revision": "d3bedb7d015e0d5f8f8a44498dce37feee0fbe79f23fda975bed81ddc04bbdb2",
+>>>>>>> origin/main
 >>>>>>> origin/main
               "spaces": 2,
               "version": "aikit.semantic-wiki-index/v1"
@@ -16654,6 +16691,11 @@
         "warnings": [
           "ProjectMap CodeIndex provider absent",
           "Central identity manifest absent; no nara entity materialised",
+<<<<<<< HEAD
+          "project-root anchor wiki:node:project-root/essaycorpus is absent from Work/EssayCorpus's canonical wiki; no folder subjects compiled",
+          "ProjectMap CodeIndex unavailable: no canonical Project identity",
+          "Work/EssayCorpus: 723 unresolved targets across 2516 occurrences pending (per-target detail: knowledge status)"
+=======
 <<<<<<< HEAD
           "project-root anchor wiki:node:project-root/essaycorpus is absent from Work/EssayCorpus's canonical wiki; no folder subjects compiled",
           "ProjectMap CodeIndex unavailable: no canonical Project identity",
@@ -20461,6 +20503,7 @@
           "Authored relation pending at /private/var/folders/q0/g_91z7355tb58425qwg3xcy80000gn/T/oi-cradle-corpus-LskuEF/Work/EssayCorpus: [[symbolon/episteme/sources/media-technology-philosophy/bratton/bratton-2026-agentworld-brief/SOURCE]] from central:project-source:essay-corpus-walk:fb1f0dfd3e1d2e7d (references) is not yet resolved",
           "ProjectMap CodeIndex unavailable: no canonical Project identity"
 >>>>>>> origin/main
+>>>>>>> origin/main
         ]
       }
     },
@@ -20478,6 +20521,10 @@
       "ok": true,
       "label": "Binding sha256s verified against actual bytes — every disagreement named (known E2 A/A′ defect, reported to the corpus owners)",
       "data": {
+<<<<<<< HEAD
+        "mismatch_count": 0,
+        "sample": []
+=======
 <<<<<<< HEAD
         "mismatch_count": 0,
         "sample": []
@@ -20504,6 +20551,7 @@
           }
         ]
 >>>>>>> origin/main
+>>>>>>> origin/main
       }
     },
     {
@@ -20513,7 +20561,11 @@
 <<<<<<< HEAD
         "hits": 50
 =======
+<<<<<<< HEAD
+        "hits": 50
+=======
         "hits": 8
+>>>>>>> origin/main
 >>>>>>> origin/main
       }
     },
@@ -20750,9 +20802,15 @@
           "Return of Zero — Conjugates A01′–A36′Work/EssayCorpus · local · 2026-09-19T23:15:22.647Z",
           "Return of Zero — A/C, Root of the Conjugate FieldWork/EssayCorpus · local · 2026-09-19T23:15:22.647Z"
 =======
+<<<<<<< HEAD
+          "Return of Zero — Arguments A01–A36Work/EssayCorpus · local · 2026-09-19T23:15:22.647Z",
+          "Return of Zero — Conjugates A01′–A36′Work/EssayCorpus · local · 2026-09-19T23:15:22.647Z",
+          "Return of Zero — A/C, Root of the Conjugate FieldWork/EssayCorpus · local · 2026-09-19T23:15:22.647Z"
+=======
           "Return of Zero — Arguments A01–A36Work/EssayCorpus · local · 2026-09-19T21:13:58.806Z",
           "Return of Zero — Conjugates A01′–A36′Work/EssayCorpus · local · 2026-09-19T21:13:58.806Z",
           "Return of Zero — A/C, Root of the Conjugate FieldWork/EssayCorpus · local · 2026-09-19T21:13:58.806Z"
+>>>>>>> origin/main
 >>>>>>> origin/main
         ],
         "overlay": true,
@@ -20761,7 +20819,11 @@
 <<<<<<< HEAD
         "columnSample": "LibraryHere · CentralThis instanceShared web Browse SearchUnavailable — shared-field: no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.jsonPartial coverage — wiki: 5 referenced resource(s) absent: SourcePool search unavailable from provider/source-pool/central-bkmr, ProjectMap code search unavailable: provider absent, Central identity ma",
 =======
+<<<<<<< HEAD
+        "columnSample": "LibraryHere · CentralThis instanceShared web Browse SearchUnavailable — shared-field: no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.jsonPartial coverage — wiki: 5 referenced resource(s) absent: SourcePool search unavailable from provider/source-pool/central-bkmr, ProjectMap code search unavailable: provider absent, Central identity ma",
+=======
         "columnSample": "LibraryHere · CentralThis instanceShared web Browse SearchUnavailable — shared-field: no SharedField target bound: set OI_SHARED_FIELD_TARGET to a target named in shared-field/spacetimedb/hosting.jsonPartial coverage — wiki: 3804 referenced resource(s) absent: SourcePool search unavailable from provider/source-pool/central-bkmr, ProjectMap code search unavailable: provider absent, Central identity",
+>>>>>>> origin/main
 >>>>>>> origin/main
         "viewState": [
           "browse:false",
@@ -20773,7 +20835,11 @@
 <<<<<<< HEAD
           "Partial coverage — wiki: 5 referenced resource(s) absent: SourcePool search unavailable from provider/source-pool/centra"
 =======
+<<<<<<< HEAD
+          "Partial coverage — wiki: 5 referenced resource(s) absent: SourcePool search unavailable from provider/source-pool/centra"
+=======
           "Partial coverage — wiki: 3804 referenced resource(s) absent: SourcePool search unavailable from provider/source-pool/cen"
+>>>>>>> origin/main
 >>>>>>> origin/main
         ]
       }
@@ -20784,15 +20850,21 @@
       "ok": true,
       "op": "info",
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
         "mounted_at": "2026-09-19T23:15:24.095Z",
+<<<<<<< HEAD
+=======
 =======
       "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
         "mounted_at": "2026-09-19T21:14:00.342Z",
+>>>>>>> origin/main
 >>>>>>> origin/main
         "transport": {
           "kind": "bridge",
@@ -20807,7 +20879,11 @@
 <<<<<<< HEAD
       "duration_ms": 288.1,
 =======
+<<<<<<< HEAD
+      "duration_ms": 288.1,
+=======
       "duration_ms": 180.8,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "subject": {
@@ -20817,7 +20893,11 @@
 <<<<<<< HEAD
             "revision": "metadata:16777231:174011523:11253:1789859722:603542576",
 =======
+<<<<<<< HEAD
+            "revision": "metadata:16777231:174011523:11253:1789859722:603542576",
+=======
             "revision": "metadata:16777231:173275658:11253:1789852438:763785597",
+>>>>>>> origin/main
 >>>>>>> origin/main
             "source": "aikit.knowledge.read"
           },
@@ -20831,13 +20911,20 @@
 <<<<<<< HEAD
       "duration_ms": 0.1,
 =======
+<<<<<<< HEAD
+      "duration_ms": 0.1,
+=======
       "duration_ms": 0.2,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "paused": false,
         "live": true,
         "scheduled": true,
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
         "frames": 1,
         "presentations": [
           {
@@ -20849,6 +20936,8 @@
         "selection": [
           "expression:knowledge-725550d95867856faac6f3062e101800:entity:k-5ba0f796ac887c8510ce0436294f84e6"
         ]
+<<<<<<< HEAD
+=======
 =======
         "frames": 3,
         "presentations": [
@@ -20859,6 +20948,7 @@
         ],
         "playback": null
 >>>>>>> origin/main
+>>>>>>> origin/main
       }
     },
     {
@@ -20867,7 +20957,11 @@
 <<<<<<< HEAD
       "duration_ms": 48,
 =======
+<<<<<<< HEAD
+      "duration_ms": 48,
+=======
       "duration_ms": 47,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "corpus-return-of-zero-corpus-local-whole.png"
@@ -20879,7 +20973,11 @@
 <<<<<<< HEAD
       "duration_ms": 71.2,
 =======
+<<<<<<< HEAD
+      "duration_ms": 71.2,
+=======
       "duration_ms": 71.7,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "seq_range": {
         "from": 26,
@@ -20909,7 +21007,11 @@
 <<<<<<< HEAD
       "duration_ms": 1.5,
 =======
+<<<<<<< HEAD
+      "duration_ms": 1.5,
+=======
       "duration_ms": 2,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "seq_range": {
         "from": 27,
@@ -20939,7 +21041,11 @@
 <<<<<<< HEAD
       "duration_ms": 130.1,
 =======
+<<<<<<< HEAD
+      "duration_ms": 130.1,
+=======
       "duration_ms": 129.6,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "seq_range": {
         "from": 28,
@@ -20977,7 +21083,11 @@
 <<<<<<< HEAD
         "frames": 6,
 =======
+<<<<<<< HEAD
+        "frames": 6,
+=======
         "frames": 8,
+>>>>>>> origin/main
 >>>>>>> origin/main
         "presentations": [
           {
@@ -20986,12 +21096,18 @@
           }
         ],
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
         "playback": null,
         "selection": [
           "expression:corpus-roz-room-02-return-of-zero:entity:ent-01x"
         ]
+<<<<<<< HEAD
+=======
 =======
         "playback": null
+>>>>>>> origin/main
 >>>>>>> origin/main
       }
     },
@@ -21001,7 +21117,11 @@
 <<<<<<< HEAD
       "duration_ms": 48,
 =======
+<<<<<<< HEAD
+      "duration_ms": 48,
+=======
       "duration_ms": 45,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "corpus-return-of-zero-corpus-verso.png"
@@ -21013,7 +21133,11 @@
 <<<<<<< HEAD
       "duration_ms": 52,
 =======
+<<<<<<< HEAD
+      "duration_ms": 52,
+=======
       "duration_ms": 53,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "corpus-return-of-zero-corpus-front.png"
@@ -21025,7 +21149,11 @@
 <<<<<<< HEAD
       "duration_ms": 42,
 =======
+<<<<<<< HEAD
+      "duration_ms": 42,
+=======
       "duration_ms": 46,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "corpus-return-of-zero-corpus-library.png"
