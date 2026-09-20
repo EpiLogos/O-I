@@ -166,6 +166,7 @@ export type ProfileEditOpWire =
 
 export type KernelOp =
   | {op: "native_expression"; request: {operation: "open"; path: string; expected_revision: string} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string}}
+  | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"graph";project?:string;query:string}
@@ -251,6 +252,7 @@ export type KernelOp =
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
   | {result: "native_expression"; data: unknown}
+  | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}

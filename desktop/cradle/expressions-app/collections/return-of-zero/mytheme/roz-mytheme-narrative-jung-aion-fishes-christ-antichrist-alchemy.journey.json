@@ -1,0 +1,1489 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+  "name": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+  "description": "The complete interpretive movement: ego and shadow, the Christ-image and its excluded contrary, the fishes' doubled time, the alchemical work and its scientific aftermath, the quaternio with its declared modern reconstruction, and the age becoming visible as an age.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-ai-0-shadow",
+      "name": "Ego, shadow, and the image of perfection",
+      "character": "The ego as centre of reference meets the shadow; the Christ-image gives wholeness a human face; Antichrist belongs to the ensuing drama as the excluded contrary made historically active.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e467",
+          "name": "the ego — centre of reference, rooted beyond what it knows of itself",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.105,
+            "y": 0.105
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st510",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e468",
+          "name": "the shadow — recognised through moral effort; projection returning the rejected face",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.36
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#1f2a33",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st511",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e469",
+          "name": "the Christ-image — the Self given a human face; exclusively luminous, not all the opposites",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.38,
+            "z": 0
+          },
+          "size": {
+            "x": 0.318,
+            "y": 0.361
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st512",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e470",
+          "name": "Antichrist — the compensatory counter-image within the same aeon",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☹",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st513",
+                "text": "☹",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Aion chs. I–V (paraphrased from the consulted 1979 paperback; §/page locators in the house)",
+          "title": "Ego, shadow, and the image of perfection",
+          "italic": "The sequence demonstrates the psychology: an exclusively good and luminous figure does not include all the opposites active in the psyche — recognising an evil factor as real confers no goodness on evil acts.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The ego first appears as the centre of reference for conscious contents, rooted in bodily and psychic conditions exceeding what it knows of itself. The shadow requires moral effort because its traits belong to the person who repudiates them; projection makes an inwardly active factor seem a property conclusively encountered outside, and the world gives back the rejected face. The anima/animus drama deepens the problem of relation — the demand that another person embody an image prevents that person from being met; Jung's gendered scheme",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "stays in his historical account. The approach to the Self carries a double danger: overwhelm by the larger whole, or appropriation of it as one's own magnitude. Christ enters as a culturally effective symbol of the Self — the heavenly man, the second Adam — yet the perfection of the image produces the difficulty: an exclusively luminous figure does not include all the opposites. Antichrist belongs to the ensuing drama: the contrary excluded from the representation of totality remains active and acquires a compensatory historical figure.\n\nOccurrences: the shadow and projection (#1, recalled at the Shadow Quaternio #4); the double inflation danger (#1); the privatio boni argument (#1); the compensatory Antichrist (#1, #2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ai-1-fishes",
+      "name": "The fishes give the age its temporal image",
+      "character": "Pisces lets the double figure acquire duration; the precessional spring-point; the Pistis Sophia child-double embracing; the overlapping ram and fish; Leviathan becoming food.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e471",
+          "name": "Pisces — the two fishes of the age, head to tail",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.368,
+            "y": 0.184
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♓",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st514",
+                "text": "♓",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e472",
+          "name": "the precessional spring-point — expectation as a historical actor",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♈",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st515",
+                "text": "♈",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e473",
+          "name": "the Pistis Sophia double — bound, released, embraced, one",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◑◕",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st516",
+                "text": "◑◕",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e474",
+          "name": "Leviathan split against itself, then food for the devout (chs. IX)",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st517",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e475",
+          "name": "Epiphanius's rite — the image carried up and returned below; a pagan rite used as testimony",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.25,
+            "z": 0
+          },
+          "size": {
+            "x": 0.089,
+            "y": 0.089
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☵",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st518",
+                "text": "☵",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Aion chs. VI–IX (§§127–187)",
+          "title": "The fishes give the age its temporal image",
+          "italic": "The doubled figure embodies an age living its contrary tendencies successively while the constellational image holds them together — an inherited forecast is not a confirmed causal law of history.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Jung opens the fish inquiry by noting that Christian interpretation gives Christ and the devil several shared animal symbols: a symbol can carry more than one valuation. The Christian fish has its baptismal, eucharistic and epigraphic settings; astrology is proposed as a second source of its activation. Pisces lets the double figure acquire duration: planetary conjunctions, messianic calculations, medieval expectations and the precessional movement of the spring-point — Jung's own notes sometimes correct his authorities' astronomy, and an inherited forecast is not an independently confirmed law. The Pistis Sophia narrative gives doubling a reunion",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "form: the child-double bound to a bed, released on the fathers' return, embraced, one — its office distinct from Christ/Antichrist antagonism. The sixteenth century sharpens the pressure: schism and the conquest of Nature cross the earlier aspiration; Nostradamus's letter makes expectation itself a historical actor. Epiphanius's Alexandrian rite — the image carried up, circled, returned below — is a pagan rite Jung uses as testimony. The apocalyptic Lamb resists a single label; Leviathan's traditions split monster against monster until the formidable creature becomes food for the devout — terror, opposition and nourishment as successive offices.\n\nOccurrences: the shared animal symbols (#2); the precessional calculations (#2, historicised at #5→0); the embracing double (#2); Leviathan's conversion into meal (#2, distinct from the authored Meal whole).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ai-2-alchemy",
+      "name": "The fish is caught, worked, and made to transform",
+      "character": "The round creature heated to radiance; the eyewash; the Echeneis reversal — the magnet that attracts the attracting power; Mercurius as substance and philosophy; science born as the mother recedes.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e476",
+          "name": "the round sea creature — bonesless, heated with sea water until it shines",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.31,
+            "z": 0
+          },
+          "size": {
+            "x": 0.313,
+            "y": 0.313
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st519",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e477",
+          "name": "the eyewash — the preparation becoming the capacity to see",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.11,
+            "z": 0
+          },
+          "size": {
+            "x": 0.105,
+            "y": 0.105
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st520",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e478",
+          "name": "the Echeneis — the small fish that halts ships; the magnet taught to attract it",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "🧲",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st521",
+                "text": "🧲",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e479",
+          "name": "Mercurius — substance and philosophy; the lapis within darkness",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☿",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st522",
+                "text": "☿",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e480",
+          "name": "the aftermath — science born, the mother receding as outlived; the investigating psyche disappearing from the account",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚗",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st523",
+                "text": "⚗",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Aion chs. X–XII (§§193–271)",
+          "title": "The fish is caught, worked, and made to transform",
+          "italic": "The work demonstrates the reversal: the practitioner works with the power that previously held the vessel — the substance's alteration returning as an alteration in the capacity to see.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Alchemy alters the position of the human participant: the image becomes something to find and work upon, and the relation between worker and transforming substance becomes part of the transformation. Within the Turba tradition as Jung reads it, a round sea creature without bones or outer covering is heated slowly and treated with sea water until it shines; the preparation becomes an eyewash through which the practitioner can understand the art — the substance's alteration returns as an alteration in the capacity to see. Jung's jellyfish identification is an interpretation; a sixteenth-century adept reads an actual fish. The stone within the fish leads through Saturn, lead and the bright",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "mercurial substance concealed within darkness, toward the lapis; the filius philosophorum mediates the relation to the redeemer. The Carcassonne revelation's two fishes yoked beneath the earth keep their distinct narrative office from the Christian pair. The Echeneis brings the reversal into focus: the small fish that halts ships is now attracted by a magnet that can be taught — Mercurius naming substance and philosophy together. The aftermath changes the scale: the alchemical epoch gives birth to science and recedes as an outlived mother; by the eighteenth-century division of faith and knowledge, the investigating psyche disappears from the account of objective knowledge while making it possible.\n\nOccurrences: the heated creature and eyewash (#3); the Echeneis reversal and the taught magnet (#3); the two yoked fishes kept distinct (#3); the scientific aftermath and the forgotten condition (#3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ai-3-quaternio",
+      "name": "The quaternio — Anthropos, Shadow, Physis, lapis",
+      "character": "A→B→C→D with lower-case transformations; the connected diamonds; the Shadow Quaternio declared a modern reconstruction; solve et coagula as the ring's movement.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e481",
+          "name": "A — Anthropos",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.125,
+            "y": 0.125
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st524",
+                "text": "A",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e482",
+          "name": "B — Shadow (the inserted modern reconstruction)",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "B",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st525",
+                "text": "B",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e483",
+          "name": "C — Physis / serpent",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "C",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st526",
+                "text": "C",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e484",
+          "name": "D — lapis",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "D",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st527",
+                "text": "D",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e485",
+          "name": "the connected diamonds — each whole unfolding into four and passing onward (p.259)",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.491,
+            "y": 0.491
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st528",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e486",
+          "name": "the ring returning through differentiation — an unconscious totality becoming conscious",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.68,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↺",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st529",
+                "text": "↺",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Aion chs. XIII–XV (§§287–427; the quaternio at §§402–421)",
+          "title": "The quaternio — Anthropos, Shadow, Physis, lapis",
+          "italic": "Jung's schema demonstrates a dynamic process within the Self — and the project's reading of the diamonds stays Offered with human-amplified: no: the Shadow's field is not the Anthropos field relabelled.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The Gnostic return reaches back before the era's images of attraction: the Naassene water of doctrine, the Peratic serpent-Son conveying signs down and carrying their awakened substance up, Monoïmos's instruction to investigate the one who speaks of \"my\" spirit. The concluding quaternio makes the historical interpretation answerable: Jung explicitly acknowledges that his inserted Shadow Quaternio is a modern reconstruction absent from the Gnostic texts, supplied because a purely upward orientation no longer describes the modern situation — the disappointment of the expected return, increased self-consciousness, the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "chthonic serpent, the approach to Nature. The four major states are Anthropos A, Shadow B, Physis/serpent C, lapis D, with lower-case transformations; at p.259 the connected diamonds show each whole unfolding into four and passing onward. The ring returns through differentiation and integration — solve et coagula, the circular opus — changing an unconscious totality into a conscious one; the nuclear comparison stays explicitly hypothetical. The conclusion returns to the clinician's first encounter: the shadow includes healthy instincts and creative capacities; declaring all things good leaves suffering untouched.\n\nOccurrences: the declared modern reconstruction of the Shadow (#4, keeping the project's Offered reading honest); the connected diamonds (p.259); the conclusion's responsibility (#1, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-ai-5-return",
+      "name": "The age becomes visible as an age",
+      "character": "Historical de-monopolisation: the inherited image exposed as background; generative vs historical succession; the register decision placing Christ/Antichrist at the occupied slash; the unresolved seams named.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#1f2a33",
+          "#3c6e71",
+          "#c9a227",
+          "#e8e2d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e487",
+          "name": "de-monopolisation — the inherited image becoming revisable",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.576,
+            "y": 0.576
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st530",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e488",
+          "name": "generative succession · historical succession — what a work makes possible vs how its image becomes an inherited condition",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⇉",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st531",
+                "text": "⇉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e489",
+          "name": "the register decision — Christ/Antichrist at the occupied slash, after the native derivation (Q27 §6)",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊘",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st532",
+                "text": "⊘",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e490",
+          "name": "uninstantiated indexes — Christ, Antichrist, fishes, alchemy, aeon: every later index returns here",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st533",
+                "text": "∅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · A19/A21 comparisons; Neumann and Gebser qualified; the human-amplified ledger",
+          "title": "The age becomes visible as an age",
+          "italic": "The whole returns-to the project as historical de-monopolisation: contrary images and transforming practices expose the history within a seemingly immediate background — and the person must still judge and act.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The existing project operation is historical de-monopolisation: an age inherits a governing image; the image becomes an apparently immediate background of judgment; its exclusions remain active; contrary images and transforming practices expose the history within that background. An age can then become visible as an age, and its inherited measure revisable. The whole compares A19's complex as local arbitration regime while keeping the substrates distinct — a complex, a theological image, a Protected Account and a civilisation's symbolic frame carry different evidential burdens. A21 receives the difference between returning unchanged and returning able to receive what had only been",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "projected. Neumann supplies the shared ground without becoming evidence for the historical details; Gebser's non-chronological Origin stays distinct from Jung's aeonic history. The success/succession seam keeps generative and historical succession alive — alchemy's forgotten motherhood articulating the latter. Q27's register decision places Christ/Antichrist at the occupied slash after the native derivation; Antichrist naming and Aquarian eschatology belong to the plate register, not public historical proof. The exact symbolic appointments to QL remain human-amplified: no; the whole-before-fragments commitment stands as design law, and every later index must return to this complete whole.\n\nOccurrences: the governing image's background operation (#1–#4, #5→0); the Shadow Quaternio's declared modernity (#4, #5→0); the sixteen recovered passage locations as the house's standing (#5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

@@ -1,0 +1,1531 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-maya-eye-veil-frame-horizon",
+  "name": "Māyā — Eye, Veil, Frame, Horizon",
+  "description": "The authored whole: the eye's constitutive blindside, Śakti's manifesting veil, the frame claiming the horizon, regard and refraction through the Other, the native field with the paśu and toroidal corrections, and recognition returning through the veil.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-maya-0-eye",
+      "name": "An eye opens upon a world",
+      "character": "Something stands forward; something recedes; a direction from which things appear. The frame gives an edge; the horizon concerns the field within which anything can come forward at all.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e491",
+          "name": "the eye — its condition already at work in what appears",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.722,
+            "y": 0.506
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st534",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e492",
+          "name": "the blindside — constitutive, more than the anatomical spot",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#161a20",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st535",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e493",
+          "name": "the frame — productive exclusion, a determinate appearance",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st536",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e494",
+          "name": "the horizon — the field of coming-forward, changed by walking and reply",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st537",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Draft 3's positive appointment of finitude",
+          "title": "An eye opens upon a world",
+          "italic": "The whole begins with a capacity before any loss: the eye's condition does not arrive as one more face or obstacle — it is already at work in their appearing.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "An eye opens upon a world. Something stands forward; something recedes; a face can be approached, a path followed. There is a direction from which these things appear, even when attention belongs wholly to what appears. The eye's condition does not ordinarily arrive as one more object; it is already at work in their appearing. Turn towards that condition: a mirror shows the eye, a diagram describes its structures, another observer supplies an angle — each disclosure real, each occurring through a further",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "situation of seeing. The blindside in this authored image is more than the anatomical blind spot: it is the condition that lets a view have a foreground at all. The frame gives this condition an edge — its exclusion productive, since without an aperture there is no particular photograph. The horizon differs from the frame: the frame bounds a presentation; the horizon concerns the field within which something can come forward at all — walking changes it, another person's reply changes what the situation asks.\n\nOccurrences: the standing-forward and its direction (#0); the mirror and diagram disclosures (#0, deepened at #2's crystal); frame vs horizon (#0, usurped at #2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-maya-1-veil",
+      "name": "The Śaiva genealogy: measure, dream, crystal",
+      "character": "Anuttara/Paramaśiva; Śakti's manifestation; Māyā's measure and the kañcukas; the paśu; the dream's forgotten condition; the crystal that displays without knowing.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#1a1730",
+        "palette": [
+          "#efe9d6",
+          "#1a1730",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e495",
+          "name": "Anuttara/Paramaśiva — the unobjectifiable ground",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.11,
+            "z": 0
+          },
+          "size": {
+            "x": 0.136,
+            "y": 0.136
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st538",
+                "text": "0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e496",
+          "name": "Śakti — manifestation and self-articulation; prakāśa–vimarśa together",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.217,
+            "y": 0.217
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☀",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st539",
+                "text": "☀",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e497",
+          "name": "Māyā — measure: this appears, that is withheld; the five kañcukas",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st540",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e498",
+          "name": "paśu — the bounded knower; buddhi, ahaṃkāra, manas",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st541",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e499",
+          "name": "the dream — sleep disappearing from the experienced situation",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☾",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st542",
+                "text": "☾",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e500",
+          "name": "the crystal — display without knowing; the mirror that also generates its appearances",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 45,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st543",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Dyczkowski pp.65–81 (source-matched transcript); the quilt's sleeper correction",
+          "title": "The Śaiva genealogy: measure, dream, crystal",
+          "italic": "The veil embodies manifestation's own power — not an alien substance across a finished spectator; the dream carries the same forgetting intimately.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The Śaiva passage gives the opening a genealogy. Anuttara/Paramaśiva names the unobjectifiable ground; Śakti is its power of manifestation and self-articulation — prakāśa and vimarśa belonging together as luminosity and reflexive awareness. Māyā brings measure: this appears, that is withheld; the kañcukas give the bounded knower effective terms — kalā, vidyā, rāga, kāla, niyati. Paśu names the bounded position; puruṣa and the inner instrument articulate an inhabitable field: buddhi determines, ahaṃkāra appropriates, manas coordinates. The veil belongs to manifestation's power — not an alien substance thrown across an otherwise finished spectator. The dream carries",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the pressure intimately: while dreaming, the fact of sleep can disappear from the experienced situation; waking changes the objects' relation to their condition without making the urgency something that never occurred. Taylor's explicit sleeper correction appoints dissociation, tattvic contraction and the slash to the same event in the ontological register — a substantive authorial identity, not proof the cosmos sleeps. The crystal makes a different limit visible: a polished surface can display a landscape without knowing the display; in the Śaiva account the mirror of consciousness also generates and hosts its appearances — no machine phenomenality established.\n\nOccurrences: the kañcukas and paśu (#1, returned at #4's correction); the dream's forgotten condition (#1, #2); the crystal's unknowing display (#1, distinct from #2's usurpation).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-maya-2-usurpation",
+      "name": "The frame calls its boundary the horizon",
+      "character": "x acts as X; the reflected image as its source; the complex making the arrest durable; the nested simulation relay with its provenance disclosed or erased.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#1a1730",
+        "palette": [
+          "#efe9d6",
+          "#1a1730",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e501",
+          "name": "x acting as X — the local 1 claiming the 0 on which it depends",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.261,
+            "y": 0.073
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "x=X",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st544",
+                "text": "x=X",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e502",
+          "name": "the prepared role — words becoming further evidence of what the frame knew",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊢",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st545",
+                "text": "⊢",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e503",
+          "name": "the complex — investment colouring perception confirming the image",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.37,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.246
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st546",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e504",
+          "name": "the nested relay — model, action, changed world, model; capture when results erase their status as results",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.44
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st547",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e505",
+          "name": "Bratton p.25 §§5.1–5.3 — the relay's distinct temporal tasks",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "B",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st548",
+                "text": "B",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · the second forgetting; the Simulation concept's disclosure demand",
+          "title": "The frame calls its boundary the horizon",
+          "italic": "Usurpation embodies constitutive limitation become jurisdiction: the operation that made a situation intelligible now judges every subsequent situation — capture begins when results circulate as self-originating authority.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The second forgetting begins when a finite measure loses its relation to being finite. The frame now calls its own boundary the horizon of reality; what it cannot admit is redescribed as unreal, irrelevant or already explained. This changes the eye's encounter with another person: before the person can answer, the frame supplies a role, score, diagnosis or expected motive; their words become further evidence of what the frame already knew. A determination claims its determining power — x acts as X, the reflected image as its source, the local 1 as the 0 on which it depends. Psychically a complex can",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "make the arrest durable: an image attracts investment, investment colours perception, the changed perception confirms the image; its organised basin treats its own criterion as necessity, and the forgotten field includes rejected alternatives, bodily conditions, other agencies and lives. The nested simulation relay gives the image outward consequence: a model describes a situation, action changes the situation, another model receives the changed world. Recurrence alone does not make the relay captive: capture begins when the result erases its status as result and circulates as self-originating authority.\n\nOccurrences: the usurping criterion and the prepared role (#2); the complex basin (#2, returned at #5→0 via A19); the relay's provenance condition (#2, #5→0 via A31/A32).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-maya-3-regard",
+      "name": "The Other interrupts — regard, context, refraction",
+      "character": "A reply refuses the prepared role; the 180°→360° turn; the stained window's seams; the holographic unit carrying the whole descent.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#1a1730",
+        "palette": [
+          "#efe9d6",
+          "#1a1730",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e506",
+          "name": "the Other's refusal — the excess that can alter the measure of the encounter",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☮",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st549",
+                "text": "☮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e507",
+          "name": "the 180°→360° turn — perspectives and transitions held in context",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.469,
+            "y": 0.469
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st550",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e508",
+          "name": "the stained window — panes, seams, changing projection; Bimba/QL/MEF/pratibimba assigned",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st551",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e509",
+          "name": "the holographic unit — the whole descent carried through one local unit",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st552",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e510",
+          "name": "Watson/Gans/Levinas — the face-to-face exceeding the image held of the Other",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊣",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st553",
+                "text": "⊣",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Watson 1998; Gebser; the corrected optical assignments; C38's local-Bimba office",
+          "title": "The Other interrupts — regard, context, refraction",
+          "italic": "Regard begins when the excess can alter the measure of the encounter: attention becomes answerable, the criterion questionable by what it concerns.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The Other interrupts. A reply refuses the role prepared for it; an encounter changes which question deserves to be asked. Regard begins when this excess can alter the measure of the encounter — attention becomes answerable, the person still judging and acting but the criterion now questionable by what it concerns. Watson's sequence through Gans's Levinas gives the interpersonal pressure: the face-to-face exceeds the image held of the Other, and ethical excess cannot be represented as a stronger quantity on an unchanged scale. Context weaves the newly available relations: one view meets a counterview, their conditions legible through their difference — the 180°→360° movement,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "never an omniscient panorama; another angle discloses an occlusion and carries its own. The stained window lets the change be seen: light through panes, lead seams marking divisions, projection changing with sun and viewer; Bimba the Original order, QL the immanent spectrum, MEF the refractive operation, pratibimba the situated display. Within a declared Context Frame an achieved image can genuinely become local Bimba while remaining pratibimba to wider sources — returned experience can revise the local reference itself. The holographic unit: the whole descent carried through one unit that retains its relations to condition, articulation, contraction, manifestation and return.\n\nOccurrences: the interrupting reply (#2, #3); the window's assignments (shared with the stained-glass whole); the local-Bimba office (#3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-maya-5-return",
+      "name": "Recognition returns through the veil",
+      "character": "\"Līlā veils; hybris absolutises the veil; recognition sees the veil as Śakti.\" The finite view remains precious because this is where the whole becomes encounterable.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#1a1730",
+        "palette": [
+          "#efe9d6",
+          "#1a1730",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e511",
+          "name": "the veil — seen as Śakti, not as hole; Māyā the measure wound around the opening Anuttara owns",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.73,
+            "y": 0.73
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st554",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e512",
+          "name": "the opening — never one more bounded patch",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.217,
+            "y": 0.217
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#1a1730",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st555",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e513",
+          "name": "A24 — necessary measuring preserved; usurped measure made answerable",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A24",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st556",
+                "text": "A24",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e514",
+          "name": "the paśu correction — the \"I am\" preceding separation; the bounded position arising within recognition's field",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "प",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st557",
+                "text": "प",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e515",
+          "name": "A35/A36 — the eye opens again; recognition lived in the next seeing",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st558",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4–#5→0 · the eightfold field; the Neumann appointments (human-amplified: yes); the Arbitration field at register 3",
+          "title": "Recognition returns through the veil",
+          "italic": "The return keeps the world differentiated and the knower situated: līlā's play has real positions and consequences — the return releases their claim to originate the whole, not the positions themselves.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The whole's native articulation is the complete field: parent −/−; 0/1; ?/!; −/+; X/x; AM/IS; ∞/dx; returning 1/0 — the page's six turns renumber nothing. The Neumann appointments carry En-Soph and tohu-bohu at −/−, world-parent separation at 0/1, coming to light at ?/!, hunger at −/+, ego against ground at X/x, the \"I am\" at AM/IS, the round's Mono/Poly fullness at ∞/dx, descent and return at 1/0 — human-amplified: yes as the author's full-field amplification. The paśu correction is decisive: in the p.105 passage recognition precedes separation into husband and wife; the bounded position arises within recognition's field and cannot retrospectively originate it. The toroidal",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "appointment keeps its exact offices: Anuttara/Paramaśiva retains the unobjectifiable opening; Māyā is the measure-field wound around it — calling Māyā the hole would remove its positive work and put measure where it cannot enclose. Recognition returns through the veil: \"Līlā veils; hybris absolutises the veil; recognition sees the veil as Śakti.\" A24 receives the consequence — necessary measuring and usurped measure require different responses; A19 the complex's changed jurisdiction; A04 contextual seeing; A21 resituation without deleting the differentiated life; A27 the Other not reducible to a place in my image; A35/A36 the completed view returning to the zero it could never occupy.\n\nDeclared cross-story: toroidal offices shared with the uroboros whole; the paśu correction shared with the Neumann whole. ↳ Occurrences: the veil and the opening (#1, #4, #5→0); the eye opening again (#0, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

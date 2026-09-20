@@ -6,7 +6,7 @@ import type {SettingSpec} from "./contracts";
 import type {ChangeRequest, ConfigPlaneSource} from "./source";
 import {detectTransport, kernelOp} from "../kernel/bridge";
 import {SetupFlow} from "./SetupFlow";
-import {SetupFlowController, requestKey} from "./setupFlow";
+import {SetupFlowController, requestKey} from "./setupFlowController";
 import {createSetupNative} from "./setupNative";
 export {ChangeSetView} from "./SetupFlow";
 
@@ -16,6 +16,7 @@ export interface PlanDrawerProps {
   settings: Record<string, SettingSpec>;
   onClose: () => void;
   onApplied: () => void;
+  startAtReview?: boolean;
 }
 
 // Only in-memory presentation drafts, scoped to the existing source object.
@@ -37,7 +38,7 @@ function draftFor(source: ConfigPlaneSource, requests: ChangeRequest[], settings
   return candidate;
 }
 
-export function PlanDrawer({source, requests, settings, onClose, onApplied}: PlanDrawerProps) {
+export function PlanDrawer({source, requests, settings, onClose, onApplied, startAtReview = true}: PlanDrawerProps) {
   const identity = JSON.stringify(requests.map(requestKey).sort());
   // The request values are intentionally not a remount key: owner readback
   // can refresh the parent while this same reviewed operation is running.
@@ -48,5 +49,5 @@ export function PlanDrawer({source, requests, settings, onClose, onApplied}: Pla
     if (transport.kind === "unavailable") return undefined;
     return createSetupNative(op => kernelOp(transport, op));
   }, [source]);
-  return <SetupFlow controller={controller} native={native} startAtReview onClose={onClose} onApplied={onApplied}/>;
+  return <SetupFlow controller={controller} native={native} startAtReview={startAtReview} onClose={onClose} onApplied={onApplied}/>;
 }

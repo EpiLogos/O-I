@@ -120,3 +120,19 @@ test('unowned kinds and malformed records refuse honestly', () => {
   const missingAddress = validBinding({ id: 'ws:kg2', kind: 'knowledge', title: 'W', project: 'Editor', ref: 'wiki:node:editor' });
   assert.equal(missingAddress, null, 'a knowledge binding without its owner address cannot be restored by ref');
 });
+
+test('the hosted engine checkpoint rides the hosted centre kinds, typed, and never on others', () => {
+  // MODE-ENGINE-STATE-PERSISTENCE §7.2: the stage slot's expression
+  // checkpoint must survive a restart or the deep link has nothing to
+  // apply — a ref into the person's saved work, never app content.
+  const expressions = validBinding({ id: 'ws:expr', kind: 'expressions', title: 'Expressions', engine: { expressionRef: 'expression-9', documentId: 'expression-9' } });
+  assert.deepEqual(expressions.engine, { expressionRef: 'expression-9', documentId: 'expression-9' }, 'the expressions centre restores its checkpoint');
+  const techne = validBinding({ id: 'ws:tech', kind: 'techne', title: 'Technè', engine: { expressionRef: 'expression-9' } });
+  assert.equal(techne.engine.expressionRef, 'expression-9', 'the deep cut restores its checkpoint too');
+  const partial = validBinding({ id: 'ws:expr2', kind: 'expressions', title: 'E', engine: { expressionRef: 'e-1', revision: 42 } });
+  assert.equal(partial.engine.revision, undefined, 'a non-string revision drops, never guessed');
+  const untyped = validBinding({ id: 'ws:expr3', kind: 'expressions', title: 'E', engine: { documentId: 'expression-9' } });
+  assert.equal(untyped.engine, undefined, 'a checkpoint without an expression ref is no checkpoint');
+  const foreign = validBinding({ id: 'ws:src', kind: 'source', title: 'x', ref: 'central:source:x', engine: { expressionRef: 'expression-9' } });
+  assert.equal(foreign.engine, undefined, 'a source tab carries no engine checkpoint');
+});

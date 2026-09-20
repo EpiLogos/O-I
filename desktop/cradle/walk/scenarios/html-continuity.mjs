@@ -228,13 +228,11 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
   // The navigator's plane state is remembered per workspace; if the return
   // left the project collapsed (its listing re-reads under the stall), open
   // it the way the journey opened it before reaching for the row.
-  if (await nav.locator('[data-file-path="Work/Continuity/readme.txt"]').count() === 0) {
-    await nav.locator('[data-project-path="Work/Continuity"]').click();
-    if ((await nav.getByRole('button', { name: 'Continuity: files', exact: true }).getAttribute('aria-pressed')) !== 'true') {
-      await nav.getByRole('button', { name: 'Continuity: files', exact: true }).click();
-    }
-  }
-  await nav.locator('[data-file-path="Work/Continuity/readme.txt"]').click();
+  // The workspace return invalidates the listing cache; the stalled re-read
+  // resolves after ~10s. Wait for ANY tree row to appear (the listing
+  // recovered), then click the readme row.
+  await page.waitForFunction(() => document.querySelectorAll('[data-file-path]').length > 0, null, { timeout: 45000 });
+  await nav.locator('[data-file-path="Work/Continuity/readme.txt"]').click({ timeout: 45000 });
   await page.waitForFunction(() => [...document.querySelectorAll('.tab')].some((tab) => tab.dataset.title === 'readme.txt'), null, { timeout: 2500 })
     .then(() => check(true, 'The pending open acknowledges its tab before the owner read resolves', {}))
     .catch(() => check(false, 'The pending open acknowledges its tab before the owner read resolves', { note: 'no tab appeared within 2.5s of the click' }));

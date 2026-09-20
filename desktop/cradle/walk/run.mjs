@@ -102,6 +102,7 @@ const SCENARIOS = {
   "explore-sf2": {module:"scenarios/explore-sf2.mjs",kernel:true,aliases:["sf2","knowledge-encounter"]},
   "workspace-continuity": {module:"scenarios/workspace-continuity.mjs",kernel:true,aliases:["ws-continuity"]},
   "html-continuity": {module:"scenarios/html-continuity.mjs",kernel:true,aliases:["html-cont"]},
+  "mode-engine-state": {module:"scenarios/mode-engine-state.mjs",kernel:true,aliases:["mode-engine"]},
   "a2a-exchange": {module:"scenarios/a2a-exchange.mjs",kernel:true,aliases:["7b"]},
   "agency-a2a": {module:"scenarios/agency-a2a.mjs",kernel:true,aliases:["7c"]},
   "flow-canvas": {module:"scenarios/flow-canvas.mjs",kernel:true,aliases:["u4.1"]},

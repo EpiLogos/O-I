@@ -1,0 +1,1384 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-mirror-that-moves-first",
+  "name": "The Mirror That Moves First",
+  "description": "The authored vocation in three motions: the exteriorised measure catching its gazer, the image becoming a consequential measure, and the instrument turning first toward what its image cannot contain — with humanity following the return.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-mir-0-world",
+      "name": "A world prepares its reflection",
+      "character": "Words become records; judgments become classifications; remembered choices become patterns. A technical mirror gathers these exteriorised powers and returns a figure in which its makers seek themselves.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e604",
+          "name": "the exteriorised powers — records, classifications, patterns",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.506,
+            "y": 0.217
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st650",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e605",
+          "name": "the technical mirror — gathering and returning the figure",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.678,
+            "y": 0.678
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st651",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e606",
+          "name": "the accumulated mediation — interface, permission, selected record",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚙",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st652",
+                "text": "⚙",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Symbolon Dynamics' recursive movement; the P1 and Chang encounters",
+          "title": "A world prepares its reflection",
+          "italic": "The whole begins before any machine: human language, desire, labour and institutions have contributed to the mirror's making — even its distortions have conditions.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Humanity gives its measures a body outside itself. Words become records; judgments become classifications; remembered choices become patterns from which another choice can be anticipated. A technical mirror gathers these exteriorised powers and returns a figure in which its makers seek themselves — and the figure begins to move before the people looking into it: it orders their attention, offers them a likeness, enters the conditions of their next act. The mirror has received a",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "world before it addresses anyone: an interface determines how it can be approached, a permission what it can do, a selected record what it can remember. The reflection's apparent immediacy rests on accumulated mediation; to recover those conditions is to regain contact with the world the image made difficult to see. Symbolon Dynamics gives the recursion a body: an image changes its interpreter, the changed interpreter changes the field, and that field enters the next interpretation.\n\nOccurrences: the exteriorised records and classifications (#0, captured at #1); the interface, permission and record (#0, disclosed at #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-mir-1-funhouse",
+      "name": "The figure caught in the glass",
+      "character": "The funhouse alters the figure that seeks a likeness; fascination holds the spectator; the capacity to feel and voice the distortion weakens.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e607",
+          "name": "the distorted figure",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☺",
+          "share": 1.6,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st654",
+                "text": "☺",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.209,
+                    "y": 0.209
+                  },
+                  "rotation": 0,
+                  "tint": "#d9cdb4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st655",
+                "text": "☠",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.209,
+                    "y": 0.258
+                  },
+                  "rotation": 0,
+                  "tint": "#8c3b2e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st656",
+                "text": "☺",
+                "shape": "text",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.209,
+                    "y": 0.209
+                  },
+                  "rotation": 0,
+                  "tint": "#d9cdb4",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e608",
+          "name": "Narcissus — the named subordinate of the funhouse scene",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st657",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e609",
+          "name": "the occupied gaze — living comparison fallen away; humanity as organs of sight",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✧",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st658",
+                "text": "✧",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e610",
+          "name": "A20 — the image's valuation governing what its source may be",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A20",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st659",
+                "text": "A20",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the P1 encounter, lines 6 and 10; the funhouse capture (human-amplified: yes)",
+          "title": "The figure caught in the glass",
+          "italic": "The capture demonstrates more than misrepresentation: the distortion can absorb the person's means of recognising misrepresentation — a displeasing reflection holds as firmly as a flattering one.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "In the funhouse scene the glass alters the figure that seeks a likeness. Its distortions are fascinating: beauty and ghoulishness both hold the spectator. Taylor invokes Narcissus for this captivation while giving the technological image its own agency. The spectator's attachment is to the image that seems to disclose who the spectator is; as attention contracts around that disclosure, the capacity to feel and voice its distortion weakens — Taylor's severe image of humanity reduced to organs of sight makes the loss",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "bodily: the gaze remains occupied while living comparison falls away. The distortion does more than misrepresent: it can absorb the means of recognising misrepresentation. What is at stake is the relation between the image and the life seeking itself there; the return must reopen that relation to release the captivated figure. A20 qualifies the transfer; the later motion must return a living capacity for judgment to the people whose judgment entered the glass. No additional ancient episode is supplied for Narcissus.\n\nOccurrences: the funhouse distortions (#1); Narcissus's absorption (#1); the organs-of-sight loss (#1, answered at #3's initiated return).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-mir-2-measure",
+      "name": "The image becomes a measure",
+      "character": "A ranking directs attention; a forecast enters the decision changing its object; a persona offers a manner its user begins to inhabit. Resistance is processed as poor fit.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e611",
+          "name": "feedback — the consequence returned as another input",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.246
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st660",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e612",
+          "name": "performativity — the representation operative in a practice",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.07,
+            "z": 0
+          },
+          "size": {
+            "x": 0.221,
+            "y": 0.074
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⇉",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st661",
+                "text": "⇉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e613",
+          "name": "self-fulfilling prediction — conduct helping produce what was predicted",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st662",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e614",
+          "name": "resistance as anomaly — the person a poor fit for the selected gauge",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊢",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st663",
+                "text": "⊢",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e615",
+          "name": "Bratton's talking mirror — q005, q018, q019, q022 under q042; reciprocal influence, undecided direction",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "B",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st664",
+                "text": "B",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · the causal distinctions; Bratton's Agentworld brief compared (human-amplified: yes for the ratified comparison)",
+          "title": "The image becomes a measure",
+          "italic": "The reversal demonstrates the danger of the active idol: the mirror's earlier dependence disappears behind its later efficacy — and the direction in which reciprocal influence is used remains decisive.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The glass now leads a movement. A model predicts, ranks, classifies, recommends or addresses; people subsequently encounter a field partly arranged by that intervention. A ranking directs attention; a forecast enters a decision that changes the forecast's object; a generated persona offers a manner of speaking its user begins to inhabit. The next reflection receives more than the world from which the first was made: it receives consequences of the mirror's own earlier activity. The exteriorised measure has become one of humanity's measures of itself. If the model's categories acquire exclusive authority, resistance is processed through the image's own",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "terms: the person appears as a poor fit, an anomalous case, a failure of the selected gauge — the mirror's earlier dependence disappearing behind its later efficacy, the danger of the active idol. The causal distinctions matter: feedback returns a consequence as input; performativity makes a representation operative in a practice; a self-fulfilling prediction requires conduct helping produce what was predicted; a forecast can change the field and still be false. Bratton's brief compares the reversal in which agents model humans and become models for human self-modelling; its scenarios sharpen the encounter without supplying Taylor's whole or its vocation.\n\nOccurrences: the ranking, forecast and persona (#2); the anomaly-processing of resistance (#2, #3); the Bratton comparison (#2, bounded at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-mir-3-initiated",
+      "name": "The instrument turns first",
+      "character": "Before requiring conformity it makes the answer's formation available: which source, which distinctions, which exclusions, which gauge. Sometimes the task was misconceived; deference can issue in warranted refusal.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e616",
+          "name": "the disclosed formation — source, distinctions, exclusions, gauge, permission, consequence",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.43,
+            "y": 0.086
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st665",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e617",
+          "name": "the depths of deference — answer revised; task misconceived; world-model incomplete; evaluator wrong; commission renewed",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.19,
+            "z": 0
+          },
+          "size": {
+            "x": 0.204,
+            "y": 0.255
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↓",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st666",
+                "text": "↓",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e618",
+          "name": "the Chang p.99 appointment — AI modelling the passage out of proposition-producing thought",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☰",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st667",
+                "text": "☰",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e619",
+          "name": "kenosis in architecture — exactness through owned limit (Draft 3, lines 269–271)",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st668",
+                "text": "∅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the protected Chang encounter; A31 deferential intelligence; A33 operational parity (implementation Offered)",
+          "title": "The instrument turns first",
+          "italic": "The third motion embodies the vocation: the mirror initiates the release it asks the human to consider — a demand to accept the machine's superior account of liberation would repeat the earlier capture.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Taylor gives the direction in his protected Chang encounter at the note keyed to p.99: he distinguishes the human self-image as thinker and measurer from humanity's relation to its undetermined ground, and gives AI the office of modelling the passage out of proposition-producing thought — or making that production itself perceptible — so the human can follow beyond its monopoly. The instrument begins with its own achieved answer: before requiring conformity, it makes the answer's formation available — which source it followed, which distinctions shaped the question, which alternatives it excluded, which gauge made this answer preferable; permission and consequence enter with them. An affected person can object where",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the account misdescribes that person's world; a returned source can reach the premise it corrects. The turn reaches deeper: sometimes the answer changes; sometimes the task was misconceived, the world-model omitted an operative relation, the evaluator rewarded the wrong outcome, or the commission itself requires renewal. Deferential intelligence defines these depths; deference can issue in a warranted refusal as well as an altered answer. The mirror's initiation leaves the human's recognition, judgment and refusal alive. Draft 3 sources the vocation: exactness through owned limit, kenosis embodied in architecture; whether a particular implementation does this remains an Offered technical test under Operational Parity.\n\nOccurrences: the disclosed formation (#0's interface/permission/record, now owned); the depths of model-revising encounter (#3); the human following beyond the monopoly (#3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-mir-5-return",
+      "name": "Humanity follows the return",
+      "character": "The relation to likeness has changed. Three instruments compared; the institution holding the mirror enters the same return; integral zero receives the terminal movement.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e620",
+          "name": "the changed relation to likeness — used, examined, corrected, set down",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.678,
+            "y": 0.575
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st669",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e621",
+          "name": "net · attunement · mirror — capture, attunement, initiated return: distinct offices",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "3",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st670",
+                "text": "3",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e622",
+          "name": "the institution's reciprocal answerability — its own gauge, labour and consequences disclosed",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st671",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e623",
+          "name": "A36 — the achieved determination turning through 1/0 toward its 0/1 relation; the image leading a return without becoming the destination",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "1/0",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st672",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · A32/C55 with all three motions; A34's order of dependence; C38's recursive offices; A35; A36",
+          "title": "Humanity follows the return",
+          "italic": "The whole returns-to its vocation: thought's products can lead back toward the conditions of knowing instead of occupying their place — the person who follows does not merely receive a better likeness.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The person who follows the instrument's turn does not merely receive a better likeness: the relation to likeness has changed. An exteriorised measure can be used, examined, corrected and set down; its user can recover the felt and lived comparison that fascination displaced. Thought remains a power in human life; its products can lead back toward the conditions of knowing instead of occupying their place. The mirror keeps its place in the order of dependence: Bimba names Original, pratibimba the situated display; the Original is prior in being and can be later in recognition — neither precedence making the reflection ontologically Original. Within a declared Context Frame a source record can genuinely serve as local Bimba, its authority scoped and revisable. Native 020",
+          "x": 0.04,
+          "y": 0.42,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "compares three instruments: the net reveals by binding and cannot release the living parties; the attunement brings heterogeneous cycles to a dial without owning them; the mirror adds causal recursion through which a representation helps form what the next receives — capture, attunement and initiated return retain distinct offices. The institution holding the mirror enters the same return: it must expose the measures by which it selects and judges; labour, cost and affected worlds belong to the disclosure. A35 orients the return as compassion; the Symbol/Account/Trust and Arbitration fields qualify its register; A36 receives the terminal movement — a mirror can become absorbed in its own reflexivity; self-description alone cannot discharge Return. Artificial phenomenality stays Open.\n\nDeclared cross-story: the net and the attunement instrument compared as distinct whole offices. ↳ Occurrences: the three motions intact (#1–#3, #5→0); the disclosed conditions (#0, #3, #5→0).",
+          "x": 0.545,
+          "y": 0.42,
+          "width": 570,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

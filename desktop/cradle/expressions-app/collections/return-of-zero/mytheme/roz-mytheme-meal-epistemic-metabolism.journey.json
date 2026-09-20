@@ -1,0 +1,1531 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-meal-epistemic-metabolism",
+  "name": "The Meal — Epistemic Metabolism and the Shared Table",
+  "description": "The authored movement: hunger made perceptible, the plate and its preparations, tasting and chewing, the container, the shared table, and satiety with renewed hunger.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-meal-0-hunger",
+      "name": "Information without nourishment",
+      "character": "The report can be recalled and repeated; the next morning the account of the world proceeds as before. The feed takes the place of seeking.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#7c5a33",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e553",
+          "name": "the finished report — recallable, unchanged in its receiver",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.368,
+            "y": 0.27
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st599",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e554",
+          "name": "the continuous feed — attention occupied, the discrepancy unarticulated",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≣",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st600",
+                "text": "≣",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e555",
+          "name": "the display case — cataloguing behind glass, untouched",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st601",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e556",
+          "name": "the disposal — distinctions destroyed before consequence",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⌫",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st602",
+                "text": "⌫",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e557",
+          "name": "appetite — the question with standing as an opening",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.19,
+            "z": 0
+          },
+          "size": {
+            "x": 0.187,
+            "y": 0.187
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "?",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st603",
+                "text": "?",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · the authored video-essay outline; the quilt's logos-health appointment (human-amplified: yes)",
+          "title": "Information without nourishment",
+          "italic": "The opening images demonstrate what the meal requires: a passage through received difference — the feed's interruptions keep attention occupied while the quieter discrepancy stays unarticulated.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The reader has finished the report: its contents can be recalled, repeated and discussed, and the next morning the account of the world proceeds much as before — something received without entering the conditions from which the reader judges and acts. The outline gives the interval a body: food has arrived, but the meal has not taken place. Before this meal hunger has to become perceptible: a stream of supplied answers arrives so continuously that the recipient has little opportunity to feel a question. The feed takes the place of seeking; its",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "interruptions keep attention occupied while the quieter discrepancy stays unarticulated — what is encountered and what the inherited account allows no longer fit together. Appetite gives that discrepancy a direction: what needs understanding, what has resisted explanation, what would count as an answer — felt urgency without a certified conclusion. Two failure images show the stakes: the display case preserves material behind glass to be catalogued untouched; the disposal takes material in and destroys its distinctions before they become consequential.\n\nOccurrences: the finished report (#0); the feed (#0, returned at #5→0's emptied rite); the display case and disposal (#0); the standing question (#0, #1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-meal-1-plate",
+      "name": "The plate and its five preparations",
+      "character": "Raw, cooked, heavily processed, junk, fermented — roles in an authored information ecology, with provenance from the first contact.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#7c5a33",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e558",
+          "name": "raw — the demanding texture of primary material",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.184,
+            "y": 0.184
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st604",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e559",
+          "name": "cooked — responsible interpretation making material accessible",
+          "kind": "formation",
+          "position": {
+            "x": -0.2,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.172,
+            "y": 0.172
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st605",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e560",
+          "name": "processed — earlier transformations hard to recover",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st606",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e561",
+          "name": "junk — stimulation after the relation to nourishment has fallen away",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.28,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.8,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st607",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e562",
+          "name": "fermented — inherited practices having worked on what a newcomer receives",
+          "kind": "formation",
+          "position": {
+            "x": -0.2,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st608",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e563",
+          "name": "provenance — who produced it, what it says, what preparation it carries",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⌘",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st609",
+                "text": "⌘",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the outline's five forms; A29 delegated labour",
+          "title": "The plate and its five preparations",
+          "italic": "Preparation embodies an affirmative office: another's labour can make an encounter possible — the question is whether it stays answerable to what was prepared.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The plate gives the question something determinate to meet: a document, an account, a testimony, an argument. Provenance matters from first contact — who produced the material, what it actually says, what work prepared it; the existence of a document and the truth of inferences from it are different matters. The outline gives preparation five forms: raw food carries the demanding texture of primary material; cooked food figures responsible interpretation making difficult material accessible through context; heavily processed food figures a product whose earlier transformations have become hard to recover; junk food figures the pursuit",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "of stimulation after the relation to nourishment has fallen away; fermentation figures inherited practices through which earlier participants have worked on what a newcomer receives. These are roles in an authored information ecology, not a dietary ranking. Cooking's affirmative office: a translation or careful explanation can open a route into the source — the question is whether that preparation remains answerable to what was prepared and leaves the recipient able to examine, disagree and continue. A29 follows what happens when the finished product is accepted but the conditions and costs of its production disappear from the account.\n\nOccurrences: the five preparation roles (#1); the provenance questions (#1, #5→0's circuit); the disappeared labour (#1, returned at #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-meal-2-chew",
+      "name": "Taste and chewing",
+      "character": "Attraction and aversion at the threshold; the fourfold discrimination; contact discharged before its work — the pathologies of consumption mistaken for nourishment.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#7c5a33",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e564",
+          "name": "the first taste — welcome or rejection before the material is worked through",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.03,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st610",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e565",
+          "name": "chewing — distinguishing statement from evidence, event from interpretation",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "cymatic",
+          "text": "",
+          "share": 1.4,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st611",
+                "text": "",
+                "shape": "cymatic",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e566",
+          "name": "the fourfold — affirm · reject · hold together · recognise a false alternative",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st612",
+                "text": "4",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e567",
+          "name": "the pathology — the jolt discharged before the work; gulping; refusal; the sensation of consumption mistaken for nourishment",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚠",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st613",
+                "text": "⚠",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · the outline's thresholds and pathologies; the taste/knowing word-field as research route",
+          "title": "Taste and chewing",
+          "italic": "The mouth demonstrates discrimination maintaining contact with what it distinguishes — the relation does not wait for an etymology to license it, nor verify one in return.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The first bite has a taste: attraction, aversion and neutrality sit at the threshold before the material is worked through — a familiar account welcome, a contrary one provoking rejection. This first valuation belongs to the encounter and needs to become available to inquiry: liking an account and establishing its claim do different work. Chewing prolongs contact: teeth divide food so it can be received more fully; the epistemic act follows the texture of a claim — distinguishing a statement from its evidence, an event from its interpretation, a connection from the explanation offered for it; returning to the passage instead of letting the headline decide",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "what was said. The fourfold discrimination keeps several responses available: affirm what is established; reject what the evidence contradicts; hold together jointly present aspects; recognise when the proposed alternatives fail to address the material — the fourth can change the question under which the plate was first presented. The pathology is contact repeatedly discharged before its work: the jolt of outrage or reassurance giving way to the next item; gulping without discrimination; refusing all approach; mistaking the sensation of consumption for nourishment. The taste/knowing and cutting/knowing word-fields remain research routes at their own register.\n\nOccurrences: the first taste's valuations (#2); the fourfold discrimination (#2); the discharged contact (#2); the word-field routes (#2, held at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-meal-3-table",
+      "name": "The container; the shared table; companions are not food",
+      "character": "The stomach's bounded interior; criteria changing; the epistemic microbiome; A30's reciprocal world-constitution; the devouring table refused.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#7c5a33",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e568",
+          "name": "the container — a bounded interior able to sustain the work it permits",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.399,
+            "y": 0.266
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st614",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e569",
+          "name": "the changed criteria — a decisive distinction become incidental; an excluded condition become necessary",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st615",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e570",
+          "name": "the shared table — companions from histories the others do not possess",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.68,
+            "y": 0.425
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st616",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e571",
+          "name": "the epistemic microbiome — inherited frameworks and practices assisting beyond solitary agency",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⋅⋅⋅",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st617",
+                "text": "⋅⋅⋅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e572",
+          "name": "companions are not food — the contributor retains the capacity to contest use (A29/A30)",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.098,
+            "y": 0.098
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊗",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st618",
+                "text": "⊗",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3–#4 · Symbolon Dynamics' native mechanism; A30; the Apportionment and Encounter/Countenance fields",
+          "title": "The container; the shared table; companions are not food",
+          "italic": "The table demonstrates reciprocal world-constitution: one participant's contribution becomes a condition of another's action without making its source mere material — assimilation reaches the receiving organisation itself.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "What has been chewed passes into a place where its first form can loosen: the stomach figures a bounded interior able to work on what it receives. The initial story can be taken apart so its components and dependencies are available for another account; more than changing the conclusion, the received material can change the criteria through which the next conclusion is reached — Symbolon Dynamics' native mechanism of image, interpreter and altered field. The container matters because dismantling an account removes supports the recipient has been acting through; patience means allowing the work time, without a rule that distress evidences truth. Circulation follows: an interpretation becomes a contribution another can meet. The table",
+          "x": 0.04,
+          "y": 0.42,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "receives distinct companions whose contributions change what the others can next ask; disagreement about the meal itself is included — a correction to a passage differs from a change in who can speak. The microbiome image names inherited frameworks and traditions assisting beyond solitary agency, with their biological claims kept to their own sources. Companions are not food: a table absorbing everyone's work into one authority performs the devouring relation the meal exists to transform; A29 requires resistance and cost to reach the office that can change the next action; A30 requires contributors to remain more than context. The absent-from-the-plate inquiry extends: who prepared the account, what was left out, who cannot appear under its terms.\n\nOccurrences: the criteria changed in processing (#3); the disagreeing table (#4); the microbiome image (#4); the non-food boundary (#4, against the black sun's capture in the taylor-images whole's field).",
+          "x": 0.545,
+          "y": 0.42,
+          "width": 570,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-meal-5-return",
+      "name": "Satiety, rest, renewed hunger — and the emptied rite",
+      "character": "Enough worked through to act from changed ground; rest without compulsory intake; hunger beginning from changed ground; the sacramental coda with its own historical limits.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#7c5a33",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e573",
+          "name": "satiety — nourishment recognisable in the change of capacity",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st619",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e574",
+          "name": "rest — the meal can be enough; no machinery of compulsory intake",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.1
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "—",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st620",
+                "text": "—",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e575",
+          "name": "renewed hunger — beginning from changed ground, unlike the uninterrupted demand",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "?′",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st621",
+                "text": "?′",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e576",
+          "name": "the coda — bread in the hands of companions; loaves and fishes as the outline's explicit wink, no derivation of 4+2",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☩",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st622",
+                "text": "☩",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e577",
+          "name": "the emptied rite — form continuing after the capacity to change relation has ceased",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st623",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · logos-health; the Symbol/Account/Trust and Arbitration fields; A29/A30/A35; A21",
+          "title": "Satiety, rest, renewed hunger — and the emptied rite",
+          "italic": "The meal returns-to its arguments with the whole movement intact: received determination examined, assimilated, shared and returned so the receiver and the conditions of future receiving can change.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The meal can finish. Satiety gives a measure of sufficiency: enough has been worked through to judge, act or live from changed ground — the recipient no longer merely carries the earlier account as an item. The distinction matters for individuation and recognition: integration increases the ability to bear differentiated relations; recognition makes source and history active; repeating a transformation's vocabulary leaves the identifying act untouched. Rest belongs to completion: the table need not become a machinery of compulsory intake. Then a new question arises from the nourished life: what follows, who else should be heard, what prepared next — renewed hunger carries the previous meal's consequence, different from",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "uninterrupted demand because something has been assimilated between the two appetites. The coda places bread in the hands of companions, invoking the Eucharist and loaves and fishes, then naming potlatch, seder, langar, iftar and thanksgiving as routes for further encounter — the loaves-and-fishes association remaining the outline's explicit wink, no derivation of 4+2. The coda also retains the emptied rite: the meal's form continuing after its capacity to bring people into changed relation has ceased — the morning information ritual. Logos-health names the integrity of the whole movement (human-amplified: yes for the ratified operation and its prescribed returns); demonstrating a therapeutic or institutional outcome would be another task.\n\nOccurrences: the satiety and rest (#5→0); the renewed hunger against the feed (#0, #5→0); the emptied rite (#5→0); the declared returns to A29/A30/A35 (#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

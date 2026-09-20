@@ -30,6 +30,22 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   check(entries.length<=3&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t)),
     'The fresh page offers only its real entries',{entries});
   check(await rest.locator('.welcome-prompt h2').count()===1,'The rolling welcome prompt is the page heading');
+  // Length robustness: every eligible phrase renders in the invisible reserve,
+  // so the stage's height is the tallest statement's and a rotation onto a
+  // longer (two- or three-line) phrase can never displace the boxes below.
+  const stability=await rest.locator('.welcome-prompt').first().evaluate(header=>{
+    const roller=header.querySelector('.welcome-prompt-roller');
+    const reserve=roller?.querySelector('.welcome-prompt-reserve');
+    const nav=header.nextElementSibling;
+    if(!roller||!(reserve instanceof Element)||!(nav instanceof HTMLElement))return {ok:false,reason:'roller, reserve or action nav missing'};
+    const spans=[...reserve.querySelectorAll(':scope > span')];
+    if(spans.length<4)return {ok:false,reason:`reserve carries ${spans.length} phrases, expected the full eligible set`};
+    const tallest=Math.max(...spans.map(span=>span.getBoundingClientRect().height));
+    const stage=roller.getBoundingClientRect();
+    const navTop=nav.getBoundingClientRect().top;
+    return {ok:stage.height>=tallest-0.5&&navTop>=stage.bottom-0.5,phrases:spans.length,tallest:Math.round(tallest),stageHeight:Math.round(stage.height)};
+  });
+  check(stability.ok&&stability.phrases>=4,'The rolling prompt reserves its tallest statement, so rotation never displaces the boxes',stability);
   check(await page.getByRole('button',{name:'Back to workspace'}).count()===0,
     'No "back to workspace" control that only returns to this same page');
 
