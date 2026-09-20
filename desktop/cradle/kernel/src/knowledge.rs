@@ -187,6 +187,10 @@ pub fn call(cwd: &Path, request: &Request) -> Result<Value, String> {
     })
 }
 
+pub fn not_fresh(value: &bool) -> bool {
+    !value
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;
@@ -225,7 +229,6 @@ mod tests {
                     "{}",
                     case.name
                 );
-                // The JSON seam must not flatten quoting or turn it into CLI flags.
                 let roundtrip: Request =
                     serde_json::from_str(&serde_json::to_string(&request).unwrap()).unwrap();
                 assert_eq!(roundtrip, request, "{}", case.name);
@@ -257,8 +260,7 @@ mod tests {
         );
         fs::create_dir_all(&scratch.0).unwrap();
         let executable = scratch.0.join("oi argv witness");
-        // A transport witness, not an AIKit implementation or a parser. The
-        // query is argv data; neither this program nor the adapter evaluates it.
+        // This transport witness observes argv; it never evaluates the query.
         fs::write(&executable, "#!/usr/bin/env python3\nimport json, sys\nprint(json.dumps({'ok': True, 'data': sys.argv[1:]}))\n").unwrap();
         fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
         for cwd in [
@@ -294,8 +296,4 @@ mod tests {
             }
         }
     }
-}
-
-pub fn not_fresh(value: &bool) -> bool {
-    !value
 }
