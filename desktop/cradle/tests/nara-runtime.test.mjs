@@ -42,8 +42,28 @@ test('mutated or fabricated authority decisions cannot be recorded as execution'
 test('source and read-model aliases cannot mutate the retained private context or constitution',()=>{const {a,b}=speechBinding();a.context.subject_ref='foreign';const c=b.contextNow;c.subject_ref='other';assert.notEqual(b.contextNow.subject_ref,c.subject_ref);const body=b.constitutionNow;body.agent_ref='another';assert.notEqual(b.agentRef,body.agent_ref);});
 test('interruption retains original response identity and invalid receipt input cannot change phase',()=>{const {b}=speechBinding();b.beginResponse('response/test');assert.throws(()=>b.interrupt({interruption_ref:'interrupt/test',reason:'',at:'2026-09-20T00:00:00Z'}));assert.equal(b.phaseNow,'speaking');const r=b.interrupt({interruption_ref:'interrupt/test',reason:'stop',at:'2026-09-20T00:00:00Z'});assert.equal(r.interruption_receipt.response_ref,'response/test');assert.equal(r.session_destroyed,false);});
 
-function presentationOwner(a){let doc=expression(a.context);const requests=[],gate=deferred();let wait=false;const p=new NaraPresentation({read:async()=>structuredClone(doc),world:async r=>{requests.push(structuredClone(r));if(r.operation==='act_perform'){if(wait)await gate.promise;assert.equal(r.expected_revision,doc.revision);doc.revision++;doc.selection={scene_ref:r.changes[0].scene_ref,entity_ref:r.changes[0].entity_ref};return {state:'act_running'};}if(r.operation==='act_interrupt')return {state:'act_held'};if(r.operation==='act_checkpoint')return {state:'checkpointed'};if(r.operation==='act_restore'){doc.revision++;return {state:'act_restored'};}throw new Error('unsupported fixture op');}});return {p,requests,gate,wait:()=>{wait=true;},doc:()=>doc};}
-test('reviewed focus executes native act with exact bound entity and revision',async()=>{const a=attachment(),o=presentationOwner(a);const result=await o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal);assert.equal(o.requests[0].operation,'act_perform');assert.equal(o.requests[0].changes[0].entity_ref,'entity/a');assert.equal(result.expression_revision,'8');assert.equal(o.p.state.state,'held');await o.p.checkpoint();assert.ok(o.p.state.checkpoint_ref);await o.p.restore();assert.equal(o.p.state.revision,9);});
+function presentationOwner(a){
+ let doc=expression(a.context);const requests=[],gate=deferred(),checkpoints=new Map();let wait=false;
+ const p=new NaraPresentation({read:async()=>structuredClone(doc),world:async r=>{
+  requests.push(structuredClone(r));
+  if(r.operation==='act_perform'){
+   if(wait)await gate.promise;assert.equal(r.expected_revision,doc.revision);
+   const selection={scene_ref:r.changes[0].scene_ref,entity_ref:r.changes[0].entity_ref};
+   if(JSON.stringify(doc.selection)!==JSON.stringify(selection)){doc.revision++;doc.selection=selection;}
+   return {state:'act_running'};
+  }
+  if(r.operation==='act_interrupt')return {state:'act_held'};
+  if(r.operation==='act_checkpoint'){checkpoints.set(r.checkpoint_ref,structuredClone(doc));return {state:'checkpointed',checkpoint:{checkpoint_ref:r.checkpoint_ref,act_ref:r.act_ref,revision:doc.revision}};}
+  if(r.operation==='act_restore'){
+   const saved=checkpoints.get(r.checkpoint_ref);
+   if(JSON.stringify({...saved,revision:0})!==JSON.stringify({...doc,revision:0}))doc={...structuredClone(saved),revision:doc.revision+1};
+   return {state:'act_restored',act_ref:r.act_ref,checkpoint_ref:r.checkpoint_ref,expression:{state:'ready',document:structuredClone(doc)}};
+  }
+  throw new Error('unsupported fixture op');
+ }});return {p,requests,gate,wait:()=>{wait=true;},doc:()=>doc};
+}
+test('reviewed focus executes native act with exact bound entity and revision',async()=>{const a=attachment(),o=presentationOwner(a);const result=await o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal);assert.equal(o.requests[0].operation,'act_perform');assert.equal(o.requests[0].changes[0].entity_ref,'entity/a');assert.equal(result.expression_revision,'8');assert.equal(o.p.state.state,'held');await o.p.checkpoint();assert.ok(o.p.state.checkpoint_ref);await o.p.restore();assert.equal(o.p.state.revision,8); // native unchanged restore is a no-op
+});
 test('interrupt while atomic focus is pending lets only that step finish and cancels later refs',async()=>{const a=attachment(),o=presentationOwner(a);o.wait();const signal=new AbortController();const run=o.p.perform(a.context,[a.context.pointed_ref,a.context.pinned_refs[0]],signal.signal);await tick();signal.abort();const hold=o.p.hold();o.gate.resolve();await Promise.all([run,hold]);assert.equal(o.requests.filter(x=>x.operation==='act_perform').length,1);assert.deepEqual(o.p.state.completed_refs,[a.context.pointed_ref]);assert.deepEqual(o.p.state.cancelled_refs,[a.context.pinned_refs[0]]);assert.equal(o.p.state.state,'held');});
 test('unmapped/escaping focus and stale peer edit cannot be replaced by first entity or rewind',async()=>{const a=attachment(),o=presentationOwner(a);await assert.rejects(o.p.perform(a.context,['foreign'],new AbortController().signal),/outside/);assert.equal(o.requests.length,0);o.doc().revision++;await assert.rejects(o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal),/changed/);assert.equal(o.requests.length,0);});
 
@@ -51,3 +71,66 @@ test('hold while native focus is being prepared prevents the first mutation',asy
 test('terminal native refusal stays a failure but no longer deadlocks continuation',async()=>{const {r,owner}=runtime();const call=owner.call;owner.call=async(...args)=>call(...args);owner.answer='';await r.sendText('No returned text');assert.equal(r.getSnapshot().phase,'error');assert.equal(r.getSnapshot().pending,null);owner.answer='Next native result';await r.sendText('Continue');assert.equal(r.getSnapshot().phase,'idle');assert.equal(owner.sendCount,2);});
 
 test('body reload preserves the current encounter context instead of restoring old source selection',async()=>{const {r}=runtime();const old=r.binding,next={...r.binding.context,context_ref:'context/later'};r.updateContext(next);old.speech.tts.voice='selected-voice';await r.reconnect(old);assert.equal(r.binding.context.context_ref,'context/later');});
+
+function structuredEpii(owner) {
+ owner.answer=turn=>{const {delegation:d}=JSON.parse(turn.packet.text),e=fixture('nara-epii-delegation-v1.json').enrichment;
+  return JSON.stringify({...e,enrichment_ref:`enrichment/${d.delegation_ref}`,delegation_ref:d.delegation_ref,basis_context_ref:d.basis.context_ref,basis_expression_revision:d.basis.expression_revision,proposed_focus_refs:[attachment().context.pointed_ref]});};
+}
+test('reject then delegate again retains two distinct review identities and allows only the second',async()=>{
+ const {r,owner,a}=runtime();structuredEpii(owner);const scope=[a.context.pointed_ref,...a.context.disclosed.map(d=>d.ref_id)];
+ await r.inquire('First inquiry',scope);const first=r.getSnapshot().inquiries[0];r.rejectInquiry(first.delegation.delegation_ref);
+ await r.inquire('Second inquiry',scope);const second=r.getSnapshot().inquiries[1];
+ assert.notEqual(first.delivery_ref,second.delivery_ref);assert.ok(second.enrichment);assert.equal(second.decision,'pending');
+ assert.throws(()=>r.reviewInquiry(first.delegation.delegation_ref),/No pending/);
+ assert.equal(r.reviewInquiry(second.delegation.delegation_ref).enrichment.delegation_ref,second.delegation.delegation_ref);
+});
+test('a changed source revision at the same context address invalidates Epii acceptance',async()=>{
+ const {r,owner,a}=runtime();structuredEpii(owner);await r.inquire('Source basis',[a.context.pointed_ref,...a.context.disclosed.map(d=>d.ref_id)]);
+ const row=r.getSnapshot().inquiries[0],next=r.binding.context;next.disclosed[0].revision='changed-source';r.updateContext(next);
+ assert.throws(()=>r.reviewInquiry(row.delegation.delegation_ref),/source or occasion changed/);
+ assert.equal(row.enrichment.basis_context_ref,r.binding.context.context_ref);
+});
+test('an acceptance reservation blocks duplicate application and rejection while preserving truthful partial result',async()=>{
+ const {r,owner,a}=runtime();structuredEpii(owner);await r.inquire('Focus',[a.context.pointed_ref,...a.context.disclosed.map(d=>d.ref_id)]);
+ const ref=r.getSnapshot().inquiries[0].delegation.delegation_ref;r.beginInquiryAcceptance(ref);
+ assert.throws(()=>r.rejectInquiry(ref),/No pending/);assert.throws(()=>r.beginInquiryAcceptance(ref),/No pending/);
+ await assert.rejects(r.sendText('Concurrent send'),/Finish or recover/);
+ r.finishInquiryAcceptance(ref,'partial');assert.equal(r.getSnapshot().inquiries[0].decision,'partial');
+ assert.throws(()=>r.rejectInquiry(ref),/No pending/);
+});
+test('a refused preflight may return to review but uncertain effects never turn back into a pending proposal',async()=>{
+ const {r,owner,a}=runtime();structuredEpii(owner);await r.inquire('Focus',[a.context.pointed_ref,...a.context.disclosed.map(d=>d.ref_id)]);
+ const ref=r.getSnapshot().inquiries[0].delegation.delegation_ref;r.beginInquiryAcceptance(ref);r.finishInquiryAcceptance(ref,'pending');
+ r.beginInquiryAcceptance(ref);r.finishInquiryAcceptance(ref,'uncertain');assert.throws(()=>r.beginInquiryAcceptance(ref),/No pending/);
+ assert.equal(r.getSnapshot().inquiries[0].decision,'uncertain');
+});
+
+
+test('same focused subject is a native no-op, not a fabricated revision or failure',async()=>{
+ const a=attachment(),o=presentationOwner(a);const first=await o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal);
+ const second=await o.p.perform(first,[a.context.pointed_ref],new AbortController().signal);
+ assert.equal(second.expression_revision,first.expression_revision);assert.equal(o.p.state.attempt,2);assert.deepEqual(o.p.state.completed_refs,[a.context.pointed_ref]);
+});
+test('native checkpoint restore after another reviewed step restores the original exact subject',async()=>{
+ const a=attachment(),o=presentationOwner(a);const first=await o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal);await o.p.checkpoint();
+ await o.p.perform(first,[a.context.pinned_refs[0]],new AbortController().signal);const before=o.doc().revision;const restored=await o.p.restore();
+ assert.equal(o.doc().selection.entity_ref,'entity/a');assert.equal(restored.pointed_ref,a.context.pointed_ref);assert.equal(o.doc().revision,before+1);
+});
+test('a preflight refusal leaves the previous attempt distinct from any new mutation',async()=>{
+ const a=attachment(),o=presentationOwner(a);await o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal);const before=o.p.state;
+ await assert.rejects(o.p.perform(a.context,[a.context.pointed_ref],new AbortController().signal),/changed/);assert.deepEqual(o.p.state,before);
+});
+test('missing checkpoint identity is rejected despite a successful-looking state string',async()=>{
+ const a=attachment();let doc=expression(a.context);const p=new NaraPresentation({read:async()=>structuredClone(doc),world:async r=>{
+  if(r.operation==='act_perform'){doc.revision++;doc.selection={scene_ref:r.changes[0].scene_ref,entity_ref:r.changes[0].entity_ref};return {state:'act_running'};}
+  return {state:r.operation==='act_checkpoint'?'checkpointed':'act_held'};
+ }});await p.perform(a.context,[a.context.pointed_ref],new AbortController().signal);await assert.rejects(p.checkpoint(),/did not retain/);assert.equal(p.state.checkpoint_ref,null);
+});
+
+
+test('an applying native proposal reserves context and cannot be forgotten or rebound',async()=>{
+ const {r,owner,a}=runtime();structuredEpii(owner);await r.inquire('Focus',[a.context.pointed_ref,...a.context.disclosed.map(d=>d.ref_id)]);
+ const ref=r.getSnapshot().inquiries[0].delegation.delegation_ref;r.beginInquiryAcceptance(ref);
+ assert.throws(()=>r.updateContext(r.binding.context),/reserved/);await assert.rejects(r.end(),/Settle/);await assert.rejects(r.reconnect(),/Finish or recover/);
+ r.updateContext(r.binding.context,ref);r.finishInquiryAcceptance(ref,'partial');assert.equal(r.getSnapshot().inquiries[0].decision,'partial');
+});

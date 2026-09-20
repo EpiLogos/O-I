@@ -14,7 +14,7 @@ import {encodeWav16kMono} from '../src/dictation/wav.ts';
 const root=fileURLToPath(new URL('../',import.meta.url)),artifacts=new URL('./artifacts/nara-native/',import.meta.url);
 const a=attachment(),owner=controlledOwner('Controlled native response; not an inference-model result.');
 let doc=expression(a.context),stt=0,tts=0,sourceOpens=0;
-const requests=[],checks=[],errors=[];
+const requests=[],checks=[],errors=[],checkpoints=new Map();
 const snapshot={focus:{},surfaces:{},buffers:{}};
 const wav=Buffer.from(await encodeWav16kMono(new Float32Array(32000)).arrayBuffer());
 const bridge=httpServer(async(req,res)=>{
@@ -38,8 +38,8 @@ const bridge=httpServer(async(req,res)=>{
     if(r.operation==='selection_read')data={selection:{subject_ref:a.context.pointed_ref,kind:'relation',native_owner:'ql',revision:'source-rev/7',origin:'expression',expression_ref:a.context.expression_ref}};
     else if(r.operation==='act_perform'){assert.equal(r.expected_revision,doc.revision);doc.revision++;doc.selection={scene_ref:r.changes[0].scene_ref,entity_ref:r.changes[0].entity_ref};data={state:'act_running'};}
     else if(r.operation==='act_interrupt')data={state:'act_held'};
-    else if(r.operation==='act_checkpoint')data={state:'checkpointed'};
-    else if(r.operation==='act_restore'){doc.revision++;data={state:'act_restored'};}
+    else if(r.operation==='act_checkpoint'){checkpoints.set(r.checkpoint_ref,structuredClone(doc));data={state:'checkpointed',checkpoint:{checkpoint_ref:r.checkpoint_ref,act_ref:r.act_ref,revision:doc.revision}};}
+    else if(r.operation==='act_restore'){const saved=checkpoints.get(r.checkpoint_ref);if(JSON.stringify({...doc,revision:0})!==JSON.stringify({...saved,revision:0}))doc={...structuredClone(saved),revision:doc.revision+1};data={state:'act_restored',act_ref:r.act_ref,checkpoint_ref:r.checkpoint_ref,expression:{state:'ready',document:structuredClone(doc)}};}
     else throw Error('Unexpected controlled world operation '+r.operation);
     outcome={result:'expression_world',data};break;
    }
@@ -85,8 +85,19 @@ try{
  await page.getByLabel('Ask Epii for deeper inquiry').fill('Explain the selected relation');await page.getByRole('button',{name:'Delegate selected basis'}).click();await page.getByRole('button',{name:'Accept focus only'}).waitFor();
  const prior=doc.revision;await page.getByRole('button',{name:'Reject without mutation'}).click();check(doc.revision===prior,'Epii rejection leaves native Expression unchanged');
  check(!(await page.evaluate(()=>JSON.stringify(localStorage))).includes('Private controlled'),'Private dialogue is absent from browser persistence');
- await page.getByRole('button',{name:'Delegate selected basis'}).click();await page.getByRole('button',{name:'Accept focus only'}).last().click();await page.getByRole('button',{name:'Checkpoint performed state'}).waitFor();check(doc.revision===prior+1&&doc.selection.entity_ref==='entity/a','Authorised focus operates the exact source-bound native entity');
- await page.getByRole('button',{name:'Checkpoint performed state'}).click();await page.getByRole('button',{name:'Restore native draft checkpoint'}).click();await page.waitForTimeout(100);check(doc.revision===prior+2,'Checkpoint restore has native revision readback, not GPU rewind');
+ await page.getByRole('button',{name:'Delegate selected basis'}).click();
+ // Await the new, returned proposal by identity. The already rejected article
+ // remains mounted: a locator captured on its disabled button is not this turn.
+ await page.waitForFunction(()=>document.querySelectorAll('[data-delegation-ref]').length===2&&document.querySelectorAll('[data-delegation-ref]')[1].querySelector('button')?.disabled===false);
+ const second=page.locator('[data-delegation-ref]').nth(1);
+ check(await second.getAttribute('data-decision')==='pending','Second inquiry has its own returned, pending proposal');
+ await second.getByRole('button',{name:'Accept focus only'}).click();await page.getByRole('button',{name:'Checkpoint performed state'}).waitFor();check(doc.revision===prior+1&&doc.selection.entity_ref==='entity/a','Authorised focus operates the exact source-bound native entity');
+ await page.getByRole('button',{name:'Checkpoint performed state'}).click();
+ const restores=requests.filter(r=>r.op==='expression_world'&&r.request.operation==='act_restore').length;
+ await page.getByRole('button',{name:'Restore native draft checkpoint'}).click();
+ await page.waitForFunction(()=>!document.querySelector('[aria-label="Expression checkpoint"] button:last-of-type')?.disabled);
+ check(requests.filter(r=>r.op==='expression_world'&&r.request.operation==='act_restore').length===restores+1&&doc.revision===prior+1,'Unchanged checkpoint restore executes the native operation without fabricating a revision');
+ check(await page.getByRole('alert').count()===0,'No native-operation refusal is hidden behind unchanged checkpoint state');
  await page.evaluate(()=>window.naraNativeTest.unmount());await page.evaluate(()=>window.naraNativeTest.mount());await page.getByLabel('Message to Nara').waitFor();check(owner.requests.filter(r=>['start','open','draft','prompt'].includes(r.action)).length===0,'No layout transition remints identities or overwrites the ordinary human composer');
  check(errors.length===0,'No browser runtime errors');await mkdir(artifacts,{recursive:true});await page.screenshot({path:fileURLToPath(new URL('controlled.png',artifacts)),fullPage:true});
 }finally{

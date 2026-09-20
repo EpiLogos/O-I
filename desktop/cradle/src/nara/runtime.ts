@@ -13,7 +13,7 @@ import {
 
 export type NaraPhase="idle"|"checking"|"requesting-microphone"|"listening"|"transcribing"|"waiting"|"preparing-audio"|"speaking"|"interrupted"|"error"|"ended";
 export interface DialogueRow {role:"person"|"nara"|"epii";text:string;delivery_ref?:string;complete:boolean}
-export interface Inquiry {delegation:EpiiDelegation;delivery_ref:string;explanation:string;enrichment:EpiiEnrichment|null;decision:"pending"|"rejected"|"accepted";error:string|null}
+export interface Inquiry {delegation:EpiiDelegation;delivery_ref:string;explanation:string;enrichment:EpiiEnrichment|null;decision:"pending"|"applying"|"partial"|"uncertain"|"rejected"|"accepted";error:string|null;context_basis:NaraDialogueContext}
 export interface NaraRuntimeSnapshot {
   phase:NaraPhase;voice_enabled:boolean;draft:string;notice:string;rows:DialogueRow[];
   pending:{delivery_ref:string;target:"nara"|"epii"}|null;inquiries:Inquiry[];
@@ -21,6 +21,13 @@ export interface NaraRuntimeSnapshot {
 export interface RuntimePorts {call:EncounterCall;audio:SpeechAudio;hold?:()=>Promise<void>;pollMs?:number;timeoutMs?:number}
 const fresh=(kind:string)=>`${kind}/nara-${crypto.randomUUID()}`;
 const interrupted=(error:unknown)=>error instanceof Error&&error.name==="AbortError";
+// A context ref is an address, not proof that its disclosed revisions stayed
+// unchanged. Compare the complete reviewed reading, independently of key order.
+function contextKey(value:unknown):string {
+  if(Array.isArray(value))return "["+value.map(contextKey).join(",")+"]";
+  if(value&&typeof value==="object")return "{"+Object.keys(value).sort().map(key=>JSON.stringify(key)+":"+contextKey((value as Record<string,unknown>)[key])).join(",")+"}";
+  return JSON.stringify(value);
+}
 
 export class NaraRuntime {
   private attachment:NaraAttachment;
@@ -41,7 +48,7 @@ export class NaraRuntime {
   setDraft(text:string):void {if(text.length>16384)throw new Error("Dialogue draft exceeds the bounded turn limit");this.state.draft=text;this.emit();}
   private setPhase(phase:NaraPhase,notice=""):void {this.state.phase=phase;this.state.notice=notice;this.emit();}
   private begin():{signal:AbortSignal;generation:number} {
-    if(this.controller||this.holding||this.state.pending)throw new Error("Finish or recover the current native delivery before starting another turn");
+    if(this.controller||this.holding||this.state.pending||this.state.inquiries.some(row=>row.decision==="applying"))throw new Error("Finish or recover the current native delivery before starting another turn");
     if(this.state.phase==="ended")throw new Error("This personal attachment was ended; attach explicitly to continue");
     this.controller=new AbortController();return {signal:this.controller.signal,generation:++this.generation};
   }
@@ -146,7 +153,9 @@ export class NaraRuntime {
       this.setPhase("idle",bodyChanged?"Same Nara and AgentSession; body changed. Enable the new speech route explicitly.":"Same native Nara encounter. No provider acoustic-history restoration is inferred.");
     }catch(error){this.failed(error,generation);}finally{if(this.generation===generation)this.controller=null;}
   }
-  updateContext(next:NaraDialogueContext):void {
+  updateContext(next:NaraDialogueContext,acceptanceRef?:string):void {
+    const applying=this.state.inquiries.find(row=>row.decision==="applying");
+    if(applying&&applying.delegation.delegation_ref!==acceptanceRef)throw new Error("Context is reserved by the current native acceptance");
     const validated=validateDialogueContext(structuredClone(next));
     if(validated.nara_ref!==this.attachment.context.nara_ref||validated.subject_ref!==this.attachment.context.subject_ref||validated.agent_session_ref!==this.attachment.dialogue.agent_session||validated.expression_ref!==this.attachment.context.expression_ref)throw new Error("Context cannot switch the personal encounter's identity");
     this.attachment.context=validated;this.emit();
@@ -155,7 +164,7 @@ export class NaraRuntime {
     const target=this.attachment.epii;if(!target)throw new Error("A distinct native Epii session must be selected");
     const delegation=buildEpiiDelegation({delegation_ref:fresh("delegation"),context:structuredClone(this.attachment.context),epii_session_ref:target.agent_session,brief,scope_candidates:scope,delegated_at_unix_ms:Date.now()});
     const {signal,generation}=this.begin(),delivery=fresh("delivery");
-    this.currentInquiry=delegation.delegation_ref;this.state.inquiries=[...this.state.inquiries,{delegation,delivery_ref:delivery,explanation:"",enrichment:null,decision:"pending",error:null}].slice(-16);
+    this.currentInquiry=delegation.delegation_ref;this.state.inquiries=[...this.state.inquiries,{delegation,delivery_ref:delivery,explanation:"",enrichment:null,decision:"pending",error:null,context_basis:structuredClone(this.attachment.context)}].slice(-16);
     this.setPhase("waiting");
     try{const result=await nativeTurn({call:this.ports.call,binding:target,audience:target.agent_ref,signal,delivery_ref:delivery,
       text:JSON.stringify({delegation,return_contract:"ql.epii-enrichment/v1",instruction:"Return a source-bearing explanation. Structured proposals must use the named QL contract and exact supplied basis; do not execute changes."}),
@@ -175,11 +184,25 @@ export class NaraRuntime {
   reviewInquiry(ref:string):{delegation:EpiiDelegation;enrichment:EpiiEnrichment} {
     const row=this.state.inquiries.find(row=>row.delegation.delegation_ref===ref);
     if(!row||row.decision!=="pending"||!row.enrichment)throw new Error("No pending structured enrichment");
+    if(contextKey(row.context_basis)!==contextKey(this.attachment.context))throw new Error("The reviewed selection, source or occasion changed; request fresh Epii enrichment");
     applyGate(row.delegation,row.enrichment,this.attachment.context);
     return structuredClone({delegation:row.delegation,enrichment:row.enrichment});
   }
-  markInquiryAccepted(ref:string):void {const row=this.state.inquiries.find(row=>row.delegation.delegation_ref===ref);if(!row||row.decision!=="pending")throw new Error("No pending inquiry");row.decision="accepted";this.emit();}
+  /** Reserve the explicit human acceptance before crossing a native write.
+   * Another presentation may not reject or apply the same proposal in flight. */
+  beginInquiryAcceptance(ref:string):{delegation:EpiiDelegation;enrichment:EpiiEnrichment} {
+    const proposal=this.reviewInquiry(ref);
+    if(this.controller||this.holding||this.state.pending)throw new Error("Finish the current dialogue operation before accepting a proposal");
+    const row=this.state.inquiries.find(row=>row.delegation.delegation_ref===ref)!;
+    if(this.state.inquiries.some(item=>item.decision==="applying"))throw new Error("Another proposal is still being applied");
+    row.decision="applying";this.emit();return proposal;
+  }
+  finishInquiryAcceptance(ref:string,outcome:"accepted"|"partial"|"uncertain"|"pending"):void {
+    const row=this.state.inquiries.find(row=>row.delegation.delegation_ref===ref);
+    if(!row||row.decision!=="applying")throw new Error("No reserved inquiry acceptance");
+    row.decision=outcome;this.emit();
+  }
   /** Explicit end forgets renderer-held personal content, never deletes the
    * owner's journal or claims a provider/session was destroyed. */
-  async end():Promise<void>{await this.interrupt();if(this.state.pending)throw new Error("Recover the outstanding native delivery before forgetting this attachment");this.state={phase:"ended",voice_enabled:false,draft:"",notice:"Detached. Native history and any pending delivery remain with their owner.",rows:[],pending:null,inquiries:[]};this.currentInquiry=null;this.emit();}
+  async end():Promise<void>{await this.interrupt();if(this.state.inquiries.some(row=>row.decision==="applying"))throw new Error("Settle the interrupted native acceptance before forgetting this attachment");if(this.state.pending)throw new Error("Recover the outstanding native delivery before forgetting this attachment");this.state={phase:"ended",voice_enabled:false,draft:"",notice:"Detached. Native history and any pending delivery remain with their owner.",rows:[],pending:null,inquiries:[]};this.currentInquiry=null;this.emit();}
 }

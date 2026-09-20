@@ -109,11 +109,19 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
     if(String(live.revision)!==current.expression_revision)throw new Error("The Expression advanced; this proposal cannot apply to that newer basis");
     const proposal=entry.runtime.reviewInquiry(ref);
     if(!proposal.enrichment.proposed_focus_refs.length)throw new Error("This result has no executable focus proposal");
+    entry.runtime.beginInquiryAcceptance(ref);
+    const previousAttempt=entry.presentation.state.attempt;
     const controller=new AbortController();entry.abort.current=controller;
-    try{const next=await entry.presentation.perform(current,proposal.enrichment.proposed_focus_refs,controller.signal);entry.runtime.updateContext(next);
+    let settled=false;
+    try{const next=await entry.presentation.perform(current,proposal.enrichment.proposed_focus_refs,controller.signal);entry.runtime.updateContext(next,ref);
       if(controller.signal.aborted)throw new Error("Presentation interrupted. Only the confirmed atomic steps stand; no pending focus was applied.");
-      entry.runtime.markInquiryAccepted(ref);
-    }finally{if(entry.abort.current===controller)entry.abort.current=null;}
+      entry.runtime.finishInquiryAcceptance(ref,"accepted");settled=true;
+    }finally{
+      if(!settled){const result=entry.presentation.state;
+        entry.runtime.finishInquiryAcceptance(ref,result.attempt===previousAttempt?"pending":result.state==="unknown"?"uncertain":result.completed_refs.length?"partial":"pending");
+      }
+      if(entry.abort.current===controller)entry.abort.current=null;
+    }
   });
   const runtime=entry?.runtime,attachment=runtime?.binding;
   const active=!["idle","interrupted","error","ended"].includes(view.phase);
@@ -150,7 +158,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
       {attachment?.epii&&<section aria-label="Epii inquiry"><form className="nara-composer" onSubmit={event=>{event.preventDefault();const c=runtime!.binding.context;void act(()=>runtime!.inquire(inquiry,[...new Set([c.pointed_ref,...c.disclosed.map(item=>item.ref_id)].filter((ref):ref is string=>!!ref))]));}}>
         <label>Ask Epii for deeper inquiry<textarea className="oi-input" value={inquiry} onChange={event=>setInquiry(event.target.value)} maxLength={16384}/></label><button type="submit" disabled={busy||active||!!view.pending||!inquiry.trim()}>Delegate selected basis</button>
       </form><p className="oi-note">Epii is a separate selected native Agent. This sends the stated question and scoped refs, not the private Nara transcript.</p>
-      {view.inquiries.map(row=><article className="nara-proposal" key={row.delegation.delegation_ref}>
+      {view.inquiries.map(row=><article className="nara-proposal" data-delegation-ref={row.delegation.delegation_ref} data-decision={row.decision} key={row.delegation.delegation_ref}>
         <p>{row.enrichment?.synthesis??row.explanation??""}</p>{row.error&&<p className="oi-note">{row.error}</p>}
         {row.enrichment&&<><p>Source refs: {row.enrichment.source_refs.join(", ")||"none returned"}</p><p>Proposed focus: {row.enrichment.proposed_focus_refs.join(", ")||"none"}</p>
           <button type="button" disabled={busy||active||!!view.pending||row.decision!=="pending"||!row.enrichment.proposed_focus_refs.length} onClick={()=>void acceptFocus(row.delegation.delegation_ref)}>Accept focus only</button>
@@ -160,7 +168,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
       {presentation?.act_ref&&<section aria-label="Expression checkpoint"><p>{presentation.state} · {presentation.completed_refs.length} confirmed focus steps</p>
         <button type="button" disabled={busy||presentation.state!=="held"} onClick={()=>void act(()=>entry.presentation.checkpoint())}>Checkpoint performed state</button>
         <button type="button" disabled={busy||!presentation.checkpoint_ref||presentation.state!=="held"} onClick={()=>void act(async()=>runtime!.updateContext(await entry.presentation.restore()))}>Restore native draft checkpoint</button>
-        <p className="oi-note">Restoration changes the authored Expression draft with a new revision. It does not rewind GPU particles, audio or the provider conversation.</p>
+        <p className="oi-note">Restoration returns the native draft to its checkpoint; an unchanged draft keeps its revision. It does not rewind GPU particles, audio or the provider conversation.</p>
       </section>}
       <button type="button" disabled={busy} onClick={()=>void act(async()=>{await runtime!.end();if(entry){held.delete(keyOf(entry.runtime.binding));surfaces.delete(binding.id);}})}>End personal attachment</button>
     </>}
