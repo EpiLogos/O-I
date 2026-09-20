@@ -1,0 +1,52 @@
+name: Collection source identity
+
+on:
+  push:
+    branches: [fix/collection-source-identity-20260920]
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/expressions/collectionReadings.ts'
+      - 'desktop/cradle/src/library/collectionsProvider.ts'
+      - 'desktop/cradle/tests/collection-*.mjs'
+      - '.github/workflows/collection-source-identity.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: collection-source-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  collections:
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: |
+            desktop/cradle/package-lock.json
+            desktop/cradle/expressions-app/package-lock.json
+      - name: Install locked application dependencies
+        run: |
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+      - name: Capture published source for isolated implementation
+        run: |
+          mkdir -p /tmp/collection-source-inputs
+          git rev-parse HEAD > /tmp/collection-source-inputs/revision.txt
+          git archive --format=tar.gz HEAD > /tmp/collection-source-inputs/source.tar.gz
+          tar -czf /tmp/collection-source-inputs/dependencies.tar.gz desktop/cradle/node_modules desktop/cradle/expressions-app/node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: collection-source-inputs-${{ github.sha }}
+          path: /tmp/collection-source-inputs/
+          retention-days: 2
+      - name: Build existing Expressions application and Cradle
+        run: |
+          npm --prefix desktop/cradle/expressions-app run build:journeys
+          npm --prefix desktop/cradle run build
