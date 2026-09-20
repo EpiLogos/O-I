@@ -15,53 +15,39 @@ permissions:
   contents: read
 concurrency:
   group: adoption-${{ github.ref }}
-  cancel-in-progress: false
+  cancel-in-progress: true
 jobs:
   native:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 1
+          persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
-      # Temporary scoped CLI delivery; removed before review-ready promotion.
-      - name: Repair the recovered branch compilation
-        if: github.event_name == 'push' && github.ref == 'refs/heads/agent/adoption-lifecycle-20260920'
-        shell: bash
+      - name: Record exact source
         run: |
           set -euo pipefail
-          python3 - <<'PY'
-          from pathlib import Path
-          p = Path('cli/src/setup_command.rs')
-          s = p.read_text()
-          s = s.replace('json!(receipt.bundle_sha256)', 'json!(receipt.bundle.sha256)')
-          p.write_text(s)
-          p = Path('cli/src/current_world.rs')
-          s = p.read_text()
-          s = s.replace('let cases: [(&[&str], &str); 5] = [', 'let cases: [(&[&str], &str); 4] = [')
-          p.write_text(s)
-          PY
-          git add cli/src/setup_command.rs cli/src/current_world.rs
-          if ! git diff --cached --quiet; then
-            git config user.name 'O:I adoption implementation'
-            git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-            git commit -m 'fix(adoption): verify native Desktop bundle and retain four local composition cases'
-            git push origin HEAD:refs/heads/agent/adoption-lifecycle-20260920
-          fi
-      - name: Record exact source and controlled dependencies
-        if: always()
-        run: |
           mkdir -p /tmp/adoption-evidence
           git rev-parse HEAD | tee /tmp/adoption-evidence/head.txt
-          git archive --format=tar HEAD cli desktop/cradle/src desktop/cradle/kernel desktop/cradle/tests desktop/cradle/walk/configuration-setup.test.mjs desktop/cradle/package.json desktop/cradle/package-lock.json desktop/cradle/tsconfig.json desktop/cradle/vite.config.ts desktop/packages docs .wayfinder skills scripts .github/workflows | gzip > /tmp/adoption-evidence/source.tar.gz
+          python3 - <<'PY'
+          import subprocess, tarfile
+          from pathlib import Path
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          prefixes = ('cli/', 'desktop/cradle/src/', 'desktop/cradle/kernel/', 'desktop/cradle/tests/', 'desktop/cradle/walk/', 'packages/', 'docs/', '.wayfinder/', 'skills/', 'scripts/', '.github/workflows/')
+          selected = [p for p in paths if p and (p.startswith(prefixes) or (p.startswith('desktop/cradle/') and p.count('/') == 2)) and '/artifacts/' not in p and Path(p).is_file()]
+          assert 'desktop/cradle/src/configuration/PlanDrawer.tsx' in selected
+          assert 'cli/src/setup.rs' in selected
+          with tarfile.open('/tmp/adoption-evidence/source.tar.gz', 'w:gz') as archive:
+              for path in selected:
+                  archive.add(path, arcname=path, recursive=False)
+          PY
       - name: Adoption controller and real CLI tests
         run: |
           set -o pipefail
@@ -86,13 +72,12 @@ jobs:
           node-version: 22
           cache: npm
           cache-dependency-path: desktop/cradle/package-lock.json
-      - name: Recover the existing configuration regression dependencies
+      - name: Existing configuration regression suite
         if: always()
         working-directory: desktop/cradle
         run: |
           npm ci --no-audit --no-fund
           node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-setup.test.mjs > /tmp/adoption-evidence/configuration-tests.log 2>&1
-          tar czf /tmp/adoption-evidence/node-modules.tar.gz node_modules
       - uses: actions/upload-artifact@v4
         if: always()
         with:
