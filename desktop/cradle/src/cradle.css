@@ -1096,11 +1096,10 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
    * under the right corner, so it gives none of its width away. With the
    * tools at the column's foot, the list's tabs start below the controls'
    * cut band instead of beside them. */
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="pinned-vertical"] > .tab-strip,
-  .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane[data-tab-presentation="pinned-vertical"] > .tab-strip,
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { padding: 0; }
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="pinned-vertical"] > .tab-strip > .tab-scroll,
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip > .tab-scroll { padding-top: var(--oi-shell-tabbar); }
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="pinned-vertical"] > .tab-strip,
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { padding: 0; }
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="pinned-vertical"] > .tab-strip > .tab-scroll,
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip > .tab-scroll { padding-top: var(--oi-shell-tabbar); }
 }
 
 @media (prefers-reduced-motion: reduce) {

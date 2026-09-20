@@ -117,7 +117,7 @@ export function validPane(raw, surfaces) {
     const tabs = o.tabs.filter((t) => typeof t === 'string' && !!surfaces[t]);
     if (tabs.length !== o.tabs.length) return null;
     const pinned = o.pinned.filter((p) => typeof p === 'string' && tabs.includes(p));
-    const active = typeof o.active === 'string' && tabs.includes(o.active) ? o.active : null;
+    const active = typeof o.active === 'string' && tabs.includes(o.active) ? o.active : tabs[0] ?? null;
     // The tab pin model is per pane: a pane restores unpinned / pinned-vertical
     // and the geometry an unpinned pane reveals in. Pinned-horizontal is the
     // absent default; an unknown name is dropped, never guessed.

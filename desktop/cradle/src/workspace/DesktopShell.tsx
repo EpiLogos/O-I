@@ -4,6 +4,7 @@ const SystemPanel=lazy(()=>import("./SystemPanel").then((module)=>({default:modu
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
+import "./sidebar-presentation.css";
 import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { WorldModeStrip } from "../surfaces/navigator/WorldNavigator";
@@ -324,7 +325,7 @@ export function DesktopShell(p: Props) {
            * agent layer replaces it. */}
           {p.right ?? <>
             <div className="region-tools oi-tool-row"><span className="oi-tool-row-title">{p.subject.title}</span><button className="oi-tool" aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button className="oi-tool" aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
-            <nav className="inspector-planes oi-plane-nav" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
+            <nav className="inspector-planes oi-plane-nav" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => v === "system" ? p.onMode("settings") : setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
             <div className="inspector-body oi-sidecar">
               {plane === "system" ? <Suspense fallback={null}><SystemPanel/></Suspense> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>

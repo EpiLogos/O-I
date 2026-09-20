@@ -131,3 +131,41 @@
 @media (prefers-reduced-motion: reduce) {
   .config-input, .config-mini, .config-drawer-actions button, .profiles-list > button, .profile-detail-actions button { transition: none; }
 }
+
+/* Shared layout only. The SetupFlow controller owns validation, review,
+   cancellation, native apply/readback and its retained draft. */
+.config-drawer { box-sizing: border-box; inset: 16px 0; margin-inline: auto; width: min(960px, calc(100% - 32px)); max-width: calc(100% - 32px); grid-template-columns: minmax(0, 1fr); justify-items: stretch; padding: clamp(12px, 3vw, 24px); scrollbar-gutter: stable; }
+.config-drawer :is(section, form, fieldset, label, details, div, nav, dl) { box-sizing: border-box; min-width: 0; max-width: 100%; }
+.config-drawer fieldset { min-inline-size: 0; margin: 8px 0; padding: 12px 0; border: 0; border-top: 1px solid var(--oi-hairline-soft); }
+.config-drawer legend { max-width: 100%; padding: 0; white-space: normal; overflow-wrap: anywhere; }
+.config-drawer :is(input, select, textarea) { box-sizing: border-box; min-width: 0; max-width: 100%; }
+.config-drawer :is(p, dd, li, code, span) { overflow-wrap: anywhere; }
+.config-drawer :is(header, .config-plan-facts > div, .config-changeset-head) { flex-wrap: wrap; gap: 6px 12px; }
+.config-drawer pre { white-space: pre-wrap; overflow-wrap: anywhere; max-width: 100%; max-height: none; overflow: visible; }
+.config-drawer :is(.config-plan, .config-changeset) { width: 100%; }
+@media (max-width: 600px) {
+  .config-drawer { inset-block: 8px; width: calc(100% - 16px); max-width: calc(100% - 16px); }
+  .config-drawer :is(.config-plan-facts > div, .config-scope, .config-new-profile) { flex-direction: column; align-items: stretch; }
+  .config-drawer :is(.config-plan-facts dt, .config-plan-facts dd) { min-width: 0; }
+}
+
+/* Owner results use the available column, not an intrinsic-width six-column
+   table that makes the entire drawer wider. At narrow widths each operation
+   remains one labelled row group; the actual table/header semantics stay. */
+.config-drawer .config-changeset { grid-template-columns: minmax(0, 1fr); }
+.config-drawer .config-ops { width: 100%; table-layout: fixed; }
+.config-drawer .config-ops :is(th, td) { overflow-wrap: anywhere; min-width: 0; }
+.config-drawer .config-changeset > * { box-sizing: border-box; max-width: 100%; min-width: 0; }
+@media (max-width: 600px) {
+  .config-drawer .config-ops, .config-drawer .config-ops tbody { display: block; }
+  .config-drawer .config-ops thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .config-drawer .config-ops tr { display: block; padding-block: 8px; border-bottom: 1px solid var(--oi-hairline-soft); }
+  .config-drawer .config-ops td { display: grid; grid-template-columns: 7ch minmax(0, 1fr); gap: 10px; border: 0; padding: 3px 0; }
+  .config-drawer .config-ops td::before { color: var(--oi-muted-2); }
+  .config-drawer .config-ops td:nth-child(1)::before { content: "Operation"; }
+  .config-drawer .config-ops td:nth-child(2)::before { content: "Owner"; }
+  .config-drawer .config-ops td:nth-child(3)::before { content: "Setting"; }
+  .config-drawer .config-ops td:nth-child(4)::before { content: "Scope"; }
+  .config-drawer .config-ops td:nth-child(5)::before { content: "Status"; }
+  .config-drawer .config-ops td:nth-child(6)::before { content: "Receipt"; }
+}

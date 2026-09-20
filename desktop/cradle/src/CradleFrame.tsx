@@ -849,9 +849,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     };
     const message=(event:Event)=>{const text=detail<{message?:string}>(event)?.message;if(text)setWindowError(text);};
     const settings=()=>enterModeRef.current("settings");
+    const closeSettings=()=>{
+      if ((stateRef.current.mode ?? "base") !== "settings") return;
+      enterModeRef.current(stateRef.current.settingsReturnMode ?? "base");
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('.warm-tree-host:not([hidden]) .pane.focused .cm-content, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]')?.focus());
+    };
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
     const openSubject=(event:Event)=>{const subject=detail<{subject?:{ref?:string;location?:CentralLocation}}>(event)?.subject;if(!subject)return;if(subject.location){void openFileRef.current(subject.location).catch(fail);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:held.id}));};
-    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
+    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -964,6 +969,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const current=stateRef.current.surfaces[id];if(!current)return;
     project=project??current.project??workspaceRef.current.current.project??undefined;
     if(kind==="search"){setSearchOpen(true);return;}
+    if(kind==="library"){setLibrary("open");return;}
     // The supplied document forms (0/1, 4+2) are not created here: their
     // real files are resolved through Central's file route and opened by
     // the same path the navigator uses (dedup + focus included). A missing
@@ -1505,7 +1511,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (
-          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
+          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
             {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
           </div>
@@ -1523,7 +1529,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * law as always — with no active root nothing in them is presented. */}
       <div className="rest-host" hidden={!!state.root || undefined}>
         <RestPane>
-          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
+          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
             const reading=kernel.snapshot.navigator;
             const project=reading?.project?.project;
             const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
@@ -1543,6 +1549,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
             workspaceName={workspace.current.name}
             state={tree.layout}
+            stageBindingId={groupsOf(tree.layout.root).flatMap(group=>group.tabs).find(id=>tree.layout.surfaces[id]?.kind===MODE_CURATION[tree.layout.mode??"base"].centreKind)}
             menuOpen={!!menu}
             execute={execute}
             openBindingMenu={openBindingMenu}
@@ -1587,7 +1594,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
  * a surface opens, the Workbench renders this same frame with tabs in it. */
 function RestPane({ children }: { children: ReactNode }) {
   return <div className="workbench"><main className="surface-host" aria-label="Canvas">
-    <section className="pane group focused" data-pane="group" data-window-corner="true" aria-label="Surface group">
+    <section className="pane group focused" data-pane="group" data-window-corner="true" data-window-corner-left="true" aria-label="Surface group">
       <div className="tab-strip" aria-hidden="true"><div className="tab-scroll"/></div>
       <div className="surface-body">{children}</div>
       <footer className="pane-status pane-footer" aria-label="Pane status"/>

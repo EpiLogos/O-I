@@ -43,9 +43,9 @@
  */
 import {lazy, Suspense, useEffect, type ReactNode} from "react";
 import {groupsOf} from "./engine";
-import {markPresented, markReleased, markRetained, exposeRuntimeProbe, RETAINED_VIEW_BUDGET} from "./runtime";
-import type {LayoutState, SurfaceBinding, SurfaceId} from "./types";
-import {MODE_CURATION, TREE_MODES, type WorkspaceMode} from "../workspace/mode";
+import {markPresented, markReleased, markRetained, exposeRuntimeProbe} from "./runtime";
+import type {LayoutState, SurfaceBinding} from "./types";
+import {MODE_CURATION, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
 import type {HostedAppState} from "../expressions/hostedApp";
 
@@ -57,9 +57,10 @@ const EpiLogosSurface = lazy(() => import("../epilogos/EpiLogosSurface").then((m
 const SystemPanel = lazy(() => import("../workspace/SystemPanel").then((module) => ({default: module.SystemPanel})));
 const FactoryCentre = lazy(() => import("../contributions/factory/FactoryCentre").then((module) => ({default: module.FactoryCentre})));
 
-/** The centre kinds this tier retains (see the module law above). */
-export const RETAINED_CENTRE_KINDS = new Set(["expressions", "techne", "epi-logos", "system", "factory"]);
-export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(kind);
+// The centre kinds this tier retains (see the module law above) are defined
+// beside the warm-tree selection law in ./warmTrees — pure presentation
+// selection, importable without JSX — and re-exported below so every
+// consumer keeps its import path.
 
 /** Factory's Desk/Tasks context (CradleFrame.factoryCentreProps): the
  * browsed project, the bound conversation, the one task-open path and the
@@ -154,79 +155,10 @@ export function StageCentreMark({binding, presented}: {binding: SurfaceBinding; 
  * lease, a browser page, a pinned presentation, Explore's remembered
  * travel. Cheap list kinds (sources, blank) release as before; explicit
  * close releases every kind (the binding leaves the tree). */
-export const RETAINED_PANE_KINDS = new Set(["file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore"]);
-export const isRetainedPaneKind = (kind: string) => RETAINED_PANE_KINDS.has(kind);
-
-export interface WarmTreeRef { key: string; workspaceId: string; layout: LayoutState; presented: boolean }
-
-/** How many recently-left workspaces keep their trees warm. */
-export const WARM_WORKSPACES = 2;
-
-function treeBindingIds(layout: LayoutState): SurfaceId[] {
-  return groupsOf(layout.root).flatMap((group) => group.tabs);
-}
-
-/** The shelving criterion (spec §7.1): a tree is shelved when it carries at
- * least one binding that needs the shelf —
- * - a retained PANE kind (the pane tier's own law, unchanged), or
- * - a retained CENTRE kind that is NOT stage-owned in this tree: a centre
- *   binding living in a foreign tree (its kind is not the tree mode's own
- *   centre kind — for base, which has no centre kind, every centre is
- *   foreign) keeps its body only through its shelved tree.
- * A STAGE-owned centre (kind K in the tree whose mode's centreKind is K)
- * counts for nothing here: its per-mode stage slot covers it, mounted and
- * never moved, whether the tree shelves or not. So a tree carrying ONLY its
- * stage-owned centre is not shelved at all — the slot is its host — while
- * the same tree with any pane binding (or a foreign centre) shelves for
- * those, the stage-owned centre still slot-covered. This keeps exactly one
- * hosting reason per binding: the slot or the shelf, never a redundant
- * shelf host beside a slot, never a double mount. */
-function treeShelfReasons(layout: LayoutState): SurfaceId[] {
-  const stageKind = MODE_CURATION[layout.mode ?? "base"].centreKind;
-  return treeBindingIds(layout).filter((id) => {
-    const binding = layout.surfaces[id];
-    if (!binding || binding.pending) return false;
-    if (isRetainedPaneKind(binding.kind)) return true;
-    return isRetainedCentreKind(binding.kind) && binding.kind !== stageKind;
-  });
-}
-
-/** The warm trees of the shell. Keys name the tree's own mode, so a key is
- * stable across the swap that presents or shelves its tree — the React
- * subtree (and every document and editor session inside it) survives. */
-export function warmWorkspaceTrees(workspaces: Workspace[], activeWorkspaceId: string, activeMode: WorkspaceMode): WarmTreeRef[] {
-  const active = workspaces.find((workspace) => workspace.id === activeWorkspaceId);
-  if (!active) return [];
-  const warm = workspaces
-    .filter((workspace) => workspace.id !== activeWorkspaceId && (workspace.lastVisitedAt ?? 0) > 0)
-    .sort((a, b) => (b.lastVisitedAt ?? 0) - (a.lastVisitedAt ?? 0))
-    .slice(0, WARM_WORKSPACES);
-  const trees: WarmTreeRef[] = [];
-  const seen = new Set<string>();
-  let budget = RETAINED_VIEW_BUDGET;
-  const addTree = (workspace: Workspace, layout: LayoutState) => {
-    const treeMode = layout.mode ?? "base";
-    const key = `${workspace.id}:${treeMode}`;
-    if (seen.has(key)) return;
-    const retained = treeShelfReasons(layout);
-    if (!retained.length || retained.length > budget) return;
-    budget -= retained.length;
-    seen.add(key);
-    trees.push({ key, workspaceId: workspace.id, layout, presented: workspace.id === activeWorkspaceId && treeMode === activeMode });
-  };
-  addTree(active, active.layout);
-  for (const mode of TREE_MODES) {
-    const layout = active.modeLayouts?.[mode];
-    if (layout) addTree(active, layout);
-  }
-  for (const workspace of warm) {
-    addTree(workspace, workspace.layout);
-    for (const mode of TREE_MODES) {
-      const layout = workspace.modeLayouts?.[mode];
-      if (layout) addTree(workspace, layout);
-    }
-  }
-  // Stable render order: the hosts' array positions never change, so React
-  // never moves a host node (moving one detaches its documents).
-  return trees.sort((a, b) => (a.key < b.key ? -1 : a.key > b.key ? 1 : 0));
-}
+// The warm-tree selection moved to ./warmTrees (workspace-continuity WF4 +
+// spec §7.1 shelving): pane kinds, centre kinds, the shelf criterion and the
+// warm-set derivation — pure logic, no JSX. The tier re-exports so every
+// consumer keeps importing from this module, and this file keeps the
+// mounting law: bodies present in place, stages and trees never move. */
+export {RETAINED_CENTRE_KINDS, isRetainedCentreKind, RETAINED_PANE_KINDS, isRetainedPaneKind, WARM_WORKSPACES, warmWorkspaceTrees} from "./warmTrees";
+export type {WarmTreeRef} from "./warmTrees";

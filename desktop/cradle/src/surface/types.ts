@@ -138,6 +138,9 @@ export interface LayoutState {
    * only: it curates the left body, the mode's centre surface and the common
    * right panel; it never closes surfaces or restarts a session. */
   mode?: import("../workspace/mode").WorkspaceMode;
+  /** Settings is a consultation of this workspace, not a replacement for its
+   * preceding work. Only a presentation mode is saved; trees stay in the book. */
+  settingsReturnMode?: Exclude<import("../workspace/mode").WorkspaceMode, "settings">;
   /** The pinned-vertical tab list's persisted width (px), shared by every
    * vertical list, clamped by mode.ts's `clampTabListWidth` on every write
    * and on restore. The pin state itself is per pane (TabGroupPane). */

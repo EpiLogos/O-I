@@ -15,7 +15,7 @@ import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
  *   absence: no encounters are fabricated before the agency vertical mounts.
  */
 
-import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState } from "react";
+import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { Loading } from "../shared/Loading";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
@@ -25,7 +25,7 @@ import { SourcesIndex } from "./SourcesIndex";
 import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
-import { contains, groupsOf, renderOrder } from "./engine";
+import { contains, groupsOf, renderOrder, upperCornerGroupId } from "./engine";
 // Expensive bodies load on first use, not at startup: the terminal (xterm),
 // the browser attachment, Explore and its presentation renderers, the
 // knowledge graph and its layout worker, the Factory contribution and the
@@ -49,6 +49,9 @@ export interface WorkbenchProps {
   workspaceName: string;
   onView:(id:string,view:NonNullable<import("./types").SurfaceBinding["view"]>)=>void;
   state: LayoutState;
+  /** The dedicated stage is this binding's sole presenting outlet. A hidden
+   * warm tree must not adopt the same retained body away from that stage. */
+  stageBindingId?: SurfaceId;
   menuOpen: boolean;
   nativeWindows: boolean;
   execute: (ref: string, arg?: ActionArg) => void;
@@ -83,9 +86,20 @@ export interface WorkbenchProps {
   subject?: {ref?: string; kind?: string; title: string; project?: string};
 }
 
+// Keep the presentation boundary aligned with shell.css: compact windows show
+// one focused pane, but do not change or persist the underlying split tree.
+const compactPaneQuery = "(max-width: 639px)";
+const readCompactPane = () => typeof window !== "undefined" && window.matchMedia(compactPaneQuery).matches;
+const subscribeCompactPane = (changed: () => void) => {
+  const query = window.matchMedia(compactPaneQuery);
+  query.addEventListener("change", changed);
+  return () => query.removeEventListener("change", changed);
+};
+
 export function Workbench(props: WorkbenchProps) {
   const { state, menuOpen } = props;
   const kernel = useKernel();
+  const focusOnly = useSyncExternalStore(subscribeCompactPane, readCompactPane, () => false);
   if (!state.root) return null;
 
   // A pointer entering a rendered material iframe crosses the document
@@ -149,7 +163,7 @@ export function Workbench(props: WorkbenchProps) {
   return (
     <div className="workbench">
       <main className="surface-host" aria-label="Canvas">
-        <PaneNode pane={state.root} {...props} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
+        <PaneNode pane={state.root} {...props} focusOnly={focusOnly} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
       </main>
     </div>
   );
@@ -159,6 +173,7 @@ export function Workbench(props: WorkbenchProps) {
 
 interface PaneProps extends WorkbenchProps {
   pane: Pane;
+  focusOnly?: boolean;
   /** Whether the source surface's buffer is dirty (kernel two-layer state). */
   kernelDirty: (ref: string | undefined) => boolean;
   weight?: number;
@@ -236,7 +251,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       className={`pane group${focused ? " focused" : ""}`}
       data-pane="group"
       data-group-id={group.id}
-      data-window-corner={groupsOf(state.root).filter(g=>!state.maximizedGroupId||g.id===state.maximizedGroupId)[0]?.id===group.id}
+      data-window-corner={upperCornerGroupId(state, "right", props.focusOnly) === group.id}
+      data-window-corner-left={upperCornerGroupId(state, "left", props.focusOnly) === group.id}
       data-focused={focused}
       data-tab-focus={!!active&&state.focusedTabId===active}
       data-tab-presentation={tabPresentation}
@@ -409,7 +425,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       >
         {tabs.length ? tabs.map(id => {
           const binding = state.surfaces[id];
-          if (!binding) return null;
+          if (!binding || id === props.stageBindingId) return null;
           const concealed = id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
