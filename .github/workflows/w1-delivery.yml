@@ -1,0 +1,116 @@
+name: W1 bounded delivery
+on:
+  pull_request:
+    paths: ['.github/workflows/w1-delivery.yml']
+permissions:
+  contents: write
+jobs:
+  deliver:
+    if: github.event.pull_request.number == 416 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'agent/w1-shell-layout-recovery-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Receive exact authored edits with old and new content checks
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          set -euo pipefail
+          for sha in 7099888b955ca3d56f85d87e98790a605e0a2c66 2aea1f0e22b46cb512f7a7aeaad1a6a509ea147f 26110aca69b6e23e3febb63e44b0e7f5a13dc722; do
+            gh api "repos/$GITHUB_REPOSITORY/git/blobs/$sha" --jq .content | base64 --decode >> /tmp/w1-manifest.gz
+          done
+          gzip -dc /tmp/w1-manifest.gz > /tmp/w1-manifest.json
+          echo 'e3d95373418791ed9d8a7929ea5c08dd61557803e0be8cb1db61b3a2ffea3d1a  /tmp/w1-manifest.json' | sha256sum --check
+          python3 - <<'PY'
+          import hashlib, json
+          from pathlib import Path
+          manifest = json.loads(Path('/tmp/w1-manifest.json').read_text())
+          assert len(manifest) == 24
+          pending = []
+          for change in manifest:
+              path = Path(change['path'])
+              assert not path.is_absolute() and '..' not in path.parts
+              assert str(path).startswith(('desktop/cradle/src/', 'desktop/cradle/tests/'))
+              assert not path.is_symlink()
+              before = path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(before).hexdigest() if before is not None else None) == change['before'], f'Changed basis: {path}'
+              lines = (before or b'').decode().splitlines(keepends=True)
+              for start, end, text in reversed(change['edits']):
+                  lines[start:end] = text.splitlines(keepends=True)
+              after = ''.join(lines).encode()
+              assert hashlib.sha256(after).hexdigest() == change['after'], f'Invalid result: {path}'
+              pending.append((path, after))
+          for path, after in pending:
+              path.parent.mkdir(parents=True, exist_ok=True)
+              path.write_bytes(after)
+          Path('/tmp/w1-paths.txt').write_text('\n'.join(str(p) for p, _ in pending) + '\n')
+          PY
+          git diff --check
+      - name: Typecheck and test before committing
+        working-directory: desktop/cradle
+        run: |
+          npm ci --no-audit --no-fund
+          npx tsc --noEmit
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs tests/configuration-setup.test.mjs
+      - name: Commit readable production files on this PR only
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          set -euo pipefail
+          branch=agent/w1-shell-layout-recovery-20260920
+          test "$(git ls-remote origin "refs/heads/$branch" | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'W1 shell implementation'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add --pathspec-from-file=/tmp/w1-paths.txt
+          git diff --cached --name-only | sort > /tmp/w1-staged.txt
+          sort /tmp/w1-paths.txt > /tmp/w1-expected.txt
+          diff -u /tmp/w1-expected.txt /tmp/w1-staged.txt
+          git commit -m 'fix(shell): restore pane invariants, full-workspace settings and semantic presentation'
+          git push origin "HEAD:refs/heads/$branch"
+          git rev-parse HEAD
+      - name: Build the production bundle
+        id: build
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: npm run build
+      - name: Install actual browser engines
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Exercise the real shell
+        id: shell
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node tests/shell-recovery.browser.mjs
+      - name: Exercise responsive existing setup forms
+        id: setup
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node tests/shell-setup.browser.mjs
+      - name: Exercise preference owner and renderer lifecycle
+        id: visuals
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node tests/visuals-preview-lifecycle.mjs
+      - name: Preserve actual failures and captures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: w1-first-implementation-evidence-${{ github.run_id }}
+          path: |
+            desktop/cradle/tests/artifacts/shell-recovery
+            desktop/cradle/tests/artifacts/shell-setup
+            desktop/cradle/tests/artifacts/visuals-preferences
+          if-no-files-found: warn
+      - name: Require every executed check
+        if: always()
+        env:
+          BUILD: ${{ steps.build.outcome }}
+          SHELL_RESULT: ${{ steps.shell.outcome }}
+          SETUP: ${{ steps.setup.outcome }}
+          VISUALS: ${{ steps.visuals.outcome }}
+        run: test "$BUILD/$SHELL_RESULT/$SETUP/$VISUALS" = success/success/success/success
