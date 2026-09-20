@@ -4,7 +4,11 @@
 <<<<<<< HEAD
   "generated_at": "2026-09-20T10:43:18.388Z",
 =======
+<<<<<<< HEAD
+  "generated_at": "2026-09-20T10:43:18.388Z",
+=======
   "generated_at": "2026-09-19T20:45:30.985Z",
+>>>>>>> origin/main
 >>>>>>> origin/main
   "environment": {
     "base_url": "http://localhost:4173",
@@ -16,6 +20,9 @@
     "source": {
       "repository_root": "/private/tmp/oi-ci-check",
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
       "repository_head": "225416260f292fbf57ada98416d9246712262a29",
       "tracked_changes": [
         "desktop/cradle/src/CradleFrame.tsx",
@@ -31,6 +38,8 @@
         "desktop/cradle/walk/artifacts/mode-engine-state.json",
         "desktop/cradle/walk/run.mjs",
         "desktop/cradle/walk/scenarios/mode-engine-state.mjs"
+<<<<<<< HEAD
+=======
 =======
       "repository_head": "0970d65d55224ccd158f2ac5ef94aaea21ee57f3",
       "tracked_changes": [
@@ -53,6 +62,7 @@
         "desktop/cradle/walk/artifacts/workspace-continuity.json",
         "desktop/cradle/walk/scenarios/html-continuity.mjs"
 >>>>>>> origin/main
+>>>>>>> origin/main
       ],
       "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -64,8 +74,13 @@
   "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/private/tmp/oi-ci-check/desktop/cradle/walk/scenarios/html-continuity.mjs:237:70)\n    at async runScenario (/private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:427:5)\n    at async file:///private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:503:18",
   "duration_ms": 34039,
 =======
+<<<<<<< HEAD
+  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/private/tmp/oi-ci-check/desktop/cradle/walk/scenarios/html-continuity.mjs:237:70)\n    at async runScenario (/private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:427:5)\n    at async file:///private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:503:18",
+  "duration_ms": 34039,
+=======
   "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('complementary', { name: 'World navigator' }).locator('[data-file-path=\"Work/Continuity/readme.txt\"]')\n\n    at Module.run (/private/tmp/oi-ci-check/desktop/cradle/walk/scenarios/html-continuity.mjs:234:70)\n    at async runScenario (/private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:418:5)\n    at async file:///private/tmp/oi-ci-check/desktop/cradle/walk/run.mjs:494:18",
   "duration_ms": 34759,
+>>>>>>> origin/main
 >>>>>>> origin/main
   "checks": [
     {
@@ -77,7 +92,11 @@
 <<<<<<< HEAD
           "token": "qd912coa5a.1789901000284",
 =======
+<<<<<<< HEAD
+          "token": "qd912coa5a.1789901000284",
+=======
           "token": "26y85pzkeuq.1789850732891",
+>>>>>>> origin/main
 >>>>>>> origin/main
           "stamp": "n0"
         }
@@ -90,7 +109,11 @@
 <<<<<<< HEAD
         "ms": 62
 =======
+<<<<<<< HEAD
+        "ms": 62
+=======
         "ms": 155
+>>>>>>> origin/main
 >>>>>>> origin/main
       }
     },
@@ -102,8 +125,13 @@
         "before": "qd912coa5a.1789901000284",
         "after": "qd912coa5a.1789901000284"
 =======
+<<<<<<< HEAD
+        "before": "qd912coa5a.1789901000284",
+        "after": "qd912coa5a.1789901000284"
+=======
         "before": "26y85pzkeuq.1789850732891",
         "after": "26y85pzkeuq.1789850732891"
+>>>>>>> origin/main
 >>>>>>> origin/main
       }
     },
@@ -116,6 +144,9 @@
     },
     {
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
       "ok": true,
       "label": "C03/mode: the HTML document survives a mode switch away and back — same document, not a rebuild",
       "data": {
@@ -136,6 +167,8 @@
       "data": {
         "token": "qd912coa5a.1789901000284",
         "first": "qd912coa5a.1789901000284"
+<<<<<<< HEAD
+=======
 =======
       "ok": false,
       "label": "C03/mode: the HTML document survives a mode switch away and back — same document, not a rebuild",
@@ -164,6 +197,7 @@
         "token": "tzsf9s2ljmp.1789850735330",
         "first": "26y85pzkeuq.1789850732891"
 >>>>>>> origin/main
+>>>>>>> origin/main
       }
     }
   ],
@@ -172,6 +206,9 @@
       "ok": true,
       "op": "capture.screenshot",
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
       "duration_ms": 53,
       "data": {
         "file": "html-continuity-boot-state.png"
@@ -181,8 +218,11 @@
       "ok": true,
       "op": "capture.screenshot",
       "duration_ms": 41,
+<<<<<<< HEAD
+=======
 =======
       "duration_ms": 74,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "html-continuity-html-open.png"
@@ -194,7 +234,11 @@
 <<<<<<< HEAD
       "duration_ms": 45,
 =======
+<<<<<<< HEAD
+      "duration_ms": 45,
+=======
       "duration_ms": 67,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "html-continuity-tab-return.png"
@@ -206,7 +250,11 @@
 <<<<<<< HEAD
       "duration_ms": 43,
 =======
+<<<<<<< HEAD
+      "duration_ms": 43,
+=======
       "duration_ms": 84,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "html-continuity-mode-return.png"
@@ -218,7 +266,11 @@
 <<<<<<< HEAD
       "duration_ms": 34,
 =======
+<<<<<<< HEAD
+      "duration_ms": 34,
+=======
       "duration_ms": 85,
+>>>>>>> origin/main
 >>>>>>> origin/main
       "data": {
         "file": "html-continuity-workspace-return.png"
@@ -227,14 +279,20 @@
   ],
   "metrics": {
 <<<<<<< HEAD
+=======
+<<<<<<< HEAD
+>>>>>>> origin/main
     "warm_tab_return_ms": 88
   },
   "screenshots": [
     "html-continuity-boot-state.png",
+<<<<<<< HEAD
+=======
 =======
     "warm_tab_return_ms": 206
   },
   "screenshots": [
+>>>>>>> origin/main
 >>>>>>> origin/main
     "html-continuity-html-open.png",
     "html-continuity-tab-return.png",
