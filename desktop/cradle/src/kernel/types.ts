@@ -167,7 +167,7 @@ export type ProfileEditOpWire =
 export type KernelOp =
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
-  | {op:"graph";project?:string;query:string}
+  | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}
   /** One request to the O:I-owned SharedField client (kernel
    * `shared_field.rs`): `status` | `snapshot` | `read {ref}` | `publish
    * {args}` | …, carried verbatim; the hosting target and token are the
@@ -218,7 +218,7 @@ export type KernelOp =
   | {op:"workcell_status_read"}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
-  | { op: "knowledge"; project?: string; request: KnowledgeRequest }
+  | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
   | { op: "state" }
   | { op: "world_read" }
   | { op: "world_browse"; fresh?: boolean }
@@ -398,6 +398,6 @@ export type ActionDispatch =
 
 export interface KnowledgeAddress { kind: "wiki" | "source" | "project-map"; value: string }
 export type KnowledgeRequest = {action:"resolve";query:string} | { action: "search"; query: string } | { action: "history" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
-export interface KnowledgeReading { resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
+export interface KnowledgeReading { document?: unknown; resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
-export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string}[]; edges: {from: string; to: string; relation: string}[]; truncated: boolean; warnings: string[] }
+export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }

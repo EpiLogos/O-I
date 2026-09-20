@@ -10,7 +10,7 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
   const kinds = [...new Set(reading.nodes.map(node => node.kind))].sort();
   const relations = [...new Set(reading.edges.map(edge => edge.relation))].sort();
   const tags = [...new Set(reading.nodes.flatMap(node => node.tags ?? []))].sort();
-  const active = Boolean(filters.text || filters.scope === 'local' || filters.kinds.length || filters.relations.length || filters.tags.length || !filters.isolated || filters.context !== 'structure');
+  const active = Boolean(filters.shared || filters.text || filters.scope === 'local' || filters.kinds.length || filters.relations.length || filters.tags.length || !filters.isolated || filters.context !== 'structure');
   const save = () => {const title = name.trim().slice(0,80); if (!title) return; onSave([...saved.filter(view => view.name !== title), {name: title, filters: {...filters}}].slice(-12)); setName('');};
   return <div className="knowledge-filter-panel">
     <details className="knowledge-filter-controls">
@@ -21,6 +21,7 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
         <label>Depth<input aria-label="Graph depth" type="number" min={0} max={8} value={filters.depth} disabled={filters.scope !== 'local'} onChange={event => change({depth: Math.max(0,Math.min(8,Number(event.target.value)))})}/></label>
       </div>
       {filters.scope === 'local' && !selected && <p role="status">Select a subject to explore its local graph.</p>}
+      <label className="knowledge-filter-check"><input type="checkbox" checked={filters.shared} onChange={event=>change({shared:event.target.checked})}/>Include my available Shared Field</label>
       <label>Follow relations<select aria-label="Graph relation direction" value={filters.direction} onChange={event => change({direction: event.target.value as FilterState['direction']})}><option value="both">Both directions</option><option value="outgoing">Outgoing</option><option value="incoming">Incoming / backlinks</option></select></label>
       <details><summary>Subject kinds · {filters.kinds.length || 'all'}</summary>{kinds.map(kind => <label key={kind} className="knowledge-filter-check"><input type="checkbox" checked={filters.kinds.includes(kind)} onChange={() => toggle('kinds',kind)}/>{kind}</label>)}</details>
       <details><summary>Relation types · {filters.relations.length || 'all'}</summary>{relations.map(relation => <label key={relation} className="knowledge-filter-check"><input type="checkbox" checked={filters.relations.includes(relation)} onChange={() => toggle('relations',relation)}/>{relation}</label>)}</details>
@@ -35,6 +36,7 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
     </details>
     <div className="knowledge-filter-summary" role="status">{result.counts.matched} matches{result.counts.context > 0 && ` + ${result.counts.context} context`} · {result.counts.displayed} of {result.counts.admitted} disclosed subjects</div>
     {active && <div className="knowledge-filter-chips" aria-label="Applied graph filters">
+      {filters.shared && <button onClick={()=>change({shared:false})}>Shared Field ×</button>}
       {filters.text && <button onClick={()=>change({text:''})} aria-label="Remove text filter">{filters.text} ×</button>}
       {filters.scope === 'local' && <button onClick={()=>change({scope:'field'})}>Local · {filters.depth} {filters.depth === 1 ? 'hop' : 'hops'} ×</button>}
       {(['kinds','relations','tags'] as const).flatMap(key=>filters[key].map(value=><button key={`${key}:${value}`} onClick={()=>toggle(key,value)} aria-label={`Remove ${key} filter ${value}`}>{value} ×</button>))}

@@ -12,8 +12,9 @@ export interface GraphFilters {
   context: 'structure' | 'matches';
   labels: 'automatic' | 'all' | 'focus';
   arrows: boolean;
+  shared: boolean;
 }
-export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], tags: [], isolated: true, context: 'structure', labels: 'automatic', arrows: false});
+export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], tags: [], isolated: true, context: 'structure', labels: 'automatic', arrows: false, shared: false});
 const strings = (value: unknown, max = 64): string[] => Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length <= 256))].slice(0, max) : [];
 /** Decode view state, never source metadata. Invalid preferences do not make a
  * whole workspace unrestorable, and unknown keys confer no native effects. */
@@ -28,7 +29,7 @@ export function restoreGraphFilters(value: unknown): GraphFilters {
     direction: v.direction === 'incoming' || v.direction === 'outgoing' ? v.direction : 'both',
     kinds: strings(v.kinds), relations: strings(v.relations), tags: strings(v.tags),
     isolated: v.isolated !== false, context: v.context === 'matches' ? 'matches' : 'structure',
-    labels: v.labels === 'all' || v.labels === 'focus' ? v.labels : 'automatic', arrows: v.arrows === true,
+    labels: v.labels === 'all' || v.labels === 'focus' ? v.labels : 'automatic', arrows: v.arrows === true, shared: v.shared === true,
   };
 }
 export interface FilteredGraph {
@@ -96,7 +97,7 @@ export function filterGraph(reading: GraphReading, filters: GraphFilters, focus?
   const contextual = new Set([...shown].filter(ref => !matches.has(ref)));
   const partialFormations = (reading.formations ?? []).filter(formation => {
     const displayed = formation.members.filter(member => shown.has(member.ref));
-    return displayed.length > 0 && displayed.length < formation.members.length;
+    return (displayed.length > 0 || shown.has(formation.ref)) && (formation.partial === true || displayed.length < formation.members.length);
   }).map(formation => formation.ref);
   const nodes = [...byRef.values()].filter(node => shown.has(node.ref));
   const edges = reading.edges.filter(edge => shown.has(edge.from_ref) && shown.has(edge.to_ref) && allowedEdge(edge));

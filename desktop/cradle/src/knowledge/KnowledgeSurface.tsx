@@ -1,9 +1,11 @@
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
-import type {KnowledgeReading} from "../kernel/types";
+import type {KnowledgeAddress,KnowledgeReading} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {knowledge} from "./client";
-import {graphAddress,isHostedNode,readGraph,type GraphNode,type GraphReading} from "./graph";
+import type {WikiAnchor,WikiNavigate} from "./wikiDocument";
+import {graphAddress,isHostedNode,type GraphNode,type GraphReading} from "./graph";
+import {loadGraph} from './graphProgress';
 import {sharedField,type SharedFieldReading} from "./shared-field";
 import {freeGraphRegion,useDetailGeometry} from "./detailGeometry";
 import {accommodate,unaccommodate} from "./camera";
@@ -21,13 +23,13 @@ import "./filters.css";
 import {Glyph} from "../workspace/Glyph";
 
 type Camera={zoom:number;x:number;y:number};
-type Visit={query:string;selected?:string;camera:Camera;overviewCamera?:Camera;filters?:GraphFilterState};
+type Visit={query:string;selected?:string;camera:Camera;overviewCamera?:Camera;filters?:GraphFilterState;pageAddress?:KnowledgeAddress;pageTitle?:string;pageAnchor?:WikiAnchor;scroll?:number};
 type Travel={visits:Visit[];index:number;saved?:SavedGraphView[]};
 const origin=():Camera=>({zoom:1,x:0,y:0});
 function restore(id:string):Travel {
   try {
     const saved=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-travel.v1:${id}`)??"null");
-    if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return {...saved,saved:restoreSavedGraphViews(saved.saved)};
+    if(saved&&Array.isArray(saved.visits)&&saved.visits.length>0&&saved.visits.length<=32&&Number.isInteger(saved.index)&&saved.index>=0&&saved.index<saved.visits.length&&saved.visits.every((v:Visit)=>typeof v.query==="string"&&(v.selected===undefined||typeof v.selected==="string")&&v.camera&&[v.camera.zoom,v.camera.x,v.camera.y].every(Number.isFinite)&&v.camera.zoom>=.15&&v.camera.zoom<=4&&(!v.overviewCamera||([v.overviewCamera.zoom,v.overviewCamera.x,v.overviewCamera.y].every(Number.isFinite)&&v.overviewCamera.zoom>=.15&&v.overviewCamera.zoom<=4))))return {...saved,visits:saved.visits.map((visit:Visit)=>({...visit,pageAddress:visit.pageAddress&&['source','wiki','project-map'].includes(visit.pageAddress.kind)&&typeof visit.pageAddress.value==='string'?visit.pageAddress:undefined,pageTitle:typeof visit.pageTitle==='string'?visit.pageTitle:undefined,scroll:typeof visit.scroll==='number'&&Number.isFinite(visit.scroll)&&visit.scroll>=0?visit.scroll:0,pageAnchor:visit.pageAnchor&&typeof visit.pageAnchor==='object'?visit.pageAnchor:undefined})),saved:restoreSavedGraphViews(saved.saved)};
     const camera=JSON.parse(localStorage.getItem(`oi-cradle.knowledge-view.v1:${id}`)??"null");
     if(camera&&[camera.zoom,camera.x,camera.y].every(Number.isFinite)&&camera.zoom>=.15&&camera.zoom<=4)return {visits:[{query:"",camera}],index:0};
   }catch{/* Invalid view state never alters an owner reading. */}
@@ -49,6 +51,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const [readError,setReadError]=useState<string>();
   const [busy,setBusy]=useState(false);
   const [generation,setGeneration]=useState(0);
+  const sourceRefresh=useRef(0),graphRefresh=useRef(0);
   const [pins,setPins]=useState<string[]>([]);const [follow,setFollow]=useState(true);
   const graph=useRef<HTMLDivElement>(null),content=useRef<HTMLElement>(null);
   useFrameSample(graph);
@@ -84,27 +87,47 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   useEffect(()=>{if(!graph.current)return;const observer=new ResizeObserver(entries=>{const {width,height}=entries[0].contentRect;if(width>0&&height>0)setExtent({width,height});});observer.observe(graph.current);return()=>observer.disconnect();},[isGraph]);
   useEffect(()=>{
     if(!isGraph)return;
-    let active=true;setBusy(true);setError(undefined);
-    void readGraph(transport,binding.project,visit.query).then(r=>{if(active)setModel(r);}).catch(e=>{if(active)setError(String(e));}).finally(()=>{if(active)setBusy(false);});
-    return()=>{active=false;};
-  },[isGraph,binding.project,visit.query,generation,transport]);
+    const controller=new AbortController();setBusy(true);setError(undefined);
+    const fresh=graphRefresh.current!==generation;graphRefresh.current=generation;
+    void loadGraph(transport,binding.project,visit.query,value=>{setModel(value.reading);setBusy(value.pending.length>0);},{shared:filters.shared,fresh,signal:controller.signal});
+    return()=>controller.abort();
+  },[isGraph,binding.project,visit.query,generation,transport,filters.shared]);
+  const selectedNode=detailNode??nodes.find(n=>n.ref===visit.selected);
+  const selectedAddress=useMemo(()=>isGraph?(selectedNode?graphAddress(selectedNode):undefined):(visit.pageAddress??binding.address),[isGraph,selectedNode,binding.address,visit.pageAddress]);
+  const readKey=JSON.stringify([binding.project,selectedAddress,selectedNode?.native_owner]);
+  const lastReadKey=useRef<string>();
   useEffect(()=>{
-    let active=true;setReading(undefined);setHosted(undefined);setReadError(undefined);
+    const controller=new AbortController();let active=true;
+    if(lastReadKey.current!==readKey){setReading(undefined);setHosted(undefined);}
+    lastReadKey.current=readKey;setReadError(undefined);
     try {
-      const node=detailNode??nodes.find(n=>n.ref===visit.selected);
-      if(visit.selected&&!node)return;
+      const node=isGraph?selectedNode:undefined;
+      if(isGraph&&!node)return;
       if(node&&isHostedNode(node)){
         void sharedField<SharedFieldReading>(transport,{kind:"read",ref:node.ref}).then(r=>{if(active)setHosted(r);}).catch(e=>{if(active)setReadError(String(e));});
         return()=>{active=false;};
       }
-      const address=node?graphAddress(node):binding.address;
+      const address=selectedAddress;
       if(!address)return;
-      void knowledge<KnowledgeReading>(transport,binding.project,{action:"read",address}).then(r=>{if(active)setReading(r);}).catch(e=>{if(active)setReadError(String(e));});
+      void knowledge<KnowledgeReading>(transport,binding.project,{action:"read",address},{signal:controller.signal,fresh:sourceRefresh.current!==generation}).then(r=>{if(active)setReading(r);}).catch(e=>{if(active)setReadError(String(e));});
     }catch(e){setReadError(String(e));}
-    return()=>{active=false;};
-  },[model,detailNode,visit.selected,travel.index,binding.ref,binding.project,generation,transport]);
+    sourceRefresh.current=generation;
+    return()=>{active=false;controller.abort();};
+  },[readKey,generation,transport]);
   useEffect(()=>{if(focusContent.current&&(reading||readError)){focusContent.current=false;content.current?.focus({preventScroll:true});}},[reading,readError]);
   const open=useCallback((node:GraphNode)=>{setDetailNode(node);setTravel(t=>{const visits=[...t.visits.slice(0,t.index+1),{...t.visits[t.index],selected:node.ref,overviewCamera:t.visits[t.index].overviewCamera??t.visits[t.index].camera,camera:{...t.visits[t.index].camera,zoom:Math.max(.75,t.visits[t.index].camera.zoom),x:0,y:0}}].slice(-32);return {...t,visits,index:visits.length-1};});},[]);
+  const navigate:WikiNavigate=(address,title,anchor)=>{
+    focusContent.current=true;
+    if(isGraph){
+      const found=nodes.find(node=>node.ref===address.value);
+      const node:GraphNode=found??{ref:address.value,label:title,kind:address.kind==="source"?"file":"knowledge-subject",address,native_owner:"ai-kit",provenance:{source:"aikit.knowledge.read"},actions:[]};
+      setDetailNode(node);push({...visit,selected:node.ref,pageAnchor:anchor});
+    }else{
+      const previous={...visit,pageAddress:visit.pageAddress??binding.address,pageTitle:visit.pageTitle??binding.title,scroll:content.current?.scrollTop??0};
+      setTravel(t=>{const all=t.visits.slice(0,t.index+1);all[t.index]=previous;all.push({...visit,pageAddress:address,pageTitle:title,pageAnchor:anchor,scroll:0});const visits=all.slice(-32);return {...t,visits,index:visits.length-1};});
+    }
+  };
+  useEffect(()=>{if(!isGraph&&reading&&content.current&&!visit.pageAnchor)content.current.scrollTop=visit.scroll??0;},[reading?.resource,travel.index]);
   const release=()=>{if(!visit.selected&&!detailNode)return;setDetailNode(undefined);push({...visit,selected:undefined,camera:visit.overviewCamera??visit.camera,overviewCamera:undefined});};
   const related=detailNode?model?.edges.filter(e=>e.from_ref===detailNode.ref||e.to_ref===detailNode.ref)??[]:[];
   const commitCamera=(next:{zoom:number;x:number;y:number})=>{const camera=region?unaccommodate(next,anchor,region,extent):next;const current=latestTravel.current;const updated={...current,visits:current.visits.map((v,i)=>i===current.index?{...v,camera}:v)};latestTravel.current=updated;setTravel(updated);persist();};
@@ -126,12 +149,12 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
       {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.15,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>
       {model&&visit.selected&&nodes.find(node=>node.ref===visit.selected)&&<div className="knowledge-expression-bar" style={detailNode&&region?{left:region.x+8,top:region.y+8,right:extent.width-region.x-region.width+8,bottom:extent.height-region.y-region.height+8}:undefined}><div className="knowledge-expression-selection oi-action-group"><button className="oi-action" aria-pressed={pins.includes(visit.selected)} onClick={()=>setPins(current=>current.includes(visit.selected!)?current.filter(ref=>ref!==visit.selected):[...current,visit.selected!])}>{pins.includes(visit.selected)?"Unpin subject":"Pin subject"}</button><button className="oi-action" aria-pressed={follow} onClick={()=>setFollow(value=>!value)}>{follow?"Following locus":"Follow locus"}</button></div><KnowledgeExpression surface={binding.id} project={binding.project} address={graphAddress(nodes.find(node=>node.ref===visit.selected)!)} locus={nodes.find(node=>node.ref===visit.selected)!} pins={pins.flatMap(ref=>nodes.find(node=>node.ref===ref)??[])} follow={follow}/></div>}
-      {detailNode&&<NodeDetails node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
+      {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:visit.pageAnchor}} node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}
-    {!isGraph&&<article className="knowledge-content" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{binding.title}</h1>{binding.address&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={binding.address} locus={{ref:reading.resource,label:binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {binding.address?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(binding.address!,binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading}/>:<p role="status">Reading content…</p>}</article>}
+    {!isGraph&&<article className="knowledge-content" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={binding} onNavigate={navigate} anchor={visit.pageAnchor}/>:<p role="status">Reading content…</p>}</article>}
     <footer className="knowledge-surface-footer">
-      {isGraph&&<nav aria-label="Graph travel"><button className="oi-tool" aria-label="Back to prior constellation" disabled={travel.index===0} onClick={()=>back(-1)}><Glyph name="back" size={13}/></button><button className="oi-tool" aria-label="Forward to next constellation" disabled={travel.index===travel.visits.length-1} onClick={()=>back(1)}><Glyph name="arrow" size={13}/></button></nav>}
+      {<nav aria-label={isGraph?"Graph travel":"Wiki reading travel"}><button className="oi-tool" aria-label={isGraph?"Back to prior constellation":"Back to prior page"} disabled={travel.index===0} onClick={()=>back(-1)}><Glyph name="back" size={13}/></button><button className="oi-tool" aria-label={isGraph?"Forward to next constellation":"Forward to next page"} disabled={travel.index===travel.visits.length-1} onClick={()=>back(1)}><Glyph name="arrow" size={13}/></button></nav>}
       <span className="knowledge-footer-path" title={`${binding.project??"Personal ground"} / ${binding.title}`}>{binding.project??"Personal ground"} / {binding.title}</span>
       {!isGraph&&binding.view?.graphOrigin&&<button className="oi-tool" aria-label="Release graph focus" title="Release graph focus" onClick={()=>{try{releaseGraph(binding.view!.graphOrigin!);}catch(e){setReadError(String(e));}}}><Glyph name="release" size={13}/></button>}
       <button className="oi-tool" aria-label="Refresh knowledge" title="Refresh" onClick={()=>setGeneration(n=>n+1)}><Glyph name="refresh" size={13}/></button>
