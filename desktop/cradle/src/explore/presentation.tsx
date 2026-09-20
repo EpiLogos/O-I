@@ -24,6 +24,7 @@ import {tryAdmitLive} from "../expression/embedding.mjs";
 import {resolveExpressionPresentation} from "../../../../shared-field/expression-presentation.mjs";
 // @ts-ignore -- the language-neutral shared-field contracts are the executable spec.
 import {LIVE_RENDERER_REF,validateExpressionComposition} from "../../../../shared-field/expression-projection.mjs";
+import {RunExpressionBody as FactoryRunExpression} from "../contributions/factory/RunExpressionBody";
 
 export interface PresentationBinding {binding_ref:string;component_ref:string;contribution_ref?:string;surface_ref?:string;projection_ref?:string;subject_ref?:string;portable_renderer?:string;props:Record<string,unknown>;fallback:Record<string,unknown>;provenance:Array<Record<string,unknown>>}
 export interface PresentationRegion {region_ref:string;role:string;label?:string;bindings:PresentationBinding[]}
@@ -224,6 +225,7 @@ export const portablePresentationRenderers:Record<string,Renderer>={
   "oi.presentation/wiki-excerpt/v1":WikiReading,
   "oi.presentation/reference-card/v1":ReferenceCard,
   "oi.presentation/run-history/v1":Timeline,
+  "oi.presentation/factory-run/v1":FactoryRunExpression,
   "oi.presentation/action/v1":Action,
   "oi.presentation/expression/v1":ExpressionBody,
 };

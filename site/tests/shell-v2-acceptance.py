@@ -15,15 +15,7 @@ from playwright.sync_api import sync_playwright, expect
 BASE = os.environ.get('SHELL_BASE_URL', 'http://127.0.0.1:4173/shell.html')
 OUT = Path('evidence/shell-v2')
 OUT.mkdir(parents=True, exist_ok=True)
-PAGES = json.loads(subprocess.check_output(['node', '--input-type=module', '-e', """
-import fs from 'node:fs';
-import ts from 'typescript';
-const js = ts.transpileModule(fs.readFileSync('src/shell/content.ts', 'utf8'), {
-  compilerOptions: { module: ts.ModuleKind.ESNext, target: ts.ScriptTarget.ES2020 }
-}).outputText;
-const content = await import('data:text/javascript;base64,' + Buffer.from(js).toString('base64'));
-console.log(JSON.stringify(content.PAGES));
-"""], text=True))
+PAGES = json.loads(subprocess.check_output(['node', 'tests/read-shell-source.mjs'], text=True))
 RESULTS = []
 FAILURES = []
 BLOCKED = []
@@ -124,7 +116,7 @@ def inspect_route(browser, engine, width, height, reduced, expected):
                 for tile in grid.locator('.office-tile__link').all():
                     bounds = tile.bounding_box()
                     assert bounds and abs(bounds['width'] - bounds['height']) < 3, ('non-square office', width, bounds)
-                    assert tile.get_attribute('href').startswith('https://github.com/EpiLogos/')
+                    assert tile.get_attribute('href').startswith('#/library/')
                     assert tile.evaluate("node => node.scrollWidth <= node.clientWidth + 1 && node.scrollHeight <= node.clientHeight + 1"), 'tile clips its label'
             if kind == 'sequence' and width >= 1000:
                 assert grid.bounding_box()['height'] < 400, 'method returned to a sprawling vertical list'
@@ -210,15 +202,15 @@ def interactions(browser):
         expect(trigger).to_be_focused()
         assert page.evaluate('document.body.style.overflow') != 'hidden'
         trigger.click()
-        dialog.locator('a[href="#/products"]').click()
-        expect(page.locator('main')).to_have_attribute('data-page', 'products')
+        dialog.locator('a[href="#/library"]').click()
+        expect(page.locator('.oi-library')).to_be_visible()
         expect(page.locator('main')).to_be_focused()
         assert page.evaluate('scrollY') < 2
         assert not page.evaluate("document.documentElement.classList.contains('lenis')")
         page.go_back()
         expect(page.locator('main')).to_have_attribute('data-page', 'home')
         page.go_forward()
-        expect(page.locator('main')).to_have_attribute('data-page', 'products')
+        expect(page.locator('.oi-library')).to_be_visible()
     check('modal-focus-escape-links-history-and-route-focus', menu, page)
 
     def rapid():
@@ -227,14 +219,14 @@ def interactions(browser):
         page.evaluate("location.hash = '/research'")
         page.wait_for_timeout(60)
         page.evaluate("location.hash = '/build'")
-        expect(page.locator('main')).to_have_attribute('data-page', 'build')
+        expect(page.locator('.expression-reader')).to_have_attribute('data-expression-ref', 'expression:oi:site:build')
         page.wait_for_timeout(700)
-        assert page.locator('main').evaluate('node => getComputedStyle(node).opacity') == '1'
+        assert page.locator('.expression-reader').evaluate('node => getComputedStyle(node).opacity') == '1'
         page.evaluate("location.hash = '/not-a-route'")
         expect(page.locator('main')).to_have_attribute('data-page', 'home')
         page.emulate_media(reduced_motion='reduce')
         page.evaluate("location.hash = '/oi'")
-        expect(page.locator('main')).to_have_attribute('data-page', 'oi')
+        expect(page.locator('.expression-reader')).to_have_attribute('data-expression-ref', 'expression:oi:site:oi')
         assert not errors, errors
     check('rapid-route-interruption-unknown-hash-and-static-route', rapid, page)
     context.close()
