@@ -1,6 +1,8 @@
 import type {SurfaceBinding} from "../surface/types";
 import type {SelectionSnapshot} from "./nativeContext";
 export interface SelectionCandidate {
+ /** Local transient adapter only; never serialized into native context. */
+ prepare?:()=>void;
  bindingId:string;kind:string;text:string;sourceRef?:string;start?:number;end?:number;
  revision?:string;workingCopy?:boolean;capturedAt?:string;observationKey?:string;
  documentId?:string;selector?:string;role?:string;nodeRef?:string;pageUrl?:string;error?:string;

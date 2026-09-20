@@ -7,7 +7,13 @@ import {createHash} from 'node:crypto';
 const root=fileURLToPath(new URL('../',import.meta.url));
 const out=fileURLToPath(new URL('./artifacts/canvas-editor/',import.meta.url));mkdirSync(out,{recursive:true});
 const original='---\ncustom: retain exactly\n---\n\n# Source document\n\nFirst same 🙂 passage.\n\nSecond same 🙂 passage.\n\n| A | B |\n| --- | --- |\n| x | y |\n';
-let source=original,revision='r1',draft={revision:0,text:''},sent=[],contexts=new Map(),calls=[],failSend=false,dropContextHandler=false;
+let source=original,revision='r1',draft={revision:0,text:''},sent=[],contexts=new Map(),calls=[],failSend=false,dropContextHandler=false,delayedRead;
+const template=readFileSync(root+'documents/ql-dialogue-flow.html','utf8');
+const docPattern=/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/;
+const flowDoc=JSON.parse(template.match(docPattern)[1]);flowDoc.meta.documentId='controlled-flow';flowDoc.entries=[1,2].map(i=>({id:'entry-'+i,author:'F',at:'2026-09-20',html:'<p>Repeated authored passage.</p>',replyTo:null,touched:false}));
+let flowSource=template.replace(docPattern,()=>'<script type="application/json" id="ql-doc">'+JSON.stringify(flowDoc)+'</script>');
+let flowRevision='f1';
+const flowReading=()=>({...reading(),content:flowSource,revision:flowRevision});
 const reading=()=>({schema:'central.file-reading/v1',location:{root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'},content:source,revision,byte_len:Buffer.byteLength(source),content_encoding:'utf-8',project:{name:'demo',path:'Work/demo',project_ref:'project:demo'},source:null,operations:{write:{available:true,reason:null},history:{available:false,reason:null},restore:{available:false,reason:null}},automatic_agent_or_model_invocation:false});
 const digest=items=>'blake3:controlled-'+createHash('sha256').update(JSON.stringify(items)).digest('hex');
 const scope=(project,session)=>({project:'project:'+project,agent_session:session??null});
@@ -15,8 +21,9 @@ function getContext(project,session){const key=JSON.stringify(scope(project,sess
 function execute(op){calls.push(op);
  if(op.op==='state')return {result:'state',snapshot:{focus:{},surfaces:{},buffers:{}}};
  if(op.op==='ground')return {result:'ground_reading',reading:{}};
- if(op.op==='file_read')return {result:'file_read',reading:reading()};
- if(op.op==='file_operation'){if(op.request.action==='write'){if(op.request.expected_revision!==revision)return {result:'file_operation',data:{outcome:'conflict',current:reading()}};source=op.request.content;revision='r'+(Number(revision.slice(1))+1);return {result:'file_operation',data:{outcome:'written',revision}};}throw Error('Unsupported controlled file operation');}
+ if(op.op==='file_read')return {result:'file_read',reading:op.location.path.endsWith('flow.html')?flowReading():reading()};
+ if(op.op==='file_operation'){if(op.request.action==='write'&&op.location.path.endsWith('flow.html')){assert.equal(op.request.expected_revision,flowRevision);flowSource=op.request.content;flowRevision='f2';return {result:'file_operation',data:{outcome:'written',revision:flowRevision}};}if(op.request.action==='write'){if(op.request.expected_revision!==revision)return {result:'file_operation',data:{outcome:'conflict',current:reading()}};source=op.request.content;revision='r'+(Number(revision.slice(1))+1);return {result:'file_operation',data:{outcome:'written',revision}};}throw Error('Unsupported controlled file operation');}
+ if(op.op==='knowledge'){if(op.request.action==='resolve')return {result:'knowledge',data:{hits:[{resource:'central:source:sample.md',label:'sample.md',provider:'controlled-source',authority:'source',kind:'source',address:{kind:'source',value:'central:source:sample.md'}}],rows:[],absences:[]}};if(op.request.action==='explain')return {result:'knowledge',data:{resource:'central:source:sample.md',provider:'controlled-source',authority:'source',evidence:[],why_selected:'Exact source address in the selected Project'}};}
  if(op.op==='encounter_task_read')return {result:'encounter_task_reading',data:null};
  if(op.op!=='encounter')return {result:'unavailable',data:{}};
  const req=op.request;let data;
@@ -38,7 +45,7 @@ function execute(op){calls.push(op);
  return {result:'encounter_reading',data};
 }
 const server=await createServer({root,appType:'custom',server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});
-server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const outcome=execute(JSON.parse(body));response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
+server.middlewares.use('/op',(request,response)=>{let body='';request.on('data',chunk=>body+=chunk);request.on('end',()=>{response.setHeader('content-type','application/json');try{const op=JSON.parse(body);if(delayedRead&&op.request?.action==='context'&&op.request.request.operation==='read'){const hold=delayedRead;delayedRead=undefined;hold.response=()=>{const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));};return;}const outcome=execute(op);response.end(JSON.stringify({ok:true,outcome:{...outcome,receipts:[]}}));}catch(e){response.end(JSON.stringify({ok:false,error:String(e)}));}});});
 server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','application/json');res.end('{"ok":true,"receipts":[]}');});
 server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body>'));});
 await server.listen();const url=`http://127.0.0.1:${server.httpServer.address().port}/canvas-editor`;
@@ -54,6 +61,13 @@ try{
  await page.getByRole('tab',{name:'Split',exact:true}).click();await page.locator('.material-preview-pane').getByRole('tab',{name:'Rendered',exact:true}).waitFor();check('split keeps one editor',await page.locator('.cm-editor').count()===1);
  await page.evaluate(start=>canvasTest.select(start,start+7),start);await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
  await page.locator('.prepared-context-item').waitFor();check('ordinary add has no modal',await page.getByRole('dialog').count()===0);
+ await page.locator('.prepared-context-item summary').click();
+ const nativeExpression=getContext('demo','agent-session/test').items[0].canonical_expression;
+ const beforeResolve=calls.filter(c=>c.op==='knowledge').length;
+ await page.getByRole('button',{name:'Resolve expression',exact:true}).click();await page.getByText('1 resolved references · preparation is unchanged').waitFor();
+ check('selection expression uses the same native Resolve request unchanged',calls.slice().reverse().find(c=>c.op==='knowledge')?.request.query===nativeExpression&&calls.filter(c=>c.op==='knowledge').length===beforeResolve+1);
+ await page.getByRole('button',{name:'Explain',exact:true}).click();await page.getByText('Exact source address in the selected Project').waitFor();checks.push('native Explain is reachable without disclosing additional source bodies');
+ await page.locator('.prepared-context-item summary').click();
  let queued=getContext('demo','agent-session/test');check('queued exact second occurrence',queued.items[0].selection.anchor.start===start);check('Unicode range retained',queued.items[0].selection.text==='same 🙂');
  await page.waitForFunction(()=>document.querySelector('.context-prepared-highlight'));checks.push('prepared selection has a retained source cue');
  await page.evaluate(()=>canvasTest.change('Explain the selected passage'));await page.waitForFunction(()=>canvasTest.session()?.draft==='Explain the selected passage'&&!canvasTest.session().busy);
@@ -74,6 +88,35 @@ try{
  await page.setViewportSize({width:1280,height:820});
  // No-agent preparation uses native Project scope, never starts a model.
  await page.locator('#toggle-agent').click();await page.evaluate(start=>canvasTest.select(start,start+7),start);await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.prepared-context-item').length===1);check('preparation without Agent is native Project-scoped',getContext('demo',null).items.length===1);
+ // Real async handler regression: the old owner read completes after the companion changes.
+ await page.getByRole('button',{name:'Clear prepared context',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.prepared-context-item').length===0);
+ const hold={};delayedRead=hold;
+ await page.evaluate(start=>canvasTest.select(start,start+7),start);await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
+ for(let i=0;!hold.response&&i<100;i++)await new Promise(r=>setTimeout(r,20));assert.ok(hold.response,'native read is held');
+ const writesBefore=calls.filter(c=>c.request?.action==='context'&&c.request.request.operation==='edit').length;
+ await page.locator('#toggle-agent').click();hold.response();
+ await page.getByRole('alert').filter({hasText:'destination changed'}).waitFor();
+ check('switching companion during native read does not retarget or mutate context',calls.filter(c=>c.request?.action==='context'&&c.request.request.operation==='edit').length===writesBefore);
+ check('switched scope does not keep prepared highlights',await page.locator('.context-prepared-highlight').count()===0);
+ // Flow uses the supplied HTML carrier and the production native file write path.
+ await page.goto(url+'?flow');await page.getByRole('textbox',{name:'New entry',exact:true}).waitFor();
+ await page.getByRole('textbox',{name:'New entry',exact:true}).fill('An unsaved Flow entry 🙂');
+ await page.evaluate(()=>canvasTest.select(3,10));await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
+ await page.locator('.prepared-context-item').waitFor();
+ const flowPrepared=getContext('demo','agent-session/test');
+ check('Flow new-entry range is a revision-carrying unsaved observation, not raw HTML offsets',flowPrepared.items[0].selection.anchor.kind==='observation'&&flowPrepared.items[0].selection.anchor.document_id==='controlled-flow'&&flowPrepared.items[0].selection.working_copy&&flowPrepared.items[0].selection.source_revision==='f1'&&flowPrepared.items[0].selection.text==='unsaved');
+ await page.waitForFunction(()=>document.querySelector('.context-prepared-highlight'));checks.push('Flow draft retains a view-only cue');
+ await page.getByRole('button',{name:'Clear prepared context',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.prepared-context-item').length===0);
+ await page.locator('[data-flow-entry="entry-2"] p').evaluate(node=>{const range=document.createRange();range.selectNodeContents(node);const s=window.getSelection();s.removeAllRanges();s.addRange(range);});
+ await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.locator('.prepared-context-item').waitFor();
+ const rendered=getContext('demo','agent-session/test').items[0].selection;
+ check('ordinary rendered Flow selection keeps the second entry identity',rendered.anchor.kind==='observation'&&rendered.anchor.document_id==='controlled-flow'&&rendered.anchor.node_ref==='entry-2'&&rendered.text==='Repeated authored passage.');
+ check('rendered Flow selection opens no modal',await page.getByRole('dialog').count()===0);
+ await page.getByRole('button',{name:'Save · ⌘S',exact:true}).click();await page.waitForFunction(()=>canvasTest.document()==='');
+ const savedDoc=JSON.parse(flowSource.match(docPattern)[1]);
+ check('Flow save preserves document identity, existing entries and template bytes',savedDoc.meta.documentId==='controlled-flow'&&JSON.stringify(savedDoc.entries.slice(0,2))===JSON.stringify(flowDoc.entries)&&flowSource.replace(docPattern,'DATA')===template.replace(docPattern,'DATA'));
+ await page.reload();await page.locator('.flow-thread-entry').last().waitFor();check('Flow native save roundtrips the new entry',await page.locator('.flow-thread-entry').count()===3);
+ await page.screenshot({path:out+'flow-context.png'});
  check('no page errors',errors.length===0);
  writeFileSync(out+'receipt.json',JSON.stringify({standing:'controlled production-component/handler evidence; native store independently tested in Rust; not installed/provider/human proof',checks,errors,calls:calls.filter(c=>['context','prompt-context'].includes(c.request?.action)).map(c=>({op:c.op,action:c.request.action,project:c.project}))},null,2));
  console.log(JSON.stringify({passed:checks.length,checks,errors},null,2));

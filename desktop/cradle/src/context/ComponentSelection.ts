@@ -19,3 +19,5 @@ export function observeComponent(node:Element,bindingId:string){
 export function registerPageObservation(text:string,validate:()=>Promise<boolean>,mark?:(enabled:boolean)=>void){const key=crypto.randomUUID();retain(key,{text,validate,mark});return key;}
 export async function observationIsCurrent(key:string){const reading=held.get(key);if(reading?.validate)return reading.validate();return !!reading?.node?.isConnected&&componentText(reading.node)===reading.text;}
 export function markObservations(keys:readonly string[]){for(const [key,value] of held)value.mark?.(keys.includes(key));}
+/** View disposal must release native observers/overlays, not just evict later. */
+export function releaseObservation(key:string){held.get(key)?.mark?.(false);held.delete(key);}

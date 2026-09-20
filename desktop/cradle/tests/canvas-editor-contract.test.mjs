@@ -27,3 +27,18 @@ test('raw HTML and executable URLs cannot acquire preview authority',()=>{const 
 test('resolved URL attributes are escaped independently of Markdown syntax',()=>{const html=renderMarkdown('[x](a.md)',{resolveAsset:()=> 'https://example.test/" onmouseover="evil&x'});assert.ok(html.includes('&quot;'));assert.ok(!html.includes(' onmouseover="'));});
 test('split view preference round trips without changing source state',()=>{assert.deepEqual(parseMaterialViewPrefs(encodeMaterialViewPrefs({view:'split',zoom:1.25})),{view:'split',zoom:1.25});});
 test('binary office formats are never routed into a UTF-8 editor',()=>{for(const ext of ['docx','xlsx','pptx','odt','pages'])assert.equal(detectFormat({path:'file.'+ext}),'unsupported');assert.equal(materialCapabilities('unsupported').edit,false);assert.equal(materialCapabilities('markdown').split,true);});
+
+import {scopeGuard,selectionScopeKey,newerContext} from '../src/context/scopeGuard.ts';
+test('async selection freezes destination and refuses a switched conversation',()=>{
+ let current=selectionScopeKey('demo','agent-session/one');const guard=scopeGuard(()=>current);guard();
+ current=selectionScopeKey('demo','agent-session/two');assert.throws(guard,/destination changed/);
+});
+test('project changes and an unbound-to-bound change invalidate preparation requests',()=>{
+ let current=selectionScopeKey('one');const unbound=scopeGuard(()=>current);
+ current=selectionScopeKey('two');assert.throws(unbound);
+ const project=scopeGuard(()=>current);current=selectionScopeKey('two','agent-session/test');assert.throws(project);
+});
+test('delayed native reads never roll a newer preparation revision back',()=>{
+ const latest={revision:3,items:['new']};assert.equal(newerContext(latest,{revision:1,items:[]}),latest);
+ assert.deepEqual(newerContext(latest,{revision:4,items:[]}),{revision:4,items:[]});
+});

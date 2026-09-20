@@ -292,7 +292,7 @@ export const TextEditor = forwardRef<EditorHandle, Props>(
             setSelection(!update.state.selection.main.empty);
               host.current?.dispatchEvent(new CustomEvent("oi:editor-selection",{bubbles:true,detail:{selected:!update.state.selection.main.empty}}));
             const chosen=update.state.selection.main,p=callbacks.current;
-            window.dispatchEvent(new CustomEvent("oi:selection-preview",{detail:chosen.empty?undefined:{bindingId:p.binding.id,kind:"text",text:update.state.doc.sliceString(chosen.from,chosen.to),start:chosen.from,end:chosen.to,sourceRef:p.binding.ref,revision:p.sourceRevision,workingCopy:p.workingCopy,capturedAt:new Date().toISOString()}}));
+            window.dispatchEvent(new CustomEvent("oi:selection-preview",{detail:chosen.empty?undefined:{prepare:p.onAttach,bindingId:p.binding.id,kind:"text",text:update.state.doc.sliceString(chosen.from,chosen.to),start:chosen.from,end:chosen.to,sourceRef:p.binding.ref,revision:p.sourceRevision,workingCopy:p.workingCopy,capturedAt:new Date().toISOString()}}));
             callbacks.current.onSelect?.();
             update.view.requestMeasure({read:v=>{const range=v.state.selection.main;const coords=v.coordsAtPos(range.head);return {selected:!range.empty,bounds:coords?{x:coords.left,y:coords.bottom,width:Math.max(1,coords.right-coords.left),height:coords.bottom-coords.top}:undefined};},write:detail=>{host.current?.dispatchEvent(new CustomEvent("oi:selection-anchor",{bubbles:true,detail}));}});
           }

@@ -2,6 +2,7 @@ import {createContext,useContext,useEffect,useLayoutEffect,useRef,useState,type 
 import type {SurfaceBinding} from "../surface/types";
 import "./editor.css";
 import {createPortal} from "react-dom";
+import {useHostSelection} from "../context/hostSelection";
 import {observeComponent} from "../context/ComponentSelection";
 import {EditorIcon} from "./EditorIcon";
 import type {EditorHandle} from "./TextEditor";
@@ -43,7 +44,7 @@ function usePaneFocus(root:React.RefObject<HTMLElement>):boolean {
 }
 
 export function EditorFrame({children,className="",toolbar,footer,label,data,presentationTools}:{children:ReactNode;className?:string;toolbar:ReactNode;presentationTools?:ReactNode;footer:ReactNode;label:string;data?:Record<string,string|boolean|undefined>}) {
-  const root=useRef<HTMLElement>(null);const focused=usePaneFocus(root);const [collapsed,setCollapsed]=useState(false);
+  const root=useRef<HTMLElement>(null);const attachHostSelection=useHostSelection(root);const focused=usePaneFocus(root);const [collapsed,setCollapsed]=useState(false);
   const [mode,setMode]=useState<"writing"|"context">("writing");const [selected,setSelected]=useState(false);
   const [selectionBox,setSelectionBox]=useState<{x:number;y:number}|null>(null);const pointerStart=useRef<{x:number;y:number}|null>(null);
   const [menu,setMenu]=useState<{x:number;y:number}|null>(null);const menuRoot=useRef<HTMLDivElement>(null);
@@ -53,7 +54,7 @@ export function EditorFrame({children,className="",toolbar,footer,label,data,pre
   useEffect(()=>{if(!menu)return;const close=(e:Event)=>{if(!menuRoot.current?.contains(e.target as Node))setMenu(null);};window.addEventListener('pointerdown',close,true);window.addEventListener('blur',close);return()=>{window.removeEventListener('pointerdown',close,true);window.removeEventListener('blur',close);};},[menu]);
   useLayoutEffect(()=>{const node=menuRoot.current;if(!node)return;const box=node.getBoundingClientRect();node.style.left=`${Math.max(4,Math.min(menu!.x,innerWidth-box.width-4))}px`;node.style.top=`${Math.max(4,Math.min(menu!.y,innerHeight-box.height-4))}px`;node.querySelectorAll('button,select').forEach(el=>el.setAttribute('role','menuitem'));node.querySelector<HTMLElement>('button:not(:disabled)')?.focus({preventScroll:true});},[menu]);
   const dataAttributes=Object.fromEntries(Object.entries(data??{}).filter(([,value])=>value!==undefined).map(([key,value])=>[`data-${key}`,String(value)]));
-  const attach=()=>{root.current?.querySelector('.text-editor')?.dispatchEvent(new Event('oi:attach-selection'));root.current?.dispatchEvent(new Event('oi:page-attach-selection'));};
+  const attach=()=>{if(attachHostSelection())return;root.current?.querySelector('.text-editor')?.dispatchEvent(new Event('oi:attach-selection'));root.current?.dispatchEvent(new Event('oi:page-attach-selection'));};
   // The tool strips under the document (returns, shared material, accepted
   // revisions) are interactive surface tooling, not document material: the
   // context-mode component picker must never arm on them or swallow their
