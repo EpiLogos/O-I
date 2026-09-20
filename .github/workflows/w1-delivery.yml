@@ -44,6 +44,11 @@ jobs:
                   lines[start:end] = text.splitlines(keepends=True)
               after = ''.join(lines).encode()
               assert hashlib.sha256(after).hexdigest() == change['after'], f'Invalid result: {path}'
+              # Correct the one trailing-space-only line exposed by the first
+              # git diff --check run, without suppressing the whitespace gate.
+              if str(path) == 'desktop/cradle/src/workspace/shell.css':
+                  assert after.count(b'\n \n') == 1
+                  after = after.replace(b'\n \n', b'\n\n')
               pending.append((path, after))
           for path, after in pending:
               path.parent.mkdir(parents=True, exist_ok=True)
