@@ -1480,6 +1480,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
                 onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
                 workspaceName={workspace.current.name}
                 state={tree.layout}
+                stageBindingId={modeCentreBinding?.id}
                 menuOpen={!!menu}
                 execute={execute}
                 openBindingMenu={openBindingMenu}
@@ -1521,6 +1522,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
                 onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
                 workspaceName={workspace.current.name}
                 state={tree.layout}
+                stageBindingId={modeCentreBinding?.id}
                 menuOpen={!!menu}
                 execute={execute}
                 openBindingMenu={openBindingMenu}

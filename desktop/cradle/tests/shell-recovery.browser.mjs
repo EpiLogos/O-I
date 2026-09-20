@@ -81,7 +81,7 @@ try{
      assert.equal(await page.locator('.visuals-preferences canvas,.visuals-preferences iframe').count(),0,'Visuals has no duplicate Expression host');
      await page.getByRole('button',{name:'Back to work',exact:true}).click();await editor.waitFor();assert.equal(await editor.evaluate(el=>el===window.retainedEditor),true,'the same editor DOM returns, not a remount');await corner(page,'upper-right');
      await page.setViewportSize({width:1440,height:900});await page.keyboard.press('Control+Alt+5');await page.getByRole('navigation',{name:'Settings surfaces'}).getByRole('button',{name:'Visuals',exact:true}).click();
-     await page.getByRole('button',{name:'Open Expressions',exact:true}).click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout.mode==='expressions');
+     await page.getByRole('button',{name:'Open Expressions',exact:true}).click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout.mode==='expressions');assert.equal(await page.locator('.mode-stage .retained-centre-outlet').count(),1,'actual Expressions stage owns its outlet');
     }finally{await context.close();}
    });
    await scenario(`${engineName}/${scheme}: Factory icons and non-chat right sections`,async()=>{

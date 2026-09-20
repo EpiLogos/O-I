@@ -48,6 +48,9 @@ export interface WorkbenchProps {
   workspaceName: string;
   onView:(id:string,view:NonNullable<import("./types").SurfaceBinding["view"]>)=>void;
   state: LayoutState;
+  /** The dedicated stage is this binding's sole presenting outlet. A hidden
+   * warm tree must not adopt the same retained body away from that stage. */
+  stageBindingId?: SurfaceId;
   menuOpen: boolean;
   nativeWindows: boolean;
   execute: (ref: string, arg?: ActionArg) => void;
@@ -409,7 +412,7 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       >
         {tabs.length ? tabs.map(id => {
           const binding = state.surfaces[id];
-          if (!binding) return null;
+          if (!binding || id === props.stageBindingId) return null;
           const concealed = id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
