@@ -1,0 +1,336 @@
+name: Nara exact followup blobs
+on:
+  push:
+    branches: ['agent/nara-personal-native-20260920']
+    paths: ['.github/workflows/nara-source-transfer.yml']
+permissions:
+  contents: read
+jobs:
+  immutable-blobs:
+    if: github.ref == 'refs/heads/agent/nara-personal-native-20260920' && github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    permissions:
+      contents: write
+    steps:
+      - name: Verify exact source and create immutable blobs only
+        env:
+          GH_TOKEN: ${{ github.token }}
+        shell: python
+        run: |
+          import base64,hashlib,json,os,pathlib,urllib.request
+          assert os.environ['GITHUB_REPOSITORY']=='EpiLogos/O-I'
+          headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'}
+          def read_blob(sha):
+              r=urllib.request.Request('https://api.github.com/repos/EpiLogos/O-I/git/blobs/'+sha,headers=headers)
+              with urllib.request.urlopen(r,timeout=30) as response:
+                  data=base64.b64decode(json.load(response)['content'])
+              assert hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()==sha
+              return data.decode()
+          def replace_once(text,old,new):
+              assert text.count(old)==1, 'source replacement is not unique: '+old[:80]
+              return text.replace(old,new)
+          updates={}
+          p='desktop/cradle/src/nara/NaraSurface.tsx'
+          s=read_blob('8d01542081209be9db3b4f52a8984361359193c2')
+          s=replace_once(s,'import "./nara.css";','import {requireObject} from "./support";\nimport "./nara.css";')
+          s=replace_once(s,'world:request=>worldOp(channel.current,request)','world:async request=>requireObject(await worldOp(channel.current,request),"native Expression result")')
+          s=replace_once(s,'selection.selection as WorldSelection|undefined','requireObject(selection,"native selection reading").selection as WorldSelection|undefined')
+          updates[p]=s
+          p='desktop/cradle/src/nara/runtime.ts'
+          s=read_blob('d1164a9247a36e760c2bb8036a350dbee3f27ef4')
+          updates[p]=replace_once(s,'enrichment:null,decision:"pending",error:null}].slice(-16)','enrichment:null,decision:"pending" as const,error:null}].slice(-16)')
+          p='desktop/cradle/tests/nara-native-browser.mjs'
+          s=read_blob('c5d5603d7de7422c57cfcaf3f72c84229dabbe21')
+          s=replace_once(s,'await server.listen();let browser;','await server.listen();let browser,page;')
+          s=replace_once(s,'const page=await context.newPage();','page=await context.newPage();')
+          s=replace_once(s,"await page.getByRole('button',{name:'Delegate selected basis'}).click();await page.getByRole('button',{name:'Accept focus only'}).last().click();", "await page.getByRole('button',{name:'Delegate selected basis'}).click();\n await page.waitForFunction(()=>document.querySelectorAll('.nara-proposal').length===2&&document.querySelector('[data-nara-phase]')?.dataset.naraPhase==='idle');\n check(owner.requests.filter(r=>r.action==='send'&&r.agent_session===a.epii.agent_session).length===2,'Second Epii inquiry has its own completed native delivery');\n await page.getByRole('button',{name:'Accept focus only'}).nth(1).click();")
+          s=replace_once(s,'}finally{\n await mkdir(artifacts', "}catch(error){\n await mkdir(artifacts,{recursive:true});\n if(page){await page.screenshot({path:fileURLToPath(new URL('failure.png',artifacts)),fullPage:true}).catch(()=>{});await writeFile(new URL('failure-dom.txt',artifacts),await page.locator('body').innerText().catch(()=>''));}\n await writeFile(new URL('failure-requests.json',artifacts),JSON.stringify({requests,ownerRequests:owner.requests,deliveries:[...owner.deliveries.entries()]},null,2));\n throw error;\n}finally{\n await mkdir(artifacts")
+          updates[p]=s
+          p='desktop/cradle/tests/nara-runtime.test.mjs'
+          s=read_blob('3013b50a2a660b17b01318b7920a58e27d538c4d')
+          updates[p]=s+'''
+
+          test('rejecting one inquiry does not block a second independently returned proposal',async()=>{
+           const {r,owner,a}=runtime();
+           owner.answer=turn=>{const {delegation:d}=JSON.parse(turn.packet.text),e=fixture('nara-epii-delegation-v1.json').enrichment;return JSON.stringify({...e,delegation_ref:d.delegation_ref,basis_context_ref:d.basis.context_ref,basis_expression_revision:d.basis.expression_revision,proposed_focus_refs:[a.context.pointed_ref]});};
+           await r.inquire('First question',[a.context.pointed_ref]);
+           const first=r.getSnapshot().inquiries[0];r.rejectInquiry(first.delegation.delegation_ref);
+           await r.inquire('Second question',[a.context.pointed_ref]);
+           const [rejected,pending]=r.getSnapshot().inquiries;
+           assert.equal(r.getSnapshot().phase,'idle');assert.equal(r.getSnapshot().pending,null);assert.equal(owner.sendCount,2);
+           assert.equal(rejected.decision,'rejected');assert.equal(pending.decision,'pending');assert.ok(pending.enrichment);
+           assert.notEqual(first.delivery_ref,pending.delivery_ref);
+           assert.equal(r.reviewInquiry(pending.delegation.delegation_ref).enrichment.delegation_ref,pending.delegation.delegation_ref);
+          });
+          '''
+          p='docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md'
+          original=read_blob('c5562a01c4c0e13225d0242a12009370fe170dfe')
+          prefix='''> **Current production continuation: O:I PR #439, 20 September 2026.**
+          > Read the production correction at the end of this document before treating
+          > the earlier document/fixture UI descriptions as an executable voice path.
+          > The historical contracts and receipts below are preserved, not promoted.
+
+          '''
+          amendment='''
+
+          ## Production correction and local acceptance — 20 September 2026, PR #439
+
+          ### Source and actual implementation standing
+
+          This is the continuation of #336 / QL-MEF #201 / AIKit #317 / Actuation
+          #91/#94 under the existing #220 W6 file claim, not another programme.
+          The recovered integrated UI was `060f0165a8ecbdc2fb3bece48c7c4d48d05e2610`,
+          including Nara/dictation backup `4dd003eb9dbfe867d5513e9f7aa51324de50b64f`.
+          Initial production work was committed at `d6c306b59b5892bee39eb198659ea599f7a1af77`.
+          GitHub rejected its retired UI base with 422 `base invalid`. Main successor
+          `11ef251cff14abb05dc324cb3e85f9e65c8c8703` contained all eleven original Nara
+          file blobs byte-identically, so only the scoped changes were carried to
+          `agent/nara-personal-native-20260920` at `8739d311d65ede98629fb5d73774c8df6c89546a`.
+          PR #439 is the review surface; subsequent fixes retain that ancestry.
+          No shared shell/stage/generic session writer was overwritten. No machine,
+          installation, main merge or live-provider/human acceptance was performed.
+
+          The old NaraSurface captured input but did not dispatch its audio, inserted
+          a placeholder text response and supplied synthetic enrichment. Its document
+          validators/fixtures were useful, but did not prove the promised production
+          loop. That discrepancy is corrected here rather than retrospectively
+          calling those earlier checks live speech evidence.
+
+          Existing native source used: AIKit `15ca100583185d40fe4db0fdacbb061625782d27`,
+          Actuation `73c8526eabe4a45a62931dc22f4e75bba0955f34`, QL-MEF
+          `5970757e25532c7329f07f4819273155c4f3f135`. These are inspected source
+          revisions, not claimed installed binaries. AIKit's real local-speech adapter
+          and the owner's #317/#336 setup receipts supply the existing STT/TTS dialect.
+          The backend is not missing and is not reimplemented by this PR.
+
+          ### Executable body and native attachment
+
+          The implemented adapter is a configured **HTTP STT → existing addressed
+          native text session → HTTP TTS** composition. It is not a universal provider,
+          realtime WebSocket/WebRTC transport or VAD/barge-in implementation. The
+          existing modality/floor declarations remain available but do not establish
+          an executable realtime path by themselves.
+
+          `src/nara/nativeDialogue.ts` defines `oi.nara-attachment/v1`, an O:I selection
+          envelope over native documents, not a replacement semantic owner. The
+          protected saved Central source contains `context` (the existing QL dialogue
+          context), `constitution` (the existing Actuation speech constitution), and
+          `dialogue` with exact `project`, `space`, `agent_session`, `provider`, `sender`,
+          `expected_binding_revision` and optional native `expected_task`. Optional
+          `epii` carries another native session plus its distinct `agent_ref`.
+          Optional `speech` has kind `http-stt-text-tts`, `stt` and `tts` route records;
+          each contains `endpoint`, `model`, `provider_ref`, `source_ref`, `revision`,
+          and TTS additionally `voice`. These are selected owner-backed facts, never
+          invented refs or binding revisions. No credentials belong in the document.
+
+          The UI opens this source through `source_open`, refuses dirty/conflicting
+          or stale input, checks identity agreement and reads the actual existing
+          native session. It never creates a persona or session to make attachment
+          succeed. Automatic catalogue/composition → native attachment production
+          still needs the generic setup/session owner's integration; a manually
+          prepared saved binding is a bounded setup route, not completion of that join.
+
+          The local STT request is multipart WAV with `file`, `model`,
+          `response_format=json`; its configured endpoint may be the existing
+          `/inference` service. TTS submits `model`, `input`, `voice`,
+          `response_format=wav` to its configured route. Endpoint/model/voice are not
+          hard-coded in production. This adapter accepts credential-free loopback
+          HTTP(S), rejects redirects, remote hosts, URL credentials/query secrets,
+          empty transcript and invalid/oversized WAV. Remote/realtime bodies require
+          their own admitted transport adapter rather than bypassing these limits.
+
+          ### Consent, continuation and privacy
+
+          Attach and Enable voice are separate from Start microphone turn. Native
+          session readiness is checked before microphone request. A late OS permission
+          grant after interruption stops every stream track; permission/input loss,
+          empty transcript and playback failure stay named failures. Listening means
+          acquired input, and Speaking begins on the actual playback `onplaying` event.
+          Local dictation into an editable ordinary chat draft remains the separate
+          existing facility described above; this change does not make it auto-send.
+
+          Native addressed `send` preserves the ordinary human draft. `delivery_ref`,
+          sender/session and reservation/terminal cursors bind response attribution.
+          Only that delivery's `agent-message-chunk` events become response text;
+          provider thoughts, tool payloads and adjacent turns never become speech.
+          A lost ACK is uncertain, retains the original delivery and never resends.
+          Recover reads the same native result without automatic playback or mutation.
+          Terminal failure is still failure, but releases the blocked-turn gate.
+
+          One private application-lifetime holder preserves draft/dialogue and exact
+          Nara/AgentSession through presentation remount. Reconnect uses the existing
+          native session, not a new renderer identity. Changing the speech body revokes
+          voice consent; the current selected context is retained. Native journals
+          remain durable authority. Full process-restart attachment discovery and
+          journal/pending-delivery rehydration are unfinished integration work, not
+          capabilities claimed for renderer memory.
+
+          The former unscoped delegation ledger now refuses personal publication and
+          exposes no private entries to generic Technè/diagnostics. Actual inquiry
+          material stays in its Nara holder. No transcript/audio/note/private context
+          is written to localStorage, a public corpus edition or shared search by
+          this path. Explicit scoped sharing still needs native admission. Merely
+          opening another presentation or knowing a reference is not disclosure.
+
+          ### Exact references, Epii and interruption
+
+          Include current selection deliberately discloses the native subject/relation
+          ref and revision, without fetching its source body. Merely pointing or
+          changing layout does not disclose it. A changed permitted selection creates
+          a new context ref, so unchanged Expression revision alone cannot admit a
+          stale Epii result. Open source uses the native source/Surface route.
+
+          Epii receives the actual scoped QL delegation through its own addressed native
+          session, not the Nara transcript. Its real text is retained. A structured
+          `ql.epii-enrichment/v1` must answer the original delegation/context/revision;
+          plain text is never decorated with fabricated source/evidence/proposals.
+          Reject changes no native state. Accept focus only validates every exact
+          target first, invokes native `expression_world.act_perform` with the reviewed
+          revision, and checks the returned selection. Ambiguous/unmapped refs do not
+          select a substitute entity. Other proposed Actions, profile variants and
+          scene changes remain unexecuted and require their own native authorisation.
+
+          Stop aborts local capture/HTTP/playback and holds pending Expression steps.
+          A sent atomic safe step may complete with actual readback; unsent subsequent
+          steps are cancelled, including interruption during preparation. The native
+          cancel API is session-wide, not delivery-correlated, so this consumer does
+          not race it against another actor's next turn. Local stop is confirmed;
+          native inference cancellation is explicitly unconfirmed and its original
+          result remains recoverable. No read-model cancellation receipt impersonates
+          actual provider cancellation.
+
+          Native `act_interrupt`, `act_checkpoint` and `act_restore` supply hold and
+          draft recovery. Checkpoint restore advances the native revision; it does not
+          rewind GPU particles, audio or the provider conversation. Consumer authority
+          records now reject cross-session, forged, mutable, stale and duplicate
+          decisions, without taking authority ownership away from Actuation.
+
+          ### Executed checks and preserved failures
+
+          Initial PR check run **35514170289**, test merge
+          `0a08ec4eedb70830d57b2394517f41193b11257a`, passed all 88 original-plus-new
+          contract cases. It also found three TypeScript inference errors and a
+          browser timeout on the second Epii review after 15 checks passed. Those
+          original results remain in artifact **10606665826**; they are not a passing
+          build/browser result. The follow-up corrects the types without weakening
+          checks, adds a repeated-inquiry regression and records controlled-browser
+          failure state for diagnosis. Read PR #439's latest exact-head check receipt
+          for final build/browser standing rather than inheriting an earlier pass.
+
+          Historical baseline **35484859654** failed on the missing TS loader;
+          corrected baseline **35485059218** passed the original 50 contracts and
+          integrated build. Local `nara-after-authority.log` retains the original
+          stale-revision assertion failure from development. Existing conformance
+          files are retained; no source-presence test substitutes for native behavior.
+
+          Run from `desktop/cradle` on the exact reviewed head:
+
+          ```sh
+          npm ci --no-audit --no-fund
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test \
+            tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs \
+            tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs
+          npm run build
+          npx playwright install chromium
+          node --experimental-strip-types --import ./tests/ts-register.mjs \
+            tests/nara-native-browser.mjs
+          ```
+
+          These exercise production code, actual loopback HTTP/audio contracts and
+          the production React/WebAudio component with controlled owner replies and
+          synthetic input. They do not prove live inference, OS permission UX, native
+          Mac interaction or human experience. CI retains failed as well as successful
+          receipts; fixtures remain exclusively in test paths.
+
+          ### Bounded executable local packet
+
+          `tests/nara-local-acceptance.mjs` runs only selected operations against an
+          already running native bridge. It installs nothing, creates no Agents,
+          activates no microphone and performs no cleanup. A new private output
+          directory is created mode 0700, with files mode 0600. Never publish these
+          personal records in GitHub/CI/corpus or generic diagnostics.
+
+          ```sh
+          # Read-only saved attachment / native session / machine preflight.
+          node --experimental-strip-types --import ./tests/ts-register.mjs \
+            tests/nara-local-acceptance.mjs --bridge http://127.0.0.1:PORT \
+            --source ACTUAL_NATIVE_ATTACHMENT_SOURCE --out NEW_PRIVATE_DIRECTORY
+
+          # Explicit real supplied audio -> STT -> native response -> TTS.
+          # Add --play-output only for explicitly requested Mac afplay playback.
+          node --experimental-strip-types --import ./tests/ts-register.mjs \
+            tests/nara-local-acceptance.mjs --bridge http://127.0.0.1:PORT \
+            --source ACTUAL_NATIVE_ATTACHMENT_SOURCE --out ANOTHER_PRIVATE_DIRECTORY \
+            --allow-provider --audio-file CONSENTED_INPUT.wav
+
+          # Recover an uncertain delivery without replay or automatic speech.
+          node --experimental-strip-types --import ./tests/ts-register.mjs \
+            tests/nara-local-acceptance.mjs --bridge http://127.0.0.1:PORT \
+            --source ACTUAL_NATIVE_ATTACHMENT_SOURCE --out NEW_RECOVERY_DIRECTORY \
+            --recover EXACT_DELIVERY_REF
+          ```
+
+          `--reconnect` invokes same-session reconnect only when required.
+          `--check-native-mac` observes an O-I process window through System Events;
+          window presence and completed afplay are not human audibility/interaction
+          certification. The packet records only source/runtime/machine facts actually
+          observed, not inferred installation or model-weight identity.
+
+          Physical episodes remain distinct: enter with no permission prompt; explicitly
+          enable/capture, deny then recover/grant and hear a real reply; stop during
+          capture/STT/native waiting/TTS/playback and a two-step native focus act;
+          confirm stale work never resumes and native-cancel standing stays honest;
+          disconnect/reconnect and recover the exact delivery; change presentation
+          with a private draft; test two personal attachments sharing one Expression
+          without context/authority leakage; receive a real Epii explanation, reject
+          unchanged, accept current focus, refuse stale enrichment and restore an
+          authored checkpoint. Record exact source/build/install/running cut,
+          provider/model/transport, observed action/result and human judgment locally.
+          Supplied-file audio is not WebView microphone/permission evidence.
+
+          ### Full personal/M4 scope and remaining work
+
+          The K10 contract and native M4 deep capability-coordinate matrix remain the
+          required field. This correction does not replace the personal instrument
+          with generic chat or treat missing desktop bindings as absent native faculty.
+
+          | Branch | Existing native meaning retained | Remaining joined experience |
+          | --- | --- | --- |
+          | M4.0 | Six source-qualified identity offices; optional absence | Identity authoring/review and native readback, never inferred personal profiles |
+          | M4.1 | Seven independent receiving centres; distinct EarthBody | Source/currentness-bound centre interaction and material/human feedback, never cymatic-station substitution |
+          | M4.2 | Consent, entropy receipt, original cast, separate interpretation | Actual oracle cast/provider, protected replay and refusal |
+          | M4.3 | Twelve storeys, three decans, twenty-four strokes, safety | Native practice transitions, consent and attributable Return |
+          | M4.4 | Six context lenses with standing | Selected-lens work over the same protected occasion |
+          | M4.5 | Six integration offices and attributed Return | Central Day/Flow/Journal receiving, review, inclusion and source return |
+
+          Full M4 workflow bindings, automatic native attachment production, complete
+          Nara-returned expressive/native action handling, non-focus Epii acceptance,
+          realtime transport, delivery-correlated cancellation, durable restart
+          rehydration and installed Mac/human acceptance remain production/proving
+          obligations. They are not deferred merely because credentials are absent.
+          Shared M1–M3/physics/stage stays with lane F; generic harness/composition
+          stays with lane C. Native domain changes belong at their existing owners.
+          No #336/#201/#317/#91/#94/#65 closure follows from this PR. Both required
+          near-term outcomes remain: useful installable/self-inhabiting technology
+          and the complete source-backed published corpus. Personal records are not
+          eligible content for that public edition.
+          '''
+          updates[p]=prefix+original+amendment
+          result={}
+          for path,text in updates.items():
+              assert path.startswith('desktop/cradle/src/nara/') or path.startswith('desktop/cradle/tests/nara-') or path=='docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md'
+              data=text.encode()
+              payload=json.dumps({'encoding':'base64','content':base64.b64encode(data).decode()}).encode()
+              r=urllib.request.Request('https://api.github.com/repos/EpiLogos/O-I/git/blobs',data=payload,method='POST',headers=headers)
+              with urllib.request.urlopen(r,timeout=30) as response:
+                  blob=json.load(response)
+              assert blob['sha']==hashlib.sha1(b'blob '+str(len(data)).encode()+b'\0'+data).hexdigest()
+              result[path]={'sha':blob['sha'],'sha256':hashlib.sha256(data).hexdigest()}
+          pathlib.Path('/tmp/nara-followup-blobs.json').write_text(json.dumps(result,indent=2))
+          print(json.dumps(result,indent=2))
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nara-followup-blobs-${{ github.sha }}
+          path: /tmp/nara-followup-blobs.json
+          retention-days: 3
