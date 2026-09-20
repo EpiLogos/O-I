@@ -10,12 +10,11 @@ jobs:
   native-consumers:
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -23,31 +22,7 @@ jobs:
       - name: Install formatter and lint
         working-directory: desktop/cradle/kernel
         run: rustup component add rustfmt clippy
-      - name: Publish the preserved local packet and existing Wayfinder section
-        id: publish
-        if: github.event_name == 'push'
-        shell: bash
-        run: |
-          test "$GITHUB_REF_NAME" = agent/native-agent-session-20260920
-          if test -f .github/agent-packet-context-proof.py; then
-            python3 .github/agent-packet-context-proof.py
-            python3 - <<'PY'
-          import pathlib,subprocess
-          p=pathlib.Path('docs/experience/SESSION-GROUNDING.md');s=p.read_text();assert s.count('## 15.')==1
-          section=pathlib.Path('.github/agent-delivery-section.md').read_text()
-          p.write_text(s.split('## 15.',1)[0]+section)
-          allowed={'desktop/cradle/tests/agent-native-local.py','desktop/cradle/tests/agent-native-local.test.py','docs/experience/SESSION-GROUNDING.md'}
-          changed=set(subprocess.check_output(['git','diff','--name-only']).decode().splitlines());assert changed==allowed,changed
-          subprocess.run(['git','add',*sorted(allowed)],check=True)
-          PY
-            git rm .github/agent-packet-context-proof.py .github/agent-delivery-section.md
-            git config user.name Epii
-            git config user.email agent-session@users.noreply.github.com
-            git commit -m 'test(agent): require actual parent context delivery and publish bounded local acceptance'
-            git push origin HEAD:refs/heads/agent/native-agent-session-20260920
-          fi
       - name: Retain exact source
-        if: always()
         shell: bash
         run: |
           mkdir -p desktop/cradle/tests/agent-native-results
@@ -117,9 +92,5 @@ jobs:
       - name: Preserve failed or unexecuted gates
         if: always()
         env:
-          OUTCOMES: ${{ steps.publish.outcome }},${{ steps.controller.outcome }},${{ steps.packet.outcome }},${{ steps.browser.outcome }},${{ steps.build.outcome }},${{ steps.kernel.outcome }},${{ steps.allkernel.outcome }},${{ steps.lint.outcome }}
-        run: |
-          case "$OUTCOMES" in
-            success,success,success,success,success,success,success,success|skipped,success,success,success,success,success,success,success) exit 0 ;;
-            *) exit 1 ;;
-          esac
+          OUTCOMES: ${{ steps.controller.outcome }},${{ steps.packet.outcome }},${{ steps.browser.outcome }},${{ steps.build.outcome }},${{ steps.kernel.outcome }},${{ steps.allkernel.outcome }},${{ steps.lint.outcome }}
+        run: test "$OUTCOMES" = 'success,success,success,success,success,success,success'
