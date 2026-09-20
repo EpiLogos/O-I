@@ -1,0 +1,104 @@
+name: Wiki exact-source delivery
+on:
+  pull_request:
+    paths:
+      - 'scripts/wiki-resume/**'
+      - '.github/workflows/wiki-resume-delivery.yml'
+permissions:
+  contents: write
+concurrency:
+  group: wiki-resume-delivery
+  cancel-in-progress: false
+jobs:
+  deliver:
+    if: github.repository == 'EpiLogos/O-I' && github.event.pull_request.head.repo.full_name == 'EpiLogos/O-I' && github.event.pull_request.head.ref == 'agent/wiki-constellation-loop-20260920' && github.actor != 'github-actions[bot]'
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: true
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Apply only the hash-verified Wiki source edits
+        run: |
+          python3 scripts/wiki-resume/apply.py
+          python3 - <<'PY'
+          from pathlib import Path
+          p=Path('desktop/cradle/kernel/src/graph.rs')
+          s=p.read_text()
+          before='#[derive(Clone, Debug, Deserialize, Serialize)]\npub struct ReadOptions'
+          assert s.count(before)==1
+          p.write_text(s.replace(before,'#[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]\npub struct ReadOptions'))
+          p=Path('desktop/cradle/src/kernel/types.ts')
+          s=p.read_text(); before='  | {op:"graph";project?:string;query:string}'
+          assert s.count(before)==1
+          p.write_text(s.replace(before,'  | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}'))
+          PY
+          xargs rustfmt --edition 2021 --config skip_children=true < /tmp/wiki-delivery-rust.txt
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: 4e21a30b4ff644d9ecca9829e5b425a6269f0bd3
+          path: .wiki-native-owner
+          persist-credentials: false
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            .wiki-native-owner
+            desktop/cradle/kernel
+      - name: Build the pinned native producer and generate its controlled corpus
+        run: |
+          cargo build --locked --manifest-path .wiki-native-owner/Cargo.toml -p aikit-cli --bin aikit
+          cd desktop/cradle
+          python3 tests/wiki-native-fixture.py --aikit ../../.wiki-native-owner/target/debug/aikit
+      - name: Publish ordinary production files without replacing a moved head
+        env:
+          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
+        run: |
+          test "$(git ls-remote origin refs/heads/agent/wiki-constellation-loop-20260920 | cut -f1)" = "$EXPECTED_HEAD"
+          xargs git add -- < /tmp/wiki-delivery-paths.txt
+          git add desktop/cradle/tests/fixtures/wiki-native.json
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'feat(wiki): join native linked reader retained graph and constructive source projection'
+          git push origin HEAD:refs/heads/agent/wiki-constellation-loop-20260920
+      - name: Test native kernel integration and lints
+        run: |
+          cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml
+          cargo clippy --locked --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings
+      - name: Build the actual frontend and run Wiki regressions
+        if: always()
+        working-directory: desktop/cradle
+        run: |
+          npm ci
+          npx tsc --noEmit
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/wiki-*.test.mjs
+          node tests/knowledge-expression.mjs
+      - name: Install controlled browser engines
+        if: always()
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Run the actual Wiki reader in Chromium and WebKit
+        if: always()
+        working-directory: desktop/cradle
+        env:
+          WIKI_WEBKIT: '1'
+        run: node tests/wiki-reader-browser.mjs
+      - name: Retain exact source and performed results
+        if: always()
+        run: |
+          mkdir -p /tmp/wiki-delivery-evidence
+          git rev-parse HEAD > /tmp/wiki-delivery-evidence/source-revision.txt
+          git archive --format=tar.gz HEAD > /tmp/wiki-delivery-evidence/source.tar.gz
+          cp -r desktop/cradle/tests/artifacts/wiki /tmp/wiki-delivery-evidence/browser 2>/dev/null || true
+          git diff > /tmp/wiki-delivery-evidence/uncommitted.diff
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiki-delivery-${{ github.run_id }}
+          path: /tmp/wiki-delivery-evidence/
+          retention-days: 7
