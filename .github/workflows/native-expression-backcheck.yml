@@ -5,6 +5,7 @@ on:
       - 'desktop/cradle/expressions-app/**'
       - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/src/expressions/**'
+      - 'desktop/cradle/src/kernel/types.ts'
       - 'desktop/cradle/tests/native-expression*'
       - 'packages/oi-design-system/expressions-engine/oi/**'
       - '.github/workflows/native-expression-backcheck.yml'
@@ -15,74 +16,38 @@ concurrency:
   group: native-expression-backcheck-${{ github.ref }}
   cancel-in-progress: false
 jobs:
-  implementation:
-    if: github.event_name == 'pull_request' && github.event.pull_request.head.repo.full_name == 'EpiLogos/O-I' && github.event.pull_request.head.ref == 'agent/w5-native-expression-backcheck-20260920'
-    permissions:
-      contents: write
+  embedded:
     runs-on: ubuntu-latest
     timeout-minutes: 25
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 2
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/QL-MEF
           ref: 5970757e25532c7329f07f4819273155c4f3f135
           path: .native-owner/QL-MEF
           persist-credentials: false
-      - name: Apply exact reviewed sandbox patch once
-        env:
-          GH_TOKEN: ${{ github.token }}
-        run: |
-          set -euo pipefail
-          mkdir -p /tmp/w5-checks
-          if test -f desktop/cradle/kernel/src/native_expression.rs; then exit 0; fi
-          python3 - <<'PY'
-          import base64,gzip,hashlib,json,os,pathlib,urllib.request,subprocess
-          ids=['b5c73715805a1576bff87bc8b3d64243e431f540','8217431a1789c12eb8fdb6dca690b40bb2451360','9e60f5402f3b292053e4d55b3e9e686b71cd88f8','884d94f468fd1a098d40b28edf191483930aa6f2','001db13d6c4adc82350ed88b3370a22fbbd615ab','e48ea602a2d54d2acf1ac60814ebdf241bcfe829','6745c147768c8bced7f5298ae5d906b189ca9746','0c090c748a947cd3c0d523203fa31801d95fcb33','4fccb7262ca5e9650b2260cd821e3c8af86a69ef','ab4bd817413c594a5cf1b869c92630a7ac3a6179','27ca24f516ad17eadf340352879e3c954ef3356f','f3bcbdb5993f838072b5d7c4c477d8dfdee4971b','da84f4027b7d319ec6ef9774a129196e17ff856e']
-          data=b''
-          for sha in ids:
-              request=urllib.request.Request('https://api.github.com/repos/EpiLogos/O-I/git/blobs/'+sha,headers={'Authorization':'Bearer '+os.environ['GH_TOKEN'],'Accept':'application/vnd.github+json'})
-              with urllib.request.urlopen(request,timeout=30) as response: blob=json.load(response)
-              chunk=base64.b64decode(blob['content'])
-              assert hashlib.sha1(b'blob '+str(len(chunk)).encode()+b'\0'+chunk).hexdigest()==sha
-              data+=chunk
-          patch=gzip.decompress(data)
-          assert hashlib.sha256(patch).hexdigest()=='e08781c189373515b29a0e7687ee5b147520cd43cc1bb05d057e4d5879e195c2'
-          p=pathlib.Path('/tmp/w5-checks/implementation.patch');p.write_bytes(patch)
-          subprocess.run(['git','apply','--check',str(p)],check=True)
-          subprocess.run(['git','apply',str(p)],check=True)
-          root=pathlib.Path('packages/oi-design-system/expressions-engine/oi')
-          original=(root/'retained.mjs').read_text()
-          start=original.index('export class RetainedProductionAdapter extends ProductionAdapter {')
-          end=original.index('\nexport { RetainedProductionAdapter as ProductionAdapter };')
-          body=original[start:end].replace('export class RetainedProductionAdapter extends ProductionAdapter {','return class RetainedProductionAdapter extends ProductionAdapter {',1)
-          (root/'retained-capability.mjs').write_text(original[:original.index('import { ProductionAdapter }')]+'/** Shared by the retained legacy host and the embedded application. */\nexport function withRetainedField(ProductionAdapter, WORLD_SCALE) {\n'+body+';\n}\n')
-          (root/'retained.mjs').write_text('/** Existing host export; capability code is shared with the embedded app. */\nimport { ProductionAdapter } from "../shell/production.mjs";\nimport { WORLD_SCALE } from "../shell/nativeParameters.mjs";\nimport { withRetainedField } from "./retained-capability.mjs";\nexport const RetainedProductionAdapter = withRetainedField(ProductionAdapter, WORLD_SCALE);\nexport { RetainedProductionAdapter as ProductionAdapter };\n')
-          ql=pathlib.Path('.native-owner/QL-MEF/adapters/retained-field')
-          target=pathlib.Path('desktop/cradle/expressions-app/field-studies-journeys/src/native-field/ql')
-          for name in ['retained-field.mjs','native-audio.mjs','instrument-session.mjs']:
-              (target/name).write_bytes((ql/name).read_bytes())
-          PY
-          git add desktop/cradle/expressions-app/field-studies-journeys/src desktop/cradle/kernel/src/lib.rs desktop/cradle/kernel/src/native_expression.rs desktop/cradle/src/expressions/hostedApp.ts desktop/cradle/src/expressions/nativeChannel.ts desktop/cradle/src/kernel/types.ts desktop/cradle/tests/native-expression-fixture.mjs desktop/cradle/tests/native-expression.test.mjs packages/oi-design-system/expressions-engine/oi
-          git diff --cached --check
-          git -c user.name='Epii' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'fix(expressions): connect native M1-M3 host to the embedded retained field'
-          git push origin HEAD:refs/heads/agent/w5-native-expression-backcheck-20260920
-          git rev-parse HEAD | tee /tmp/w5-checks/implementation-head.txt
       - uses: actions/setup-node@v4
         with:
           node-version: 22
       - uses: dtolnay/rust-toolchain@stable
-      - name: Locked application dependencies and TypeScript
+      - uses: Swatinem/rust-cache@v2
+        with:
+          workspaces: |
+            desktop/cradle/kernel -> target
+            .native-owner/QL-MEF -> target
+      - name: Locked dependencies and embedded build
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           cd desktop/cradle
           npx tsc --noEmit
-          npm run build:journeys --prefix expressions-app
-      - name: New meaningful-effect and existing regressions
+          npm run lint --prefix expressions-app
+          npx playwright install --with-deps chromium
+      - name: Meaningful effect and existing regressions
         env:
           QL_SOURCE: ${{ github.workspace }}/.native-owner/QL-MEF
         run: |
@@ -91,13 +56,32 @@ jobs:
           (cd desktop/cradle && node --test tests/native-expression.test.mjs) 2>&1 | tee /tmp/w5-checks/native-expression.log
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
-      - name: Native kernel regression checks
+      - name: Actual embedded WebGL browser and relay
+        env:
+          NATIVE_EXPRESSION_OUT: /tmp/w5-checks/browser
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node tests/native-expression-browser.mjs 2>&1 | tee /tmp/w5-checks/browser.log
+      - name: Native kernel regressions
         if: always()
         run: |
           set -o pipefail
           mkdir -p /tmp/w5-checks
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
-      - name: Exact head and toolchain receipt
+      - name: Build the exact real QL host and C++ material owner
+        if: always()
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/w5-checks/native
+          sudo apt-get update -qq
+          sudo apt-get install -y libjson-c-dev
+          make -C .native-owner/QL-MEF/cpp test 2>&1 | tee /tmp/w5-checks/native/cpp.log
+          cargo build --locked --manifest-path .native-owner/QL-MEF/Cargo.toml -p ql-mef --bin ql-field-host 2>&1 | tee /tmp/w5-checks/native/build.log
+          cp .native-owner/QL-MEF/cpp/build/ql-field-worker /tmp/w5-checks/native/
+          cp .native-owner/QL-MEF/target/debug/ql-field-host /tmp/w5-checks/native/
+          sha256sum /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
+      - name: Exact source and toolchain receipt
         if: always()
         run: |
           mkdir -p /tmp/w5-checks
@@ -107,7 +91,7 @@ jobs:
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: w5-implementation-checks-${{ github.event.pull_request.head.sha }}
+          name: w5-native-expression-${{ github.event.pull_request.head.sha || github.sha }}
           path: /tmp/w5-checks
           retention-days: 14
           if-no-files-found: error
