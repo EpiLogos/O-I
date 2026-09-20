@@ -9,9 +9,16 @@ export interface WelcomePromptProps {
   paused?: boolean;
 }
 
-/** A quiet, presentation-only welcome. It owns no draft or Flow operation. */
+/** A quiet, presentation-only welcome. It owns no draft or Flow operation.
+ *
+ * Length robustness: EVERY eligible phrase is rendered inside the invisible
+ * reserve beneath the active heading, so the stage's row is always sized by
+ * the tallest statement at the current width. Statements that wrap to two or
+ * three lines are anticipated by construction — when the rotation lands on a
+ * longer phrase, the box is already that tall and nothing beside or below
+ * (the activity boxes, the composer, the pane) is displaced. */
 export function WelcomePrompt({phrases=DEFAULT_WELCOME_PHRASES,intervalMs=7000,placement="opening",paused=false}:WelcomePromptProps) {
-  const root=useRef<HTMLElement>(null);
+  const root=useRef<HTMLDivElement>(null);
   const eligible=useMemo(()=>phrases.filter(phrase=>phrase.placement==="either"||phrase.placement===placement),[phrases,placement]);
   const [index,setIndex]=useState(0);
   const [rotating,setRotating]=useState(false);
@@ -38,7 +45,10 @@ export function WelcomePrompt({phrases=DEFAULT_WELCOME_PHRASES,intervalMs=7000,p
 
   const phrase=eligible[index];
   if(!phrase)return null;
-  return <header ref={root} className="welcome-prompt" data-tone={phrase.tone} data-placement={placement} data-rotating={rotating}>
+  return <div ref={root} className="welcome-prompt-roller" data-tone={phrase.tone} data-placement={placement} data-rotating={rotating}>
+    <span className="welcome-prompt-reserve" aria-hidden="true">
+      {eligible.map(item=><span key={item.id}>{item.text}</span>)}
+    </span>
     <h2 key={phrase.id}>{phrase.text}</h2>
-  </header>;
+  </div>;
 }
