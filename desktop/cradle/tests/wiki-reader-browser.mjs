@@ -45,8 +45,8 @@ try{
    check(await page.locator('.wiki-prose input[type=checkbox]').count()===2,`${name}: native task items rendered`);
    check(await page.evaluate(()=>window.__injected===undefined),`${name}: raw source HTML does not execute`);
    check(remote.length===0,`${name}: remote image does not disclose a reader visit without an explicit request`);
-   check(await page.getByRole('link',{name:'Missing ?'}).count()===1,`${name}: unresolved link stays visible`);
-   await page.getByRole('link',{name:'Same ?'}).click();
+   check(await page.locator('.wiki-inline-link[data-link-state=unresolved]').filter({hasText:'Missing'}).count()===1,`${name}: unresolved link stays visible`);
+   await page.locator('.wiki-inline-link[data-link-state=ambiguous]').filter({hasText:'Same'}).click();
    await page.getByText('This link has several native candidates; disambiguate the source link.').waitFor();
    await page.screenshot({path:resolve(out,`${name}-reader.png`)});
    await page.getByRole('link',{name:'the next note',exact:true}).click();
@@ -60,8 +60,6 @@ try{
    await page.locator('.wiki-backlinks button').first().click();
    await page.locator('.wiki-prose h1').filter({hasText:'Alpha'}).waitFor();
    check(await page.getByRole('status').filter({hasText:'no longer present'}).count()===0,`${name}: backlink opens the recorded byte occurrence`);
-   // Select rendered text naturally; the Context event carries the exact native
-   // revision and a revalidation observation, never fabricated UTF-16 offsets.
    await page.locator('.wiki-prose strong').evaluate(element=>{const range=document.createRange();range.selectNodeContents(element);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);element.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));});
    await page.getByRole('button',{name:'Add to Context',exact:true}).click();
    const candidate=await page.evaluate(()=>window.__WIKI_TEST__.context.at(-1));
@@ -70,7 +68,7 @@ try{
    await page.getByRole('button',{name:'Refresh knowledge'}).click();
    await page.waitForFunction(()=>document.querySelector('.wiki-prose h1')?.textContent==='Alpha');
    await page.waitForTimeout(70);
-   check(calls.slice().some(op=>op.op==='knowledge'&&op.fresh===true),`${name}: explicit refresh bypasses retained owner reading`);
+   check(calls.some(op=>op.op==='knowledge'&&op.fresh===true),`${name}: explicit refresh bypasses retained owner reading`);
    check(calls.filter(op=>op.op==='knowledge'&&op.request.action==='read').length>before,`${name}: refresh actually calls the owner`);
    await page.getByRole('button',{name:'Graph corpus',exact:true}).click();
    await page.getByText('Filter graph',{exact:true}).click();
