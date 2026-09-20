@@ -47,9 +47,10 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
       <h3>Bounds &amp; return</h3>
       <dl className="oi-kv">
         <dt>Working ground</dt><dd>{accompanying.project}</dd>
-        <dt>Source changes</dt><dd>Human acceptance</dd>
-        <dt>Permission authority</dt><dd>Native provider consent</dd>
       </dl>
+      {/* General policy, labelled as policy — not evidence that this subject's
+          changes were accepted or that this operation was authorised (F06). */}
+      <p className="oi-note">Standing policy, not a receipt for this subject or this operation: source changes require human acceptance, and permission authority follows native provider consent.</p>
     </div>}
   </div>;
 }
@@ -60,7 +61,9 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
 function SubjectContext({subject,history,historyAvailable,onOpenSubject}:{subject:AgentSubject;history?:ReactNode;historyAvailable:boolean;onOpenSubject?:(subject:AgentSubject)=>void}) {
   const [historyOpen,setHistoryOpen]=useState(false);
   const glyph = KIND_GLYPH[subject.kind ?? ""] ?? "file";
-  const owner = KIND_OWNER[subject.kind ?? ""] ?? "Central";
+  // Only an owner the kind actually maps to; an unknown kind is not silently
+  // attributed to Central (F06).
+  const owner = KIND_OWNER[subject.kind ?? ""];
   return <div className="agent-subject-context" data-subject-ref={subject.ref}>
     <p className="agent-eyebrow oi-eyebrow">Current subject · Follows selection</p>
     {subject.ref ? <>
@@ -73,8 +76,8 @@ function SubjectContext({subject,history,historyAvailable,onOpenSubject}:{subjec
         <dt>Project</dt><dd>{subject.project ?? "Not attached to a project"}</dd>
         <dt>Source ref</dt><dd className="oi-ref">{subject.ref}</dd>
         <dt>Revision</dt><dd>{subject.revision ? subject.revision.slice(0, 10) : "Unknown"}</dd>
-        <dt>State</dt><dd>{subject.dirty ? "Unsaved changes" : "Saved"}</dd>
-        <dt>Owner</dt><dd>{owner}</dd>
+        <dt>State</dt><dd>{subject.dirty === undefined ? "Unknown" : subject.dirty ? "Unsaved changes" : "Saved"}</dd>
+        <dt>Owner</dt><dd>{owner ?? "Unknown"}</dd>
       </dl>
       {historyAvailable
         ? <details className="agent-section oi-disclosure" onToggle={event=>setHistoryOpen((event.currentTarget as HTMLDetailsElement).open)}><summary>History</summary>{historyOpen&&history}</details>
@@ -120,7 +123,11 @@ function SessionContext({session}:{session:EncounterSessionHandle}) {
     </div>
     <div className="agent-section oi-section" data-context="pinned">
       <h3>Pinned</h3>
-      <p className="oi-note" data-fact="pinned-context-absent">No owner operation pins context to a session on the bound cut, so nothing is pinned and no pin control is offered.</p>
+      {/* Capability-derived from the bound conversation's disclosed actions, not
+          a universal product law about pinning (F06). */}
+      {actions.allowed("pin")
+        ? <p className="oi-note" data-fact="pinned-context-available">This conversation discloses a pin capability.</p>
+        : <p className="oi-note" data-fact="pinned-context-absent">This conversation does not offer pinning context to the session.</p>}
     </div>
     <div className="agent-section oi-section" data-context="operative">
       <h3>Operative context</h3>
