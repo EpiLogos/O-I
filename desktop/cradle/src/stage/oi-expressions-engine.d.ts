@@ -178,6 +178,9 @@ declare module "@epilogos/oi-design-system/expressions-engine/oi/retained.mjs" {
     capture(width: number, height: number): HTMLCanvasElement;
     retainedTargetPort(): RetainedTargetPort;
     updateRetainedPresentation(request: unknown): unknown;
+    setExpressionBindings(bindings: unknown[]): void;
+    hitTestExpression(x: number, y: number): unknown;
+    expressionBindingSnapshot(): {rendered: string[]; unavailable: string[]};
     checkpointRetainedField(binding: { checkpoint(renderer: unknown): unknown }): unknown;
     restoreRetainedField(binding: { restore(renderer: unknown, checkpoint: unknown): void }, checkpoint: unknown): RetainedProductionAdapter;
     onRetainedRecoveryRequired(listener: (phase: "lost"|"restored") => void): () => void;
