@@ -42,6 +42,10 @@ export interface LibraryItem {
   project?: string;
   expressionRef?: string;
   sourceLocation?: CentralLocation;
+  /** Occurrences reference this subject. They never replace its native ref. */
+  collectionMemberships?: CollectionMembership[];
+  /** Native Expression index labels; not source-manifest identity. */
+  nativeCollections?: string[];
   /** The owner read's own knowledge address for this item, when it carried
    * one (the wiki provider's hits) — so the verso reads the same resource
    * back through its own kind, never a guessed one. */
@@ -51,6 +55,17 @@ export interface LibraryItem {
   /** Set only by a fixtures.dev.ts-sourced item (COMMON-BRIEF fixture rule);
    * LibraryResults renders the visible "Fixture — not native data" label. */
   fixture?: boolean;
+}
+
+export interface CollectionMembership {
+  manifest_path: string;
+  manifest_location: CentralLocation;
+  manifest_revision: string;
+  member_id: string;
+  slot: number;
+  file: string;
+  group: string;
+  title: string;
 }
 
 export interface LibraryCoverage {
@@ -64,4 +79,5 @@ export interface LibraryQuery {
   mode: WorkspaceMode;
   text: string;
   kinds?: LibraryKind[];
+  fresh?: boolean;
 }
