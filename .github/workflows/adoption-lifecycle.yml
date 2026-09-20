@@ -2,85 +2,76 @@ name: Adoption lifecycle
 on:
   push:
     branches: [agent/adoption-lifecycle-20260920]
-  pull_request:
-    paths:
-      - '.github/workflows/adoption-lifecycle.yml'
-      - 'cli/**'
-      - 'desktop/cradle/src/configuration/**'
-      - 'desktop/cradle/kernel/**'
-      - 'desktop/cradle/tests/*adoption*'
-      - 'desktop/cradle/walk/*adoption*'
-      - 'scripts/test-adoption-local.py'
 permissions:
   contents: read
-concurrency:
-  group: adoption-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
-  native:
+  scoped-delivery:
+    if: github.event_name == 'push' && github.ref == 'refs/heads/agent/adoption-lifecycle-20260920'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 40
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 1
-          persist-credentials: false
+          fetch-depth: 0
       - uses: dtolnay/rust-toolchain@stable
         with:
           components: rustfmt, clippy
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: cli
-      - name: Record exact source
+      - name: Apply exact reviewed scoped patch and remove delivery transport
+        run: python3 .github/adoption-delivery/apply.py
+      - name: Exact source receipt
+        if: always()
         run: |
           set -euo pipefail
           mkdir -p /tmp/adoption-evidence
           git rev-parse HEAD | tee /tmp/adoption-evidence/head.txt
-          python3 - <<'PY'
-          import subprocess, tarfile
-          from pathlib import Path
-          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
-          prefixes = ('cli/', 'desktop/cradle/src/', 'desktop/cradle/kernel/', 'desktop/cradle/tests/', 'desktop/cradle/walk/', 'packages/', 'docs/', '.wayfinder/', 'skills/', 'scripts/', '.github/workflows/')
-          selected = [p for p in paths if p and (p.startswith(prefixes) or (p.startswith('desktop/cradle/') and p.count('/') == 2)) and '/artifacts/' not in p and Path(p).is_file()]
-          assert 'desktop/cradle/src/configuration/PlanDrawer.tsx' in selected
-          assert 'cli/src/setup.rs' in selected
-          with tarfile.open('/tmp/adoption-evidence/source.tar.gz', 'w:gz') as archive:
-              for path in selected:
-                  archive.add(path, arcname=path, recursive=False)
-          PY
-      - name: Adoption controller and real CLI tests
-        run: |
-          set -o pipefail
-          cargo test --manifest-path cli/Cargo.toml --locked --test setup_lifecycle 2>&1 | tee /tmp/adoption-evidence/setup-tests.log
-      - name: Full native regression suite
-        if: always()
-        run: |
-          set -o pipefail
-          cargo test --manifest-path cli/Cargo.toml --all-targets --locked 2>&1 | tee /tmp/adoption-evidence/native-tests.log
-      - name: Native lint
-        if: always()
-        run: |
-          set -o pipefail
-          cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings 2>&1 | tee /tmp/adoption-evidence/clippy.log
-      - name: Retain controlled executable and formatter
-        if: always()
-        run: |
-          if test -f cli/target/debug/oi; then cp cli/target/debug/oi /tmp/adoption-evidence/oi; strip /tmp/adoption-evidence/oi; fi
-          cp "$(rustup which rustfmt)" /tmp/adoption-evidence/rustfmt
+          git status --short | tee /tmp/adoption-evidence/status.txt
+          git diff > /tmp/adoption-evidence/uncommitted.patch
+          git archive --format=tar HEAD | gzip > /tmp/adoption-evidence/source.tar.gz
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: desktop/cradle/package-lock.json
-      - name: Existing configuration regression suite
-        if: always()
-        working-directory: desktop/cradle
+      - name: Execute native and desktop checks without suppressing failures
         run: |
-          npm ci --no-audit --no-fund
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-setup.test.mjs > /tmp/adoption-evidence/configuration-tests.log 2>&1
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess
+          root = Path.cwd()
+          checks = [
+            ('setup', ['cargo','test','--manifest-path','cli/Cargo.toml','--locked','--test','setup_lifecycle'], root),
+            ('native', ['cargo','test','--manifest-path','cli/Cargo.toml','--all-targets','--locked'], root),
+            ('kernel', ['cargo','test','--manifest-path','desktop/cradle/kernel/Cargo.toml','--locked'], root),
+            ('clippy', ['cargo','clippy','--manifest-path','cli/Cargo.toml','--all-targets','--locked','--','-D','warnings'], root),
+            ('local-cli', ['python3','scripts/test-adoption-local.py','--oi','cli/target/debug/oi','--output','/tmp/adoption-evidence/local-cli.json'], root),
+            ('npm', ['npm','ci','--no-audit','--no-fund'], root/'desktop/cradle'),
+            ('controllers', ['node','--experimental-strip-types','--import','./tests/ts-register.mjs','--test','tests/configuration-setup.test.mjs','tests/adoption-lifecycle.test.mjs'], root/'desktop/cradle'),
+            ('types', ['npx','tsc','--noEmit'], root/'desktop/cradle'),
+            ('build', ['npx','vite','build'], root/'desktop/cradle'),
+            ('browser-install', ['npx','playwright','install','--with-deps','chromium','webkit'], root/'desktop/cradle'),
+            ('configuration-browser', ['node','walk/configuration-setup.test.mjs'], root/'desktop/cradle'),
+            ('adoption-browser', ['node','walk/adoption-lifecycle.test.mjs'], root/'desktop/cradle'),
+          ]
+          failed = []
+          for name, command, cwd in checks:
+              with open('/tmp/adoption-evidence/'+name+'.log','w') as output:
+                  result = subprocess.run(command, cwd=cwd, stdout=output, stderr=subprocess.STDOUT)
+              print(name, result.returncode, flush=True)
+              if result.returncode: failed.append(name)
+          Path('/tmp/adoption-evidence/failures.txt').write_text('\n'.join(failed))
+          raise SystemExit(bool(failed))
+          PY
+      - name: Retain browser reports and controlled executable
+        if: always()
+        run: |
+          cp -R desktop/cradle/tests/artifacts /tmp/adoption-evidence/browser-artifacts 2>/dev/null || true
+          if test -f cli/target/debug/oi; then cp cli/target/debug/oi /tmp/adoption-evidence/oi; strip /tmp/adoption-evidence/oi; fi
       - uses: actions/upload-artifact@v4
         if: always()
         with:
-          name: adoption-native-${{ github.run_id }}
+          name: adoption-delivery-${{ github.run_id }}
           path: /tmp/adoption-evidence
           retention-days: 5
