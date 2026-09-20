@@ -5,24 +5,75 @@ on:
   pull_request:
     paths:
       - 'desktop/cradle/src/central/**'
+      - 'desktop/cradle/src/day/**'
+      - 'desktop/cradle/src/receiving/**'
+      - 'desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx'
+      - 'desktop/cradle/kernel/**'
       - 'desktop/cradle/walk/central-*'
       - '.github/workflows/central-desktop-source-walk.yml'
 permissions:
   contents: read
 jobs:
-  source:
+  native:
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
-      - name: Retain exact tracked source (no local runtime or private ground)
-        run: |
-          mkdir -p "$RUNNER_TEMP/central-source"
-          git archive HEAD | gzip > "$RUNNER_TEMP/central-source/oi-source.tar.gz"
-          git rev-parse HEAD > "$RUNNER_TEMP/central-source/source-revision.txt"
-      - uses: actions/upload-artifact@v4
+      - uses: actions/checkout@v4
         with:
-          name: central-desktop-source-${{ github.sha }}
-          path: ${{ runner.temp }}/central-source
+          repository: EpiLogos/Central
+          ref: 12ee31313e710378845baae190efc1a4b3e7ebdb
+          path: native-central
+          persist-credentials: false
+      - name: Retain pinned native source
+        run: |
+          mkdir -p "$RUNNER_TEMP/central-native"
+          git -C native-central archive HEAD | gzip > "$RUNNER_TEMP/central-native/central-source.tar.gz"
+          git -C native-central rev-parse HEAD > "$RUNNER_TEMP/central-native/central-revision.txt"
+          git rev-parse HEAD > "$RUNNER_TEMP/central-native/oi-revision.txt"
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Native Central build
+        run: cargo build --manifest-path native-central/Cargo.toml --locked -p ctrl 2>&1 | tee "$RUNNER_TEMP/central-native/build.log"
+      - name: Native Central continuous-work regressions
+        run: cargo test --manifest-path native-central/Cargo.toml --locked -p ctrl continuous_work -- --nocapture 2>&1 | tee "$RUNNER_TEMP/central-native/tests.log"
+      - name: Desktop kernel regressions
+        if: always()
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked -- --nocapture 2>&1 | tee "$RUNNER_TEMP/central-native/kernel.log"
+      - name: Retain compiled native product
+        if: always()
+        run: |
+          test ! -f native-central/target/debug/ctrl || cp native-central/target/debug/ctrl "$RUNNER_TEMP/central-native/ctrl"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: central-native-${{ github.sha }}
+          path: ${{ runner.temp }}/central-native
+          retention-days: 3
+  desktop:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - run: mkdir -p "$RUNNER_TEMP/central-desktop"
+      - name: Dependencies
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Production build
+        working-directory: desktop/cradle
+        run: npm run build 2>&1 | tee "$RUNNER_TEMP/central-desktop/build.log"
+      - name: Retain dependencies for isolated source-backed tests
+        if: always()
+        run: |
+          tar -czf "$RUNNER_TEMP/central-desktop/node_modules.tar.gz" -C desktop/cradle node_modules
+          git rev-parse HEAD > "$RUNNER_TEMP/central-desktop/oi-revision.txt"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: central-desktop-${{ github.sha }}
+          path: ${{ runner.temp }}/central-desktop
           retention-days: 3
