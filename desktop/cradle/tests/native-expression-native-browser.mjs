@@ -33,7 +33,8 @@ print(json.dumps({'ok':True,'data':data}))
 const bridge=spawn(paths.bridge,['127.0.0.1:0'],{env:{...process.env,OI_BIN:central,OI_CENTRAL_ROOT:temp,OI_CENTRAL_PROJECT_QUERY:''},stdio:['ignore','pipe','pipe']});
 let bridgeLog='',bridgeErr='';bridge.stdout.on('data',x=>bridgeLog+=x);bridge.stderr.on('data',x=>bridgeErr+=x);
 const endpoint=await new Promise((resolve,reject)=>{const timer=setTimeout(()=>reject(new Error('native kernel bridge startup timed out')),15000);bridge.once('error',reject);bridge.once('exit',code=>{clearTimeout(timer);reject(new Error(`bridge exited ${code}: ${bridgeErr}`));});bridge.stdout.on('data',()=>{const match=bridgeLog.match(/http:\/\/127\.0\.0\.1:\d+/);if(match){clearTimeout(timer);resolve(match[0]);}});});
-let latestSources=null,lease=null,opens=0,closes=0,pcm=false,disconnect=false;
+let latestSources=null,lease=null,opens=0,closes=0,pcm=false,disconnect=false,observedClose;
+const terminalClose=new Promise(resolve=>{observedClose=resolve;});
 const frames=new Map(),key=frame=>`${frame.generation}:${frame.samples_elapsed}`;
 await build({stdin:{contents:`import {relayNativeChannel} from './src/expressions/nativeChannel.ts'; window.disposeRelay=relayNativeChannel(document.querySelector('iframe'),{kind:'bridge',url:location.origin});`,resolveDir:resolve('.')},bundle:true,platform:'browser',format:'esm',outfile:join(temp,'parent.js')});
 const html=await readFile('expressions-app/field-studies-journeys/public/index.html');
@@ -41,10 +42,10 @@ const server=createServer(async(req,res)=>{try{
  if(req.method==='POST'&&req.url==='/op'){
   const chunks=[];for await(const c of req)chunks.push(c);const bytes=Buffer.concat(chunks),op=JSON.parse(bytes);
   if(disconnect&&op.request?.operation==='exchange')throw new Error('explicit test transport disconnection after real native effects');
-  const start=performance.now();const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes});const result=await response.json();report.timings_ms.push({operation:op.request?.request?.command?.operation??op.op,elapsed:performance.now()-start});
+  const start=performance.now();const response=await fetch(`${endpoint}/op`,{method:'POST',headers:{'content-type':'application/json'},body:bytes});const result=await response.json();report.timings_ms.push({operation:op.request?.request?.command?.operation??op.request?.operation??op.op,elapsed:performance.now()-start});
   const data=result.outcome?.data;
   if(data?.schema==='oi.native-expression-open/v1'){opens++;lease=data.lease;frames.set(key(data.receipt.field),data.receipt.field);}
-  if(data?.schema==='oi.native-expression-closed/v1'){closes++;lease=null;}
+  if(data?.schema==='oi.native-expression-closed/v1'){closes++;lease=null;observedClose();}
   if(data?.field){frames.set(key(data.field),data.field);if(frames.size>128)frames.delete(frames.keys().next().value);if(data.field.audio.some(x=>Math.abs(x)>1e-8))pcm=true;}
   if(data?.sources)latestSources=data.sources;
   res.setHeader('content-type','application/json');res.end(JSON.stringify(result));return;
@@ -99,10 +100,17 @@ try{
  await frame.locator('[data-native="hold"]').click();await page.screenshot({path:join(out,'native-domain.png')});
  await page.evaluate(()=>document.querySelector('iframe').contentWindow.postMessage({v:1,kind:'host-mode',mode:'techne'},'*'));await frame.waitForFunction(()=>window.__FIELD_STUDIES__.getState().hostMode==='techne');
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().lease),lease);assert.equal(opens,1);report.checks.push('host-mode switch retains native lease and app subject');
- disconnect=true;await frame.locator('[data-native="resume"]').click();await frame.waitForFunction(()=>['held','unavailable'].includes(window.__FIELD_STUDIES__.native().status),null,{timeout:15000});
- const stopped=report.timings_ms.length;await page.waitForTimeout(200);assert.equal(report.timings_ms.length,stopped);report.checks.push('disconnected producer stops the real consumer; no convincing independent simulation');
+ disconnect=true;await frame.locator('[data-native="resume"]').click();await frame.waitForFunction(()=>window.__FIELD_STUDIES__.native().status==='unavailable',null,{timeout:15000});
+ const frozen=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
+ // Unavailability stops simulation immediately; the one required asynchronous
+ // close must finish before a no-further-request assertion is meaningful.
+ let closeTimer;try{await Promise.race([terminalClose,new Promise((_,reject)=>{closeTimer=setTimeout(()=>reject(new Error('native teardown did not finish')),6000);})]);}finally{clearTimeout(closeTimer);}
+ assert.equal(closes,1);const stopped=report.timings_ms.length;await page.waitForTimeout(200);assert.equal(report.timings_ms.length,stopped);
+ const after=await frame.evaluate(()=>({state:window.__FIELD_STUDIES__.inspect(true),cursor:window.__FIELD_STUDIES__.native().native.acknowledged}));
+ assert.deepEqual(after.state.positions,frozen.state.positions);assert.deepEqual(after.state.velocities,frozen.state.velocities);assert.deepEqual(after.cursor,frozen.cursor);
+ report.checks.push('disconnected producer stops GPU position, velocity, native cursor and request retries after its single required close');
  await frame.locator('[data-native="disconnect"]').click();await page.waitForTimeout(100);assert.equal(closes,1);
- await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});assert.deepEqual(errors,[]);report.checks.push('native owner released exactly once');
+ await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});await page.waitForTimeout(100);assert.equal(closes,1);assert.deepEqual(errors,[]);report.checks.push('native owner released exactly once');
  report.measurement={standing:'bounded single scenario, not sustained real-time performance acceptance',latency_by_operation:{}};
  for(const operation of new Set(report.timings_ms.map(x=>x.operation))){const values=report.timings_ms.filter(x=>x.operation===operation).map(x=>x.elapsed).sort((a,b)=>a-b);report.measurement.latency_by_operation[operation]={count:values.length,mean_ms:values.reduce((a,b)=>a+b,0)/values.length,p95_ms:values[Math.ceil(values.length*.95)-1],max_ms:values.at(-1)};}
  report.pass=true;report.requests={opens,closes};report.final_sources=latestSources;console.log(JSON.stringify({...report,final_sources:'retained in artifact'},null,2));
