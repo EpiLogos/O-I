@@ -43,7 +43,9 @@ if 'action' in args:
 elif 'agent-session-scope' in args:
  print(json.dumps({'schema':'aikit.direct-agent-scope/v1','project_ref':'control:root'}))
 elif 'discover' in args:
- print(json.dumps([{'definition':{'id':'session-space/native','projects':['control:root']},'agent_sessions':{'agent-session/native':{}}}]))
+ value=[{'version':'aikit.session-space-application/v1','definition':{'id':'session-space/native','projects':['control:root']},'agent_sessions':{'agent-session/native':{}}}]
+ if (root/'discovery.json').exists(): value=json.loads((root/'discovery.json').read_text())
+ print(json.dumps(value))
 else:
  value={'schema':'aikit.direct-agent-session/v1','request_id':'request-12345678','profile_ref':'agent-profile:allocated','agent_ref':'agent:native','agent_session':'agent-session/native','space':'session-space/native','project_ref':'control:root','prepared':True,'provider_started':False,'execution_authority_granted':False}
  if (root/'override.json').exists(): value.update(json.loads((root/'override.json').read_text()))
@@ -184,6 +186,24 @@ fn prepared_session_must_be_attached_and_in_the_actual_native_scope() {
     )
     .unwrap();
     assert!(rig.call(Rig::prepare()).is_err());
+}
+#[test]
+fn discovery_without_the_native_version_is_not_an_attached_session() {
+    let rig = Rig::new();
+    let row = json!({
+        "definition": {"id": "session-space/native", "projects": ["control:root"]},
+        "agent_sessions": {"agent-session/native": {}}
+    });
+    for version in [None, Some(json!("aikit.session-space-application/v0")), Some(json!(1))] {
+        let mut reading = row.clone();
+        if let Some(version) = version {
+            reading["version"] = version;
+        }
+        fs::write(rig.root.join("discovery.json"), json!([reading]).to_string()).unwrap();
+        for request in [Rig::prepare(), Request::Find { request_id: "request-12345678".into() }] {
+            assert_eq!(rig.call(request).unwrap_err(), "Unsupported native SessionSpace reading");
+        }
+    }
 }
 #[test]
 fn correlation_and_effect_flags_cannot_turn_a_bad_reply_into_success() {
