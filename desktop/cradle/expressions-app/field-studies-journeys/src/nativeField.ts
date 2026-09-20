@@ -2,16 +2,16 @@
  * fallback input, hidden microphone or local imitation of a native producer. */
 import {NativeDomainView} from './native-field/domainView';
 import {NativeChannel} from './native-field/channel';
-import {NativeFieldController,NativeRenderer} from './native-field/controller';
+import {NativeFieldController,NativeRenderer,EMBEDDED_NATIVE_PLAYBACK} from './native-field/controller';
 import type {FieldEngineAdapter} from './engine';
 export function installNativeField(engine:FieldEngineAdapter,onResumeApplication:()=>void){
  const port=new NativeChannel();
  const canRetain=typeof (engine as any).retainedTargetPort==='function';
  if(!canRetain){port.dispose();return null;}
- const controller=new NativeFieldController(port,engine as unknown as NativeRenderer);
+ const controller=new NativeFieldController(port,engine as unknown as NativeRenderer,undefined,EMBEDDED_NATIVE_PLAYBACK);
  const panel=document.createElement('details');panel.dataset.nativeField='';panel.className='native-field-panel';
  panel.innerHTML=`<summary>Native M1–M3</summary><div class="native-field-depth">
- <p>Same Expressions body. Native topology, modal sound and clock; existing GPU particle mechanics.</p>
+ <p>Same Expressions body. Native topology, modal sound and clock; existing GPU particle mechanics.</p><p>Buffered native playback: 8,192 samples per block, 250 ms initial device lead, 500 ms lookahead ceiling. This pays for the complete native transfer; lateness holds rather than silently skipping samples. The chosen sample rate must fit this policy.</p>
  <label>Central binding source <input name="native-path" type="text" spellcheck="false" placeholder="Work/…/native-binding.json"></label>
  <button type="button" data-native="source">Read binding</button><output data-native-source>No source selected.</output>
  <button type="button" data-native="connect" disabled>Connect muted</button>
@@ -20,8 +20,10 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
  <button type="button" data-native="scale">Override presentation scale</button><button type="button" data-native="follow">Follow binding scale</button>
  <details><summary>Native domain controls</summary>
  <p>These change the existing producer. Source generations, continuous time and presentation remain separate.</p>
+ <label>M1 carrier tick (0–11)<input name="native-tick" type="number" min="0" max="11" step="1" value="0"></label>
+ <button type="button" data-native="tick">Apply native carrier tick</button>
  <label>M1 harmonic row (0–11)<input name="native-row" type="number" min="0" max="11" step="1" value="0"></label>
- <button type="button" data-native="row">Apply native harmonic row</button>
+ <button type="button" data-native="row">Apply native harmonic row</button><p>Material harmonic selection remains the native basis: changing a row does not retune a separately selected canonical harmonic.</p>
  <label>M3 transcription<select name="native-rna"><option value="false">DNA</option><option value="true">RNA</option></select></label>
  <button type="button" data-native="transcription">Apply native transcription</button>
  <label>M2 material mode<select name="native-mode"></select></label>
@@ -54,6 +56,8 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   const stamp=JSON.stringify(reading.domain);
   if(reading.domain&&domainStamp!==stamp){
    domainStamp=stamp;
+   query<HTMLInputElement>('[name="native-row"]').value=String(reading.domain.m1.row12);
+   query<HTMLInputElement>('[name="native-tick"]').value=String(reading.domain.m1.tick12);
    const modes=query<HTMLSelectElement>('[name="native-mode"]'),prior=modes.value;
    modes.replaceChildren(...reading.domain.m2.modes.map(mode=>{const option=document.createElement('option');option.value=mode.ref;option.textContent=`${mode.ref} · ${mode.frequency_hz} Hz`;return option;}));
    if(reading.domain.m2.modes.some(mode=>mode.ref===prior))modes.value=prior;
@@ -63,7 +67,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
   query('output[data-native-status]').textContent=reading.reason??`${reading.status} · ${reading.presentation_mode} · ${reading.native?.acknowledged?.generation??'—'} / ${reading.native?.acknowledged?.samples_elapsed??'—'}`;
   if(panel.open)query('pre[data-native-reading]').textContent=JSON.stringify(reading,null,2);
   query<HTMLButtonElement>('[data-native="connect"]').disabled=busy||!source||!['manual','unavailable'].includes(reading.status)||!!reading.lease;
-  for(const command of ['hold','resume','mute','scale','follow','operate','inspect','checkpoint','restore','row','transcription','damping','axis'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=busy||!reading.lease||reading.status==='unavailable';
+  for(const command of ['hold','resume','mute','scale','follow','operate','inspect','checkpoint','restore','row','tick','transcription','damping','axis'])query<HTMLButtonElement>(`[data-native="${command}"]`).disabled=busy||!reading.lease||reading.status==='unavailable';
  };
  controller.onChange=update;
  const click=async(event:Event)=>{
@@ -89,6 +93,7 @@ export function installNativeField(engine:FieldEngineAdapter,onResumeApplication
    else if(operation==='scale')controller.setScale(Number(query<HTMLInputElement>('[name="native-scale"]').value));
    else if(operation==='follow'){controller.followDomain();query<HTMLInputElement>('[name="native-scale"]').value=String(controller.reading.presentation_units_per_metre);}
    else if(operation==='operate')await controller.operate(JSON.parse(query<HTMLTextAreaElement>('[name="native-command"]').value));
+   else if(operation==='tick')await controller.editBasis({kind:'carrier-tick',tick12:Number(query<HTMLInputElement>('[name="native-tick"]').value)});
    else if(operation==='row')await controller.editBasis({kind:'harmonic-row',row12:Number(query<HTMLInputElement>('[name="native-row"]').value)});
    else if(operation==='transcription')await controller.editBasis({kind:'transcription',rna:query<HTMLSelectElement>('[name="native-rna"]').value==='true'});
    else if(operation==='damping')await controller.editBasis({kind:'damping',mode_ref:query<HTMLSelectElement>('[name="native-mode"]').value,per_second:Number(query<HTMLInputElement>('[name="native-damping"]').value)});

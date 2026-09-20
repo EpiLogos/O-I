@@ -9,6 +9,8 @@ export interface NativeRenderer {
  checkpointRetainedField(binding:any):any;restoreRetainedField(binding:any,checkpoint:any):void;
  setNativeDomain(active:boolean):void;
 }
+export interface NativePlaybackPolicy {blockFrames:number;leadSeconds:number;lookaheadSeconds:number;}
+export const EMBEDDED_NATIVE_PLAYBACK:Readonly<NativePlaybackPolicy>=Object.freeze({blockFrames:8192,leadSeconds:.25,lookaheadSeconds:.5});
 export type NativeStatus='manual'|'opening'|'following'|'held'|'unavailable';
 /** The QL driver schedules PCM/targets; the app remains the sole GPU stage.
  * The controller owns admission/lifetime only, never native math or a second clock.
@@ -37,11 +39,14 @@ export class NativeFieldController {
  status:NativeStatus='manual';reason:string|null=null;
  onChange:()=>void=()=>{};
  constructor(private port:NativePort,private renderer:NativeRenderer,
-  private audio:(rate:number)=>AudioContext=rate=>new AudioContext({sampleRate:rate})){
+  private audio:(rate:number)=>AudioContext=rate=>new AudioContext({sampleRate:rate}),
+  private playback:NativePlaybackPolicy={blockFrames:512,leadSeconds:.04,lookaheadSeconds:.1}){
+  this.playback=Object.freeze({...this.playback});
   port.onHold=reason=>{this.hold(reason);};
  }
  get reading(){return{schema:'oi.native-expression-reading/v1',status:this.status,reason:this.reason,
   source:this.opened?.source??null,lease:this.opened?.lease??null,
+  playback_policy:{...this.playback,owner:'QL InstrumentSession / explicit application buffering; no sample-rate change'},
   renderer_requirements:this.renderer.retainedTopology?.()??null,
   presentation_mode:!this.projection?'manual':this.projection.scale===this.opened.presentation.units_per_metre?'domain-follow':'manual-presentation-override',
   presentation_units_per_metre:this.projection?.scale??null,
@@ -51,7 +56,8 @@ export class NativeFieldController {
   checkpoint:this.checkpoint?{supported:true,scope:'same live GPU and unchanged native cursor',receipt:this.checkpoint.receipt}:null,
   exact_seek:false,restart:'explicit new native process; no implicit rewind',
   domain_owned:['M1/M2/M3 native targets','native PCM','native clock'],
-  presentation_owned:['particle mechanics','camera','density','palette','presentation scale'],
+  presentation_owned:['resident particle mechanics','camera','presentation scale'],
+  presentation_changes_requiring_rebind:['scene membership','target topology or density','authored scene configuration while leased'],
   unavailable_consumers:['arbitrary M3 glyph mesh/physical pose is not supplied by this native output','material model replacement beyond the existing modal owner requires a new binding'],
  } as const;}
  private changed(){this.onChange();}
@@ -73,7 +79,7 @@ export class NativeFieldController {
    const stage=this.renderer.retainedTargetPort();
    this.projection=new NativeProjection(stage,opened.receipt.field,opened.presentation);
    this.renderer.setNativeDomain(true);
-   this.session=new InstrumentSession({context:this.context,owner:this.renderer,initialReceipt:opened.receipt,
+   this.session=new InstrumentSession({...this.playback,context:this.context,owner:this.renderer,initialReceipt:opened.receipt,
     transport:{request:(request:any)=>this.port.request({operation:'exchange',lease:opened.lease,request}),close:()=>{void this.closeOwner(opened).catch(()=>{});}},fieldBinding:this.projection,muted:true});
    this.recovery=this.renderer.onRetainedRecoveryRequired(state=>{this.contextLost=state==='lost';this.hold(`GPU context ${state}; explicit same-state checkpoint recovery or disconnect required`);});
    await this.readSources(this.session);
@@ -94,7 +100,8 @@ export class NativeFieldController {
   if(paused&&this.session&&this.status==='following')this.hold('application paused or hidden');
   if(this.session){
    const reading=this.session.reading;
-   if(!reading.available||reading.held){if(this.status==='following'){this.status=reading.available?'held':'unavailable';this.reason=reading.reason??'native/audio owner held';this.changed();}}
+   if(!reading.available&&this.status!=='unavailable'){this.status='unavailable';this.reason=reading.reason??'native acknowledgement unavailable';this.changed();}
+   else if(reading.held&&this.status==='following'){this.status='held';this.reason=reading.reason??'native/audio owner held';this.changed();}
    if(this.status==='following'){try{this.session.present();}catch(error){this.hold(String(error));}}
   }
   return this.status==='manual'?delta:this.status==='following'?delta:0;

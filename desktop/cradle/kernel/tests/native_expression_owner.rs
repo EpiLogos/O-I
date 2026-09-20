@@ -91,6 +91,7 @@ print(json.dumps({'ok':True,'data':data}))
         }
     }
     replacement["m2"]["stamp"]["identity"]["profile_generation"]=json!(next_generation);
+    replacement["m3"]["stamp"]["identity"]["profile_generation"]=json!(next_generation);
     replacement["m3"]["m2_basis"]=replacement["m2"]["stamp"].clone();
     let replaced=exchange(&mut manager,&client,&lease,&mut last,json!({"operation":"replace","basis":replacement}));
     assert_eq!(replaced["status"],"ok","{}",replaced["error"]);

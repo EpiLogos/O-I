@@ -12,7 +12,7 @@ const src=resolve('expressions-app/field-studies-journeys/src');
 const temp=await mkdtemp(join(tmpdir(),'native-expression-tests-'));
 await build({entryPoints:[join(src,'native-field/projection.ts'),join(src,'native-field/controller.ts')],bundle:true,platform:'node',format:'esm',outdir:temp,outExtension:{'.js':'.mjs'}});
 const {NativeProjection}=await import(pathToFileURL(join(temp,'projection.mjs')));
-const {NativeFieldController}=await import(pathToFileURL(join(temp,'controller.mjs')));
+const {NativeFieldController,EMBEDDED_NATIVE_PLAYBACK}=await import(pathToFileURL(join(temp,'controller.mjs')));
 test.after(()=>rm(temp,{recursive:true,force:true}));
 function renderer(){
  const texture=()=>new THREE.DataTexture(new Float32Array([0,0,0,.1,0,0,0,.2,0,0,0,.3,0,0,0,.4]),2,2,THREE.RGBAFormat,THREE.FloatType);
@@ -86,12 +86,13 @@ test('native transcription and material controls modify the existing producer, n
   await c.connect('source.json','controlled:r1',48000);assert.equal(c.reading.domain.m3.sequence,'ACT');
   await c.editBasis({kind:'transcription',rna:true});assert.equal(c.reading.domain.m3.sequence,'ACU');
   await c.editBasis({kind:'harmonic-row',row12:4});assert.equal(c.reading.domain.m1.revision,'1');assert.deepEqual(c.reading.domain.m1.quadrature,[0,1]);
+  await c.editBasis({kind:'carrier-tick',tick12:3});assert.equal(c.reading.domain.m1.tick12,3);assert.equal(c.reading.domain.m1.revision,'2');
   await c.editBasis({kind:'damping',mode_ref:'controlled:mode',per_second:.75});
   audio.currentTime=c.reading.native.audio.target_context_seconds;c.frame(0,false);
   assert.equal(c.inspectTargets().target_b[2],300);assert.equal(c.reading.domain.m2.modes[0].damping_per_second,.75);
   assert.equal(owner.calls.filter(x=>x.operation==='open').length,1);
-  assert.equal(owner.calls.filter(x=>x.request?.command?.operation==='replace').length,3);
-  assert.equal(owner.sources.current.input.m2.stamp.identity.profile_generation,4);
+  assert.equal(owner.calls.filter(x=>x.request?.command?.operation==='replace').length,4);
+  assert.equal(owner.sources.current.input.m2.stamp.identity.profile_generation,5);
   assert.equal(owner.sources.original.input.m2.stamp.identity.profile_generation,1);
  }finally{await c.dispose();}
 });
@@ -145,5 +146,29 @@ test('slow complete-source inspection rebases the device without advancing the n
  const c=new NativeFieldController(owner,r,()=>audio);
  try{await c.connect('source.json','controlled:r1',48000);assert.equal(c.status,'following');assert.equal(c.reading.native.acknowledged.samples_elapsed,'0');
   assert.ok(c.reading.native.audio.target_context_seconds>=2);
+ }finally{await c.dispose();}
+});
+
+test('every helper edit keeps M2/M3 seed generations coupled and refuses retained command-history rewriting',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),c=new NativeFieldController(owner,renderer(),()=>audio);
+ try{await c.connect('source.json','r1',48000);c.hold();
+  for(const edit of [{kind:'carrier-tick',tick12:1},{kind:'transcription',rna:true},{kind:'damping',mode_ref:'controlled:mode',per_second:.3}]){
+   await c.editBasis(edit);const input=owner.sources.current.input;
+   assert.equal(input.m3.stamp.identity.profile_generation,input.m2.stamp.identity.profile_generation);
+   assert.deepEqual(input.m3.m2_basis.identity,input.m3.stamp.identity);
+  }
+  owner.sources.current.input.m3_commands=[{expected_generation:1}];const before=owner.calls.filter(x=>x.request?.command?.operation==='replace').length;
+  await assert.rejects(c.editBasis({kind:'carrier-tick',tick12:2}),/retained M3 commands/);
+  assert.equal(owner.calls.filter(x=>x.request?.command?.operation==='replace').length,before);
+ }finally{await c.dispose();}
+});
+test('declared embedded buffering pays for a 65ms delivery without resampling or silently dropping native PCM',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),request=owner.request.bind(owner);
+ owner.request=async packet=>{const reply=await request(packet);if(packet.request?.command?.operation==='advance')audio.currentTime+=.065;return reply;};
+ const c=new NativeFieldController(owner,renderer(),()=>audio,EMBEDDED_NATIVE_PLAYBACK);
+ try{await c.connect('source.json','r1',48000);await tick();c.frame(.016,false);
+  assert.equal(c.status,'following');assert.equal(c.reading.native.acknowledged.samples_elapsed,'8192');
+  assert.equal(c.reading.playback_policy.leadSeconds,.25);assert.equal(audio.nodes[0].buffer.data.length,8192);
+  assert.equal(audio.nodes[0].time,.25);assert.equal(audio.sampleRate,48000);
  }finally{await c.dispose();}
 });

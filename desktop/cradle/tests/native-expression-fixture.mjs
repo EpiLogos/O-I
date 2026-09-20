@@ -3,7 +3,7 @@ export function controlledFrame(){return{schema:'ql.continuous-field/v1',event_r
 export function controlledSources(){
  const identity={event_ref:'controlled:occasion',profile_generation:1};
  const stamp={contract_ref:'ql.m2-engine-request/v1',identity,source_ref:'controlled:source'};
- const input={m1:{event_ref:identity.event_ref,revision:'0',selected_coordinate:'#1-5',row12:0},m2:{stamp:structuredClone(stamp),resonator:{stamp:structuredClone(stamp),modes:[{mode_ref:'controlled:mode',frequency_hz:440,damping_per_second:.25}]}},m3:{stamp:structuredClone(stamp),m2_basis:structuredClone(stamp),rna:false},m3_commands:[]};
+ const input={m1:{event_ref:identity.event_ref,revision:'0',selected_coordinate:'#1-5',row12:0,tick12:0},m2:{stamp:structuredClone(stamp),resonator:{stamp:structuredClone(stamp),modes:[{mode_ref:'controlled:mode',frequency_hz:440,damping_per_second:.25}]}},m3:{stamp:structuredClone(stamp),m2_basis:structuredClone(stamp),rna:false},m3_commands:[]};
  return {original:{input:structuredClone(input)},current:{input,
   m1:{schema:'ql.m1.engine/v1',config:structuredClone(input.m1),carrier:{quadrature:[1,0],opposite_quadrature:[-1,0]},standing:{source:'controlled'}},
   m2:{schema:'ql.m2-engine/v1',identity:structuredClone(identity),resonator:structuredClone(input.m2.resonator)},

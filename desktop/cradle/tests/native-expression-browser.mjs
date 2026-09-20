@@ -39,7 +39,7 @@ try{
  assert.ok(count>=report.particles);assert.equal(count,topology.tex_width*topology.tex_height);
  const before=await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect());
  await frame.locator('.native-field-panel>summary').click();await frame.locator('[name="native-path"]').fill('binding.json');await frame.locator('[data-native="source"]').click();await frame.locator('[data-native="connect"]').click();
- await frame.waitForFunction(()=>['following','unavailable'].includes(window.__FIELD_STUDIES__.native()?.status),null,{timeout:15000});
+ await frame.waitForFunction(()=>['following','held','unavailable'].includes(window.__FIELD_STUDIES__.native()?.status),null,{timeout:15000});
  assert.equal(await frame.evaluate(()=>window.__FIELD_STUDIES__.native().status),'following',await frame.locator('[data-native-status]').textContent());
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeTargets()?.target_a[1]>0,null,{timeout:10000});
  report.checks.push('actual embedded target texture receives native protocol values');
@@ -78,5 +78,5 @@ try{
  assert.deepEqual(disconnected.positions,lost.positions);assert.deepEqual(disconnected.velocities,lost.velocities);assert.equal(owner.calls.length,requests);report.checks.push('disconnect stops GPU evolution and request retries');
  await page.screenshot({path:join(out,'disconnected.png')});await page.evaluate(()=>{window.disposeRelay();document.querySelector('iframe').remove();});await page.waitForTimeout(100);
  assert.equal(owner.closed,true);assert.equal(closes,1);report.checks.push('unmount releases the single native lease');assert.deepEqual(errors,[]);report.pass=true;report.requests={opens,closes,total:owner.calls.length};console.log(JSON.stringify(report,null,2));
-}catch(error){report.pass=false;report.failure=String(error);await page.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
+}catch(error){report.pass=false;report.failure=String(error);report.reading=await page.frames().find(f=>f!==page.mainFrame())?.evaluate(()=>window.__FIELD_STUDIES__?.native()).catch(()=>null);await page.screenshot({path:join(out,'failure.png')}).catch(()=>{});throw error;}
 finally{await writeFile(join(out,'browser.json'),JSON.stringify(report,null,2)+'\n');await browser.close();await new Promise(r=>server.close(r));await rm(temp,{recursive:true,force:true});}
