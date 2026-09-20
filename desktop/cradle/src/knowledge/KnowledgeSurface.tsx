@@ -43,8 +43,6 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const filters=useMemo(()=>restoreGraphFilters(visit.filters),[visit.filters]);
   const [detailNode,setDetailNode]=useState<GraphNode>();
   const [reading,setReading]=useState<KnowledgeReading>();
-  // A hosted node (Shared Field) reads through the kernel's shared_field op
-  // as a Projection reading — no local address, no second store.
   const [hosted,setHosted]=useState<SharedFieldReading>();
   const [model,setModel]=useState<GraphReading>();
   const [error,setError]=useState<string>();
@@ -65,8 +63,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const filtered=useMemo(()=>visibleModel?filterGraph(visibleModel,filters,visit.selected):undefined,[visibleModel,filters,visit.selected]);
   const displayedModel=useMemo(()=>visibleModel&&filtered?{...visibleModel,nodes:filtered.nodes,edges:filtered.edges}:undefined,[visibleModel,filtered]);
   const focused=useMemo(()=>neighbourhood(displayedModel,visit.selected),[displayedModel,visit.selected]);
-  // Exact-ref grouping is visual only; all owner rows remain in detail disclosures.
-  // Missing endpoints remain explicit in each subject’s related list.
+  // All owner disclosures remain inspectable; filtering never changes layout topology.
   const layout=useLayout(visibleModel);
   const positions=layout.points;
   const displayedPositions=useMemo(()=>{const byRef=new Map(nodes.map((node,i)=>[node.ref,positions[i]]));return filtered?.nodes.map(node=>byRef.get(node.ref)!)??[];},[nodes,positions,filtered]);
@@ -82,7 +79,13 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const latestTravel=useRef(travel);latestTravel.current=travel;
   const persist=useCallback(()=>{try{const current=latestTravel.current;localStorage.setItem(`oi-cradle.knowledge-travel.v1:${binding.id}`,JSON.stringify(current));localStorage.setItem(`oi-cradle.knowledge-view.v1:${binding.id}`,JSON.stringify(current.visits[current.index].camera));}catch{setError("Graph view state could not be saved on this device.");}},[binding.id]);
   useEffect(()=>{const timer=setTimeout(persist,200);return()=>clearTimeout(timer);},[travel,persist]);
-  useEffect(()=>()=>persist(),[persist]);
+  useEffect(()=>{
+    // React cleanup is not a document-discard notification. Flush the latest
+    // view ref before reload, including a filter edit less than 200 ms ago.
+    const visibility=()=>{if(document.visibilityState==='hidden')persist();};
+    window.addEventListener('pagehide',persist);document.addEventListener('visibilitychange',visibility);
+    return()=>{persist();window.removeEventListener('pagehide',persist);document.removeEventListener('visibilitychange',visibility);};
+  },[persist]);
 
   useEffect(()=>{if(!graph.current)return;const observer=new ResizeObserver(entries=>{const {width,height}=entries[0].contentRect;if(width>0&&height>0)setExtent({width,height});});observer.observe(graph.current);return()=>observer.disconnect();},[isGraph]);
   useEffect(()=>{
@@ -152,10 +155,10 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
       {detailNode&&<NodeDetails readingProps={{transport,project:binding.project,binding,onNavigate:navigate,anchor:visit.pageAnchor}} node={detailNode} reading={reading?.resource===detailNode.ref?reading:undefined} hosted={hosted&&isHostedNode(detailNode)&&(hosted.state==="unavailable"||hosted.ref===detailNode.ref)?hosted:undefined} error={readError} project={binding.project} onClose={release} onPromote={()=>setDetailNode(undefined)} onOpen={(address,title,project,placement)=>onOpen(address,title,project,placement,binding.id)} disclosures={grouped.find(s=>s.node.ref===detailNode.ref)?.disclosures??[detailNode]} related={related.map(edge=>({edge,node:nodes.find(n=>n.ref===(edge.from_ref===detailNode.ref?edge.to_ref:edge.from_ref))}))} onRelated={open} native={transport.kind==="tauri"} rect={detailGeometry.rect} extent={extent} onGeometry={detailGeometry.change} storageError={detailGeometry.storageError} transport={transport} onActionDispatched={()=>setGeneration(n=>n+1)}/>}
     </div>}
     {model&&<div className="knowledge-inputs">{Object.values(model.inputs).filter(input=>input.state!=="available").map((input,i)=><details key={i} open={input.state==="unavailable"}><summary>{input.owner_operation==="shared-field.projection"?"Shared Field":input.owner_operation} · {input.state}</summary><p role="status">{input.owner_operation} — {input.detail}</p></details>)}</div>}
-    {!isGraph&&<article className="knowledge-content" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={binding} onNavigate={navigate} anchor={visit.pageAnchor}/>:<p role="status">Reading content…</p>}</article>}
+    {!isGraph&&<article className="knowledge-content" ref={content} tabIndex={-1} aria-label="Selected node content"><div className="knowledge-page-heading"><h1>{visit.pageTitle??binding.title}</h1>{selectedAddress&&reading&&<KnowledgeExpression surface={binding.id} project={binding.project} address={selectedAddress} locus={{ref:reading.resource,label:visit.pageTitle??binding.title,kind:"knowledge-subject",native_owner:reading.provider,provenance:{source:reading.authority,revision:reading.revision},actions:[]}} pins={[]} follow={false}/>} {selectedAddress?.kind==="wiki"&&<button className="oi-action" onClick={()=>void onOpen(selectedAddress!,visit.pageTitle??binding.title,binding.project,"tab").catch(e=>setReadError(String(e)))}>Show in graph ↗</button>}</div>{readError?<p role="alert">{readError}</p>:reading?<ReadingBody reading={reading} transport={transport} project={binding.project} binding={{...binding,title:visit.pageTitle??binding.title}} onNavigate={navigate} anchor={visit.pageAnchor}/>:<p role="status">Reading content…</p>}</article>}
     <footer className="knowledge-surface-footer">
-      {<nav aria-label={isGraph?"Graph travel":"Wiki reading travel"}><button className="oi-tool" aria-label={isGraph?"Back to prior constellation":"Back to prior page"} disabled={travel.index===0} onClick={()=>back(-1)}><Glyph name="back" size={13}/></button><button className="oi-tool" aria-label={isGraph?"Forward to next constellation":"Forward to next page"} disabled={travel.index===travel.visits.length-1} onClick={()=>back(1)}><Glyph name="arrow" size={13}/></button></nav>}
-      <span className="knowledge-footer-path" title={`${binding.project??"Personal ground"} / ${binding.title}`}>{binding.project??"Personal ground"} / {binding.title}</span>
+      <nav aria-label={isGraph?"Graph travel":"Wiki reading travel"}><button className="oi-tool" aria-label={isGraph?"Back to prior constellation":"Back to prior page"} disabled={travel.index===0} onClick={()=>back(-1)}><Glyph name="back" size={13}/></button><button className="oi-tool" aria-label={isGraph?"Forward to next constellation":"Forward to next page"} disabled={travel.index===travel.visits.length-1} onClick={()=>back(1)}><Glyph name="arrow" size={13}/></button></nav>
+      <span className="knowledge-footer-path" title={`${binding.project??"Personal ground"} / ${visit.pageTitle??binding.title}`}>{binding.project??"Personal ground"} / {visit.pageTitle??binding.title}</span>
       {!isGraph&&binding.view?.graphOrigin&&<button className="oi-tool" aria-label="Release graph focus" title="Release graph focus" onClick={()=>{try{releaseGraph(binding.view!.graphOrigin!);}catch(e){setReadError(String(e));}}}><Glyph name="release" size={13}/></button>}
       <button className="oi-tool" aria-label="Refresh knowledge" title="Refresh" onClick={()=>setGeneration(n=>n+1)}><Glyph name="refresh" size={13}/></button>
     </footer>
