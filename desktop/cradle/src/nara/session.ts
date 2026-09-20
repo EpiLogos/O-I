@@ -22,7 +22,7 @@ import {
   type SpeechConstitutionChangeReceipt,type SpeechConstitutionFacts,
 } from "./constitution";
 import {
-  contextContinues,validateDialogueContext,
+  contextContinues,validateDialogueContext,validateEpiiDelegation,validateEpiiEnrichment,
   type NaraDialogueContext,
 } from "./dialogueContext";
 import {
@@ -118,21 +118,22 @@ export class NaraSpeechBinding {
   private inFlight:string|null=null;
   private readonly executed:string[]=[];
   private readonly decisions:SpeechToolDecision[]=[];
+  private readonly recordedExecutions=new Set<string>();
   private readonly delegations:Record<string,unknown>[]=[];
   private readonly enrichments:Record<string,unknown>[]=[];
 
   private constructor(constitution:SpeechConstitutionFacts,context:NaraDialogueContext,authority:AllowedAuthority){
-    this.constitution=constitution;
-    this.context=context;
-    this.authority=authority;
+    this.constitution=structuredClone(constitution);
+    this.context=structuredClone(context);
+    this.authority=structuredClone(authority);
   }
 
   /** Constitute canonical Nara on a resolved body with the caller's bounded
    * dialogue context. A text-only body constitutes exactly like a realtime
    * body; Nara is not defined by any of them (Actuation `NaraBinding::constitute`). */
   static constitute(input:{constitution:unknown;dialogue_context:unknown;allowed_action_refs:string[];denied_action_refs:string[]}):NaraSpeechBinding {
-    const constitution=validateSpeechConstitution(input.constitution);
-    const context=validateDialogueContext(input.dialogue_context);
+    const constitution=validateSpeechConstitution(structuredClone(input.constitution));
+    const context=validateDialogueContext(structuredClone(input.dialogue_context));
     if(context.agent_session_ref!==constitution.agent_session_ref)throw new Error("dialogue context does not name the constituted AgentSession");
     noSecretMaterialKeys({allowed:input.allowed_action_refs,denied:input.denied_action_refs},"authority");
     const allowed=input.allowed_action_refs.map(ref=>wireText(ref,"allowed action ref"));
@@ -144,28 +145,28 @@ export class NaraSpeechBinding {
   get naraRef():string {return this.context.nara_ref;}
   get agentRef():string {return this.constitution.agent_ref;}
   get phaseNow():SpeechTurnPhase {return this.phase;}
-  get contextNow():NaraDialogueContext {return this.context;}
-  get constitutionNow():SpeechConstitutionFacts {return this.constitution;}
-  get decisionsRecorded():readonly SpeechToolDecision[] {return this.decisions;}
-  get delegationReceipts():readonly Record<string,unknown>[] {return this.delegations;}
-  get enrichmentReceipts():readonly Record<string,unknown>[] {return this.enrichments;}
+  get contextNow():NaraDialogueContext {return structuredClone(this.context);}
+  get constitutionNow():SpeechConstitutionFacts {return structuredClone(this.constitution);}
+  get decisionsRecorded():readonly SpeechToolDecision[] {return structuredClone(this.decisions);}
+  get delegationReceipts():readonly Record<string,unknown>[] {return structuredClone(this.delegations);}
+  get enrichmentReceipts():readonly Record<string,unknown>[] {return structuredClone(this.enrichments);}
 
   /** A deictic/expression context update on the same encounter. The session
    * is never reminted: same Nara, same session, updated bounded context. */
   updateContext(next:unknown):NaraDialogueContext {
-    const context=validateDialogueContext(next);
+    const context=validateDialogueContext(structuredClone(next));
     if(context.nara_ref!==this.context.nara_ref)throw new Error("a context update cannot change the Nara identity");
     if(context.agent_session_ref!==this.context.agent_session_ref)throw new Error("a context update cannot change the AgentSession");
     this.context=context;
-    return context;
+    return structuredClone(context);
   }
 
   /** Reconnect or body replacement: the change receipt enforces the enduring
    * identity; the refreshed QL context must still be this Nara's and must
    * continue the same dialogue. */
   reconnect(input:{change_ref:string;next_constitution:unknown;next_context:unknown;reason:string;evidence_refs:string[];at:string}):SpeechConstitutionChangeReceipt {
-    const next=validateSpeechConstitution(input.next_constitution);
-    const context=validateDialogueContext(input.next_context);
+    const next=validateSpeechConstitution(structuredClone(input.next_constitution));
+    const context=validateDialogueContext(structuredClone(input.next_context));
     if(context.agent_session_ref!==next.agent_session_ref)throw new Error("reconnect context does not name the new AgentSession");
     const change=recordConstitutionChange({
       change_ref:input.change_ref,
@@ -221,6 +222,8 @@ export class NaraSpeechBinding {
    * pretending otherwise would falsify the body. The session and the Nara
    * identity survive either way (`session_destroyed:false`). */
   interrupt(input:{interruption_ref:string;reason:string;at:string}):NaraInterruptionReceipt {
+    wireText(input.interruption_ref,"interruption_ref");wireText(input.reason,"reason");wireTimestamp(input.at,"at");
+    const responseRef=this.inFlight;
     const support=interruptionSupport(this.constitution);
     const correlated=this.context.expressive_act;
     const correlatedAct=correlated&&expressiveActLiveState(correlated)&&correlated.speech_turn_ref!=null
@@ -250,7 +253,7 @@ export class NaraSpeechBinding {
       agent_session_ref:this.constitution.agent_session_ref,
       constitution_ref:this.constitution.constitution_ref,
       body_ref:this.constitution.body_ref,
-      response_ref:this.inFlight,
+      response_ref:responseRef,
       executed_refs:[...this.executed],
       reason:wireText(input.reason,"reason"),
       support,
@@ -275,7 +278,9 @@ export class NaraSpeechBinding {
    * governance lists. The decision is recorded either way; authorisation
    * never executes by itself. */
   adjudicateToolRequest(input:{decision_ref:string;request:unknown;decided_by:string;at:string}):SpeechToolDecision {
-    const request=validateToolRequest(input.request);
+    const request=validateToolRequest(structuredClone(input.request));
+    if(request.agent_session_ref!==this.constitution.agent_session_ref)throw new Error("tool request belongs to another AgentSession");
+    if(this.decisions.some(item=>item.decision_ref===input.decision_ref))throw new Error("decision reference is already bound");
     if(request.constitution_ref!==this.constitution.constitution_ref)throw new Error("tool request belongs to another constitution");
     const channel=interactionSupport(this.constitution,"tool-requests");
     let resolution:SpeechToolResolution;
@@ -303,8 +308,8 @@ export class NaraSpeechBinding {
       decided_by:wireText(input.decided_by,"decided_by"),
       decided_at:wireTimestamp(input.at,"decided_at"),
     },["schema","decision_ref","request","constitution_ref","resolution","decided_by","decided_at"],"speech tool decision") as unknown as SpeechToolDecision;
-    this.decisions.push(decision);
-    return decision;
+    this.decisions.push(structuredClone(decision));
+    return structuredClone(decision);
   }
 
   /** Record the actual execution of an authorised decision, after the real
@@ -312,8 +317,12 @@ export class NaraSpeechBinding {
    * cannot be executed; the authorisation itself stays immutable. */
   recordExecution(decision:SpeechToolDecision,input:{execution_ref:string;owner_operation:string;result:unknown;evidence_refs:string[];executed_at:string}):SpeechExecutionReceipt {
     if(!decision.resolution||decision.resolution.resolution!=="authorised")throw new Error("a refused tool request cannot be executed");
+    const recorded=this.decisions.find(item=>item.decision_ref===decision.decision_ref);
+    if(!recorded||JSON.stringify(recorded)!==JSON.stringify(decision))throw new Error("execution requires an unchanged recorded decision");
+    if(decision.constitution_ref!==this.constitution.constitution_ref||decision.request.agent_session_ref!==this.constitution.agent_session_ref)throw new Error("execution decision is stale after a body/session change");
+    if(this.recordedExecutions.has(decision.decision_ref))throw new Error("decision execution was already recorded");
     if(!input.evidence_refs.length)throw new Error("execution requires evidence");
-    return exactKeys({
+    const receipt=exactKeys({
       schema:SPEECH_TOOL_DECISION_VERSION,
       execution_ref:wireText(input.execution_ref,"execution_ref"),
       decision_ref:decision.decision_ref,
@@ -325,19 +334,21 @@ export class NaraSpeechBinding {
       evidence_refs:input.evidence_refs.map(ref=>wireText(ref,"evidence ref")),
       executed_at:wireTimestamp(input.executed_at,"executed_at"),
     },["schema","execution_ref","decision_ref","action_ref","constitution_ref","agent_session_ref","owner_operation","result","evidence_refs","executed_at"],"speech execution receipt") as unknown as SpeechExecutionReceipt;
+    this.recordedExecutions.add(decision.decision_ref);
+    return structuredClone(receipt);
   }
 
   /** Record a structured Nara→Epii delegation receipt: identity and
    * currentness are what Actuation checks; the QL document carries the
    * delegation's own law. */
   recordDelegation(delegation:unknown,input:{delegation_receipt_ref:string;at:string}):Record<string,unknown> {
-    const d=requireObject(delegation,"delegation");
+    const d=validateEpiiDelegation(structuredClone(delegation) as Parameters<typeof validateEpiiDelegation>[0]);
     if(d["schema"]!==NARA_EPII_DELEGATION_VERSION)throw new Error("expected ql.nara-epii-delegation/v1");
     if(d["nara_ref"]!==this.context.nara_ref)throw new Error("the delegation belongs to another Nara");
     const epii=wireText(d["epii_session_ref"],"Epii AgentSession reference");
-    if(epii===this.context.nara_ref)throw new Error("Epii must remain distinct from the delegating Nara");
+    if(epii===this.context.nara_ref||epii===this.context.agent_session_ref)throw new Error("Epii must remain distinct from the delegating Nara");
     const basis=requireObject(d["basis"],"delegation basis");
-    const basisCurrent=basis["context_ref"]===this.context.context_ref;
+    const basisCurrent=basis["context_ref"]===this.context.context_ref&&basis["expression_revision"]===this.context.expression_revision&&basis["expression_ref"]===this.context.expression_ref&&basis["profile_ref"]===this.context.profile_ref&&basis["profile_revision"]===this.context.profile_revision;
     const receipt=exactKeys({
       schema:NARA_DELEGATION_VERSION,
       delegation_receipt_ref:wireText(input.delegation_receipt_ref,"delegation_receipt_ref"),
@@ -353,20 +364,20 @@ export class NaraSpeechBinding {
       basis_current_at_receipt:basisCurrent,
       recorded_at:wireTimestamp(input.at,"recorded_at"),
     },["schema","delegation_receipt_ref","delegation_ref","nara_ref","nara_agent_ref","nara_agent_session_ref","epii_session_ref","basis_context_ref","basis_expression_revision","scope_ref_count","foreground_agent","basis_current_at_receipt","recorded_at"],"nara delegation receipt");
-    this.delegations.push(receipt);
-    return receipt;
+    this.delegations.push(structuredClone(receipt));
+    return structuredClone(receipt);
   }
 
   /** Receive an Epii result: a late result is retained, never applied; even a
    * current one is proposed-only. `applied:false` is structural. */
   recordEnrichment(enrichment:unknown,input:{enrichment_receipt_ref:string;at:string}):Record<string,unknown> {
-    const e=requireObject(enrichment,"enrichment");
+    const e=validateEpiiEnrichment(structuredClone(enrichment));
     if(e["schema"]!==EPII_ENRICHMENT_VERSION)throw new Error("expected ql.epii-enrichment/v1");
     const delegationRef=wireText(e["delegation_ref"],"enrichment delegation reference");
     if(!this.delegations.some(d=>d["delegation_ref"]===delegationRef))throw new Error(`enrichment answers unknown delegation ${delegationRef}`);
     const basisRevision=wireText(e["basis_expression_revision"],"enrichment basis revision");
     const liveRevision=this.context.expression_revision;
-    const current=basisRevision===liveRevision;
+    const current=basisRevision===liveRevision&&e.basis_context_ref===this.context.context_ref;
     const receipt=exactKeys({
       schema:NARA_ENRICHMENT_VERSION,
       enrichment_receipt_ref:wireText(input.enrichment_receipt_ref,"enrichment_receipt_ref"),
@@ -378,8 +389,8 @@ export class NaraSpeechBinding {
       applied:false,
       recorded_at:wireTimestamp(input.at,"recorded_at"),
     },["schema","enrichment_receipt_ref","enrichment_ref","delegation_ref","nara_ref","standing","currentness","applied","recorded_at"],"nara enrichment receipt");
-    this.enrichments.push(receipt);
-    return receipt;
+    this.enrichments.push(structuredClone(receipt));
+    return structuredClone(receipt);
   }
 
   /** The wire read a desktop client consumes (Actuation `NaraBinding::read`

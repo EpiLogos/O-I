@@ -1,0 +1,61 @@
+name: Nara personal contracts
+on:
+  push:
+    branches: ['agent/nara-personal-review-20260920']
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/nara/**'
+      - 'desktop/cradle/tests/nara-*'
+      - 'desktop/cradle/kernel/tests/nara_*'
+      - 'desktop/cradle/src/dictation/**'
+      - 'docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md'
+      - '.github/workflows/nara-personal.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nara-personal-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Install locked dependencies
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Speech, authority, privacy, continuity and actual HTTP contracts
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          mkdir -p tests/artifacts/nara-native
+          git rev-parse HEAD > tests/artifacts/nara-native/source-revision.txt
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs 2>&1 | tee tests/artifacts/nara-native/contracts.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs tests/nara-local-acceptance.mjs --help
+      - name: Compile the integrated app
+        if: ${{ !cancelled() }}
+        run: npm --prefix desktop/cradle run build
+      - name: Install controlled browser
+        if: ${{ !cancelled() }}
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Production Nara component with synthetic media and controlled native owner
+        if: ${{ !cancelled() }}
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          node --experimental-strip-types --import ./tests/ts-register.mjs tests/nara-native-browser.mjs 2>&1 | tee tests/artifacts/nara-native/browser.log
+      - name: Retain exact check results, including original failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nara-checks-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/nara-native
+          if-no-files-found: error
