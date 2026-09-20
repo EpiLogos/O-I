@@ -1,0 +1,1754 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-dossiers",
+ "name": "Return of Zero — Episteme dossiers",
+ "description": "Seven dossiers as evidential plates: each carries its governing finding and its declared source relation.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "dossier-formal-limit",
+   "name": "Formal Limit — Source-Specific Limits and Their Consequences",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-formal-limit-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-formal-limit-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-formal-limit-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-formal-limit-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-formal-limit-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-formal-limit-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-formal-limit-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-formal-limit-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-formal-limit · ARGUED; SPECIFIED FORMAL CONSEQUENCES DERIVED UNDER THEIR STATED ASSUMPTIONS",
+     "title": "Formal Limit — Source-Specific Limits and Their Consequences",
+     "italic": "Paraphrased source-specific accounts; Argued from native derivation; comparative extensions explicitly distinguished",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A03, Immutable Gap / Formal Limit grounds the native pressure. Including the conditions of an account produces a further account whose present occurrence has conditions. Successful reflection therefore makes something newly explicit while renewing the difference between its content and its act. C04, Formal Limit defines an operation's constraint under specified conditions; C05, Immutable Gap defines that recurrent non-coincidence.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "dossier-bohm",
+   "name": "Bohm — Enfoldment, Dialogue and the Return of an Account",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-bohm-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-bohm-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-bohm-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-bohm-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-bohm-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-bohm-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-bohm-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-bohm-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-bohm · ARGUED",
+     "title": "Bohm — Enfoldment, Dialogue and the Return of an Account",
+     "italic": "Paraphrased primary carriers; Argued native coordination; Offered technical practice",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "An account determines something through a field it cannot replace. E4's Symbol, Account and Trust whole grounds this dossier's question: how does a useful explication retain the activity, source and relation through which it became articulate? Symbol answers to source; Account does not replace source; Trust keeps the return route active; Account re-enters source-field. The fourth operation sends this inquiry into Bohm's work.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "dossier-jung-pauli-psychoid",
+   "name": "Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-jung-pauli-psychoid-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-jung-pauli-psychoid-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-jung-pauli-psychoid-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-jung-pauli-psychoid-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-jung-pauli-psychoid-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-jung-pauli-psychoid-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-jung-pauli-psychoid-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-jung-pauli-psychoid-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-jung-pauli-psychoid · ARGUED",
+     "title": "Jung–Pauli — Psychoid, Number and a Translation That Changes Its Terms",
+     "italic": "Paraphrased correspondence and later scholarship; Argued authorial return",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The Jung–Pauli source house sources a correspondence running from 1932 to 1958. This dossier develops its changing question: how can psychic experience, physical description and mathematical form bear a relation without one vocabulary silently taking possession of the others? Dreams, letters, diagrams and later edited essays are different kinds of witness.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "dossier-process",
+   "name": "Process — What an Achieved Form Makes Possible Next",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-process-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-process-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-process-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-process-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-process-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-process-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-process-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-process-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-process · ARGUED",
+     "title": "Process — What an Achieved Form Makes Possible Next",
+     "italic": "Paraphrased bounded source passages; Argued native coordination; Offered technical tests",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A process account must show how a determination takes form and what its occurrence changes. Its product is available for another act: a memory bears upon an encounter, a rule constrains a decision, a response changes a relationship, and a tool alters the possible course of work. A14, Computational Process Ontology grounds this native claim through the distinction between operative grammar, epistemic inspection and ontology.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "dossier-indian-philosophy",
+   "name": "Indian Philosophy — Articulation, Agency and the Sourceward Turn",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-indian-philosophy-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-indian-philosophy-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-indian-philosophy-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-indian-philosophy-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-indian-philosophy-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-indian-philosophy-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-indian-philosophy-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-indian-philosophy-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-indian-philosophy · ARGUED",
+     "title": "Indian Philosophy — Articulation, Agency and the Sourceward Turn",
+     "italic": "Paraphrased source-local material; Argued from native derivation and authorial encounters; Offered technical construction",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "An articulated world has functions, distinctions and forms which can themselves become objects of inquiry. The question is how their source remains present through that articulation. A05, Prakāśa–Vimarśa grounds the dossier's positive metaphysical relation: luminous appearing and its self-apprehending power belong together. A06, Vāk extends it into speech; A09, the tattvic differential field extends it into finite worldhood.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "dossier-zero-reception",
+   "name": "Zero Reception — The Sign and the Practice That Receives It",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-zero-reception-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-zero-reception-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-zero-reception-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-zero-reception-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-zero-reception-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-zero-reception-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-zero-reception-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-zero-reception-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-zero-reception · ARGUED",
+     "title": "Zero Reception — The Sign and the Practice That Receives It",
+     "italic": "Paraphrased selected witnesses; Argued comparison of receiving practices",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Zero's reception concerns what a receiving practice permits a sign to do. A familiar shape can enter a new script, table, calculation or account without carrying all its previous uses into the new setting. Conversely, a new notation can preserve an operation across a change in language and material.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "dossier-oi-technical-responsibility",
+   "name": "O:I — Technical Responsibility, Authored Ground and Source Return",
+   "character": "An evidential plate: cells hold what the dossier has reached and what stays open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "dossier-oi-technical-responsibility-plate",
+     "name": "the dossier plate",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.16,
+      "y": 0.88
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-oi-technical-responsibility-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-oi-technical-responsibility-c1",
+     "name": "section cell 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.12,
+      "y": 0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-oi-technical-responsibility-c1-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-oi-technical-responsibility-c2",
+     "name": "section cell 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": 0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-oi-technical-responsibility-c2-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dossier-oi-technical-responsibility-c3",
+     "name": "section cell 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.16,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dossier-oi-technical-responsibility-c3-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "dossier-oi-technical-responsibility · ARGUED",
+     "title": "O:I — Technical Responsibility, Authored Ground and Source Return",
+     "italic": "Argued authorial technical responsibility; Paraphrased dated product contracts and bounded source witnesses; Offered engineering comparisons",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "An agent acts from a world whose conditions have already been partly determined. A person has commissioned work; a model supplies capacities; sources, memory, permissions, evaluators and material resources make some actions possible. The result changes that world.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}
