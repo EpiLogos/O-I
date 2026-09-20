@@ -16,14 +16,13 @@ jobs:
           ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
-      - name: Export only tracked sources and exact public revision objects
+      - name: Export tracked basis and bounded Git objects, never credentials
         run: |
           set -euo pipefail
           mkdir -p /tmp/w1-reconcile
           git rev-parse HEAD > /tmp/w1-reconcile/source-revision.txt
-          git archive HEAD | gzip > /tmp/w1-reconcile/lane.tar.gz
-          git archive b72d763ce026efebe3fac67655749ac0909ea130 | gzip > /tmp/w1-reconcile/main.tar.gz
           git archive a222c8bdf46a7b2146084770b704dfbe83ce5027 | gzip > /tmp/w1-reconcile/base.tar.gz
+          git cat-file commit a222c8bdf46a7b2146084770b704dfbe83ce5027 > /tmp/w1-reconcile/base.commit
           git bundle create /tmp/w1-reconcile/history.bundle HEAD refs/remotes/origin/main ^a222c8bdf46a7b2146084770b704dfbe83ce5027
           sha256sum /tmp/w1-reconcile/* > /tmp/w1-reconcile/checksums.txt
       - uses: actions/upload-artifact@v4
