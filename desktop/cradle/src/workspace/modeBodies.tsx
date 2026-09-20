@@ -34,7 +34,6 @@ const TaOntaContextPlane = lazy(() => import("../expressions/TaOntaSide").then(m
 export interface PanelAccompanying { ref: string; project: string; space: string }
 const RunPlane = lazy(() => import("../contributions/factory/sidebar/RunPlane").then(module => ({default: module.RunPlane})));
 const AgentsPlane = lazy(() => import("../contributions/factory/sidebar/AgentsPlane").then(module => ({default: module.AgentsPlane})));
-const ContextPlane = lazy(() => import("../contributions/factory/sidebar/ContextPlane").then(module => ({default: module.ContextPlane})));
 
 /** The left body for a mode whose curation does not use the World navigator. */
 export function ModeLeftBody({mode, project, onOpenExpressions, onOpenTechne, onOpenPlace, onOpenFile, onMessage}: {
@@ -83,7 +82,10 @@ export function modeExtraPlanes(mode: WorkspaceMode, subject: PanelSubject, acco
   if (mode === "factory") return [
     {id: "run", label: "Run", body: <Suspense fallback={null}><RunPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host} full={full}/></Suspense>},
     {id: "agents", label: "Agents", body: <Suspense fallback={null}><AgentsPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host}/></Suspense>},
-    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="ta-context-plane"><ContextPaneMount opens={opens}/><ContextPlane subject={subject} accompanying={accompanying} onMessage={onMessage} host={host}/></div></Suspense>},
+    // Owner direction 2026-09-20: the Context plane IS the canvas — the same
+    // plane body the Ta-Onta modes mount, nothing mounted beneath it. The
+    // former Needs-you/Sources/Produced stack under the canvas is unmounted.
+    {id: "factory-context", label: "Context", body: <Suspense fallback={null}><div className="desk-plane factory-side ta-context-plane" data-plane="factory-context"><ContextPaneMount opens={opens}/></div></Suspense>},
   ];
   // Nara/Anima is the personal encounter, Epii the deep inquiry — the same
   // companion components, curated to the Epi-Logos world.

@@ -6,7 +6,7 @@ import type {SettingSpec} from "./contracts";
 import type {ChangeRequest, ConfigPlaneSource} from "./source";
 import {detectTransport, kernelOp} from "../kernel/bridge";
 import {SetupFlow} from "./SetupFlow";
-import {SetupFlowController, requestKey} from "./setupFlow";
+import {SetupFlowController, requestKey} from "./setupFlowController";
 import {createSetupNative} from "./setupNative";
 export {ChangeSetView} from "./SetupFlow";
 

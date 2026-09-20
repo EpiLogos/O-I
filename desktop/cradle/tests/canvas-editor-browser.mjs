@@ -16,7 +16,7 @@ flowDoc.entries[1].replyTo={entryId:'entry-1',anchor:'echo'};
 flowDoc.notes=[{id:'note-1',entryId:'entry-1',author:'F',anchor:'echo',text:'<em>Preserved note.</em>',replies:[{id:'note-reply',author:'H',text:'<strong>Preserved reply.</strong>'}]}];
 flowDoc.journal=[{id:'journal-1',at:'2026-09-20',html:'<p><em>Journal stays separate.</em></p>'}];
 flowDoc.media=[{id:'media-1',entry:'entry-1',name:'Retained file',mime:'application/octet-stream',data:'unchanged payload',caption:'<p>Authored caption.</p>'}];
-let flowSource=template.replace(docPattern,()=>'<script type="application/json" id="ql-doc">'+JSON.stringify(flowDoc)+'</script>');
+let flowSource=template.replace(docPattern,()=>'<script type="application/json" id="ql-doc">'+JSON.stringify(flowDoc).replace(/<\/script/gi,'<\\/script')+'</script>');
 let flowRevision='f1';
 const flowReading=()=>({...reading(),content:flowSource,revision:flowRevision});
 const reading=()=>({schema:'central.file-reading/v1',location:{root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'},content:source,revision,byte_len:Buffer.byteLength(source),content_encoding:'utf-8',project:{name:'demo',path:'Work/demo',project_ref:'project:demo'},source:null,operations:{write:{available:true,reason:null},history:{available:false,reason:null},restore:{available:false,reason:null}},automatic_agent_or_model_invocation:false});
@@ -117,7 +117,7 @@ try{
  check('Flow new-entry range is a revision-carrying unsaved observation, not raw HTML offsets',flowPrepared.items[0].selection.anchor.kind==='observation'&&flowPrepared.items[0].selection.anchor.document_id==='controlled-flow'&&flowPrepared.items[0].selection.working_copy&&flowPrepared.items[0].selection.source_revision==='f1'&&flowPrepared.items[0].selection.text==='unsaved');
  await page.waitForFunction(()=>document.querySelector('.context-prepared-highlight'));checks.push('Flow draft retains a view-only cue');
  await page.getByRole('button',{name:'Clear prepared context',exact:true}).click();await page.waitForFunction(()=>document.querySelectorAll('.prepared-context-item').length===0);
- await page.locator('[data-flow-entry="entry-2"] p').evaluate(node=>{const range=document.createRange();range.selectNodeContents(node);const s=window.getSelection();s.removeAllRanges();s.addRange(range);});
+ await page.locator('[data-flow-entry="entry-2"] .flow-thread-body > p').evaluate(node=>{const range=document.createRange();range.selectNodeContents(node);const s=window.getSelection();s.removeAllRanges();s.addRange(range);});
  await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();await page.locator('.prepared-context-item').waitFor();
  const rendered=getContext('demo','agent-session/test').items[0].selection;
  check('ordinary rendered Flow selection keeps the second entry identity',rendered.anchor.kind==='observation'&&rendered.anchor.document_id==='controlled-flow'&&rendered.anchor.node_ref==='entry-2'&&rendered.text==='Repeated authored passage.');

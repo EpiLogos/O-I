@@ -40,3 +40,11 @@
 .flow-thread-media,.flow-thread-notes,.flow-journal-pages{list-style:none;margin:var(--oi-desktop-gap-sm) 0;padding:0}
 .flow-thread-notes>li,.flow-thread-note-reply{padding:var(--oi-desktop-gap-sm);border-inline-start:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
 .flow-journal-note{margin:var(--oi-desktop-gap-lg)}
+
+/* An opener is an activity surface, not a mandatory ontology lesson. */
+.fresh-surface .welcome-prompt p { color: var(--oi-muted-2); font-size: var(--oi-shell-type-body); line-height: 1.6; margin: 12px 0; }
+.fresh-more { margin-top: 24px; color: var(--oi-muted-2); max-width: 100%; }
+.fresh-more > summary { cursor: pointer; font-size: var(--oi-shell-type-ui); padding-block: 8px; }
+.fresh-more label { display: flex; align-items: center; flex-wrap: wrap; gap: 8px; margin-block: 12px; }
+.fresh-more select { min-width: 0; max-width: 100%; }
+.fresh-surface .rest-actions { flex-wrap: wrap; }

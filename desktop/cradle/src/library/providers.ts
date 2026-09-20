@@ -10,13 +10,13 @@
  * src/epilogos; this module only exposes the seam it registers through).
  */
 import {useEffect} from "react";
-import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus, KnowledgeHit} from "../kernel/types";
 import {knowledge} from "../knowledge/client";
 import {isUnavailable, sharedField, type SharedFieldSnapshot, type SharedFieldUnavailable} from "../knowledge/shared-field";
 import {useKernel} from "../kernel/KernelProvider";
 import type {WorkspaceMode} from "../workspace/mode";
 import {collectionsProvider} from "./collectionsProvider";
+import {nativeExpressionsProvider} from "./nativeExpressionsProvider";
 import type {LibraryItem, LibraryCoverage, LibraryKind, LibraryQuery} from "./scope";
 
 export interface LibraryProvider {
@@ -52,32 +52,6 @@ export function subscribeLibraryProviders(listener: () => void): () => void {
 }
 
 // ---- built-in providers ----------------------------------------------------
-
-/** Compositions: the kernel `expression` op's `list` operation
- * (src/expression/types.ts ExpressionRequest `{operation:"list"}` ->
- * `ExpressionResult.expressions`), the same read useExpressionApplication's
- * FieldMenu list uses. No per-item owner is disclosed by this read, so the
- * item names the instance the read came from, never a fabricated author. */
-function expressionsProvider(transport: KernelTransportStatus): LibraryProvider {
-  return {
-    id: "expressions", label: "Expressions", kinds: ["composition"], scopes: ["local"], modes: ["expressions"],
-    async list(_query, signal) {
-      const reply = await kernelOp(transport, {op: "expression", request: {operation: "list"}});
-      if (signal.aborted) return {items: [], coverage: {provider: "expressions", state: "unavailable", reason: "query cancelled"}};
-      if (reply.error || reply.outcome?.result !== "expression") {
-        return {items: [], coverage: {provider: "expressions", state: "unavailable", reason: reply.error ?? "the expression op returned no listing"}};
-      }
-      const data = reply.outcome.data as {expressions?: {expression_ref: string; revision: number; title: string; dirty: boolean}[]};
-      const items: LibraryItem[] = (data.expressions ?? []).map(entry => ({
-        kind: "composition", ref: entry.expression_ref, title: entry.title,
-        summary: entry.dirty ? "Unsaved changes" : undefined,
-        owner: "this instance", scope: "local", revision: String(entry.revision),
-        expressionRef: entry.expression_ref, provider: "expressions",
-      }));
-      return {items, coverage: {provider: "expressions", state: "complete"}};
-    },
-  };
-}
 
 /** Worlds: ES1/ES4 `expression_world` (src/expression/world.ts) carries one
  * bounded selection plus portals/acts/wholes — `selection_set`,
@@ -176,7 +150,7 @@ export function useBuiltInLibraryProviders(): void {
   const {transport} = useKernel();
   useEffect(() => {
     const unregister = [
-      registerLibraryProvider(expressionsProvider(transport)),
+      registerLibraryProvider(nativeExpressionsProvider(transport)),
       registerLibraryProvider(expressionWorldsProvider()),
       registerLibraryProvider(sharedFieldProvider(transport)),
       registerLibraryProvider(wikiProvider(transport)),

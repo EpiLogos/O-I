@@ -4,7 +4,7 @@ import type {ChangeSetDocument, ConfigResolution, PlanDocument, ReceiptDocument,
 import type {ChangeRequest} from "./source";
 import type {NativeDirectory, SourceBufferState, SourceListingState} from "../kernel/types";
 import {compositionLine} from "./composition";
-import {SetupFlowController, editableReason, requestKey, settingsOf, validateRequest} from "./setupFlow";
+import {SetupFlowController, editableReason, requestKey, settingsOf, validateRequest} from "./setupFlowController";
 import type {SetupNative} from "./setupNative";
 
 export interface SetupFlowProps {

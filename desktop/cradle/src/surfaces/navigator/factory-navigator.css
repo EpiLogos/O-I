@@ -78,3 +78,11 @@
  * the project card loses its box (border + wash) and stays structure only. */
 .factory-space{border:0;background:transparent}
 .factory-space-mark{border:0;background:var(--oi-wash)}
+
+/* Desk/Tasks is navigation, not an inverse primary-action treatment. Keep
+   radio semantics and the existing Factory selection/state meanings. */
+.factory-views.oi-segment { background: transparent; border: 0; border-bottom: 1px solid var(--oi-hairline-soft); border-radius: 0; padding: 0; height: auto; }
+.factory-views.oi-segment > button { min-height: 32px; color: var(--oi-muted-2); background: transparent; border: 0; border-bottom: 2px solid transparent; border-radius: 0; box-shadow: none; }
+.factory-views.oi-segment > button[aria-checked="true"], .factory-views.oi-segment > button[aria-checked="true"]:hover { color: var(--oi-foreground); background: var(--oi-wash); border-bottom-color: var(--oi-accent); box-shadow: none; }
+.factory-views.oi-segment > button:hover:not(:disabled) { color: var(--oi-foreground); background: var(--oi-wash); }
+.factory-views.oi-segment > button svg { color: currentColor; }
