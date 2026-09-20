@@ -1,114 +1,33 @@
-name: W1 bounded delivery
+name: W1 reconciliation source recovery
 on:
   pull_request:
     paths: ['.github/workflows/w1-delivery.yml']
 permissions:
-  contents: write
+  contents: read
 jobs:
-  deliver:
+  recover:
     if: github.event.pull_request.number == 416 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'agent/w1-shell-layout-recovery-20260920'
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-      - uses: actions/setup-node@v4
-        with:
-          node-version: 22
-      - name: Receive the authored compact-pane correction and evidence gate
-        env:
-          GH_TOKEN: ${{ github.token }}
+          fetch-depth: 0
+          persist-credentials: false
+      - name: Export only tracked sources and exact public revision objects
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/git/blobs/f13e0baa6362822fe2b09200e1df379fd671d908" --jq .content | base64 --decode | gzip -dc > /tmp/w1-manifest.json
-          echo 'be9f3919c92d5b76745d36940a9def082b73401cdeddc8ecd8b138fb480abe22  /tmp/w1-manifest.json' | sha256sum --check
-          python3 - <<'PY'
-          import hashlib, json
-          from pathlib import Path
-          manifest=json.loads(Path('/tmp/w1-manifest.json').read_text())
-          assert len(manifest)==8
-          pending=[]
-          for change in manifest:
-              path=Path(change['path'])
-              assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
-              assert str(path).startswith(('desktop/cradle/src/','desktop/cradle/tests/'))
-              before=path.read_bytes() if path.exists() else None
-              assert (hashlib.sha256(before).hexdigest() if before is not None else None)==change['before'], f'Changed basis: {path}'
-              lines=(before or b'').decode().splitlines(keepends=True)
-              for start,end,text in reversed(change['edits']): lines[start:end]=text.splitlines(keepends=True)
-              after=''.join(lines).encode()
-              assert hashlib.sha256(after).hexdigest()==change['after'], f'Invalid result: {path}'
-              pending.append((path,after))
-          for path,after in pending:
-              path.parent.mkdir(parents=True,exist_ok=True)
-              path.write_bytes(after)
-          Path('/tmp/w1-paths.txt').write_text('\n'.join(str(p) for p,_ in pending)+'\n')
-          PY
-          git diff --check
-      - name: Typecheck and executable state and evidence regressions
-        working-directory: desktop/cradle
-        run: |
-          npm ci --no-audit --no-fund
-          npx tsc --noEmit
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs tests/configuration-setup.test.mjs tests/local-shell-acceptance.test.mjs tests/verify-shell-evidence.test.mjs
-      - name: Commit readable corrections only to this PR
-        env:
-          EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
-        run: |
-          set -euo pipefail
-          branch=agent/w1-shell-layout-recovery-20260920
-          test "$(git ls-remote origin "refs/heads/$branch" | cut -f1)" = "$EXPECTED_HEAD"
-          git config user.name 'W1 shell implementation'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add --pathspec-from-file=/tmp/w1-paths.txt
-          git diff --cached --name-only | sort > /tmp/w1-staged.txt
-          sort /tmp/w1-paths.txt > /tmp/w1-expected.txt
-          diff -u /tmp/w1-expected.txt /tmp/w1-staged.txt
-          git commit -m 'fix(shell): follow the visible compact pane and verify browser evidence identities'
-          git push origin "HEAD:refs/heads/$branch"
-          git rev-parse HEAD
-      - name: Build production and install actual browser engines
-        working-directory: desktop/cradle
-        run: |
-          npm run build
-          npx playwright install --with-deps chromium webkit
-      - name: Exercise the real shell
-        id: shell
-        continue-on-error: true
-        working-directory: desktop/cradle
-        run: node tests/shell-recovery.browser.mjs
-      - name: Exercise responsive setup
-        id: setup
-        continue-on-error: true
-        working-directory: desktop/cradle
-        run: node tests/shell-setup.browser.mjs
-      - name: Exercise themes and existing appearance
-        id: visuals
-        continue-on-error: true
-        working-directory: desktop/cradle
-        run: |
-          node tests/visuals-preview-lifecycle.mjs
-          node tests/desktop-appearance.mjs
-      - name: Independently require complete current receipts
-        if: always()
-        working-directory: desktop/cradle
-        run: node tests/verify-shell-evidence.mjs
-      - name: Preserve original failures and exact-source captures
-        if: always()
-        uses: actions/upload-artifact@v4
+          mkdir -p /tmp/w1-reconcile
+          git rev-parse HEAD > /tmp/w1-reconcile/source-revision.txt
+          git archive HEAD | gzip > /tmp/w1-reconcile/lane.tar.gz
+          git archive b72d763ce026efebe3fac67655749ac0909ea130 | gzip > /tmp/w1-reconcile/main.tar.gz
+          git archive a222c8bdf46a7b2146084770b704dfbe83ce5027 | gzip > /tmp/w1-reconcile/base.tar.gz
+          git bundle create /tmp/w1-reconcile/history.bundle HEAD refs/remotes/origin/main
+          sha256sum /tmp/w1-reconcile/* > /tmp/w1-reconcile/checksums.txt
+      - uses: actions/upload-artifact@v4
         with:
-          name: w1-shell-evidence-${{ github.run_id }}
-          path: |
-            desktop/cradle/tests/artifacts/shell-recovery
-            desktop/cradle/tests/artifacts/shell-setup
-            desktop/cradle/tests/artifacts/visuals-preferences
-            desktop/cradle/tests/artifacts/shell-evidence.json
-            desktop/cradle/walk/artifacts/ui-convergence
-      - name: Also require every process result
-        if: always()
-        env:
-          SHELL_RESULT: ${{ steps.shell.outcome }}
-          SETUP: ${{ steps.setup.outcome }}
-          VISUALS: ${{ steps.visuals.outcome }}
-        run: test "$SHELL_RESULT/$SETUP/$VISUALS" = success/success/success
+          name: w1-reconciliation-sources-${{ github.run_id }}
+          path: /tmp/w1-reconcile
+          retention-days: 3
+          compression-level: 0
