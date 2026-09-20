@@ -69,6 +69,11 @@ mod unix {
             while live.load(Ordering::Acquire) {
                 match listener.accept() {
                     Ok((mut stream, _)) => {
+                        // Accepted sockets inherit the listener's O_NONBLOCK on
+                        // macOS; the handler contract (read/write timeouts) is
+                        // blocking, and a nonblocking first read racing the peer
+                        // returns EAGAIN that must not be treated as fatal.
+                        let _ = stream.set_nonblocking(false);
                         let apply = apply.clone();
                         std::thread::spawn(move || {
                             let result = line(&mut stream)
