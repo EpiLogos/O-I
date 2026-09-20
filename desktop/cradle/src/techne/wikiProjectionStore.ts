@@ -56,6 +56,7 @@ export interface WikiProjectionSelection {
   expressionRef: string | null;
   sceneRef: string | null;
   entityRef: string | null;
+  relationRef?: string | null;
   subjectRef: string | null;
 }
 
@@ -64,6 +65,7 @@ export interface WikiSelectionRequest {
   registerKey: string;
   sceneRef: string;
   entityRef: string | null;
+  relationRef?: string | null;
   subjectRef: string | null;
   title?: string;
   origin: "wiki-map" | "graph-navigator" | "external";
@@ -127,7 +129,8 @@ function selectionOf(registerKey: string, standing: RegisterStanding): WikiProje
     expressionRef: document.expression_ref,
     sceneRef: document.selection.scene_ref,
     entityRef: entityRef ?? null,
-    subjectRef: entity?.subject?.subject_ref ?? null,
+    relationRef: document.selection.relation_ref ?? null,
+    subjectRef: document.selection.relation_ref ? document.relations[document.selection.relation_ref]?.relation.ref ?? null : entity?.subject?.subject_ref ?? null,
   };
 }
 
@@ -267,8 +270,8 @@ const rereadGenerations = new Map<string, number>();
 /** A kernel `file_changed` receipt whose path is a register's wiki basis
  * invalidates that register's cached reading (the seam the 13-step walk
  * named): the store re-reads the local whole and re-projects, and the
- * centre's open flow stands the new generation — the projection identity is
- * content-addressed over the reading, so a changed wiki is a new generation;
+ * centre's open flow checks the source basis against the same stable identity;
+ * a changed wiki is drift, not permission to remint or overwrite composition;
  * the kernel never replaces the standing draft. The stale-while-revalidate
  * law is the files broker's own: the standing stays visible to every
  * aperture while the fresh read flies. Returns the register keys
