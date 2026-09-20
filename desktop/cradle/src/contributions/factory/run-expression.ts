@@ -60,14 +60,6 @@ const nonempty=(value:unknown):value is string=>typeof value==="string"&&value.t
 const revision=(value:unknown):value is number=>typeof value==="number"&&Number.isSafeInteger(value)&&value>=0;
 const rr=(ref:string,rev:string,availability:ReadingRef["availability"]="available"):ReadingRef=>({ref,revision:rev,availability});
 
-/** Lossless UTF-16 encoding, not punctuation replacement or a hash.
- * Kind namespaces also separate a node called "run" from the root Being,
- * and separate attempts from nodes with the same native spelling. */
-export function runExpressionEntityRef(expressionRef:string,kind:string,nativeRef:string):string {
-  const encoded=Array.from({length:nativeRef.length},(_,i)=>nativeRef.charCodeAt(i).toString(16).padStart(4,"0")).join("");
-  return `${expressionRef}:entity:${kind}-${encoded}`;
-}
-
 /** Refuse a mismatched read occasion, not a legitimately historical source.
  * sourceCurrent=false is retained and rendered; it is NOT permission to run
  * against a newly substituted source. Legacy missing provenance is unknown. */
@@ -114,8 +106,15 @@ export function composeRunExpression(inputs:RunExpressionInputs,expressionRef:st
   const entities:Record<string,Entity>={}; const relations:Record<string,Relation>={}; const scenes:Scene[]=[];
   const root=`${expressionRef}:entity:run`;
   const basis=[rr(run.contract,String(run.revision)),...(attempt?[rr(attempt.contract,String(attempt.revision))]:[])];
+  // Local addresses are not native identities. A collision-free tuple map
+  // allocates bounded ordinal addresses even for long native refs (the
+  // shared kernel caps each local suffix at 128 bytes). The complete native
+  // identity remains in subject_ref. Never infer it by decoding the address.
+  const localAddresses=new Map<string,string>();
   const add=(kind:string,key:string,title:string,subject:SubjectBinding):string=>{
-    const ref=runExpressionEntityRef(expressionRef,kind,key);
+    const tuple=JSON.stringify([kind,key]);
+    const ref=localAddresses.get(tuple)??`${expressionRef}:entity:${kind}-${localAddresses.size}`;
+    localAddresses.set(tuple,ref);
     entities[ref]={entity_ref:ref,revision:1,title,subject,parameters:{}};return ref;
   };
   const subject=(ref:string,owner="software-factory",readings:ReadingRef[]=[]):SubjectBinding=>({subject_ref:ref,native_owner:owner,presentation_role:"thing",sources:[],readings,actions:[]});
