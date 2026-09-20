@@ -14,6 +14,8 @@ jobs:
   joined:
     runs-on: ubuntu-latest
     timeout-minutes: 30
+    env:
+      PLAYWRIGHT_BROWSERS_PATH: ${{ runner.temp }}/w2-browser-engines
     steps:
       - uses: actions/checkout@v4
         with:
@@ -61,11 +63,11 @@ jobs:
       - name: Targeted Central behavioural regressions
         if: always() && steps.deps.outcome == 'success'
         working-directory: desktop/cradle
-        run: node --import ./tests/ts-register.mjs --test tests/central-ground.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/central-node.log"
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/central-ground.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/central-node.log"
       - name: Existing repository Node regressions
         if: always() && steps.deps.outcome == 'success'
         working-directory: desktop/cradle
-        run: node --import ./tests/ts-register.mjs --test tests/*.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/all-node.log"
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/*.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/all-node.log"
       - name: Install real browser engines
         id: browsers
         if: always() && steps.deps.outcome == 'success'
