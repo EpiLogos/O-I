@@ -4,12 +4,23 @@ import type {SurfaceBinding} from '../surface/types';
 import {registerPageObservation} from '../context/ComponentSelection';
 import {knowledge} from './client';
 import {wikiDocument,nodeText,occurrenceFor,resolveWikiAnchor,safeExternalLink,sourceSlice,type MarkdownNode,type WikiAnchor,type WikiNavigate,type WikiOccurrence} from './wikiDocument';
+import {WikiSourceTools} from './WikiSourceTools';
 import './wikiReader.css';
 
 type Props = {reading:KnowledgeReading;onNavigate?:WikiNavigate;anchor?:WikiAnchor;transport?:KernelTransportStatus;project?:string;binding?:SurfaceBinding;onSelectSource?:(reading:KnowledgeReading,anchor:WikiAnchor)=>void};
 /** One reader for the native Markdown facet. No parser, resolver, raw HTML
  * injection, source write or ambient Agent disclosure lives in this component. */
-export function WikiReader({reading,onNavigate,anchor,transport,project,binding,onSelectSource}:Props) {
+export function WikiReader(props:Props) {
+  const [revalidated,setRevalidated]=useState<KnowledgeReading>();
+  const {onNavigate,anchor,transport,project,binding,onSelectSource}=props;
+  const reading=revalidated?.resource===props.reading.resource&&revalidated.revision!==props.reading.revision?revalidated:props.reading;
+  useEffect(()=>setRevalidated(undefined),[props.reading]);
+  const reread=async()=>{
+    if(!transport)return;
+    const current=await knowledge<KnowledgeReading>(transport,project,{action:'read',address:{kind:'source',value:props.reading.resource}},{fresh:true});
+    if(current.resource!==props.reading.resource)throw new Error('Source refresh returned a different identity.');
+    setRevalidated(current);
+  };
   const root=useRef<HTMLDivElement>(null),prefix=useId().replace(/:/g,'');
   const [notice,setNotice]=useState<string>(),[preview,setPreview]=useState<{occurrence:WikiOccurrence;reading?:KnowledgeReading;error?:string}>();
   const [selection,setSelection]=useState<{text:string;start:number;end:number;bounds:DOMRect}>();
@@ -41,20 +52,24 @@ export function WikiReader({reading,onNavigate,anchor,transport,project,binding,
     const selected=window.getSelection();if(!selected?.rangeCount||selected.isCollapsed||!root.current){setSelection(undefined);return;}
     const range=selected.getRangeAt(0),text=selected.toString().trim();
     if(!text||text.length>12000||!root.current.contains(range.commonAncestorContainer)){setSelection(undefined);return;}
-    const element=range.commonAncestorContainer instanceof Element?range.commonAncestorContainer:range.commonAncestorContainer.parentElement;
-    const block=element?.closest<HTMLElement>('[data-wiki-start]');
-    if(!block||!root.current.contains(block)){setSelection(undefined);return;}
-    setSelection({text,start:Number(block.dataset.wikiStart),end:Number(block.dataset.wikiEnd),bounds:range.getBoundingClientRect()});
+    const nearest=(node:Node)=>(node instanceof Element?node:node.parentElement)?.closest<HTMLElement>('[data-wiki-start]');
+    const first=nearest(range.startContainer),last=nearest(range.endContainer);
+    if(!first||!last||!root.current.contains(first)||!root.current.contains(last)){setSelection(undefined);return;}
+    // Native enclosing spans plus the rendered quote, not invented UTF-16
+    // character offsets into Markdown. Multi-paragraph selections stay usable.
+    const start=Math.min(Number(first.dataset.wikiStart),Number(last.dataset.wikiStart));
+    const end=Math.max(Number(first.dataset.wikiEnd),Number(last.dataset.wikiEnd));
+    setSelection({text,start,end,bounds:range.getBoundingClientRect()});
   };
   const addContext=()=>{
-    if(!selection||!transport||!binding||!document)return;
+    if(!selection||!transport||!binding||!document||!reading.revision)return;
     const chosen=selection,basis=reading;
     const raw=sourceSlice(basis.content??'',chosen.start,chosen.end);
     const observationKey=registerPageObservation(chosen.text,async()=>{
       const current=await knowledge<KnowledgeReading>(transport,project,{action:'read',address:{kind:'source',value:basis.resource}},{fresh:true});
-      return current.revision===basis.revision&&sourceSlice(current.content??'',chosen.start,chosen.end)===raw;
+      return current.resource===basis.resource&&current.revision===basis.revision&&sourceSlice(current.content??'',chosen.start,chosen.end)===raw;
     });
-    window.dispatchEvent(new CustomEvent('oi:context-candidate',{detail:{bindingId:binding.id,kind:'element',documentId:`wiki:${reading.resource}@${reading.revision??'unknown'}`,nodeRef:reading.resource,workingCopy:false,text:chosen.text,sourceRef:reading.resource,revision:reading.revision,observationKey,selector:`markdown:bytes:${chosen.start}-${chosen.end}; quote=${JSON.stringify(chosen.text)}`,role:'text',bounds:{x:chosen.bounds.x,y:chosen.bounds.y,width:chosen.bounds.width,height:chosen.bounds.height}}}));
+    window.dispatchEvent(new CustomEvent('oi:context-candidate',{detail:{bindingId:binding.id,kind:'element',documentId:`wiki:${reading.resource}@${reading.revision}`,nodeRef:reading.resource,workingCopy:false,text:chosen.text,sourceRef:reading.resource,revision:reading.revision,observationKey,selector:`markdown:bytes:${chosen.start}-${chosen.end}; quote=${JSON.stringify(chosen.text)}`,role:'text',bounds:{x:chosen.bounds.x,y:chosen.bounds.y,width:chosen.bounds.width,height:chosen.bounds.height}}}));
     setSelection(undefined);
   };
   const render=(node:MarkdownNode,index:number,inHead=false):ReactNode=>{
@@ -102,10 +117,11 @@ export function WikiReader({reading,onNavigate,anchor,transport,project,binding,
       {document.selectors.some(item=>item.kind==='heading')&&<details><summary>On this page</summary><nav aria-label="Page outline">{document.selectors.filter(item=>item.kind==='heading').map(item=><a key={item.id} href={`#${prefixId(item.id)}`} onClick={event=>{event.preventDefault();root.current?.querySelector<HTMLElement>(`[data-wiki-anchor="${CSS.escape(item.id)}"]`)?.scrollIntoView({block:'start'});}}>{item.keys[0]}</a>)}</nav></details>}
       {document.syntax.tags?.length>0&&<div aria-label="Source tags" className="wiki-tags">{document.syntax.tags.map(tag=><span key={tag}>#{tag}</span>)}</div>}
     </div>
+    {binding&&transport&&<WikiSourceTools key={reading.resource} reading={reading} binding={binding} onReturn={reread}/>}
     {notice&&<p role="status">{notice}</p>}
     {document.syntax.warnings?.map((warning,index)=><p role="status" key={index}>{warning}</p>)}
     <div className="wiki-prose">{document.syntax.blocks.map((node,i)=>render(node,i))}</div>
-    {selection&&<div className="wiki-selection-tools" role="toolbar" aria-label="Selected passage"><span>{selection.text.slice(0,72)}</span>{binding&&transport&&<button type="button" className="oi-action" onMouseDown={event=>event.preventDefault()} onClick={addContext}>Add to Context</button>}{onSelectSource&&<button type="button" className="oi-action" onClick={()=>{onSelectSource(reading,{revision:reading.revision,start_byte:selection.start,end_byte:selection.end});setSelection(undefined);}}>Add to constellation</button>}</div>}
+    {selection&&<div className="wiki-selection-tools" role="toolbar" aria-label="Selected passage"><span>{selection.text.slice(0,72)}</span>{binding&&transport&&<button type="button" className="oi-action" disabled={!reading.revision} title={!reading.revision?'The owner must supply a source revision before context disclosure':undefined} onMouseDown={event=>event.preventDefault()} onClick={addContext}>Add to Context</button>}{onSelectSource&&<button type="button" className="oi-action" disabled={!reading.revision} onClick={()=>{onSelectSource(reading,{revision:reading.revision,start_byte:selection.start,end_byte:selection.end});setSelection(undefined);}}>Add to constellation</button>}</div>}
     {preview&&<aside className="wiki-link-preview" aria-label="Link preview"><header><strong>{preview.reading?.resource??preview.occurrence.target?.value}</strong><button type="button" className="oi-tool" aria-label="Close link preview" onClick={()=>{request.current?.abort();setPreview(undefined);}}>×</button></header>{preview.error?<p role="status">{preview.error}</p>:preview.reading?<p>{preview.reading.content?.slice(0,800)??'No source body was returned.'}</p>:<p role="status">Reading linked source…</p>}<button type="button" className="oi-action" onClick={()=>follow(preview.occurrence,preview.reading?.resource??'Linked source')}>Open linked source</button></aside>}
     <details className="wiki-backlinks" open><summary>Backlinks · {document.incoming.length}</summary>{document.incoming.map((item,index)=><div key={item.reference??`${item.from}:${index}`}><button type="button" className="oi-action" onClick={()=>onNavigate?.(item.address,item.label,{revision:item.evidence.source_revision,start_byte:item.evidence.anchor?.start_byte,end_byte:item.evidence.anchor?.end_byte})}>{item.label}</button><blockquote>{item.evidence.raw_token??item.relation}</blockquote></div>)}{!document.incoming.length&&<p>{document.relations_available?'No backlinks in this reading.':'Backlinks are unavailable from this owner reading.'}</p>}{document.relations_truncated&&<p role="status">The native relation reading is bounded; further backlinks may exist.</p>}</details>
   </div>;
