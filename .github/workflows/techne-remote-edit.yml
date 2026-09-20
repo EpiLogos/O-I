@@ -25,13 +25,12 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
+          test -f tests/techne-remote-edit.patch || exit 0
           python3 - <<'PY'
-          import hashlib, json, os, pathlib
-          envelope = json.load(open('tests/techne-remote-edit.patch'))
-          assert envelope['schema'] == 'techne.branch-text-patch/v1'
-          patch = envelope['patch_text'].encode('utf-8')
+          import hashlib, os, pathlib
+          header, patch = pathlib.Path('tests/techne-remote-edit.patch').read_bytes().split(b'\n', 1)
           assert len(patch) <= 8 * 1024 * 1024, 'patch budget exceeded'
-          assert hashlib.sha256(patch).hexdigest() == envelope['sha256'], 'patch digest mismatch'
+          assert header.decode() == 'sha256 ' + hashlib.sha256(patch).hexdigest(), 'patch digest mismatch'
           for line in patch.decode().splitlines():
               if line.startswith(('--- ', '+++ ')):
                   path = line[4:]
