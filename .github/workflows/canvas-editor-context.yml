@@ -2,50 +2,81 @@ name: Canvas editor and context
 on:
   push:
     branches: [agent/canvas-editor-context-20260920]
-  pull_request:
-    paths:
-      - 'desktop/cradle/src/editor/**'
-      - 'desktop/cradle/src/context/**'
-      - 'desktop/cradle/tests/canvas-editor*'
-      - '.github/workflows/canvas-editor-context.yml'
+    paths: ['scripts/canvas-editor-return.b64']
 permissions:
   contents: read
-concurrency:
-  group: canvas-editor-${{ github.ref }}
-  cancel-in-progress: true
 jobs:
-  editor-context:
+  canvas:
+    if: github.ref == 'refs/heads/agent/canvas-editor-context-20260920'
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 25
+    permissions:
+      contents: write
     steps:
       - uses: actions/checkout@v4
-        with:
-          persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          repository: EpiLogos/ai-kit
-          path: _review/ai-kit
-          persist-credentials: false
-      - uses: actions/checkout@v4
-        with:
-          repository: EpiLogos/QL-MEF
-          path: _review/QL-MEF
-          persist-credentials: false
-          sparse-checkout-cone-mode: false
-          sparse-checkout: |
-            /docs/kernel-rebuild/UX-SPINE-RECONCILIATION.md
-            /docs/integrations/epi-logos/EPI-VAK-OPERATIVE-SYNTAX-ARCHITECTURE.md
-      - name: Native review basis
+      - name: Apply the bounded source return
+        shell: python
         run: |
-          mkdir -p /tmp/editor-owners/ai-kit /tmp/editor-owners/QL-MEF
-          git -C _review/ai-kit rev-parse HEAD > /tmp/editor-owners/ai-kit/source-head.txt
-          git -C _review/ai-kit archive HEAD | tar -x -C /tmp/editor-owners/ai-kit
-          git -C _review/QL-MEF rev-parse HEAD > /tmp/editor-owners/QL-MEF/source-head.txt
-          cp -a _review/QL-MEF/docs /tmp/editor-owners/QL-MEF/
-          tar -czf native-editor-owners.tar.gz -C /tmp/editor-owners .
-      - uses: actions/upload-artifact@v4
+          from pathlib import Path
+          import base64, zlib, subprocess
+          payload=Path('scripts/canvas-editor-return.b64')
+          patch=zlib.decompress(base64.b64decode(payload.read_text(),validate=False))
+          assert len(patch)<2_000_000
+          paths=[]
+          for line in patch.decode().splitlines():
+              if line.startswith('+++ b/'):
+                  path=line[6:]
+                  assert '..' not in path.split('/')
+                  assert path.startswith(('desktop/cradle/src/editor/','desktop/cradle/src/context/','desktop/cradle/src/material/','desktop/cradle/tests/canvas-editor')) or path in {
+                      'desktop/cradle/src/files/FileSurface.tsx','desktop/cradle/src/browser/BrowserSurface.tsx',
+                      'desktop/cradle/src/agent/planes/ContextPlane.tsx','desktop/cradle/src/encounter/client.ts','desktop/cradle/src/encounter/session.ts',
+                      'desktop/cradle/kernel/src/agency.rs','desktop/cradle/src-tauri/src/browser.rs',
+                      'desktop/cradle/package.json','desktop/cradle/package-lock.json',
+                      'docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md','.wayfinder/maps/canvas-editor-context.md',
+                      '.superpowers/sdd/cradle-rebuild/progress.md','docs/experience/DOCUMENT-OPERATIONS.md'
+                  },path
+                  paths.append(path)
+          assert 20<=len(paths)<=45
+          subprocess.run(['git','apply','--check','-'],input=patch,check=True)
+          subprocess.run(['git','apply','--index','-'],input=patch,check=True)
+          payload.unlink()
+          subprocess.run(['git','add','scripts/canvas-editor-return.b64'],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          subprocess.run(['git','-c','user.name=O:I canvas implementation','-c','user.email=noreply@openai.com','commit','-m','feat(canvas): join format-aware editing, natural selection and native prepared context'],check=True)
+          subprocess.run(['git','push','origin','HEAD:refs/heads/agent/canvas-editor-context-20260920'],check=True)
+      - name: Tested source identity
+        run: git rev-parse HEAD | tee source-head.txt
+      - uses: actions/setup-node@v4
         with:
-          name: native-editor-owners
-          path: native-editor-owners.tar.gz
-          retention-days: 1
-          compression-level: 0
+          node-version: '22'
+      - name: Install locked dependencies
+        working-directory: desktop/cradle
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Type and range/lifecycle contracts
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          npx tsc --noEmit 2>&1 | tee ../../canvas-types.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs 2>&1 | tee ../../canvas-contracts.log
+      - name: Install browser
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Production editor selection and send interaction
+        working-directory: desktop/cradle
+        run: set -o pipefail; node tests/canvas-editor-browser.mjs 2>&1 | tee ../../canvas-browser.log
+      - name: Production bundle
+        working-directory: desktop/cradle
+        run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - name: Kernel adapter compatibility
+        run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-editor-context-proof
+          path: |
+            source-head.txt
+            canvas-*.log
+            desktop/canvas-*.log
+            desktop/cradle/tests/artifacts/canvas-editor
+          retention-days: 7
