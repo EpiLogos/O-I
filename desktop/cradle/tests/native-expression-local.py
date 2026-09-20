@@ -8,6 +8,7 @@ namespace. This is not the installed WKWebView, audible speaker or Nara voice pr
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -76,6 +77,59 @@ def run_isolated(args, *, cwd, env, stdout, timeout=180):
                 signal.signal(sig, handler)
 
 
+def verify_joined_receipt(path, files):
+    """Bind a successful child result to its complete, exact input/binary record.
+
+    This validates the result of the behavioural test; it is not independent
+    acceptance or installed-device proof. Never infer success from exit zero.
+    """
+    limit = 16 * 1024 * 1024
+    if path.is_symlink() or not path.is_file():
+        raise ValueError('Browser acceptance receipt is missing or not a regular file')
+    with path.open('rb') as source:
+        raw = source.read(limit + 1)
+    if len(raw) > limit:
+        raise ValueError('Browser acceptance receipt exceeds the 16 MiB evidence bound')
+
+    def unique_object(pairs):
+        value = {}
+        for key, item in pairs:
+            if key in value:
+                raise ValueError('Duplicate key in browser acceptance receipt: ' + key)
+            value[key] = item
+        return value
+
+    def invalid_constant(value):
+        raise ValueError('Nonfinite value in browser acceptance receipt: ' + value)
+
+    def finite_float(value):
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError('Overflowed number in browser acceptance receipt: ' + value)
+        return result
+
+    reading = json.loads(raw, object_pairs_hook=unique_object,
+                         parse_constant=invalid_constant, parse_float=finite_float)
+    if not isinstance(reading, dict) or reading.get('schema') != 'oi.native-expression-joined-browser/v1':
+        raise ValueError('Unsupported browser acceptance receipt schema')
+    if reading.get('pass') is not True or 'failure' in reading:
+        raise ValueError('Browser receipt does not report unambiguous success')
+    checks = reading.get('checks')
+    if not isinstance(checks, list) or not checks or any(not isinstance(c, str) or not c.strip() for c in checks):
+        raise ValueError('Browser acceptance receipt omits its executed checks')
+    requests = reading.get('requests', {})
+    if not isinstance(requests, dict) or any(type(requests.get(k)) is not int or requests[k] != 1 for k in ('opens', 'closes')):
+        raise ValueError('Browser acceptance did not complete one native open and close')
+    if set(files) != {'host', 'worker', 'bridge', 'input'} or reading.get('sources') != files:
+        raise ValueError('Browser receipt uses different native binaries or coupled input')
+    for name, record in files.items():
+        if digest(Path(record['path'])) != record['sha256']:
+            raise ValueError(name + ' changed during browser acceptance')
+    return {'path': str(path), 'sha256': hashlib.sha256(raw).hexdigest(),
+            'schema': reading['schema'], 'checks': len(checks),
+            'standing': 'child behavioural result verified; not independent or installed acceptance'}
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--expected-head', required=True)
@@ -123,10 +177,21 @@ def main():
             with (args.output / 'browser-run.log').open('w') as log:
                 returncode = run_isolated([node, 'tests/native-expression-native-browser.mjs'],
                                           cwd=root / 'desktop/cradle', env=env, stdout=log)
-            code = 0 if returncode == 0 else 1
-            report['status'] = 'isolated-native-browser-passed' if code == 0 else 'failed'
+            report['checks']['browser_process'] = {'code': returncode}
             report['claims']['controlled_central_disclosure'] = True
-            report['claims']['installed_app'] = False
+            if returncode != 0:
+                raise ValueError(f'Isolated browser acceptance exited with code {returncode}')
+            report['checks']['browser_receipt'] = verify_joined_receipt(
+                args.output / 'browser/joined.json', report['files'])
+            # A valid result for a source changed while running is not this cut's proof.
+            final_head = run(['git', 'rev-parse', 'HEAD'], root)
+            final_dirty = run(['git', 'status', '--porcelain', '--untracked-files=no'], root)
+            report['checks']['head_after'] = final_head
+            report['checks']['working_copy_after'] = final_dirty
+            if final_head['code'] or final_head['stdout'].strip() != args.expected_head or final_dirty['code'] or final_dirty['stdout'].strip():
+                raise ValueError('Source changed during browser acceptance; result retained, not promoted')
+            code = 0
+            report['status'] = 'isolated-native-browser-passed'
         else:
             report['pending'] = 'Preflight only. --run-browser-join explicitly starts owned native/browser test processes. No install or device access occurred.'
     except KeyboardInterrupt as error:

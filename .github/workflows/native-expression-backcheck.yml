@@ -64,6 +64,7 @@ jobs:
           set -o pipefail
           mkdir -p /tmp/w5-checks
           (cd desktop/cradle && python3 tests/native-expression-local.test.py) 2>&1 | tee /tmp/w5-checks/local-packet.log
+          (cd desktop/cradle && python3 tests/native-expression-receipt.test.py) 2>&1 | tee /tmp/w5-checks/local-receipt-admission.log
           (cd desktop/cradle && node --test tests/native-expression.test.mjs) 2>&1 | tee /tmp/w5-checks/native-expression.log
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
@@ -122,18 +123,22 @@ jobs:
         run: |
           set -o pipefail
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test native_expression_owner -- --ignored --nocapture 2>&1 | tee /tmp/w5-checks/native/manager.log
-      - name: Complete real native producer to the embedded browser stage
+      - name: Complete real native producer through the shipped local acceptance packet
         if: always()
         env:
           NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
           OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/release/ql-field-host
           OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
           NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
-          NATIVE_EXPRESSION_OUT: /tmp/w5-checks/native-browser
         run: |
           set -o pipefail
           cd desktop/cradle
-          node tests/native-expression-native-browser.mjs 2>&1 | tee /tmp/w5-checks/native-browser.log
+          python3 tests/native-expression-local.py \
+            --expected-head "$(git rev-parse HEAD)" \
+            --host "$OI_QL_FIELD_HOST_BIN" --worker "$OI_QL_FIELD_WORKER_BIN" \
+            --bridge "$NATIVE_EXPRESSION_BRIDGE" --input "$NATIVE_EXPRESSION_INPUT" \
+            --output /tmp/w5-checks/local-join --run-browser-join \
+            2>&1 | tee /tmp/w5-checks/native-browser.log
       - name: Exact source and toolchain receipt
         if: always()
         run: |
