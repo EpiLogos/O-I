@@ -1,0 +1,67 @@
+name: Factory native receiver
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/contributions/factory/**'
+      - 'desktop/cradle/tests/factory-run-*'
+      - 'desktop/cradle/walk/factory-run-*'
+      - 'desktop/cradle/kernel/examples/factory_run_receiving_probe.rs'
+      - '.github/workflows/factory-native-receiver.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: factory-native-receiver-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  browser:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Locked production web build
+        run: |
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          npm --prefix desktop/cradle run build
+      - name: Real browser engines
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Production Factory receiver contracts in Chromium and WebKit
+        working-directory: desktop/cradle
+        run: node tests/factory-run-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-receiver-browser-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/factory-run
+          if-no-files-found: warn
+  native-socket:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/kernel
+      - name: TypeScript source through the actual native Kernel and Unix socket
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          mkdir -p tests/artifacts/factory-run
+          node --experimental-strip-types --import ./tests/ts-register.mjs tests/factory-run-emit.mjs > tests/artifacts/factory-run/native-document.json
+          cargo run --manifest-path kernel/Cargo.toml --example factory_run_receiving_probe < tests/artifacts/factory-run/native-document.json | tee tests/artifacts/factory-run/native-socket.json
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: factory-native-socket-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/factory-run
+          if-no-files-found: error
