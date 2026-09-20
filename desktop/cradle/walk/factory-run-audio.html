@@ -1,0 +1,23 @@
+<!doctype html><html lang="en"><meta charset="utf-8"><meta name="viewport" content="width=device-width"><title>Factory local audio acceptance</title>
+<style>body{font:17px system-ui;max-width:52rem;margin:3rem auto;padding:0 1rem;line-height:1.5}button,input{font:inherit;padding:.6rem;margin:.3rem}pre{white-space:pre-wrap;overflow-wrap:anywhere}button:disabled{opacity:.5}</style>
+<h1>Local microphone and playback check</h1><p>This page asks for audio access only after a click. It does not record, upload or dispatch work. A browser permission result is not proof of native Agency or self-inhabitation.</p>
+<label>Actual Run reference <input id="run" autocomplete="off" placeholder="Copy the existing native Run ref"></label>
+<p>Use this in the installed O:I WebView under test. Keep the socket/process receipt beside this observation; a JavaScript host flag alone does not prove installation.</p>
+<button id="capture">Check microphone for four seconds</button><button id="play">Play a quiet test tone</button><button id="heard" disabled>I heard the test tone</button><button id="save">Export observations</button><pre id="result" role="status"></pre>
+<script type="module">
+const observations=[];const result=document.querySelector('#result');
+const append=value=>{observations.push({...value,at:new Date().toISOString()});result.textContent=JSON.stringify(observations,null,2);};
+const identify=()=>{const runRef=document.querySelector('#run').value.trim();if(!runRef)throw new Error('Enter the existing native Run reference first');return runRef;};
+document.querySelector('#capture').onclick=async event=>{
+  let stream,context;event.target.disabled=true;
+  try{const runRef=identify();stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});context=new AudioContext();await context.resume();
+    const source=context.createMediaStreamSource(stream);const analyser=context.createAnalyser();analyser.fftSize=2048;source.connect(analyser);const samples=new Float32Array(analyser.fftSize);let peak=0,frames=0;const until=performance.now()+4000;
+    while(performance.now()<until){analyser.getFloatTimeDomainData(samples);const rms=Math.sqrt(samples.reduce((sum,x)=>sum+x*x,0)/samples.length);peak=Math.max(peak,rms);frames++;await new Promise(resolve=>setTimeout(resolve,50));}
+    append({kind:'microphone',runRef,permission:'granted',frames,peakRms:peak,nonSilentSignalObserved:peak>0.0001,standing:'local-signal-observation-only'});
+  }catch(error){append({kind:'microphone',outcome:'failed-or-denied',name:error.name,message:error.message});}
+  finally{stream?.getTracks().forEach(track=>track.stop());if(context)await context.close();event.target.disabled=false;}
+};
+document.querySelector('#play').onclick=async()=>{let context;try{const runRef=identify();context=new AudioContext();await context.resume();const oscillator=context.createOscillator(),gain=context.createGain();oscillator.frequency.value=440;gain.gain.value=0.035;oscillator.connect(gain).connect(context.destination);oscillator.start();await new Promise(resolve=>setTimeout(resolve,700));oscillator.stop();append({kind:'playback-request',runRef,contextState:context.state,heard:'not-yet-confirmed'});document.querySelector('#heard').disabled=false;}catch(error){append({kind:'playback-request',outcome:'failed',message:error.message});}finally{if(context)await context.close();}};
+document.querySelector('#heard').onclick=event=>{try{append({kind:'playback-human-observation',runRef:identify(),heard:true,standing:'operator-reported'});event.target.disabled=true;}catch(error){append({kind:'input-error',message:error.message});}};
+document.querySelector('#save').onclick=()=>{try{const receipt={schema:'oi.factory-local-audio/v1',runRef:identify(),userAgent:navigator.userAgent,secureContext:isSecureContext,tauriMarkerObserved:Boolean(window.__TAURI_INTERNALS__),standing:'local-audio-observations-not-native-dispatch',observations,selfInhabitation:false};const url=URL.createObjectURL(new Blob([JSON.stringify(receipt,null,2)+'\n'],{type:'application/json'}));const link=document.createElement('a');link.href=url;link.download='factory-audio-observations.json';link.click();setTimeout(()=>URL.revokeObjectURL(url),1000);}catch(error){append({kind:'input-error',message:error.message});}};
+</script></html>

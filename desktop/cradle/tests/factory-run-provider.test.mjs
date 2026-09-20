@@ -1,0 +1,15 @@
+import test from 'node:test';
+import assert from 'node:assert/strict';
+import http from 'node:http';
+import {once} from 'node:events';
+import {mkdtemp,readFile,rm} from 'node:fs/promises';
+import {spawn} from 'node:child_process';
+import {tmpdir} from 'node:os';
+import {join} from 'node:path';
+async function fixture(t,reply){const dir=await mkdtemp(join(tmpdir(),'factory-provider-'));let count=0;const server=http.createServer(async(req,res)=>{count++;const chunks=[];for await(const c of req)chunks.push(c);const request=JSON.parse(Buffer.concat(chunks));reply(request,res);});server.listen(0,'127.0.0.1');await once(server,'listening');t.after(async()=>{await new Promise(resolve=>server.close(resolve));await rm(dir,{recursive:true,force:true});});return {endpoint:`http://127.0.0.1:${server.address().port}/v1/chat/completions`,path:join(dir,'receipt.json'),count:()=>count};}
+async function probe(h,args=[]){const child=spawn(process.execPath,['walk/factory-run-provider.mjs','--endpoint',h.endpoint,'--model','controlled-model','--out',h.path,...args],{stdio:['ignore','pipe','pipe']});let stdout='',stderr='';child.stdout.on('data',v=>stdout+=v);child.stderr.on('data',v=>stderr+=v);const [exit]=await once(child,'close');const receipt=await readFile(h.path,'utf8').then(JSON.parse).catch(()=>null);return {exit,stdout,stderr,receipt};}
+test('provider packet verifies a fresh bounded reply and explicitly does not certify Factory execution',async t=>{const h=await fixture(t,(request,res)=>{assert.equal(request.max_tokens,32);const nonce=request.messages[0].content.split(': ').at(-1);res.end(JSON.stringify({model:'controlled-model-version',choices:[{message:{content:nonce},finish_reason:'stop'}],usage:{completion_tokens:8}}));});const result=await probe(h);assert.equal(result.exit,0);assert.equal(result.receipt.outcome,'readiness-pass');assert.equal(result.receipt.selfInhabitation,false);assert.equal(h.count(),1);});
+test('denied provider is a failed receipt, not a missing result normalised to success',async t=>{const h=await fixture(t,(_request,res)=>{res.statusCode=403;res.end('{"error":"denied"}');});const result=await probe(h);assert.equal(result.exit,1);assert.equal(result.receipt.httpStatus,403);assert.equal(result.receipt.outcome,'failed');assert.equal(h.count(),1);});
+test('unrelated provider output cannot satisfy readiness',async t=>{const h=await fixture(t,(_request,res)=>res.end('{"choices":[{"message":{"content":"cached unrelated answer"}}]}'));const result=await probe(h);assert.equal(result.exit,1);assert.match(result.receipt.error,/fresh requested nonce/);});
+test('missing requested credentials never send an unauthorised fallback request',async t=>{const h=await fixture(t,(_request,res)=>res.end('{}'));const result=await probe(h,['--token-env','OI_FACTORY_TEST_UNSET_TOKEN_921784']);assert.notEqual(result.exit,0);assert.equal(result.receipt,null);assert.equal(h.count(),0);});
+test('non-JSON provider errors are bounded failed receipts',async t=>{const h=await fixture(t,(_request,res)=>res.end('not json'));const result=await probe(h);assert.equal(result.exit,1);assert.match(result.receipt.error,/non-JSON/);});

@@ -4,4 +4,5 @@ import {composeRunExpression} from '../src/contributions/factory/run-expression.
 const data=readings();
 data.units.units[0].workflowUnitRef='workflow-unit:'+ 'x'.repeat(250);
 data.attempt.attempts[0].workflowUnitRef=data.units.units[0].workflowUnitRef;
+data.attempt.attempts[0].readableReturn.summary='Original failure\n'+'🧭'.repeat(1400);
 console.log(JSON.stringify(composeRunExpression(data,'expression:native-factory-receiving')));

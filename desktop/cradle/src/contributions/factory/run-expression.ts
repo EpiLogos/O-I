@@ -1,6 +1,7 @@
 import type {ExpressionDocument, Entity, ReadingRef, Relation, Scene, SubjectBinding} from "../../expression/types";
 import type {KernelTransportStatus} from "../../kernel/types";
 import {developmentRead, attemptRead} from "./development";
+import {nativeRunDisplayTitle} from "./run-expression-display";
 
 /** A projection of the existing native Run, never a second Run store.
  * Field spellings follow Factory developmental_read.rs / attempt_runtime.rs.
@@ -115,7 +116,7 @@ export function composeRunExpression(inputs:RunExpressionInputs,expressionRef:st
     const tuple=JSON.stringify([kind,key]);
     const ref=localAddresses.get(tuple)??`${expressionRef}:entity:${kind}-${localAddresses.size}`;
     localAddresses.set(tuple,ref);
-    entities[ref]={entity_ref:ref,revision:1,title,subject,parameters:{}};return ref;
+    entities[ref]={entity_ref:ref,revision:1,title:nativeRunDisplayTitle(title),subject,parameters:{}};return ref;
   };
   const subject=(ref:string,owner="software-factory",readings:ReadingRef[]=[]):SubjectBinding=>({subject_ref:ref,native_owner:owner,presentation_role:"thing",sources:[],readings,actions:[]});
   const link=(from:string,to:string,relation:string,key:string)=>{
@@ -130,7 +131,7 @@ export function composeRunExpression(inputs:RunExpressionInputs,expressionRef:st
     const key=String(nextLink++);const to=add("reference",key,`${role}: ${ref}`,subject(ref,owner,[rr(ref,rev)]));
     link(from,to,`factory.correlation/${role}`,`correlation-${key}`);return to;
   };
-  entities[root]={entity_ref:root,revision:1,title:run.destination||run.runRef,parameters:{},subject:{
+  entities[root]={entity_ref:root,revision:1,title:nativeRunDisplayTitle(run.destination||run.runRef),parameters:{},subject:{
     ...subject(run.runRef,"software-factory",basis),presentation_role:"being",
     sources:[rr(`file:${statePath}`,`run:${run.revision}`)],
     actions:(run.actions??[]).filter(a=>!a.subjectKinds||a.subjectKinds.includes("run")).map(a=>({action_ref:a.actionRef,target_ref:run.runRef,authority_requirement:`${a.authorityOwner}${a.requiredCapabilityRef?` ${a.requiredCapabilityRef}`:""} — native authority is required`})),
@@ -194,7 +195,7 @@ export function composeRunExpression(inputs:RunExpressionInputs,expressionRef:st
   scenesFor(attempts,"executions-1","Attempts — live and returned");
   scenesFor(returns,"return","Returns");
   const placed=new Set(scenes.flatMap(s=>s.entity_refs));scenesFor(Object.keys(entities).filter(ref=>!placed.has(ref)),"sources-evidence","Source and native evidence");
-  return {schema:"oi.expression/v1",expression_ref:expressionRef,revision:1,title:`Run ${run.runRef}`,scenes,entities,relations,
+  return {schema:"oi.expression/v1",expression_ref:expressionRef,revision:1,title:nativeRunDisplayTitle(`Run ${run.runRef}`),scenes,entities,relations,
     selection:{scene_ref:scenes[0].scene_ref,entity_ref:root},provenance:[rr(`file:${statePath}`,`run:${run.revision}`),...basis,rr(units.contract,String(unitRevisionOf(units)??"unreported"))],representations:[],refinements:[]};
 }
 const unitRevisionOf=(units:UnitListReading)=>units.provenance?.factoryStateRevision??units.provenance?.buildStateRevision;
