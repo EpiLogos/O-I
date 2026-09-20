@@ -1,0 +1,39 @@
+name: Agent session native
+on:
+  push:
+    branches: [agent/native-agent-session-20260920]
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/agency/**'
+      - 'desktop/cradle/tests/agent-native-*'
+      - '.github/workflows/agent-session-native.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Retain exact tracked source (no runtime or secret stores)
+        shell: bash
+        run: |
+          git rev-parse HEAD > source-revision.txt
+          python3 - <<'PY'
+          import subprocess, tarfile
+          paths = subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          roots = ('desktop/cradle/src/', 'desktop/cradle/kernel/', 'desktop/cradle/tests/', 'docs/', '.wayfinder/', '.github/')
+          with tarfile.open('agent-session-source.tar.gz','w:gz') as out:
+              out.add('source-revision.txt')
+              for path in paths:
+                  if path and (path.startswith(roots) or (path.startswith('desktop/cradle/') and path.count('/') == 2)):
+                      if path.endswith(('.md','.rs','.toml','.lock','.json','.ts','.tsx','.mjs','.js','.css','.yml','.yaml','.html','.sh','.py')):
+                          out.add(path)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-session-source
+          path: agent-session-source.tar.gz
+          retention-days: 3
