@@ -15,6 +15,7 @@ import {BrowserSpeechAudio} from "./audio";
 import {NaraRuntime,type NaraRuntimeSnapshot} from "./runtime";
 import {NaraPresentation,selectedContext} from "./presentation";
 import {readNativeSession,validateAttachment} from "./nativeDialogue";
+import {requireObject} from "./support";
 import "./nara.css";
 
 interface HeldEncounter {channel:{current:KernelTransportStatus};abort:{current:AbortController|null};runtime:NaraRuntime;presentation:NaraPresentation;source_ref:string;source_revision:string}
@@ -73,7 +74,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
       const reply=await kernelOp(channel.current,{op:"expression",request:{operation:"inspect",expression_ref:ref}});
       if(reply.error||reply.outcome?.result!=="expression"||!reply.outcome.data.document)throw new Error("Native Expression reading unavailable");
       return reply.outcome.data.document;
-    },world:request=>worldOp(channel.current,request)});
+    },world:async request=>requireObject(await worldOp(channel.current,request),"Native Expression world reply")});
     const runtime=new NaraRuntime(attachment,{call,audio:new BrowserSpeechAudio(),hold:async()=>{abort.current?.abort();await expression.hold();}});
     const next={channel,abort,runtime,presentation:expression,source_ref:source.trim(),source_revision:buffer.base_revision};
     held.set(key,next);surfaces.set(binding.id,key);setEntry(next);setPresentation(expression.state);
@@ -93,7 +94,8 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   const disclose=()=>act(async()=>{
     if(!entry)return;const current=entry.runtime.binding.context;
     const [document,selection]=await Promise.all([readExpression(current.expression_ref),worldOp(transport.current,{operation:"selection_read"})]);
-    entry.runtime.updateContext(selectedContext(current,document,selection.selection as WorldSelection|undefined));
+    const reading=requireObject(selection,"Native selection reply");
+    entry.runtime.updateContext(selectedContext(current,document,reading.selection as WorldSelection|undefined));
   });
   const openSource=(ref:string)=>act(async()=>{
     // Source navigation is explicit. It neither uploads nor adds its contents

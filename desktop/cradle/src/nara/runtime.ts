@@ -164,7 +164,8 @@ export class NaraRuntime {
     const target=this.attachment.epii;if(!target)throw new Error("A distinct native Epii session must be selected");
     const delegation=buildEpiiDelegation({delegation_ref:fresh("delegation"),context:structuredClone(this.attachment.context),epii_session_ref:target.agent_session,brief,scope_candidates:scope,delegated_at_unix_ms:Date.now()});
     const {signal,generation}=this.begin(),delivery=fresh("delivery");
-    this.currentInquiry=delegation.delegation_ref;this.state.inquiries=[...this.state.inquiries,{delegation,delivery_ref:delivery,explanation:"",enrichment:null,decision:"pending",error:null,context_basis:structuredClone(this.attachment.context)}].slice(-16);
+    const inquiry:Inquiry={delegation,delivery_ref:delivery,explanation:"",enrichment:null,decision:"pending",error:null,context_basis:structuredClone(this.attachment.context)};
+    this.currentInquiry=delegation.delegation_ref;this.state.inquiries=[...this.state.inquiries,inquiry].slice(-16);
     this.setPhase("waiting");
     try{const result=await nativeTurn({call:this.ports.call,binding:target,audience:target.agent_ref,signal,delivery_ref:delivery,
       text:JSON.stringify({delegation,return_contract:"ql.epii-enrichment/v1",instruction:"Return a source-bearing explanation. Structured proposals must use the named QL contract and exact supplied basis; do not execute changes."}),
