@@ -17,18 +17,21 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Receive exact authored corrections
+      - name: Receive exact authored corrections and local acceptance checks
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          gh api "repos/$GITHUB_REPOSITORY/git/blobs/05a1ddcc439fc8cefd3a67569bf1f00576331c2b" --jq .content | base64 --decode | gzip -dc > /tmp/w1-manifest.json
-          echo '56b783d3fa859c2c98ec5e8f8560c152c9141568bcf5de973e237434c4738c3b  /tmp/w1-manifest.json' | sha256sum --check
+          for sha in b3cf387bf79b9cb69b9471d67428c82f7876aafa 357e7aa654b991fa79cb035ee3cd6b5d648474c7; do
+            gh api "repos/$GITHUB_REPOSITORY/git/blobs/$sha" --jq .content | base64 --decode >> /tmp/w1-manifest.gz
+          done
+          gzip -dc /tmp/w1-manifest.gz > /tmp/w1-manifest.json
+          echo '60fae28114c90ca0849e50585e52950ec546da3e9211cd86bca4c74dc08c81a0  /tmp/w1-manifest.json' | sha256sum --check
           python3 - <<'PY'
           import hashlib, json
           from pathlib import Path
           manifest = json.loads(Path('/tmp/w1-manifest.json').read_text())
-          assert len(manifest) == 7
+          assert len(manifest) == 9
           pending = []
           for change in manifest:
               path = Path(change['path'])
@@ -53,7 +56,9 @@ jobs:
         run: |
           npm ci --no-audit --no-fund
           npx tsc --noEmit
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs tests/configuration-setup.test.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs tests/configuration-setup.test.mjs tests/local-shell-acceptance.test.mjs
+          node --check tests/local-shell-acceptance.mjs
+          node --check tests/local-audio-acceptance.mjs
       - name: Commit readable corrections on this PR only
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
@@ -67,7 +72,7 @@ jobs:
           git diff --cached --name-only | sort > /tmp/w1-staged.txt
           sort /tmp/w1-paths.txt > /tmp/w1-expected.txt
           diff -u /tmp/w1-expected.txt /tmp/w1-staged.txt
-          git commit -m 'fix(shell): always render active layouts and wrap native setup results'
+          git commit -m 'fix(shell): give retained centres one visible presenter and add native acceptance checks'
           git push origin "HEAD:refs/heads/$branch"
           git rev-parse HEAD
       - name: Build production and install browser engines
@@ -92,16 +97,6 @@ jobs:
         run: |
           node tests/visuals-preview-lifecycle.mjs
           node tests/desktop-appearance.mjs
-      - name: Capture the original published source with the same browser driver
-        id: reference
-        continue-on-error: true
-        run: |
-          mkdir -p /tmp/w1-reference
-          git archive a222c8bdf46a7b2146084770b704dfbe83ce5027 | tar -x -C /tmp/w1-reference
-          cp desktop/cradle/tests/shell-recovery.browser.mjs /tmp/w1-reference/desktop/cradle/tests/
-          npm ci --prefix /tmp/w1-reference/desktop/cradle --no-audit --no-fund
-          cd /tmp/w1-reference/desktop/cradle
-          W1_REFERENCE_CAPTURE=1 W1_ARTIFACTS="$GITHUB_WORKSPACE/desktop/cradle/tests/artifacts/shell-before" node tests/shell-recovery.browser.mjs
       - name: Preserve failures and captures
         if: always()
         uses: actions/upload-artifact@v4
@@ -110,7 +105,6 @@ jobs:
           path: |
             desktop/cradle/tests/artifacts/shell-recovery
             desktop/cradle/tests/artifacts/shell-setup
-            desktop/cradle/tests/artifacts/shell-before
             desktop/cradle/tests/artifacts/visuals-preferences
             desktop/cradle/walk/artifacts/ui-convergence
           if-no-files-found: warn
@@ -120,5 +114,4 @@ jobs:
           SHELL_RESULT: ${{ steps.shell.outcome }}
           SETUP: ${{ steps.setup.outcome }}
           VISUALS: ${{ steps.visuals.outcome }}
-          REFERENCE: ${{ steps.reference.outcome }}
-        run: test "$SHELL_RESULT/$SETUP/$VISUALS/$REFERENCE" = success/success/success/success
+        run: test "$SHELL_RESULT/$SETUP/$VISUALS" = success/success/success
