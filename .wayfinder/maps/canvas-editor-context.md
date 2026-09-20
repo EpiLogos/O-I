@@ -25,3 +25,10 @@ Transient selection, authored annotations, prepared context and owner-recorded d
 ## Evidence and remaining gates
 
 This is implementation work, not an acceptance claim. Append actual commands and results below. Controlled browser and native deterministic tests do not establish a real model/provider, installed Tauri/browser or human experience. Whole-source Return/inclusion and existing Day/NOW gates retain their own requirements.
+
+
+### Returned implementation and evidence
+
+Tested runtime O:I `b78a5684d3149774fcff188652b19dd571b11c9e` / AIKit `0ff20e936a3baaa4fe39f655891985a94bd07535`. Current O:I main `112bdd0` is reconciled without replacing shared-shell work. Review [O:I #441](https://github.com/EpiLogos/O-I/pull/441) after [AIKit #363](https://github.com/EpiLogos/ai-kit/pull/363).
+
+[Exact receipt](../../desktop/cradle/walk/artifacts/CANVAS-EDITOR-CONTEXT-2026-09-20.md): 31 JS contracts; 35 controlled production-component checks; 12 native context regressions; TypeScript/build; 95 kernel passes with 51 existing gated ignores; existing experience-source/compiler and ordinary AIKit conformance passed. CE1–CE5 have implementation and this bounded evidence. Installed/provider Return, physical Day/window/browser and H obligations above remain open. The existing progress ledger records the continuation and preserves historical standings.
