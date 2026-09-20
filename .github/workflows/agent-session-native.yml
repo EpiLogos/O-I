@@ -17,6 +17,19 @@ jobs:
       - uses: actions/checkout@v4
         with:
           persist-credentials: false
+      - name: Read pinned native producer sources
+        shell: bash
+        run: |
+          mkdir -p native
+          while read -r repo revision; do
+            mkdir -p "native/$repo"
+            curl --fail --silent --show-error --location "https://codeload.github.com/EpiLogos/$repo/tar.gz/$revision" | tar xz --strip-components=1 -C "native/$repo"
+            printf '%s\n' "$revision" > "native/$repo/source-revision.txt"
+          done <<'PINS'
+          Central 12ee31313e710378845baae190efc1a4b3e7ebdb
+          ai-kit 99306d858c255fa258d8cc419b314a433d3f92a4
+          Actuation 47f4fa3c184850e254ef5089696bf5fbbad907ec
+          PINS
       - name: Retain exact tracked source (no runtime or secret stores)
         shell: bash
         run: |
@@ -27,6 +40,7 @@ jobs:
           roots = ('desktop/cradle/src/', 'desktop/cradle/kernel/', 'desktop/cradle/tests/', 'docs/', '.wayfinder/', '.github/')
           with tarfile.open('agent-session-source.tar.gz','w:gz') as out:
               out.add('source-revision.txt')
+              out.add('native')
               for path in paths:
                   if path and (path.startswith(roots) or (path.startswith('desktop/cradle/') and path.count('/') == 2)):
                       if path.endswith(('.md','.rs','.toml','.lock','.json','.ts','.tsx','.mjs','.js','.css','.yml','.yaml','.html','.sh','.py')):
