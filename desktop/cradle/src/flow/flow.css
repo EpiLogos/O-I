@@ -28,6 +28,19 @@
 .flow-changed{margin-top:8px;border-top:1px dashed var(--oi-rule);padding-top:8px}
 .flow-changed-title{font-weight:500}
 
+/* Source-bound rich Flow reading; editing still uses the native document owner. */
+.flow-thread{list-style:none;padding:var(--oi-desktop-gap-lg);margin:0;display:grid;gap:var(--oi-desktop-gap-lg)}
+.flow-thread-entry>header{display:flex;gap:var(--oi-desktop-gap-sm);margin-bottom:var(--oi-desktop-gap-sm);font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2)}
+.flow-thread-body{font:var(--oi-shell-type-prose)/1.7 var(--oi-font-sans);overflow-wrap:anywhere}
+.flow-thread-body p+p{margin-top:var(--oi-desktop-gap-sm)}
+.flow-thread-body :is(ul,ol){padding-inline-start:var(--oi-desktop-gap-lg)}
+.flow-thread-body :is(pre,blockquote){padding:var(--oi-desktop-gap-sm);border-inline-start:var(--oi-shell-edge) solid var(--oi-hairline)}
+.flow-thread-body table{border-collapse:collapse}.flow-thread-body :is(th,td){border:var(--oi-shell-edge) solid var(--oi-hairline);padding:var(--oi-desktop-gap-xs)}
+.flow-thread-media img,.flow-thread-body img{max-width:100%;max-height:300px;object-fit:contain}
+.flow-thread-media,.flow-thread-notes,.flow-journal-pages{list-style:none;margin:var(--oi-desktop-gap-sm) 0;padding:0}
+.flow-thread-notes>li,.flow-thread-note-reply{padding:var(--oi-desktop-gap-sm);border-inline-start:var(--oi-shell-edge) solid var(--oi-hairline-soft)}
+.flow-journal-note{margin:var(--oi-desktop-gap-lg)}
+
 /* An opener is an activity surface, not a mandatory ontology lesson. */
 .fresh-surface .welcome-prompt p { color: var(--oi-muted-2); font-size: var(--oi-shell-type-body); line-height: 1.6; margin: 12px 0; }
 .fresh-more { margin-top: 24px; color: var(--oi-muted-2); max-width: 100%; }
