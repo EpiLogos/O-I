@@ -8,6 +8,7 @@ namespace. This is not the installed WKWebView, audible speaker or Nara voice pr
 import argparse
 import hashlib
 import json
+import math
 import os
 from pathlib import Path
 import platform
@@ -101,7 +102,14 @@ def verify_joined_receipt(path, files):
     def invalid_constant(value):
         raise ValueError('Nonfinite value in browser acceptance receipt: ' + value)
 
-    reading = json.loads(raw, object_pairs_hook=unique_object, parse_constant=invalid_constant)
+    def finite_float(value):
+        result = float(value)
+        if not math.isfinite(result):
+            raise ValueError('Overflowed number in browser acceptance receipt: ' + value)
+        return result
+
+    reading = json.loads(raw, object_pairs_hook=unique_object,
+                         parse_constant=invalid_constant, parse_float=finite_float)
     if not isinstance(reading, dict) or reading.get('schema') != 'oi.native-expression-joined-browser/v1':
         raise ValueError('Unsupported browser acceptance receipt schema')
     if reading.get('pass') is not True or 'failure' in reading:

@@ -51,7 +51,7 @@ class ReceiptAdmissionTests(unittest.TestCase):
                 executed = True
                 if not missing:
                     (output / 'browser').mkdir()
-                    (output / 'browser/joined.json').write_text(raw if raw is not None else json.dumps(joined))
+                    (output / 'browser/joined.json').write_text(raw(joined) if callable(raw) else raw if raw is not None else json.dumps(joined))
                 if change_file:
                     paths['host'].write_text('different bytes after launch')
                 return returncode
@@ -112,6 +112,11 @@ class ReceiptAdmissionTests(unittest.TestCase):
         for text in ('{', '[]', '{"pass":NaN}', '{"pass":false,"pass":true}'):
             with self.subTest(text=text):
                 self.assertEqual(self.exercise(raw=text)[0], 1)
+        # Syntactically valid JSON can overflow float() without a NaN/Infinity token.
+        for exponent in ('1e999', '-1e999'):
+            with self.subTest(overflow=exponent):
+                receipt = lambda r: json.dumps(r)[:-1] + ',"measurement":' + exponent + '}'
+                self.assertEqual(self.exercise(raw=receipt)[0], 1)
 
     def test_receipt_size_and_regular_file_boundary_are_enforced(self):
         with tempfile.TemporaryDirectory() as directory:
