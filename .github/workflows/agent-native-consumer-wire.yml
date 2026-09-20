@@ -53,7 +53,8 @@ jobs:
           s=replace(s,'  openReason?: string;','  openReason?: string;\n  model?:NativeModelState;\n  modelActions?:NativeModelActions;\n  onRefreshProviders?:()=>void;')
           s=replace(s,'const connected=!!status&&status.state!=="Disconnected";','const connected=!!status?.native_session_id&&!status.error&&["Resident","TurnInFlight","InterruptRequested"].includes(status.state);')
           s=replace(s,'No ACP provider is configured; connect one in System → Sources, then return here.','No encounter harness is configured. Configure an eligible native harness in System, then refresh here; your draft stays.')
-          s=replace(s,'      {connection.resume&&<button','      {connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}\n      {connection.resume&&<button')
+          needle='      {connection.resume&&<button className="chat-provider oi-chip"'
+          s=replace(s,needle,'      {connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}\n'+needle)
           s=replace(s,'          <span className="oi-eyebrow">Provider</span>','          {connection.model&&connection.modelActions&&<NativeModelControls state={connection.model} actions={connection.modelActions} disabled={pending||running}/>}\n          <span className="oi-eyebrow">Harness</span>')
           s=replace(s,'data-fact="disconnected">','data-fact="disconnected">\n      {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}');p.write_text(s)
           p=root/'src/agent/chat/AgentChat.tsx';s=p.read_text()
@@ -65,6 +66,9 @@ jobs:
           git -c user.name=Epii -c user.email=agent-session@users.noreply.github.com commit -m 'feat(encounter): connect native model controls and fence project-scoped reconnects'
           git push origin HEAD:refs/heads/agent/native-agent-session-20260920
           git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
       - name: Execute production controller fault regressions
         working-directory: desktop/cradle
         run: node --experimental-strip-types --test tests/agent-native-model.test.mjs
