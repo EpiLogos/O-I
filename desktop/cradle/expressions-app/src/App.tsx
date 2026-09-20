@@ -15,6 +15,7 @@ import {
 import { AutomationLiveValue } from './engine/automation';
 import { DEFAULT_CONFIG, PointCloudField, DEFAULT_COLOR_CONFIG, DEFAULT_TOROIDAL_CONFIG, SpatialGridMode } from './engine/PointCloudField';
 import { isLightHex } from './engine/colorPalettes';
+import { downloadSnapshot } from './engine/snapshot';
 import { FACTORY_PRESETS, FactoryPreset } from './engine/factoryPresets';
 import {
   Entity,
@@ -663,10 +664,13 @@ export default function App() {
           );
           triggerToast('Configuration JSON copied to clipboard');
         }}
-        onTakeSnapshot={() => {
-          if (engine) {
-            engine.captureSnapshot('png', 1.0);
-            triggerToast('High-resolution PNG downloaded');
+        onTakeSnapshot={async () => {
+          if (!engine) { triggerToast('The field is not ready to capture.'); return; }
+          try {
+            await downloadSnapshot(engine);
+            triggerToast('PNG export started');
+          } catch (error) {
+            triggerToast(`PNG export failed: ${error instanceof Error ? error.message : String(error)}`);
           }
         }}
         onResetScene={() => {

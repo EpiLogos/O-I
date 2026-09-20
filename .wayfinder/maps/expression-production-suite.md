@@ -237,3 +237,40 @@ checks and uses explicit buffered delivery (8,192-frame blocks, 250 ms lead,
 late delivery still holds, with no automatic rebase, dropped-sample fiction or
 reduced semantic input. The real-native workflow uses the production release
 host; exact debug/release sources and binary hashes remain distinct evidence.
+
+
+### Final repository-side repair before local integration
+
+The final continuation retains the accepted native producer/relay contracts and
+repairs the retained React shell rather than waiving its lint. Exact replay of
+both `a222c8b` and `9926f4d` produced **22 TypeScript diagnostics** with identical
+text; the previous PR summary's count of 42 was incorrect. Existing imperative
+methods are now declared in the component ref; colour ranges use the existing
+`ParamRow` (including negative speed and degree ranges); physical resonance
+anchors receive view labels, not fabricated semantic name/colour fields; PNG
+capture uses the already-bounded `renderImage` and existing PNG/download helper.
+Render/encoding failures remain failures and cannot announce a successful export.
+
+The broader desktop job actually failed the **pre-paint CSP** assertion, not the
+previously reported mobile-overflow check. Its returned job log was accessible;
+only an incorrect artifact-ID download returned 404. The exact inline bootstrap
+had changed while its allowed script hash had not. The hash is reconciled
+without changing bootstrap meaning, widening script permissions, or introducing
+`unsafe-inline`/`unsafe-eval`. `native-expression-final.test.mjs` guards source
+and built script bytes; the existing `theme-prepaint-csp.mjs` checks actual
+browser enforcement and still refuses changed scripts.
+
+`native-expression-legacy-browser.mjs` exercises real retained React controls,
+resident-engine ref delegation, GPU-state-preserving PNG capture, and rendering/
+encoding refusals. The native-backcheck workflow runs it alongside all original
+checks, full build, full retained-shell lint and both CSP regressions. Exact-head
+results belong to the final #419 receipt, not to this source declaration.
+Browser execution in the web work container was denied by its administrator
+policy; no policy was altered. Hosted GitHub CI is the separate execution venue.
+
+This closes neither native arbitrary mesh/physical-crease output nor detached
+outer-shell continuity by assertion. Those remain the concrete production and
+integrated-runtime obligations in the table above. Existing native work is not
+replaced by invented physical correspondence. Local integration must reconcile
+its newer source cut, review this PR and run the committed opt-in packet; no
+local suite has been accessed or installed by this continuation.

@@ -46,11 +46,11 @@ jobs:
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           cd desktop/cradle
-          npx tsc --noEmit
+          npm run build
           npm run build:journeys --prefix expressions-app
           expressions-app/node_modules/.bin/tsc --noEmit -p expressions-app/field-studies-journeys/tsconfig.json
           npx playwright install --with-deps chromium
-      - name: Retained legacy React shell lint (original failures remain failing)
+      - name: Complete retained React shell lint
         if: always()
         run: |
           set -o pipefail
@@ -83,6 +83,16 @@ jobs:
           set -o pipefail
           cd desktop/cradle
           node tests/native-expression-gpu.mjs 2>&1 | tee /tmp/w5-checks/gpu-effect.log
+      - name: Retained shell controls and exact native CSP
+        if: always()
+        env:
+          NATIVE_EXPRESSION_OUT: /tmp/w5-checks/legacy-browser
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node --test tests/native-expression-final.test.mjs 2>&1 | tee /tmp/w5-checks/csp-hash.log
+          node tests/theme-prepaint-csp.mjs 2>&1 | tee /tmp/w5-checks/csp-browser.log
+          node tests/native-expression-legacy-browser.mjs 2>&1 | tee /tmp/w5-checks/legacy-browser.log
       - name: Native kernel regressions
         if: always()
         run: |
