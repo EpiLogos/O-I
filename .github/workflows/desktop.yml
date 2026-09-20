@@ -70,6 +70,9 @@ jobs:
       - name: Prove knowledge projection identity and provenance preservation
         working-directory: desktop/cradle
         run: node tests/knowledge-expression.mjs
+      - name: Prove the Factory attempt-task consumer joins the native reads honestly
+        working-directory: desktop/cradle
+        run: node tests/factory-attempt-task.mjs
       - name: Prove Explore travel, field search and primary projection readings (SF1)
         working-directory: desktop/cradle
         run: node --test tests/explore-field.test.mjs

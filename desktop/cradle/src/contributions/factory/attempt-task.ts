@@ -3,14 +3,15 @@
  * validators below are the owner's own, carried verbatim — Factory, not the
  * desktop, owns these schemas.
  *
- * ADAPTED FOR THE LIVE KERNEL (desktop/cradle/kernel/src/factory.rs): the
- * donor reached these readings through two kernel ops this kernel cut does
- * NOT carry — `factory_attempt_task_list_read` and
- * `factory_attempt_task_read`. No native claim is invented in their place:
- * the read functions below refuse honestly, naming the missing ops, and the
- * handoff surface renders that refusal as its unavailable state. When the
- * kernel gains the ops, the bodies become kernelOp calls again and the
- * retained validators already hold the compatibility law. */
+ * WIRED TO THE LIVE KERNEL: the two task-scoped attempt reads reach the
+ * owner's own CLI through the kernel ops factory_attempt_task_list_read and
+ * factory_attempt_task_read (desktop/cradle/kernel/src/lib.rs →
+ * `factory attempt list|task`). The desktop carries state path, Run, task,
+ * revision and cursor, validates the returned identity against the request,
+ * and preserves the owner's failure semantics — it never manufactures a task
+ * list, a reading, or a Factory state. */
+import {kernelOp} from "../../kernel/bridge";
+import type {KernelTransportStatus} from "../../kernel/types";
 
 export interface FactoryReadableReturn {
   returnRef:string;
@@ -157,24 +158,31 @@ export function isFactoryAttemptTaskReading(value:unknown,runRef:string,taskRef:
   return isRecord(value)&&value.contract==="factory.attempt-task-reading/v1"&&value.runRef===runRef&&value.taskRef===taskRef&&typeof value.projectRef==="string"&&isNonNegativeInteger(value.revision)&&isNonNegativeInteger(value.runRevision)&&isNonNegativeInteger(value.topologyRevision)&&typeof value.sourceCurrent==="boolean"&&typeof value.workflowSourceRef==="string"&&typeof value.workflowSourceRevision==="string"&&typeof value.workflowSourceDigest==="string"&&isNonNegativeInteger(value.totalAttempts)&&Array.isArray(value.attempts)&&value.attempts.every(attemptView)&&value.totalAttempts>=value.attempts.length;
 }
 
-// ---------------------------------------------------------------------------
-// The owner reads. The donor kernel carried two dedicated ops for these; the
-// live kernel does not. The refusal names them rather than faking a reading.
-// ---------------------------------------------------------------------------
-
-/** The kernel op spellings the donor used; recorded so the gap (and its
- * future wiring) stays nameable from every consumer. */
-export const FACTORY_ATTEMPT_TASK_LIST_OP = "factory_attempt_task_list_read";
-export const FACTORY_ATTEMPT_TASK_READ_OP = "factory_attempt_task_read";
-
-export function attemptTaskReadsUnavailable():string {
-  return `Owner attempt-task reads are unavailable on this kernel cut: the kernel carries neither ${FACTORY_ATTEMPT_TASK_LIST_OP} nor ${FACTORY_ATTEMPT_TASK_READ_OP} (desktop/cradle/kernel/src/factory.rs). No attempt or task list is invented in their place.`;
+/** Validates a retained or returned task-list response and binds it to the
+ * exact Run it was requested for. */
+export function isFactoryAttemptTaskListReading(value:unknown,runRef:string):value is FactoryAttemptTaskListReading {
+  return isRecord(value)&&value.contract==="factory.attempt-task-list-reading/v1"&&value.runRef===runRef&&typeof value.projectRef==="string"&&isNonNegativeInteger(value.runRevision)&&strings(value.taskRefs)&&isNonNegativeInteger(value.totalTasks)&&value.totalTasks>=value.taskRefs.length&&(value.revision===undefined||isNonNegativeInteger(value.revision))&&(value.topologyRevision===undefined||isNonNegativeInteger(value.topologyRevision))&&(value.sourceCurrent===undefined||typeof value.sourceCurrent==="boolean");
 }
 
-export async function listFactoryAttemptTasks():Promise<FactoryAttemptTaskListReading> {
-  throw new Error(attemptTaskReadsUnavailable());
+// ---------------------------------------------------------------------------
+// The owner reads, through the live kernel. Both carry the caller's state
+// path/Run/task disclosure to the owner's own CLI and validate the returned
+// identity before it reaches the desktop. A different Run or task, or an
+// incompatible contract, refuses — it is never silently presented.
+// ---------------------------------------------------------------------------
+
+export async function listFactoryAttemptTasks(transport:KernelTransportStatus,{statePath,runRef}:{statePath:string;runRef:string}):Promise<FactoryAttemptTaskListReading> {
+  const result=await kernelOp(transport,{op:"factory_attempt_task_list_read",state_path:statePath,run_ref:runRef});
+  if(result.error||result.outcome?.result!=="factory_attempt_task_list_reading")throw new Error(result.error??"Factory attempt-task list reading is unavailable");
+  const data=result.outcome.data;
+  if(!isFactoryAttemptTaskListReading(data,runRef))throw new Error("Factory returned an attempt-task list for a different Run or an incompatible contract");
+  return data;
 }
 
-export async function readFactoryAttemptTask():Promise<FactoryAttemptTaskReading> {
-  throw new Error(attemptTaskReadsUnavailable());
+export async function readFactoryAttemptTask(transport:KernelTransportStatus,{statePath,runRef,taskRef,limit,cursor}:{statePath:string;runRef:string;taskRef:string;limit?:number;cursor?:unknown}):Promise<FactoryAttemptTaskReading> {
+  const result=await kernelOp(transport,{op:"factory_attempt_task_read",state_path:statePath,run_ref:runRef,task_ref:taskRef,limit,cursor});
+  if(result.error||result.outcome?.result!=="factory_attempt_task_reading")throw new Error(result.error??"Factory attempt-task reading is unavailable");
+  const data=result.outcome.data;
+  if(!isFactoryAttemptTaskReading(data,runRef,taskRef))throw new Error("Factory returned an attempt-task reading for a different Run or task, or an incompatible contract");
+  return data;
 }
