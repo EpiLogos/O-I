@@ -1,7 +1,7 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "mode-engine-state",
-  "generated_at": "2026-09-20T04:08:14.217Z",
+  "generated_at": "2026-09-20T10:52:23.259Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -11,17 +11,27 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/private/tmp/oi-ci-check",
-      "repository_head": "ab989c389c58d9f7a6228542126ee5ed8cb8635a",
+      "repository_head": "225416260f292fbf57ada98416d9246712262a29",
       "tracked_changes": [
         "desktop/cradle/src/CradleFrame.tsx",
         "desktop/cradle/src/cradle.css",
+        "desktop/cradle/src/expressions/PointCloudHost.tsx",
+        "desktop/cradle/src/surface/Workbench.tsx",
+        "desktop/cradle/src/surface/layout-codec.mjs",
+        "desktop/cradle/src/surface/retention.tsx",
+        "desktop/cradle/src/surface/types.ts",
+        "desktop/cradle/src/workspace/DesktopShell.tsx",
+        "desktop/cradle/src/workspace/store.ts",
+        "desktop/cradle/tests/workspace-continuity.test.mjs",
         "desktop/cradle/walk/artifacts/html-continuity-failure.png",
         "desktop/cradle/walk/artifacts/html-continuity-html-open.png",
         "desktop/cradle/walk/artifacts/html-continuity-mode-return.png",
         "desktop/cradle/walk/artifacts/html-continuity-tab-return.png",
         "desktop/cradle/walk/artifacts/html-continuity-workspace-return.png",
         "desktop/cradle/walk/artifacts/html-continuity.json",
-        "desktop/cradle/walk/retention-probe.mjs"
+        "desktop/cradle/walk/artifacts/mode-engine-state.json",
+        "desktop/cradle/walk/run.mjs",
+        "desktop/cradle/walk/scenarios/mode-engine-state.mjs"
       ],
       "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -30,14 +40,14 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 9656,
+  "duration_ms": 17359,
   "checks": [
     {
       "ok": true,
       "label": "The Expressions application is live, stamped, and holds in-app state (its Library open)",
       "data": {
         "present": true,
-        "token": "7vnqr88cdx.1789877297936",
+        "token": "21jjj5rkq07.1789901546840",
         "libraryOpen": true,
         "hostMode": "expressions"
       }
@@ -52,7 +62,7 @@
       "label": "Technè presents the deep cut of the application and holds its own in-app state",
       "data": {
         "present": true,
-        "token": "nrwg01wmfaq.1789877301642",
+        "token": "zg9s2caniud.1789901549529",
         "libraryOpen": true,
         "hostMode": "techne"
       }
@@ -61,8 +71,8 @@
       "ok": true,
       "label": "RETURN/Expressions: the SAME application document came back (token kept — the frame never re-navigated)",
       "data": {
-        "before": "7vnqr88cdx.1789877297936",
-        "after": "7vnqr88cdx.1789877297936"
+        "before": "21jjj5rkq07.1789901546840",
+        "after": "21jjj5rkq07.1789901546840"
       }
     },
     {
@@ -77,8 +87,8 @@
       "ok": true,
       "label": "RETURN/Technè: the SAME application document came back (token kept)",
       "data": {
-        "before": "nrwg01wmfaq.1789877301642",
-        "after": "nrwg01wmfaq.1789877301642"
+        "before": "zg9s2caniud.1789901549529",
+        "after": "zg9s2caniud.1789901549529"
       }
     },
     {
@@ -86,7 +96,7 @@
       "label": "RETURN/Technè: the in-app state survived — the Library is still open",
       "data": {
         "present": true,
-        "token": "nrwg01wmfaq.1789877301642",
+        "token": "zg9s2caniud.1789901549529",
         "libraryOpen": true,
         "hostMode": "techne"
       }
@@ -100,7 +110,8 @@
         "stamped": [
           "expressions",
           "techne"
-        ]
+        ],
+        "parks": 0
       }
     },
     {
@@ -113,6 +124,163 @@
     },
     {
       "ok": true,
+      "label": "The park layer is gone from the shell entirely (spec §7.1)",
+      "data": {
+        "frames": 2,
+        "hosts": 2,
+        "stamped": [
+          "expressions",
+          "techne"
+        ],
+        "parks": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "The pane-tab centre mounts IN PLACE in the warm tree's own pane wrapper — no stage slot, no park, no outlet",
+      "data": {
+        "inStage": false,
+        "inPark": false,
+        "inWarmTree": true,
+        "outletWrapped": false,
+        "wrapperHidden": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "The pane-tab centre is its pane's presented tab (mounted-concealed only when its tab is switched away)",
+      "data": {
+        "inStage": false,
+        "inPark": false,
+        "inWarmTree": true,
+        "outletWrapped": false,
+        "wrapperHidden": false
+      }
+    },
+    {
+      "ok": true,
+      "label": "The pane-tab Expressions centre is live, stamped, and holds in-app state of its own (its Library open)",
+      "data": {
+        "present": true,
+        "token": "r94mrbgk1z.1789901551928",
+        "libraryOpen": true,
+        "hostMode": "expressions"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The expressions mode's stage slot presents the STAGE-OWNED instance — never the foreign pane-tab binding",
+      "data": {
+        "stageStamp": "expressions"
+      }
+    },
+    {
+      "ok": true,
+      "label": "PANE-TAB RETURN: the SAME document came back (token kept — the shelved tree was never unmounted or moved)",
+      "data": {
+        "before": "r94mrbgk1z.1789901551928",
+        "after": "r94mrbgk1z.1789901551928",
+        "during": "r94mrbgk1z.1789901551928"
+      }
+    },
+    {
+      "ok": true,
+      "label": "PANE-TAB RETURN: the in-app state survived — the pane-tab centre's Library is still open",
+      "data": {
+        "present": true,
+        "token": "r94mrbgk1z.1789901551928",
+        "libraryOpen": true,
+        "hostMode": "expressions"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Three bindings, exactly three hosted instances — one mount per binding, no park copies",
+      "data": {
+        "frames": 3,
+        "hosts": 3,
+        "stamped": [
+          "expressions",
+          "techne",
+          "pane-expressions"
+        ],
+        "parks": 0,
+        "outlets": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "The pane-tab centre exists exactly once, outside every retired park/outlet wrapper",
+      "data": {
+        "frames": 3,
+        "hosts": 3,
+        "stamped": [
+          "expressions",
+          "techne",
+          "pane-expressions"
+        ],
+        "parks": 0,
+        "outlets": 0
+      }
+    },
+    {
+      "ok": true,
+      "label": "A different expression was opened through the application's own Library (the person's work moved)",
+      "data": {
+        "before": "oi-mark",
+        "after": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The live frame's src carries no deep link (it booted before any checkpoint existed)",
+      "data": {
+        "src": "ema%22%3A%22central.path-ref%2Fv1%22%7D/"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The stage slot CHECKPOINTED the current expression ref onto the binding (a ref, not app content)",
+      "data": {
+        "checkpoint": {
+          "expressionRef": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba",
+          "documentId": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba"
+        },
+        "expected": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The checkpoint write never re-navigated the live frame (src unchanged after the checkpoint landed)",
+      "data": {}
+    },
+    {
+      "ok": true,
+      "label": "RESTART: the restored stage slot deep-links the application to the CHECKPOINTED expression (?expression=<ref>)",
+      "data": {
+        "src": "/?expression=expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba",
+        "expected": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba"
+      }
+    },
+    {
+      "ok": true,
+      "label": "RESTART: the SAME expression is back on screen — the app's own boot applied the checkpointed ref",
+      "data": {
+        "restored": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba",
+        "checkpointed": "expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba"
+      }
+    },
+    {
+      "ok": true,
+      "label": "The restored frame holds still — one node, one src, no re-navigation while the new session runs",
+      "data": {
+        "src": "http://127.0.0.1:4179/material/%7B%22path%22%3A%22Work%2FO-I%2Fdesktop%2Fcradle%2Fexpressions-app%2Fdist%2Findex.html%22%2C%22ref%22%3A%22central%3Apath%3A%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-mode-engine-state-CVYq0F%3AWork%2FO-I%2Fdesktop%2Fcradle%2Fexpressions-app%2Fdist%2Findex.html%22%2C%22root%22%3A%22%2Fprivate%2Fvar%2Ffolders%2Fq0%2Fg_91z7355tb58425qwg3xcy80000gn%2FT%2Foi-mode-engine-state-CVYq0F%22%2C%22schema%22%3A%22central.path-ref%2Fv1%22%7D/?expression=expression-3d6c9805-1f14-43a6-a40b-b720c900e5ba",
+        "connected": true,
+        "stamp": "restarted"
+      }
+    },
+    {
+      "ok": true,
       "label": "No page errors across the whole journey",
       "data": []
     }
@@ -121,7 +289,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 62,
+      "duration_ms": 54,
       "data": {
         "file": "mode-engine-state-expressions-marked.png"
       }
@@ -129,7 +297,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 48,
+      "duration_ms": 47,
       "data": {
         "file": "mode-engine-state-techne-marked.png"
       }
@@ -137,7 +305,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 48,
       "data": {
         "file": "mode-engine-state-expressions-returned.png"
       }
@@ -145,19 +313,57 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 55,
       "data": {
         "file": "mode-engine-state-techne-returned.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 35,
+      "data": {
+        "file": "mode-engine-state-pane-tab-marked.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 55,
+      "data": {
+        "file": "mode-engine-state-pane-tab-returned.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 226,
+      "data": {
+        "file": "mode-engine-state-checkpointed.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 262,
+      "data": {
+        "file": "mode-engine-state-restored-after-restart.png"
       }
     }
   ],
   "metrics": {
-    "mode_round_trip_survivals": 4
+    "mode_round_trip_survivals": 4,
+    "pane_tab_survivals": 2,
+    "restart_expression_restored": 1
   },
   "screenshots": [
     "mode-engine-state-expressions-marked.png",
     "mode-engine-state-techne-marked.png",
     "mode-engine-state-expressions-returned.png",
-    "mode-engine-state-techne-returned.png"
+    "mode-engine-state-techne-returned.png",
+    "mode-engine-state-pane-tab-marked.png",
+    "mode-engine-state-pane-tab-returned.png",
+    "mode-engine-state-checkpointed.png",
+    "mode-engine-state-restored-after-restart.png"
   ]
 }

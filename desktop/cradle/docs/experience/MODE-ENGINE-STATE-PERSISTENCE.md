@@ -4,6 +4,24 @@ Status: commissioned design for implementation. Owner report: switching to
 and from the Expressions and Technè engines loses their state — the engines
 reboot instead of resuming.
 
+LANDED 2026-09-20: the first pass (§1–6, per-mode persistent stage slots)
+and the second pass (§7/§8) are both implemented on this branch. §7.1: the
+park is retired — `SurfaceBody` mounts `ModeCentreBody` directly (a
+stage-owned centre's own pane tab presents nothing; a foreign-tree centre
+presents through its pane wrapper), and the warm-tree criterion counts
+foreign-tree centres as a shelving reason. §7.2: the stage slots checkpoint
+the hosted application's current expression ref onto the binding
+(`SurfaceBinding.engine`, written debounced through
+`workspace.surfaceEngine`, carried across restarts by the layout codec) and
+the remounted application is deep-linked `?expression=<ref>` through its own
+boot grammar. Technè's centre is the same hosted application in its deep
+cut, so the same checkpoint covers it; the wiki-projection registers are
+kernel-backed and needed no renderer checkpoint. Evidence:
+`walk/artifacts/mode-engine-state.json` (26/26, three runs) and
+`walk/artifacts/html-continuity.json` (7/7 identity checks; the
+pending-origin/restart legs stand down at the documented pre-existing
+navigator-listing stall, WORKSPACE-CONTINUITY-EXECUTION).
+
 ## 1. Root cause (suspected, verify first)
 
 The mode-centre retention park (`src/surface/retention.tsx`) keeps centre
