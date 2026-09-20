@@ -1,0 +1,189 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "canvas-context",
+  "generated_at": "2026-09-20T21:24:00.626Z",
+  "environment": {
+    "base_url": "http://localhost:4573",
+    "bridge_url": "http://127.0.0.1:4579",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/private/tmp/oi-canvas-integration",
+      "repository_head": "346af0e558456ecca318fae2bb41260be6aa9b77",
+      "tracked_changes": [
+        "desktop/cradle/walk/artifacts/flow-canvas-failure.png",
+        "desktop/cradle/walk/artifacts/flow-canvas.json",
+        "desktop/cradle/walk/run.mjs",
+        "docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md"
+      ],
+      "engine_provenance_path": "/private/tmp/oi-canvas-integration/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 32262,
+  "checks": [
+    {
+      "ok": true,
+      "label": "the prepared-context surface opens no modal"
+    },
+    {
+      "ok": true,
+      "label": "the exact repeated passage is locatable"
+    },
+    {
+      "ok": true,
+      "label": "bold rewrites exactly the selected range and no other bytes"
+    },
+    {
+      "ok": true,
+      "label": "one undo restores the exact source bytes"
+    },
+    {
+      "ok": true,
+      "label": "split keeps exactly one source editor"
+    },
+    {
+      "ok": true,
+      "label": "ordinary selection preparation opens no modal"
+    },
+    {
+      "ok": true,
+      "label": "the prepared row carries its native identity"
+    },
+    {
+      "ok": true,
+      "label": "the prepared selection shows a retained source cue"
+    },
+    {
+      "ok": true,
+      "label": "AIKit holds exactly one prepared selection at Project scope"
+    },
+    {
+      "ok": true,
+      "label": "the native anchor is the exact UTF-16 range of the repeated occurrence"
+    },
+    {
+      "ok": true,
+      "label": "the native snapshot text is exact, emoji included"
+    },
+    {
+      "ok": true,
+      "label": "the native snapshot pins the source revision"
+    },
+    {
+      "ok": true,
+      "label": "reveal re-renders the retained cue on the open source"
+    },
+    {
+      "ok": true,
+      "label": "remove clears the native prepared selection"
+    },
+    {
+      "ok": true,
+      "label": "AIKit rendered the canonical native expression (Vāk stays native)"
+    },
+    {
+      "ok": true,
+      "label": "adoption moves the prepared selection into the conversation scope"
+    },
+    {
+      "ok": true,
+      "label": "Resolve answered through the real native knowledge owner"
+    },
+    {
+      "ok": true,
+      "label": "stale-source refusal retains the prepared selection natively"
+    },
+    {
+      "ok": true,
+      "label": "stale-source refusal retains the instruction"
+    },
+    {
+      "ok": true,
+      "label": "the stale send dispatched nothing to the native owner"
+    },
+    {
+      "ok": true,
+      "label": "the restored preparation sits in the conversation scope before delivery"
+    },
+    {
+      "ok": true,
+      "label": "the instruction is recorded in the transcript"
+    },
+    {
+      "ok": true,
+      "label": "a real provider Return arrived (existing pi/GLM harness)"
+    },
+    {
+      "ok": true,
+      "label": "the submission recorded a structured prepared-context receipt"
+    },
+    {
+      "ok": true,
+      "label": "the receipt states its honest standing"
+    },
+    {
+      "ok": true,
+      "label": "the receipt names the delivered source"
+    },
+    {
+      "ok": true,
+      "label": "successful delivery cleared the prepared selections"
+    },
+    {
+      "ok": true,
+      "label": "successful delivery cleared the draft"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "info",
+      "duration_ms": 0,
+      "data": {
+        "schema": "oi.cradle.walk/v1",
+        "mounted_at": "2026-09-20T21:24:00.756Z",
+        "transport": {
+          "kind": "bridge",
+          "url": "http://127.0.0.1:4579"
+        },
+        "url": "http://localhost:4573/"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "canvas-context-native-resolve-on-prepared-selection.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 31,
+      "data": {
+        "file": "canvas-context-stale-source-refusal-retains-preparation.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 39,
+      "data": {
+        "file": "canvas-context-real-return-after-explicit-delivery.png"
+      }
+    }
+  ],
+  "metrics": {},
+  "screenshots": [
+    "canvas-context-native-resolve-on-prepared-selection.png",
+    "canvas-context-stale-source-refusal-retains-preparation.png",
+    "canvas-context-real-return-after-explicit-delivery.png"
+  ]
+}

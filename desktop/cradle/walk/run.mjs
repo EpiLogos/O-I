@@ -88,6 +88,7 @@ const SCENARIOS = {
   encounter: {module:"scenarios/encounter.mjs",kernel:true,aliases:[]},
   "agent-dictation": {module:"scenarios/agent-dictation.mjs",kernel:true,aliases:["dictation"]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
+  "canvas-context": {module:"scenarios/canvas-context.mjs",kernel:true,aliases:["canvas"]},
   "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
