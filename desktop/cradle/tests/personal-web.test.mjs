@@ -12,11 +12,18 @@ for(const family of ["beings","things"]){
  test(`${family}: built reference carrier is exactly reproducible`,async()=>{assert.equal(await readFile(new URL(`../documents/oi-${family}.html`,import.meta.url),"utf8"),renderPage(blankPage(family)));});
 }
 test("six core families, with plural canonical Beings and Things",()=>{assert.equal(roster.forms.length,6);assert.equal(roster.forms[2].label,"Beings");assert.equal(roster.forms[3].label,"Things");assert.equal(roster.cProfile.source,"C0");assert.equal(roster.cProfile.expression,"C5");assert.equal(roster.cProfile.audienceIndependent,true);assert.equal(roster.cProfile.requiresLiveQl,false);});
-test("legacy Day index and files remain intact; absent forms aren't fabricated",()=>{const forms=availableForms(roster);assert.equal(forms.length,4);assert.equal(forms[0].file,"ql-dialogue-flow.html");assert.equal(forms[1].file,"ql-daily-die.html");assert.ok(!forms.some(f=>/cube|card/.test(f.file)));});
+test("retained Day, Flow and recovered Cube stay source-backed; absent Epi-Card is not fabricated",async()=>{
+ const forms=availableForms(roster);
+ assert.deepEqual(forms.map(form=>form.file),["ql-dialogue-flow.html","ql-daily-die.html","oi-beings.html","oi-things.html","ql-yoshimoto-cube.html"]);
+ assert.equal(roster.forms.find(form=>form.kind==="document-yoshimoto").standing,"retained-source");
+ assert.equal(roster.forms.find(form=>form.kind==="document-epi-card").file,null);
+ assert.ok(!forms.some(form=>form.kind==="document-epi-card"));
+ for(const form of forms){const source=await readFile(new URL(`../documents/${form.file}`,import.meta.url),"utf8");assert.match(source,/<html\b/i,`${form.file} must be an actual HTML source`);}
+});
 test("a seventh user descriptor is not rejected by a closed family enum",()=>{const copy=structuredClone(roster);copy.forms.push({kind:"document-garden",label:"Garden",hint:"A custom reading",templateRef:"user.template/garden",file:"garden.html"});assert.equal(availableForms(copy).at(-1).label,"Garden");assert.equal(roster.forms.length,6);});
 test("duplicate descriptors and path escape are rejected before file resolution",()=>{const copy=structuredClone(roster);copy.forms.push(copy.forms[0]);assert.throws(()=>availableForms(copy),/duplicate/);copy.forms.pop();copy.forms[2].file="../private.html";assert.throws(()=>availableForms(copy),/owner-resolved/);});
 for(const categories of [["C0"],["C5"],["C9"],["C2","C2"],[]])test(`reject category conflation ${JSON.stringify(categories)}`,()=>{const d=blankPage("things");d.bindings.categories=categories;assert.throws(()=>validatePage(d),/C1–C4/);});
-test("C0/C5 source-expression exists independently of an optional audience",()=>{const d=blankPage("things");d.bindings.worldRef="world:public-source";d.bindings.expressionRef="projection:private-reading";d.extensions.audience="private";assert.equal(readPage(renderPage(d)).bindings.expressionRef,d.bindings.expressionRef);});
+test("C0/C5 source-expression exists independently of an optional audience",()=>{const d=blankPage("things");d.bindings.worldRef="world:public-source";d.bindings.expressionRef="projection:private-reading";d.extensions.audience="private";assert.equal(readPage(renderPage(d)).bindings.expressionRef,"projection:private-reading");});
 test("calendar uses declared occurrence; a revision cannot move the page",()=>{const d=blankPage("things");d.meta.occurredOn="2026-09-10";d.meta.createdOn="2026-09-13";d.meta.revision=23;assert.deepEqual(pageDate(d),{date:"2026-09-10",basis:"occurrence"});});
 test("no UTC guessing when civil creation date is absent",()=>{const d=blankPage("beings");d.meta.created="2026-09-13T23:30:00Z";assert.equal(pageDate(d),null);d.meta.createdOn="2026-09-14";assert.deepEqual(pageDate(d),{date:"2026-09-14",basis:"creation"});});
 test("impossible occurrence dates fail rather than normalize",()=>{const d=blankPage("things");d.meta.occurredOn="2026-02-30";assert.throws(()=>pageDate(d));});
