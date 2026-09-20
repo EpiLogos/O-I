@@ -51,6 +51,19 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
+      - name: Guard executable source — no unresolved markers, runner entry points parse
+        working-directory: desktop/cradle
+        run: |
+          # The bundle build never imports the walk runner, so a syntax error
+          # or an unresolved merge marker there is invisible to tsc/vite. Catch
+          # both cheaply against tracked executable source (F01/F02).
+          if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then
+            echo "::error::unresolved conflict markers in executable source"; exit 1
+          fi
+          for f in $(git ls-files 'walk/*.mjs' 'walk/scenarios/*.mjs' 'tests/*.mjs'); do
+            node --check "$f" || { echo "::error::syntax error in $f"; exit 1; }
+          done
+          node --test tests/walk-runner.test.mjs
       - name: Prove Expression projection through the declared native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
