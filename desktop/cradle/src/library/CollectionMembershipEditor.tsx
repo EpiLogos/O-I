@@ -1,4 +1,5 @@
 import {useEffect, useRef, useState} from "react";
+import "./collectionMembership.css";
 import {useKernel} from "../kernel/KernelProvider";
 import type {LibraryItem} from "./scope";
 import {editManifestMembership, saveNativeCollectionMember, setNativeCollections, type ManifestMembershipChange} from "./collectionOperations";
@@ -32,7 +33,7 @@ export function CollectionMembershipEditor({item, onChanged}: {item: LibraryItem
     void act(async () => { const r = await editManifestMembership(transport, membership, change); return r.message ?? (r.state === "unchanged" ? "Membership is already at that boundary." : "Membership saved through Central. The member source is unchanged."); });
   };
   if (!membership && !item.expressionRef) return null;
-  return <details className="oi-kv lib-membership-editor">
+  return <details className="oi-disclosure lib-membership-editor">
     <summary>Collection membership</summary>
     {membership && <>
       <label>Collection <select className="oi-input" aria-label="Selected collection" value={occurrence} disabled={pending} onChange={e => setOccurrence(Number(e.target.value))}>
