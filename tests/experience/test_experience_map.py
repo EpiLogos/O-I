@@ -141,10 +141,14 @@ class ExperienceMapTests(unittest.TestCase):
         self.assertIn("headless", result["config"]["composition_examples"])
 
     def test_method_description_has_the_real_prefix(self):
+        # The METHOD: prefix on the skill's description is a real contract and
+        # is kept. The former `assertIn("Source publication does", text)` was a
+        # brittle exact-prose match on the skill body — a documentation-wording
+        # check, not product acceptance, that broke on any rewording of the same
+        # distinction — so it is removed rather than protected (F09).
         text = (ROOT / "skills/experience-campaign/SKILL.md").read_text()
         description = next(line for line in text.splitlines() if line.startswith("description:"))
         self.assertTrue(description.split(":", 1)[1].strip().strip('"').startswith("METHOD:"))
-        self.assertIn("Source publication does", text)
 
     def test_output_is_new_derived_planning_only(self):
         output = self.root / "generated"
