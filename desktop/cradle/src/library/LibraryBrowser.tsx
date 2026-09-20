@@ -18,6 +18,9 @@
  * last ask (techneSummon.tsx).
  */
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useKernel} from "../kernel/KernelProvider";
+import {resolveCollectionSelection} from "./collectionSelection";
+import {CollectionMembershipEditor} from "./CollectionMembershipEditor";
 import {Glyph} from "../workspace/Glyph";
 import {MODE_CURATION, type WorkspaceMode} from "../workspace/mode";
 import type {LibraryCoverage, LibraryItem, LibraryKind, LibraryQuery, LibraryScopeId} from "./scope";
@@ -32,9 +35,9 @@ import "./library.css";
 const HERE_KINDS: Record<WorkspaceMode, LibraryKind[]> = {
   base: ["projected-object", "page"],
   factory: ["projected-object", "page"],
-  techne: ["projected-object", "page"],
+  techne: ["composition", "world", "projected-object", "page"],
   expressions: ["composition", "world"],
-  "epi-logos": ["place", "page"],
+  "epi-logos": ["composition", "place", "page"],
   settings: ["projected-object", "page"],
 };
 
@@ -61,11 +64,34 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
   initialScope?: LibraryScopeId;
 }) {
   useBuiltInLibraryProviders();
+  const {transport} = useKernel();
+  const [openError, setOpenError] = useState("");
+  const [refreshGeneration, setRefreshGeneration] = useState(0);
+  const opening = useRef<AbortController | null>(null);
+  useEffect(() => () => { opening.current?.abort(); }, []);
+  const openItem = useCallback((item: LibraryItem, how: "page" | "expression" | "instrument" | "source") => {
+    opening.current?.abort();
+    const controller = new AbortController(); opening.current = controller;
+    setOpenError("");
+    void (async () => {
+      try {
+        const resolved = await resolveCollectionSelection(transport, item, controller.signal);
+        if (controller.signal.aborted) return;
+        if (resolved.collectionMemberships?.length && how === "expression" && !resolved.expressionRef) throw new Error("This saved Journey has no native Expression binding yet. Open its exact source or use the Expressions collection import.");
+        await onOpen(resolved, resolved.collectionMemberships?.length && how === "page" ? "source" : how);
+      } catch (cause) {
+        if (!controller.signal.aborted) setOpenError(cause instanceof Error ? cause.message : String(cause));
+      }
+    })();
+  }, [transport, onOpen]);
   const [scope, setScope] = useState<LibraryScopeId>(initialScope ?? "here");
   const [view, setView] = useState<LibraryView>(initialView);
   const [text, setText] = useState("");
   const [items, setItems] = useState<LibraryItem[]>([]);
   const [coverage, setCoverage] = useState<LibraryCoverage[]>([]);
+  const contextKey = `${scope}:${mode}`;
+  const [readingContext, setReadingContext] = useState("");
+  useEffect(() => { opening.current?.abort(); setOpenError(""); }, [contextKey]);
   const [selectedRef, setSelectedRef] = useState<string | undefined>();
   const [registryGeneration, setRegistryGeneration] = useState(0);
   const searchRef = useRef<HTMLInputElement>(null);
@@ -93,6 +119,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
   const relevantProviders = useMemo(() => {
     const kinds = scope === "here" ? HERE_KINDS[mode] : undefined;
     return libraryProviders().filter(provider => {
+      if (scope === "shared" && !provider.scopes.includes("shared")) return false;
       if (kinds && !provider.kinds.some(kind => kinds.includes(kind))) return false;
       if (provider.modes && !provider.modes.includes(mode)) return false;
       return true;
@@ -105,7 +132,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
     const controller = new AbortController();
     const timer = window.setTimeout(() => {
       const kinds = scope === "here" ? HERE_KINDS[mode] : undefined;
-      const query: LibraryQuery = {scope, mode, text, kinds};
+      const query: LibraryQuery = {scope, mode, text, kinds, fresh: refreshGeneration > 0};
       Promise.all(relevantProviders.map(provider =>
         provider.list(query, controller.signal).catch((cause): {items: LibraryItem[]; coverage: LibraryCoverage} => ({
           items: [], coverage: {provider: provider.id, state: "unavailable", reason: cause instanceof Error ? cause.message : String(cause)},
@@ -115,7 +142,8 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
         const literal = text.trim().toLowerCase();
         let nextItems = results.flatMap(result => result.items);
         if (literal) nextItems = nextItems.filter(item =>
-          item.title.toLowerCase().includes(literal) || item.summary?.toLowerCase().includes(literal) || item.ref.toLowerCase().includes(literal));
+          item.title.toLowerCase().includes(literal) || item.summary?.toLowerCase().includes(literal) || item.ref.toLowerCase().includes(literal) || item.collectionMemberships?.some(m => [m.title, m.member_id, m.group, m.manifest_path].some(value => value.toLowerCase().includes(literal))));
+        setReadingContext(contextKey);
         setItems(nextItems);
         setCoverage(results.map(result => result.coverage));
         setSelectedRef(current => current && nextItems.some(item => item.ref === current) ? current : undefined);
@@ -124,18 +152,22 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
       });
     }, DEBOUNCE_MS);
     return () => { window.clearTimeout(timer); controller.abort(); };
-  }, [relevantProviders, scope, mode, text, onMessage]);
+  }, [relevantProviders, scope, mode, text, onMessage, refreshGeneration, contextKey]);
 
   // The literal filter is INSTANT over whatever the providers most recently
   // returned ("typing feels instant while the owner reads settle behind
   // it") — a client-side filter of the existing reads, never a second index.
   const literal = text.trim().toLowerCase();
+  const eligibleItems = useMemo(() => readingContext === contextKey
+    ? items.filter(item => relevantProviders.some(provider => provider.id === item.provider)) : [],
+    [items, readingContext, contextKey, relevantProviders]);
   const visibleItems = useMemo(() => literal
-    ? items.filter(item =>
+    ? eligibleItems.filter(item =>
         item.title.toLowerCase().includes(literal)
         || item.summary?.toLowerCase().includes(literal)
-        || item.ref.toLowerCase().includes(literal))
-    : items, [items, literal]);
+        || item.ref.toLowerCase().includes(literal)
+        || item.collectionMemberships?.some(m => [m.title, m.member_id, m.group, m.manifest_path].some(value => value.toLowerCase().includes(literal))))
+    : eligibleItems, [eligibleItems, literal]);
 
   // Epi-Logos places register externally and are never imported here
   // (COMMON-BRIEF: another agent owns src/epilogos); until one registers,
@@ -143,7 +175,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
   const epiCoverage: LibraryCoverage[] = mode === "epi-logos" && !relevantProviders.some(provider => provider.kinds.includes("place"))
     ? [{provider: "epi-logos-places", state: "unavailable", reason: "Epi-Logos places register when that world's sources connect"}]
     : [];
-  const allCoverage = coverage.concat(epiCoverage);
+  const allCoverage = (readingContext === contextKey ? coverage : []).concat(epiCoverage);
 
   const move = useCallback((delta: number) => {
     if (visibleItems.length === 0) return;
@@ -158,19 +190,20 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
     const onKey = (event: KeyboardEvent) => {
       const target = event.target as HTMLElement | null;
       const inSearch = target === searchRef.current;
+      if (!inSearch && target?.closest("button,input,textarea,select,summary")) return;
       if (event.key === "/" && !inSearch) { event.preventDefault(); searchRef.current?.focus(); return; }
       if (event.key === "ArrowDown") { event.preventDefault(); move(1); return; }
       if (event.key === "ArrowUp") { event.preventDefault(); move(-1); return; }
       if (event.key === "Enter") {
         const current = visibleItems.find(item => item.ref === selectedRef);
-        if (current) { event.preventDefault(); onOpen(current, "page"); }
+        if (current) { event.preventDefault(); openItem(current, "page"); }
         return;
       }
       if (event.key === "Escape" && inSearch) setText("");
     };
     node.addEventListener("keydown", onKey);
     return () => node.removeEventListener("keydown", onKey);
-  }, [move, visibleItems, selectedRef, onOpen]);
+  }, [move, visibleItems, selectedRef, openItem]);
 
   return <div ref={rootRef} className="lib-browser" data-library-view={view}>
     <div className="oi-panel-head lib-head">
@@ -198,9 +231,12 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
         onChange={event => setText(event.target.value)}
         onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); setText(""); } }}/>
     </div>
+    {openError && <p className="oi-refusal" role="alert">{openError}</p>}
+    <button type="button" className="oi-action" onClick={() => { opening.current?.abort(); setRefreshGeneration(g => g + 1); }}>Refresh sources</button>
+    {visibleItems.find(item => item.ref === selectedRef) && <CollectionMembershipEditor item={visibleItems.find(item => item.ref === selectedRef)!} onChanged={() => setRefreshGeneration(g => g + 1)}/>}
     {view === "browse"
       ? <div className="lib-results oi-scroll"><LibraryBrowse items={visibleItems} coverage={allCoverage} selectedRef={selectedRef}
-          onSelect={item => setSelectedRef(item.ref)} onOpen={onOpen} scope={scope} onScopeChange={setScope}/></div>
-      : <LibraryResults items={visibleItems} coverage={allCoverage} selectedRef={selectedRef} onSelect={item => setSelectedRef(item.ref)} onOpen={onOpen}/>}
+          onSelect={item => setSelectedRef(item.ref)} onOpen={openItem} scope={scope} onScopeChange={setScope}/></div>
+      : <LibraryResults items={visibleItems} coverage={allCoverage} selectedRef={selectedRef} onSelect={item => setSelectedRef(item.ref)} onOpen={openItem}/>}
   </div>;
 }
