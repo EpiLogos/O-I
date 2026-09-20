@@ -1,0 +1,117 @@
+name: Desktop shell recovery
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/**'
+      - 'packages/oi-design-system/**'
+      - '.github/workflows/desktop-shell-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          fetch-depth: 0
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Locked desktop dependencies
+        id: deps
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Production build
+        working-directory: desktop/cradle
+        run: npm run build
+      - name: Geometry, state, retained documents, setup and acceptance safety
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: |
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test \
+            tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs \
+            tests/configuration-setup.test.mjs tests/local-shell-acceptance.test.mjs \
+            tests/verify-shell-evidence.test.mjs tests/workspace-continuity.test.mjs \
+            tests/configuration-live-source.test.mjs tests/configuration-composition.test.mjs
+      - name: Install controlled browsers
+        id: browsers
+        if: ${{ !cancelled() && steps.deps.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Actual shell interactions in Chromium and WebKit
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: node tests/shell-recovery.browser.mjs
+      - name: Real setup component with test-only controlled source
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: node tests/shell-setup.browser.mjs
+      - name: Real theme preferences and Expressions route
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: node tests/visuals-preview-lifecycle.mjs
+      - name: Preserve appearance behaviour
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: node tests/desktop-appearance.mjs
+      - name: Independently verify complete evidence for this source and run
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        working-directory: desktop/cradle
+        run: node tests/verify-shell-evidence.mjs
+      - name: Capture published pre-repair source separately
+        if: ${{ !cancelled() && steps.browsers.outcome == 'success' }}
+        run: |
+          set -euo pipefail
+          before="$RUNNER_TEMP/w1-before"
+          git worktree add --detach "$before" b72d763ce026efebe3fac67655749ac0909ea130
+          ln -s "$GITHUB_WORKSPACE/desktop/cradle/node_modules" "$before/desktop/cradle/node_modules"
+          cp desktop/cradle/tests/shell-recovery.browser.mjs desktop/cradle/tests/verify-shell-evidence.mjs "$before/desktop/cradle/tests/"
+          cd "$before/desktop/cradle"
+          W1_REFERENCE_CAPTURE=1 W1_ARTIFACTS="$GITHUB_WORKSPACE/desktop/cradle/tests/artifacts/shell-reference" node tests/shell-recovery.browser.mjs
+      - name: Publish all evidence, including failures
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: desktop-shell-evidence-${{ github.event.pull_request.head.sha || github.sha }}-${{ github.run_id }}
+          path: desktop/cradle/tests/artifacts/
+          if-no-files-found: error
+          retention-days: 14
+  wider-suite:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Wider suite, preserving the original Day-roster failure
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          node documents/build-personal.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/*.test.mjs 2>&1 | tee /tmp/w1-wider-suite.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: desktop-wider-suite-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/w1-wider-suite.log
+          if-no-files-found: error
+          retention-days: 14
