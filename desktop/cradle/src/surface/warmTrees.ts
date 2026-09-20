@@ -4,8 +4,15 @@
 import {groupsOf} from "./engine";
 import {RETAINED_VIEW_BUDGET} from "./runtime";
 import type {LayoutState, SurfaceId} from "./types";
-import {TREE_MODES, type WorkspaceMode} from "../workspace/mode";
+import {MODE_CURATION, TREE_MODES, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
+
+/** The centre kinds the tier retains: engines and hosted applications —
+ * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
+ * `system`, and `factory` (the retention tier's own law; re-exported by
+ * surface/retention). */
+export const RETAINED_CENTRE_KINDS = new Set(["expressions", "techne", "epi-logos", "system", "factory"]);
+export const isRetainedCentreKind = (kind: string) => RETAINED_CENTRE_KINDS.has(kind);
 
 export const RETAINED_PANE_KINDS = new Set(["draft", "file", "source", "knowledge", "encounter", "terminal", "browser", "presentation", "explore"]);
 export const isRetainedPaneKind = (kind: string) => RETAINED_PANE_KINDS.has(kind);
@@ -17,6 +24,27 @@ export const WARM_WORKSPACES = 2;
 
 function treeBindingIds(layout: LayoutState): SurfaceId[] {
   return groupsOf(layout.root).flatMap((group) => group.tabs);
+}
+
+/** The shelving criterion (spec §7.1): a tree is shelved when it carries at
+ * least one binding that NEEDS the shelf —
+ * - a retained PANE kind (the pane tier's own law; drafts keep their live
+ *   editor session), or
+ * - a retained CENTRE kind that is NOT stage-owned in this tree: a centre
+ *   binding living in a foreign tree keeps its body only through its
+ *   shelved tree. A STAGE-owned centre (kind K in the tree whose mode's
+ *   centreKind is K) counts for nothing here: its per-mode stage slot
+ *   covers it, mounted and never moved, whether the tree shelves or not —
+ *   exactly one hosting reason per binding, the slot or the shelf, never a
+ *   double mount. */
+function treeShelfReasons(layout: LayoutState): SurfaceId[] {
+  const stageKind = MODE_CURATION[layout.mode ?? "base"].centreKind;
+  return treeBindingIds(layout).filter((id) => {
+    const binding = layout.surfaces[id];
+    if (!binding || binding.pending) return false;
+    if (isRetainedPaneKind(binding.kind)) return true;
+    return isRetainedCentreKind(binding.kind) && binding.kind !== stageKind;
+  });
 }
 
 /** The warm trees of the shell. Keys name the tree's own mode, so a key is
@@ -36,10 +64,7 @@ export function warmWorkspaceTrees(workspaces: Workspace[], activeWorkspaceId: s
     const treeMode = layout.mode ?? "base";
     const key = `${workspace.id}:${treeMode}`;
     if (seen.has(key)) return;
-    const retained = treeBindingIds(layout).filter((id) => {
-      const binding = layout.surfaces[id];
-      return !!binding && isRetainedPaneKind(binding.kind) && !binding.pending;
-    });
+    const retained = treeShelfReasons(layout);
     // Retention is a budget for HIDDEN trees, never admission to the visible
     // workspace. New tabs, drafts and empty split destinations must render
     // even without a retained kind; a large active tree must not disappear.

@@ -81,11 +81,26 @@ export function validBinding(raw) {
   }
   const terminal = o.kind === 'terminal' ? { cwd: typeof o.terminal?.cwd === 'string' ? o.terminal.cwd : undefined } : undefined;
   const browser = o.kind === 'browser' ? { url: typeof o.browser?.url === 'string' ? o.browser.url : '' } : undefined;
+  // The hosted engine's checkpoint (MODE-ENGINE-STATE-PERSISTENCE §7.2):
+  // the expression ref the hosted application last showed, written by its
+  // stage slot from the application's own announcements. It rides only on
+  // the hosted-application centre kinds, and only when well-typed — a REF
+  // into the person's saved work, never app content, so the restart can
+  // deep-link the application through its own boot grammar.
+  const engineRaw = o.engine && typeof o.engine === 'object' ? o.engine : {};
+  const engine = (o.kind === 'expressions' || o.kind === 'techne') && typeof engineRaw.expressionRef === 'string' && engineRaw.expressionRef.trim()
+    ? {
+        expressionRef: engineRaw.expressionRef,
+        ...(typeof engineRaw.documentId === 'string' ? { documentId: engineRaw.documentId } : {}),
+        ...(typeof engineRaw.revision === 'string' ? { revision: engineRaw.revision } : {}),
+      }
+    : undefined;
   return {
     presentation, terminal,
     flow: o.kind === 'flow' ? flow : undefined,
     browser,
     view: Object.keys(view).length ? view : undefined,
+    engine,
     encounter, location, address,
     project: o.project,
     id: o.id, kind: o.kind,

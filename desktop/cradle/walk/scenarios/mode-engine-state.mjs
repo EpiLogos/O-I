@@ -7,16 +7,31 @@
 // subtree that contains an iframe detaches it — the iframe re-navigates and
 // the hosted application boots from scratch.
 //
-//   enter the Expressions mode (the real vendored application)
-//   → mark in-app state through the app's OWN UI (open its Library)
-//   → stamp the frame node (parent-side data attribute) and the frame
-//     document (an in-page token a fresh execution cannot have)
-//   → switch to Technè, mark its centre the same way
-//   → return to Expressions: the SAME iframe node, the SAME document
-//     token, and the Library still open
-//   → return to Technè: the same three assertions, mirrored
-//   → with both centres visited, exactly ONE hosted application instance
-//     per mode in the whole DOM (no double mount)
+// First pass (the stage law): enter the Expressions mode (the real vendored
+// application) → mark in-app state through the app's OWN UI (open its
+// Library) → stamp the frame node (parent-side data attribute) and the frame
+// document (an in-page token a fresh execution cannot have) → switch to
+// Technè, mark its centre the same way → return to Expressions: the SAME
+// iframe node, the SAME document token, and the Library still open → return
+// to Technè: the same three assertions, mirrored → with both centres
+// visited, exactly ONE hosted application instance per mode in the whole DOM
+// (no double mount).
+//
+// Second pass (spec §7/§8):
+//   PANE-TAB legs — a centre opened as an ordinary pane tab in a FOREIGN
+//   tree (here: the Expressions centre into the Technè tree, through the
+//   shell's own left-navigator path) mounts IN PLACE in the pane's own
+//   wrapper — no park, no outlet, no adopt — and its node, document and
+//   in-app state survive mode switches away and back because its tree now
+//   SHELVES (the widened warm-tree criterion: a foreign-tree centre is a
+//   shelving reason). The stage-owned instances stay distinct: one hosted
+//   instance per BINDING, never a second copy of one binding.
+//   RESTART leg — with a DIFFERENT expression opened through the app's own
+//   Library, the shell CHECKPOINTS the current expression ref onto the
+//   binding (debounced, from the app's own oi-app-state announcements); a
+//   renderer restart (page.reload) remounts the stage slot and the app is
+//   deep-linked `?expression=<ref>` through its own boot grammar — the SAME
+//   expression comes back on screen.
 import { mkdtempSync, mkdirSync, cpSync, rmSync } from 'node:fs';
 import { tmpdir } from 'node:os';
 import { join, dirname } from 'node:path';
@@ -188,17 +203,173 @@ export default async function run({ page, baseUrl, check, metric, shot, log }) {
     'RETURN/Technè: the in-app state survived — the Library is still open', techneBack);
   await shot('techne-returned');
 
-  // ---- no double mount ------------------------------------------------------
+  // ---- no double mount (stage-owned centres so far) ------------------------
   const counts = await page.evaluate(() => ({
     frames: document.querySelectorAll('iframe.pcd-host-frame').length,
     hosts: document.querySelectorAll('.pcd-host').length,
     stamped: [...document.querySelectorAll('iframe.pcd-host-frame[data-walk-stamp]')].map((el) => el.dataset.walkStamp),
+    parks: document.querySelectorAll('.mode-centre-retention').length,
   }));
   check(counts.frames === 2 && counts.hosts === 2,
     'With both centres visited, exactly ONE hosted application instance per mode — no double mount', counts);
   check(counts.stamped.includes('expressions') && counts.stamped.includes('techne'),
     'Both centre frames are the stamped instances (the same nodes marked at first presentation)', counts.stamped);
+  check(counts.parks === 0, 'The park layer is gone from the shell entirely (spec §7.1)', counts);
+
+  // ==========================================================================
+  // SECOND PASS — pane-tab centre legs (spec §7.1/§8)
+  // ==========================================================================
+
+  // ---- open the Expressions centre as a pane tab in the TECHNÈ tree -------
+  // The shell's own path: the Technè mode's left navigator. With no
+  // expressions in the kernel it offers New Expression; creating one opens
+  // the Expressions centre as an ordinary tab in the CURRENT tree (the
+  // frame's openModeSurface grammar) — a FOREIGN-tree centre.
+  if (!(await page.locator('.xg-navigator').isVisible().catch(() => false))) {
+    await page.locator('button[aria-label="Toggle left region"]').click();
+  }
+  await page.locator('.xg-navigator').waitFor({ state: 'visible', timeout: 15000 });
+  await page.locator('.xg-navigator button[aria-label="New Expression"]').first().click();
+  // The new tab presents inside the Technè tree's own pane wrapper — the
+  // tree stands hidden behind the stage, so the frame is ATTACHED, not
+  // visible; wait for its host to resolve the vendored app.
+  await page.locator('.warm-tree-host .surface-retained .pcd-host[data-state="ready"]').waitFor({ timeout: 30000, state: 'attached' });
+  const paneHandle = await page.locator('.warm-tree-host iframe.pcd-host-frame').first().elementHandle();
+  const paneFrame = paneHandle ? await paneHandle.contentFrame() : null;
+  if (!paneFrame) throw new Error('the pane-tab centre frame did not present');
+  await paneFrame.waitForSelector('#tool-rail button', { timeout: 30000, state: 'attached' });
+  await paneFrame.waitForFunction(() => !!window.__FIELD_STUDIES__, null, { timeout: 30000 });
+  await paneHandle.evaluate((el) => { if (el.dataset.walkStamp === undefined) el.dataset.walkStamp = 'pane-expressions'; });
+  const paneToken = await paneFrame.evaluate(() => (window.__oiWalkEngineToken ??= Math.random().toString(36).slice(2) + '.' + Date.now()));
+  const panePlacement = await paneHandle.evaluate((el) => ({
+    inStage: !!el.closest('[data-mode-stage]'),
+    inPark: !!el.closest('.mode-centre-retention'),
+    inWarmTree: !!el.closest('.warm-tree-host'),
+    outletWrapped: !!el.closest('.retained-centre-outlet'),
+    wrapperHidden: el.closest('.surface-retained')?.hasAttribute('hidden') ?? null,
+  }));
+  check(!panePlacement.inStage && !panePlacement.inPark && !panePlacement.outletWrapped && panePlacement.inWarmTree,
+    'The pane-tab centre mounts IN PLACE in the warm tree\'s own pane wrapper — no stage slot, no park, no outlet', panePlacement);
+  check(panePlacement.wrapperHidden === false,
+    'The pane-tab centre is its pane\'s presented tab (mounted-concealed only when its tab is switched away)', panePlacement);
+
+  // Mark in-app state through the app's OWN UI, in-frame: the tab stands
+  // behind the stage, so the clicks are dispatched to the app's own
+  // controls inside its document (the same handlers a visible click runs).
+  const openPaneLibrary = async () => {
+    await paneFrame.evaluate((sel) => {
+      const cluster = document.querySelector('.header-cluster[data-compact-at]');
+      const toggle = cluster?.querySelector('.header-menu-toggle');
+      if (toggle && matchMedia(`(max-width: ${cluster.dataset.compactAt}px)`).matches && getComputedStyle(toggle).display !== 'none') toggle.click();
+      document.querySelector(sel)?.click();
+    }, LIBRARY_BUTTON.expressions);
+    await paneFrame.waitForFunction(() => document.body.classList.contains('library-open'), null, { timeout: 15000 });
+  };
+  await openPaneLibrary();
+  const paneBefore = await identityOf('pane-expressions');
+  check(paneBefore.token === paneToken && paneBefore.libraryOpen === true,
+    'The pane-tab Expressions centre is live, stamped, and holds in-app state of its own (its Library open)', paneBefore);
+  await shot('pane-tab-marked');
+
+  // ---- mode round trip: the pane-tab centre rides its SHELVED tree --------
+  await enterMode('expressions');
+  const paneDuringExpressions = await identityOf('pane-expressions');
+  const expressionsStageNow = await page.evaluate(() => document.querySelector('.mode-stage[data-mode-stage="expressions"]:not([hidden]) iframe.pcd-host-frame')?.dataset.walkStamp ?? null);
+  check(expressionsStageNow === 'expressions',
+    'The expressions mode\'s stage slot presents the STAGE-OWNED instance — never the foreign pane-tab binding', { stageStamp: expressionsStageNow });
+  await enterMode('techne');
+  await page.waitForTimeout(400);
+  const paneBack = await identityOf('pane-expressions');
+  check(paneBack.present && paneBack.token === paneToken,
+    'PANE-TAB RETURN: the SAME document came back (token kept — the shelved tree was never unmounted or moved)', { before: paneToken, after: paneBack.token, during: paneDuringExpressions.token });
+  check(paneBack.libraryOpen === true,
+    'PANE-TAB RETURN: the in-app state survived — the pane-tab centre\'s Library is still open', paneBack);
+  await shot('pane-tab-returned');
+
+  // ---- single-mount law over three bindings -------------------------------
+  const countsAfterPane = await page.evaluate(() => ({
+    frames: document.querySelectorAll('iframe.pcd-host-frame').length,
+    hosts: document.querySelectorAll('.pcd-host').length,
+    stamped: [...document.querySelectorAll('iframe.pcd-host-frame[data-walk-stamp]')].map((el) => el.dataset.walkStamp),
+    parks: document.querySelectorAll('.mode-centre-retention').length,
+    outlets: document.querySelectorAll('.retained-centre-outlet, .retained-centre-host').length,
+  }));
+  check(countsAfterPane.frames === 3 && countsAfterPane.hosts === 3,
+    'Three bindings, exactly three hosted instances — one mount per binding, no park copies', countsAfterPane);
+  check(countsAfterPane.stamped.filter((s) => s === 'pane-expressions').length === 1 && countsAfterPane.parks === 0 && countsAfterPane.outlets === 0,
+    'The pane-tab centre exists exactly once, outside every retired park/outlet wrapper', countsAfterPane);
+
+  // ==========================================================================
+  // SECOND PASS — the restart leg (spec §7.2/§8)
+  // ==========================================================================
+
+  // ---- open a DIFFERENT expression through the app's own Library ----------
+  await enterMode('expressions');
+  const stage = await presentedAppFrame('expressions');
+  const docBefore = await stage.frame.evaluate(() => window.__FIELD_STUDIES__.getDocument().id);
+  // The stage app's Library has been open since the first leg — enter it
+  // only if the app closed it.
+  const libraryAlreadyOpen = await stage.frame.evaluate(() => document.body.classList.contains('library-open'));
+  if (!libraryAlreadyOpen) {
+    await stage.frame.click(LIBRARY_BUTTON.expressions, { timeout: 15000 });
+    await stage.frame.waitForFunction(() => document.body.classList.contains('library-open'), null, { timeout: 15000 });
+  }
+  await stage.frame.click('button.expression-open[data-action="open-featured"]', { timeout: 15000 });
+  await stage.frame.waitForFunction(() => !document.body.classList.contains('library-open'), null, { timeout: 15000 });
+  const docAfter = await stage.frame.evaluate(() => window.__FIELD_STUDIES__.getDocument().id);
+  check(docAfter && docAfter !== docBefore,
+    'A different expression was opened through the application\'s own Library (the person\'s work moved)', { before: docBefore, after: docAfter });
+
+  // The stage slot checkpoints the app's own announcements (debounced).
+  // The stage frame's src was minted at boot — BEFORE any checkpoint
+  // existed — so it must carry no deep link, and must NOT change when the
+  // checkpoint lands (reassigning an iframe src re-navigates it).
+  const srcBefore = await stage.handle.evaluate((el) => el.getAttribute('src'));
+  check(!srcBefore.includes('expression='), 'The live frame\'s src carries no deep link (it booted before any checkpoint existed)', { src: srcBefore.slice(-40) });
+  await page.waitForTimeout(1500); // announcement → 400ms debounce → store persist
+  const book = await page.evaluate(() => JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1') ?? 'null'));
+  const activeWs = book?.workspaces?.find((w) => w.id === book.active);
+  const expressionsBinding = activeWs && Object.values(activeWs.layout.surfaces).find((b) => b.kind === 'expressions');
+  check(expressionsBinding?.engine?.expressionRef === docAfter,
+    'The stage slot CHECKPOINTED the current expression ref onto the binding (a ref, not app content)', { checkpoint: expressionsBinding?.engine ?? null, expected: docAfter });
+  check(await stage.handle.evaluate((el) => el.getAttribute('src')) === srcBefore,
+    'The checkpoint write never re-navigated the live frame (src unchanged after the checkpoint landed)', {});
+  // The deep link resolves through the application's OWN boot grammar —
+  // its browser library. Wait until the app has durably recorded the fork
+  // itself (its library record and its last-work pointer), so the restart
+  // exercises the real hand-off: shell checkpoint → app boot grammar.
+  await stage.frame.waitForFunction((id) => {
+    try {
+      const last = localStorage.getItem('oi.field-studies.last');
+      const library = JSON.parse(localStorage.getItem('oi.field-studies.journey-library.v1') ?? '[]');
+      return last === id && Array.isArray(library) && library.some((entry) => entry && entry.id === id);
+    } catch { return false; }
+  }, docAfter, { timeout: 15000 });
+  await shot('checkpointed');
+
+  // ---- restart the renderer ------------------------------------------------
+  await page.reload();
+  await page.waitForSelector('.desktop-shell', { timeout: 30000 });
+  await page.waitForTimeout(1500);
+  await enterMode('expressions');
+  const restored = await presentedAppFrame('expressions');
+  const restoredStamp = await restored.handle.evaluate((el) => { el.dataset.walkStamp = 'restarted'; return el.getAttribute('src'); });
+  check(/expression=/.test(restoredStamp) && restoredStamp.includes(encodeURIComponent(docAfter)),
+    'RESTART: the restored stage slot deep-links the application to the CHECKPOINTED expression (?expression=<ref>)', { src: restoredStamp.slice(-60), expected: docAfter });
+  await restored.frame.waitForFunction(() => !!window.__FIELD_STUDIES__ && !!window.__FIELD_STUDIES__.getDocument().id, null, { timeout: 30000 });
+  const docRestored = await restored.frame.evaluate(() => window.__FIELD_STUDIES__.getDocument().id);
+  check(docRestored === docAfter,
+    'RESTART: the SAME expression is back on screen — the app\'s own boot applied the checkpointed ref', { restored: docRestored, checkpointed: docAfter });
+  // The deep link is a boot-time hint only: the mounted frame's src must
+  // stay put while the (new) session checkpoints its own announcements.
+  await page.waitForTimeout(1200);
+  const afterSettle = await restored.handle.evaluate((el) => ({ src: el.getAttribute('src'), connected: el.isConnected, stamp: el.dataset.walkStamp }));
+  check(afterSettle.connected && afterSettle.stamp === 'restarted' && afterSettle.src === restoredStamp,
+    'The restored frame holds still — one node, one src, no re-navigation while the new session runs', afterSettle);
+  await shot('restored-after-restart');
 
   metric('mode_round_trip_survivals', [expressionsBack.token === expressions.token, expressionsBack.libraryOpen === true, techneBack.token === techne.token, techneBack.libraryOpen === true].filter(Boolean).length);
+  metric('pane_tab_survivals', [paneBack.token === paneToken, paneBack.libraryOpen === true].filter(Boolean).length);
+  metric('restart_expression_restored', docRestored === docAfter ? 1 : 0);
   check(errors.length === 0, 'No page errors across the whole journey', errors.slice(0, 3));
 }

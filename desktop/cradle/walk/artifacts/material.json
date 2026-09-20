@@ -1,16 +1,37 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "material",
+<<<<<<< HEAD
+  "generated_at": "2026-09-19T23:16:28.938Z",
+=======
   "generated_at": "2026-09-19T20:59:45.700Z",
+>>>>>>> origin/main
   "environment": {
-    "base_url": "http://localhost:4173",
-    "bridge_url": "http://127.0.0.1:4179",
+    "base_url": "http://localhost:4473",
+    "bridge_url": "http://127.0.0.1:4479",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
+<<<<<<< HEAD
+      "repository_head": "f234bad2cdcf0289fb03edf21d3b33dc909f66b0",
+      "tracked_changes": [
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/contributions/factory/sidebar/sidebar.css",
+        "desktop/cradle/src/expressions/ActiveContext.tsx",
+        "desktop/cradle/src/expressions/TaOntaSide.tsx",
+        "desktop/cradle/src/files/FileSurface.tsx",
+        "desktop/cradle/src/material/MaterialSurface.tsx",
+        "desktop/cradle/src/material/lifecycle.ts",
+        "desktop/cradle/src/workspace/store.ts",
+        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-front.png",
+        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-library.png",
+        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-local-whole.png",
+        "desktop/cradle/walk/artifacts/corpus-return-of-zero-corpus-verso.png",
+        "desktop/cradle/walk/artifacts/corpus-return-of-zero.json",
+=======
       "repository_head": "ab053b8768a0dfc911e3922ac408b6492d1a4a31",
       "tracked_changes": [
         "desktop/cradle/documents/README.md",
@@ -86,12 +107,20 @@
         "desktop/cradle/walk/artifacts/knowledge-failure.png",
         "desktop/cradle/walk/artifacts/knowledge.json",
         "desktop/cradle/walk/artifacts/material-failure.png",
+>>>>>>> origin/main
         "desktop/cradle/walk/artifacts/material-html-rendered.png",
         "desktop/cradle/walk/artifacts/material-image-rendered.png",
         "desktop/cradle/walk/artifacts/material-markdown-rendered.png",
         "desktop/cradle/walk/artifacts/material-pdf-state.png",
         "desktop/cradle/walk/artifacts/material-unsupported-disposition.png",
         "desktop/cradle/walk/artifacts/material.json",
+<<<<<<< HEAD
+        "desktop/cradle/walk/artifacts/nara-speech-nara-joined-world.png",
+        "desktop/cradle/walk/artifacts/nara-speech.json",
+        "desktop/cradle/walk/artifacts/nara-stage-focus-nara-stage-focus.png",
+        "desktop/cradle/walk/artifacts/nara-stage-focus.json",
+        "desktop/cradle/walk/run.mjs"
+=======
         "desktop/cradle/walk/artifacts/navigator-failure.png",
         "desktop/cradle/walk/artifacts/navigator.json",
         "desktop/cradle/walk/artifacts/page-context-rendered-context-and-scroll.png",
@@ -163,6 +192,7 @@
         "packages/oi-design-system/desktop.css",
         "packages/oi-design-system/search.css",
         "packages/oi-design-system/tokens.css"
+>>>>>>> origin/main
       ],
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
@@ -171,7 +201,11 @@
   },
   "passed": true,
   "error": null,
+<<<<<<< HEAD
+  "duration_ms": 2567,
+=======
   "duration_ms": 2532,
+>>>>>>> origin/main
   "checks": [
     {
       "ok": true,
@@ -319,7 +353,11 @@
       "label": "No uncaught app page errors during the material walk (harness frame-storage noise counted separately)",
       "data": {
         "appErrors": [],
+<<<<<<< HEAD
+        "harnessErrors": 0
+=======
         "harnessErrors": 7
+>>>>>>> origin/main
       }
     }
   ],
@@ -330,11 +368,18 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
+<<<<<<< HEAD
+        "mounted_at": "2026-09-19T23:16:29.010Z",
+=======
         "mounted_at": "2026-09-19T20:59:45.785Z",
+>>>>>>> origin/main
         "transport": {
           "kind": "bridge",
-          "url": "http://127.0.0.1:4179"
+          "url": "http://127.0.0.1:4479"
         },
+<<<<<<< HEAD
+        "url": "http://localhost:4473/"
+=======
         "url": "http://localhost:4173/"
       }
     },
@@ -344,6 +389,7 @@
       "duration_ms": 37,
       "data": {
         "file": "material-html-rendered.png"
+>>>>>>> origin/main
       }
     },
     {
@@ -351,13 +397,25 @@
       "op": "capture.screenshot",
       "duration_ms": 31,
       "data": {
+        "file": "material-html-rendered.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 30,
+      "data": {
         "file": "material-markdown-rendered.png"
       }
     },
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
+      "duration_ms": 31,
+=======
       "duration_ms": 20,
+>>>>>>> origin/main
       "data": {
         "file": "material-image-rendered.png"
       }
@@ -365,7 +423,11 @@
     {
       "ok": true,
       "op": "capture.screenshot",
+<<<<<<< HEAD
+      "duration_ms": 30,
+=======
       "duration_ms": 32,
+>>>>>>> origin/main
       "data": {
         "file": "material-pdf-state.png"
       }
