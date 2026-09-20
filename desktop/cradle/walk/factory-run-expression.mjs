@@ -1,90 +1,67 @@
-// Run-in-Expressions walk (O:I #220 presentation lane): compose a
-// `oi.expression/v1` document from the owner's own Factory readings and
-// verify the SSSF structure survives verbatim — every node kind, every edge
-// kind, declared barriers, attempt verifications, the readable Return, and
-// disclosed actions that keep their native authority.
-// Usage: node walk/factory-run-expression.mjs <factory-bin> <state-path> <run-ref>
-import {readFile} from "node:fs/promises"
-import {spawnSync} from "node:child_process"
-import ts from "typescript"
-
-const [factoryBin, statePath, runRef] = process.argv.slice(2)
-if (!factoryBin || !statePath || !runRef) {
-  throw new Error("usage: node walk/factory-run-expression.mjs <factory-bin> <state-path> <run-ref>")
-}
-const checks = []
-const check = (name, ok, detail="") => { checks.push({name, ok, detail}); if (!ok) throw new Error(`check failed: ${name} ${detail}`) }
-
-const runSh = spawnSync(factoryBin, ["development", "run", statePath, runRef, "--json"], {encoding:"utf8"})
-if (runSh.status !== 0) throw new Error(runSh.stderr || runSh.stdout || "factory development run failed")
-const unitsSh = spawnSync(factoryBin, ["development", "workflow-units", statePath, runRef, "--json"], {encoding:"utf8"})
-if (unitsSh.status !== 0) throw new Error(unitsSh.stderr || unitsSh.stdout || "factory development workflow-units failed")
-const attemptSh = spawnSync(factoryBin, ["attempt", "read", statePath, runRef, "--json"], {encoding:"utf8"})
-const run = JSON.parse(runSh.stdout), units = JSON.parse(unitsSh.stdout)
-let attempt
-let attemptsSkipped = null
-if (attemptSh.status === 0) { attempt = JSON.parse(attemptSh.stdout) }
+// Native Factory CLI -> production Run projection. This is not desktop,
+// provider, installation or self-inhabitation evidence. The receiver browser
+// and native socket packets test their own receiving surfaces separately.
+// Usage: node walk/factory-run-expression.mjs <factory-bin> <state-path> <run-ref> [new-document-output]
+import {readFile,writeFile} from "node:fs/promises";
+import {spawnSync} from "node:child_process";
+import ts from "typescript";
+const [factoryBin,statePath,runRef,output]=process.argv.slice(2);
+if(!factoryBin||!statePath||!runRef)throw new Error("usage: node walk/factory-run-expression.mjs <factory-bin> <state-path> <run-ref> [new-document-output]");
+const checks=[];
+const check=(name,ok,detail="")=>{checks.push({name,ok,detail});if(!ok)throw new Error(`check failed: ${name} ${detail}`);};
+const cli=args=>{
+  const result=spawnSync(factoryBin,args,{encoding:"utf8",timeout:30000,maxBuffer:4*1024*1024});
+  if(result.error)throw result.error;
+  return result;
+};
+const read=args=>{const result=cli(args);if(result.status!==0)throw new Error(result.stderr||result.stdout||`Factory read failed: ${result.status}`);return JSON.parse(result.stdout);};
+const run=read(["development","run",statePath,runRef,"--json"]);
+const units=read(["development","workflow-units",statePath,runRef,"--json"]);
+const attemptResult=cli(["attempt","read",statePath,runRef,"--json"]);
+let attempt;let attemptsSkipped=null;
+if(attemptResult.status===0)attempt=JSON.parse(attemptResult.stdout);
 else {
-  const refusal = String(attemptSh.stderr || attemptSh.stdout || "")
-  if (!refusal.includes("no native attempt field")) throw new Error(refusal || "factory attempt read failed")
-  // Honest refusal for attempt-less runs: compose topology-only and name it.
-  attemptsSkipped = refusal.trim().split("\n")[0]
+  const refusal=String(attemptResult.stderr||attemptResult.stdout||"");
+  if(!refusal.includes("no native attempt field"))throw new Error(refusal||"Factory attempt read failed");
+  attemptsSkipped=refusal;
 }
-if (attempt && attempt.contract !== "factory.attempt-reading/v1") throw new Error("incompatible attempt reading: " + attempt.contract)
-
-check("run reading contract", run.contract === "factory.run-reading/v1", run.contract)
-check("attempt reading contract", !attempt || attempt.contract === "factory.attempt-reading/v1", attempt?.contract ?? "absent (attempt-less run)")
-check("unit list contract", units.contract === "factory.workflow-unit-list-reading/v1", units.contract)
-
-const transpile = async (path) => {
-  const source = await readFile(new URL(path, import.meta.url), "utf8")
-  // The data-URL module cannot resolve relative imports; the transport
-  // helpers are not exercised here (this walk runs the owner CLI directly),
-  // so the import is stubbed for this probe only.
-  const stubbed = source.replace(/import \{ *developmentRead *, *attemptRead *\} *from *"\.\/development";/, "const developmentRead = undefined, attemptRead = undefined")
-  const js = ts.transpileModule(stubbed, {compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText
-  return (await import("data:text/javascript," + encodeURIComponent(js)))
+const after=read(["development","run",statePath,runRef,"--json"]);
+check("stable native reading occasion",JSON.stringify(run)===JSON.stringify(after));
+check("requested native Run",run.runRef===runRef);
+check("run reading contract",run.contract==="factory.run-reading/v1");
+check("attempt reading contract",!attempt||attempt.contract==="factory.attempt-reading/v1");
+check("unit list contract",units.contract==="factory.workflow-unit-list-reading/v1");
+const source=await readFile(new URL("../src/contributions/factory/run-expression.ts",import.meta.url),"utf8");
+// Test-only direct-CLI composition probe; the actual production transport is
+// exercised without substitution by factory-run-receiving.test.mjs.
+const isolated=source.replace(/import \{ *developmentRead *, *attemptRead *\} *from *"\.\/development";/,"const developmentRead=undefined,attemptRead=undefined;");
+const js=ts.transpileModule(isolated,{compilerOptions:{module:ts.ModuleKind.ESNext,target:ts.ScriptTarget.ES2022}}).outputText;
+const adapter=await import("data:text/javascript,"+encodeURIComponent(js));
+const expressionRef="expression:walk-factory-run-expression";
+const document=adapter.composeRunExpression({run,attempt,units,statePath},expressionRef);
+const entities=Object.values(document.entities),relations=Object.values(document.relations);
+const subjects=new Set(entities.map(e=>e.subject?.subject_ref));
+const root=document.entities[`${expressionRef}:entity:run`]?.subject;
+check("expression schema",document.schema==="oi.expression/v1");
+check("same Run Being and native owner",root?.subject_ref===run.runRef&&root?.native_owner==="software-factory"&&root?.presentation_role==="being");
+check("bounded Expression-local entity refs",Object.keys(document.entities).every(ref=>ref.startsWith(`${expressionRef}:entity:`)&&ref.slice(`${expressionRef}:entity:`.length).length<=128));
+check("Expression-local scene refs",document.scenes.every(s=>s.scene_ref.startsWith(`${expressionRef}:scene:`)));
+check("current kernel per-scene budget",document.scenes.every(s=>s.entity_refs.length<=10));
+check("all entities are scene-addressable",new Set(document.scenes.flatMap(s=>s.entity_refs)).size===entities.length);
+check("every native node",Object.values(run.runMap.nodes).every(n=>subjects.has(`${run.runRef}#${n.id}`)));
+check("every native node kind",Object.values(run.runMap.nodes).every(n=>entities.some(e=>e.subject?.subject_ref===`${run.runRef}#${n.id}`&&e.subject.readings.some(r=>r.ref===`factory.run-node/${n.kind}`))));
+check("every edge and exact native endpoints",run.runMap.edges.every(edge=>relations.some(r=>r.relation.ref===`factory.run-edge/${edge.relation}`&&document.entities[r.from_entity_ref].subject.subject_ref===`${run.runRef}#${edge.from}`&&document.entities[r.to_entity_ref].subject.subject_ref===`${run.runRef}#${edge.to}`)));
+check("native gates and barriers",Object.values(run.runMap.nodes).filter(n=>n.kind.toLowerCase()==="gate").every(n=>subjects.has(`${run.runRef}#${n.id}`)));
+check("every compiled unit",units.units.every(u=>subjects.has(u.workflowUnitRef)));
+check("disclosed Run Action targets remain native",root.actions.every(a=>a.target_ref===run.runRef&&(run.actions??[]).some(native=>native.actionRef===a.action_ref)));
+if(attempt){
+  check("every native attempt",attempt.attempts.every(a=>subjects.has(a.attemptRef)));
+  check("every verification and its outcome",attempt.attempts.every(a=>(a.verifications??[]).every(v=>entities.some(e=>e.subject?.subject_ref===a.attemptRef&&e.subject.readings.some(r=>r.ref===`factory.verification/${v.outcome}`&&r.revision===v.verificationRef)))));
+  check("all Returns, not only the first",attempt.attempts.filter(a=>a.readableReturn).every(a=>subjects.has(a.readableReturn.returnRef)));
+  check("all returned artifacts/evidence/receiving refs",attempt.attempts.filter(a=>a.readableReturn).every(a=>[...(a.readableReturn.artifactRefs??[]),...(a.readableReturn.evidenceRefs??[]),...(a.readableReturn.receivingRef?[a.readableReturn.receivingRef]:[])].every(ref=>subjects.has(ref))));
+}else{
+  check("explicit native attempt absence",Boolean(attemptsSkipped));
+  check("no invented attempt scene",!document.scenes.some(s=>s.scene_ref.endsWith(":scene:executions-1")));
 }
-const adapter = await transpile("../src/contributions/factory/run-expression.ts")
-const expressionRef = "expression:walk-factory-run-expression"
-const document = adapter.composeRunExpression({run, attempt, units, statePath}, expressionRef)
-
-check("expression schema", document.schema === "oi.expression/v1", document.schema)
-check("subject bound to the run", document.entities[`${expressionRef}:entity:run`]?.subject?.subject_ref === run.runRef, "")
-check("subject names its native owner", document.entities[`${expressionRef}:entity:run`]?.subject?.native_owner === "software-factory", "")
-check("subject is a Being, not a thing", document.entities[`${expressionRef}:entity:run`]?.subject?.presentation_role === "being", "")
-
-// SSSF preservation: the topology survives verbatim, under the kernel's
-// composition law (expression-local refs, kinds as readings).
-const sanitize = (ref) => ref.replace(/[^A-Za-z0-9-_.]/g, "-")
-const entityFor = (suffix) => `${expressionRef}:entity:${sanitize(suffix)}`
-check("entity refs are expression-local", Object.keys(document.entities).every(k => k.startsWith(`${expressionRef}:entity:`)), "")
-check("scene refs are expression-local", document.scenes.every(scn => scn.scene_ref.startsWith(`${expressionRef}:scene:`)), "")
-check("kernel scene budget respected (<=10 entities)", document.scenes.every(scn => scn.entity_refs.length <= 10), String(Math.max(...document.scenes.map(scn => scn.entity_refs.length))))
-const nodeIds = Object.keys(run.runMap.nodes)
-check("every native node has an entity", nodeIds.every(id => document.entities[entityFor(id)]), String(nodeIds.length))
-const kindSet = new Set(Object.values(run.runMap.nodes).map(n => n.kind))
-check("node kinds preserved as readings", [...kindSet].every(kind => Object.values(document.entities).some(e => e.subject?.readings?.some(r => r.ref === `factory.run-node/${kind}`))), [...kindSet].join(","))
-check("every native edge has a relation", run.runMap.edges.every((edge, i) => document.relations[`${expressionRef}:relation:edge-${i}-${edge.relation}`]), String(run.runMap.edges.length))
-const edgeKinds = new Set(run.runMap.edges.map(e => e.relation))
-check("edge kinds preserved verbatim", [...edgeKinds].every(kind => Object.values(document.relations).some(r => r.relation.ref === `factory.run-edge/${kind}`)), [...edgeKinds].join(","))
-// Gate/barrier nodes are the owner's own topology projection of barriers.
-const gateNodes = Object.values(run.runMap.nodes).filter(n => n.kind === "gate" || n.kind === "Gate")
-check("gate/barrier nodes render as entities", gateNodes.every(n => document.entities[entityFor(n.id)]), String(gateNodes.length))
-
-// Attempts with their actual verification evidence.
-if (attempt) {
-  check("every attempt has an entity", attempt.attempts.every(a => document.entities[entityFor(a.attemptRef)]), String(attempt.attempts.length))
-  check("attempt subject names the native attempt", attempt.attempts.every(a => document.entities[entityFor(a.attemptRef)]?.subject?.subject_ref === a.attemptRef), "")
-  const returned = attempt.attempts.find(a => a.readableReturn)
-  check("readable Return has its scene", Boolean(returned) === document.scenes.some(scn => scn.scene_ref.endsWith(":scene:return")), "")
-} else {
-  check("attempt-less run discloses the refusal", Boolean(attemptsSkipped), attemptsSkipped ?? "")
-  check("attempt-less run invents no attempts", !document.scenes.some(scn => scn.scene_ref.endsWith(":scene:executions-1")), "")
-}
-
-// The renderer is registered for the world-presentation map.
-const presentation = await readFile(new URL("../src/explore/presentation.tsx", import.meta.url), "utf8")
-check("factory-run presentation registered", presentation.includes(`"oi.presentation/factory-run/v1"`), "")
-
-console.log(JSON.stringify({expression:document.expression_ref, entities:Object.keys(document.entities).length, relations:Object.keys(document.relations).length, scenes:document.scenes.length, attemptsSkipped, checks:checks.length, passed:checks.filter(c => c.ok).length}))
+if(output)await writeFile(output,JSON.stringify(document,null,2)+"\n",{flag:"wx",mode:0o600});
+console.log(JSON.stringify({schema:"oi.factory-cli-projection-check/v1",runRef,expression:expressionRef,entities:entities.length,relations:relations.length,scenes:document.scenes.length,attemptsSkipped,checks,standing:"native-cli-projection-only",documentOutput:output??null}));
