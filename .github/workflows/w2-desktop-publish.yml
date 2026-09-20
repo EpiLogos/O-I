@@ -1,0 +1,39 @@
+name: W2 exact desktop publication
+on:
+  push:
+    branches: [agent/w2-central-day-source-20260920]
+permissions:
+  contents: write
+defaults:
+  run:
+    shell: bash
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Preserve transfer diagnostics before any change
+        run: |
+          mkdir -p "$RUNNER_TEMP/w2-publication"
+          cp .github/w2-desktop-part*.b64 "$RUNNER_TEMP/w2-publication/"
+          git rev-parse HEAD > "$RUNNER_TEMP/w2-publication/initial-revision.txt"
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt
+      - name: Apply only hash-verified scoped source
+        run: |
+          python3 .github/w2-desktop-apply.py
+          rustfmt --edition 2021 desktop/cradle/kernel/src/central.rs desktop/cradle/kernel/src/flow.rs desktop/cradle/kernel/src/history.rs
+          git diff --check
+          while IFS= read -r path; do git add -- "$path"; done < /tmp/w2-published-paths
+          git rm .github/w2-desktop-part*.b64 .github/w2-desktop-apply.py
+          git -c user.name='EpiLogos W2' -c user.email='186434782+EpiLogos@users.noreply.github.com' commit -m 'feat(central): wire root ground, Control, current Daily Die and exact NOW Returns'
+          git push origin HEAD:refs/heads/agent/w2-central-day-source-20260920
+          git rev-parse HEAD > "$RUNNER_TEMP/w2-publication/production-revision.txt"
+          git diff HEAD~1 HEAD > "$RUNNER_TEMP/w2-publication/production.patch"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w2-exact-publication
+          path: ${{ runner.temp }}/w2-publication
+          retention-days: 7
