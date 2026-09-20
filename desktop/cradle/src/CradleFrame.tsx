@@ -1505,7 +1505,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (
-          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
+          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
             {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
           </div>
