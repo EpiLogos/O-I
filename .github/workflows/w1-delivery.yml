@@ -1,18 +1,19 @@
 name: W1 reconciliation source recovery
 on:
-  pull_request:
+  push:
+    branches: ['agent/w1-shell-layout-recovery-20260920']
     paths: ['.github/workflows/w1-delivery.yml']
 permissions:
   contents: read
 jobs:
   recover:
-    if: github.event.pull_request.number == 416 && github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'agent/w1-shell-layout-recovery-20260920'
+    if: github.ref == 'refs/heads/agent/w1-shell-layout-recovery-20260920'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
-          ref: ${{ github.event.pull_request.head.sha }}
+          ref: ${{ github.sha }}
           fetch-depth: 0
           persist-credentials: false
       - name: Export only tracked sources and exact public revision objects
@@ -23,7 +24,7 @@ jobs:
           git archive HEAD | gzip > /tmp/w1-reconcile/lane.tar.gz
           git archive b72d763ce026efebe3fac67655749ac0909ea130 | gzip > /tmp/w1-reconcile/main.tar.gz
           git archive a222c8bdf46a7b2146084770b704dfbe83ce5027 | gzip > /tmp/w1-reconcile/base.tar.gz
-          git bundle create /tmp/w1-reconcile/history.bundle HEAD refs/remotes/origin/main
+          git bundle create /tmp/w1-reconcile/history.bundle HEAD refs/remotes/origin/main ^a222c8bdf46a7b2146084770b704dfbe83ce5027
           sha256sum /tmp/w1-reconcile/* > /tmp/w1-reconcile/checksums.txt
       - uses: actions/upload-artifact@v4
         with:
