@@ -47,7 +47,7 @@ try{
    await page.goto('http://127.0.0.1:1554/__system.html');
    await page.getByRole('heading',{name:'This world',exact:true}).waitFor();
    assert.equal(calls.some(c=>c.op==='setup'),false,'System census must not start adoption');
-   await page.getByRole('button',{name:'Install or change this World…'}).click();
+   await page.getByRole('button',{name:'Install and set up…',exact:true}).click();
    await page.getByLabel('Composition',{exact:true}).selectOption('custom');
    await page.getByLabel('Central directory',{exact:true}).fill('/chosen/Central');
    await page.getByRole('button',{name:'Review effects and authority'}).click();
@@ -57,7 +57,7 @@ try{
    await page.getByRole('button',{name:'Back',exact:true}).click();
    await page.getByRole('button',{name:'Cancel',exact:true}).click();
    await page.getByRole('dialog',{name:'Install and set up this World'}).waitFor({state:'detached'});
-   await page.getByRole('button',{name:'Install or change this World…'}).click();
+   await page.getByRole('button',{name:'Install and set up…',exact:true}).click();
    assert.equal(await page.getByLabel('Central directory',{exact:true}).inputValue(),'/chosen/Central');
    await page.getByRole('button',{name:'Close',exact:true}).click();
    await page.getByRole('button',{name:'Read the world again'}).click();
