@@ -1,0 +1,28 @@
+name: W5 exact-source recovery
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/w5-recovery-transfer.yml'
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+          persist-credentials: false
+      - name: Retain changed source only, without runtime data or credentials
+        run: |
+          mkdir -p /tmp/w5-recovery
+          git rev-parse HEAD > /tmp/w5-recovery/head.txt
+          git archive HEAD desktop/cradle/src desktop/cradle/kernel desktop/cradle/tests desktop/cradle/expressions-app/field-studies-journeys/src packages/oi-design-system/expressions-engine/oi .github/workflows/native-expression-backcheck.yml docs/EXPRESSION-PRODUCTION-SUITE-ALIGNMENT.md .wayfinder | gzip > /tmp/w5-recovery/source.tar.gz
+          sha256sum /tmp/w5-recovery/source.tar.gz > /tmp/w5-recovery/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w5-recovery-${{ github.event.pull_request.head.sha }}
+          path: /tmp/w5-recovery
+          retention-days: 1
+          if-no-files-found: error
