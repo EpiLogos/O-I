@@ -277,6 +277,14 @@ pub enum KernelOp {
     /// the buffer is built from `central.day.read`'s own disclosure.
     DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
+    /// Provision ONE fresh chat conversation for a project and open it — the
+    /// desktop's new-chat first Send. The kernel replays the owner's own
+    /// SessionSpace CLI sequence (`project-context` → create →
+    /// bind-project-context → attach-agent-session → encounter-agency-configure
+    /// → encounter open) and returns the minted refs plus the open result.
+    /// Every other encounter action keeps its attachment gate; this is the one
+    /// path allowed to create the attachment it needs.
+    EncounterProvision {project:String},
     MaterialRead {target:material::Target},
     /// The re-pinned build view (queue cell B): the owner CLI reads it as
     /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
@@ -451,6 +459,9 @@ pub enum KernelOpResult {
     InstanceCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
+    /// The provisioned chat conversation: the minted space and session refs,
+    /// the chosen default provider and the owner's own open result, verbatim.
+    EncounterProvisioned {data:serde_json::Value},
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
@@ -810,18 +821,22 @@ impl Kernel {
                 }})
             }
             KernelOp::Encounter {project,request} => {
-                let root=self.world_map(false).map_err(|e|e.to_string())?;
-                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
-                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
-                let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?;
-                let data=self.agency.encounter(&cwd,project_ref,&request)?;
+                let (cwd,project_ref)=self.project_ground(&project)?;
+                let data=self.agency.encounter(&cwd,&project_ref,&request)?;
                 if let agency::EncounterRequest::Read{agent_session,..}=&request {
                     if data["agent_session"].as_str()!=Some(agent_session){return Err("AIKit encounter reading identity mismatch".into());}
-                    let project=focus::ProjectRef::try_from(owner_relation(project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
+                    let project=focus::ProjectRef::try_from(owner_relation(&project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
                     self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
                 }
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
+            }
+            KernelOp::EncounterProvision {project} => {
+                // The same disclosure gate as every project-scoped op: the
+                // project must be inside Central's disclosed ground, and the
+                // canonical ProjectRef is Central's own, never the caller's.
+                let (cwd,project_ref)=self.project_ground(&project)?;
+                let data=self.agency.provision(&cwd,&project_ref)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterProvisioned {data}})
             }
             KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),
             KernelOp::AgencyRead { project } => {
@@ -1172,6 +1187,19 @@ impl Kernel {
         let reading = world::read_world(&self.client)?;
         self.reads.put("world".into(), reading.clone());
         Ok(reading)
+    }
+
+    /// The project-scoped ground every project-named op shares: the project
+    /// must be inside Central's disclosed ground, the cwd comes from that
+    /// disclosure, and the canonical ProjectRef is Central's own inspect
+    /// reading — never a caller-supplied path or ref.
+    fn project_ground(&mut self, project: &str) -> Result<(std::path::PathBuf, String), String> {
+        let root=self.world_map(false)?;
+        let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+        let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
+        let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+        let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+        Ok((cwd,project_ref))
     }
 
     fn project_map(&mut self, project: &str, fresh: bool) -> Result<serde_json::Value, String> {

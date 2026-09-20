@@ -34,8 +34,10 @@ export interface FactoryCentreProps {
  * conversation primitives). The left navigator's two entries choose between
  * them; switching changes the working view, never execution. With no
  * conversation bound, Tasks is the genuine new-conversation state — identity,
- * welcome and the full composer, first Send routing through the ordinary
- * chooser. The imported development console survives only as a dev-only
+ * welcome and the full composer, usable by default: first Send provisions a
+ * fresh conversation (kernel `encounter_provision`); existing conversations
+ * are chosen from the sidebar, the history menu, the Desk or the navigator.
+ * The imported development console survives only as a dev-only
  * debugging disclosure, never the normal experience. */
 export function FactoryCentre({chat,project,accompanying,onOpenTask,onMessage}:FactoryCentreProps) {
   const view=useCentreView();

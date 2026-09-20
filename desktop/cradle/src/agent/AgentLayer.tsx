@@ -12,7 +12,7 @@ import {MODE_CURATION,type WorkspaceMode} from "../workspace/mode";
 import {EncounterList, type EncounterRow} from "../encounter/EncounterList";
 import {expressionReadingOf,useEncounterSession} from "../encounter/session";
 import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
-import {encounter} from "../encounter/client";
+import {encounter,encounterProvision} from "../encounter/client";
 import type {SurfaceBinding} from "../surface/types";
 import type {CentralLocation} from "../kernel/types";
 import {SessionHeader} from "./planes/SessionHeader";
@@ -219,7 +219,16 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
         return <div key={name} className="agent-plane-host" hidden={hidden} style={hidden?{display:"none"}:undefined}>
           {name==="Chat"&&<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={curation.agent} situating={project?`Situated in ${project}`:"Situated in Central"} sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
             subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
-            onNewChat={()=>onAccompanying(undefined)} onChoose={choose}/>}
+            onNewChat={()=>onAccompanying(undefined)} onChoose={choose}
+            onProvision={async provisionProject=>{
+              // New-chat first Send: provision through the kernel, then bind —
+              // the same one binding the chooser sets, no chooser on the way.
+              const provisioned=await encounterProvision(kernel.transport,provisionProject);
+              const value={ref:provisioned.agent_session,project:provisionProject,space:provisioned.space};
+              learnTitles([{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space,title:provisioned.space}]);
+              onAccompanying(value);
+              if(offered.some(entry=>entry.id==="Chat"))select("Chat");
+            }}/>}
           {name==="Activity"&&(session?<ActivityPlane key={session.state.key} session={session} onInspect={handToPanelInspect} conversation={conversation}/>:<NoAccompanying project={project} onOpen={choose}/>)}
           {name==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying} session={session} onOpenSubject={onOpenSubject}/>}
           {name==="Inspect"&&<InspectPlane full={full} selection={inspect} onSelection={setInspect} handed={handed} onDismiss={dismissHanded} subject={subject} history={history} historyAvailable={historyAvailable} session={session} onOpenSubject={onOpenSubject}/>}

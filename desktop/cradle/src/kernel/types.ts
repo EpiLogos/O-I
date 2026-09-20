@@ -209,6 +209,9 @@ export type KernelOp =
   | { op: "agency_read"; project: string }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
+  /** Provision one fresh chat conversation (new-chat first Send): the kernel
+   * replays the owner's own SessionSpace CLI sequence and opens the result. */
+  | {op:"encounter_provision";project:string}
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
@@ -276,6 +279,7 @@ export type KernelOpResult =
   | { result: "config_receipts"; document: unknown }
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
+  | { result:"encounter_provisioned";data:unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
