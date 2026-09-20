@@ -111,3 +111,55 @@ a stage slot owns). `CentreOutlet` remains for pane-tab presentation.
   app's Save into its kernel-backed documents is its own feature).
 - Pane-tab-presented centres' move-reload residual.
 - The C-matrix's native legs (C07/C21/C22/C23) — unchanged.
+
+## 7. Second pass — commissioned 2026-09-19 (owner directive: these are not residuals)
+
+### 7.1 Pane-tab-presented centres: retire the park entirely
+
+The park-adopt path moves the container — the same reload defect — for a
+centre opened as an ordinary pane tab outside its own mode's tree. Design:
+
+- `SurfaceBody`'s centre arm mounts `ModeCentreBody` DIRECTLY (in place,
+  inside the pane's own `.surface-retained` wrapper, mounted-concealed by
+  the pane tier like every other retained tab). `CentreOutlet` and the
+  park-adopt path retire entirely; `ModeCentreRetention`, `retainedCentres`
+  and the park layer are removed.
+- The warm-tree shelving criterion widens: a tree is shelved when it
+  carries ANY retained binding — pane kinds, plus centre bindings that are
+  NOT stage-owned (a centre opened into a foreign tree keeps its body
+  across mode swaps because its tree shelves). Stage-owned centres remain
+  covered by their per-mode stage slots.
+- Single-mount law unchanged: a stage-owned centre is presented only by
+  its stage slot; a foreign-tree centre only by its pane wrapper.
+
+### 7.2 Cross-restart persistence of the hosted engine's state
+
+The Expressions application's in-memory state must survive a full app
+restart, not just mode round trips. The app already deep-links its entry
+(`?expression=<ref>`) and posts hosted-state messages the shell validates
+(PageExpression integration). Design:
+
+- The stage slot for the expressions centre CHECKPOINTS the app's current
+  expression: the shell already receives hosted-state posts (document id,
+  expression ref, revisions — validated token/generation/revision); store
+  the current `expressionRef` as a checkpoint on the binding (`view` or a
+  dedicated checkpoint field, debounced on change).
+- On restart restore, the stage slot re-mounts the hosted app and
+  deep-links it to the checkpointed expression ref through the app's own
+  `?expression=` grammar — the app's own boot then carries the person back
+  to the work they had open. The checkpoint is a REF into the person's
+  saved work, never a copy of app content.
+- Technè: verify its state is kernel-backed (projection registers) and
+  therefore already survives; if any stage-local state (focus, reading
+  position) is renderer-only, checkpoint it the same way.
+
+## 8. Second-pass acceptance
+
+- Pane-tab centre legs in `mode-engine-state.mjs`: open a centre as a pane
+  tab in a foreign tree, mark state, switch modes/workspaces, return —
+  same node, same document, state kept. Run twice.
+- Restart leg: with an expression open in the Expressions engine, restart
+  the renderer — the stage slot re-presents the SAME expression (the
+  checkpointed ref) via the app's own deep-link.
+- All prior acceptance (10/10 mode-engine-state, 13/13 html-continuity,
+  37+/39 node suites, tsc, no double mounts) stays green.
