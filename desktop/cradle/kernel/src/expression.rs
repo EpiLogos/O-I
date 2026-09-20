@@ -350,6 +350,15 @@ pub enum Request {
         expression_ref: String,
         expected_revision: u64,
     },
+    SaveAs {
+        expression_ref: String,
+        expected_revision: u64,
+        parent: files::Location,
+        name: String,
+        operation_ref: String,
+        actor: String,
+        actor_kind: String,
+    },
     Save {
         expression_ref: String,
         expected_revision: u64,
@@ -441,7 +450,7 @@ pub struct Application {
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","invoke",
+        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
         "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
@@ -1414,6 +1423,25 @@ impl Application {
                 }
                 json!({"state":"exported","audience":"local_private","document":self.document(&expression_ref)?,"dynamic_checkpoint":false})
             }
+            Request::SaveAs { expression_ref, expected_revision, parent, name, operation_ref, actor, actor_kind } => {
+                text(&actor)?;
+                text(&operation_ref)?;
+                if !["human", "agent"].contains(&actor_kind.as_str()) { return Err("actor_kind must be human or agent".into()); }
+                if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? { return Ok((conflict, None)); }
+                let document = self.document(&expression_ref)?.clone();
+                let content = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
+                match client.run("central.files.create", json!({"parent":parent,"name":name,"content":content,
+                    "expected_absent":true,"operation_ref":operation_ref,"actor":actor,"actor_kind":actor_kind})) {
+                    Ok(data) if data["schema"]=="central.file-mutation/v1" && matches!(data["outcome"].as_str(), Some("created"|"unchanged")) => {
+                        match serde_json::from_value::<files::Location>(data["location"].clone()) {
+                            Ok(location) => self.accept_saved(client, &document, location, "central.files.create", data),
+                            Err(error) => json!({"state":"saved_readback_failed","persisted":true,"owner_operation":"central.files.create","data":data,"error":error.to_string()}),
+                        }
+                    },
+                    Ok(data) => json!({"state":"save_refused","owner_operation":"central.files.create","data":data}),
+                    Err(error) => json!({"state":"save_refused","owner_operation":"central.files.create","failure":error}),
+                }
+            }
             Request::Save {
                 expression_ref,
                 expected_revision,
@@ -1454,10 +1482,8 @@ impl Application {
                             && matches!(data["outcome"].as_str(), Some("written" | "unchanged"))
                             && data["revision"].as_str().is_some_and(|r| !r.is_empty())
                         {
-                            self.saved.insert(expression_ref.clone(), expected_revision);
-                            let file = json!({"location":location,"revision":data["revision"]});
-                            self.file_bindings.insert(expression_ref, file.clone());
-                            json!({"state":"saved","owner_operation":"central.files.write","data":data,"expression_revision":expected_revision,"file":file})
+                            let document = self.document(&expression_ref)?.clone();
+                            self.accept_saved(client, &document, location, "central.files.write", data)
                         } else {
                             json!({"state":"save_refused","owner_operation":"central.files.write","data":data})
                         }
@@ -1689,6 +1715,27 @@ impl Application {
             }
         };
         Ok((result, changed))
+    }
+    /// A native save receipt is not readback. Keep acknowledged effects legible
+    /// on a lost read; never replay the write or mark a different revision saved.
+    fn accept_saved(&mut self, client: &CentralClient, document: &Document, location: files::Location, operation: &str, data: Value) -> Value {
+        let file = json!({"location":location,"revision":data["revision"]});
+        let proof = (|| -> Result<(),String> {
+            let current = files::read(client, &location)?;
+            if data["revision"] != current.revision { return Err("Native source changed before readback".into()); }
+            let read: Document = serde_json::from_str(&current.content).map_err(|e| e.to_string())?;
+            read.validate()?;
+            if &read != document { return Err("Native readback differs from the saved Expression".into()); }
+            Ok(())
+        })();
+        match proof {
+            Ok(()) => {
+                self.saved.insert(document.expression_ref.clone(),document.revision);
+                self.file_bindings.insert(document.expression_ref.clone(),file.clone());
+                json!({"state":"saved","persisted":true,"readback_verified":true,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file})
+            },
+            Err(error) => json!({"state":"saved_readback_failed","persisted":true,"readback_verified":false,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file,"error":error}),
+        }
     }
     fn open(&mut self, d: Document, actor: String) -> Result<(Value, Option<Changed>), String> {
         text(&actor)?;

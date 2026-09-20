@@ -60,6 +60,7 @@ export type ExpressionRequest =
  | {operation:"propose";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[]}
  | {operation:"review";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;decision:"accepted"|"rejected";reason:string;corrections:Change[]}
  | {operation:"export";expression_ref:string;expected_revision:number}
+ | {operation:"save_as";expression_ref:string;expected_revision:number;parent:CentralLocation;name:string;operation_ref:string;actor:string;actor_kind:"human"|"agent"}
  | {operation:"save";expression_ref:string;expected_revision:number;location:CentralLocation;expected_file_revision:string;actor:string;actor_kind:"human"|"agent"}
  | {operation:"invoke";expression_ref:string;expected_revision:number;entity_ref:string;action_ref:string;input:unknown;project:string|null}
  /* Substrate requests (#352): ES3 profiles/editions/index, ES3A asset index. */

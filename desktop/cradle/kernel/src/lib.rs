@@ -36,6 +36,7 @@ pub mod expression_trigger;
 pub mod flow;
 pub mod history;
 pub mod knowledge;
+pub mod construction;
 pub mod shared_field;
 pub mod action;
 pub mod configuration;
@@ -596,6 +597,12 @@ impl Kernel {
                 if let Some(change) = changed {
                     receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor, activity_ref: change.activity_ref }));
                 }
+                if data["persisted"]==true && data["data"]["changed"]==true {
+                    if let Some(path)=data["file"]["location"]["path"].as_str().or_else(||data["data"]["location"]["path"].as_str()) {
+                        self.reads.invalidate(&format!("dir:{}",files::parent_path(path)));
+                        receipts.push(self.log.record(KernelEvent::FileChanged{path:path.into(),summary:"Saved an Expression through its native file owner.".into()}));
+                    }
+                }
                 if data["state"] == "ready" {
                     if let Some(expression_ref) = focus_ref.as_deref() {
                         if let Some(subject) = self.expressions.selected_subject(expression_ref) {
@@ -996,7 +1003,18 @@ impl Kernel {
                     std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
                 } else { std::path::PathBuf::from(base) };
                 let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::ActionDispatched { dispatch } })
+                let mut receipts=Vec::new();
+                if invocation.action==construction::APPLY {
+                    if let action::ActionDispatch::Invoked{data,..}=&dispatch {
+                        if data["persisted"]==true && data["state"]=="saved" {
+                            if let Some(path)=data["native_file"]["location"]["path"].as_str().or_else(||invocation.input.as_ref().and_then(|i|i["location"]["path"].as_str())) {
+                                self.reads.invalidate(&format!("dir:{}",files::parent_path(path)));
+                                receipts.push(self.log.record(KernelEvent::FileChanged{path:path.into(),summary:"The native Wiki owner saved a constructive whole.".into()}));
+                            }
+                        }
+                    }
+                }
+                Ok(KernelOpOutcome { receipts, result: KernelOpResult::ActionDispatched { dispatch } })
             }
             KernelOp::FlowChangedSince { project, thought } => {
                 // The changed-since compose resolves its owner cwd exactly as
