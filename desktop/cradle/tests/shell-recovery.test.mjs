@@ -106,3 +106,18 @@ test('a draft-only editor tree stays mounted when Settings stands, without cloni
  const tree=warmWorkspaceTrees([w],w.id,'settings').find(t=>t.key==='w:base');
  assert.ok(tree);assert.equal(tree.presented,false);assert.equal(tree.layout.root,base.root);assert.equal(tree.layout.surfaces,base.surfaces);
 });
+
+
+test('compact presentation assigns both corners to the visible focused pane without changing the tree',()=>{
+ const s=state(split('h','h',group('left'),split('v','v',group('top'),group('bottom'))));
+ const before=JSON.stringify(s);
+ for(const id of ['left','top','bottom']) {
+  const focused={...s,focusedGroupId:id};
+  assert.equal(engine.upperCornerGroupId(focused,'right',true),id);
+  assert.equal(engine.upperCornerGroupId(focused,'left',true),id);
+  assert.equal(engine.upperCornerGroupId(focused,'right',false),'top');
+ }
+ assert.equal(engine.upperCornerGroupId({...s,maximizedGroupId:'bottom'},'right',true),'bottom');
+ assert.equal(engine.upperCornerGroupId({...s,focusedGroupId:'stale'},'right',true),'top');
+ assert.equal(JSON.stringify(s),before,'resizing never rewrites a retained layout');
+});

@@ -1037,6 +1037,9 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
   border: var(--oi-shell-edge) solid var(--oi-hairline);
   border-radius: var(--oi-shell-radius); }
 .mode-stage::-webkit-scrollbar { display: none; }
+/* Author display:flex overrides the browser's hidden rule unless explicit.
+ * Keep the stable empty stage slot out of layout when Base returns. */
+.mode-stage[hidden] { display: none; }
 /* Children keep their natural height against a full-stage floor: short
  * surfaces still fill the stage, tall ones (Factory's desk sections) grow
  * and THIS stage is their scroll owner. */

@@ -49,8 +49,11 @@ export function groupsOf(pane: Pane | null): TabGroupPane[] {
 /** The upper boundary leaf. h = side by side, v = stacked. Positive split
  * weights change size, never which child touches an outside corner. A valid
  * maximise mask makes its one visible group own BOTH upper corners. */
-export function upperCornerGroupId(state: Pick<LayoutState, "root" | "maximizedGroupId">, side: "left" | "right"): string | null {
+export function upperCornerGroupId(state: Pick<LayoutState, "root" | "maximizedGroupId"> & Partial<Pick<LayoutState, "focusedGroupId">>, side: "left" | "right", focusOnly = false): string | null {
   if (state.maximizedGroupId && groupsOf(state.root).some(g => g.id === state.maximizedGroupId)) return state.maximizedGroupId;
+  // Below the shell's compact breakpoint only the focused group is shown.
+  // Presentation owns the corner; a hidden geometric neighbour cannot.
+  if (focusOnly && state.focusedGroupId && groupsOf(state.root).some(g => g.id === state.focusedGroupId)) return state.focusedGroupId;
   const visit = (pane: Pane | null): string | null => {
     if (!pane) return null;
     if (pane.type === "group") return pane.id;

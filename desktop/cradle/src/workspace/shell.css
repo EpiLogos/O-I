@@ -18,7 +18,7 @@
 .shell-agent-toggle svg { transform: scaleX(-1); }
 @media (max-width: 639px) {
   .desktop-centre .pane.split { display: contents; }
-  .desktop-centre .pane.group:not(.focused), .desktop-centre .split-resizer { display: none !important; }
+  .desktop-centre .pane.group:not(.focused):not([data-maximized="true"]), .desktop-centre .split-resizer { display: none !important; }
 }
 @media (pointer: coarse) { .shell-topbar { height: 44px; } .shell-topbar button { width: 40px; height: 40px; } }
 .desktop-shell button, .desktop-shell select, .desktop-shell input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }

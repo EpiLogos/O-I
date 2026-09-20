@@ -15,7 +15,7 @@ import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
  *   absence: no encounters are fabricated before the agency vertical mounts.
  */
 
-import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState } from "react";
+import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { Loading } from "../shared/Loading";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
@@ -85,9 +85,20 @@ export interface WorkbenchProps {
   subject?: {ref?: string; kind?: string; title: string; project?: string};
 }
 
+// Keep the presentation boundary aligned with shell.css: compact windows show
+// one focused pane, but do not change or persist the underlying split tree.
+const compactPaneQuery = "(max-width: 639px)";
+const readCompactPane = () => typeof window !== "undefined" && window.matchMedia(compactPaneQuery).matches;
+const subscribeCompactPane = (changed: () => void) => {
+  const query = window.matchMedia(compactPaneQuery);
+  query.addEventListener("change", changed);
+  return () => query.removeEventListener("change", changed);
+};
+
 export function Workbench(props: WorkbenchProps) {
   const { state, menuOpen } = props;
   const kernel = useKernel();
+  const focusOnly = useSyncExternalStore(subscribeCompactPane, readCompactPane, () => false);
   if (!state.root) return null;
 
   // A pointer entering a rendered material iframe crosses the document
@@ -151,7 +162,7 @@ export function Workbench(props: WorkbenchProps) {
   return (
     <div className="workbench">
       <main className="surface-host" aria-label="Canvas">
-        <PaneNode pane={state.root} {...props} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
+        <PaneNode pane={state.root} {...props} focusOnly={focusOnly} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
       </main>
     </div>
   );
@@ -161,6 +172,7 @@ export function Workbench(props: WorkbenchProps) {
 
 interface PaneProps extends WorkbenchProps {
   pane: Pane;
+  focusOnly?: boolean;
   /** Whether the source surface's buffer is dirty (kernel two-layer state). */
   kernelDirty: (ref: string | undefined) => boolean;
   weight?: number;
@@ -238,8 +250,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       className={`pane group${focused ? " focused" : ""}`}
       data-pane="group"
       data-group-id={group.id}
-      data-window-corner={upperCornerGroupId(state, "right") === group.id}
-      data-window-corner-left={upperCornerGroupId(state, "left") === group.id}
+      data-window-corner={upperCornerGroupId(state, "right", props.focusOnly) === group.id}
+      data-window-corner-left={upperCornerGroupId(state, "left", props.focusOnly) === group.id}
       data-focused={focused}
       data-tab-focus={!!active&&state.focusedTabId===active}
       data-tab-presentation={tabPresentation}

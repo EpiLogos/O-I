@@ -1,6 +1,9 @@
 import assert from 'node:assert/strict';
 import {mkdirSync,writeFileSync} from 'node:fs';
 import {fileURLToPath} from 'node:url';
+import {execFileSync} from 'node:child_process';
+import {createHash} from 'node:crypto';
+import {readFileSync} from 'node:fs';
 import {createServer} from 'vite';
 import {chromium,webkit} from 'playwright';
 const root=fileURLToPath(new URL('../',import.meta.url));
@@ -8,7 +11,7 @@ const out=process.env.W1_ARTIFACTS??fileURLToPath(new URL('./artifacts/shell-rec
 const reference=process.env.W1_REFERENCE_CAPTURE==='1';
 const server=await createServer({root,server:{host:'127.0.0.1',port:0},logLevel:'error'});await server.listen();
 const url=`http://127.0.0.1:${server.httpServer.address().port}`;
-const receipt={classification:reference?'reference capture of original source (not a passing acceptance test)':'controlled production-shell interaction; no native, provider, microphone or installed-Mac claims',checks:[],failures:[],browsers:[],passed:false};
+const receipt={sourceRevision:execFileSync('git',['rev-parse','HEAD'],{cwd:root,encoding:'utf8'}).trim(),driverSha256:createHash('sha256').update(readFileSync(fileURLToPath(import.meta.url))).digest('hex'),runId:process.env.GITHUB_RUN_ID??null,classification:reference?'reference capture of original source (not a passing acceptance test)':'controlled production-shell interaction; no native, provider, microphone or installed-Mac claims',checks:[],failures:[],browsers:[],passed:false};
 const group=id=>({type:'group',id,tabs:['doc-'+id],pinned:[],active:'doc-'+id});
 const layout={root:{type:'split',id:'horizontal',dir:'h',weights:[1,2],children:[group('left'),{type:'split',id:'vertical',dir:'v',weights:[1,1],children:[group('upper-right'),group('lower-right')]}]},surfaces:Object.fromEntries(['left','upper-right','lower-right'].map(id=>['doc-'+id,{id:'doc-'+id,kind:'draft',title:id+' draft'}])),closedStack:[],focusedGroupId:'left',agencyDepth:'collapsed',rightDepth:'collapsed',leftWidth:240,rightWidth:300};
 const scenario=async(name,body)=>{try{await body();receipt.checks.push(name);}catch(e){receipt.failures.push({name,error:String(e),stack:e.stack});console.error(name,e);}};
@@ -34,6 +37,8 @@ async function seed(browser,scheme){
  }
 }
 async function corner(page,expected){
+ const snapshot=await page.locator(visible+' [data-pane="group"]').evaluateAll(ns=>ns.map(n=>({id:n.dataset.groupId,corner:n.dataset.windowCorner,rect:n.getBoundingClientRect().toJSON(),display:getComputedStyle(n).display})));
+ writeFileSync(`${out}/last-geometry.json`,JSON.stringify({expected,width:page.viewportSize()?.width,groups:snapshot},null,2));
  const actual=await page.locator(visible+' [data-window-corner="true"]').evaluateAll(ns=>ns.filter(n=>n.getBoundingClientRect().width>0).map(n=>n.dataset.groupId));
  assert.deepEqual(actual,[expected]);
  const boxes=await page.locator(visible+' [data-pane="group"]').evaluateAll(ns=>ns.map(n=>({id:n.dataset.groupId,x:n.getBoundingClientRect().left,y:n.getBoundingClientRect().top,right:n.getBoundingClientRect().right,width:n.getBoundingClientRect().width})).filter(n=>n.width>0));
@@ -79,8 +84,10 @@ try{
      await appearance.getByRole('button',{name:'Dark',exact:true}).click();await page.waitForFunction(()=>document.body.dataset.theme==='dark');assert.equal(await bodyTheme(page),'dark');
      await appearance.getByRole('button',{name:'System',exact:true}).click();await page.emulateMedia({colorScheme:'light'});await page.waitForFunction(()=>!document.body.dataset.theme);assert.equal(await bodyTheme(page),'light');
      assert.equal(await page.locator('.visuals-preferences canvas,.visuals-preferences iframe').count(),0,'Visuals has no duplicate Expression host');
-     await page.getByRole('button',{name:'Back to work',exact:true}).click();await editor.waitFor();assert.equal(await editor.evaluate(el=>el===window.retainedEditor),true,'the same editor DOM returns, not a remount');await corner(page,'upper-right');
-     await page.setViewportSize({width:1440,height:900});await page.keyboard.press('Control+Alt+5');await page.getByRole('navigation',{name:'Settings surfaces'}).getByRole('button',{name:'Visuals',exact:true}).click();
+     await page.getByRole('button',{name:'Back to work',exact:true}).click();await editor.waitFor();assert.equal(await editor.evaluate(el=>el===window.retainedEditor),true,'the same editor DOM returns, not a remount');await page.screenshot({path:`${out}/${engineName}-${scheme}-return-360.png`});await corner(page,'left');
+     for(const width of [639,640,760,1440]){await page.setViewportSize({width,height:900});await page.waitForFunction(()=>[...document.querySelectorAll('.warm-tree-host:not([hidden]) [data-window-corner="true"]')].some(n=>n.getBoundingClientRect().width>0));await corner(page,width<640?'left':'upper-right');}
+     await page.screenshot({path:`${out}/${engineName}-${scheme}-return-wide.png`});
+     await page.keyboard.press('Control+Alt+5');await page.getByRole('navigation',{name:'Settings surfaces'}).getByRole('button',{name:'Visuals',exact:true}).click();
      await page.getByRole('button',{name:'Open Expressions',exact:true}).click();await page.waitForFunction(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout.mode==='expressions');assert.equal(await page.locator('.mode-stage .retained-centre-outlet').count(),1,'actual Expressions stage owns its outlet');
     }finally{await context.close();}
    });
@@ -88,7 +95,9 @@ try{
     const {context,page}=await seed(browser,scheme);try{
      await page.keyboard.press('Control+Alt+2');await page.getByRole('radiogroup',{name:'Factory view'}).waitFor();
      const views=page.getByRole('radiogroup',{name:'Factory view'});await views.getByRole('radio',{name:'Tasks',exact:true}).click();assert.equal(await views.getByRole('radio',{name:'Tasks',exact:true}).getAttribute('aria-checked'),'true');
+     if(!reference)await page.locator('.mode-stage .factory-centre[data-centre-view="tasks"] .factory-chat-full').waitFor({state:'visible'});
      await views.getByRole('radio',{name:'Desk',exact:true}).click();assert.equal(await views.getByRole('radio',{name:'Desk',exact:true}).getAttribute('aria-checked'),'true');
+     if(!reference){await page.locator('.mode-stage .factory-centre[data-centre-view="desk"]').waitFor({state:'visible'});assert.equal(await page.locator('.factory-centre:visible').count(),1,'one actual Factory body has one presenter');}
      await page.screenshot({path:`${out}/${engineName}-${scheme}-factory.png`});
      if(reference)return;
      const colours=await views.locator('button').evaluateAll(ns=>ns.map(n=>({selected:n.getAttribute('aria-checked'),color:getComputedStyle(n).color,bg:getComputedStyle(n).backgroundColor,icon:getComputedStyle(n.querySelector('svg')).color})));
@@ -104,5 +113,5 @@ try{
   }}finally{await browser.close();}
  }
  receipt.passed=!reference&&receipt.failures.length===0;
- if(!reference)assert.deepEqual(receipt.failures,[],'all production shell interaction cases must pass');
+ if(!reference){assert.equal(receipt.checks.length,12,'all planned scenarios must execute');assert.deepEqual(receipt.failures,[],'all production shell interaction cases must pass');}
 }finally{writeFileSync(`${out}/receipt.json`,JSON.stringify(receipt,null,2)+'\n');await server.close();}
