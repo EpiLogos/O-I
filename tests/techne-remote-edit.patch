@@ -1,0 +1,131 @@
+sha256 0303df477aa0c90d7cc9c87c5c4eed3189b7a2640c9e59466840cdf6f4f5d67d
+diff --git a/desktop/cradle/src/techne/WikiExpressionBody.tsx b/desktop/cradle/src/techne/WikiExpressionBody.tsx
+index 2464b90b7d6c40b530014f9c14d826cc34a305c9..b0edc0bb950e09cb6111f9ded1e9199101539324 100644
+--- a/desktop/cradle/src/techne/WikiExpressionBody.tsx
++++ b/desktop/cradle/src/techne/WikiExpressionBody.tsx
+@@ -182,8 +182,14 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+         // the position this instrument restores to. Only an absent
+-        // generation opens. (The projection identity is content-addressed
+-        // over the reading, so a changed wiki basis opens as a new
+-        // generation rather than silently replacing this one.)
++        // generation opens. Identity is stable across source changes; a
++        // different source basis is exposed as drift without replacing edits.
+         const standingReply = await kernelOp(kernel.transport, {op: "expression", request: {operation: "inspect", expression_ref: projection.document.expression_ref}});
+         const standingDocument = standingReply.outcome?.result === "expression" ? (standingReply.outcome.data as ExpressionResult).document : undefined;
+-        if (standingDocument) { wikiProjectionDocumentReady(target.key, standingDocument); return; }
++        if (standingDocument) {
++          const basis = projection.document.provenance[0];
++          const original = standingDocument.provenance.find(row => row.ref === basis?.ref);
++          if (basis && original?.revision !== basis.revision) {
++            wikiProjectionDrift(target.key, standingDocument, "The connected source revision changed. This saved composition and its selection remain intact; reconcile affected bindings before applying new interpretations.");
++          } else wikiProjectionDocumentReady(target.key, standingDocument);
++          return;
++        }
+         const reply = await kernelOp(kernel.transport, {op: "expression", request: {operation: "open", document: projection.document, actor: ACTOR}});
+@@ -294,3 +300,8 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+       presentation.current = acquired;
+-      setReady(true);
++      const lease = acquired;
++      void lease.ready().then(() => {
++        if (presentation.current === lease) setReady(true);
++      }, cause => {
++        if (presentation.current === lease) setStageError(text(cause));
++      });
+     } catch (cause) {
+@@ -315,3 +326,3 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+     try {
+-      standingPresentation.updateConfig(projectedConfig!, document.selection.scene_ref, document.selection.entity_ref ? [document.selection.entity_ref] : []);
++      standingPresentation.updateConfig(projectedConfig!, document.selection.scene_ref, document.selection.relation_ref ? [document.selection.relation_ref] : document.selection.entity_ref ? [document.selection.entity_ref] : []);
+     } catch (cause) { setStageError(cause instanceof Error ? cause.message : String(cause)); }
+@@ -322,4 +333,17 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+   useEffect(() => {
+-    if (ready && document) stage.focusSelection(document.selection.entity_ref ? [document.selection.entity_ref] : []);
+-  }, [ready, document?.selection.entity_ref, stage]);
++    if (ready && document) stage.focusSelection(document.selection.relation_ref ? [document.selection.relation_ref] : document.selection.entity_ref ? [document.selection.entity_ref] : []);
++  }, [ready, document?.selection.entity_ref, document?.selection.relation_ref, stage]);
++
++  const pointerStart = useRef<{x:number;y:number}|null>(null);
++  const focusRelation = async (bindingRef: string) => {
++    const current = latest.current.document;
++    if (!current || !current.relations[bindingRef]) return;
++    const response = await kernelOp(kernel.transport, {op:"expression", request:{operation:"edit",
++      expression_ref:current.expression_ref, expected_revision:current.revision, actor:ACTOR,
++      changes:[{change:"relation_focus",scene_ref:current.selection.scene_ref,binding_ref:bindingRef}]}});
++    const result = response.outcome?.result === "expression" ? response.outcome.data as ExpressionResult : undefined;
++    if (result?.document && registerKey) wikiProjectionDocumentFocused(registerKey,result.document);
++    else setError(response.error ?? (result?.state === "revision_conflict"
++      ? "The field changed during selection. Select the relation again on the current field." : "The native relation selection was refused."));
++  };
+ 
+@@ -419,3 +443,13 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+       {visualsSnapshot.enabled
+-        ? <div ref={stageHost} className="wx-stage-host" aria-label="The wiki local whole, projected" data-ready={ready || undefined}/>
++        ? <div ref={stageHost} className="wx-stage-host" aria-label="The wiki local whole, projected" data-ready={ready || undefined}
++            onPointerDown={event => { if(event.button===0)pointerStart.current={x:event.clientX,y:event.clientY}; }}
++            onPointerCancel={() => { pointerStart.current=null; }}
++            onPointerUp={event => {
++              const start=pointerStart.current;pointerStart.current=null;
++              if(!start || Math.hypot(event.clientX-start.x,event.clientY-start.y)>5 || !document || !ready)return;
++              const hit=presentation.current?.hitTest(event.clientX,event.clientY);
++              if(hit?.kind==="entity")void focus(document.expression_ref,document.revision,document.selection.scene_ref,hit.entity_ref);
++              else if(hit?.kind==="relation")void focusRelation(hit.binding_ref);
++            }}/>
++
+         : <div className="wx-stage-off" role="status">
+@@ -425,2 +459,8 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+           </div>}
++      {document?.selection.relation_ref && <aside className="wx-subject" aria-label="Selected relation" data-binding-ref={document.selection.relation_ref}>
++        <strong>Selected connection</strong>
++        <span className="oi-ref">{document.relations[document.selection.relation_ref]?.relation.ref}</span>
++        <span className="oi-note">{document.relations[document.selection.relation_ref]?.from_entity_ref} → {document.relations[document.selection.relation_ref]?.to_entity_ref}</span>
++        <span className="oi-state">Source revision {document.relations[document.selection.relation_ref]?.relation.revision}</span>
++      </aside>}
+       {document && <WikiSubjectPanel document={document} workspaceSubjectRef={subject?.ref} onOpenKnowledge={openKnowledge} onOpenSource={source => void openSource(source)}/>}
+@@ -430,3 +470,3 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+         onFocus={(sceneRef, entityRef) => void focus(document.expression_ref, document.revision, sceneRef, entityRef)}
+-        onOpenKnowledge={openKnowledge}/>}
++        onOpenKnowledge={openKnowledge} onRelation={ref => void focusRelation(ref)}/>}
+     </>}
+@@ -438,3 +478,3 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
+  * document; entering a constellation is the same edit. */
+-function WikiTransport({document, projection, onFocus, onOpenKnowledge}: {
++function WikiTransport({document, projection, onFocus, onOpenKnowledge, onRelation}: {
+   document: ExpressionDocument;
+@@ -442,2 +482,3 @@ function WikiTransport({document, projection, onFocus, onOpenKnowledge}: {
+   onFocus(sceneRef: string, entityRef: string | null): void;
++  onRelation(bindingRef:string): void;
+   onOpenKnowledge(ref: string, title: string): void;
+@@ -481,2 +522,8 @@ function WikiTransport({document, projection, onFocus, onOpenKnowledge}: {
+       })}
++      {selectedScene && Object.values(document.relations).filter(relation => selectedScene.entity_refs.includes(relation.from_entity_ref) && selectedScene.entity_refs.includes(relation.to_entity_ref)).map(relation =>
++        <button key={relation.binding_ref} type="button" className="wx-entity" data-relation-ref={relation.relation.ref}
++          aria-pressed={document.selection.relation_ref===relation.binding_ref} onClick={() => onRelation(relation.binding_ref)}
++          title={`${relation.relation.ref} · ${relation.from_entity_ref} → ${relation.to_entity_ref}`}>
++          {document.entities[relation.from_entity_ref]?.title} → {document.entities[relation.to_entity_ref]?.title}
++        </button>)}
+       {selectedScene && selectedScene.entity_refs.length === 0 && <span className="oi-note">This scene holds nothing yet.</span>}
+diff --git a/desktop/cradle/src/techne/wikiProjectionStore.ts b/desktop/cradle/src/techne/wikiProjectionStore.ts
+index 169d915f2f691597699f7bafa69e6007768a6772..5c6a5a0c95c570edd49dfaca8961da639bc3dfa6 100644
+--- a/desktop/cradle/src/techne/wikiProjectionStore.ts
++++ b/desktop/cradle/src/techne/wikiProjectionStore.ts
+@@ -58,2 +58,3 @@ export interface WikiProjectionSelection {
+   entityRef: string | null;
++  relationRef?: string | null;
+   subjectRef: string | null;
+@@ -66,2 +67,3 @@ export interface WikiSelectionRequest {
+   entityRef: string | null;
++  relationRef?: string | null;
+   subjectRef: string | null;
+@@ -129,3 +131,4 @@ function selectionOf(registerKey: string, standing: RegisterStanding): WikiProje
+     entityRef: entityRef ?? null,
+-    subjectRef: entity?.subject?.subject_ref ?? null,
++    relationRef: document.selection.relation_ref ?? null,
++    subjectRef: document.selection.relation_ref ? document.relations[document.selection.relation_ref]?.relation.ref ?? null : entity?.subject?.subject_ref ?? null,
+   };
+@@ -269,4 +272,4 @@ const rereadGenerations = new Map<string, number>();
+  * named): the store re-reads the local whole and re-projects, and the
+- * centre's open flow stands the new generation — the projection identity is
+- * content-addressed over the reading, so a changed wiki is a new generation;
++ * centre's open flow checks the source basis against the same stable identity;
++ * a changed wiki is drift, not permission to remint or overwrite composition;
+  * the kernel never replaces the standing draft. The stale-while-revalidate
