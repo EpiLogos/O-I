@@ -165,6 +165,7 @@ export type ProfileEditOpWire =
   | { action: "set_description"; description: string | null };
 
 export type KernelOp =
+  | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"graph";project?:string;query:string}
@@ -249,6 +250,7 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}

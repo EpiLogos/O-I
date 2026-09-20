@@ -15,7 +15,7 @@ import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {PlanDrawer} from '/src/configuration/PlanDrawer.tsx';
 import {SetupFlow} from '/src/configuration/SetupFlow.tsx';
-import {SetupFlowController,settingsOf} from '/src/configuration/setupFlow.ts';
+import {SetupFlowController,settingsOf} from '/src/configuration/setupFlowController.ts';
 import {createSetupNative} from '/src/configuration/setupNative.ts';
 import {createFixtureConfigPlaneSource} from '/src/configuration/fixtureSource.ts';
 import {createLiveConfigPlaneSource} from '/src/configuration/liveSource.ts';

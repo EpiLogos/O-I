@@ -521,8 +521,8 @@ pub fn apply<R: Runtime, S: JournalStore>(
                             receipt["verification"] = reading;
                         }
                     }
-                    Err(_) => {
-                        journal.records[index].message = Some("The operation returned, but its independent native readback did not verify. Recheck; do not replay the write.".into());
+                    Err(error) => {
+                        journal.records[index].message = Some(format!("The operation returned, but independent native readback did not verify: {error}. Recheck; do not replay the write."));
                     }
                 }
                 store.save(&journal)?;
@@ -530,9 +530,9 @@ pub fn apply<R: Runtime, S: JournalStore>(
                     break;
                 }
             }
-            Err(_) => {
+            Err(error) => {
                 journal.records[index].state = StepState::Unknown;
-                journal.records[index].message = Some("The native operation did not return a conclusive result. Earlier effects are retained. Inspect and recheck the owner's state; this write will not be retried.".into());
+                journal.records[index].message = Some(format!("Native operation: {error}. Earlier effects are retained. Inspect and recheck the owner's state; this write will not be retried."));
                 store.save(&journal)?;
                 break;
             }

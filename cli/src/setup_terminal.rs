@@ -91,6 +91,7 @@ fn setup_interactive() -> Result<i32, String> {
                 "Configure capabilities in the existing World".into(),
                 "Inspect the last installation and its recovery state".into(),
                 "Begin ordinary work with native tools".into(),
+                "Set up secure credentials in the native AIKit terminal".into(),
                 "Leave setup".into(),
             ],
         )?
@@ -107,7 +108,11 @@ fn setup_interactive() -> Result<i32, String> {
                 continue;
             }
             3 => return setup_begin_work(),
-            4 => return Ok(0),
+            4 => {
+                setup_credentials_terminal()?;
+                continue;
+            }
+            5 => return Ok(0),
             _ => {}
         }
         let labels = discovery
@@ -347,7 +352,17 @@ fn setup_configure_terminal() -> Result<i32, String> {
         };
         let entry = editable[index];
         if entry.setting.sensitive || entry.value_kind() == ValueKind::Secret {
-            println!("This is a secure credential reference, not an ordinary text value. Use the owner's secure credential setup; no secret will be put in an O:I plan/profile/journal.");
+            println!("This capability uses a secure credential, never an ordinary settings value.");
+            if setup_choose(
+                "Credential authority stays with its native owner",
+                &[
+                    "Open native AIKit credential setup".into(),
+                    "Back without changing credentials".into(),
+                ],
+            )? == Some(0)
+            {
+                setup_credentials_terminal()?;
+            }
             continue;
         }
         let mut scopes = entry
@@ -436,11 +451,19 @@ fn setup_configure_terminal() -> Result<i32, String> {
         }
         let id = mint_changeset_id();
         match config.apply(&id, std::slice::from_ref(&request), None) {
-            Ok(applied) => println!(
-                "Native result: {} ({} receipt(s)).",
-                wire_string(&applied.changeset.status),
-                applied.receipts.len()
-            ),
+            Ok(applied) => {
+                println!(
+                    "Native result: {} ({} receipt(s)).",
+                    wire_string(&applied.changeset.status),
+                    applied.receipts.len()
+                );
+                if applied.changeset.status
+                    != oi_cli::configuration::changeset::ChangeSetStatus::Verified
+                {
+                    println!("This operation is not independently verified. Inspect the native ChangeSet and readback before another change. No automatic restart or write retry.");
+                    return Ok(1);
+                }
+            }
             Err(error) => {
                 println!("{error}\nOutcome may be partial or unknown. Read native receipts before another change; no write was retried.");
                 return Ok(1);
@@ -482,4 +505,24 @@ fn setup_print_resolution(reading: &Resolution) {
         }
     }
     println!("No automatic restart, reconnect, session creation or credential disclosure.");
+}
+
+/// Enter the existing native TUI with its discovered credential requirements,
+/// provider selection, secure material input, scope and redacted readback.
+/// O:I neither reads secret input nor fabricates an authority/credential store.
+fn setup_credentials_terminal() -> Result<i32, String> {
+    setup_require_terminal()?;
+    println!("AIKit owns credential setup. In its command palette choose credential setup; select a discovered requirement and review its provider and scope. Cancel leaves credentials unchanged. Return here after the native terminal closes.");
+    let status = Command::new(env::current_exe().map_err(|error| error.to_string())?)
+        .args(["aikit", "tui"])
+        .status()
+        .map_err(|error| {
+            format!(
+                "Native credential setup did not start: {error}. No O:I credential write was made."
+            )
+        })?;
+    if !status.success() {
+        println!("The native terminal exited unsuccessfully. Credential outcome is not inferred and no operation is retried; use its redacted native readback.");
+    }
+    Ok(status.code().unwrap_or(1))
 }

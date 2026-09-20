@@ -475,3 +475,117 @@ fn production_adoption_rejects_configuration_fixture_transport() {
     assert_eq!(value["error"]["code"], "setup_refused");
     assert_eq!(value["write_retried"], false);
 }
+
+fn real_setup(home: &std::path::Path, request: &Value) -> (i32, Value) {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+    let mut child = Command::new(env!("CARGO_BIN_EXE_oi"))
+        .args(["setup", "--request-file", "-", "--json"])
+        .env_clear()
+        .env("HOME", home)
+        .env("OI_HOME", home.join("config"))
+        .env("OI_DATA_HOME", home.join("data"))
+        .env("PATH", "")
+        .current_dir(home)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .unwrap();
+    child
+        .stdin
+        .take()
+        .unwrap()
+        .write_all(&serde_json::to_vec(request).unwrap())
+        .unwrap();
+    let out = child.wait_with_output().unwrap();
+    let value: Value = serde_json::from_slice(&out.stdout).unwrap_or_else(|error| {
+        panic!(
+            "{error}: {} / {}",
+            String::from_utf8_lossy(&out.stdout),
+            String::from_utf8_lossy(&out.stderr)
+        )
+    });
+    (out.status.code().unwrap_or(-1), value)
+}
+fn real_maintenance_plan(home: &std::path::Path) -> Value {
+    // An absent Desktop's teardown is explicitly a no-op; recording the chosen
+    // composition exercises real O:I journal/config writes, not product install.
+    let (code, value) = real_setup(
+        home,
+        &json!({"action":"plan","selection":{"composition":"custom","desktop":"remove","products":[],"remove_products":[]}}),
+    );
+    assert_eq!(code, 0, "{value}");
+    assert_eq!(value["plan"]["blocked"], json!([]));
+    value["plan"].clone()
+}
+#[test]
+fn real_native_plan_apply_restart_and_readback_do_not_replay() {
+    let home = tempfile::TempDir::new().unwrap();
+    let plan = real_maintenance_plan(home.path());
+    assert!(!home.path().join("config").exists());
+    let request = json!({"action":"apply","plan":plan,"approval":plan["review_token"]});
+    let (code, result) = real_setup(home.path(), &request);
+    assert_eq!(code, 0, "{result}");
+    assert_eq!(result["disposition"], "verified");
+    let (_, status) = real_setup(home.path(), &json!({"action":"status"}));
+    assert_eq!(status["journal"], result["journal"]);
+    let (_, repeated) = real_setup(home.path(), &request);
+    assert_eq!(repeated["journal"], result["journal"]);
+    assert_eq!(repeated["replayed"], false);
+    let (_, checked) = real_setup(home.path(), &json!({"action":"recheck"}));
+    assert_eq!(checked["disposition"], "verified");
+    assert_eq!(checked["replayed"], false);
+    assert!(!home.path().join("Central").exists());
+}
+#[test]
+fn real_native_stale_basis_refuses_before_any_owner_write() {
+    let home = tempfile::TempDir::new().unwrap();
+    let stale = real_maintenance_plan(home.path());
+    // Use an ordinary external native CLI setting operation, not a fabricated
+    // success response. It changes the composition basis after review.
+    let output = std::process::Command::new(env!("CARGO_BIN_EXE_oi"))
+        .args(["mode", "set", "0/1"])
+        .env_clear()
+        .env("HOME", home.path())
+        .env("OI_HOME", home.path().join("config"))
+        .env("OI_DATA_HOME", home.path().join("data"))
+        .env("PATH", "")
+        .current_dir(home.path())
+        .output()
+        .unwrap();
+    assert!(
+        output.status.success(),
+        "{}",
+        String::from_utf8_lossy(&output.stderr)
+    );
+    let (code, result) = real_setup(
+        home.path(),
+        &json!({"action":"apply","plan":stale,"approval":stale["review_token"]}),
+    );
+    assert_eq!(code, 1, "{result}");
+    assert_eq!(result["disposition"], "not_applied");
+    assert_eq!(result["write_started"], false);
+    let (_, status) = real_setup(home.path(), &json!({"action":"status"}));
+    assert!(status["journal"].is_null());
+}
+#[test]
+fn original_owner_failures_survive_the_journal() {
+    let p = planned();
+    let mut owner = Owner::new(p.clone());
+    owner.fail_invocation = Some(1);
+    let journal = apply(
+        &mut owner,
+        &mut MemoryStore::default(),
+        p.clone(),
+        &p.review_token,
+        1001,
+    )
+    .unwrap();
+    assert!(journal.records[0]
+        .message
+        .as_deref()
+        .unwrap()
+        .contains("Native operation:"));
+    assert_eq!(journal.records[0].state, StepState::Unknown);
+}

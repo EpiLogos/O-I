@@ -485,201 +485,236 @@ fn setup_install_native(product: &str, plan: &AdoptionPlan) -> Result<Value, Str
         json!({"native_receipt":active_update_receipt_path(&data_root),"product":installed,"takes_effect":"next-invocation","agent_authority_granted":false}),
     )
 }
-struct AdoptionRuntime;
+#[derive(Default)]
+struct AdoptionRuntime {
+    basis: Option<String>,
+}
+fn setup_record_basis() -> Result<String, String> {
+    let root = oi_data_root()?;
+    adoption::digest(&json!({
+        "composition": setup_file_digest(&state_path()?)?,
+        "suite_receipt": setup_file_digest(&installed_receipt_path(&root))?,
+        "update_receipt": setup_file_digest(&active_update_receipt_path(&root))?,
+        "desktop_receipt": setup_file_digest(&oi_cli::desktop_install::installed_receipt_path(&root))?
+    }))
+}
 impl adoption::Runtime for AdoptionRuntime {
     fn refresh_plan(&mut self, reviewed: &AdoptionPlan) -> Result<AdoptionPlan, String> {
-        setup_make_plan(reviewed.selection.clone(), reviewed.created_at_unix_ms)
+        let fresh = setup_make_plan(reviewed.selection.clone(), reviewed.created_at_unix_ms)?;
+        self.basis = Some(setup_record_basis()?);
+        Ok(fresh)
+    }
+    fn preflight(&mut self, _step: &adoption::Step, _plan: &AdoptionPlan) -> Result<(), String> {
+        if self.basis.as_deref() != Some(setup_record_basis()?.as_str()) {
+            return Err("Native composition or receipts changed between operations. Earlier effects remain; review a fresh plan for the remaining work.".into());
+        }
+        Ok(())
     }
     fn invoke(&mut self, step: &adoption::Step, plan: &AdoptionPlan) -> Result<Value, String> {
-        match &step.operation {
-            AdoptionOperation::RegisterExisting {
-                product,
-                executable,
-                sha256,
-            } => {
-                if setup_file_digest(Path::new(executable))?.as_deref() != Some(sha256.as_str()) {
-                    return Err("The selected native executable changed.".into());
+        let result = (|| {
+            match &step.operation {
+                AdoptionOperation::RegisterExisting {
+                    product,
+                    executable,
+                    sha256,
+                } => {
+                    if setup_file_digest(Path::new(executable))?.as_deref() != Some(sha256.as_str())
+                    {
+                        return Err("The selected native executable changed.".into());
+                    }
+                    let catalog = catalog()?;
+                    let surface = find_surface(&catalog, product)?;
+                    let mut composition = load_composition()?;
+                    let registration = registration_in_modality(
+                        surface,
+                        Some(PathBuf::from(executable)),
+                        None,
+                        None,
+                        InstallModality::ExistingWorldAdoption,
+                        Some("reviewed-existing-native-command".into()),
+                    )?;
+                    ensure_alias_available(&composition, &registration)?;
+                    composition.modules.insert(product.clone(), registration);
+                    save_composition(&composition)?;
+                    Ok(
+                        json!({"product":product,"executable":executable,"sha256":sha256,"reinstalled":false}),
+                    )
                 }
-                let catalog = catalog()?;
-                let surface = find_surface(&catalog, product)?;
-                let mut composition = load_composition()?;
-                let registration = registration_in_modality(
-                    surface,
-                    Some(PathBuf::from(executable)),
-                    None,
-                    None,
-                    InstallModality::ExistingWorldAdoption,
-                    Some("reviewed-existing-native-command".into()),
-                )?;
-                ensure_alias_available(&composition, &registration)?;
-                composition.modules.insert(product.clone(), registration);
-                save_composition(&composition)?;
-                Ok(
-                    json!({"product":product,"executable":executable,"sha256":sha256,"reinstalled":false}),
-                )
-            }
-            AdoptionOperation::InstallProduct { product } => setup_install_native(product, plan),
-            AdoptionOperation::EstablishGround { path } => {
-                let composition = load_composition()?;
-                let central = composition
-                    .modules
-                    .get("central")
-                    .and_then(|r| r.native_executable.as_deref())
-                    .ok_or("Central must be installed before ground initialization")?;
-                let root = Path::new(path);
-                if setup_ground(root, Some(Path::new(central)))["outcome"] != "new" {
-                    return Err(
-                        "The selected ground is no longer empty; it will not be overwritten."
-                            .into(),
-                    );
+                AdoptionOperation::InstallProduct { product } => {
+                    setup_install_native(product, plan)
                 }
-                let output = Command::new(central)
-                    .arg("--root")
-                    .arg(root)
-                    .args(["init", "--json"])
-                    .stdin(Stdio::null())
-                    .output()
-                    .map_err(|e| e.to_string())?;
-                if !output.status.success() {
-                    return Err("Native Central initialization did not complete.".into());
-                }
-                central_doctor(Path::new(central), root)?;
-                let mut composition = load_composition()?;
-                if composition.personal_ground != plan.discovery.bound_ground {
-                    return Err("The default Central binding changed during initialization; the new ground is retained but not selected.".into());
-                }
-                composition.personal_ground = Some(path.clone());
-                save_composition(&composition)?;
-                Ok(
-                    json!({"ground":path,"owner":"Central","created":true,"policy_authored":false,"takes_effect":"next-launch"}),
-                )
-            }
-            AdoptionOperation::BindGround { path } => {
-                let reading = ground_owner_recognition(path)?;
-                if reading["outcome"] != "recognized"
-                    || reading["identity"] != plan.discovery.ground["identity"]
-                    || reading["canonical_path"] != json!(path)
-                    || reading["access"]["readable"] != true
-                    || reading["access"]["searchable"] != true
-                {
-                    return Err("Central's recognised root identity/access changed.".into());
-                }
-                let mut composition = load_composition()?;
-                if composition.personal_ground != plan.discovery.bound_ground {
-                    return Err("The default Central binding changed after review.".into());
-                }
-                composition.personal_ground = Some(path.clone());
-                save_composition(&composition)?;
-                Ok(json!({"ground":path,"ground_mutated":false,"takes_effect":"next-launch"}))
-            }
-            AdoptionOperation::InstallDesktop => {
-                let selection = &plan.selection;
-                let staged = oi_cli::desktop_install::stage_bundle(
-                    Path::new(
-                        selection
-                            .bundle
-                            .as_deref()
-                            .ok_or("Choose a Desktop bundle")?,
-                    ),
-                    selection.bundle_sha256.as_deref(),
-                    platform_target()?,
-                    &env::temp_dir(),
-                )?;
-                let expected = step
-                    .native_plan
-                    .as_ref()
-                    .ok_or("The native Desktop plan is missing")?;
-                if expected["bundle"]["sha256"] != staged.sha256 {
-                    return Err("Desktop bundle changed after review.".into());
-                }
-                let native_plan = oi_cli::desktop_install::plan_install(
-                    &staged,
-                    &oi_data_root()?,
-                    &desktop_home()?,
-                    expected["backing"]["requested"]
-                        .as_str()
-                        .ok_or("Backing is missing")?,
-                    &desktop_product_probe,
-                )?;
-                let actual = serde_json::to_value(&native_plan).map_err(|e| e.to_string())?;
-                // Newly installed backing may change presence, not footprint.
-                for key in [
-                    "bundle",
-                    "footprint_sha256",
-                    "changes",
-                    "never_owned",
-                    "data_root",
-                ] {
-                    if actual[key] != expected[key] {
+                AdoptionOperation::EstablishGround { path } => {
+                    let composition = load_composition()?;
+                    let central = composition
+                        .modules
+                        .get("central")
+                        .and_then(|r| r.native_executable.as_deref())
+                        .ok_or("Central must be installed before ground initialization")?;
+                    let root = Path::new(path);
+                    if setup_ground(root, Some(Path::new(central)))["outcome"] != "new" {
                         return Err(
-                            "Desktop effects changed after review. No Desktop write started."
+                            "The selected ground is no longer empty; it will not be overwritten."
                                 .into(),
                         );
                     }
+                    let output = Command::new(central)
+                        .arg("--root")
+                        .arg(root)
+                        .args(["init", "--json"])
+                        .stdin(Stdio::null())
+                        .output()
+                        .map_err(|e| e.to_string())?;
+                    if !output.status.success() {
+                        return Err("Native Central initialization did not complete.".into());
+                    }
+                    central_doctor(Path::new(central), root)?;
+                    let mut composition = load_composition()?;
+                    if composition.personal_ground != plan.discovery.bound_ground {
+                        return Err("The default Central binding changed during initialization; the new ground is retained but not selected.".into());
+                    }
+                    composition.personal_ground = Some(path.clone());
+                    save_composition(&composition)?;
+                    Ok(
+                        json!({"ground":path,"owner":"Central","created":true,"policy_authored":false,"takes_effect":"next-launch"}),
+                    )
                 }
-                serde_json::to_value(oi_cli::desktop_install::commit_install(
-                    staged,
-                    &native_plan,
-                    &desktop_home()?,
-                    false,
-                )?)
-                .map_err(|e| e.to_string())
-            }
-            AdoptionOperation::RemoveDesktop => {
-                let root = oi_data_root()?;
-                let receipt = oi_cli::desktop_install::load_installed_receipt(&root)?
-                    .ok_or("No Desktop receipt remains")?;
-                let expected = step
-                    .native_plan
-                    .as_ref()
-                    .ok_or("The Desktop removal plan is missing")?;
-                if serde_json::to_value(oi_cli::desktop_install::plan_remove(&receipt))
-                    .map_err(|e| e.to_string())?
-                    != *expected
-                {
-                    return Err("The Desktop removal footprint changed after review.".into());
+                AdoptionOperation::BindGround { path } => {
+                    let reading = ground_owner_recognition(path)?;
+                    if reading["outcome"] != "recognized"
+                        || reading["identity"] != plan.discovery.ground["identity"]
+                        || reading["canonical_path"] != json!(path)
+                        || reading["access"]["readable"] != true
+                        || reading["access"]["searchable"] != true
+                    {
+                        return Err("Central's recognised root identity/access changed.".into());
+                    }
+                    let mut composition = load_composition()?;
+                    if composition.personal_ground != plan.discovery.bound_ground {
+                        return Err("The default Central binding changed after review.".into());
+                    }
+                    composition.personal_ground = Some(path.clone());
+                    save_composition(&composition)?;
+                    Ok(json!({"ground":path,"ground_mutated":false,"takes_effect":"next-launch"}))
                 }
-                serde_json::to_value(oi_cli::desktop_install::commit_remove(&receipt, &root)?)
+                AdoptionOperation::InstallDesktop => {
+                    let selection = &plan.selection;
+                    let staged = oi_cli::desktop_install::stage_bundle(
+                        Path::new(
+                            selection
+                                .bundle
+                                .as_deref()
+                                .ok_or("Choose a Desktop bundle")?,
+                        ),
+                        selection.bundle_sha256.as_deref(),
+                        platform_target()?,
+                        &env::temp_dir(),
+                    )?;
+                    let expected = step
+                        .native_plan
+                        .as_ref()
+                        .ok_or("The native Desktop plan is missing")?;
+                    if expected["bundle"]["sha256"] != staged.sha256 {
+                        return Err("Desktop bundle changed after review.".into());
+                    }
+                    let native_plan = oi_cli::desktop_install::plan_install(
+                        &staged,
+                        &oi_data_root()?,
+                        &desktop_home()?,
+                        expected["backing"]["requested"]
+                            .as_str()
+                            .ok_or("Backing is missing")?,
+                        &desktop_product_probe,
+                    )?;
+                    let actual = serde_json::to_value(&native_plan).map_err(|e| e.to_string())?;
+                    // Newly installed backing may change presence, not footprint.
+                    for key in [
+                        "bundle",
+                        "footprint_sha256",
+                        "changes",
+                        "never_owned",
+                        "data_root",
+                    ] {
+                        if actual[key] != expected[key] {
+                            return Err(
+                                "Desktop effects changed after review. No Desktop write started."
+                                    .into(),
+                            );
+                        }
+                    }
+                    serde_json::to_value(oi_cli::desktop_install::commit_install(
+                        staged,
+                        &native_plan,
+                        &desktop_home()?,
+                        false,
+                    )?)
                     .map_err(|e| e.to_string())
-            }
-            AdoptionOperation::RemoveProduct { product } => {
-                let manifest = suite_manifest()?;
-                let root = oi_data_root()?;
-                let mut composition = load_composition()?;
-                let mut receipt = load_installed_receipt(&root, &manifest.suite_version)?;
-                let native_plan =
-                    removal_plan_for_product(&manifest, &receipt, &composition, &root, product)?;
-                let outcome = execute_product_removal(&native_plan, &mut composition, &mut receipt);
-                save_composition(&composition)?;
-                save_installed_receipt(&root, &receipt)?;
-                let receipt_path = write_removal_receipt(
-                    &root,
-                    &manifest,
-                    std::slice::from_ref(&outcome),
-                    &composition,
-                )?;
-                if !outcome.residuals.is_empty() {
-                    return Err("The native removal reports residuals. Inspect its receipt; do not replay automatically.".into());
                 }
-                Ok(json!({"native_receipt":receipt_path,"product":product}))
+                AdoptionOperation::RemoveDesktop => {
+                    let root = oi_data_root()?;
+                    let receipt = oi_cli::desktop_install::load_installed_receipt(&root)?
+                        .ok_or("No Desktop receipt remains")?;
+                    let expected = step
+                        .native_plan
+                        .as_ref()
+                        .ok_or("The Desktop removal plan is missing")?;
+                    if serde_json::to_value(oi_cli::desktop_install::plan_remove(&receipt))
+                        .map_err(|e| e.to_string())?
+                        != *expected
+                    {
+                        return Err("The Desktop removal footprint changed after review.".into());
+                    }
+                    serde_json::to_value(oi_cli::desktop_install::commit_remove(&receipt, &root)?)
+                        .map_err(|e| e.to_string())
+                }
+                AdoptionOperation::RemoveProduct { product } => {
+                    let manifest = suite_manifest()?;
+                    let root = oi_data_root()?;
+                    let mut composition = load_composition()?;
+                    let mut receipt = load_installed_receipt(&root, &manifest.suite_version)?;
+                    let native_plan = removal_plan_for_product(
+                        &manifest,
+                        &receipt,
+                        &composition,
+                        &root,
+                        product,
+                    )?;
+                    let outcome =
+                        execute_product_removal(&native_plan, &mut composition, &mut receipt);
+                    save_composition(&composition)?;
+                    save_installed_receipt(&root, &receipt)?;
+                    let receipt_path = write_removal_receipt(
+                        &root,
+                        &manifest,
+                        std::slice::from_ref(&outcome),
+                        &composition,
+                    )?;
+                    if !outcome.residuals.is_empty() {
+                        return Err("The native removal reports residuals. Inspect its receipt; do not replay automatically.".into());
+                    }
+                    Ok(json!({"native_receipt":receipt_path,"product":product}))
+                }
+                AdoptionOperation::RecordComposition => {
+                    let mut composition = load_composition()?;
+                    composition.requested_mode = if plan.selection.composition == "custom" {
+                        None
+                    } else {
+                        Some(RequestedMode {
+                            frame: plan.selection.composition.clone(),
+                            set_at_unix_seconds: unix_seconds_now(),
+                            set_by: format!("oi setup ({})", adoption::ENGAGEMENT_CONTRACT),
+                        })
+                    };
+                    save_composition(&composition)?;
+                    Ok(
+                        json!({"requested_composition":plan.selection.composition,"engagement_contract":adoption::ENGAGEMENT_CONTRACT,"activation":"not-claimed"}),
+                    )
+                }
             }
-            AdoptionOperation::RecordComposition => {
-                let mut composition = load_composition()?;
-                composition.requested_mode = if plan.selection.composition == "custom" {
-                    None
-                } else {
-                    Some(RequestedMode {
-                        frame: plan.selection.composition.clone(),
-                        set_at_unix_seconds: unix_seconds_now(),
-                        set_by: format!("oi setup ({})", adoption::ENGAGEMENT_CONTRACT),
-                    })
-                };
-                save_composition(&composition)?;
-                Ok(
-                    json!({"requested_composition":plan.selection.composition,"engagement_contract":adoption::ENGAGEMENT_CONTRACT,"activation":"not-claimed"}),
-                )
-            }
+        })();
+        if result.is_ok() {
+            self.basis = Some(setup_record_basis()?);
         }
+        result
     }
     fn verify(
         &mut self,
@@ -828,7 +863,7 @@ fn setup_handle(request: AdoptionRequest) -> Result<Value, String> {
         return Err("Adoption refuses the configuration fixture transport. Use native owners; fixtures cannot prove installability.".into());
     }
     let now = prelocal_now_ms()? as u64;
-    let mut runtime = AdoptionRuntime;
+    let mut runtime = AdoptionRuntime::default();
     let mut store = AdoptionStore::new()?;
     let result = match request {
         AdoptionRequest::Discover { ground } => {
@@ -867,6 +902,13 @@ fn setup_handle(request: AdoptionRequest) -> Result<Value, String> {
                 }
                 store.archive(&prior)?;
             }
+            let fresh = setup_make_plan(plan.selection.clone(), plan.created_at_unix_ms)?;
+            if fresh.review_token != plan.review_token {
+                return Ok(
+                    json!({"schema":adoption::SCHEMA,"disposition":"not_applied","write_started":false,
+                    "reason":"The World or native effects changed after review. Make a fresh plan.","replayed":false}),
+                );
+            }
             let journal = adoption::apply(&mut runtime, &mut store, *plan, &approval, now)?;
             json!({"disposition":journal.disposition(),"journal":journal,"replayed":false})
         }
@@ -891,11 +933,14 @@ fn command_setup(args: &[OsString]) -> Result<i32, String> {
         .map(|a| a.to_str().ok_or("Setup arguments must be UTF-8"))
         .collect::<Result<_, _>>()?;
     if matches!(words.first().copied(), Some("--help" | "-h" | "help")) {
-        println!("oi setup                         interactive adoption and maintenance\noi setup configure               native capability forms\noi setup discover [--ground PATH] [--json]\noi setup plan --composition NAME [--ground PATH] [--desktop keep|add|remove] [--bundle PATH] [--sha256 HASH] [--product NAME] [--remove-product NAME] [--json]\noi setup apply --plan-file PATH --approve REVIEW_TOKEN [--json]\noi setup status|recheck [--json]\noi setup --request-file PATH|- --json\n\nInstallation does not grant Agent authority or author a human-adopted Control policy. Unknown writes are never retried. Current source/activation and runtime/provider use are distinct.");
+        println!("oi setup                         interactive adoption and maintenance\noi setup configure               native capability forms\noi setup credentials             native secure-credential terminal\noi setup discover [--ground PATH] [--json]\noi setup plan --composition NAME [--ground PATH] [--desktop keep|add|remove] [--bundle PATH] [--sha256 HASH] [--product NAME] [--remove-product NAME] [--json]\noi setup apply --plan-file PATH --approve REVIEW_TOKEN [--json]\noi setup status|recheck [--json]\noi setup --request-file PATH|- --json\n\nInstallation does not grant Agent authority or author a human-adopted Control policy. Unknown writes are never retried. Current source/activation and runtime/provider use are distinct.");
         return Ok(0);
     }
     if words.is_empty() {
         return setup_interactive();
+    }
+    if words == ["credentials"] {
+        return setup_credentials_terminal();
     }
     if words == ["configure"] {
         return setup_configure_terminal();

@@ -3,7 +3,7 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
 import {readFileSync} from 'node:fs';
-import {SetupFlowController, settingsOf, requestKey, validateRequest} from '../src/configuration/setupFlow.ts';
+import {SetupFlowController, settingsOf, requestKey, validateRequest} from '../src/configuration/setupFlowController.ts';
 import {createSetupNative} from '../src/configuration/setupNative.ts';
 const fixture = name => JSON.parse(readFileSync(new URL(`../../../suite/configuration/cases/${name}.json`, import.meta.url), 'utf8'));
 const contributions = ['contribution-ai-kit', 'contribution-oi'].map(name => fixture(name).contribution);
