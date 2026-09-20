@@ -39,15 +39,24 @@ jobs:
           workspaces: |
             desktop/cradle/kernel -> target
             .native-owner/QL-MEF -> target
-      - name: Locked dependencies and embedded build
+      - name: Locked dependencies and actual embedded application build
         run: |
+          mkdir -p /tmp/w5-checks
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           cd desktop/cradle
           npx tsc --noEmit
-          npm run lint --prefix expressions-app
+          npm run build:journeys --prefix expressions-app
+          expressions-app/node_modules/.bin/tsc --noEmit -p expressions-app/field-studies-journeys/tsconfig.json
           npx playwright install --with-deps chromium
+      - name: Retained legacy React shell lint (original failures remain failing)
+        if: always()
+        run: |
+          set -o pipefail
+          mkdir -p /tmp/w5-checks
+          npm run lint --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/complete-embedded-lint.log
       - name: Meaningful effect and existing regressions
+        if: always()
         env:
           QL_SOURCE: ${{ github.workspace }}/.native-owner/QL-MEF
         run: |
@@ -57,6 +66,7 @@ jobs:
           npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded.log
           node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-clients.log
       - name: Actual embedded WebGL browser and relay
+        if: always()
         env:
           NATIVE_EXPRESSION_OUT: /tmp/w5-checks/browser
         run: |
@@ -81,6 +91,16 @@ jobs:
           cp .native-owner/QL-MEF/cpp/build/ql-field-worker /tmp/w5-checks/native/
           cp .native-owner/QL-MEF/target/debug/ql-field-host /tmp/w5-checks/native/
           sha256sum /tmp/w5-checks/native/ql-field-* > /tmp/w5-checks/native/binaries.sha256
+      - name: Real native effects through the production process manager
+        if: always()
+        env:
+          OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/debug/ql-field-host
+          OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
+          NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
+          NATIVE_EXPRESSION_NATIVE_RECEIPT: /tmp/w5-checks/native/acceptance.json
+        run: |
+          set -o pipefail
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test native_expression_owner -- --ignored --nocapture 2>&1 | tee /tmp/w5-checks/native/manager.log
       - name: Exact source and toolchain receipt
         if: always()
         run: |
