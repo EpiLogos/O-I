@@ -121,6 +121,8 @@ fn read_project_with(
 pub enum EncounterRequest {
     Start,
     Providers,
+    ModelRead { agent_session:String },
+    ModelSelect { agent_session:String, provider_model_id:String, #[serde(default,skip_serializing_if="Option::is_none")] provider_reasoning_effort:Option<String>, expected_native_session_id:String },
     Open { space:String, agent_session:String, provider:String },
     Read { agent_session:String, after:u64, limit:usize },
     View {agent_session:String,before:Option<u64>},
@@ -167,7 +169,7 @@ pub enum PermissionDecision {Selected {option_id:String},Cancelled}
 impl EncounterRequest {
     fn sessions(&self)->Vec<&str> {match self {
         Self::Start|Self::Providers|Self::Health=>Vec::new(),
-        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
+        Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::ModelRead{agent_session}|Self::ModelSelect{agent_session,..}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
         // The attachment gate covers every named participant of a group: a
         // session outside this Project's SessionSpaces is refused here, before
         // the owner sees the turn.
@@ -181,7 +183,7 @@ impl Client {
             let spaces=self.read_project(cwd,project_ref)?;
             let authorized=sessions.iter().all(|session|spaces.as_array().is_some_and(|rows|rows.iter().any(|space| {
                 let attached=space["agent_sessions"].as_object().is_some_and(|sessions|sessions.contains_key(*session));
-                attached && match request {EncounterRequest::Open{space:requested,..}=>space["definition"]["id"].as_str()==Some(requested),_=>true}
+                attached && match request {EncounterRequest::Open{space:requested,..}|EncounterRequest::Reconnect{space:requested,..}=>space["definition"]["id"].as_str()==Some(requested),_=>true}
             })));
             if !authorized{return Err("Encounter is not attached to this native Project's SessionSpaces".into());}
         }

@@ -23,6 +23,7 @@
  * and any unsaved typing stay) so that closing and reopening a conversation
  * never drops typing the owner has not accepted yet.
  */
+import {NativeModelController,connectionLabel,type NativeModelState} from "./nativeModel";
 import {useEffect,useMemo,useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {KernelTransportStatus} from "../kernel/types";
@@ -45,6 +46,7 @@ export interface EncounterSessionState {
  key:string;project:string;agentSession:string;space?:string;
  reading?:EncounterReading;status?:EncounterStatus;
  providers:{id:string;label:string}[];
+ model:NativeModelState;
  /** The composer text: the canonical draft, or the person's unsaved typing. */
  draft:string;
  /** An owner operation this window started is in flight. */
@@ -73,6 +75,9 @@ export interface EncounterSessionActions {
  send():Promise<void>;
  /** After a failed save: re-read the canonical draft and apply the held typing to it. */
  recover():Promise<void>;
+ readModel():Promise<void>;
+ selectModel(model:string,effort?:string):Promise<void>;
+ refreshProviders():Promise<void>;
  connect(provider:string):Promise<void>;
  reconnect(provider:string):Promise<void>;
  cancel():void;
@@ -91,6 +96,7 @@ const hidden=()=>document.visibilityState!=="visible";
 
 class EncounterSession implements EncounterSessionActions {
  private state:EncounterSessionState;
+ private models:NativeModelController;
  private listeners=new Set<()=>void>();
  private subscribers=0;
  private stopTimer?:ReturnType<typeof setTimeout>;
@@ -110,7 +116,8 @@ class EncounterSession implements EncounterSessionActions {
  polls=0;
 
  constructor(private transport:KernelTransportStatus,binding:EncounterSessionBinding) {
-  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,providers:[],draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
+  this.state={key:encounterSessionKey(binding),project:binding.project,agentSession:binding.ref,space:binding.space,providers:[],model:{phase:"unread"},draft:"",pending:false,busy:false,draftFailed:false,dispatch:{kind:"idle"},deliveries:[],a2a:{busy:false}};
+  this.models=new NativeModelController(binding.ref,request=>this.call(request),model=>this.set({model}));
  }
  // --- store plumbing ---------------------------------------------------
  subscribe=(listener:()=>void)=>{this.listeners.add(listener);return()=>{this.listeners.delete(listener);};};
@@ -161,7 +168,7 @@ class EncounterSession implements EncounterSessionActions {
  /** Exactly one chain: a restart retires the previous one, whose in-flight
   * read is dropped when it lands instead of scheduling a second timer. */
  private restartChain(){const chain=++this.chain;clearTimeout(this.timer);void this.poll(chain);}
- private onVisible=()=>{if(this.observing&&!hidden())this.restartChain();};
+ private onVisible=()=>{if(this.observing&&!hidden()){void this.refreshProviders();this.restartChain();}};
  // Honesty law + SELF-OTHER-FIELD-UX "view disposal": a hidden document
  // (backgrounded app, minimized window) pauses network polling rather than
  // spending cycles on a transcript nobody can see. Structural pausing is the
@@ -176,7 +183,7 @@ class EncounterSession implements EncounterSessionActions {
    if(!this.dirty&&!this.saving&&!this.sending&&next.draft.revision>=this.canonical.revision){this.canonical=next.draft;this.input=next.draft.text;patch.draft=next.draft.text;}
    this.set(patch);
    const current=next.connection ?? await this.call<EncounterStatus>({action:"status",agent_session:this.state.agentSession}).catch(()=>undefined);
-   if(chain===this.chain)this.set({status:current});
+   if(chain===this.chain){this.models.observe(current);this.set({status:current});}
    const fingerprint=JSON.stringify([next,current]);
    this.quietReads=fingerprint===this.lastFingerprint?this.quietReads+1:0;
    this.lastFingerprint=fingerprint;
@@ -204,7 +211,7 @@ class EncounterSession implements EncounterSessionActions {
  }
  change=(text:string)=>{if(!this.allowed("draft"))return;this.input=text;this.dirty=true;this.set({draft:text});void this.save();};
  send=async()=>{
-  if(!this.allowed("prompt")||this.dirty||this.saving||this.sending||this.failed)return;
+  if(this.operations>0||!this.allowed("prompt")||this.dirty||this.saving||this.sending||this.failed)return;
   this.sending=true;const submitted=this.input;this.begin();this.set({error:undefined});
   try{
    const response=await this.call<{draft:Draft}>({action:"prompt",agent_session:this.state.agentSession,draft_revision:this.canonical.revision});
@@ -220,6 +227,13 @@ class EncounterSession implements EncounterSessionActions {
  };
 
  // --- connection, consent, stop ----------------------------------------
+ readModel=()=>this.models.refresh();
+ selectModel=async(model:string,effort?:string)=>{this.begin();try{await this.models.select(model,effort);}finally{this.end();}};
+ refreshProviders=async()=>{
+  try{const providers=await this.call<{id:string;label:string}[]>({action:"providers"});this.set({providers,error:undefined});}
+  catch(error){this.set({error:String(error)});}
+ };
+
  connect=async(provider:string)=>{
   if(!this.allowed("open"))return;
   this.begin();this.set({error:undefined});
@@ -412,11 +426,7 @@ export function expressionReadingOf(state:EncounterSessionState|undefined):Encou
  return {agentSessionRef:reading?.agent_session,state:status?.state,pending,inputRevision:reading?.draft.revision,completed:reading?reading.blocks.filter(block=>block.kind==="completed").slice(-1)[0]?.id??-1:undefined,latestOwnerActivity:activity?{blockId:activity.id,kind:activity.kind}:undefined};
 }
 /** The owner's connection state as the one label every head shows. */
-export function sessionStateLabel(status:EncounterStatus|undefined):"Disconnected"|"Connected"|"Responding…"|"Stopping…" {
- if(status?.state==="InterruptRequested")return "Stopping…";
- if(status?.state==="TurnInFlight")return "Responding…";
- return status&&status.state!=="Disconnected"?"Connected":"Disconnected";
-}
+export function sessionStateLabel(status:EncounterStatus|undefined):string {return connectionLabel(status);}
 /** Delivery identities dispatched from this window, with their settled phases. */
 export function deliveriesOf(state:EncounterSessionState):{ref:string;phase:string}[] {
  return [...state.deliveries.map(entry=>({ref:entry.ref,phase:entry.record.phase})),...(state.group?[{ref:state.group.ref,phase:`group — ${state.group.rows.map(row=>row.error?"refused":row.phase??"in flight").join(", ")}`}]:[])];

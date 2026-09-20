@@ -1,3 +1,5 @@
+import {NativeModelControls,type NativeModelActions} from "../../encounter/NativeModelControls";
+import {connectionLabel,type NativeModelState} from "../../encounter/nativeModel";
 import {useEffect,useLayoutEffect,useMemo,useRef,useState,type ClipboardEvent} from "react";
 import type {EncounterReading,EncounterStatus,PermissionDecision} from "../../encounter/client";
 import {parseContextItems,removeContextItem,type ContextItem} from "../../context/contextItems";
@@ -32,6 +34,9 @@ export interface ComposerConnection {
   onReconnect: (provider:string)=>void;
   openAllowed: boolean;
   openReason?: string;
+  model?:NativeModelState;
+  modelActions?:NativeModelActions;
+  onRefreshProviders?:()=>void;
 }
 
 export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,onPermission,permissionAllowed,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,picking,onPick,listProject,onChooseRow}:{
@@ -54,7 +59,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   const [providerOpen,setProviderOpen]=useState(false);
   const status=connection.status;
   const running=status?.state==="TurnInFlight"||status?.state==="InterruptRequested";
-  const connected=!!status&&status.state!=="Disconnected";
+  const connected=!!status?.native_session_id&&!status.error&&["Resident","TurnInFlight","InterruptRequested"].includes(status.state);
   const selected=useMemo(()=>parseContextItems(draft),[draft]);
   /** The message text without its attachment blocks — what the person reads as theirs. */
   const message=useMemo(()=>{let text=draft;for(const item of [...selected].reverse())text=text.slice(0,item.start)+text.slice(item.end);return text.replace(/^\n+|\n+$/g,"");},[draft,selected]);
@@ -94,9 +99,11 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
         {!listProject&&picking&&<span className="oi-note">Select a project in the sidebar to list its conversations.</span>}
       </div>
       :!connected&&<div className="chat-connect" data-fact="disconnected">
+      {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}
       <span className="chat-connect-label"><Glyph name="link" size={11}/> Connect with</span>
       {connection.providers.map(provider=><button key={provider.id} className="chat-provider oi-chip" disabled={pending||!connection.openAllowed} title={connection.openReason} onClick={()=>connection.onProvider(provider.id)}>{provider.label}</button>)}
-      {!connection.providers.length&&<span className="oi-note">No ACP provider is configured; connect one in System → Sources, then return here.</span>}
+      {!connection.providers.length&&<span className="oi-note">No encounter harness is configured. Configure an eligible native harness in System, then refresh here; your draft stays.</span>}
+      {connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}
       {connection.resume&&<button className="chat-provider oi-chip" data-resume="true" disabled={pending} title="The owner holds a recorded native session for this conversation; reconnecting resumes that exact identity." onClick={()=>connection.onReconnect(connection.resume!.provider)}><Glyph name="refresh" size={10}/>Reconnect {connection.resume.provider}</button>}
     </div>}
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}
@@ -114,7 +121,8 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       {connected&&current&&<div className="chat-provider-menu">
         <button className="oi-tool chat-provider-config" aria-label="Model and session" aria-haspopup="true" aria-expanded={providerOpen} title={`${current.label} — model and session`} onClick={()=>setProviderOpen(value=>!value)}><span className="chat-provider-config-label">{current.label}</span><Glyph name="down" size={10}/></button>
         {providerOpen&&<div className="oi-menu" role="group" aria-label="Model and session">
-          <span className="oi-eyebrow">Provider</span>
+          {connection.model&&connection.modelActions&&<NativeModelControls state={connection.model} actions={connection.modelActions} disabled={pending||running}/>}
+          <span className="oi-eyebrow">Harness</span>
           {connection.providers.filter(provider=>provider.id!==current.id).map(provider=><button key={provider.id} className="oi-menu-item" disabled={pending||!connection.openAllowed} title={connection.openReason} onClick={()=>{setProviderOpen(false);connection.onProvider(provider.id);}}>{`Connect ${provider.label}`}</button>)}
           {connection.resume&&<button className="oi-menu-item" disabled={pending} onClick={()=>{setProviderOpen(false);connection.onReconnect(connection.resume!.provider);}}>{`Reconnect recorded session (${connection.resume.provider})`}</button>}
           {!connection.providers.filter(provider=>provider.id!==current.id).length&&!connection.resume&&<span className="oi-menu-item" data-static="true">{current.label} is the configured provider.</span>}

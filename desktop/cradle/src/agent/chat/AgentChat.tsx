@@ -211,7 +211,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
           promptAllowed={allowed("prompt")} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
           onDraft={actions.change} onSend={send} onCancel={actions.cancel}
           onPermission={(id,decision)=>void actions.permission(id,decision)} permissionAllowed={allowed("permission")}
-          connection={{status,providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
+          connection={{status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
           tools={{subject:subject.location?{title:subject.title,attach:()=>attachLocation(subject.location!)}:undefined,pickFiles:attachFiles}}
           draftFailed={state.draftFailed} onRecover={()=>void actions.recover()} paged={state.before!==undefined} onLatest={actions.latest} focusToken={composerFocusToken}/>
       </>
