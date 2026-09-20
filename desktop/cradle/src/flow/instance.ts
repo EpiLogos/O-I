@@ -16,30 +16,6 @@ export interface QlDocEntry {
   touched: boolean;
   fromJournal?: string;
 }
-export interface QlDocNoteReply {
-  id?: string;
-  author?: string;
-  at?: string;
-  text?: string;
-}
-export interface QlDocNote {
-  id: string;
-  entryId?: string;
-  anchor?: string | null;
-  author?: string;
-  timing?: string;
-  at?: string;
-  text?: string;
-  replies?: QlDocNoteReply[];
-}
-export interface QlDocMedia {
-  id: string;
-  entry?: string;
-  name?: string;
-  mime?: string;
-  data?: string;
-  caption?: string;
-}
 export interface QlDoc {
   meta: {
     documentId: string | null;
@@ -53,9 +29,9 @@ export interface QlDoc {
     template: string;
   };
   entries: QlDocEntry[];
-  notes: QlDocNote[];
+  notes: unknown[];
   packet: unknown[];
-  media: QlDocMedia[];
+  media: unknown[];
   journal: { id: string; at: string; html: string }[];
 }
 const QL_DOC = /<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/;
@@ -88,37 +64,6 @@ export function htmlToText(html: string): string {
     .replace(/&quot;/g, '"')
     .replace(/&#39;/g, "'")
     .trim();
-}
-/** Rich entries and notes are the template's human document content, not a
- * plain-text summary. This reader-side filter follows the template's own
- * clean() law: scripts/active chrome are removed, inline handlers and style
- * are removed, and remote media cannot load. Data media remains as media in
- * the supplied collection, rendered through its declared MIME type. */
-const ACTIVE_MEDIA_TAGS=new Set(["SCRIPT","STYLE","IFRAME","OBJECT","EMBED","LINK","META","FORM","INPUT","BUTTON","TEXTAREA","SELECT","BASE","APPLET"]);
-export function sanitizeRichHtml(html:string):string {
-  if(typeof DOMParser==="undefined")throw new Error("Rich Flow rendering requires the browser document parser.");
-  const parsed=new DOMParser().parseFromString(`<body>${html||""}</body>`,"text/html");
-  const root=parsed.body;
-  for(const element of Array.from(root.querySelectorAll("*"))){
-    if(ACTIVE_MEDIA_TAGS.has(element.tagName)){element.remove();continue;}
-    for(const attribute of Array.from(element.attributes)){
-      const name=attribute.name.toLowerCase();
-      const value=attribute.value.trim().toLowerCase();
-      if(name.startsWith("on")||name==="style"||name==="srcdoc"||name==="srcset"||name==="poster"){element.removeAttribute(attribute.name);continue;}
-      if((name==="href"||name==="xlink:href")&&/^(javascript|data|vbscript):/.test(value)){element.removeAttribute(attribute.name);continue;}
-      if(name==="src"&&!value.startsWith("data:image/")){element.removeAttribute(attribute.name);continue;}
-    }
-    if(element.tagName==="IMG"&&!element.getAttribute("src"))element.remove();
-  }
-  return root.innerHTML;
-}
-/** The Flow template's reply anchor is an exact passage within one entry.
- * The occurrence index stays local evidence for repeated passages; the
- * native reply still carries the template's own string anchor. */
-export function htmlAnchorPosition(entryHtml:string,anchor:string):number|null {
-  const text=htmlToText(entryHtml);
-  if(!anchor||!text.includes(anchor))return null;
-  return text.indexOf(anchor);
 }
 /** Mint a fresh instance from the pristine template: the typed writing
  * becomes the first F entry, verbatim in its paragraph form; the document
