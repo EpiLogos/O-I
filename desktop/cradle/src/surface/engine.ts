@@ -94,7 +94,8 @@ function prune(pane: Pane | null, reservedGroups: ReadonlySet<string> = new Set(
  * - every nonempty group presents a member; empty groups present null;
  * - pins are a subset, and an empty destination ceases to be empty when filled;
  * - focus/maximise/tab-focus never point into a pruned group or closed tab;
- * - no content and no detached native view means genuine rest (root = null).
+ * - explicit empty destinations survive restore; closing the last content
+ *   (closeSurface) retires them to genuine rest, never a placeholder binding.
  * This repairs membership only. It does not recreate bindings, reset a book,
  * touch document models, or discard the closed-content recovery stack. */
 export function reconcileLayout(state: LayoutState): LayoutState {
@@ -104,8 +105,7 @@ export function reconcileLayout(state: LayoutState): LayoutState {
     const active = g.active && tabs.includes(g.active) ? g.active : tabs[0] ?? null;
     return { ...g, tabs, pinned, active, emptySlot: !tabs.length && g.emptySlot ? true : undefined };
   };
-  let root = prune(state.root ? mapPane(state.root, normalize) : null, new Set(state.detached?.map(entry => entry.groupId)));
-  if (root && !groupsOf(root).some(g => g.tabs.length) && !state.detached?.length) root = null;
+  const root = prune(state.root ? mapPane(state.root, normalize) : null, new Set(state.detached?.map(entry => entry.groupId)));
   const groups = groupsOf(root);
   const focusedGroupId = groups.find(g => g.id === state.focusedGroupId)?.id ?? groups[0]?.id ?? null;
   const live = new Set(groups.flatMap(g => g.tabs));
@@ -316,7 +316,10 @@ function reorderTab(
 export function closeSurface(state: LayoutState, id: SurfaceId): LayoutState {
   const g = groupOf(state, id);
   if (!g || g.pinned.includes(id)) return state;
-  const root = mapPane(state.root!, (x) => (x.id === g.id ? removeTab(x, id) : x));
+  let root: Pane | null = mapPane(state.root!, (x) => (x.id === g.id ? removeTab(x, id) : x));
+  // An explicitly created empty destination survives restoration, but after
+  // the final content is closed it must not keep an empty workbench alive.
+  if (!groupsOf(root).some(group => group.tabs.length) && !state.detached?.length) root = null;
   // A dismissed opener has no content to recover. Real closed documents
   // retain their binding and re-open stack, including unsaved-draft identity.
   const blank = state.surfaces[id]?.kind === "blank";

@@ -93,3 +93,16 @@ test('Settings takes the full workspace and returns its exact preceding layout/d
   assert.equal(back.layout.root,layout.root);assert.equal(back.layout.surfaces,layout.surfaces);assert.equal(back.layout.accompanying,layout.accompanying);assert.equal(back.layout.agencyDepth,'panel');assert.equal(back.layout.rightDepth,'panel');assert.equal(back.layout.maximizedGroupId,'b');
  }
 });
+
+import {warmWorkspaceTrees} from '../src/surface/warmTrees.ts';
+test('visible new-tab/draft/empty/over-budget trees cannot be filtered out by hidden retention',()=>{
+ for(const layout of [engine.openBinding(freshLayout(),binding('new','blank')),state(group('draft')),state({...group('empty',[]),emptySlot:true}),state(group('large',Array.from({length:200},(_,i)=>'doc-'+i)))]){
+  const w={id:'w',name:'Central',writing:'',layout};const trees=warmWorkspaceTrees([w],w.id,'base');
+  assert.equal(trees.length,1);assert.equal(trees[0].layout,layout);assert.equal(trees[0].presented,true);
+ }
+});
+test('a draft-only editor tree stays mounted when Settings stands, without cloning document identity',()=>{
+ const base=state(group('g',['draft']));const w=switchWorkspaceMode({id:'w',name:'Central',writing:'',layout:base},'settings');
+ const tree=warmWorkspaceTrees([w],w.id,'settings').find(t=>t.key==='w:base');
+ assert.ok(tree);assert.equal(tree.presented,false);assert.equal(tree.layout.root,base.root);assert.equal(tree.layout.surfaces,base.surfaces);
+});

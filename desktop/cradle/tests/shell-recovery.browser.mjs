@@ -23,7 +23,15 @@ async function seed(browser,scheme){
   }
   sessionStorage.setItem('oi-cradle.welcome.v1','w1');
  },{layout,scheme});
- const page=await context.newPage();page.setDefaultTimeout(15000);await page.goto(url);await page.locator('.desktop-shell').waitFor();await page.locator(visible+' [data-group-id="upper-right"]').waitFor();return {context,page};
+ const page=await context.newPage();page.setDefaultTimeout(15000);
+ try {await page.goto(url);await page.locator('.desktop-shell').waitFor();
+  if(!reference)await page.locator(visible+' [data-group-id="upper-right"]').waitFor();
+  return {context,page};
+ } catch(error) {
+  await page.screenshot({path:`${out}/seed-${scheme}-${Date.now()}.png`});
+  receipt.failures.push({seed:await page.evaluate(()=>({book:localStorage.getItem('oi-cradle.workspaces.v1'),groups:[...document.querySelectorAll('[data-group-id]')].map(n=>({id:n.dataset.groupId,rect:n.getBoundingClientRect().toJSON()})),warm:window.__oiWarmTreesLog,body:document.body.innerText}))});
+  await context.close();throw error;
+ }
 }
 async function corner(page,expected){
  const actual=await page.locator(visible+' [data-window-corner="true"]').evaluateAll(ns=>ns.filter(n=>n.getBoundingClientRect().width>0).map(n=>n.dataset.groupId));
@@ -57,7 +65,7 @@ try{
    });
    await scenario(`${engineName}/${scheme}: full-workspace Settings, narrow preferences, real return and themes`,async()=>{
     const {context,page}=await seed(browser,scheme);try{
-     const editor=page.locator(visible+' [data-group-id="left"] .cm-content');await editor.waitFor();await editor.evaluate(el=>{window.retainedEditor=el;});
+     const editor=page.locator(visible+' [data-group-id="left"] .cm-content');if(!reference){await editor.waitFor();await editor.evaluate(el=>{window.retainedEditor=el;});}
      await page.keyboard.press('Control+Alt+5');await page.getByRole('region',{name:'Settings and system'}).waitFor();
      if(!reference){const s=await page.evaluate(()=>JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1')).workspaces[0].layout);assert.equal(s.agencyDepth,'collapsed');assert.equal(s.rightDepth,'collapsed');}
      await page.getByRole('navigation',{name:'Settings surfaces'}).getByRole('button',{name:'Visuals',exact:true}).click();

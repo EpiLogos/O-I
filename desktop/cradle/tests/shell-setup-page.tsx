@@ -4,6 +4,8 @@ import {PlanDrawer} from '../src/configuration/PlanDrawer';
 import {createFixtureConfigPlaneSource} from '../src/configuration/fixtureSource';
 import {settingsOf} from '../src/configuration/setupFlow';
 import '@epilogos/oi-design-system/tokens.css';
+import '@epilogos/oi-design-system/desktop.css';
+import '../src/rest.css';
 import '../src/cradle.css';
 import '../src/workspace/shell.css';
 import '../src/workspace/settings/settings-v2.css';

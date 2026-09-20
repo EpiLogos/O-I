@@ -148,3 +148,24 @@
   .config-drawer :is(.config-plan-facts > div, .config-scope, .config-new-profile) { flex-direction: column; align-items: stretch; }
   .config-drawer :is(.config-plan-facts dt, .config-plan-facts dd) { min-width: 0; }
 }
+
+/* Owner results use the available column, not an intrinsic-width six-column
+   table that makes the entire drawer wider. At narrow widths each operation
+   remains one labelled row group; the actual table/header semantics stay. */
+.config-drawer .config-changeset { grid-template-columns: minmax(0, 1fr); }
+.config-drawer .config-ops { width: 100%; table-layout: fixed; }
+.config-drawer .config-ops :is(th, td) { overflow-wrap: anywhere; min-width: 0; }
+.config-drawer .config-changeset > * { box-sizing: border-box; max-width: 100%; min-width: 0; }
+@media (max-width: 600px) {
+  .config-drawer .config-ops, .config-drawer .config-ops tbody { display: block; }
+  .config-drawer .config-ops thead { position: absolute; width: 1px; height: 1px; overflow: hidden; clip-path: inset(50%); }
+  .config-drawer .config-ops tr { display: block; padding-block: 8px; border-bottom: 1px solid var(--oi-hairline-soft); }
+  .config-drawer .config-ops td { display: grid; grid-template-columns: 7ch minmax(0, 1fr); gap: 10px; border: 0; padding: 3px 0; }
+  .config-drawer .config-ops td::before { color: var(--oi-muted-2); }
+  .config-drawer .config-ops td:nth-child(1)::before { content: "Operation"; }
+  .config-drawer .config-ops td:nth-child(2)::before { content: "Owner"; }
+  .config-drawer .config-ops td:nth-child(3)::before { content: "Setting"; }
+  .config-drawer .config-ops td:nth-child(4)::before { content: "Scope"; }
+  .config-drawer .config-ops td:nth-child(5)::before { content: "Status"; }
+  .config-drawer .config-ops td:nth-child(6)::before { content: "Receipt"; }
+}
