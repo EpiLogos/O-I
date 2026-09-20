@@ -1,0 +1,163 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "mode-engine-state",
+  "generated_at": "2026-09-20T04:08:14.217Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/private/tmp/oi-ci-check",
+      "repository_head": "ab989c389c58d9f7a6228542126ee5ed8cb8635a",
+      "tracked_changes": [
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/cradle.css",
+        "desktop/cradle/walk/artifacts/html-continuity-failure.png",
+        "desktop/cradle/walk/artifacts/html-continuity-html-open.png",
+        "desktop/cradle/walk/artifacts/html-continuity-mode-return.png",
+        "desktop/cradle/walk/artifacts/html-continuity-tab-return.png",
+        "desktop/cradle/walk/artifacts/html-continuity-workspace-return.png",
+        "desktop/cradle/walk/artifacts/html-continuity.json",
+        "desktop/cradle/walk/retention-probe.mjs"
+      ],
+      "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": true,
+  "error": null,
+  "duration_ms": 9656,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The Expressions application is live, stamped, and holds in-app state (its Library open)",
+      "data": {
+        "present": true,
+        "token": "7vnqr88cdx.1789877297936",
+        "libraryOpen": true,
+        "hostMode": "expressions"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Technè presents its own application instance (a second centre, not a shared frame)",
+      "data": {}
+    },
+    {
+      "ok": true,
+      "label": "Technè presents the deep cut of the application and holds its own in-app state",
+      "data": {
+        "present": true,
+        "token": "nrwg01wmfaq.1789877301642",
+        "libraryOpen": true,
+        "hostMode": "techne"
+      }
+    },
+    {
+      "ok": true,
+      "label": "RETURN/Expressions: the SAME application document came back (token kept — the frame never re-navigated)",
+      "data": {
+        "before": "7vnqr88cdx.1789877297936",
+        "after": "7vnqr88cdx.1789877297936"
+      }
+    },
+    {
+      "ok": true,
+      "label": "RETURN/Expressions: the in-app state survived — the Library the person opened is still open",
+      "data": {
+        "during": true,
+        "after": true
+      }
+    },
+    {
+      "ok": true,
+      "label": "RETURN/Technè: the SAME application document came back (token kept)",
+      "data": {
+        "before": "nrwg01wmfaq.1789877301642",
+        "after": "nrwg01wmfaq.1789877301642"
+      }
+    },
+    {
+      "ok": true,
+      "label": "RETURN/Technè: the in-app state survived — the Library is still open",
+      "data": {
+        "present": true,
+        "token": "nrwg01wmfaq.1789877301642",
+        "libraryOpen": true,
+        "hostMode": "techne"
+      }
+    },
+    {
+      "ok": true,
+      "label": "With both centres visited, exactly ONE hosted application instance per mode — no double mount",
+      "data": {
+        "frames": 2,
+        "hosts": 2,
+        "stamped": [
+          "expressions",
+          "techne"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Both centre frames are the stamped instances (the same nodes marked at first presentation)",
+      "data": [
+        "expressions",
+        "techne"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "No page errors across the whole journey",
+      "data": []
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 62,
+      "data": {
+        "file": "mode-engine-state-expressions-marked.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 48,
+      "data": {
+        "file": "mode-engine-state-techne-marked.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 40,
+      "data": {
+        "file": "mode-engine-state-expressions-returned.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "mode-engine-state-techne-returned.png"
+      }
+    }
+  ],
+  "metrics": {
+    "mode_round_trip_survivals": 4
+  },
+  "screenshots": [
+    "mode-engine-state-expressions-marked.png",
+    "mode-engine-state-techne-marked.png",
+    "mode-engine-state-expressions-returned.png",
+    "mode-engine-state-techne-returned.png"
+  ]
+}

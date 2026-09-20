@@ -1,33 +1,37 @@
 /**
  * The mode-centre retention tier (owner-approved three-tier retention law,
- * 2026-09-19). Switching workspace modes swaps whole per-mode trees, which
- * unmounts every surface in the outgoing tree — the Expressions application
- * reloaded, the Technè wiki web rebuilt, on every hop. This module keeps the
- * heavy centre surfaces MOUNTED across those swaps:
+ * 2026-09-19; stage law revised 2026-09-20). Switching workspace modes swaps
+ * whole per-mode trees, which unmounts every surface in the outgoing tree —
+ * the Expressions application reloaded, the Technè wiki web rebuilt, on
+ * every hop. This module keeps the heavy centre surfaces MOUNTED across
+ * those swaps:
  *
- * - The SHELL declares each retained centre once, in a hidden park layer the
- *   pane system never unmounts (workspace/DesktopShell renders it beside the
- *   centre region's presenting tree). React owns the subtree for its whole
- *   retained life; only the container DOM node moves.
- * - A presenting surface (the mode stage, or the centre's tab in a pane —
- *   both render `SurfaceBody`) mounts a `CentreOutlet` instead of a second
- *   copy. A mounted outlet ADOPTS the retained container into itself; an
- *   unmounting outlet releases it back to the park (the presenting sites
- *   are exclusive by construction, so adoption needs no arbitration). DOM
- *   moves never reload iframes or restart engines, and a concealed pane tab
- *   keeps holding its centre mounted-concealed — the pane tier's own law.
+ * - STAGE-OWNED centres (a mode's own centre kind, standing in that mode's
+ *   own tree) are presented by the frame's per-mode stage slots
+ *   (CradleFrame): one ALWAYS-PRESENT keyed slot per mode, the centre body
+ *   mounted DIRECTLY in place through `ModeCentreBody` and never moved —
+ *   the pane tier's own warm-tree law (moving a DOM subtree that contains
+ *   an iframe detaches it and the iframe re-navigates, which the measured
+ *   receipt in docs/experience/evidence/mode-engine-state.before.json
+ *   names). A mode swap flips the slot's visibility; the application's
+ *   document, engine and in-memory state ride through.
+ * - PANE-TAB-PRESENTED centres (a centre kind opened as an ordinary pane
+ *   tab outside its own mode's tree) keep the park-and-adopt path: the
+ *   shell declares each once in a hidden park layer
+ *   (`ModeCentreRetention`), and a presenting pane mounts `CentreOutlet`,
+ *   which adopts the retained container and releases it back on unmount.
+ *   Moves never reload the vending engines these surfaces do not host.
  * - Parked means suspended: the park layer is `display:none`, the same
  *   off-screen observation (`IntersectionObserver`, MaterialSurface's
- *   `useSuspend` law) every viewport-gated surface already honours.
+ *   `useSuspend` law) every viewport-gated surface already honours; a
+ *   hidden stage slot is `display:none` by the same law.
  *
  * Per surface KIND (the tier law): engines and hosted applications retain —
  * `expressions` (the vendored application's iframe), `techne`, `epi-logos`,
  * `system`, and `factory`. Factory's Desk/Tasks body composes the frame-built
  * chat node (`CradleFrame.factoryCentre`), so the frame passes that node —
  * with its Desk/Tasks context — down through the shell (DesktopShell →
- * ModeCentreRetention) and the declarer mounts the ONE FactoryCentre body
- * with it: the park holds the same node the stage's and panes' outlets
- * adopt, exactly like the other centres.
+ * ModeCentreRetention) and to the stage slots alike.
  *
  * Retention keys on the workspace: the retained set is derived only from the
  * ACTIVE workspace's trees, so switching workspaces unmounts every declarer
@@ -39,7 +43,7 @@ import {createPortal} from "react-dom";
 import {groupsOf} from "./engine";
 import {markPresented, markReleased, markRetained, exposeRuntimeProbe, RETAINED_VIEW_BUDGET} from "./runtime";
 import type {LayoutState, SurfaceBinding, SurfaceId} from "./types";
-import {TREE_MODES, type WorkspaceMode} from "../workspace/mode";
+import {MODE_CURATION, TREE_MODES, type WorkspaceMode} from "../workspace/mode";
 import type {Workspace} from "../workspace/store";
 
 // The retained centre bodies are the same lazy chunks the workbench mounts;
@@ -128,6 +132,20 @@ function presentedBindingOfKind(layout: LayoutState, kind: string): SurfaceBindi
 
 export interface RetainedCentreRef { binding: SurfaceBinding; mode: WorkspaceMode }
 
+/** The centre-kind binding living in ONE MODE'S OWN TREE: the active
+ * workspace layout when that mode is the one standing, else its waiting tree
+ * in `modeLayouts` — present in its pane groups. This is the ownership test
+ * of the whole tier: a centre in its own mode's tree is STAGE-OWNED (the
+ * frame's per-mode slot presents it in place); a centre found anywhere else
+ * is pane-tab-presented (the park keeps it; a pane outlet adopts it). */
+export function centreBindingOf(workspace: Workspace, activeMode: WorkspaceMode, mode: WorkspaceMode): SurfaceBinding | undefined {
+  const kind = MODE_CURATION[mode].centreKind;
+  if (!kind) return undefined;
+  const layout = mode === activeMode ? workspace.layout : workspace.modeLayouts?.[mode];
+  if (!layout) return undefined;
+  return presentedBindingOfKind(layout, kind);
+}
+
 function retainedCentres(workspace: Workspace, activeMode: WorkspaceMode): RetainedCentreRef[] {
   const trees: {mode: WorkspaceMode; layout: LayoutState}[] = [{mode: activeMode, layout: workspace.layout}];
   for (const mode of TREE_MODES) {
@@ -138,7 +156,13 @@ function retainedCentres(workspace: Workspace, activeMode: WorkspaceMode): Retai
     for (const kind of RETAINED_CENTRE_KINDS) {
       if (found.has(kind)) continue;
       const binding = presentedBindingOfKind(tree.layout, kind);
-      if (binding) found.set(kind, {binding, mode: tree.mode});
+      if (!binding) continue;
+      // Stage-owned centres are not the park's to declare: a binding of the
+      // tree's own mode's centre kind is presented by that mode's stage slot
+      // DIRECTLY (mounted in place, never moved). Declaring it here too
+      // would mount it twice. The park keeps pane-tab-presented centres.
+      if (MODE_CURATION[tree.mode].centreKind === kind) continue;
+      found.set(kind, {binding, mode: tree.mode});
     }
   }
   return [...found.values()];
@@ -186,10 +210,32 @@ function RetainedCentre({binding, subject, factoryCentre, factoryTasks}: {bindin
   return createPortal(<Suspense fallback={null}>{retainedBody(binding, subject, factoryCentre, factoryTasks)}</Suspense>, container);
 }
 
+/** The centre body itself, mounted DIRECTLY where the stage presents it —
+ * the same arms the park declarer mounts, under one Suspense, with the
+ * factory context the frame holds. The stage path never adopts and never
+ * moves a DOM node: the body mounts in its own mode's slot for its whole
+ * retained life. */
+export function ModeCentreBody({binding, subject, factoryCentre, factoryTasks}: {binding: SurfaceBinding; subject?: WorkbenchSubject; factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext}) {
+  return <Suspense fallback={null}>{retainedBody(binding, subject, factoryCentre, factoryTasks)}</Suspense>;
+}
+
+/** The stage-presented centre's residency record — the same honest
+ * presented/retained facts the outlet path keeps, without any adoption. */
+export function StageCentreMark({binding, presented}: {binding: SurfaceBinding; presented: boolean}) {
+  useEffect(() => {
+    if (presented) markPresented(binding.id, binding.kind);
+    else markRetained(binding.id, binding.kind);
+    exposeRuntimeProbe();
+  }, [binding.id, binding.kind, presented]);
+  useEffect(() => () => markReleased(binding.id, binding.kind), [binding.id, binding.kind]);
+  return null;
+}
+
 /** The shell's retention layer — DesktopShell renders this once beside the
- * centre region's presenting tree. It owns the hidden park and declares every
- * retained centre of the ACTIVE workspace. Factory's declarer receives the
- * frame-built chat node and its context through the shell. */
+ * centre region's presenting tree. It owns the hidden park and declares the
+ * ACTIVE workspace's PANE-TAB-PRESENTED centres (stage-owned centres mount
+ * in their own mode's slot and never enter the park). Factory's declarer
+ * receives the frame-built chat node and its context through the shell. */
 export function ModeCentreRetention({workspace, mode, factoryCentre, factoryTasks}: {workspace: Workspace; mode: WorkspaceMode; factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext}) {
   const centres = useMemo(() => retainedCentres(workspace, mode), [workspace, mode]);
   const subject = workspace.context?.subject;
@@ -199,17 +245,16 @@ export function ModeCentreRetention({workspace, mode, factoryCentre, factoryTask
 }
 
 // ---------------------------------------------------------------------------
-// The outlet — what a presenting surface mounts in place of a second body
-// copy. A presenting surface ADOPTS the retained container into itself and
-// releases it back to the park on unmount. The presenting sites for one
-// binding are exclusive by construction (the frame renders either the solo
-// mode stage or the pane tree, and a binding lives in one group of one
-// tree), so mount/unmount adoption is the whole law: a concealed pane tab
-// KEEPS its centre mounted-concealed (the pane tier), and a mode switch
-// releases the stage's outlet so the centre parks suspended rather than
-// unmounting. Both wrappers are layout-transparent (`display:contents`), so
-// the centre's own root keeps the exact sizing and flow it had as the
-// stage's/tabpanel's direct child.
+// The outlet — what a PANE presenting a centre mounts in place of a second
+// body copy. The presenting pane ADOPTS the retained container into itself
+// and releases it back to the park on unmount. Stage-owned centres never
+// come through here (their mode's slot mounts the body directly, nothing
+// adopts), so the presenting sites for one park-declared binding remain
+// exclusive by construction: a concealed pane tab KEEPS its centre
+// mounted-concealed (the pane tier), and the park holds the body suspended
+// whenever no pane presents it. Both wrappers are layout-transparent
+// (`display:contents`), so the centre's own root keeps the exact sizing and
+// flow it had as the tabpanel's direct child.
 export function CentreOutlet({binding}: {binding: SurfaceBinding}) {
   const host = useRef<HTMLDivElement>(null);
   useEffect(() => {
