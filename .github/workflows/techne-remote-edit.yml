@@ -1,0 +1,49 @@
+name: Technē bounded branch edit
+
+# Temporary delivery transport for the disconnected development sandbox.
+# It can write only this commission's integration branch, never main. The
+# patch's original blobs must match (`git apply --index`); a concurrent push
+# is refused by ordinary non-forced git push. Remove before final delivery.
+on:
+  pull_request:
+    paths: ['tests/techne-remote-edit.patch']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: techne-remote-edit-${{ github.event.pull_request.number }}
+  cancel-in-progress: false
+
+jobs:
+  apply:
+    if: github.event.pull_request.head.repo.full_name == github.repository && github.event.pull_request.head.ref == 'codex/techne-constructive-field-20260920'
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha }}
+      - name: Apply the exact reviewed patch on the integration branch
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f tests/techne-remote-edit.patch
+          git apply --check --index tests/techne-remote-edit.patch
+          git apply --index tests/techne-remote-edit.patch
+          python3 - <<'PY'
+          import subprocess
+          paths = subprocess.check_output(['git', 'diff', '--cached', '--name-only', '-z']).decode().split('\0')
+          allowed = ('desktop/cradle/', 'packages/oi-design-system/', '.wayfinder/maps/techne-', '.github/workflows/techne-')
+          for path in filter(None, paths):
+              assert path.startswith(allowed), f'outside assigned implementation boundary: {path}'
+              assert '/node_modules/' not in path, 'dependencies are not authored source'
+          PY
+          git rm tests/techne-remote-edit.patch
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git commit -m 'fix(techne): apply verified constructive-field source edits'
+          git push origin HEAD:refs/heads/codex/techne-constructive-field-20260920
+          git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"
+          echo 'Source delivery only. Normal PR gates must run on this resulting revision.' >> "$GITHUB_STEP_SUMMARY"
