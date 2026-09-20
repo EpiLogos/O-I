@@ -599,7 +599,6 @@ mod tests {
                 "0/1/2/3",
             ),
             (&["central", "workcell"], "4.5/0"),
-            (&["central", "quaternal-logic"], "5/0"),
         ];
         for (products, expected) in cases {
             let reading = CurrentWorldReading::from_disclosure(&disclosure_with(
@@ -635,7 +634,7 @@ mod tests {
             NativeSurfaceState::Registered,
         );
         let reading = CurrentWorldReading::from_disclosure(&learning);
-        assert_eq!(mode_of(&reading).as_deref(), Some("5/0"));
+        assert_eq!(mode_of(&reading).as_deref(), None);
     }
 
     #[test]

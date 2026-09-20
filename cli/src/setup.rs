@@ -42,8 +42,15 @@ pub struct Selection {
 }
 impl Default for Selection {
     fn default() -> Self {
-        Self { composition: "0/1/2".into(), ground: None, desktop: DesktopChoice::Keep,
-            bundle: None, bundle_sha256: None, products: Vec::new(), remove_products: Vec::new() }
+        Self {
+            composition: "0/1/2".into(),
+            ground: None,
+            desktop: DesktopChoice::Keep,
+            bundle: None,
+            bundle_sha256: None,
+            products: Vec::new(),
+            remove_products: Vec::new(),
+        }
     }
 }
 
@@ -113,11 +120,23 @@ pub struct Discovery {
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(tag = "kind", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Operation {
-    RegisterExisting { product: String, executable: String, sha256: String },
-    InstallProduct { product: String },
-    RemoveProduct { product: String },
-    EstablishGround { path: String },
-    BindGround { path: String },
+    RegisterExisting {
+        product: String,
+        executable: String,
+        sha256: String,
+    },
+    InstallProduct {
+        product: String,
+    },
+    RemoveProduct {
+        product: String,
+    },
+    EstablishGround {
+        path: String,
+    },
+    BindGround {
+        path: String,
+    },
     InstallDesktop,
     RemoveDesktop,
     RecordComposition,
@@ -161,28 +180,53 @@ impl Plan {
     }
     pub fn check_review(&self, approval: &str, now: u64) -> Result<(), String> {
         if self.schema != PLAN_SCHEMA || self.engagement_contract != ENGAGEMENT_CONTRACT {
-            return Err("This plan uses an unsupported adoption contract. Make a fresh plan.".into());
+            return Err(
+                "This plan uses an unsupported adoption contract. Make a fresh plan.".into(),
+            );
         }
         if approval.is_empty() || approval != self.review_token {
             return Err("Explicit approval must name this exact reviewed plan.".into());
         }
-        let mut original = self.clone(); original.seal()?;
-        if original.review_token != self.review_token { return Err("The reviewed plan was changed.".into()); }
-        if self.created_at_unix_ms > now || now >= self.expires_at_unix_ms
-            || self.expires_at_unix_ms != self.created_at_unix_ms.saturating_add(REVIEW_LIFETIME_MS) {
-            return Err("The plan expired or has an invalid review window. Refresh and review again.".into());
+        let mut original = self.clone();
+        original.seal()?;
+        if original.review_token != self.review_token {
+            return Err("The reviewed plan was changed.".into());
         }
-        if !self.blocked.is_empty() { return Err("Resolve the plan's blocked items before applying.".into()); }
+        if self.created_at_unix_ms > now
+            || now >= self.expires_at_unix_ms
+            || self.expires_at_unix_ms != self.created_at_unix_ms.saturating_add(REVIEW_LIFETIME_MS)
+        {
+            return Err(
+                "The plan expired or has an invalid review window. Refresh and review again."
+                    .into(),
+            );
+        }
+        if !self.blocked.is_empty() {
+            return Err("Resolve the plan's blocked items before applying.".into());
+        }
         Ok(())
     }
 }
 
 /// Desktop supplies its own bundle/footprint plan and receipt-owned teardown.
-pub fn plan(selection: Selection, discovery: Discovery, desktop_plan: Result<Option<Value>, String>, now: u64) -> Result<Plan, String> {
-    let choice = discovery.choices.iter().find(|c| c.id == selection.composition)
+pub fn plan(
+    selection: Selection,
+    discovery: Discovery,
+    desktop_plan: Result<Option<Value>, String>,
+    now: u64,
+) -> Result<Plan, String> {
+    let choice = discovery
+        .choices
+        .iter()
+        .find(|c| c.id == selection.composition)
         .ok_or("Choose one of the discovered compositions.")?;
-    let mut selected = if choice.id == "custom" { selection.products.clone() } else { choice.products.clone() };
-    selected.sort(); selected.dedup();
+    let mut selected = if choice.id == "custom" {
+        selection.products.clone()
+    } else {
+        choice.products.clone()
+    };
+    selected.sort();
+    selected.dedup();
     let mut result = Plan { schema: PLAN_SCHEMA.into(), engagement_contract: ENGAGEMENT_CONTRACT.into(),
         selection: selection.clone(), discovery: discovery.clone(), steps: Vec::new(), blocked: Vec::new(),
         notices: vec![
@@ -191,50 +235,109 @@ pub fn plan(selection: Selection, discovery: Discovery, desktop_plan: Result<Opt
             "Contributed capability settings are configured and verified separately through their native owners after installation.".into(),
         ], created_at_unix_ms: now, expires_at_unix_ms: now.saturating_add(REVIEW_LIFETIME_MS), review_token: String::new() };
     if choice.hosted {
-        if selection.desktop != DesktopChoice::Keep || selection.bundle.is_some() || !selection.products.is_empty() || !selection.remove_products.is_empty() {
+        if selection.desktop != DesktopChoice::Keep
+            || selection.bundle.is_some()
+            || !selection.products.is_empty()
+            || !selection.remove_products.is_empty()
+        {
             result.blocked.push("Hosted reading has no local install or teardown. Choose a local composition for local changes.".into());
         }
         result.notices.push("Continue through the site's existing Library. Hosting is the publisher's responsibility, not the reader's setup.".into());
-        result.seal()?; return Ok(result);
+        result.seal()?;
+        return Ok(result);
     }
     if choice.id != "custom" && !selection.products.is_empty() {
-        result.blocked.push("Individual product overrides require the explicit individual-products composition.".into());
+        result.blocked.push(
+            "Individual product overrides require the explicit individual-products composition."
+                .into(),
+        );
     }
-    if selected.is_empty() && selection.desktop != DesktopChoice::Remove && selection.remove_products.is_empty() {
-        result.blocked.push("Choose at least one product or an explicit removal.".into());
+    if selected.is_empty()
+        && selection.desktop != DesktopChoice::Remove
+        && selection.remove_products.is_empty()
+    {
+        result
+            .blocked
+            .push("Choose at least one product or an explicit removal.".into());
     }
     let all: BTreeSet<&str> = discovery.products.iter().map(|p| p.id.as_str()).collect();
     for id in selected.iter().chain(selection.remove_products.iter()) {
-        if !all.contains(id.as_str()) { result.blocked.push(format!("Product {id:?} is not in the current native catalogue.")); }
+        if !all.contains(id.as_str()) {
+            result.blocked.push(format!(
+                "Product {id:?} is not in the current native catalogue."
+            ));
+        }
     }
     if selection.desktop == DesktopChoice::Remove && choice.id == "00/00" {
-        result.blocked.push("Choose the backing composition to keep when removing Desktop.".into());
+        result
+            .blocked
+            .push("Choose the backing composition to keep when removing Desktop.".into());
     }
     for product in &discovery.products {
-        if !selected.contains(&product.id) { continue; }
-        if selection.remove_products.contains(&product.id) {
-            result.blocked.push(format!("{} cannot be selected and removed in the same plan.", product.title)); continue;
+        if !selected.contains(&product.id) {
+            continue;
         }
-        if product.present && product.registered { continue; }
-        if let (Some(executable), Some(sha256)) = (&product.existing_executable, &product.existing_digest) {
-            result.steps.push(Step { operation: Operation::RegisterExisting { product: product.id.clone(), executable: executable.clone(), sha256: sha256.clone() },
-                title: format!("Retain existing {}",product.title), effects: vec![format!("Register {executable}; do not replace it or change its native configuration.")], native_plan: None });
+        if selection.remove_products.contains(&product.id) {
+            result.blocked.push(format!(
+                "{} cannot be selected and removed in the same plan.",
+                product.title
+            ));
+            continue;
+        }
+        if product.present && product.registered {
+            continue;
+        }
+        if let (Some(executable), Some(sha256)) =
+            (&product.existing_executable, &product.existing_digest)
+        {
+            result.steps.push(Step {
+                operation: Operation::RegisterExisting {
+                    product: product.id.clone(),
+                    executable: executable.clone(),
+                    sha256: sha256.clone(),
+                },
+                title: format!("Retain existing {}", product.title),
+                effects: vec![format!(
+                    "Register {executable}; do not replace it or change its native configuration."
+                )],
+                native_plan: None,
+            });
         } else if let Some(offer) = &product.offer {
             result.steps.push(Step { operation: Operation::InstallProduct { product: product.id.clone() }, title: format!("Install {}", product.title),
                 effects: vec!["Use the reviewed native source/build/activation contract. Keep foreign installations and source untouched.".into()], native_plan: Some(offer.clone()) });
         } else {
-            result.blocked.push(format!("{}: {}",product.title,product.unavailable_reason.as_deref().unwrap_or("No usable native installation offer was disclosed.")));
+            result.blocked.push(format!(
+                "{}: {}",
+                product.title,
+                product
+                    .unavailable_reason
+                    .as_deref()
+                    .unwrap_or("No usable native installation offer was disclosed.")
+            ));
         }
     }
     let adds_desktop = selection.desktop == DesktopChoice::Add || choice.id == "00/00";
     let needs_ground = selected.iter().any(|id| id == "central") || adds_desktop;
-    if adds_desktop && !selected.iter().any(|id| id == "central") && !discovery.products.iter().any(|p| p.id == "central" && p.present) {
-        result.blocked.push("Desktop needs Central ground. Select Central or retain an existing installation.".into());
+    if adds_desktop
+        && !selected.iter().any(|id| id == "central")
+        && !discovery
+            .products
+            .iter()
+            .any(|p| p.id == "central" && p.present)
+    {
+        result.blocked.push(
+            "Desktop needs Central ground. Select Central or retain an existing installation."
+                .into(),
+        );
     }
     if needs_ground {
         let path = discovery.selected_ground.as_deref().unwrap_or_default();
-        if path.is_empty() { result.blocked.push("Choose where Central will live, or select the existing ground.".into()); }
-        else { match discovery.ground["outcome"].as_str() {
+        if path.is_empty() {
+            result
+                .blocked
+                .push("Choose where Central will live, or select the existing ground.".into());
+        } else {
+            match discovery.ground["outcome"].as_str() {
             Some("recognized") if discovery.ground["access"]["readable"] == true && discovery.ground["access"]["searchable"] == true => {
                 if discovery.bound_ground.as_deref() != Some(path) {
                     result.steps.push(Step { operation: Operation::BindGround { path: path.into() }, title: "Use the recognised Central ground".into(),
@@ -245,7 +348,8 @@ pub fn plan(selection: Selection, discovery: Discovery, desktop_plan: Result<Opt
             Some("new") => result.steps.push(Step { operation: Operation::EstablishGround { path: path.into() }, title: "Establish Central".into(),
                 effects: vec![format!("Ask Central to initialise {path} and verify it with its native doctor. No work-placement grants or human-adopted policy will be fabricated.")], native_plan: None }),
             _ => result.blocked.push("Central did not recognise the selected directory as accessible ground. Select a recognised root or a new empty directory; existing content is not overwritten.".into()),
-        }}
+        }
+        }
     }
     if adds_desktop && discovery.desktop["state"] != "installed" {
         match desktop_plan {
@@ -262,8 +366,16 @@ pub fn plan(selection: Selection, discovery: Discovery, desktop_plan: Result<Opt
             Err(message) => result.blocked.push(message),
         }
     }
-    for product in discovery.products.iter().rev().filter(|p| selection.remove_products.contains(&p.id)) {
-        if !product.managed { result.blocked.push(format!("{} is not a receipt-owned install; setup will not remove a pre-existing native installation.", product.title)); continue; }
+    for product in discovery
+        .products
+        .iter()
+        .rev()
+        .filter(|p| selection.remove_products.contains(&p.id))
+    {
+        if !product.managed {
+            result.blocked.push(format!("{} is not a receipt-owned install; setup will not remove a pre-existing native installation.", product.title));
+            continue;
+        }
         result.steps.push(Step { operation: Operation::RemoveProduct { product: product.id.clone() }, title: format!("Remove managed {}", product.title),
             effects: vec!["Remove only the native receipt-owned footprint. Keep all human source and foreign installations.".into()], native_plan: None });
     }
@@ -275,7 +387,14 @@ pub fn plan(selection: Selection, discovery: Discovery, desktop_plan: Result<Opt
 
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
-pub enum StepState { Pending, Running, Applied, Verified, Refused, Unknown }
+pub enum StepState {
+    Pending,
+    Running,
+    Applied,
+    Verified,
+    Refused,
+    Unknown,
+}
 #[derive(Clone, Debug, Serialize, Deserialize, PartialEq)]
 pub struct StepRecord {
     pub state: StepState,
@@ -292,22 +411,56 @@ pub struct Journal {
 }
 impl Journal {
     pub fn new(plan: Plan, now: u64) -> Self {
-        let records = plan.steps.iter().map(|_| StepRecord { state: StepState::Pending, receipt: None, message: None }).collect();
-        Self { schema: JOURNAL_SCHEMA.into(), plan, records, updated_at_unix_ms: now, verification: None }
+        let records = plan
+            .steps
+            .iter()
+            .map(|_| StepRecord {
+                state: StepState::Pending,
+                receipt: None,
+                message: None,
+            })
+            .collect();
+        Self {
+            schema: JOURNAL_SCHEMA.into(),
+            plan,
+            records,
+            updated_at_unix_ms: now,
+            verification: None,
+        }
     }
     pub fn validate(&self) -> Result<(), String> {
-        if self.schema != JOURNAL_SCHEMA || self.records.len() != self.plan.steps.len() { return Err("The native adoption journal is incomplete or unsupported.".into()); }
-        let mut checked = self.plan.clone(); checked.seal()?;
-        if checked.review_token != self.plan.review_token { return Err("The native adoption journal's review basis changed.".into()); }
+        if self.schema != JOURNAL_SCHEMA || self.records.len() != self.plan.steps.len() {
+            return Err("The native adoption journal is incomplete or unsupported.".into());
+        }
+        let mut checked = self.plan.clone();
+        checked.seal()?;
+        if checked.review_token != self.plan.review_token {
+            return Err("The native adoption journal's review basis changed.".into());
+        }
         Ok(())
     }
-    pub fn uncertain(&self) -> bool { self.records.iter().any(|r| matches!(r.state, StepState::Running | StepState::Unknown)) }
-    pub fn complete(&self) -> bool { self.records.iter().all(|r| r.state == StepState::Verified) }
+    pub fn uncertain(&self) -> bool {
+        self.records
+            .iter()
+            .any(|r| matches!(r.state, StepState::Running | StepState::Unknown))
+    }
+    pub fn complete(&self) -> bool {
+        self.records.iter().all(|r| r.state == StepState::Verified)
+    }
     pub fn disposition(&self) -> &'static str {
-        if self.uncertain() { "outcome_unknown" }
-        else if self.complete() { "verified" }
-        else if self.records.iter().any(|r| matches!(r.state, StepState::Applied | StepState::Verified)) { "partially_applied" }
-        else { "not_applied" }
+        if self.uncertain() {
+            "outcome_unknown"
+        } else if self.complete() {
+            "verified"
+        } else if self
+            .records
+            .iter()
+            .any(|r| matches!(r.state, StepState::Applied | StepState::Verified))
+        {
+            "partially_applied"
+        } else {
+            "not_applied"
+        }
     }
 }
 
@@ -315,16 +468,33 @@ impl Journal {
 /// resolved only by independent owner readback, never by invoking it again.
 pub trait Runtime {
     fn refresh_plan(&mut self, reviewed: &Plan) -> Result<Plan, String>;
-    fn preflight(&mut self, _step: &Step, _plan: &Plan) -> Result<(), String> { Ok(()) }
+    fn preflight(&mut self, _step: &Step, _plan: &Plan) -> Result<(), String> {
+        Ok(())
+    }
     fn invoke(&mut self, step: &Step, plan: &Plan) -> Result<Value, String>;
-    fn verify(&mut self, step: &Step, plan: &Plan, receipt: Option<&Value>) -> Result<Value, String>;
+    fn verify(
+        &mut self,
+        step: &Step,
+        plan: &Plan,
+        receipt: Option<&Value>,
+    ) -> Result<Value, String>;
 }
-pub trait JournalStore { fn save(&mut self, journal: &Journal) -> Result<(), String>; }
+pub trait JournalStore {
+    fn save(&mut self, journal: &Journal) -> Result<(), String>;
+}
 
-pub fn apply<R: Runtime, S: JournalStore>(runtime: &mut R, store: &mut S, plan: Plan, approval: &str, now: u64) -> Result<Journal, String> {
+pub fn apply<R: Runtime, S: JournalStore>(
+    runtime: &mut R,
+    store: &mut S,
+    plan: Plan,
+    approval: &str,
+    now: u64,
+) -> Result<Journal, String> {
     plan.check_review(approval, now)?;
     let fresh = runtime.refresh_plan(&plan)?;
-    if fresh.review_token != plan.review_token { return Err("The World, native effects or source changed after review. No operation started; refresh and review a new plan.".into()); }
+    if fresh.review_token != plan.review_token {
+        return Err("The World, native effects or source changed after review. No operation started; refresh and review a new plan.".into());
+    }
     // Never invoke metadata supplied by a client instead of fresh native data.
     let mut journal = Journal::new(fresh, now);
     store.save(&journal)?;
@@ -347,12 +517,18 @@ pub fn apply<R: Runtime, S: JournalStore>(runtime: &mut R, store: &mut S, plan: 
                 match runtime.verify(step, &journal.plan, journal.records[index].receipt.as_ref()) {
                     Ok(reading) => {
                         journal.records[index].state = StepState::Verified;
-                        if let Some(receipt) = journal.records[index].receipt.as_mut() { receipt["verification"] = reading; }
+                        if let Some(receipt) = journal.records[index].receipt.as_mut() {
+                            receipt["verification"] = reading;
+                        }
                     }
-                    Err(_) => { journal.records[index].message = Some("The operation returned, but its independent native readback did not verify. Recheck; do not replay the write.".into()); }
+                    Err(_) => {
+                        journal.records[index].message = Some("The operation returned, but its independent native readback did not verify. Recheck; do not replay the write.".into());
+                    }
                 }
                 store.save(&journal)?;
-                if journal.records[index].state != StepState::Verified { break; }
+                if journal.records[index].state != StepState::Verified {
+                    break;
+                }
             }
             Err(_) => {
                 journal.records[index].state = StepState::Unknown;
@@ -364,15 +540,30 @@ pub fn apply<R: Runtime, S: JournalStore>(runtime: &mut R, store: &mut S, plan: 
     }
     Ok(journal)
 }
-pub fn recheck<R: Runtime, S: JournalStore>(runtime: &mut R, store: &mut S, mut journal: Journal, now: u64) -> Result<Journal, String> {
+pub fn recheck<R: Runtime, S: JournalStore>(
+    runtime: &mut R,
+    store: &mut S,
+    mut journal: Journal,
+    now: u64,
+) -> Result<Journal, String> {
     journal.validate()?;
     for index in 0..journal.records.len() {
-        if journal.records[index].state == StepState::Pending || journal.records[index].state == StepState::Refused { continue; }
-        match runtime.verify(&journal.plan.steps[index], &journal.plan, journal.records[index].receipt.as_ref()) {
+        if journal.records[index].state == StepState::Pending
+            || journal.records[index].state == StepState::Refused
+        {
+            continue;
+        }
+        match runtime.verify(
+            &journal.plan.steps[index],
+            &journal.plan,
+            journal.records[index].receipt.as_ref(),
+        ) {
             Ok(reading) => {
                 journal.records[index].state = StepState::Verified;
                 journal.records[index].message = None;
-                journal.records[index].receipt = Some(json!({"recovered_by":"independent-native-readback","verification":reading}));
+                journal.records[index].receipt = Some(
+                    json!({"recovered_by":"independent-native-readback","verification":reading}),
+                );
             }
             Err(_) => {
                 journal.records[index].state = match journal.records[index].state {
