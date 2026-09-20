@@ -13,15 +13,8 @@ import type {ActivityExtras, CompositionReading, OwnerMount} from "../types";
 import {buildSections, frameFact} from "../world";
 import {ProductSection} from "./ProductSectionV2";
 import {NativeProductSection} from "./NativeProductSectionV2";
-import {GroundChooser} from "../../GroundChooser";
+import {AdoptionEntry} from "../../../configuration/AdoptionEntry";
 import {formatRelativeTime} from "../../../shared/relativeTime";
-
-const BOOTSTRAP_STEPS: {title: string; detail: string; native: string}[] = [
-  {title: "Connect your Central", detail: "Central is where this world keeps its memory and its rules. Point the suite at it once and everything else keys off that choice.", native: "Settings → Ground & suite, or `oi install --personal-ground <path>` in a terminal"},
-  {title: "Install the products", detail: "One command puts every product of the suite in place at pinned, verified versions — a stale pin refuses cleanly rather than installing a lie.", native: "`oi install` in a terminal"},
-  {title: "Check the world", detail: "Each product reports in below as it is found — every discovery is a visible event, not a spinner.", native: "`oi verify --json` · `oi doctor` · `oi status --json` in a terminal"},
-  {title: "Make it yours", detail: "Only the settings that matter on first run surface for attention; day-to-day life happens in Settings.", native: "Settings, in this same window"},
-];
 
 export function SystemHome({reading, nativeMounts, nativePending, ground, extras, pending, error, onRefresh}: {
   reading?: CompositionReading;
@@ -60,16 +53,7 @@ export function SystemHome({reading, nativeMounts, nativePending, ground, extras
         ? <NativeProductSection key={section.product_id} mount={mount} name={section.name}/>
         : <ProductSection key={section.product_id} model={section}/>;
     })}
-    <section className="settings-bootstrap" aria-label="Setting up a new world">
-      <h3>Set up a new world</h3>
-      <p className="settings-note">The same steps work whether nothing is installed yet or you are starting over — this page is that process, not a separate wizard.</p>
-      <ol className="settings-bootstrap">{BOOTSTRAP_STEPS.map((step, index) => <li key={step.title}>
-        <strong>{index + 1}. {step.title}</strong>
-        <p>{step.detail}</p>
-        <em className="product-native-path">{step.native}</em>
-      </li>)}</ol>
-      <GroundChooser/>
-    </section>
+    <AdoptionEntry onApplied={onRefresh}/>
     <div className="system-actions">
       <button disabled={pending || nativePending} onClick={onRefresh}>{pending || nativePending ? "Reading…" : "Read the world again"}</button>
     </div>
