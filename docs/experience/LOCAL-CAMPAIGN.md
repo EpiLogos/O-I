@@ -2,7 +2,11 @@
 
 Start at [#65 and the campaign map](README.md). Use [stories](STORIES.md), [paired record profile](STORY-PROFILE.md) and [practice conditions](PRACTICE-CONDITIONS.md). Load the source-owned [campaign Method](../../skills/experience-campaign/SKILL.md) explicitly for this commissioned bootstrap when it is not yet discoverable through the actual installed AIKit source. That explicit load is not a claim that normal discovery works.
 
-**Current owner update — 18 September 2026:** Mac is the installed acceptance/ordinary-use locus; Omarchy is the development/reference host, now reported by the owner to support sandboxes. Use those sandboxes as the default place for eligible isolated install, functionality, fixture and hardening rounds (§2.1), not as permission to churn the host or the Mac. `5/0` is the hosted Library/Expression learning encounter, not a visitor-side install: [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) records the correction and clean-browser walk. These updates refine the existing C0–C5 campaign and take precedence over older peer-machine/minimal-learner-install descriptions. They neither assert physical verification of the sandbox setup nor release a still-unproved Day/NOW foundation by declaration.
+**Current owner update — 19 September 2026:** use the [existing orientation's three bounded Mac tracks](INHABITED-SYSTEM-ORIENTATION.md#current-owner-direction--two-outcomes-three-mac-tracks): (1) O:I/Desktop/whole-product UX, (2) S0–S4 functionality/performance/Factory plus Run-in-Expressions, (3) QL-MEF/Expressions/Technè/Nara/Epii. The primary checkout is included within **three O:I Mac trees total**; each native repository has **one owner checkout**. No fourth Mac verifier tree. Track 1 owns shell integration and Mac UX proof; Track 2 owns native operations; Track 3 owns QL/Expression facilities. Claim disjoint files before edits and preserve unpublished local work. Verification uses the existing owner checkout and isolated outputs/episodes, not an additional Mac tree.
+
+Omarchy contributes **bounded independent work and Bimba/SharedField hosting**, without gating unrelated Mac progress. This supersedes the 18 September sandbox-default/Omarchy-first execution wording, not the historical sandbox observations or material evidence. `5/0` remains the hosted Library/Expression learning encounter, not a visitor-side install: [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) retains that correction and clean-browser walk. Both useful installed products with actual Factory self-inhabitation **and** the complete source-backed corpus with real hosted publication remain required outcomes. A representative slice is not closure of either.
+
+The existing Day/NOW gate still bounds broad dependent fan-out. Independent useful implementation and affected tests continue without another whole-suite audit or planning approval phase. This GitHub-only setup/planning contribution does not authorise connection to or mutation of the person's machines; local operations below require their own current authority. Native matrices, C0–C5 and historical receipts keep their scopes.
 
 ## 1. Your job and why it exists
 
@@ -14,38 +18,39 @@ Keep one concise current entry under #65 linking the exact round, active test as
 
 ## 2. Before asking the person to test
 
-1. **Inspect safely.** Read actual local/remote state, relevant owner issues and approved source; do not re-run a whole-suite census before every small operation. Preserve dirty/untracked/staged work, local customisations, active worktrees, processes and pending results. A closed issue is neither a reason to repeat its completed implementation nor sufficient proof of this installed experience.
+1. **Inspect safely within the current authority.** Read actual permitted state, relevant owner issues and approved source; do not re-run a whole-suite census before every small operation. Preserve dirty/untracked/staged work, local customisations, active worktrees, processes and pending results. A closed issue is neither a reason to repeat its completed implementation nor sufficient proof of this installed experience. A GitHub-only commission is not permission to inspect a personal machine.
 2. **Select a coherent round.** Account for all required product versions and companions. The first tasks are ordinary quiet use, instructions and a real agent, not necessarily the largest Factory or QL demonstration. Choose the relevant setup context, selected/declined products, familiar user entry, root/child scope and machine. Ordinary absent optional products must stay absent in their tests.
 3. **Resolve readiness.** For each chosen row, bind actual native capabilities, current schema/input/result, context sources, applicable Skills/sets, exact revisions, loading route, authority and material support. A plan names requirements; a real invocation/readback establishes them. An unavailable UI, tool or computer-use channel is a precisely named test-environment gap, not simulated access.
-4. **Use the final cut.** Reconcile required code/branches under existing policy; run final-source tests; build and verify installed paths and resident service versions. Do not force-merge actively owned QL/desktop work or rewrite shared history to achieve cosmetic cleanliness. Use isolated build outputs/acceptance worktrees. Hold this cut fixed during an episode; repair changing it creates a new episode and affected retesting.
+4. **Use the final affected cut.** Reconcile required code/branches under existing policy; run final-source tests; build and verify installed paths and resident service versions where authorised. Do not force-merge actively owned QL/desktop work or rewrite shared history to achieve cosmetic cleanliness. Use isolated build outputs within the bounded checkout allocation, not a fourth Mac acceptance/verifier tree. Hold this cut fixed during an episode; repair changing it creates a new episode and affected retesting.
 5. **Prepare disposable material first.** Use realistic copied or purpose-made examples with known important distinctions, not only tiny canned success fixtures. Record filenames/versions and invariants outside the actor brief. Rehearse migration and destructive failure conditions in disposable environments before specifically authorised personal application. Select private-canary tests without exposing canaries to the working actor.
 6. **Check safety and capacity.** Set explicit time/turn/cost/concurrency/resource/retry limits for this round; record which effects, external transmissions, credentials, machine restarts and repository writes are permitted. No fixed global allowance is inferred from this document. Have an emergency stop and known cleanup/retention boundaries before starting a multi-agent or computer-use run.
 
 A missing production operation remains implementation work. Do not invite the human into a control known to have no working route. Complete it, or select a useful independent activity while preserving that obligation as blocked. Human judgement is reserved for actual choices and experience, not avoidable setup debugging.
 
-## 2.1 Omarchy sandbox proving — available development material
+## 2.1 Omarchy sandbox proving — bounded independent development material
 
 ### Machine roles and observed readiness
 
-The owner reports the sandbox facility ready on Omarchy. The planning field may now select it rather than treating disposable worlds as hypothetical. The exact backend, images, isolation guarantees, network/GPU/audio access, resource limits and native control commands have not been independently established by this documentation update. Discover and verify the selected current Workcell/provider offers at C1; do not commission a new sandbox platform, assume a named VM/container technology, or substitute an arbitrary directory for required process/network isolation.
+The owner reports the sandbox facility ready on Omarchy. The planning field may select it for an appropriate independent episode rather than treating disposable worlds as hypothetical. The exact backend, images, isolation guarantees, network/GPU/audio access, resource limits and native control commands have not been independently established by this documentation update. Discover and verify the selected current Workcell/provider offers at C1; do not commission a new sandbox platform, assume a named VM/container technology, or substitute an arbitrary directory for required process/network isolation.
 
-The topology is:
+The current topology is parallel, not a serial Omarchy-to-Mac release gate:
 
 ```text
-Omarchy development/reference host
+Mac: three bounded O:I trees, primary included
+  ├─ Track 1: O:I/Desktop/whole-product UX and Mac integration
+  ├─ Track 2: S0–S4/native performance/Factory/Run-in-Expressions
+  └─ Track 3: QL/Expressions/Technè/Nara/Epii/full corpus
+     one owner checkout for each native repository; no fourth verifier
+                         ↕ exact affected native returns through #220/#65
+Omarchy: bounded independent work + Bimba/SharedField hosting
   ├─ protected working sources, resident agents and services
-  └─ bounded disposable test worlds
-       ├─ selected install/update/lifecycle composition
-       ├─ native functionality / Factory / knowledge / SDK work
-       ├─ real browser/desktop routes where the provider supports them
-       └─ QL experiments / concurrency / failure and recovery
-                         ↓ native evidence + independent repair/replay
-                  accepted source / candidate cut
-                         ↓ established install/update path
-Mac installed acceptance world + published site/browser experience
+  └─ separately authorised disposable test worlds where useful
+       native install/provider/knowledge/QL/failure/recovery episodes
+                         ↓ actual hosting return
+Published Library/Expression/corpus experience in a clean browser
 ```
 
-Omarchy stays productive while different test worlds churn. The host itself, private Central ground, active worktrees and live SharedField service are not disposable. A guest labelled Omarchy does not establish the bare-metal host's behaviour. The Mac is not a sandbox to be silently reset or updated.
+Omarchy stays productive while different test worlds churn. The host itself, private Central ground, active worktrees and live SharedField service are not disposable. A guest labelled Omarchy does not establish the bare-metal host's behaviour. Neither machine is a sandbox to be silently reset or updated. A blocked Omarchy episode does not pause unrelated Mac tracks.
 
 ### Bind a useful episode, not a sandbox count
 
@@ -67,7 +72,7 @@ The current Day/NOW foundation session remains the producer. Reuse its demonstra
 
 ### Parallel work that is genuinely independent
 
-Run disjoint install variants, functional/provider tests, knowledge imports, QL experiments and corpus work in parallel where backend capacity and authority permit. Each writable data/index/store/worktree/browser profile, service endpoint, credential scope and temporary output belongs to its declared episode. Shared caches must be read-only or designed for concurrency. One computer-use driver owns each interactive desktop; independent supported guest desktops may run concurrently.
+Run disjoint install variants, functional/provider tests, knowledge imports, QL experiments and corpus work in parallel where backend capacity and authority permit. Each writable data/index/store/worktree/browser profile, service endpoint, credential scope and temporary output belongs to its declared episode and the bounded checkout allocation. Shared caches must be read-only or designed for concurrency. One computer-use driver owns each interactive desktop; independent supported guest desktops may run concurrently.
 
 Serialise mutation of the same native registry, shared source/index, installed candidate, live service, Git integration target or desktop focus. Reserve host capacity for ongoing work and record contention: concurrent guests share physical resources, so their latency is not an isolated performance baseline. Controlled deliberate contention has its own declared comparison. Do not infer that two guests are two physical machines, that a different guest image proves another OS, or that guest GPU access proves Mac rendering.
 
@@ -87,9 +92,9 @@ Human H/EX concerns the mature joined experience and the person's actual assessm
 
 ### Ready work inside existing tracks
 
-Use sandbox rounds for #268's remaining installed forms and update/rollback/owned teardown; #65/#201–#205 functional and provider work; #366 and KN stories for real import/retrieval/change/rebuild/fresh-agent recovery; QL's existing experiment and instrument protocols; and current SDK extension lifecycle. The clean-browser hosted Library walk belongs to the same campaign. UI and domain writers retain their files; test feedback lands in the chosen new UI through the current integrator rather than creating a third app.
+Use the existing track owner for #268's remaining installed forms and update/rollback/owned teardown; #65/#201–#205 functional and provider work; #366 and KN stories for real import/retrieval/change/rebuild/fresh-agent recovery; QL's existing experiment and instrument protocols; and current SDK extension lifecycle. Use an Omarchy sandbox when useful and independently authorised, not as a prerequisite for Mac implementation. The complete clean-browser hosted Library/corpus walk belongs to the same campaign. UI and domain writers retain their files; test feedback lands in the chosen new UI through Track 1 rather than creating a third app.
 
-Before the first broad batch, publish one concise #65 entry with selected cases, actual provider capabilities, isolation/cleanup results, concurrent assignments/budgets and the current foundation receipt or exact remaining dependency. Then execute; do not turn the resource inventory into a new architecture phase. Missing provider operations become bounded native-owner work.
+Before the first broad dependent batch, publish one concise #65 entry with selected cases, actual provider capabilities, isolation/cleanup results, concurrent assignments/budgets and the current foundation receipt or exact remaining dependency. Then execute; do not turn the resource inventory into a new architecture phase. Independent useful work needs no new broad-batch approval. Missing provider operations become bounded native-owner work.
 
 ## 3. Roles in one episode
 
@@ -153,7 +158,7 @@ Bind the finding to **story + step + native capability + practice/context basis 
 
 ### Repair at the right level
 
-A misleading Skill trigger is a procedure/interface repair, not necessarily a missing API. A wrong context scope is a resolver/source-policy issue. A unavailable provider is not fixed by editing a test to return success. A lost task/receipt boundary is fixed in the native caller/receiver, not by a new campaign ledger. A wrong expectation is corrected with source-backed explanation; an unresolved product decision goes to the person once, clearly.
+A misleading Skill trigger is a procedure/interface repair, not necessarily a missing API. A wrong context scope is a resolver/source-policy issue. An unavailable provider is not fixed by editing a test to return success. A lost task/receipt boundary is fixed in the native caller/receiver, not by a new campaign ledger. A wrong expectation is corrected with source-backed explanation; an unresolved product decision goes to the person once, clearly.
 
 The orchestrator may allocate a bounded repair to the relevant owner and integrate it through the current branch/review/check discipline. It may use Factory if operationally available and appropriate, but needing Factory to build the ability to test Factory would be circular. The approved local/native/GitHub procedure remains an explicit bootstrap path. No recursive unlimited delegation or retry is implied.
 
@@ -173,11 +178,33 @@ Evidence grades remain D/C/P/M/H with actual scope. Subagent work and computer u
 
 ## 7. Desktop and terminal coordination
 
-Keep O:I #190's active desktop/Wave 6–8 sequence and AIKit #211/#282, as superseded by their actual current owners including #375's new-UI landing. This campaign tests their real domain controls and the person's ordinary external tool use; it does not launch a competing UI implementation.
+Keep O:I #190's active desktop/Wave 6–8 sequence and AIKit #211/#282, as superseded by their actual current owners including #375's new-UI landing. This campaign tests their real domain controls and the person's ordinary external tool use; it does not launch a competing UI implementation. Track 1 owns the shell and Mac proof; bounded setup form/flow/adapter/test contributions claim their files with that owner before edits. Track 2 native operations and Track 3 QL facilities join through their existing contracts.
 
-A required control needs: useful user action, real native operation, allowed state change, readable feedback, interruption/recovery and persistence where promised. The Activity/Run view quality target is a compact readable timeline with actual inputs/turns/tool/permission events, search and expandable detail, not raw logs as the default result. Conversation, Activity, Context and Inspect remain views of the same selected participant/work.
+A required control needs: useful user action, real native operation, allowed state change, readable feedback, interruption/recovery and persistence where promised. The Activity/Run view quality target is a compact readable timeline with actual inputs/turns/tool/permission events, search and expandable detail, not raw logs as the default result. The current #375 amendment places Desk/Tasks centrally and Run/Agents/Context in the sidebar; these remain views of the same selected participant/work, not a competing redesign. Native terminal interaction follows AIKit `docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md`; an embedded terminal is not replaced with a JSON form.
 
-Schedule one computer-use driver per shared desktop focus. Use independent desktops/users/VMs for actual parallel UI testing. Narrow/wide, keyboard/pointer, draft restoration, graph/list/tree, privacy and missing-provider states are first-class cases. Record what the driver actually did and observed; reserved human quality questions should be short and attached to a genuinely working example.
+Schedule one computer-use driver per shared desktop focus. Use independent desktops/users/VMs for actual parallel UI testing where authorised, within the checkout/resource limits above. Narrow/wide, keyboard/pointer, draft restoration, graph/list/tree, privacy and missing-provider states are first-class cases. Record what the driver actually did and observed; reserved human quality questions should be short and attached to a genuinely working example.
+
+### 7.1 A bounded human setup/configuration/recovery episode
+
+Consume the existing #299 configuration plane and completed #109 native engagement rather than diagnosing the September 10 read-only disclosure snapshot as today's implementation. [The current consumer seam](../cradle/08-WAVE-5-CONSUMER-SEAM.md#8-human-setup-and-recovery-consumer--19-september-2026) records the production setup contribution in #406 and the native dependencies it does not replace.
+
+```text
+discover actual owner/composition
+  → choose intended composition and its relevant settings
+  → typed draft forms / native pickers
+  → owner validation and complete plan
+  → explicit authorised application
+  → independent native readback
+  → one useful first action through an existing owner operation
+```
+
+First use the existing controlled fixtures to exercise interaction and failure branches; then bind the same forms to the real production handlers. Fixture polish or a generic schema renderer does not close the feature. Installation variant selection, product adoption and removal remain actual installation-owner operations, not writes to an invented composition setting.
+
+For the selected real setting: navigate System → Settings, select its owner/scope, edit, review, go Back, edit again, Cancel and reopen. The draft must survive in its promised session scope, and none of these actions may write native state. Apply once, independently inspect the native CLI/headless result and compare the desktop's desired/declared/effective/active/staged axes. A required restart/reconnect remains explicit; do not simulate it by changing a status label. Use the existing native path picker and open one actually returned source without inventing a child Project for root work.
+
+Exercise denied/absent/unavailable owners, invalid input, externally changed native state, expired or incomplete plans, double-click, partial desired holding, partial native application, missing receipt/readback and a lost apply reply. Preserve successful operations and original failures. Retry reads without replaying writes; only explicit retryable failed operations can enter a fresh plan. Unknown effects need native reconciliation, not an automatic repeat. Keep credential material out of drafts, ordinary profiles, logs, browser test output and receipts; transport references through the secure owner mechanism.
+
+Track 1 checks the current integrated Mac shell's focus, keyboard/IME/Escape, scrolling/resizing, state restoration and native terminal continuity. Track 2 verifies the native plan/authority/staleness/apply/readback contract at its exact cut, including concurrent CLI changes. Track 3 checks the selected QL/Expression consumer, not a duplicate setup authority. Return the exact commands, cases, native revisions and residual checks to #406/#299/#220/#65. Do not add a whole-suite audit gate before this useful slice.
 
 ## 8. How the person enters the campaign
 
@@ -197,4 +224,4 @@ Return one readable account: what the person can actually do now; what still fai
 
 Per story retain source standing, binding/readiness, executed result, independent verification and human assessment separately. Keep skipped/unavailable cases visible and new capability inventory entries accounted for. Only the required complete route, independent negative/recovery proof and applicable human assessment warrants **usable end-to-end feature.** for the named scope.
 
-Full #65 closure requires its A–I field and included native programmes at their stated scope, not merely this round. Future/research/QL ratification dependencies retain their actual owner and re-entry condition. The user should have one next prompt or next ready experience, never a new A–E relay chart.
+Full #65 closure requires its A–I field and included native programmes at their stated scope, not merely this round. Actual Factory self-inhabitation and the complete source-backed corpus plus real hosted publication remain required outcomes; a setup success, queued Run, sample scene or local build cannot close them. Future/research/QL ratification dependencies retain their actual owner and re-entry condition. The user should have one next prompt or next ready experience, never a new A–E relay chart.
