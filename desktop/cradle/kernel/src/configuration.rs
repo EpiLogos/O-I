@@ -329,6 +329,24 @@ enum InvokeOutcome {
     },
 }
 
+/// Read one pipe to the end on a worker thread, giving up after `secs`. The
+/// invoked engine may leave a descendant holding the pipe, in which case the
+/// read never reaches EOF and the partial output is abandoned with the thread.
+fn drain<R: std::io::Read + Send + 'static>(mut pipe: Option<R>, secs: u64) -> String {
+    let (sender, receiver) = std::sync::mpsc::channel();
+    std::thread::spawn(move || {
+        let mut buffer = Vec::new();
+        if let Some(pipe) = pipe.as_mut() {
+            let _ = std::io::Read::read_to_end(pipe, &mut buffer);
+        }
+        let _ = sender.send(buffer);
+    });
+    match receiver.recv_timeout(std::time::Duration::from_secs(secs)) {
+        Ok(buffer) => String::from_utf8_lossy(&buffer).into_owned(),
+        Err(_) => String::new(),
+    }
+}
+
 /// The engine binding: the installed `oi` executable the CLI surface
 /// drives (`OI_BIN`, else `oi` on `PATH`).
 #[derive(Clone, Debug)]
@@ -350,12 +368,15 @@ impl Client {
     }
 
     fn invoke(&self, cwd: &Path, args: &[String], stdin: Option<&Value>) -> InvokeOutcome {
+        const AWAIT_SECS: u64 = 15;
+        const DRAIN_SECS: u64 = 5;
         let mut command = Command::new(&self.executable);
         command
             .current_dir(cwd)
             .args(args)
             .stdin(Stdio::piped())
-            .stdout(Stdio::piped());
+            .stdout(Stdio::piped())
+            .stderr(Stdio::piped());
         let mut child = match command.spawn() {
             Ok(child) => child,
             Err(error) => return InvokeOutcome::SpawnFailed(error.to_string()),
@@ -369,13 +390,39 @@ impl Client {
                 return InvokeOutcome::SpawnFailed(format!("cannot write the request: {error}"));
             }
         }
-        match child.wait_with_output() {
-            Err(error) => InvokeOutcome::SpawnFailed(error.to_string()),
-            Ok(output) => InvokeOutcome::Completed {
-                exit_code: output.status.code().unwrap_or(-1),
-                stdout: String::from_utf8_lossy(&output.stdout).into_owned(),
-                stderr: String::from_utf8_lossy(&output.stderr).into_owned(),
-            },
+        // The kernel must never block on an installed product: these calls run
+        // under the kernel lock, and an engine that never exits (or leaves a
+        // descendant holding its stdout pipe) once froze every Expression
+        // request with it. Wait bounded, kill at the deadline, and drain the
+        // pipes bounded — a descendant can keep a pipe open after its parent.
+        let deadline = std::time::Instant::now() + std::time::Duration::from_secs(AWAIT_SECS);
+        let status = loop {
+            match child.try_wait() {
+                Err(error) => return InvokeOutcome::SpawnFailed(error.to_string()),
+                Ok(Some(status)) => break status,
+                Ok(None) => {
+                    if std::time::Instant::now() >= deadline {
+                        let _ = child.kill();
+                        let _ = child.wait();
+                        return InvokeOutcome::Completed {
+                            exit_code: -1,
+                            stdout: String::new(),
+                            stderr: format!(
+                                "the engine did not answer within {AWAIT_SECS}s and was stopped; \
+                                 the configuration reading degrades rather than blocking the kernel"
+                            ),
+                        };
+                    }
+                    std::thread::sleep(std::time::Duration::from_millis(50));
+                }
+            }
+        };
+        let stdout = drain(child.stdout.take(), DRAIN_SECS);
+        let stderr = drain(child.stderr.take(), DRAIN_SECS);
+        InvokeOutcome::Completed {
+            exit_code: status.code().unwrap_or(-1),
+            stdout,
+            stderr,
         }
     }
 
