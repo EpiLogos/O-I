@@ -75,6 +75,14 @@ jobs:
           set -o pipefail
           cd desktop/cradle
           node tests/native-expression-browser.mjs 2>&1 | tee /tmp/w5-checks/browser.log
+      - name: Real GPU effect and deliberately disconnected consumer
+        if: always()
+        env:
+          NATIVE_EXPRESSION_OUT: /tmp/w5-checks/gpu-effect
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node tests/native-expression-gpu.mjs 2>&1 | tee /tmp/w5-checks/gpu-effect.log
       - name: Native kernel regressions
         if: always()
         run: |
