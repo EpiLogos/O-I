@@ -1,6 +1,6 @@
 import { useEffect, useRef, useState, type MouseEvent } from 'react';
 import { ShellMark } from './ShellMark';
-import { PAGES } from './content';
+const PAGES=[{id:'home',index:'00',label:'Home',hint:'World and Life'},{id:'library',index:'01',label:'Library',hint:'Enter the published work'}];
 
 type ShellNavProps = { page: string; onNavigate: (id: string) => void };
 const hrefFor = (id: string) => id === 'home' ? '#/' : `#/${id}`;
@@ -34,6 +34,7 @@ export function ShellNav({ page, onNavigate }: ShellNavProps) {
   return (
     <header className={`sn${page === 'home' ? ' sn--light' : ''}`}>
       {brand}
+      <a className="sn__library" href="#/library" onClick={event=>go(event,'library')} aria-current={page==='library'?'page':undefined}>Library <span aria-hidden="true">↗</span></a>
       <button type="button" className="sn__toggle" aria-expanded={open} aria-controls="shell-menu" onClick={() => {
         dialogRef.current?.showModal();
         if (previousOverflow.current === null) previousOverflow.current = document.body.style.overflow;

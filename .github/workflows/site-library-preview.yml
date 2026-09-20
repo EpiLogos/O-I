@@ -1,0 +1,61 @@
+name: Site Library preview
+
+on:
+  push:
+    branches: [site/library-first-public-expressions-20260919]
+    paths: ['site/**', '.github/workflows/site-library-preview.yml']
+  pull_request:
+    paths: ['site/**', 'shared-field/**', '.github/workflows/site-library-preview.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-library-preview-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  preview:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install browser-build dependencies
+        working-directory: site
+        run: npm install --no-audit --no-fund
+      - name: Verify source, native publication and public browser build
+        working-directory: site
+        run: |
+          node --test library.test.mjs publication.test.mjs public-content.test.mjs ../shared-field/expression-projection.test.mjs
+          npm run build:public
+      - name: Exercise the actual native reader in Chromium
+        working-directory: site
+        run: |
+          python -m pip install playwright==1.51.0 pillow
+          python -m playwright install --with-deps chromium
+          mkdir -p evidence/library
+          git rev-parse HEAD > evidence/library/commit.txt
+          npm run preview -- --host 127.0.0.1 --port 4173 > evidence/library/server.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          node tests/publication-fixtures.mjs > evidence/library/publication-test-fixture.json
+          result=0
+          python tests/library-acceptance.py || result=1
+          python tests/library-regressions.py || result=1
+          python tests/publication-acceptance.py || result=1
+          exit "$result"
+      - name: Retain the preview and all browser evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: site-library-preview-${{ github.sha }}
+          retention-days: 14
+          if-no-files-found: error
+          path: |
+            site/dist/
+            site/evidence/library/
+            site/package-lock.json
