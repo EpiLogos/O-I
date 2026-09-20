@@ -1,223 +1,48 @@
-/**
- * Settings → Visuals: Themes and Expression.
- *
- * Themes: explicit light/dark/system selection resolved through the shell's
- * semantic tokens (the VisualsProvider applies them to the `oi-desktop`
- * body; nothing here invents colours).
- *
- * Expression hosts the FULL control set of the particle engine — the same
- * parameters the reference instrument exposes — plus the two desktop asks:
- * a master on/off switch that is unambiguous, and typed text targets
- * (glyph A/B and arbitrary words). The panel is a controller of the
- * instrument, never its owner: every value flows through the validated
- * visual-preference owner. The preview places the window's shared Expression
- * stage in this box; it never creates a component-level renderer.
- */
-import { useCallback, useEffect, useId, useMemo, useRef, useState } from "react";
+/** Settings → Visuals: preferences only. The actual Expressions application
+ * is entered through the workspace mode route; there is no second workbench,
+ * preview stage, scene store, or renderer under Settings. */
+import { useCallback, useEffect, useMemo, useRef, useState } from "react";
 import { useVisuals } from "../../visuals/ParticleExpression";
-import { useExpressionStage, type StagePresentation } from "../../stage/ExpressionStage";
-import {
-  visuals,
-  type SavedState,
-  type ThemeChoice,
-} from "../../visuals/store";
-import {
-  PRESETS,
-} from "@epilogos/oi-design-system/point-cloud/presets";
-import {
-  CONTROL_SCHEMA,
-  readPath,
-  type PointCloudConfig,
-  type PointCloudPatch,
-} from "@epilogos/oi-design-system/point-cloud/config";
+import type { StagePresentation } from "../../stage/ExpressionStage";
+import { visuals, type SavedState, type ThemeChoice } from "../../visuals/store";
+import { PRESETS } from "@epilogos/oi-design-system/point-cloud/presets";
+import { CONTROL_SCHEMA, readPath, type PointCloudConfig, type PointCloudPatch } from "@epilogos/oi-design-system/point-cloud/config";
 import "./visuals.css";
-import {ExpressionView as ApplicationExpressionView} from "../../expression/ExpressionView";
-
-type ExpressionSubview = "themes" | "expression" | "compose";
 
 const QUICK_CHARS = ["✦", "✧", "★", "∞", "Ω", "∑", "∫", "⌘", "⌥", "§", "λ", "☯"];
-
+const THEME_CHOICES: ReadonlyArray<{value: ThemeChoice; label: string; hint: string}> = [
+  {value: "light", label: "Light", hint: "Use the light appearance"},
+  {value: "dark", label: "Dark", hint: "Use the dark appearance"},
+  {value: "system", label: "System", hint: "Follow this device's appearance"},
+];
 export function VisualsView() {
-  const { snapshot } = useVisuals();
-  const [subview, setSubview] = useState<ExpressionSubview>("expression");
-  return <div className="settings-view">
-    <h3>Visuals</h3>
-    <nav className="settings-rail visuals-subrail" aria-label="Visuals views">
-      <button aria-pressed={subview === "compose"} onClick={() => setSubview("compose")}>Compose</button>
-      <button aria-pressed={subview === "themes"} onClick={() => setSubview("themes")}>Themes</button>
-      <button aria-pressed={subview === "expression"} onClick={() => setSubview("expression")}>Expression</button>
-    </nav>
-    {subview === "themes" && <ThemesView theme={snapshot.theme} />}
-    {subview === "expression" && <ExpressionView />}
-    {subview === "compose" && <ApplicationExpressionView />}
+  const {snapshot} = useVisuals();
+  return <div className="settings-view visuals-preferences" aria-label="Appearance preferences">
+    <section aria-labelledby="appearance-heading">
+      <h3 id="appearance-heading">Appearance</h3>
+      <p className="settings-note">The same appearance follows your workspace, tools and document controls.</p>
+      <div className="oi-segment" role="group" aria-label="Appearance">
+        {THEME_CHOICES.map(option=><button key={option.value} type="button" aria-pressed={snapshot.theme === option.value} title={option.hint} onClick={()=>visuals.setTheme(option.value)}>{option.label}</button>)}
+      </div>
+    </section>
+    <section aria-labelledby="opening-heading">
+      <h3 id="opening-heading">Opening</h3>
+      <label className="visuals-check"><input type="checkbox" checked={snapshot.welcomeEnabled} disabled={!snapshot.enabled} onChange={event=>visuals.setWelcomeEnabled(event.target.checked)}/>Show the welcome mark when the app opens</label>
+      <label className="visuals-check"><input type="checkbox" checked={snapshot.enabled} onChange={event=>visuals.setEnabled(event.target.checked)}/>Enable the shared visual layer</label>
+      <p className="settings-note">Turning the visual layer off releases its renderer. Your saved work and theme are kept.</p>
+    </section>
+    <p className="settings-note">Scenes, composition and animation belong in Expressions.</p>
+    <button type="button" className="settings-mini" onClick={()=>window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail:{mode:"expressions"}}))}>Open Expressions</button>
   </div>;
 }
 
-function ThemesView({ theme }: { theme: ThemeChoice }) {
-  const options: { value: ThemeChoice; label: string; hint: string }[] = [
-    { value: "light", label: "Light", hint: "The day palette" },
-    { value: "dark", label: "Dark", hint: "The night palette" },
-    { value: "system", label: "System", hint: "Follow the OS appearance" },
-  ];
-  return <div className="settings-view">
-    <p className="settings-native-note">Appearance resolves through the shell's semantic tokens; the expression ink follows the theme unless overridden below.</p>
-    <div className="oi-segment" role="group" aria-label="Appearance">
-      {options.map((option) => (
-        <button
-          key={option.value}
-          type="button"
-          aria-pressed={theme === option.value}
-          title={option.hint}
-          onClick={() => visuals.setTheme(option.value)}
-        >
-          {option.label}
-        </button>
-      ))}
-    </div>
-  </div>;
-}
-
-/** What the engine control set needs from whoever hosts the field: the
- * presentation its field actions (disperse, pause, reset, capture) and its
- * diagnostics operate on. The Settings preview below is one host; the
- * Expressions centre surface's artboard is another. The controls never
- * acquire a presentation of their own. */
+/** Optional controls for a host's own standing presentation. Settings does
+ * not acquire a presentation; the real Expressions application owns its canvas. */
 export interface ExpressionControlsHost {
-  /** The standing presentation, or null when none stands. Stable identity. */
   presentation: () => StagePresentation | null;
   ready: boolean;
   paused: boolean;
   onPausedChange: (paused: boolean) => void;
-}
-
-function ExpressionView() {
-  const { snapshot } = useVisuals();
-  const stage = useExpressionStage();
-  const previewId = `oi-visuals-preview${useId()}`;
-  const config = snapshot.config;
-  const containerRef = useRef<HTMLDivElement | null>(null);
-  const presentationRef = useRef<StagePresentation | null>(null);
-  const [previewError, setPreviewError] = useState<string | null>(null);
-  const [previewReady, setPreviewReady] = useState(false);
-  const [retry, setRetry] = useState(0);
-  const [previewPaused, setPreviewPaused] = useState(false);
-  const [previewForceMotion, setPreviewForceMotion] = useState(false);
-  const latest = useRef({config, previewPaused, previewForceMotion});
-  latest.current = {config, previewPaused, previewForceMotion};
-  const surfaceError = stage.error ?? previewError;
-  const currentPresentation = useCallback(() => presentationRef.current, []);
-
-  // Acquire the one window stage, then move its existing canvas/context into
-  // the preview. Provider readiness retries acquisition; navigation releases
-  // the presentation and returns the canvas to its window home.
-  useEffect(() => {
-    setPreviewError(null);
-    setPreviewReady(false);
-    if (!snapshot.enabled) return;
-    const container = containerRef.current;
-    if (!container) return;
-    let presentation: StagePresentation | null = null;
-    try {
-      presentation = stage.present({id: previewId, plane: "overlay", recipe: "",
-        config: latest.current.config as unknown as Record<string, unknown>,
-        sceneRef: previewId,
-        paused: latest.current.previewPaused, forceMotion: latest.current.previewForceMotion});
-      if (!presentation) return;
-      presentation.setContainer(container);
-      presentationRef.current = presentation;
-      setPreviewReady(true);
-    } catch (cause) {
-      presentation?.release();
-      setPreviewError(cause instanceof Error ? cause.message : String(cause));
-    }
-    return () => {
-      presentation?.release();
-      if (presentationRef.current === presentation) presentationRef.current = null;
-    };
-  }, [snapshot.enabled, stage, previewId, retry]);
-
-  // Accepted writes re-present the owner's document — one migration per
-  // revision; the store's own emission is the coalescing point.
-  useEffect(() => {
-    presentationRef.current?.updateConfig(config as unknown as Record<string, unknown>, previewId, []);
-  }, [config, previewId]);
-
-  // These settings belong only to this presentation and are restored on
-  // re-enable. Releasing the handle clears its deliberate motion override.
-  useEffect(() => {
-    presentationRef.current?.setPaused(previewPaused);
-  }, [previewPaused]);
-  useEffect(() => {
-    presentationRef.current?.setForceMotion(previewForceMotion);
-  }, [previewForceMotion]);
-
-  return (
-    <div className="visuals-expression">
-      <div className="visuals-master oi-card">
-        <div className="oi-panel-head">
-          <span className="oi-panel-head-title">Expression layer</span>
-          <div className="oi-panel-head-tools">
-            <button
-              type="button"
-              className={snapshot.enabled ? "oi-action oi-action-primary" : "oi-action"}
-              aria-pressed={snapshot.enabled}
-              onClick={() => visuals.setEnabled(!snapshot.enabled)}
-            >
-              {snapshot.enabled ? "Expression: On" : "Expression: Off"}
-            </button>
-          </div>
-        </div>
-        <div className="visuals-master-body">
-          <p className="oi-note">
-            {snapshot.enabled
-              ? "Expression is enabled. Off removes the renderer entirely — nothing runs hidden."
-              : "Off is absolute: no renderer, no simulation, no resources held."}
-          </p>
-          <label className="visuals-check">
-            <input
-              type="checkbox"
-              checked={snapshot.welcomeEnabled}
-              onChange={(event) => visuals.setWelcomeEnabled(event.target.checked)}
-              disabled={!snapshot.enabled}
-            />
-            Show the welcome mark when the app opens
-          </label>
-        </div>
-      </div>
-
-      {!snapshot.enabled && (
-        <p className="oi-empty"><strong>Expression is off.</strong><span>Turn the expression on to see and shape the field.</span></p>
-      )}
-
-      {snapshot.enabled && surfaceError && <div className="oi-refusal" role="alert">
-        <p>The expression preview is unavailable: {surfaceError}</p>
-        {!stage.error && <button type="button" className="oi-action" onClick={() => setRetry((value) => value + 1)}>Retry preview</button>}
-      </div>}
-
-      {snapshot.enabled && (
-        <>
-          {/* The window's production canvas is placed here while acquired. */}
-          <div className="visuals-preview">
-            <div
-              className={surfaceError ? "visuals-preview-stage visuals-preview-stage-empty oi-card" : "visuals-preview-stage oi-card"}
-              ref={containerRef}
-              style={{ position: "relative" }}
-            />
-            <label className="visuals-check">
-              <input
-                type="checkbox"
-                checked={previewForceMotion}
-                onChange={(event) => setPreviewForceMotion(event.target.checked)}
-              />
-              Animate the preview even with reduced motion on (deliberate override)
-            </label>
-          </div>
-
-          <ExpressionControls host={{presentation: currentPresentation, ready: previewReady, paused: previewPaused, onPausedChange: setPreviewPaused}} />
-        </>
-      )}
-    </div>
-  );
 }
 
 /**
@@ -226,7 +51,7 @@ function ExpressionView() {
  * config import/export and diagnostics. Every value flows through the
  * validated visual-preference owner; field actions operate on the HOST's
  * presentation. It renders a fragment of groups so a host lays them out in
- * its own container (Settings: the visuals grid; Expressions: the Studio dock).
+ * its own container (for example, the Expressions Studio dock).
  * `editableValues` swaps each slider's read-only value for a direct numeric
  * entry (the Studio's label–slider–number row).
  */

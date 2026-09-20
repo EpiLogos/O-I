@@ -1,0 +1,29 @@
+/* W1: the existing Run / Agents / Context / Inspect bodies. Deliberately
+   no .agent-chat, transcript, composer, tab roster, or semantic state rewrite. */
+.desktop-side.right :is(.factory-side, .agent-context, .agent-inspect, .agent-activity, .ta-context-plane) { min-width: 0; box-sizing: border-box; line-height: 1.5; overflow-wrap: anywhere; }
+.desktop-side.right :is(.agent-context, .agent-inspect) { padding: 14px 12px 20px; }
+.desktop-side.right :is(.factory-side-group, .factory-side-head, .factory-side-run) { padding: 12px; background: transparent; }
+.desktop-side.right .factory-side-group > h4 { font-size: var(--oi-shell-type-ui); line-height: 1.5; margin-bottom: 8px; color: var(--oi-foreground); }
+.desktop-side.right :is(.factory-side-run-head, .factory-side-detail-head, .factory-side-assign, .factory-side-traj-strip, .factory-side-compare) { flex-wrap: wrap; min-width: 0; gap: 6px 10px; }
+.desktop-side.right :is(.factory-side-row, .factory-side-traj-row) { min-height: 30px; gap: 8px; align-items: start; }
+.desktop-side.right :is(.factory-side-row, .factory-side-group > h4, .factory-side-detail-head) > svg { flex: none; margin-top: 2px; }
+.desktop-side.right .factory-side-row-title { white-space: normal; overflow: visible; overflow-wrap: anywhere; }
+.desktop-side.right :is(.factory-side-steps > li, .factory-side-skills > li, .factory-side-proposal, .factory-side-create, .factory-side-return, .factory-side-compare-col, .factory-side-decision) { background: transparent; border: 0; border-radius: 0; padding: 8px 0; }
+.desktop-side.right :is(.factory-side-steps > li, .factory-side-skills > li) + li { border-top: 1px solid var(--oi-hairline-soft); }
+.desktop-side.right :is(.factory-side-steps > li[data-step-status="blocked"], .factory-side-steps > li[data-step-status="fail"], .factory-side-skills > li[data-permission="refused"]) { border-left: 2px solid var(--oi-accent); padding-left: 8px; }
+.desktop-side.right .factory-side-create { margin-inline: 12px; }
+.desktop-side.right .factory-side-proposal { border-top: 1px solid var(--oi-hairline-soft); }
+.desktop-side.right .factory-side-compare-col { flex: 1 1 180px; }
+.desktop-side.right :is(.factory-side, .agent-context, .agent-inspect, .agent-activity) :is(input, select, textarea) { box-sizing: border-box; min-width: 0; max-width: 100%; }
+.desktop-side.right :is(.factory-side-setup, .agent-context .oi-kv, .agent-inspect .oi-kv) { display: grid; grid-template-columns: minmax(0, .8fr) minmax(0, 1.2fr); gap: 6px 12px; margin-block: 10px; }
+.desktop-side.right :is(.factory-side-setup, .agent-context .oi-kv, .agent-inspect .oi-kv) dd { min-width: 0; text-align: left; overflow-wrap: anywhere; }
+.desktop-side.right :is(.agent-context, .agent-inspect, .factory-side) summary { cursor: pointer; padding-block: 6px; }
+.desktop-side.right :is(.factory-side, .agent-context, .agent-inspect) :is(button, summary):focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
+.desktop-side.right :is(.factory-side-run-actions, .factory-side .oi-action-group, .ta-pane-launcher) { flex-wrap: wrap; gap: 6px; }
+.desktop-side.right .agent-context .oi-eyebrow { margin-bottom: 8px; }
+@container (max-width: 300px) {
+  .desktop-side.right :is(.factory-side-setup, .agent-context .oi-kv, .agent-inspect .oi-kv) { grid-template-columns: minmax(0, 1fr); gap: 2px; }
+  .desktop-side.right :is(.factory-side-setup, .agent-context .oi-kv, .agent-inspect .oi-kv) dd { margin-bottom: 8px; }
+  .desktop-side.right .factory-side-compare { flex-direction: column; }
+  .desktop-side.right .factory-side-compare-col { flex-basis: auto; }
+}

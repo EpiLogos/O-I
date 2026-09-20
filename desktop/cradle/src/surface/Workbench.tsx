@@ -15,7 +15,7 @@ import type {ExploreSurfaceProps} from "../explore/ExploreSurface";
  *   absence: no encounters are fabricated before the agency vertical mounts.
  */
 
-import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState } from "react";
+import { Glyph } from "../workspace/Glyph";import { Fragment, useEffect, useLayoutEffect, useState, useSyncExternalStore } from "react";
 import { Loading } from "../shared/Loading";
 import { useKernel } from "../kernel/KernelProvider";
 import type { ListedSource } from "../kernel/types";
@@ -25,7 +25,7 @@ import { SourcesIndex } from "./SourcesIndex";
 import { DraftSurface } from "../flow/DraftSurface";
 import { FlowSurface } from "../flow/FlowSurface";
 import { FreshSurface } from "../flow/FreshSurface";
-import { contains, groupsOf, renderOrder } from "./engine";
+import { contains, groupsOf, renderOrder, upperCornerGroupId } from "./engine";
 // Expensive bodies load on first use, not at startup: the terminal (xterm),
 // the browser attachment, Explore and its presentation renderers, the
 // knowledge graph and its layout worker, the Factory contribution and the
@@ -35,19 +35,23 @@ const TerminalSurface=lazy(()=>import("../terminal/TerminalSurface").then((modul
 const BrowserSurface=lazy(()=>import("../browser/BrowserSurface").then((module)=>({default:module.BrowserSurface})));
 const KnowledgeSurface=lazy(()=>import("../knowledge/KnowledgeSurface").then((module)=>({default:module.KnowledgeSurface})));
 // The mode centre surfaces (workspace/mode.ts) are ordinary bindings in this
-// pane system; each loads with its mode, never at startup. Their bodies are
-// declared ONCE by the shell's retention layer (surface/retention.tsx) and
-// presented here through its outlet — a mode switch parks them suspended
-// instead of unmounting them.
-import {CentreOutlet, isRetainedCentreKind} from "./retention";
+// pane system; each loads with its mode, never at startup. A centre's body
+// mounts DIRECTLY here, inside the pane's own retained wrapper (spec §7.1:
+// the park-and-adopt path is retired — the presenting pane mounts the body
+// in place, and a mode switch shelves this whole tree hidden instead of
+// moving anything).
+import {ModeCentreBody, isRetainedCentreKind} from "./retention";
 const AgencySurface=lazy(()=>import("../agency/AgencySurface").then((module)=>({default:module.AgencySurface})));
 import type { ActionArg, LayoutState, Pane, SurfaceId } from "./types";
-import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN } from "../workspace/mode";
+import { TAB_LIST_WIDTH_MAX, TAB_LIST_WIDTH_MIN, MODE_CURATION } from "../workspace/mode";
 
 export interface WorkbenchProps {
   workspaceName: string;
   onView:(id:string,view:NonNullable<import("./types").SurfaceBinding["view"]>)=>void;
   state: LayoutState;
+  /** The dedicated stage is this binding's sole presenting outlet. A hidden
+   * warm tree must not adopt the same retained body away from that stage. */
+  stageBindingId?: SurfaceId;
   menuOpen: boolean;
   nativeWindows: boolean;
   execute: (ref: string, arg?: ActionArg) => void;
@@ -82,9 +86,20 @@ export interface WorkbenchProps {
   subject?: {ref?: string; kind?: string; title: string; project?: string};
 }
 
+// Keep the presentation boundary aligned with shell.css: compact windows show
+// one focused pane, but do not change or persist the underlying split tree.
+const compactPaneQuery = "(max-width: 639px)";
+const readCompactPane = () => typeof window !== "undefined" && window.matchMedia(compactPaneQuery).matches;
+const subscribeCompactPane = (changed: () => void) => {
+  const query = window.matchMedia(compactPaneQuery);
+  query.addEventListener("change", changed);
+  return () => query.removeEventListener("change", changed);
+};
+
 export function Workbench(props: WorkbenchProps) {
   const { state, menuOpen } = props;
   const kernel = useKernel();
+  const focusOnly = useSyncExternalStore(subscribeCompactPane, readCompactPane, () => false);
   if (!state.root) return null;
 
   // A pointer entering a rendered material iframe crosses the document
@@ -148,7 +163,7 @@ export function Workbench(props: WorkbenchProps) {
   return (
     <div className="workbench">
       <main className="surface-host" aria-label="Canvas">
-        <PaneNode pane={state.root} {...props} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
+        <PaneNode pane={state.root} {...props} focusOnly={focusOnly} kernelDirty={(ref) => !!ref && !!kernel.snapshot.buffers[ref]?.dirty} />
       </main>
     </div>
   );
@@ -158,6 +173,7 @@ export function Workbench(props: WorkbenchProps) {
 
 interface PaneProps extends WorkbenchProps {
   pane: Pane;
+  focusOnly?: boolean;
   /** Whether the source surface's buffer is dirty (kernel two-layer state). */
   kernelDirty: (ref: string | undefined) => boolean;
   weight?: number;
@@ -235,7 +251,8 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       className={`pane group${focused ? " focused" : ""}`}
       data-pane="group"
       data-group-id={group.id}
-      data-window-corner={groupsOf(state.root).filter(g=>!state.maximizedGroupId||g.id===state.maximizedGroupId)[0]?.id===group.id}
+      data-window-corner={upperCornerGroupId(state, "right", props.focusOnly) === group.id}
+      data-window-corner-left={upperCornerGroupId(state, "left", props.focusOnly) === group.id}
       data-focused={focused}
       data-tab-focus={!!active&&state.focusedTabId===active}
       data-tab-presentation={tabPresentation}
@@ -408,11 +425,11 @@ export function GroupPane(props: PaneProps & { group: Extract<Pane, { type: "gro
       >
         {tabs.length ? tabs.map(id => {
           const binding = state.surfaces[id];
-          if (!binding) return null;
+          if (!binding || id === props.stageBindingId) return null;
           const concealed = id !== active;
           if (concealed && CONCEAL_RELEASES.has(binding.kind)) return null;
           return <div key={id} className="surface-retained" data-surface-kind={binding.kind} hidden={concealed}>
-            <SurfaceBody binding={binding} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
+            <SurfaceBody binding={binding} treeMode={state.mode ?? "base"} onView={props.onView} openSource={props.openSource} openKnowledge={props.openKnowledge} openPresentation={props.openPresentation} openExplore={props.openExplore} factoryCentre={props.factoryCentre} factoryTasks={props.factoryTasks} subject={props.subject} />
           </div>;
         }) : <p className="source-note">{state.detached?.some(d=>d.groupId===group.id)?"This view is open in a native window. Close that window to re-dock it here.":"Move a tab here, or open a source or wiki with +."}</p>}
       </div>
@@ -443,6 +460,7 @@ export function SurfaceBody(props: Parameters<typeof SurfaceBodyImpl>[0]) {
 function SurfaceBodyImpl({
   binding,onView,
   openSource, openKnowledge, openPresentation, openExplore,
+  factoryCentre, factoryTasks, subject, treeMode,
 }: {
   binding: import("./types").SurfaceBinding;
   onView:WorkbenchProps["onView"];
@@ -457,15 +475,28 @@ function SurfaceBodyImpl({
    * retention.tsx) read it from the workspace context themselves; the
    * prop stays on the seam for the frame's composition. */
   subject?: WorkbenchProps["subject"];
+  /** The mode of the tree this pane belongs to (the layout's own mode).
+   * It decides centre ownership: a centre binding whose kind is this tree
+   * mode's own centre kind is STAGE-OWNED — its mode's stage slot presents
+   * it, and this pane presents nothing, exactly like the retired outlet
+   * did. Any other centre kind here is pane-tab-presented and mounts its
+   * body right here (spec §7.1). */
+  treeMode: import("../workspace/mode").WorkspaceMode;
 }) {
   if (binding.pending) return <Loading label={`Opening ${binding.title}…`} scope="surface"/>;
   // Retained centre kinds (expressions/techne/epi-logos/system/factory —
-  // surface/retention.tsx) present through the shell's ONE declared body:
-  // the outlet adopts it here, and a mode switch parks it suspended rather
-  // than unmounting it. Factory's body composes the frame-built chat node —
-  // the shell's declarer mounts that one body (DesktopShell passes
-  // CradleFrame.factoryCentre down), so there is no second direct arm here.
-  if (isRetainedCentreKind(binding.kind)) return <CentreOutlet binding={binding}/>;
+  // surface/retention.tsx) mount their ONE body directly, in place, inside
+  // this pane's own `.surface-retained` wrapper — mounted-concealed by the
+  // pane tier like every other retained tab, never adopted, never moved
+  // (spec §7.1) — but only when this tree is a FOREIGN host for them. The
+  // single-mount law: a stage-owned centre is presented ONLY by its stage
+  // slot; a foreign-tree centre ONLY by its pane wrapper. Factory's body
+  // composes the frame-built chat node — the frame passes
+  // CradleFrame.factoryCentre down, so there is no second direct arm here.
+  if (isRetainedCentreKind(binding.kind)) {
+    if (binding.kind === MODE_CURATION[treeMode].centreKind) return null;
+    return <ModeCentreBody binding={binding} subject={subject} factoryCentre={factoryCentre} factoryTasks={factoryTasks}/>;
+  }
   if(binding.kind==="explore"||binding.kind==="presentation")return <ExploreSurface key={binding.id} binding={binding} onOpenPresentation={openPresentation} onOpenExplore={openExplore}/>;
   if(binding.kind==="encounter")return <EncounterSurface key={binding.id} binding={binding} onView={view=>onView(binding.id,view)}/>;
   if (binding.kind === "terminal") return <TerminalSurface binding={binding} />;

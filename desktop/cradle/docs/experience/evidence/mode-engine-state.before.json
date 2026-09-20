@@ -1,0 +1,155 @@
+{
+  "schema": "oi.cradle.walk.scenario/v1",
+  "scenario": "mode-engine-state",
+  "generated_at": "2026-09-20T03:25:46.301Z",
+  "environment": {
+    "base_url": "http://localhost:4173",
+    "bridge_url": "http://127.0.0.1:4179",
+    "viewport": "1280x820",
+    "bundle": "walk (WALK=1) served by vite preview",
+    "node": "v24.16.0",
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/private/tmp/oi-ci-check",
+      "repository_head": "5eff2fe62a01e832ce9ec28370b1c96300fb9b37",
+      "tracked_changes": [
+        "desktop/cradle/walk/run.mjs"
+      ],
+      "engine_provenance_path": "/private/tmp/oi-ci-check/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
+  },
+  "passed": false,
+  "error": null,
+  "duration_ms": 16158,
+  "checks": [
+    {
+      "ok": true,
+      "label": "The Expressions application is live, stamped, and holds in-app state (its Library open)",
+      "data": {
+        "present": true,
+        "token": "id7wagcdna9.1789874750168",
+        "libraryOpen": true,
+        "hostMode": "expressions"
+      }
+    },
+    {
+      "ok": true,
+      "label": "Technè presents its own application instance (a second centre, not a shared frame)",
+      "data": {}
+    },
+    {
+      "ok": true,
+      "label": "Technè presents the deep cut of the application and holds its own in-app state",
+      "data": {
+        "present": true,
+        "token": "fsed9b16es6.1789874754391",
+        "libraryOpen": true,
+        "hostMode": "techne"
+      }
+    },
+    {
+      "ok": false,
+      "label": "RETURN/Expressions: the SAME application document came back (token kept — the frame never re-navigated)",
+      "data": {
+        "before": "id7wagcdna9.1789874750168",
+        "after": null
+      }
+    },
+    {
+      "ok": false,
+      "label": "RETURN/Expressions: the in-app state survived — the Library the person opened is still open",
+      "data": {
+        "during": false,
+        "after": false
+      }
+    },
+    {
+      "ok": false,
+      "label": "RETURN/Technè: the SAME application document came back (token kept)",
+      "data": {
+        "before": "fsed9b16es6.1789874754391",
+        "after": null
+      }
+    },
+    {
+      "ok": false,
+      "label": "RETURN/Technè: the in-app state survived — the Library is still open",
+      "data": {
+        "present": true,
+        "token": null,
+        "libraryOpen": false,
+        "hostMode": "techne"
+      }
+    },
+    {
+      "ok": true,
+      "label": "With both centres visited, exactly ONE hosted application instance per mode — no double mount",
+      "data": {
+        "frames": 2,
+        "hosts": 2,
+        "stamped": [
+          "expressions",
+          "techne"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "Both centre frames are the stamped instances (the same nodes marked at first presentation)",
+      "data": [
+        "expressions",
+        "techne"
+      ]
+    },
+    {
+      "ok": true,
+      "label": "No page errors across the whole journey",
+      "data": []
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 69,
+      "data": {
+        "file": "mode-engine-state-expressions-marked.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 45,
+      "data": {
+        "file": "mode-engine-state-techne-marked.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 265,
+      "data": {
+        "file": "mode-engine-state-expressions-returned.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 289,
+      "data": {
+        "file": "mode-engine-state-techne-returned.png"
+      }
+    }
+  ],
+  "metrics": {
+    "mode_round_trip_survivals": 0
+  },
+  "screenshots": [
+    "mode-engine-state-expressions-marked.png",
+    "mode-engine-state-techne-marked.png",
+    "mode-engine-state-expressions-returned.png",
+    "mode-engine-state-techne-returned.png"
+  ]
+}

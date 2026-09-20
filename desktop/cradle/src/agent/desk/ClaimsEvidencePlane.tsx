@@ -61,7 +61,7 @@ export function ClaimsEvidencePlane({subject,accompanying,onMessage: _onMessage}
   <div className="oi-scroll">
    {!source&&<div className="oi-empty" data-state="no-claims-source">
     <strong>No claims reading is available yet.</strong>
-    <p>No owner operation discloses Claim, Evidence or Assessment records for {subject.title || "this subject"}. The named producers: Factory #222 (claim reception) and O:I #220 (native joins). This plane will read them the moment one registers a <code>ClaimsSource</code> (deskTypes.ts).</p>
+    <p>No owner operation discloses Claim, Evidence or Assessment records for {subject.title || "this subject"}. The named producers: Factory issue 222 (claim reception) and O:I issue 220 (native joins). This plane will read them the moment one registers a <code>ClaimsSource</code> (deskTypes.ts).</p>
    </div>}
    {source&&pending&&<p className="oi-note" role="status">Reading claims from {source.label}…</p>}
    {source&&refusal&&<p className="oi-refusal" role="alert">{refusal}</p>}

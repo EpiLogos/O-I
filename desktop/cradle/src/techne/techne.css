@@ -271,7 +271,7 @@ summary:hover > .wiki-open-web, summary:focus-within > .wiki-open-web, .wiki-spa
 .wx-entity[aria-pressed="true"] { border-color: var(--oi-foreground); }
 .wx-entity .oi-state { font-size: var(--oi-shell-type-nav); color: var(--oi-muted-2); }
 .wx-scheme { padding-inline-start: 4px; }
-.wx-subject { position: absolute; inset-block: 10px; inset-inline-end: 10px; z-index: 2; inline-size: min(340px, 42%); display: flex; flex-direction: column; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-surface); box-shadow: 0 8px 28px rgba(0,0,0,.14); overflow: hidden; }
+.wx-subject { position: absolute; inset-block: 10px; inset-inline-end: 10px; z-index: 2; inline-size: min(340px, 42%); display: flex; flex-direction: column; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px; background: var(--oi-surface); box-shadow: var(--oi-shadow-menu); overflow: hidden; }
 .wx-subject-head { display: flex; flex-direction: column; gap: 3px; padding: 10px 12px 8px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
 .wx-subject-head strong { font-size: var(--oi-shell-type-ui); }
 .wx-subject-ref { overflow-wrap: anywhere; }
@@ -323,12 +323,12 @@ summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-reg
   display: block; width: 100%; aspect-ratio: 1 / 1; border-radius: var(--oi-shell-radius-row);
   background: var(--oi-wash); border: 1px solid var(--oi-hairline-soft);
 }
-.wiki-graph-relation { stroke: var(--oi-hairline-strong, var(--oi-hairline)); stroke-width: 0.006; fill: none; }
+.wiki-graph-relation { stroke: var(--oi-hairline); stroke-width: 0.006; fill: none; }
 .wiki-graph-node { cursor: pointer; }
 .wiki-graph-node circle { fill: var(--oi-wash-strong); stroke: var(--oi-muted-2); stroke-width: 0.008; }
 .wiki-graph-node:hover circle { stroke: var(--oi-accent-ink); }
 .wiki-graph-node[data-selected] circle { fill: var(--oi-accent-ink); stroke: var(--oi-accent-ink); }
-.wiki-graph-node[data-selected] text { fill: var(--oi-background, #fff); }
+.wiki-graph-node[data-selected] text { fill: var(--oi-active-ink); }
 .wiki-graph-node text { font-size: 0.07px; fill: var(--oi-foreground); pointer-events: none; }
 .wiki-graph figcaption { margin-top: 3px; }
 
@@ -430,7 +430,7 @@ summary:hover > .wiki-project-register, summary:focus-within > .wiki-project-reg
   inline-size: min(340px, 44cqi); max-block-size: min(420px, 60cqb);
   display: flex; flex-direction: column; min-block-size: 0;
   border: var(--oi-shell-edge) solid var(--oi-hairline-soft); border-radius: 10px;
-  background: var(--oi-surface); box-shadow: 0 8px 28px rgba(0,0,0,.14);
+  background: var(--oi-surface); box-shadow: var(--oi-shadow-menu);
   overflow: hidden;
 }
 .tn-epii-head { flex: none; display: flex; align-items: center; justify-content: space-between; padding: 7px 10px; border-block-end: var(--oi-shell-edge) solid var(--oi-hairline-soft); }

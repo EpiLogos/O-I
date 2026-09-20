@@ -12,14 +12,15 @@ import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
-import {MODE_CURATION,isWorkspaceMode,type WorkspaceMode} from "./workspace/mode";
+import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {ModeLeftBody,modeExtraPlanes} from "./workspace/modeBodies";
 import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
-import {GroupPane, SurfaceBody} from "./surface/Workbench";
-import {warmWorkspaceTrees} from "./surface/retention";
+import {GroupPane} from "./surface/Workbench";
+import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} from "./surface/retention";
+import type {HostedAppState} from "./expressions/hostedApp";
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -110,6 +111,14 @@ function snapshotOf(state: LayoutState): RestorePoint {
  * build, where the dynamic import below is dead-code-eliminated and the
  * `__cradle.walk` chunk is never emitted (map §3 D10: dev tooling only). */
 declare const __CRADLE_WALK__: boolean;
+
+/** The modes whose centre the frame stages: every workspace mode with a
+ * curated centre kind. Each gets one ALWAYS-PRESENT keyed stage slot (the
+ * per-mode stage law, 2026-09-20): the centre body mounts in its own slot
+ * the moment its mode's tree carries it, and a mode swap flips the slot's
+ * visibility — the DOM never moves, so a hosted application's document,
+ * engine and in-memory state survive every round trip. */
+const STAGE_MODES:readonly WorkspaceMode[] = WORKSPACE_MODES.filter(mode => !!MODE_CURATION[mode].centreKind);
 
 export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const [WalkChannel, setWalkChannel] = useState<ComponentType<{layout:LayoutState}> | null>(null);
@@ -840,9 +849,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     };
     const message=(event:Event)=>{const text=detail<{message?:string}>(event)?.message;if(text)setWindowError(text);};
     const settings=()=>enterModeRef.current("settings");
+    const closeSettings=()=>{
+      if ((stateRef.current.mode ?? "base") !== "settings") return;
+      enterModeRef.current(stateRef.current.settingsReturnMode ?? "base");
+      requestAnimationFrame(() => document.querySelector<HTMLElement>('.warm-tree-host:not([hidden]) .pane.focused .cm-content, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]')?.focus());
+    };
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
     const openSubject=(event:Event)=>{const subject=detail<{subject?:{ref?:string;location?:CentralLocation}}>(event)?.subject;if(!subject)return;if(subject.location){void openFileRef.current(subject.location).catch(fail);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:held.id}));};
-    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
+    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -955,6 +969,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const current=stateRef.current.surfaces[id];if(!current)return;
     project=project??current.project??workspaceRef.current.current.project??undefined;
     if(kind==="search"){setSearchOpen(true);return;}
+    if(kind==="library"){setLibrary("open");return;}
     // The supplied document forms (0/1, 4+2) are not created here: their
     // real files are resolved through Central's file route and opened by
     // the same path the navigator uses (dedup + focus included). A missing
@@ -1346,9 +1361,47 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // tab chrome. The base tree is preserved in the store and simply not
   // mounted while a mode stands (its heavy bodies cost nothing idle).
   const modeCentreKind=curation.centreKind;
-  const modeCentreBinding=modeCentreKind
-    ? Object.values(state.surfaces).find(binding=>binding.kind===modeCentreKind && groupsOf(state.root).some(group=>group.tabs.includes(binding.id)))
-    : undefined;
+  // The per-mode stage law (2026-09-20): each mode with a centre kind owns
+  // one always-present stage slot, and the slot presents the centre binding
+  // living in THAT MODE'S OWN TREE (surface/retention.tsx centreBindingOf).
+  // The slot mounts the body directly — no adoption, no DOM move — so a
+  // mode round trip flips visibility and the hosted application keeps its
+  // document and in-memory state. A centre opened outside its own mode's
+  // tree is pane-tab-presented: the pane's own wrapper mounts the body in
+  // place (surface/retention.tsx, spec §7.1 — the park is retired).
+  const stageCentres=STAGE_MODES.map(stageMode=>({mode:stageMode,binding:centreBindingOf(workspace.current,mode,stageMode)}));
+  const modeCentreBinding=stageCentres.find(centre=>centre.mode===mode)?.binding;
+  // The hosted engine's checkpoint (§7.2): the stage slot follows the
+  // application's own oi-app-state announcements and writes the current
+  // expression ref onto the binding — debounced, and only on change —
+  // through the store's surfaceEngine. The checkpoint is a REF into the
+  // person's saved work (the id the app's own ?expression= boot grammar
+  // resolves), never a copy of app content; writing it never gates or
+  // blocks the application. The Technè centre is the same hosted
+  // application in its deep cut, so the same checkpoint covers it; the
+  // wiki-projection state elsewhere in Technè is kernel-backed and needs
+  // no renderer checkpoint.
+  const engineWrites=useRef(new Map<string,{timer?:number;last?:string}>());
+  const writeEngineCheckpoint=useCallback((bindingId:string,state:HostedAppState)=>{
+    const documentId=state.document?.id;
+    if(!documentId)return;
+    const checkpoint={expressionRef:documentId,documentId};
+    const key=JSON.stringify(checkpoint);
+    const entry=engineWrites.current.get(bindingId);
+    if(entry?.last===key)return;
+    if(entry?.timer)window.clearTimeout(entry.timer);
+    const timer=window.setTimeout(()=>{
+      engineWrites.current.set(bindingId,{timer:undefined,last:key});
+      workspaceRef.current.surfaceEngine(workspaceRef.current.current.id,bindingId,checkpoint);
+    },400);
+    engineWrites.current.set(bindingId,{timer,last:entry?.last});
+  },[]);
+  const engineCallbacks=useRef(new Map<string,(state:HostedAppState)=>void>());
+  const engineCallbackFor=useCallback((bindingId:string)=>{
+    let callback=engineCallbacks.current.get(bindingId);
+    if(!callback){callback=(state:HostedAppState)=>writeEngineCheckpoint(bindingId,state);engineCallbacks.current.set(bindingId,callback);}
+    return callback;
+  },[writeEngineCheckpoint]);
   // Owner ruling 2026-09-19 (portal prerequisites): the dedicated stage
   // stands while the mode's tree carries ONLY its centre. The moment the
   // tree holds any other surface — a knowledge page opened from Instrument
@@ -1441,98 +1494,78 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       <ExpressionLayout layout={state}/>
       <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
-        factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
         navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
-      {state.root ? (
-        <>
-          {/* The warm trees (surface/retention.tsx): every tree of the warm
-            * set renders here at a STABLE position — the presented one
-            * visible, the others mounted-hidden — so a mode or workspace
-            * swap flips visibility instead of unmounting anything. The mode
-            * stage, when the mode has a centre, renders inside its own
-            * ALWAYS-PRESENT slot (keyed, never conditionally inserted):
-            * inserting a sibling before the hosts would MOVE them, and
-            * moving a host detaches its documents — an iframe reloads. */}
-          {/* The mode's dedicated solo stage — the ALWAYS-PRESENT slot the
-            * comment above names (keyed, never conditionally inserted, so
-            * inserting it beside the hosts moves nothing): it presents the
-            * mode's centre when the mode has one, through the same
-            * SurfaceBody the workbench pane uses — retained centres adopt
-            * from the park via CentreOutlet inside it. Hidden while there
-            * is nothing to present; the trees hold the centre then. */}
-          <div key="mode-stage" className="mode-stage" data-mode={mode} data-window-corner="true" hidden={!modeCentreBinding || undefined}>
-            {modeCentreBinding && <SurfaceBody binding={modeCentreBinding} onView={(id,view)=>workspace.surfaceView(workspace.current.id,id,view)} openSource={openSource} openKnowledge={openKnowledge} openPresentation={openPresentation} openExplore={openExplore} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} subject={workspace.current.context?.subject} />}
+      {/* The modes' dedicated stages (surface/retention.tsx, stage law
+        * 2026-09-20): one ALWAYS-PRESENT keyed slot per centre mode. Each
+        * slot presents the centre binding living in its OWN mode's tree,
+        * mounted DIRECTLY through ModeCentreBody: hidden while another mode
+        * stands, never unmounted, never moved — moving a subtree that
+        * contains an iframe detaches it and the iframe re-navigates (the
+        * measured defect this replaces: the park-adopt stage,
+        * docs/experience/evidence/mode-engine-state.before.json). */}
+      {stageCentres.map(({mode: stageMode, binding}) => {
+        const presented = stageMode === mode && !!binding;
+        return (
+          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" data-window-corner-left="true" hidden={!presented || undefined}>
+            {binding && <StageCentreMark binding={binding} presented={presented}/>}
+            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
           </div>
-          {warmTrees.map(tree => (
-            <div key={tree.key} className="warm-tree-host" hidden={!tree.presented || !!(modeSoloStage && modeCentreBinding) || undefined}>
-              <Workbench
-                onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
-                workspaceName={workspace.current.name}
-                state={tree.layout}
-                menuOpen={!!menu}
-                execute={execute}
-                openBindingMenu={openBindingMenu}
-                openFrameMenu={openFrameMenu}
-                openSource={openSource}
-                openKnowledge={openKnowledge}
-                openPresentation={openPresentation}
-                openExplore={openExplore}
-                openEncounter={row=>openEncounter(row).catch(report)}
-                factoryCentre={factoryCentre}
-                factoryTasks={factoryCentreProps}
-                subject={workspace.current.context?.subject}
-                nativeWindows={kernel.transport.kind==="tauri"}
-              />
-            </div>
-          ))}
-        </>
-      ) : (
-        <>
-          {/* The ACTIVE tree is empty (a fresh mode tree or a brand-new
-            * workspace — freshLayout() has no root): show the rest frame,
-            * but keep the warm-tree hosts MOUNTED BESIDE it (all hidden —
-            * with no active root nothing in them is presented). Branching
-            * the hosts themselves on state.root tore every warm tree out
-            * of the DOM for one commit on each first visit to a mode or a
-            * new workspace, destroying the live documents the warm set
-            * exists to keep (html-continuity C03/C04). */}
-          <RestPane>
-            <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>void openExplore().catch(e=>setWindowError(String(e)))} onWiki={(() => {
-              const reading=kernel.snapshot.navigator;
-              const project=reading?.project?.project;
-              const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
-              return ref ? () => { void openKnowledge({kind:"wiki",value:ref},project ? `${project.name} wiki` : "Central wiki",project?.name).catch(e=>setWindowError(String(e))); } : undefined;
-            })()} />
-          </RestPane>
-          {warmTrees.map(tree => (
-            <div key={tree.key} className="warm-tree-host" hidden>
-              <Workbench
-                onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
-                workspaceName={workspace.current.name}
-                state={tree.layout}
-                menuOpen={!!menu}
-                execute={execute}
-                openBindingMenu={openBindingMenu}
-                openFrameMenu={openFrameMenu}
-                openSource={openSource}
-                openKnowledge={openKnowledge}
-                openPresentation={openPresentation}
-                openExplore={openExplore}
-                openEncounter={row=>openEncounter(row).catch(report)}
-                factoryCentre={factoryCentre}
-                factoryTasks={factoryCentreProps}
-                subject={workspace.current.context?.subject}
-                nativeWindows={kernel.transport.kind==="tauri"}
-              />
-            </div>
-          ))}
-        </>
-      )}
+        );
+      })}
+      {/* The centre region renders as ONE stable sibling list — the rest
+        * frame, the warm trees, and the stages above — never a branch.
+        * Branching on state.root put the hosts at the branch's position 0,
+        * so the root flip on a first mode visit REMOUNTED them (a remounted
+        * MaterialSurface that mounts concealed can never latch first
+        * presentation, and its document never loads). The ACTIVE tree being
+        * empty (a fresh mode tree or a brand-new workspace — freshLayout()
+        * has no root) only decides whether the rest frame paints; the hosts
+        * render beside it at positions that never move, hidden by the same
+        * law as always — with no active root nothing in them is presented. */}
+      <div className="rest-host" hidden={!!state.root || undefined}>
+        <RestPane>
+          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
+            const reading=kernel.snapshot.navigator;
+            const project=reading?.project?.project;
+            const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
+            return ref ? () => { void openKnowledge({kind:"wiki",value:ref},project ? `${project.name} wiki` : "Central wiki",project?.name).catch(e=>setWindowError(String(e))); } : undefined;
+          })()} />
+        </RestPane>
+      </div>
+      {/* The warm trees (surface/retention.tsx): every tree of the warm set
+        * renders here at a STABLE position — the presented one visible, the
+        * others mounted-hidden — so a mode or workspace swap flips
+        * visibility instead of unmounting anything. The modes' stages stand
+        * beside them as always-present keyed slots (above): the same
+        * never-move law the trees follow. */}
+      {warmTrees.map(tree => (
+        <div key={tree.key} className="warm-tree-host" hidden={!tree.presented || !!(modeSoloStage && modeCentreBinding) || undefined}>
+          <Workbench
+            onView={(id,view)=>workspace.surfaceView(tree.workspaceId,id,view)}
+            workspaceName={workspace.current.name}
+            state={tree.layout}
+            stageBindingId={groupsOf(tree.layout.root).flatMap(group=>group.tabs).find(id=>tree.layout.surfaces[id]?.kind===MODE_CURATION[tree.layout.mode??"base"].centreKind)}
+            menuOpen={!!menu}
+            execute={execute}
+            openBindingMenu={openBindingMenu}
+            openFrameMenu={openFrameMenu}
+            openSource={openSource}
+            openKnowledge={openKnowledge}
+            openPresentation={openPresentation}
+            openExplore={openExplore}
+            openEncounter={row=>openEncounter(row).catch(report)}
+            factoryCentre={factoryCentre}
+            factoryTasks={factoryCentreProps}
+            subject={workspace.current.context?.subject}
+            nativeWindows={kernel.transport.kind==="tauri"}
+          />
+        </div>
+      ))}
       </DesktopShell>
       {WalkChannel&&<WalkChannel layout={state}/>}
       <ContextTray bindings={{...Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces)),...state.surfaces}} accompanying={state.accompanying}/>
@@ -1561,7 +1594,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
  * a surface opens, the Workbench renders this same frame with tabs in it. */
 function RestPane({ children }: { children: ReactNode }) {
   return <div className="workbench"><main className="surface-host" aria-label="Canvas">
-    <section className="pane group focused" data-pane="group" data-window-corner="true" aria-label="Surface group">
+    <section className="pane group focused" data-pane="group" data-window-corner="true" data-window-corner-left="true" aria-label="Surface group">
       <div className="tab-strip" aria-hidden="true"><div className="tab-scroll"/></div>
       <div className="surface-body">{children}</div>
       <footer className="pane-status pane-footer" aria-label="Pane status"/>
