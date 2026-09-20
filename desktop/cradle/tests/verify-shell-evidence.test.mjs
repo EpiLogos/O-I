@@ -13,3 +13,7 @@ test('evidence gate rejects stale source, driver and run identities',()=>{
  assert.throws(()=>validateReceipt({...valid(),sourceClean:false},2,identity));
  for(const key of Object.keys(identity))assert.throws(()=>validateReceipt({...valid(),[key]:'previous'},2,identity));
 });
+
+test('evidence gate inspects the error list independently of an empty failure list',()=>{
+ assert.throws(()=>validateReceipt({...valid(),failures:[],errors:[{error:'runtime exception'}]},2,identity));
+});
