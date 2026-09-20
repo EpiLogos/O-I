@@ -30,6 +30,52 @@ def digest(path):
     return h.hexdigest()
 
 
+
+def run_isolated(args, *, cwd, env, stdout, timeout=180):
+    """Reap only this opt-in test's owned process group on timeout/interruption.
+
+    Do not install persistent signal handlers or touch other suite processes.
+    Cleanup is bounded even when a child ignores the first termination request.
+    """
+    process = None
+    previous = {sig: signal.getsignal(sig) for sig in (signal.SIGINT, signal.SIGTERM)}
+
+    def interrupted(signum, _frame):
+        raise KeyboardInterrupt(f'Isolated acceptance interrupted by signal {signum}')
+
+    try:
+        for sig in previous:
+            signal.signal(sig, interrupted)
+        process = subprocess.Popen(args, cwd=cwd, env=env, stdout=stdout,
+                                   stderr=subprocess.STDOUT, start_new_session=True)
+        try:
+            process.wait(timeout=timeout)
+        except subprocess.TimeoutExpired as error:
+            raise RuntimeError('Isolated browser acceptance timed out') from error
+        return process.returncode
+    finally:
+        # A second Ctrl-C or SIGTERM must not interrupt the bounded reap itself.
+        for sig in previous:
+            signal.signal(sig, signal.SIG_IGN)
+        try:
+            if process is not None and process.poll() is None:
+                try:
+                    os.killpg(process.pid, signal.SIGTERM)
+                except ProcessLookupError:
+                    pass  # The owned child exited between poll and termination.
+                try:
+                    process.wait(timeout=10)
+                except subprocess.TimeoutExpired:
+                    try:
+                        os.killpg(process.pid, signal.SIGKILL)
+                    except ProcessLookupError:
+                        pass
+                    process.wait(timeout=10)
+        finally:
+            for sig, handler in previous.items():
+                signal.signal(sig, handler)
+
+
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument('--expected-head', required=True)
@@ -75,23 +121,18 @@ def main():
         if args.run_browser_join:
             env = dict(os.environ, NATIVE_EXPRESSION_BRIDGE=str(args.bridge), OI_QL_FIELD_HOST_BIN=str(args.host), OI_QL_FIELD_WORKER_BIN=str(args.worker), NATIVE_EXPRESSION_INPUT=str(args.input), NATIVE_EXPRESSION_OUT=str(args.output.resolve() / 'browser'), NATIVE_EXPRESSION_GPU='hardware' if args.hardware_gpu else 'software')
             with (args.output / 'browser-run.log').open('w') as log:
-                result = subprocess.Popen([node, 'tests/native-expression-native-browser.mjs'], cwd=root / 'desktop/cradle', env=env, stdout=log, stderr=subprocess.STDOUT, start_new_session=True)
-                try:
-                    result.wait(timeout=180)
-                except subprocess.TimeoutExpired:
-                    os.killpg(result.pid, signal.SIGTERM)
-                    try:
-                        result.wait(timeout=10)
-                    except subprocess.TimeoutExpired:
-                        os.killpg(result.pid, signal.SIGKILL)
-                        result.wait()
-                    raise RuntimeError('Isolated browser acceptance timed out; its owned process group was released')
-            code = 0 if result.returncode == 0 else 1
+                returncode = run_isolated([node, 'tests/native-expression-native-browser.mjs'],
+                                          cwd=root / 'desktop/cradle', env=env, stdout=log)
+            code = 0 if returncode == 0 else 1
             report['status'] = 'isolated-native-browser-passed' if code == 0 else 'failed'
             report['claims']['controlled_central_disclosure'] = True
             report['claims']['installed_app'] = False
         else:
             report['pending'] = 'Preflight only. --run-browser-join explicitly starts owned native/browser test processes. No install or device access occurred.'
+    except KeyboardInterrupt as error:
+        report['status'] = 'interrupted'
+        report['error'] = str(error) or 'Acceptance interrupted'
+        code = 130
     except Exception as error:
         report['status'] = 'failed'
         report['error'] = str(error)
