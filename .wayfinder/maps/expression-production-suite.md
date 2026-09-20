@@ -179,10 +179,11 @@ join; its M1/M2/M3 outputs, PCM and targets are not fixtures.
 
 The earlier failing browser correspondence and stale M2-generation replacement
 are retained in run `35487032890`; the latter remains an executable negative
-case. Whole legacy React-shell lint is retained as a failing check, not skipped
-or weakened to make this lane green. Source/CI receipts on #419 give the exact
-executed head and per-check results; a workflow containing that baseline failure
-is not described as all-green.
+case. At the historical `9926f4d` cut, whole legacy React-shell lint was retained
+as a failing check rather than skipped or weakened. The final repair below now
+passes that same lint; the original failure remains in its historical receipt.
+Source/CI receipts on #419 and dependent #446 give exact executed heads and
+per-check results, not a claim that every wider integration gate is green.
 
 Measurements record source/binary hashes, GPU renderer, viewport, slot/drawn
 counts, machine/Node/browser facts and per-operation latency count/mean/p95/max
@@ -274,3 +275,59 @@ integrated-runtime obligations in the table above. Existing native work is not
 replaced by invented physical correspondence. Local integration must reconcile
 its newer source cut, review this PR and run the committed opt-in packet; no
 local suite has been accessed or installed by this continuation.
+
+### Recovered final cut and receipt admission — #419 → #446
+
+The interrupted continuation's committed source was recovered, not overwritten:
+`6f444e60feb7b011103c55570e95916538d0e528` repairs retained controls/PNG/CSP;
+`debc1c6d8830eef29f51843910471878e1bc2ab6` adds bounded isolated timeout and
+SIGINT/SIGTERM cleanup; `bbb0571eaed2d060b87e1c9250a2d067869ba09c` makes the
+native Node regressions use Cradle's locked dependencies without requiring an
+unrelated nested installation. #419 remains unmerged at that source cut.
+
+At `bbb0571`, native run **35524255474**, O:I desktop **35524255436** and Search
+**35524255480** completed successfully. Downloaded native artifact **10609229448**
+has SHA-256 `3e6e746c932a126d3fe9c30b2606bb10b38e1d3e41c1f84e621f57136a7b5111`.
+Its logs prove 15 focused, 53 existing embedded, 32 accepted native-client,
+10 packet-safety and two CSP-byte tests; 22 browser-enforced CSP cases; six
+retained-control/PNG cases; both ten-check embedded/native browser scenarios;
+actual GPU effect/disconnection and compiled native manager/C++ checks. The
+normal kernel run has 100 passes and 52 ignored; this lane's native owner test
+is separately executed, leaving 51 owner/environment-specific tests unproved.
+
+Wider integration is not all-green: OI Verify **35524255475**, synthetic merge
+`7618c2ea7b03ce37a0911595b627c324f026239b`, fails update-lock recovery at
+`src/update_flow.rs:1320`. Shell recovery **35524255470** has shared-shell
+failures and its wider Node artifact reports 144 passes/one failure in the
+legacy Day roster (`personal-web.test.mjs:15`, five versus four). The old
+mobile-overflow diagnosis is withdrawn, not carried as another defect.
+These are separate owner/integration gates; this lane does not waive them.
+
+Dependent **#446**, based exactly on #419's `bbb0571`, strengthens the actual
+local packet: child exit zero alone is insufficient. It admits only an exact,
+unambiguous successful joined receipt with the original four binary/input paths
+and hashes, one native open/close, and reported executed checks. It rehashes the
+files and rechecks the selected source HEAD and tracked bytes after execution.
+Missing, failed, foreign, duplicate-key, nonfinite, oversized (16 MiB maximum)
+or symlink evidence refuses acceptance without deleting the returned evidence.
+The admitted receipt's SHA-256 and original child exit code remain inspectable.
+This is consistency verification of the behavioural result, not independent
+acceptance, a signature, or proof of installed devices.
+
+`python3 tests/native-expression-receipt.test.py` adds nine deterministic tests;
+the original packet fails their negative cases and the repaired packet passes.
+Existing safety tests are unchanged. The native-backcheck now runs the shipped
+Python packet around the unchanged real native-to-browser scenario, retaining
+all original behavioural assertions and recording `local-join/local-receipt.json`
+and `local-join/browser/joined.json`. Exact final-head results are recorded on
+#446 after execution; this source declaration does not manufacture a pass.
+
+Local integration should fetch and review **#419 then #446 as one dependent
+stack** against the current #65/#220 reconciliation receipt. Preserve newer
+local/main work; do not resolve conflicts by wholesale branch replacement.
+Build and run the same checks on the actual reconciled candidate, then run the
+bounded local packet with that candidate's exact HEAD and explicit native paths.
+Merge only the reviewed/tested result through the local integration workflow.
+Report source/build/install/running standing separately and retain the physical
+form-output, outer-host continuity, real device/provider, corpus and independent
+acceptance obligations above. No web-lane merge, deployment or machine mutation.
