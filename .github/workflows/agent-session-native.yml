@@ -5,49 +5,55 @@ on:
   pull_request:
     paths:
       - 'desktop/cradle/src/agency/**'
+      - 'desktop/cradle/src/encounter/**'
+      - 'desktop/cradle/src/agent/chat/**'
+      - 'desktop/cradle/kernel/src/agency.rs'
+      - 'desktop/cradle/kernel/tests/agent_native_gate.rs'
       - 'desktop/cradle/tests/agent-native-*'
       - '.github/workflows/agent-session-native.yml'
 permissions:
   contents: read
 jobs:
-  source:
+  native-consumers:
     runs-on: ubuntu-latest
-    timeout-minutes: 5
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
         with:
-          persist-credentials: false
-      - name: Read pinned native producer sources
-        shell: bash
-        run: |
-          mkdir -p native
-          while read -r repo revision; do
-            mkdir -p "native/$repo"
-            curl --fail --silent --show-error --location "https://codeload.github.com/EpiLogos/$repo/tar.gz/$revision" | tar xz --strip-components=1 -C "native/$repo"
-            printf '%s\n' "$revision" > "native/$repo/source-revision.txt"
-          done <<'PINS'
-          Central 12ee31313e710378845baae190efc1a4b3e7ebdb
-          ai-kit 99306d858c255fa258d8cc419b314a433d3f92a4
-          Actuation 47f4fa3c184850e254ef5089696bf5fbbad907ec
-          PINS
-      - name: Retain exact tracked source (no runtime or secret stores)
-        shell: bash
-        run: |
-          git rev-parse HEAD > source-revision.txt
-          python3 - <<'PY'
-          import subprocess, tarfile
-          paths = subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
-          roots = ('desktop/cradle/src/', 'desktop/cradle/kernel/', 'desktop/cradle/tests/', 'docs/', '.wayfinder/', '.github/')
-          with tarfile.open('agent-session-source.tar.gz','w:gz') as out:
-              out.add('source-revision.txt')
-              out.add('native')
-              for path in paths:
-                  if path and (path.startswith(roots) or (path.startswith('desktop/cradle/') and path.count('/') == 2)):
-                      if path.endswith(('.md','.rs','.toml','.lock','.json','.ts','.tsx','.mjs','.js','.css','.yml','.yaml','.html','.sh','.py')):
-                          out.add(path)
-          PY
+          node-version: '22'
+      - name: Install desktop dependencies
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Controller fault regressions
+        id: controller
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --test tests/agent-native-model.test.mjs
+      - name: Browser runtime
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Actual composer browser regressions
+        id: browser
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node tests/agent-native-browser.mjs
+      - name: Full desktop production build
+        id: build
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: npm run build
+      - name: Kernel project/session gate regressions
+        id: kernel
+        continue-on-error: true
+        working-directory: desktop/cradle/kernel
+        run: cargo test --locked --test agent_native_gate
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: agent-session-source
-          path: agent-session-source.tar.gz
-          retention-days: 3
+          name: agent-session-consumer-evidence
+          path: desktop/cradle/tests/agent-native-results/
+          retention-days: 7
+      - name: Preserve all original failing gates
+        if: steps.controller.outcome != 'success' || steps.browser.outcome != 'success' || steps.build.outcome != 'success' || steps.kernel.outcome != 'success'
+        run: exit 1
