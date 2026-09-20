@@ -566,6 +566,33 @@ impl Kernel {
         Self::new(CentralClient::discover())
     }
 
+    /// The working directory the configuration-plane reads resolve against:
+    /// the World root when it maps, else the process directory. Cheap and
+    /// in-memory — the host snapshots it under a brief lock so the reads
+    /// themselves (bounded engine invocations, minutes on a stale suite) can
+    /// run OUTSIDE the kernel mutex instead of freezing every Expression
+    /// request behind them.
+    pub fn configuration_working_directory(&mut self) -> Result<std::path::PathBuf, String> {
+        if let Ok(root) = self.world_map(false) {
+            if let Some(dir) = root["root"].as_str() {
+                return Ok(std::path::PathBuf::from(dir));
+            }
+        }
+        std::env::current_dir().map_err(|e| e.to_string())
+    }
+
+    pub fn system_composition_outcome(cwd: &std::path::Path) -> Result<KernelOpOutcome, String> {
+        Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SystemCompositionReading{reading:system_composition::Client::discover().read(cwd)}})
+    }
+
+    pub fn config_registry_outcome(cwd: &std::path::Path) -> Result<KernelOpOutcome, String> {
+        Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigRegistryReading{reading:configuration::Client::discover().registry_read(cwd)}})
+    }
+
+    pub fn config_resolutions_outcome(cwd: &std::path::Path, pairs: &[configuration::ConfigPair]) -> Result<KernelOpOutcome, String> {
+        Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigResolutions{resolutions:configuration::Client::discover().resolutions_read(cwd,pairs)}})
+    }
+
     /// The ordered event log — the observable seam the host exposes by
     /// command and forwards by event.
     pub fn event_log(&self) -> &KernelEventLog {
@@ -675,19 +702,16 @@ impl Kernel {
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::CompositionReading{reading:composition::Client::discover().read_with_owners(&cwd,owners)}})
             },
             KernelOp::SystemCompositionRead => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SystemCompositionReading{reading:system_composition::Client::discover().read(&cwd)}})
+                let cwd=self.configuration_working_directory()?;
+                Self::system_composition_outcome(&cwd)
             },
             KernelOp::ConfigRegistryRead => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigRegistryReading{reading:configuration::Client::discover().registry_read(&cwd)}})
+                let cwd=self.configuration_working_directory()?;
+                Self::config_registry_outcome(&cwd)
             },
             KernelOp::ConfigResolutionsRead {pairs} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigResolutions{resolutions:configuration::Client::discover().resolutions_read(&cwd,&pairs)}})
+                let cwd=self.configuration_working_directory()?;
+                Self::config_resolutions_outcome(&cwd,&pairs)
             },
             KernelOp::ConfigDesiredHold {request} => {
                 let root=self.world_map(false).ok();

@@ -30,7 +30,27 @@ async fn kernel_op(app: AppHandle, op: KernelOp) -> Result<KernelOpOutcome, Stri
     // the kernel mutex still serialises mutations and event order.
     tauri::async_runtime::spawn_blocking(move || {
         let host = app.state::<KernelHost>();
-        let (outcome, receipts) = {
+        // The system-composition and configuration READS invoke the installed
+        // products' engines. Bounded now, but on a stale suite they still
+        // sweep for minutes, and they mutate no kernel state and record no
+        // receipts — so they run OUTSIDE the kernel mutex rather than freezing
+        // every Expression request behind them. The lock is taken once,
+        // briefly, only to snapshot the working directory they resolve
+        // against; apply keeps the same logic for every other caller.
+        let (outcome, receipts) = if matches!(&op, KernelOp::SystemCompositionRead | KernelOp::ConfigRegistryRead | KernelOp::ConfigResolutionsRead { .. }) {
+            let cwd = {
+                let mut kernel = host.0.lock().map_err(|_| "kernel lock unavailable")?;
+                kernel.configuration_working_directory()?
+            };
+            let outcome = match &op {
+                KernelOp::SystemCompositionRead => Kernel::system_composition_outcome(&cwd),
+                KernelOp::ConfigRegistryRead => Kernel::config_registry_outcome(&cwd),
+                KernelOp::ConfigResolutionsRead { pairs } => Kernel::config_resolutions_outcome(&cwd, pairs),
+                _ => unreachable!("matched above"),
+            }?;
+            let receipts = outcome.receipts.clone();
+            (outcome, receipts)
+        } else {
             let mut kernel = host.0.lock().map_err(|_| "kernel lock unavailable")?;
             let outcome = kernel.apply(op)?;
             let receipts = outcome.receipts.clone();
