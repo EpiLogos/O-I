@@ -28,6 +28,7 @@
 
 pub mod events;
 pub mod expression;
+pub mod native_expression;
 pub mod expression_asset;
 pub mod expression_carrier;
 pub mod expression_profile;
@@ -156,6 +157,7 @@ pub struct KernelSnapshot {
 #[derive(Debug)]
 pub struct Kernel {
     expressions: expression::Application,
+    native_expression: native_expression::Manager,
     agency: agency::Client,
     client: CentralClient,
     focus: GlobalFocus,
@@ -187,6 +189,7 @@ pub enum KernelOp {
     Setup { request: serde_json::Value },
     BeingEncounter { request: being::Request },
     Expression { request: expression::Request },
+    NativeExpression { request: native_expression::Request },
     /// Pull the whole kernel state (read model; emits nothing).
     State,
     WorldRead,
@@ -431,6 +434,7 @@ pub enum KernelOpResult {
     SetupReading { data: serde_json::Value },
     BeingEncounter { data: serde_json::Value },
     Expression { data: serde_json::Value },
+    NativeExpression { data: serde_json::Value },
     State { snapshot: KernelSnapshot },
     WorldRead { snapshot: KernelSnapshot },
     Knowledge { data: serde_json::Value },
@@ -551,6 +555,7 @@ impl Kernel {
             client,
             agency,
             expressions: expression::Application::default(),
+            native_expression: native_expression::Manager::default(),
             focus: GlobalFocus::unfocused(),
             world: expression_world::WorldState::default(),
             log: KernelEventLog::new(),
@@ -588,6 +593,10 @@ impl Kernel {
     /// exactly one receipt per kernel state change.
     pub fn apply(&mut self, op: KernelOp) -> Result<KernelOpOutcome, String> {
         match op {
+            KernelOp::NativeExpression { request } => {
+                let data = self.native_expression.apply(&self.client, request)?;
+                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::NativeExpression { data } })
+            }
             KernelOp::Expression { request } => {
                 let focus_ref = match &request {
                     expression::Request::Edit { expression_ref, changes, .. }
