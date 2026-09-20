@@ -1,0 +1,29 @@
+name: Native Expression backcheck
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/expressions-app/**'
+      - 'desktop/cradle/src/expressions/**'
+      - 'desktop/cradle/tests/native-expression*'
+      - '.github/workflows/native-expression-backcheck.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: native-expression-backcheck-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  embedded:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: 5970757e25532c7329f07f4819273155c4f3f135
+          path: /tmp/invalid
+          persist-credentials: false
