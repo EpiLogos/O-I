@@ -33,10 +33,8 @@
  *   - exact refs: every entity binds its canonical native subject ref with
  *     the revision(s) the owner disclosed; document provenance retains the
  *     wiki basis ref + revision and the relations basis.
- *   - dynamic currentness (#366 EX3A4): the projection identity is
- *     content-addressed over what was actually read, so a changed basis is
- *     a new generation that opens cleanly — an open draft is never
- *     silently replaced (the kernel's own CAS law).
+ *   - stable identity and revision are separate: changed source bytes disclose
+ *     drift on the same Expression; native open drafts are never replaced.
  */
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import {kernelOp} from "../kernel/bridge";
@@ -71,7 +69,7 @@ export function wikiPathOf(register: WikiRegister): string {
 // ---------------------------------------------------------------------------
 // Live reads (through the owners — the files seam and the kernel knowledge op)
 
-export interface WikiRelationEdge { relation: string; from: string; to: string; provider: string | null; authority: string | null; revision: string | null }
+export interface WikiRelationEdge { ref?: string; direction?: string; relation: string; from: string; to: string; provider: string | null; authority: string | null; revision: string | null }
 export type WikiRelationsReading =
   | { state: "available"; focusRef: string; edges: WikiRelationEdge[]; truncated: boolean; warnings: string[] }
   | { state: "unavailable"; focusRef: string; reason: string };
@@ -102,7 +100,7 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
     try {
       const reply = await kernelOp(transport, {op: "knowledge", project: register.project, request: {action: "relations", address: {kind: "wiki", value: focusRef}}});
       const data = reply.outcome?.result === "knowledge" ? reply.outcome.data as {
-        edges?: { relation: string; from: string; to: string; origin?: { provider?: string; authority?: string; revision?: string } }[];
+        edges?: { ref?: string; edge_ref?: string; relation: string; direction?: string; from: string; to: string; origin?: { provider?: string; authority?: string; revision?: string } }[];
         truncated?: boolean;
         warnings?: string[];
       } : null;
@@ -111,6 +109,8 @@ export async function readWikiRegister(transport: KernelTransportStatus, registe
         state: "available",
         focusRef,
         edges: (data.edges ?? []).map(edge => ({
+          ref: edge.edge_ref ?? edge.ref,
+          direction: edge.direction,
           relation: String(edge.relation),
           from: String(edge.from),
           to: String(edge.to),
@@ -197,35 +197,16 @@ export interface WikiProjection {
 }
 
 const kebab = (value: string) => value.toLowerCase().replace(/[^a-z0-9]+/g, "-").replace(/^-+|-+$/g, "") || "register";
-const glyphOf = (title: string) => {
-  const found = title.match(/[^\s]/u);
-  const glyph = found ? found[0] : "·";
-  return [...glyph][0] ?? "·";
-};
-
-/** A small deterministic content hash (FNV-1a 32) over the projection-relevant
- * reading: the wiki basis revision plus every relation edge with its origin
- * revision. Same reading → same identity; changed basis → a new generation. */
-function basisHash(input: {wikiRevision: string; relations: WikiRelationsReading}): string {
-  let hash = 0x811c9dc5;
-  const feed = (text: string) => { for (let index = 0; index < text.length; index++) { hash ^= text.charCodeAt(index); hash = Math.imul(hash, 0x01000193) >>> 0; } };
-  feed(input.wikiRevision);
-  feed("\0");
-  if (input.relations.state === "available") {
-    feed(input.relations.focusRef);
-    for (const edge of input.relations.edges) feed(`${edge.from}\u001f${edge.relation}\u001f${edge.to}\u001f${edge.revision ?? ""}\u001e`);
-    feed(input.relations.truncated ? "truncated" : "complete");
-  } else {
-    feed(`unavailable:${input.relations.reason}`);
-  }
-  return hash.toString(16).padStart(8, "0");
+/** Stable identity follows the register, never the bytes/revision it reads.
+ * The full native refs remain in bindings; this non-authoritative projection
+ * key only gives browser/kernel-local identifiers a bounded ASCII spelling. */
+export function projectionKey(value:string):string {
+  const seeds=[0x811c9dc5,0x9e3779b9,0x85ebca6b,0xc2b2ae35];
+  for(const c of new TextEncoder().encode(value))for(let i=0;i<seeds.length;i++)seeds[i]=Math.imul(seeds[i]^c,0x01000193)>>>0;
+  return seeds.map(h=>h.toString(16).padStart(8,"0")).join("");
 }
-
-/** The projection's expression identity: content-addressed over the reading,
- * stable for the same basis. Structure keeps #366 EX3A4 honest — a changed
- * wiki is a new generation, never an implicit replacement. */
-export function projectionExpressionRef(register: WikiRegister, input: {wikiRevision: string; relations: WikiRelationsReading}): string {
-  return `expression:techne-m0.${kebab(register.key)}.${basisHash(input)}`;
+export function projectionExpressionRef(register: WikiRegister, _input?: {wikiRevision: string; relations: WikiRelationsReading}): string {
+  return `expression:techne-m0.${kebab(register.key).slice(0,48)}.${projectionKey(register.key)}`;
 }
 
 const parameter = (value: string | number): Parameter => ({value, automation: null});
@@ -283,9 +264,9 @@ function declaredPosition(kind: "space" | "frame", memberRef: string, constellat
   return typeof position === "number" ? position : null;
 }
 
-const SCENE_ENTITY_BUDGET = 10; // the kernel's own composition budget
+const SCENE_ENTITY_BUDGET = 256; // semantic composition, distinct from the renderer window
 const SCENE_BUDGET = 64;
-const ENTITY_BUDGET = 220; // stays under the kernel's 256-entity document budget
+const ENTITY_BUDGET = 256; // stays under the kernel's 256-entity document budget
 
 export function projectWikiExpression(input: WikiRegisterReading & { state: "ready" }): WikiProjection {
   const {register, wiki, wikiBasis, relations} = input;
@@ -303,12 +284,12 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
   const overviewSceneRef = `${expressionRef}:scene:overview`;
   const constellations: ProjectedConstellation[] = [];
   const disclosures = constellationsOf(wiki);
-  const overviewCount = Math.min(disclosures.length, SCENE_ENTITY_BUDGET);
+  const overviewCount = Math.min(disclosures.length, SCENE_BUDGET - 1);
   if (disclosures.length > overviewCount) notices.push(`The overview carries the first ${overviewCount} of ${disclosures.length} disclosed constellations (the scene's own entity budget).`);
 
   for (let index = 0; index < overviewCount; index++) {
     const disclosure = disclosures[index];
-    const overviewEntityRef = `${expressionRef}:entity:o${index}`;
+    const overviewEntityRef = `${expressionRef}:entity:o${projectionKey(`${disclosure.kind}:${disclosure.wholeRef}`)}`;
     const at = overviewPosition(index, overviewCount);
     const subject: SubjectBinding = {
       subject_ref: disclosure.kind === "space" && disclosure.space ? disclosure.space.ref : disclosure.wholeRef,
@@ -323,20 +304,20 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
       revision: 1,
       title: disclosure.title,
       subject,
-      parameters: {x: parameter(at.x), y: parameter(at.y), z: parameter(0), scale: parameter(1.35), glyph: parameter(glyphOf(disclosure.title))},
+      parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.24), glyph: parameter(disclosure.title.slice(0,120))},
     };
     entitySubjects.set(overviewEntityRef, subject.subject_ref);
     overviewEntityRefs.push(overviewEntityRef);
   }
 
   for (let index = 0; index < Math.min(disclosures.length, SCENE_BUDGET - 1); index++) {
-    if (Object.keys(entities).length + SCENE_ENTITY_BUDGET + 1 > ENTITY_BUDGET) {
+    if (Object.keys(entities).length + 1 >= ENTITY_BUDGET) {
       notices.push(`The projection stops at ${constellations.length} constellations (the document's own entity budget); the wiki discloses ${disclosures.length}.`);
       break;
     }
     const disclosure = disclosures[index];
-    const sceneRef = `${expressionRef}:scene:c${index}`;
-    const wholeEntityRef = `${expressionRef}:entity:w${index}`;
+    const sceneRef = `${expressionRef}:scene:c${projectionKey(`${disclosure.kind}:${disclosure.wholeRef}`)}`;
+    const wholeEntityRef = `${expressionRef}:entity:w${projectionKey(`${disclosure.kind}:${disclosure.wholeRef}`)}`;
     const overviewEntityRef = overviewEntityRefs[index];
 
     // The members this register's own reading discloses for this whole.
@@ -344,7 +325,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
     if (disclosure.kind === "space" && disclosure.space) memberRefs = disclosure.space.node_refs ?? [];
     else if (disclosure.kind === "frame" && disclosure.constellation) memberRefs = (disclosure.constellation.members ?? []).map(member => member.ref ?? "").filter(Boolean);
     const membersWithWhole = memberRefs.filter(ref => ref && ref !== disclosure.wholeRef);
-    const memberBudget = SCENE_ENTITY_BUDGET - 1;
+    const memberBudget = Math.min(SCENE_ENTITY_BUDGET - 1, ENTITY_BUDGET-Object.keys(entities).length-1);
     const placedMembers = membersWithWhole.slice(0, memberBudget);
     if (membersWithWhole.length > placedMembers.length) notices.push(`${disclosure.title} carries ${membersWithWhole.length} members; its scene places the first ${placedMembers.length} (the scene's own entity budget).`);
     const warrantCount = placedMembers.filter(memberRef => declaredPosition(disclosure.kind, memberRef, disclosure.constellation, wiki) !== null).length;
@@ -363,12 +344,12 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
         readings: [],
         actions: [],
       },
-      parameters: {x: parameter(0), y: parameter(0), z: parameter(0), scale: parameter(1.5), glyph: parameter(glyphOf(disclosure.title))},
+      parameters: {x: parameter(0), y: parameter(0), z: parameter(0), scale: parameter(0.28), glyph: parameter(disclosure.title.slice(0,120))},
     };
     entitySubjects.set(wholeEntityRef, disclosure.wholeRef);
 
     const members: ProjectedMember[] = placedMembers.map((memberRef, memberIndex) => {
-      const entityRef = `${expressionRef}:entity:n${index}.${memberIndex}`;
+      const entityRef = `${expressionRef}:entity:n${projectionKey(`${disclosure.kind}:${disclosure.wholeRef}`)}.${projectionKey(memberRef)}.${placedMembers.slice(0,memberIndex).filter(ref=>ref===memberRef).length}`;
       const node = byRef.get(memberRef);
       const title = node?.title ?? memberRef;
       const declared = declaredPosition(disclosure.kind, memberRef, disclosure.constellation, wiki);
@@ -386,7 +367,7 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
           readings: [],
           actions: node ? [{action_ref: "aikit:knowledge:read", target_ref: memberRef, authority_requirement: "read"}] : [],
         },
-        parameters: {x: parameter(at.x), y: parameter(at.y), z: parameter(0), scale: parameter(1), glyph: parameter(glyphOf(title))},
+        parameters: {x: parameter(at.x * 1000), y: parameter(-at.y * 1000), z: parameter(0), scale: parameter(0.2), glyph: parameter(title.slice(0,120))},
       };
       entitySubjects.set(entityRef, memberRef);
       sceneEntityRefs.push(entityRef);
@@ -410,24 +391,32 @@ export function projectWikiExpression(input: WikiRegisterReading & { state: "rea
 
   scenes.unshift({scene_ref: overviewSceneRef, revision: 1, title: `${register.title} — wiki overview`, entity_refs: overviewEntityRefs, body: null, triggers: []});
 
-  // Typed relations — ONLY from the live kernel read, both endpoints placed.
+  // Typed relations — ONLY from the live kernel read, co-present occurrences.
   if (relations.state === "available") {
-    const bySubject = new Map<string, string>();
-    for (const [entityRef, subjectRef] of entitySubjects) if (!bySubject.has(subjectRef)) bySubject.set(subjectRef, entityRef);
-    const seen = new Set<string>();
-    for (const edge of relations.edges) {
-      const key = `${edge.from}\u001f${edge.relation}\u001f${edge.to}`;
-      if (seen.has(key)) continue;
-      const fromEntity = bySubject.get(edge.from), toEntity = bySubject.get(edge.to);
-      if (!fromEntity || !toEntity) { adriftRelationCount++; continue; }
-      seen.add(key);
-      boundRelations.push({
-        binding_ref: `${expressionRef}:relation:r${boundRelations.length}`,
-        relation: reading(`wiki:relation:${edge.relation}`, edge.revision ?? wikiBasis.revision),
-        from_entity_ref: fromEntity,
-        to_entity_ref: toEntity,
-        provenance: [reading(edge.provider ?? "wiki", edge.revision ?? wikiBasis.revision)],
-      });
+    // Bind within EACH Scene, using exact occurrences. Same endpoints with
+    // different native records/provenance remain independently addressable.
+    // A generic relations provider that omits an edge ref is disclosed as a
+    // sourced observation, not relabelled as a fictitious canonical WikiEdge.
+    for (const [edgeIndex,edge] of relations.edges.entries()) {
+      let bound=false;
+      for(const scene of scenes) {
+        const from=scene.entity_refs.filter(ref=>entitySubjects.get(ref)===edge.from);
+        const to=scene.entity_refs.filter(ref=>entitySubjects.get(ref)===edge.to);
+        for(const fromEntity of from) for(const toEntity of to) {
+          if(boundRelations.length>=256)continue;
+          const observed=edge.ref ?? `wiki:relation-observation:${projectionKey(JSON.stringify([edge.provider,edge.authority,edge.revision,edge.from,edge.relation,edge.to,edgeIndex]))}`;
+          boundRelations.push({
+            native_owner:edge.provider ?? "wiki",
+            binding_ref:`${expressionRef}:relation:r${projectionKey(JSON.stringify([scene.scene_ref,observed,fromEntity,toEntity]))}`,
+            relation:reading(observed,edge.revision ?? wikiBasis.revision),
+            from_entity_ref:fromEntity,to_entity_ref:toEntity,
+            provenance:[reading(edge.provider ?? "wiki",edge.revision ?? wikiBasis.revision),
+              reading(`wiki:relation-type:${edge.relation}`,edge.revision ?? wikiBasis.revision)],
+          });
+          bound=true;
+        }
+      }
+      if(!bound)adriftRelationCount++;
     }
     if (relations.truncated) notices.push("The relations read was truncated by its own budget; the bound relations are a bounded view.");
     for (const warning of relations.warnings) notices.push(`Relations read warning: ${warning}`);
