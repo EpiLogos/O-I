@@ -1,0 +1,57 @@
+name: Desktop shell recovery
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/**'
+      - 'packages/oi-design-system/**'
+      - '.github/workflows/desktop-shell-recovery.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: ${{ github.workflow }}-${{ github.ref }}
+  cancel-in-progress: false
+
+jobs:
+  shell:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Install the locked desktop dependencies
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      # Initial W1 source transfer: only tracked repository content and public
+      # locked dependencies. No .git, credential, runtime or personal files.
+      # This temporary export is removed after the sandbox has its exact basis.
+      - name: Export reproducible development basis
+        run: |
+          mkdir -p /tmp/w1-basis
+          git rev-parse HEAD > /tmp/w1-basis/source-revision.txt
+          git archive HEAD | gzip > /tmp/w1-basis/source.tar.gz
+          tar -czf /tmp/w1-basis/node-modules.tar.gz desktop/cradle/node_modules
+          sha256sum /tmp/w1-basis/*.gz > /tmp/w1-basis/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w1-development-basis-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/w1-basis
+          retention-days: 3
+          compression-level: 0
+      - name: Typecheck the actual desktop
+        working-directory: desktop/cradle
+        run: npx tsc --noEmit
+      - name: Preserve existing continuity and setup regressions
+        working-directory: desktop/cradle
+        run: |
+          node --test tests/workspace-continuity.test.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs tests/configuration-composition.test.mjs
