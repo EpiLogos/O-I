@@ -30,12 +30,16 @@ try{
    await input.waitFor();
    assert.equal(await input.getAttribute('contenteditable'),'true');
    check(name+': Today opens original Daily Die through native file/SourceSurface callback');
+   assert.match(await page.locator('.editor-path').textContent(),/^Central \/ Control\//);
    const before=native();const text='Native '+name+' writing '+crypto.randomUUID();
    await input.fill(text);await page.getByText('Unsaved form edits.',{exact:false}).waitFor();
    check(name+': typing does not write native source',native().revision.revision===before.revision.revision);
    await page.evaluate(()=>window.postMessage({source:'oi-cradle-die-face',type:'snapshot',nonce:'forged',payload:{fields:{p0_quick_thoughts:'forged'}}},'*'));
    await page.waitForTimeout(100);
    check(name+': unsolicited document message cannot write',native().revision.revision===before.revision.revision);
+   await page.getByRole('tab',{name:'Source',exact:true}).click();
+   await page.getByRole('tab',{name:'Rendered',exact:true}).click();
+   assert.equal(await input.textContent(),text);check(name+': source/rendered switch preserves unsaved Day and root scope');
    await page.getByRole('button',{name:'Back to Central ground',exact:true}).click();
    await page.getByRole('button',{name:'Return to exact open source',exact:true}).click();
    assert.equal(await input.textContent(),text);check(name+': back and return retain unsaved original form');
