@@ -1,0 +1,50 @@
+name: Adoption System ingress
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/workspace/settings/v2/SystemHome.tsx'
+      - 'desktop/cradle/src/configuration/**'
+      - 'desktop/cradle/walk/adoption-system.test.mjs'
+      - '.github/workflows/adoption-ingress.yml'
+permissions:
+  contents: read
+jobs:
+  system:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - run: npm ci --no-audit --no-fund
+        working-directory: desktop/cradle
+      - name: Whole desktop type check and production build
+        working-directory: desktop/cradle
+        run: |
+          set -euo pipefail
+          git rev-parse HEAD | tee /tmp/adoption-system-head.txt
+          npx tsc --noEmit
+          npx vite build
+      - name: Acceptance packet safety tests
+        if: always()
+        run: python3 scripts/test_adoption_packet.py
+      - run: npx playwright install --with-deps chromium webkit
+        working-directory: desktop/cradle
+        if: always()
+      - name: Real System component and bridge interaction
+        working-directory: desktop/cradle
+        if: always()
+        run: node walk/adoption-system.test.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: adoption-system-${{ github.run_id }}
+          path: |
+            desktop/cradle/tests/artifacts/adoption-system
+            /tmp/adoption-system-head.txt
+          retention-days: 5
