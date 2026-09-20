@@ -17,7 +17,7 @@ concurrency:
 jobs:
   receiver:
     runs-on: ubuntu-latest
-    timeout-minutes: 15
+    timeout-minutes: 20
     steps:
       - uses: actions/checkout@v4
         with:
@@ -29,23 +29,39 @@ jobs:
       - name: Install the existing public build dependencies
         working-directory: site
         run: npm install --no-audit --no-fund
-      # Temporary tracked-source transfer for the network-isolated editing sandbox.
-      # No Git credentials, runtime stores, user home or untracked source is archived.
-      - name: Transfer exact tracked source and dependency bytes for local regression
-        run: |
-          mkdir -p /tmp/receiver-transfer
-          git rev-parse HEAD > /tmp/receiver-transfer/HEAD.txt
-          git archive --format=tar HEAD site packages desktop docs shared-field scripts tests .wayfinder .github | gzip > /tmp/receiver-transfer/source.tgz
-          tar -czf /tmp/receiver-transfer/dependencies.tgz site/node_modules site/package-lock.json
-      - uses: actions/upload-artifact@v4
-        with:
-          name: receiver-development-source-${{ github.sha }}
-          path: /tmp/receiver-transfer/
-          retention-days: 1
-          if-no-files-found: error
-      - name: Existing source and native publication regressions
+      - name: Native and public receiving behaviour
         working-directory: site
-        run: node --test library.test.mjs publication.test.mjs public-content.test.mjs ../shared-field/expression-projection.test.mjs
-      - name: Build the production public edition
+        run: |
+          mkdir -p evidence/receiver
+          git rev-parse HEAD > evidence/receiver/commit.txt
+          set -o pipefail
+          node --test *.test.mjs src/explore/relation-layout.test.mjs tests/publication-*.test.mjs ../shared-field/*.test.mjs | tee evidence/receiver/node.tap
+      - name: Build only admitted public outputs
         working-directory: site
         run: npm run build:public
+      - name: Verify preview bytes without claiming that an empty corpus is accepted
+        working-directory: site
+        run: node verify-public-edition.mjs --directory dist --allow-empty --out evidence/receiver/preview-byte-receipt.json
+      - name: Exercise the actual browser boundary
+        working-directory: site
+        run: |
+          python -m pip install playwright==1.51.0 pillow
+          python -m playwright install --with-deps chromium
+          npm run preview -- --host 127.0.0.1 --port 4173 > evidence/receiver/server.log 2>&1 &
+          for i in $(seq 1 40); do curl -fsS http://127.0.0.1:4173/ >/dev/null && break; sleep 1; done
+          result=0
+          python tests/library-acceptance.py || result=1
+          python tests/library-regressions.py || result=1
+          python tests/publication-acceptance.py || result=1
+          python tests/publication-receiver-browser.py || result=1
+          exit "$result"
+      - name: Retain exact-head evidence, never stage it as public site data
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: publication-receiver-${{ github.sha }}
+          path: |
+            site/evidence/receiver/
+            site/evidence/library/
+          retention-days: 14
+          if-no-files-found: error
