@@ -25,5 +25,42 @@ jobs:
         with:
           repository: EpiLogos/QL-MEF
           ref: 5970757e25532c7329f07f4819273155c4f3f135
-          path: /tmp/invalid
+          path: .native-owner/QL-MEF
           persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Locked embedded application dependencies
+        run: npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+      - name: Exact temporary development transfer
+        run: |
+          mkdir -p /tmp/w5-basis
+          git rev-parse HEAD > /tmp/w5-basis/oi-source.txt
+          git -C .native-owner/QL-MEF rev-parse HEAD > /tmp/w5-basis/ql-source.txt
+          git -C .native-owner/QL-MEF archive HEAD | gzip > /tmp/w5-basis/ql-source.tar.gz
+          tar -czf /tmp/w5-basis/embedded-dependencies.tar.gz desktop/cradle/expressions-app/node_modules
+          sha256sum /tmp/w5-basis/*.gz > /tmp/w5-basis/sha256.txt
+      - uses: actions/upload-artifact@v4
+        with:
+          name: w5-development-basis-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/w5-basis
+          retention-days: 3
+          compression-level: 0
+      - name: Existing embedded regression baseline
+        run: |
+          mkdir -p /tmp/w5-checks
+          set -o pipefail
+          npm test --prefix desktop/cradle/expressions-app 2>&1 | tee /tmp/w5-checks/embedded-baseline.log
+      - name: Existing native audio and instrument lifecycle regressions
+        if: always()
+        run: |
+          mkdir -p /tmp/w5-checks
+          set -o pipefail
+          node --test .native-owner/QL-MEF/adapters/retained-field/native-audio.test.mjs .native-owner/QL-MEF/adapters/retained-field/instrument-session.test.mjs 2>&1 | tee /tmp/w5-checks/native-baseline.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: w5-original-checks-${{ github.event.pull_request.head.sha || github.sha }}
+          path: /tmp/w5-checks
+          retention-days: 14
+          if-no-files-found: error
