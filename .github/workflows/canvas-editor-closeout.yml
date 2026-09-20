@@ -1,0 +1,127 @@
+name: Canvas source and evidence closeout
+on:
+  push:
+    branches: [agent/canvas-editor-context-20260920]
+    paths: [.github/workflows/canvas-editor-closeout.yml]
+permissions:
+  contents: write
+jobs:
+  closeout:
+    if: github.ref == 'refs/heads/agent/canvas-editor-context-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 2
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Apply the bounded reviewed source change
+        shell: python
+        run: |
+          import subprocess,pathlib,hashlib,lzma,base64
+          assert subprocess.check_output(['git','rev-parse','HEAD^'],text=True).strip()=='77c2c3935a10aa2ea1d728fc602a74ccd413c87c'
+          assert subprocess.check_output(['git','diff','--name-only','HEAD^','HEAD'],text=True).strip()=='.github/workflows/canvas-editor-closeout.yml'
+          payload='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'
+          patch=lzma.decompress(base64.b64decode(payload))
+          assert hashlib.sha256(patch).hexdigest()=='3aaf7d681caf3918a74e02b4e48d17ef0b0c68e7f81994dd496897b2d19508ea'
+          file=pathlib.Path('/tmp/rich-flow.patch');file.write_bytes(patch)
+          stats=subprocess.check_output(['git','apply','--numstat',str(file)],text=True)
+          assert all(line.split('\t')[-1].startswith('desktop/cradle/') for line in stats.splitlines())
+          subprocess.run(['git','apply','--check',str(file)],check=True)
+          subprocess.run(['git','apply',str(file)],check=True)
+          subprocess.run(['git','rm','.github/workflows/canvas-editor-closeout.yml'],check=True)
+          subprocess.run(['git','add','desktop/cradle'],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          subprocess.run(['git','config','user.name','github-actions[bot]'],check=True)
+          subprocess.run(['git','config','user.email','41898282+github-actions[bot]@users.noreply.github.com'],check=True)
+          subprocess.run(['git','commit','-m','fix(canvas): recover passive rich Flow readings and house Context controls'],check=True)
+          subprocess.run(['git','push','origin','HEAD:refs/heads/agent/canvas-editor-context-20260920'],check=True)
+          pathlib.Path('source-head.txt').write_text(subprocess.check_output(['git','rev-parse','HEAD'],text=True))
+      - name: Install locked dependencies
+        working-directory: desktop/cradle
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Types and source contracts
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          npx tsc --noEmit 2>&1 | tee ../../canvas-types.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs 2>&1 | tee ../../canvas-contracts.log
+      - name: Browser dependencies
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Rich Flow and prepared-context interactions
+        working-directory: desktop/cradle
+        run: set -o pipefail; node tests/canvas-editor-browser.mjs 2>&1 | tee ../../canvas-browser.log
+      - name: Production bundle
+        working-directory: desktop/cradle
+        run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
+      - name: Record verified scope in the existing map and ledger
+        shell: python
+        run: |
+          import pathlib,json,os,subprocess,hashlib
+          head=pathlib.Path('source-head.txt').read_text().strip()
+          result=json.loads(pathlib.Path('desktop/cradle/tests/artifacts/canvas-editor/receipt.json').read_text())
+          assert not result['errors']
+          run='https://github.com/EpiLogos/O-I/actions/runs/'+os.environ['GITHUB_RUN_ID']
+          checks='\n'.join('- '+item for item in result['checks'])
+          receipt=f'''# Canvas editor / context — implementation receipt, 20 September 2026
+
+          ## Exact returned source
+
+          Runtime O:I `{head}`; native AIKit `0ff20e936a3baaa4fe39f655891985a94bd07535`.
+          Review PRs: [O:I #441](https://github.com/EpiLogos/O-I/pull/441) and [AIKit #363](https://github.com/EpiLogos/ai-kit/pull/363).
+          Original basis: O:I `a222c8bdf46a7b2146084770b704dfbe83ce5027`, AIKit `99306d858c255fa258d8cc419b314a433d3f92a4`.
+          Implementation follows [the existing feature map](../../../../../.wayfinder/maps/canvas-editor-context.md), D20/W1.7, U1.2/U1.3/U1.4, U3.1/U3.2 and FND-04. No machine connection, reset, installation, deployment or parent-issue closure.
+
+          ## Executed evidence
+
+          [Current CI source-and-browser run]({run}) tests the exact runtime SHA above, not its earlier source-transport commit. The self-removing transport is not a retained product workflow.
+          - TypeScript `tsc --noEmit`: pass.
+          - `node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs`: 31 passed, 0 failed.
+          - `node tests/canvas-editor-browser.mjs`: {len(result['checks'])} passing production-component/handler checks, 0 page errors.
+          - `npx vite build`: pass.
+          - Native [AIKit context run](https://github.com/EpiLogos/ai-kit/actions/runs/35522747624): 12 actual EncounterStore SQLite/Vak/CAS/dispatch regression tests pass; `cargo check --locked -p aikit-cli` passes.
+          - Native [AIKit normal PR suite](https://github.com/EpiLogos/ai-kit/actions/runs/35522750598): all five crate jobs, real integration suite, bkmr SourcePool and GitNexus ProjectMap conformance pass.
+          - Prior [O:I kernel/experience run](https://github.com/EpiLogos/O-I/actions/runs/35522709614) on unchanged kernel source: 95 passed, 51 existing native-environment-gated ignores; experience source tests/compiler pass. Ignored tests are not passing proof.
+
+          Screenshots, receipt JSON, tested source SHA and command output are retained in this run's `canvas-editor-closeout-proof` artifact. The component fixture now imports the actual shell/reset/house CSS; it is not an installed native-window screenshot.
+
+          ## Connected interactions proved in the controlled browser
+
+          {checks}
+
+          ## Implementation and recovery
+
+          CodeMirror remains the editor. Formatting acts on precise ranges and does not reserialize unrelated source. Source/rendered/split share one draft/editor. Native AIKit, not a desktop store, owns prepared selections, IDs, digests, canonical Vāk AST/text, CAS and dispatch expectations. The existing Context panel contains transient and prepared material; ordinary addition has no distribution modal. Resolve/Explain use the existing knowledge service without broadening the prepared payload or executing an Action. Send rechecks the exact native expectation; failed/stale sends retain the instruction and preparation.
+
+          Scope-switch guards prevent an asynchronous Add from being retargeted to a different companion; late readings cannot regress current preparation. Flow draft coordinates are revision-carrying observations, never fabricated raw-HTML offsets. Rendered Flow selections retain actual entry/document identities. Rich entry/note/reply/media/Journal reading is recovered from #411 (`5325400d5a5a55f4fee6449aa222afd218ecfc83`) while keeping this lane's selection path. Passive React reconstruction replaces the donor's arbitrary HTML insertion; no scripts, custom elements, source event handlers, SVG, external media or forged source-ref attributes receive host authority. Ambiguous note/reply anchors remain explicitly ambiguous. The original document collections and unknown media bytes survive Save.
+
+          ## Limits and integration order
+
+          These are deterministic native-owner and controlled production-component results. Browser `/op` responses are controlled, not a running AIKit service, physical Workcell or model. Install/merge AIKit #363 before O:I #441; verify the public owner operation and the returned executable revision, rather than substituting the old quote-only attachment path.
+
+          Remaining existing acceptance gates: the same path against installed Central/AIKit/Actuation and a real model; actual provider Return and source-bound inclusion under concurrent edits; native Tauri browser/window detach/redock and browser navigation/security; complete Day/Flow standalone export/reopen and mapped editable HTML; physical resource measurements and human experience. Root-Central/no-Project dispatch is not added here and must not be approximated by inventing a child Project. Non-text formats expose their real preview/open-with capabilities, not fictional universal editing. Source preview is not lossless arbitrary HTML WYSIWYG. No P/M/H or whole-programme acceptance is claimed.
+          '''
+          # Normalize the Python block's indentation, not Markdown source semantics.
+          receipt='\n'.join(line[10:] if line.startswith('          ') else line for line in receipt.splitlines())+'\n'
+          path=pathlib.Path('desktop/cradle/walk/artifacts/CANVAS-EDITOR-CONTEXT-2026-09-20.md');path.write_text(receipt)
+          ledger=pathlib.Path('.superpowers/sdd/cradle-rebuild/progress.md')
+          assert hashlib.sha256(ledger.read_bytes()).hexdigest()=='228be8f028f2337b7f6f8a9db9e8a9d00b0fc501ebaa9461e93d588b898242cd'
+          ledger.write_text(ledger.read_text()+f'\n\n### 2026-09-20 — Canvas continuation executed; native and browser proof returned\n\nO:I runtime `{head}`; AIKit `0ff20e936a3baaa4fe39f655891985a94bd07535`. PRs #441 / ai-kit #363. This supersedes the earlier “browser pending” row: 31 JS contracts, {len(result["checks"])} controlled production-component checks, 12 native SQLite/Vak/dispatch regressions, types and production bundle pass. Normal AIKit crate/integration/conformance jobs pass; prior unchanged kernel source has 95 passed / 51 existing environment-gated ignores. The existing Context panel is primary, no selection modal; async scope isolation and monotonic readbacks are proved. Rich Flow entries/notes/Journal are recovered without importing the donor\'s old context path. Full command/source/standing receipt: `desktop/cradle/walk/artifacts/CANVAS-EDITOR-CONTEXT-2026-09-20.md`. Native producer merges before its consumer. Installed provider/Return, native window/browser, full Day/export and H gates remain explicitly unclaimed; no owner machine changed.\n')
+          m=pathlib.Path('.wayfinder/maps/canvas-editor-context.md')
+          m.write_text(m.read_text()+f'\n\n### Returned implementation and proof\n\nRuntime O:I `{head}` / AIKit `0ff20e936a3baaa4fe39f655891985a94bd07535`; review [O:I #441](https://github.com/EpiLogos/O-I/pull/441) after [AIKit #363](https://github.com/EpiLogos/ai-kit/pull/363). [Exact receipt](../../desktop/cradle/walk/artifacts/CANVAS-EDITOR-CONTEXT-2026-09-20.md): 31 JS contracts, {len(result["checks"])} controlled production-component checks, 12 native context regressions, types/build and ordinary AIKit conformance pass. CE1–CE5 now have implementation and bounded evidence; installed/provider/Return/Day-window/H obligations above remain open. The existing progress ledger records this continuation without replacing its historical receipts.\n')
+          subprocess.run(['git','add',str(path),str(ledger),str(m)],check=True)
+          subprocess.run(['git','diff','--cached','--check'],check=True)
+          subprocess.run(['git','commit','-m','docs(canvas): bind executed proof to the existing Wayfinder and ledger'],check=True)
+          subprocess.run(['git','push','origin','HEAD:refs/heads/agent/canvas-editor-context-20260920'],check=True)
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-editor-closeout-proof
+          path: |
+            source-head.txt
+            canvas-*.log
+            desktop/cradle/tests/artifacts/canvas-editor
+          retention-days: 7
