@@ -19,10 +19,14 @@ Default: read-only native attachment/readiness/machine receipt, no provider call
 --play-output: on macOS, play only the returned WAV through afplay (never the microphone).
 --recover DELIVERY_REF: read that original delivery only, without replay or automatic playback.
 --reconnect: explicitly reconnect the same native session, never open/create.
+Recovery and reconnect are separate episodes; neither can be combined with a new provider/audio turn.
 --check-native-mac: read System Events' O-I window count; this is a host observation, not UI/audio acceptance.
 Physical microphone, barge-in, re-entry and complete personal-path episodes are in docs/contracts/NARA-SPEECH-EXPERIENCE-V1.md.
 Personal content is saved only in the explicitly selected new directory with mode 0700/0600. Never upload it to public CI or corpus editions.`);process.exit(0);}
 if(!v.bridge||!v.source||!v.out)throw Error('bridge, source and a new private output directory are required; see --help');
+// Validate intent before even creating an output directory or reading source.
+if(v.recover&&(v['allow-provider']||v['audio-file']||v['play-output']||v.reconnect))throw Error('Recovery is read-only; do not combine it with provider, audio, playback or reconnect flags');
+if(v.reconnect&&(v['allow-provider']||v['audio-file']||v['play-output']))throw Error('Run reconnect separately from a new provider/audio turn');
 const bridge=localSpeechEndpoint(v.bridge).replace(/\/$/,'');
 if(v['audio-file']&&!v['allow-provider'])throw Error('Audio input requires explicit --allow-provider consent');
 if(v['play-output']&&(!v['audio-file']||!v['allow-provider']||v.recover))throw Error('Playback requires an explicitly permitted new audio turn; recovery never speaks automatically');
@@ -37,7 +41,7 @@ try{
  if(buffer.dirty||buffer.conflict||buffer.content!==buffer.saved_content||!buffer.base_revision)throw Error('Attachment source must be saved and revision-bound');
  const a=validateAttachment(JSON.parse(buffer.saved_content)),view=await readNativeSession(call,a.dialogue);
  receipt.binding={nara:a.context.nara_ref,subject:a.context.subject_ref,expression:a.context.expression_ref,agent_session:a.dialogue.agent_session,body:a.constitution.body_ref,source_ref:v.source,source_revision:buffer.base_revision};
- receipt.provider_observation=view.connection;receipt.checks.push('saved-native-attachment','exact-existing-native-session-ready');
+ receipt.provider_observation=view.connection;receipt.checks.push('saved-native-attachment','exact-existing-native-session-reading');
  const before=structuredClone(a);
  if(v.reconnect&&(view.connection?.state!=='Resident'||view.connection.error||!view.connection.resident)){await call(a.dialogue,{action:'reconnect',space:a.dialogue.space,agent_session:a.dialogue.agent_session,provider:a.dialogue.provider});const resumed=await requireNativeReady(call,a.dialogue);if(resumed.agent_session!==before.dialogue.agent_session||!sameEncounter(before,a))throw Error('Reconnect identity drift');receipt.checks.push('explicit-native-reconnect-same-session');}
  if(v['check-native-mac']){
@@ -45,7 +49,7 @@ try{
   const count=execFileSync('osascript',['-e','tell application "System Events" to count windows of process "O-I"'],{encoding:'utf8',timeout:10000}).trim();
   if(!/^\d+$/.test(count)||Number(count)<1)throw Error('No native O-I window was observed');receipt.native_mac_window_count=Number(count);receipt.checks.push('native-Mac-window-observed-only');
  }
- if(!v.recover)await requireNativeReady(call,a.dialogue);
+ if(!v.recover){await requireNativeReady(call,a.dialogue);receipt.checks.push('native-session-ready-observed');}
  const audio=new BrowserSpeechAudio();let text;
  if(v['audio-file']){if(!a.speech)throw Error('No supported speech adapter selected');const bytes=await readFile(v['audio-file']);receipt.input_audio_sha256=createHash('sha256').update(bytes).digest('hex');text=await audio.transcribe(new Blob([bytes],{type:'audio/wav'}),a.speech,AbortSignal.timeout(120000));await save('input-transcript.txt',text);receipt.checks.push('actual-configured-STT-response');}
  let result;
