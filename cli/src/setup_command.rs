@@ -770,7 +770,7 @@ impl adoption::Runtime for AdoptionRuntime {
                 .map_err(|e| e.to_string())?;
                 if reading["state"] != "installed"
                     || step.native_plan.as_ref().map(|p| &p["bundle"]["sha256"])
-                        != Some(&json!(receipt.bundle_sha256))
+                        != Some(&json!(receipt.bundle.sha256))
                 {
                     return Err("Desktop native footprint has not verified".into());
                 }

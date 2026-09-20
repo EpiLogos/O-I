@@ -591,7 +591,7 @@ mod tests {
 
     #[test]
     fn install_modes_recognise_their_exact_composition() {
-        let cases: [(&[&str], &str); 5] = [
+        let cases: [(&[&str], &str); 4] = [
             (&["central", "actuation"], "0/1"),
             (&["central", "actuation", "ai-kit"], "0/1/2"),
             (
