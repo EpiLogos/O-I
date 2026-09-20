@@ -50,15 +50,20 @@ try{
    await page.getByRole('button',{name:'Install and set up…',exact:true}).click();
    await page.getByLabel('Composition',{exact:true}).selectOption('custom');
    await page.getByLabel('Central directory',{exact:true}).fill('/chosen/Central');
+   // Explicit absent-Desktop removal is reviewable; an empty custom choice is
+   // not. This is transport interaction, never proof of a native installation.
+   await page.getByLabel('Desktop',{exact:true}).selectOption('remove');
    await page.getByRole('button',{name:'Review effects and authority'}).click();
    await page.getByRole('button',{name:'Apply this reviewed plan'}).waitFor();
    assert.equal(calls.filter(c=>c.request?.action==='apply').length,0);
    assert.equal(calls.find(c=>c.request?.action==='plan').request.selection.ground,'/chosen/Central');
+   assert.equal(calls.find(c=>c.request?.action==='plan').request.selection.desktop,'remove');
    await page.getByRole('button',{name:'Back',exact:true}).click();
    await page.getByRole('button',{name:'Cancel',exact:true}).click();
    await page.getByRole('dialog',{name:'Install and set up this World'}).waitFor({state:'detached'});
    await page.getByRole('button',{name:'Install and set up…',exact:true}).click();
    assert.equal(await page.getByLabel('Central directory',{exact:true}).inputValue(),'/chosen/Central');
+   assert.equal(await page.getByLabel('Desktop',{exact:true}).inputValue(),'remove');
    await page.getByRole('button',{name:'Close',exact:true}).click();
    await page.getByRole('button',{name:'Read the world again'}).click();
    assert.equal(await page.evaluate(()=>window.refreshes),1);
