@@ -1,4 +1,4 @@
-name: W1 reconciliation source recovery
+name: W1 bounded successor delivery
 on:
   push:
     branches: ['agent/w1-shell-layout-recovery-20260920']
@@ -6,28 +6,26 @@ on:
 permissions:
   contents: read
 jobs:
-  recover:
-    if: github.ref == 'refs/heads/agent/w1-shell-layout-recovery-20260920'
+  verify-transport:
+    if: github.repository == 'EpiLogos/O-I' && github.ref == 'refs/heads/agent/w1-shell-layout-recovery-20260920'
     runs-on: ubuntu-latest
-    timeout-minutes: 10
+    timeout-minutes: 5
     steps:
-      - uses: actions/checkout@v4
-        with:
-          ref: ${{ github.sha }}
-          fetch-depth: 0
-          persist-credentials: false
-      - name: Export tracked basis and bounded Git objects, never credentials
+      - name: Retrieve and verify bounded manifest, without executing it
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/w1-reconcile
-          git rev-parse HEAD > /tmp/w1-reconcile/source-revision.txt
-          git archive a222c8bdf46a7b2146084770b704dfbe83ce5027 | gzip > /tmp/w1-reconcile/base.tar.gz
-          git cat-file commit a222c8bdf46a7b2146084770b704dfbe83ce5027 > /tmp/w1-reconcile/base.commit
-          git bundle create /tmp/w1-reconcile/history.bundle HEAD refs/remotes/origin/main ^a222c8bdf46a7b2146084770b704dfbe83ce5027
-          sha256sum /tmp/w1-reconcile/* > /tmp/w1-reconcile/checksums.txt
+          mkdir -p /tmp/w1-transport
+          gh api repos/EpiLogos/O-I/git/blobs/7eb294b00fa97a3d0365b539079d5a4af953cee2 --jq .content | base64 --decode > /tmp/w1-transport/manifest.gz
+          python3 - <<'PY'
+          import gzip,hashlib,pathlib
+          raw=gzip.decompress(pathlib.Path('/tmp/w1-transport/manifest.gz').read_bytes())
+          assert hashlib.sha256(raw).hexdigest()=='753a18b88874b8bd61637c934e0abdb68d27ead94cede6ea5b48b53e674d3a7d'
+          PY
       - uses: actions/upload-artifact@v4
+        if: always()
         with:
-          name: w1-reconciliation-sources-${{ github.run_id }}
-          path: /tmp/w1-reconcile
-          retention-days: 3
-          compression-level: 0
+          name: w1-transport-check
+          path: /tmp/w1-transport/
+          retention-days: 1
