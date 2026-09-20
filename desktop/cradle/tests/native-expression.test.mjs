@@ -5,7 +5,7 @@ import {tmpdir} from 'node:os';
 import {join,resolve} from 'node:path';
 import {pathToFileURL} from 'node:url';
 import {createHash} from 'node:crypto';
-import {build} from '../expressions-app/node_modules/esbuild/lib/main.js';
+import {build} from 'esbuild';
 import * as THREE from 'three';
 import {controlledFrame,ControlledAudio,ControlledOwner} from './native-expression-fixture.mjs';
 const src=resolve('expressions-app/field-studies-journeys/src');
