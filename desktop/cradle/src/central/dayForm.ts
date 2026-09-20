@@ -6,7 +6,15 @@ export interface FieldEdit {id:string;pointer:string;before:unknown;value:unknow
 export type FieldWriter=(input:{source_ref:string;document_id:string;expected_revision:string;request_id:string;field_id:string;value:unknown})=>Promise<unknown>;
 export const isObject=(v:unknown):v is Record<string,unknown>=>!!v&&typeof v==="object"&&!Array.isArray(v);
 const clone=<T,>(v:T):T=>v===undefined?v:JSON.parse(JSON.stringify(v)) as T;
-const equal=(a:unknown,b:unknown):boolean=>JSON.stringify(a)===JSON.stringify(b);
+// JSON object key order is not native source identity. Rust/serde may reorder
+// keys on acknowledgement; array order and actual values still matter.
+function equal(a:unknown,b:unknown):boolean {
+ if(a===b)return true;
+ if(Array.isArray(a)||Array.isArray(b))return Array.isArray(a)&&Array.isArray(b)&&a.length===b.length&&a.every((value,i)=>equal(value,b[i]));
+ if(!isObject(a)||!isObject(b))return false;
+ const keys=Object.keys(a);
+ return keys.length===Object.keys(b).length&&keys.every(key=>Object.prototype.hasOwnProperty.call(b,key)&&equal(a[key],b[key]));
+}
 export function pointerValue(payload:unknown,pointer:string):unknown {
  if(!pointer.startsWith("/"))throw new Error("Native field needs a non-root template pointer");
  let current:unknown=payload;
