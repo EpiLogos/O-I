@@ -374,6 +374,7 @@ pub fn relation_bindings(
             continue;
         };
         bindings.push(expression::Relation {
+            native_owner: None,
             binding_ref: format!(
                 "{expression_ref}:relation:w-{}",
                 fnv1a64(&relation.relation.r#ref)
@@ -1251,32 +1252,31 @@ impl Kernel {
         };
         let document: expression::Document = serde_json::from_value(inspected["document"].clone())
             .map_err(|e| format!("Expression document unreadable: {e}"))?;
-        let mut target: Option<(String, String)> = None;
-        for (entity_ref, entity) in &document.entities {
-            if entity
-                .subject
-                .as_ref()
-                .is_some_and(|b| b.subject_ref == subject_ref)
-            {
-                let scene_ref = document
-                    .scenes
-                    .iter()
-                    .find(|s| {
-                        s.scene_ref == document.selection.scene_ref
-                            && s.entity_refs.contains(entity_ref)
-                    })
-                    .or_else(|| {
-                        document
-                            .scenes
-                            .iter()
-                            .find(|s| s.entity_refs.contains(entity_ref))
-                    })
-                    .map(|s| s.scene_ref.clone());
-                if let Some(scene_ref) = scene_ref {
-                    target = Some((entity_ref.clone(), scene_ref));
-                    break;
+        // Preserve an exact current occurrence. A subject-only handoff must
+        // not silently select the first glyph or first scene with that subject.
+        let mut occurrences = Vec::new();
+        for scene in &document.scenes {
+            for entity_ref in &scene.entity_refs {
+                if document.entities.get(entity_ref).and_then(|e| e.subject.as_ref())
+                    .is_some_and(|b| b.subject_ref == subject_ref) {
+                    occurrences.push((entity_ref.clone(), scene.scene_ref.clone()));
                 }
             }
+        }
+        let selected = document.selection.entity_ref.as_ref().and_then(|r| {
+            occurrences.iter().find(|(entity, scene)| entity == r && scene == &document.selection.scene_ref).cloned()
+        });
+        let in_scene: Vec<_> = occurrences.iter().filter(|(_, scene)| scene == &document.selection.scene_ref).cloned().collect();
+        let target = selected.or_else(|| {
+            if in_scene.len() == 1 { in_scene.first().cloned() }
+            else if occurrences.len() == 1 { occurrences.first().cloned() }
+            else { None }
+        });
+        if target.is_none() && occurrences.len() > 1 {
+            return Ok(json!({"state":"ambiguous_occurrence", "expression_ref":expression_ref,
+                "subject_ref":subject_ref, "occurrences":occurrences.iter().map(|(entity,scene)|
+                    json!({"entity_ref":entity,"scene_ref":scene})).collect::<Vec<_>>(),
+                "detail":"Select an exact scene occurrence; native subject identity is not occurrence identity"}));
         }
         let Some((entity_ref, scene_ref)) = target else {
             return Ok(json!({
@@ -1399,6 +1399,7 @@ mod tests {
             selection: expression::Selection {
                 scene_ref: String::new(),
                 entity_ref: None,
+                relation_ref: None,
             },
             provenance: vec![],
             representations: vec![],
@@ -1457,6 +1458,7 @@ mod tests {
             selection: expression::Selection {
                 scene_ref: String::new(),
                 entity_ref: None,
+                relation_ref: None,
             },
             provenance: vec![],
             representations: vec![],

@@ -588,7 +588,7 @@ impl Kernel {
             KernelOp::Expression { request } => {
                 let focus_ref = match &request {
                     expression::Request::Edit { expression_ref, changes, .. }
-                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. })) => Some(expression_ref.clone()),
+                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. } | expression::Change::RelationFocus { .. })) => Some(expression_ref.clone()),
                     _ => None,
                 };
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
