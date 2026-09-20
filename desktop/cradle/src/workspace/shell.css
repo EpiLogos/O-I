@@ -6,9 +6,9 @@
  * end of packages/oi-design-system/tokens.css exists for exactly this.
  */
 
-.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) calc(100% - var(--desktop-right-width, 0px)), var(--oi-agent-ground) calc(100% - var(--desktop-right-width, 0px)) 100%); color: var(--oi-accent-ink); }
+.desktop-shell { height: 100%; display: flex; flex-direction: column; font: var(--oi-shell-type-ui) var(--oi-font-sans); background: linear-gradient(to right, var(--oi-sidebar-ground) 0 var(--desktop-left-width), var(--oi-shell-ground) var(--desktop-left-width) calc(100% - var(--desktop-right-width, 0px)), var(--oi-agent-ground) calc(100% - var(--desktop-right-width, 0px)) 100%); color: var(--oi-accent-ink); border-top-left-radius: var(--oi-shell-radius); }
 .shell-topbar { flex: none; display: flex; align-items: center; gap: var(--oi-space-2); height: 40px; padding: 0 var(--oi-space-2); border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); background: var(--oi-shell-ground); user-select: none; }
-.desktop-shell[data-native="true"] .shell-topbar { padding-left: 84px; }
+.desktop-shell[data-window-lights="true"] .shell-topbar { padding-left: 84px; }
 .shell-topbar button { display: inline-flex; align-items: center; justify-content: center; width: 30px; height: 30px; flex: none; border-radius: var(--oi-radius-sm); color: var(--oi-muted); }
 .shell-topbar button:hover, .shell-topbar button[aria-expanded="true"] { color: var(--oi-accent-ink); background: var(--oi-wash); }
 .shell-topbar button:disabled { opacity: .3; cursor: default; background: transparent; }
@@ -56,6 +56,11 @@
 .desktop-regions { position: relative; display: flex; flex: 1; min-height: 0; }
 .desktop-side { flex: none; position: relative; display: flex; flex-direction: column; min-height: 0; transition: width var(--oi-motion-plane) var(--oi-motion-ease-out), inset var(--oi-motion-plane) var(--oi-motion-ease-out), margin var(--oi-motion-plane) var(--oi-motion-ease-out), opacity var(--oi-motion-ui) var(--oi-motion-ease-out); will-change: width; }
 .desktop-side-content { width: 100%; min-width: 0; min-height: 0; flex: 1; display: flex; flex-direction: column; overflow: hidden; }
+/* Owner refinement 2026-09-20: the accompanying panel's content keeps the
+   same 3px breath from the window edge the centre canvas keeps on its own
+   edges — the space either side of the panel reads balanced, its right side
+   subtly shorter instead of running flush into the corner. */
+.desktop-side.right > .desktop-side-content { padding-right: 3px; box-sizing: border-box; }
 .desktop-side.left > .desktop-side-content { width: var(--desktop-left-target); min-width: var(--desktop-left-target); }
 .desktop-side.right.depth-panel > .desktop-side-content { width: var(--desktop-right-width); min-width: var(--desktop-right-width); }
 .desktop-side.right.depth-full > .desktop-side-content { width: 100%; }
@@ -414,7 +419,12 @@
 .desktop-centre .tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out),opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
 .desktop-regions[data-right-full="true"] .desktop-centre .tab-strip{opacity:0;pointer-events:none}
 
-.desktop-shell{--shell-window-reserve:42px}.desktop-shell[data-native="true"]{--shell-window-reserve:116px}
+/* The window-controls reserve belongs to the macOS traffic lights — and only
+   while they are actually present (Tauri on a Mac, not fullscreen, where the
+   system hides them). data-window-lights carries that live condition; every
+   consumer below (the header offset, the corner cutouts) derives from it, so
+   a fullscreen Mac and every non-Mac window take the corner's space back. */
+.desktop-shell{--shell-window-reserve:42px}.desktop-shell[data-window-lights="true"]{--shell-window-reserve:116px}
 /* Owner cleanup 2026-09-17: the canvas card sits on the footer edge — the
    2px bottom margins left a white hairline under the canvas at rest. */
 .desktop-centre{margin-left:3px;margin-right:3px;margin-bottom:0}
@@ -436,7 +446,14 @@
      toggle sits in open corner space. */
   --window-cutout-right:max(0px,calc(52.5px - var(--desktop-right-width,0px)));
   --window-corner-depth:calc(var(--oi-shell-tabbar) + 4.5px);
-  clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--window-corner-depth),100% 100%,0 100%,0 var(--window-corner-depth),var(--window-cutout) var(--window-corner-depth));
+  /* Owner refinement 2026-09-20: the lights' corner (left) sits about 4px
+     shallower at the bottom than the agent-toggle corner (right, the
+     2026-09-19 ruling) — each corner cut carries its own depth. The floor
+     lands exactly on the canvas top edge (strip height + its 1px hairline):
+     shallower and the cut slices the strip's hairline, leaving a grey
+     sliver across the notch; deeper and the band reads too tall. */
+  --window-corner-depth-left:calc(var(--oi-shell-tabbar) + 1px);
+  clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--window-corner-depth),100% 100%,0 100%,0 var(--window-corner-depth-left),var(--window-cutout) var(--window-corner-depth-left));
  }
  .desktop-shell [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
 }
