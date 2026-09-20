@@ -13,119 +13,710 @@
     "wc65": {
       "source_ref": "docs/positions/WIKI-CONSTELLATION-PRACTICE.md#3-decisions-made-here",
       "issue": "https://github.com/EpiLogos/O-I/issues/65",
-      "consumer_issues": [366, 335, 375],
+      "consumer_issues": [
+        366,
+        335,
+        375
+      ],
       "policy": "Preserve every WC decision and reason, the complete UX activities and existing original story/CAW/QL obligations. Exact native Action IDs and current implementation standing are resolved at the incoming mainline cut, not fabricated by this planning module."
+    },
+    "adaptive65": {
+      "source_ref": "docs/experience/WIKI-CONSTELLATION-UX.md#6-adaptive-wikiuseragent-interaction",
+      "issue": "https://github.com/EpiLogos/O-I/issues/65",
+      "consumer_issues": [
+        375,
+        414,
+        418,
+        420
+      ],
+      "policy": "Extend existing stories and WC01–WC15; source coverage is not runtime, installed or human acceptance."
     }
   },
-  "required_obligation_ids": ["wc65:WC01", "wc65:WC02", "wc65:WC03", "wc65:WC04", "wc65:WC05", "wc65:WC06", "wc65:WC07", "wc65:WC08", "wc65:WC09", "wc65:WC10", "wc65:WC11", "wc65:WC12", "wc65:WC13", "wc65:WC14", "wc65:WC15"],
+  "required_obligation_ids": [
+    "wc65:WC01",
+    "wc65:WC02",
+    "wc65:WC03",
+    "wc65:WC04",
+    "wc65:WC05",
+    "wc65:WC06",
+    "wc65:WC07",
+    "wc65:WC08",
+    "wc65:WC09",
+    "wc65:WC10",
+    "wc65:WC11",
+    "wc65:WC12",
+    "wc65:WC13",
+    "wc65:WC14",
+    "wc65:WC15",
+    "adaptive65:AP01",
+    "adaptive65:AP02",
+    "adaptive65:AP03",
+    "adaptive65:AP04",
+    "adaptive65:AP05",
+    "adaptive65:AP06",
+    "adaptive65:AP07",
+    "adaptive65:AP08"
+  ],
   "obligations": [
     {
-      "id": "wc65:WC01", "source": "wc65", "native_locator": "Product WC01; specification section 2; UX activity A",
+      "id": "wc65:WC01",
+      "source": "wc65",
+      "native_locator": "Product WC01; specification section 2; UX activity A",
       "requirement": "Ordinary linked Markdown is a complete useful Wiki path without QL or forced source migration.",
-      "story_ids": ["KN01", "KN02", "KN09", "UI01"], "required_evidence": ["D", "C", "P", "H"],
-      "required_branches": ["Import preserves authored bytes/frontmatter and native identity.", "Read/edit/search/traverse works with QL absent, including unresolved links and media."],
-      "test_refs": ["WCT01", "WCT02"]
+      "story_ids": [
+        "KN01",
+        "KN02",
+        "KN09",
+        "UI01"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Import preserves authored bytes/frontmatter and native identity.",
+        "Read/edit/search/traverse works with QL absent, including unresolved links and media."
+      ],
+      "test_refs": [
+        "WCT01",
+        "WCT02"
+      ]
     },
     {
-      "id": "wc65:WC02", "source": "wc65", "native_locator": "Product WC02; specification section 2; UX activities A and G",
+      "id": "wc65:WC02",
+      "source": "wc65",
+      "native_locator": "Product WC02; specification section 2; UX activities A and G",
       "requirement": "Reader, graph, backlinks, tags and agent lookup share source occurrence and target resolution.",
-      "story_ids": ["KN02", "KN03", "KN05", "KN09", "WR03"], "required_evidence": ["D", "C", "P"],
-      "required_branches": ["Aliases, duplicate titles, relative paths, heading/block selectors and external edits preserve exact source/revision.", "Backlinks are inverse occurrences; unlinked mentions remain suggestions and tag membership does not fabricate document cliques."],
-      "test_refs": ["WCT02", "WCT03", "WCT04"]
+      "story_ids": [
+        "KN02",
+        "KN03",
+        "KN05",
+        "KN09",
+        "WR03"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P"
+      ],
+      "required_branches": [
+        "Aliases, duplicate titles, relative paths, heading/block selectors and external edits preserve exact source/revision.",
+        "Backlinks are inverse occurrences; unlinked mentions remain suggestions and tag membership does not fabricate document cliques."
+      ],
+      "test_refs": [
+        "WCT02",
+        "WCT03",
+        "WCT04"
+      ]
     },
     {
-      "id": "wc65:WC03", "source": "wc65", "native_locator": "Product WC03; specification section 5; UX activity C",
+      "id": "wc65:WC03",
+      "source": "wc65",
+      "native_locator": "Product WC03; specification section 5; UX activity C",
       "requirement": "Humans and agents can create and edit a constellation from selected material or an explicitly chosen frame.",
-      "story_ids": ["KN02", "KN06", "KN08", "WR03"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["Place/reassign members and roles, type/reconnect relations, annotate and compare alternatives.", "Unfilled positions remain real gaps; source members are not fabricated to complete a shape."],
-      "test_refs": ["WCT09", "WCT10"]
+      "story_ids": [
+        "KN02",
+        "KN06",
+        "KN08",
+        "WR03"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Place/reassign members and roles, type/reconnect relations, annotate and compare alternatives.",
+        "Unfilled positions remain real gaps; source members are not fabricated to complete a shape."
+      ],
+      "test_refs": [
+        "WCT09",
+        "WCT10"
+      ]
     },
     {
-      "id": "wc65:WC04", "source": "wc65", "native_locator": "Product WC04; specification sections 5 and 8; UX activities C and F",
+      "id": "wc65:WC04",
+      "source": "wc65",
+      "native_locator": "Product WC04; specification sections 5 and 8; UX activities C and F",
       "requirement": "Formal QL validity, interpretation support and acceptance remain distinguishable while provisional construction is usable.",
-      "story_ids": ["KN02", "KN06", "KN07", "KN08"], "required_evidence": ["D", "C", "P", "H"],
-      "required_branches": ["A valid form can carry a contested interpretation with inspectable evidence/standing.", "Geometry alone creates no source edge; review applies to actual native effects, not every gesture."],
-      "test_refs": ["WCT10", "WCT14"]
+      "story_ids": [
+        "KN02",
+        "KN06",
+        "KN07",
+        "KN08"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "A valid form can carry a contested interpretation with inspectable evidence/standing.",
+        "Geometry alone creates no source edge; review applies to actual native effects, not every gesture."
+      ],
+      "test_refs": [
+        "WCT10",
+        "WCT14"
+      ]
     },
     {
-      "id": "wc65:WC05", "source": "wc65", "native_locator": "Product WC05; specification sections 4, 5 and 8; UX activities C, F and G",
+      "id": "wc65:WC05",
+      "source": "wc65",
+      "native_locator": "Product WC05; specification sections 4, 5 and 8; UX activities C, F and G",
       "requirement": "Contextual membership and modular constellation reuse preserve source, whole and presentation identities.",
-      "story_ids": ["KN02", "KN05", "KN07", "KN08", "KN09", "UI02"], "required_evidence": ["D", "C", "P", "M"],
-      "required_branches": ["One source has different roles in two constellations without permanent reclassification.", "Live reuse, pinned revision, variant and instance layout have distinct effects; cycles are bounded and n-ary structure survives."],
-      "test_refs": ["WCT08", "WCT10", "WCT13", "WCT16"]
+      "story_ids": [
+        "KN02",
+        "KN05",
+        "KN07",
+        "KN08",
+        "KN09",
+        "UI02"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "One source has different roles in two constellations without permanent reclassification.",
+        "Live reuse, pinned revision, variant and instance layout have distinct effects; cycles are bounded and n-ary structure survives."
+      ],
+      "test_refs": [
+        "WCT08",
+        "WCT10",
+        "WCT13",
+        "WCT16"
+      ]
     },
     {
-      "id": "wc65:WC06", "source": "wc65", "native_locator": "Product WC06; specification section 6; UX activity E",
+      "id": "wc65:WC06",
+      "source": "wc65",
+      "native_locator": "Product WC06; specification section 6; UX activity E",
       "requirement": "Technè construction uses the actual 3D Expression medium with glyphs, text, images, lines and particle relations.",
-      "story_ids": ["KN02", "UI01", "UI02", "UI05", "UI06"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["Direct manipulation operates exact bound subjects and relations through the existing Stage.", "Canonical structure, authored arrangement and physics remain distinct; no flat converter or duplicate engine substitutes for the intended medium."],
-      "test_refs": ["WCT11", "WCT15"]
+      "story_ids": [
+        "KN02",
+        "UI01",
+        "UI02",
+        "UI05",
+        "UI06"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Direct manipulation operates exact bound subjects and relations through the existing Stage.",
+        "Canonical structure, authored arrangement and physics remain distinct; no flat converter or duplicate engine substitutes for the intended medium."
+      ],
+      "test_refs": [
+        "WCT11",
+        "WCT15"
+      ]
     },
     {
-      "id": "wc65:WC07", "source": "wc65", "native_locator": "Product WC07; specification sections 3, 5 and 6; UX activities C and E",
+      "id": "wc65:WC07",
+      "source": "wc65",
+      "native_locator": "Product WC07; specification sections 3, 5 and 6; UX activities C and E",
       "requirement": "M0′ makes linked source material available for construction and M1′ deepens tools in the same working field.",
-      "story_ids": ["KN02", "KN03", "KN07", "WR03", "UI02"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["Exact passage/link/multiple selection supports Add to constellation by keyboard and pointer.", "M0′–M5′ are non-compulsory operations over one field; M3′ Scenes and M5′ Palace use existing native refs."],
-      "test_refs": ["WCT09", "WCT15"]
+      "story_ids": [
+        "KN02",
+        "KN03",
+        "KN07",
+        "WR03",
+        "UI02"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Exact passage/link/multiple selection supports Add to constellation by keyboard and pointer.",
+        "M0′–M5′ are non-compulsory operations over one field; M3′ Scenes and M5′ Palace use existing native refs."
+      ],
+      "test_refs": [
+        "WCT09",
+        "WCT15"
+      ]
     },
     {
-      "id": "wc65:WC08", "source": "wc65", "native_locator": "Product WC08; specification section 7; UX activity D",
+      "id": "wc65:WC08",
+      "source": "wc65",
+      "native_locator": "Product WC08; specification section 7; UX activity D",
       "requirement": "The real situated agent and person operate the same QL-shaped working construction over exact disclosed corpus references.",
-      "story_ids": ["AG01", "AG03", "AG06", "AG09", "KN08", "WR03", "WR04"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["Available, selected and actually disclosed material remain distinct in the existing Context surface.", "Human edits advance the working revision and defeat stale agent writes; hold/continue preserves work and uses actual Agency/session/Action contracts."],
-      "test_refs": ["WCT09", "WCT12"]
+      "story_ids": [
+        "AG01",
+        "AG03",
+        "AG06",
+        "AG09",
+        "KN08",
+        "WR03",
+        "WR04"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Available, selected and actually disclosed material remain distinct in the existing Context surface.",
+        "Human edits advance the working revision and defeat stale agent writes; hold/continue preserves work and uses actual Agency/session/Action contracts."
+      ],
+      "test_refs": [
+        "WCT09",
+        "WCT12"
+      ]
     },
     {
-      "id": "wc65:WC09", "source": "wc65", "native_locator": "Product WC09; specification sections 5.1 and 8; UX activities C, D and F",
+      "id": "wc65:WC09",
+      "source": "wc65",
+      "native_locator": "Product WC09; specification sections 5.1 and 8; UX activities C, D and F",
       "requirement": "Deliberate semantic relationship authoring is operative through its native owner while ordinary spatial composition stays reversible.",
-      "story_ids": ["KN02", "KN08", "WR04", "UI06"], "required_evidence": ["D", "C", "P", "M"],
-      "required_branches": ["Move/select/form choice does not silently mutate source.", "The explicit typed relation tool performs a real revision-checked native write; save preview, receipt, readback, denied/stale and partial results are distinguishable."],
-      "test_refs": ["WCT11", "WCT12", "WCT14"]
+      "story_ids": [
+        "KN02",
+        "KN08",
+        "WR04",
+        "UI06"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Move/select/form choice does not silently mutate source.",
+        "The explicit typed relation tool performs a real revision-checked native write; save preview, receipt, readback, denied/stale and partial results are distinguishable."
+      ],
+      "test_refs": [
+        "WCT11",
+        "WCT12",
+        "WCT14"
+      ]
     },
     {
-      "id": "wc65:WC10", "source": "wc65", "native_locator": "Product WC10; specification section 8; UX activities F and H",
+      "id": "wc65:WC10",
+      "source": "wc65",
+      "native_locator": "Product WC10; specification section 8; UX activities F and H",
       "requirement": "Constellations, QL relationships, Expressions and artifacts return to native Wiki/Library discovery with attribution and derivation.",
-      "story_ids": ["KN01", "KN05", "KN06", "KN07", "KN08", "KN09", "PX05", "WR05", "SH01", "SH02"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["N-ary whole/member roles remain intact, source occurrences remain source-owned, and generated material is not independent corroboration.", "Partial multi-owner saves and retries do not duplicate artifacts/relations; local save is not publication or private-context disclosure."],
-      "test_refs": ["WCT13", "WCT14", "WCT17"]
+      "story_ids": [
+        "KN01",
+        "KN05",
+        "KN06",
+        "KN07",
+        "KN08",
+        "KN09",
+        "PX05",
+        "WR05",
+        "SH01",
+        "SH02"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "N-ary whole/member roles remain intact, source occurrences remain source-owned, and generated material is not independent corroboration.",
+        "Partial multi-owner saves and retries do not duplicate artifacts/relations; local save is not publication or private-context disclosure."
+      ],
+      "test_refs": [
+        "WCT13",
+        "WCT14",
+        "WCT17"
+      ]
     },
     {
-      "id": "wc65:WC11", "source": "wc65", "native_locator": "Product WC11; specification sections 3 and 4; UX activities B and H",
+      "id": "wc65:WC11",
+      "source": "wc65",
+      "native_locator": "Product WC11; specification sections 3 and 4; UX activities B and H",
       "requirement": "Filtering and emphasis change disclosure without altering constellation identity, source meaning or audience eligibility.",
-      "story_ids": ["KN02", "KN03", "AG03", "SH01", "UI05"], "required_evidence": ["D", "C", "P", "H"],
-      "required_branches": ["Matches, structural context and displayed subsets remain distinct, including partially shown atomic/composite forms.", "Audience filtering precedes expansion, counts and cached delivery; hidden neighbours are not misreported as absent knowledge."],
-      "test_refs": ["WCT07", "WCT08", "WCT17"]
+      "story_ids": [
+        "KN02",
+        "KN03",
+        "AG03",
+        "SH01",
+        "UI05"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Matches, structural context and displayed subsets remain distinct, including partially shown atomic/composite forms.",
+        "Audience filtering precedes expansion, counts and cached delivery; hidden neighbours are not misreported as absent knowledge."
+      ],
+      "test_refs": [
+        "WCT07",
+        "WCT08",
+        "WCT17"
+      ]
     },
     {
-      "id": "wc65:WC12", "source": "wc65", "native_locator": "Product WC12; specification section 9; architecture section 6; UX activity G",
+      "id": "wc65:WC12",
+      "source": "wc65",
+      "native_locator": "Product WC12; specification section 9; architecture section 6; UX activity G",
       "requirement": "The existing kernel resource layer provides retained revision-aware readings, in-flight work and model continuity without taking semantic ownership.",
-      "story_ids": ["KN01", "KN05", "KN08", "KN09", "UI02", "UI07"], "required_evidence": ["D", "C", "P", "M"],
-      "required_branches": ["Deduplicate authorised reads, deliver independent local results promptly and preserve currentness/access epochs.", "Warm return and restart do not wait for an unrelated tree/provider; targeted invalidation protects dirty work and denies revoked cached access."],
-      "test_refs": ["WCT04", "WCT05", "WCT06", "WCT16", "WCT18"]
+      "story_ids": [
+        "KN01",
+        "KN05",
+        "KN08",
+        "KN09",
+        "UI02",
+        "UI07"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Deduplicate authorised reads, deliver independent local results promptly and preserve currentness/access epochs.",
+        "Warm return and restart do not wait for an unrelated tree/provider; targeted invalidation protects dirty work and denies revoked cached access."
+      ],
+      "test_refs": [
+        "WCT04",
+        "WCT05",
+        "WCT06",
+        "WCT16",
+        "WCT18"
+      ]
     },
     {
-      "id": "wc65:WC13", "source": "wc65", "native_locator": "Product WC13; specification sections 3 and 9.1; UX activities A, B and G",
+      "id": "wc65:WC13",
+      "source": "wc65",
+      "native_locator": "Product WC13; specification sections 3 and 9.1; UX activities A, B and G",
       "requirement": "Wiki navigation is fluent, accessible and measured, with strong search/filter/backlink/preview/history tools and quiet graph defaults.",
-      "story_ids": ["KN01", "KN02", "KN03", "UI01", "UI02", "UI05", "UI07"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["Keep small nodes/thin lines, keyboard/pointer equivalence, chips, groups, independent clear/fit and durable reading position.", "Measure proposed p95 targets on a recorded build/hardware/corpus; no fabricated Obsidian or installed-app benchmark."],
-      "test_refs": ["WCT05", "WCT07", "WCT16", "WCT18"]
+      "story_ids": [
+        "KN01",
+        "KN02",
+        "KN03",
+        "UI01",
+        "UI02",
+        "UI05",
+        "UI07"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Keep small nodes/thin lines, keyboard/pointer equivalence, chips, groups, independent clear/fit and durable reading position.",
+        "Measure proposed p95 targets on a recorded build/hardware/corpus; no fabricated Obsidian or installed-app benchmark."
+      ],
+      "test_refs": [
+        "WCT05",
+        "WCT07",
+        "WCT16",
+        "WCT18"
+      ]
     },
     {
-      "id": "wc65:WC14", "source": "wc65", "native_locator": "Product WC14; specification section 10; UX section 4; Wayfinder sections 4–7",
+      "id": "wc65:WC14",
+      "source": "wc65",
+      "native_locator": "Product WC14; specification section 10; UX section 4; Wayfinder sections 4–7",
       "requirement": "The complete ordinary-source → constructive constellation → Expression/Palace → native Return → Wiki rediscovery loop is proven, not just isolated UI.",
-      "story_ids": ["KN02", "KN05", "KN07", "KN08", "KN09", "AG06", "UI02", "UI06"], "required_evidence": ["D", "C", "P", "M", "H"],
-      "required_branches": ["Use a real linked corpus, shared source in two constellations, actual agent work, current Stage and owner saves.", "Include restart, source change, partial failure and a deliberately disconnected handler; preserve independent useful Wiki work without a hosted-service gate."],
-      "test_refs": ["WCT01", "WCT09", "WCT10", "WCT11", "WCT12", "WCT14", "WCT15", "WCT16", "WCT18"]
+      "story_ids": [
+        "KN02",
+        "KN05",
+        "KN07",
+        "KN08",
+        "KN09",
+        "AG06",
+        "UI02",
+        "UI06"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Use a real linked corpus, shared source in two constellations, actual agent work, current Stage and owner saves.",
+        "Include restart, source change, partial failure and a deliberately disconnected handler; preserve independent useful Wiki work without a hosted-service gate."
+      ],
+      "test_refs": [
+        "WCT01",
+        "WCT09",
+        "WCT10",
+        "WCT11",
+        "WCT12",
+        "WCT14",
+        "WCT15",
+        "WCT16",
+        "WCT18"
+      ]
     },
     {
-      "id": "wc65:WC15", "source": "wc65", "native_locator": "Product WC15; UX sections 2 and 5; Wayfinder sections 1, 2 and 8",
+      "id": "wc65:WC15",
+      "source": "wc65",
+      "native_locator": "Product WC15; UX sections 2 and 5; Wayfinder sections 1, 2 and 8",
       "requirement": "Product decisions and reasons remain visible in the plan and UX entry and trace through native work, rather than being hidden in schemas.",
-      "story_ids": ["KN01", "KN04", "GV03", "UI06"], "required_evidence": ["D", "C"],
-      "required_branches": ["Preserve explicit decisions, source standing, native owners, work packages and required evidence across the incoming mainline reconciliation.", "Exact API symbols follow the native cut without reopening settled product meaning or replacing earlier story/CAW/QL obligations."],
-      "test_refs": ["source mapping and link checks", "WCT18"]
+      "story_ids": [
+        "KN01",
+        "KN04",
+        "GV03",
+        "UI06"
+      ],
+      "required_evidence": [
+        "D",
+        "C"
+      ],
+      "required_branches": [
+        "Preserve explicit decisions, source standing, native owners, work packages and required evidence across the incoming mainline reconciliation.",
+        "Exact API symbols follow the native cut without reopening settled product meaning or replacing earlier story/CAW/QL obligations."
+      ],
+      "test_refs": [
+        "source mapping and link checks",
+        "WCT18"
+      ]
+    },
+    {
+      "id": "adaptive65:AP01",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP01",
+      "requirement": "Ordinary source links, bkmr/ripgrep retrieval and authored QL constellations remain distinct from governance, interpretation and feedback authority.",
+      "story_ids": [
+        "KN02",
+        "KN04",
+        "KN08",
+        "AG03"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P"
+      ],
+      "required_branches": [
+        "Search hits and geometry cannot acquire governance or semantic assertion authority."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT24"
+      ]
+    },
+    {
+      "id": "adaptive65:AP02",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP02",
+      "requirement": "Authorised operational correction changes agent-maintained Wiki source without silently mutating human governance or accepting agent inference.",
+      "story_ids": [
+        "GV01",
+        "GV03",
+        "GV04",
+        "AG09",
+        "WR04"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Exact basis and evidence survive; stale/concurrent edits and claimed-actor authority are checked separately."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT20"
+      ]
+    },
+    {
+      "id": "adaptive65:AP03",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP03",
+      "requirement": "Guidance carries purpose, applicability, exceptions and useful alternatives, without bypassing native privacy or authority.",
+      "story_ids": [
+        "GV01",
+        "GV04",
+        "WR03",
+        "PX05"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Useful reinterpretation does not weaken consent, disclosure or completion-evidence requirements."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT23"
+      ]
+    },
+    {
+      "id": "adaptive65:AP04",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP04",
+      "requirement": "User/guardian, root meta-project Central, current workcell, primary world and child ProjectCentral retain distinct identity and scope.",
+      "story_ids": [
+        "AG01",
+        "AG06",
+        "KN05",
+        "MC02"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Root-only use, sibling projects and two workcells have no silent primary-machine fallback or identity remint."
+      ],
+      "test_refs": [
+        "WCT21"
+      ]
+    },
+    {
+      "id": "adaptive65:AP05",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP05",
+      "requirement": "A correction reaches the next actual act through the native source tool, selected composition and supported harness transport.",
+      "story_ids": [
+        "AG03",
+        "AG06",
+        "AG09",
+        "WR03",
+        "WR04",
+        "KN08"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Stored, selected, emitted, acknowledged and observed-use remain distinct; disconnected transport fails."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT22",
+        "WCT25"
+      ]
+    },
+    {
+      "id": "adaptive65:AP06",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP06",
+      "requirement": "Chat/selection and existing Context/Run/Agents surfaces expose a small correction operation and inspectable effective guidance.",
+      "story_ids": [
+        "UI06",
+        "AG03",
+        "AG09",
+        "KN04",
+        "WR04"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "No participant modal or compulsory QL; human and agent operate one revisioned source with clear/suspend/undo."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT24",
+        "WCT25"
+      ]
+    },
+    {
+      "id": "adaptive65:AP07",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP07",
+      "requirement": "Accumulated scoped feedback supports a separately accepted governance revision and re-evaluation of dependent interpretations.",
+      "story_ids": [
+        "GV03",
+        "GV04",
+        "KN04",
+        "KN05",
+        "PX05"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Contradictions and common lineage remain visible; repetition never auto-ratifies governance; expiry revokes future delivery."
+      ],
+      "test_refs": [
+        "WCT20",
+        "WCT23"
+      ]
+    },
+    {
+      "id": "adaptive65:AP08",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP08",
+      "requirement": "The joined loop proves changed use and survives denial, stale basis, budgets, unsupported transport, compaction and restart.",
+      "story_ids": [
+        "AG06",
+        "KN05",
+        "WR04",
+        "UI06"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Independent disconnected-consumer negative distinguishes saved files from a working collaboration."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT20",
+        "WCT21",
+        "WCT22",
+        "WCT23",
+        "WCT24",
+        "WCT25"
+      ]
     }
   ],
-  "delegated_ql_stories": ["UX01", "UX04", "UX05", "UX06", "UX08", "UX09", "UX11", "UX12"],
+  "delegated_ql_stories": [
+    "UX01",
+    "UX04",
+    "UX05",
+    "UX06",
+    "UX08",
+    "UX09",
+    "UX11",
+    "UX12"
+  ],
   "execution_policy": {
     "launch_workers_on_publication": false,
     "reconcile_incoming_mains": true,
