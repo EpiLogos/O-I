@@ -17,12 +17,12 @@ import {nativeExpressionsProvider} from '../src/library/nativeExpressionsProvide
 import {setNativeCollections,saveNativeCollectionMember,editManifestMembership} from '../src/library/collectionOperations.ts';
 import {repositoryFiles,realManifests} from './collection-transport.mjs';
 
-const ctrl=process.env.OI_CENTRAL_CTRL_BIN,bridgeBin=process.env.OI_COLLECTION_BRIDGE_BIN;
-if(!ctrl||!path.isAbsolute(ctrl)||!bridgeBin||!path.isAbsolute(bridgeBin))throw new Error('Set absolute OI_CENTRAL_CTRL_BIN and OI_COLLECTION_BRIDGE_BIN to the exact source-built executables. No test double or installed-default fallback.');
+const ctrl=process.env.OI_CENTRAL_CTRL_BIN,bridgeBin=process.env.OI_COLLECTION_BRIDGE_BIN,oi=process.env.OI_BIN;
+if(!ctrl||!path.isAbsolute(ctrl)||!bridgeBin||!path.isAbsolute(bridgeBin)||!oi||!path.isAbsolute(oi))throw new Error('Set absolute OI_BIN, OI_CENTRAL_CTRL_BIN and OI_COLLECTION_BRIDGE_BIN to the exact source-built executables. The kernel uses the native oi central route; no test double or installed-default fallback.');
 const out=path.resolve(process.env.OI_COLLECTION_EVIDENCE??'tests/artifacts/collection-source');await fs.mkdir(out,{recursive:true});
 const parent=await fs.mkdtemp(path.join(tmpdir(),'oi-collection-native-')),root=path.join(parent,'Central'),home=path.join(parent,'home');await fs.mkdir(root);await fs.mkdir(home);
 const checks=[],corpora=[];let bridge,transport,bridgeLog='';
-const env={...process.env,HOME:home,OI_HOME:home,OI_CENTRAL_ROOT:root,OI_CENTRAL_CTRL_BIN:ctrl,OI_CENTRAL_PROJECT_QUERY:'O-I'};
+const env={...process.env,HOME:home,OI_HOME:home,OI_CENTRAL_ROOT:root,OI_BIN:oi,OI_CENTRAL_CTRL_BIN:ctrl,OI_CENTRAL_PROJECT_QUERY:'O-I'};
 const sha=async p=>'sha256:'+createHash('sha256').update(await fs.readFile(p)).digest('hex');
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
 const provision=async(p,text)=>{const file=path.join(root,p);await fs.mkdir(path.dirname(file),{recursive:true});await fs.writeFile(file,text);};
@@ -34,7 +34,7 @@ async function start(){
   bridge.stdout.on('data',b=>{output+=b;bridgeLog+=b;const found=output.match(/listening on (http:\/\/127\.0\.0\.1:\d+)/);if(found){clearTimeout(timer);resolve(found[1]);}});
  });transport={kind:'bridge',url};
 }
-async function stop(){if(!bridge)return;await new Promise(resolve=>{bridge.once('exit',resolve);bridge.kill('SIGTERM');});bridge=null;}
+async function stop(){const child=bridge;bridge=null;if(!child||child.exitCode!==null||child.signalCode!==null)return;await new Promise(resolve=>{child.once('exit',resolve);child.kill('SIGTERM');});}
 async function expression(request){const r=await kernelOp(transport,{op:'expression',request});assert.equal(r.error,undefined);assert.equal(r.outcome?.result,'expression');return r.outcome.data;}
 try{
  const init=JSON.parse(execFileSync(ctrl,['--root',root,'--json','action','run','central.init','{}'],{env,encoding:'utf8',timeout:30000}));assert.equal(init.ok,true,JSON.stringify(init));
@@ -88,7 +88,7 @@ try{
  check('restart reopens the saved source, exact selection and subjects, without claiming particle checkpoint',true);
  const sourceReturn=await readFile(transport,firstMember.location);assert.equal(sourceReturn.revision,firstMember.source_revision);
  check('exact source return still resolves after reopening',true);
- await fs.writeFile(path.join(out,'native.json'),JSON.stringify({standing:'source-built-native-disposable-ground',oi_source:process.env.OI_SOURCE_SHA??null,central_source:process.env.CENTRAL_SOURCE_SHA??null,binaries:{ctrl:await sha(ctrl),kernel:await sha(bridgeBin)},platform:process.platform,checks,corpora,installed:false,mac_interaction:false,real_model:false,microphone:false},null,2));
+ await fs.writeFile(path.join(out,'native.json'),JSON.stringify({standing:'source-built-native-disposable-ground',oi_source:process.env.OI_SOURCE_SHA??null,central_source:process.env.CENTRAL_SOURCE_SHA??null,binaries:{oi:await sha(oi),ctrl:await sha(ctrl),kernel:await sha(bridgeBin)},platform:process.platform,checks,corpora,installed:false,mac_interaction:false,real_model:false,microphone:false},null,2));
  console.log(JSON.stringify({standing:'source-built-native',checks,corpusSubjects:corpora.reduce((n,c)=>n+c.subjects.length,0)},null,2));
 }catch(error){await fs.writeFile(path.join(out,'native-failure.json'),JSON.stringify({checks,corpora,error:String(error),stack:error.stack},null,2));throw error;}
 finally{await stop();await fs.writeFile(path.join(out,'native-bridge.log'),bridgeLog);await fs.rm(parent,{recursive:true,force:true});}

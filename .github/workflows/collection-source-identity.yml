@@ -72,12 +72,14 @@ jobs:
         run: |
           cargo build --locked --manifest-path native-central/Cargo.toml -p ctrl
           cargo build --locked --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
+          cargo build --locked --manifest-path cli/Cargo.toml --bin oi
           cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml --test expression --test expression_substrate --test expression_world
       - name: Real native source, collection CAS, saved Expression and restart
         working-directory: desktop/cradle
         env:
           CENTRAL_SOURCE_SHA: 12ee31313e710378845baae190efc1a4b3e7ebdb
         run: |
+          export OI_BIN="$GITHUB_WORKSPACE/cli/target/debug/oi"
           export OI_CENTRAL_CTRL_BIN="$GITHUB_WORKSPACE/native-central/target/debug/ctrl"
           export OI_COLLECTION_BRIDGE_BIN="$GITHUB_WORKSPACE/desktop/cradle/kernel/target/debug/walk-bridge"
           export OI_SOURCE_SHA="$(git rev-parse HEAD)"

@@ -10,15 +10,17 @@ const out=new URL('./artifacts/collection-source/',import.meta.url);await fs.mkd
 const original=await repositoryFiles();const oldBase='Work/O-I/desktop/cradle/expressions-app/legacy-collections';
 const base='Work/Corpus/ProjectCentral/user/collections';const manifest=JSON.parse(original.get(oldBase+'/manifest.json'));
 const files=new Map([[base+'/authored.manifest.json',JSON.stringify(manifest)],...[...manifest.featured??[],...manifest.starters??[]].map(e=>[base+'/'+e.file,original.get(oldBase+'/'+e.file)])]);
-const t=memoryTransport(files);const checks=[],errors=[];let browser,server,delayed=null;
+const t=memoryTransport(files);const checks=[],errors=[],consoleErrors=[],failedRequests=[];let browser,server,page,delayed=null;
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
 try{
  server=await createServer({server:{host:'127.0.0.1',port:0,strictPort:false},logLevel:'error'});await server.listen();
  browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
- const context=await browser.newContext({viewport:{width:1200,height:900}});const page=await context.newPage();
+ const context=await browser.newContext({viewport:{width:1200,height:900}});page=await context.newPage();
  page.on('pageerror',e=>errors.push(e.message));
- await context.addInitScript(()=>{window.__OI_KERNEL_BRIDGE__='http://collection-controlled.invalid';localStorage.setItem('oi-cradle.library.view.v1','gallery');});
- await context.route('http://collection-controlled.invalid/**',async route=>{
+ page.on('console',message=>{if(message.type()==='error')consoleErrors.push(message.text());});
+ page.on('requestfailed',request=>failedRequests.push({url:request.url(),error:request.failure()?.errorText}));
+ await context.addInitScript(()=>{window.__OI_KERNEL_BRIDGE__=location.origin+'/__collection_bridge';localStorage.setItem('oi-cradle.library.view.v1','gallery');});
+ await context.route('**/__collection_bridge/**',async route=>{
   const req=route.request();let response;
   try{
    if(req.method()!=='POST')response={ok:true,events:[]};
@@ -36,6 +38,7 @@ try{
   await route.fulfill({json:response});
  });
  const url=server.resolvedUrls.local[0]+'tests/collection-browser-page.html';await page.goto(url);
+ await page.getByRole('radio',{name:'Search',exact:true}).click();
  const members=[...manifest.featured??[],...manifest.starters??[]];const chosen=members.find(e=>e.id==='seven-centres');assert.ok(chosen);
  await page.getByRole('option',{name:new RegExp(chosen.name)}).waitFor();
  check('metadata discovery does not load composition bodies',t.ops.filter(o=>o.op==='file_read'&&!o.location.path.endsWith('.manifest.json')).length===0);
@@ -75,5 +78,9 @@ try{
  await page.screenshot({path:new URL('library-shared-withdrawal.png',out).pathname,fullPage:true});
  await fs.writeFile(new URL('browser.json',out),JSON.stringify({standing:'controlled-browser',checks,errors,production:false,installed:false},null,2));
  console.log(JSON.stringify({standing:'controlled-browser',passed:checks.length,checks},null,2));
-}catch(error){await fs.writeFile(new URL('browser-failure.json',out),JSON.stringify({checks,errors,error:String(error)},null,2));throw error;}
+}catch(error){
+ const content=await page?.content().catch(()=>null);
+ await page?.screenshot({path:new URL('browser-failure.png',out).pathname,fullPage:true}).catch(()=>{});
+ await fs.writeFile(new URL('browser-failure.json',out),JSON.stringify({checks,errors,consoleErrors,failedRequests,operations:t.ops,content,error:String(error)},null,2));throw error;
+}
 finally{await browser?.close();await server?.close();}
