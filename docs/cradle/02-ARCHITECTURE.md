@@ -8,6 +8,8 @@ Standing: architecture-contract
 **Status:** architecture commitment for the O:I desktop.
 **Companion:** [01-DESIGN.md](01-DESIGN.md) (intent), [03-UX-STATES.md](03-UX-STATES.md) (states), [04-VERIFICATION.md](04-VERIFICATION.md) (evidence).
 
+**20 September 2026 clarification:** §6 explicitly includes retained kernel loading/resource state. Read [Wiki/constellation decisions WC01–WC15](../positions/WIKI-CONSTELLATION-PRACTICE.md) and the [joined development map](../../.wayfinder/maps/wiki-constellation-development.md) for its purpose and application. The dated implementation disposition in §11 remains historical evidence, not a finding about the owner's incoming local mains.
+
 ## 1. Stack and kernel
 
 Tauri + Rust + React/TypeScript. React sits on top of a **real O:I application
@@ -120,23 +122,79 @@ The key loop: **native operation returns → kernel state changes → typed even
 a "saved" card. Push, not poll: the current build's absence of any event seam is
 the single largest infrastructure gap (§11).
 
-## 6. Two state layers — both real
+## 6. Three state responsibilities — native work, retained resources, presentation
 
-**Semantic/application state** lives in the kernel and native products: World,
+**Owner-directed clarification, 20 September 2026.** The earlier two-layer
+account distinguished semantic authority from presentation correctly but did
+not name the kernel's loading/resource continuity responsibility. It must not
+be read as a prohibition on caching. The existing third-layer implementation
+and [workspace continuity](../experience/WORKSPACE-CONTINUITY.md) are the
+reconciliation targets; this is not a fourth store or framework migration.
+
+**Semantic/application state** belongs to its kernel or native owner: World,
 Project, Source, Knowledge, Agency, AgentSession, Journey, Run, SharedField,
-Activity, Attention, material state, Action results.
+Activity, Attention, material state, Action results, and the existing native
+constellation/Expression work. Authoritative identity, source revisions,
+permissions and durable semantic mutation stay there.
 
-**Presentation state** lives in the desktop: open surface bindings, split
-arrangement, panel widths, resting vs summoned regions, drawer, focused
-presentation, scroll positions, popover state, draft composer content.
+**Retained kernel loading/resource state** keeps the working readings available
+above disposable views: source and directory readings, knowledge adjacency and
+index projections, shared working-model handles, request generations,
+in-flight deduplication, revision/currentness, per-provider availability and
+subscriptions. It composes and caches owner readings; it does not become a
+second authoritative Wiki, filesystem, session or Scene database. Existing
+kernel source buffers remain the single editable model where already owned.
+An adapter which is not a store may still consume this retained state.
+
+**Presentation state** belongs to the desktop: open Surface bindings, split
+arrangement, panel widths, resting/summoned regions, drawer, focused
+presentation, scroll/camera, graph filters/expansion, popovers and view
+checkpoints. Drafts and working models survive view disposal through their
+existing shared owner/model path, not isolated competing copies in each view.
+
+The responsibilities cooperate:
+
+```text
+native owner / application work + revision and authority
+                        ↓ readings / receipts / invalidation
+retained kernel resources + shared models + in-flight work
+                        ↓ targeted subscriptions / usable partial readings
+presentation bindings + live views + restorable checkpoints
+```
 
 Rules:
 
-1. Never derive semantic state from presentation state.
-2. Presentation state is **real product state** — persisted professionally,
-   versioned, restorable; "presentation isn't semantic authority" never mutated
-   into "presentation doesn't matter".
-3. Layout persistence never persists semantic selection.
+1. Never derive semantic truth or authority from presentation coordinates,
+   cache presence or a restored view. Deliberate semantic authoring still uses
+   the real owner Action; the ownership rule does not make Technè read-only.
+2. Presentation is real product state: persisted, versioned and restorable.
+   Resource retention is also legitimate product infrastructure. Neither is
+   made unimportant by not owning source truth.
+3. Semantic focus remains kernel-owned (§7). Layout checkpoints may retain a
+   reference needed to restore that focus, but do not create a second focus
+   authority or silently disclose the selected source to an agent.
+4. Resource keys include native World/owner/ref, operation/query, revision or
+   version basis and access/provider epoch. Equivalent authorised reads share
+   work. Dirty models, stale responses and revoked access receive explicit
+   treatment; a cache hit is not a fresh permission grant.
+5. Independent local readings may be presented while another provider is slow
+   or absent. Keep partial/completeness and per-owner revision basis visible.
+   Save operations bind the coherent basis they actually require; no global
+   revision or distributed transaction is fabricated.
+6. Warm return does not cold-read files, re-enumerate the tree or reconstruct
+   unchanged formations solely because visibility changed. Restart restores
+   useful permitted models/checkpoints and then reconciles their currentness.
+7. Native receipts/change observations invalidate affected resources. Preserve
+   write ordering, bounded concurrency and subscribers; update only affected
+   consumers. A no-cache comment in old code is an implementation decision to
+   revise, not a constitutional prohibition.
+
+Live-view retention, resource/model continuity and durable recovery are the
+three cooperating continuity mechanisms, not replacement names for these
+ownership responsibilities. Likewise, source field/constellation organisation
+and Expressions/Technè are semantic and application-mode distinctions, not
+state-layer classifications. [Wiki/constellation specification §9](WIKI-CONSTELLATION-SPEC.md#9-kernel-loadingresource-state-and-performance)
+gives the concrete read, invalidation and performance contract.
 
 ## 7. One global focus model
 
@@ -170,7 +228,7 @@ SurfaceBinding {
     provider         // which service/product supplies it
     region           // centre · left · summoned · drawer · detached
     presentation     // mode (read/edit/graph/…)
-    local_state      // dirty buffer, scroll — presentation layer (§6)
+    local_state      // view checkpoint; shared dirty model remains above the view (§6)
 }
 ```
 
@@ -286,7 +344,7 @@ service/Fabric materiality; Actuation owns attributable Stream and authority.
 |---|---|
 | SessionSpace, Agency/Agent, AgentSession, purpose and Focus | Existing-session selection and agent details in the dynamic right panel; selection attaches the actual owner session |
 | Actuation/ActuationStream, sequence/cursor, attribution/locus, native evidence and Return refs | Conversation and semantic Activity over the same encounter; ordered incremental reading/replay with native correlation intact |
-| Operative Context, resolved Harness/model condition, context revision/lineage | Context and Inspect planes; authored, effective and actually active facts remain distinct |
+| Operative Context, resolved Harness/model condition, context revision/lineageage | Context and Inspect planes; authored, effective and actually active facts remain distinct |
 | Surface, connection, reachability, material observation, compatibility and age | Side/full/tab/detached/Observatory views with exact serving seam and local degraded/last-observed state |
 | Available/granted capabilities and permitted invocation modes | Owner-disclosed operations with exact scope/refusal; presence and reachability never imply authority |
 
