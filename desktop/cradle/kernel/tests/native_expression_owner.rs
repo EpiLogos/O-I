@@ -78,6 +78,20 @@ print(json.dumps({'ok':True,'data':data}))
     // Native producer recomputes M1, M2 and M3. Only that native output is used.
     let mut replacement=input["basis"].clone();replacement["m1"]["row12"]=json!((replacement["m1"]["row12"].as_u64().unwrap()+1)%12);
     replacement["m3"]["rna"]=json!(!replacement["m3"]["rna"].as_bool().unwrap());
+    // Accepted native replacement requires a strictly newer M2 producer stamp;
+    // changing M1/M3 while replaying the initial M2 generation is a refusal.
+    // Keep that original negative case; then issue an explicitly new basis.
+    let stale_replace=exchange(&mut manager,&client,&lease,&mut last,json!({"operation":"replace","basis":replacement}));
+    assert_eq!(stale_replace["status"],"refused");
+    assert_eq!(state(&stale_replace),state(&changed));
+    let next_generation=input["basis"]["m2"]["stamp"]["identity"]["profile_generation"].as_u64().unwrap()+1;
+    for component in ["resonator", "vimarsha", "m1_excitation"] {
+        if !replacement["m2"][component].is_null() {
+            replacement["m2"][component]["stamp"]["identity"]["profile_generation"]=json!(next_generation);
+        }
+    }
+    replacement["m2"]["stamp"]["identity"]["profile_generation"]=json!(next_generation);
+    replacement["m3"]["m2_basis"]=replacement["m2"]["stamp"].clone();
     let replaced=exchange(&mut manager,&client,&lease,&mut last,json!({"operation":"replace","basis":replacement}));
     assert_eq!(replaced["status"],"ok","{}",replaced["error"]);
     let new_sources=exchange(&mut manager,&client,&lease,&mut last,json!({"operation":"inspect"}));

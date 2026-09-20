@@ -78,6 +78,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p /tmp/w5-checks
+          cargo build --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml 2>&1 | tee /tmp/w5-checks/kernel.log
       - name: Build the exact real QL host and C++ material owner
         if: always()
@@ -101,6 +102,18 @@ jobs:
         run: |
           set -o pipefail
           cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --test native_expression_owner -- --ignored --nocapture 2>&1 | tee /tmp/w5-checks/native/manager.log
+      - name: Complete real native producer to the embedded browser stage
+        if: always()
+        env:
+          NATIVE_EXPRESSION_BRIDGE: ${{ github.workspace }}/desktop/cradle/kernel/target/debug/walk-bridge
+          OI_QL_FIELD_HOST_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/target/debug/ql-field-host
+          OI_QL_FIELD_WORKER_BIN: ${{ github.workspace }}/.native-owner/QL-MEF/cpp/build/ql-field-worker
+          NATIVE_EXPRESSION_INPUT: ${{ github.workspace }}/desktop/cradle/walk/artifacts/ui-convergence/owner-verification/ql-coupled/input.json
+          NATIVE_EXPRESSION_OUT: /tmp/w5-checks/native-browser
+        run: |
+          set -o pipefail
+          cd desktop/cradle
+          node tests/native-expression-native-browser.mjs 2>&1 | tee /tmp/w5-checks/native-browser.log
       - name: Exact source and toolchain receipt
         if: always()
         run: |

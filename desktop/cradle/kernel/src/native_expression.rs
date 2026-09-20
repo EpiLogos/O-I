@@ -44,6 +44,7 @@ struct Owner {
     config_path: PathBuf,
     identity: Value,
     last_request_id: u64,
+    stopped: bool,
 }
 
 fn nonempty(s: &str) -> bool { !s.is_empty() && s.len() <= 4096 && !s.contains('\0') }
@@ -82,7 +83,18 @@ fn presentation(value: &Value) -> Result<(), String> {
 
 impl Owner {
     fn stop(&mut self) {
+        if self.stopped { return; }
+        self.stopped = true;
         self.tx.take();
+        // QL's worker inherits the dedicated process group. Killing only its
+        // parent can leave inherited pipes open and block the reader joins.
+        // This group was created by this manager; no foreign service is named.
+        #[cfg(unix)] {
+            unsafe extern "C" { fn kill(pid: i32, signal: i32) -> i32; }
+            if let Ok(pid) = i32::try_from(self.child.id()) {
+                if pid > 0 { unsafe { kill(-pid, 9); } }
+            }
+        }
         let _ = self.child.kill();
         let _ = self.child.wait();
         if let Some(handle) = self.reader.take() { let _ = handle.join(); }
@@ -105,7 +117,7 @@ impl Manager {
                 if self.active.is_some() { return Err("native-expression.owner_busy: another surface owns the material/audio driver".into()); }
                 if !nonempty(&path) || !nonempty(&expected_revision) { return Err("explicit source path and revision required".into()); }
                 let (parent, name) = path.rsplit_once('/').unwrap_or((".", &path));
-                let dir = files::list(client, if parent.is_empty() { "." } else { parent })?;
+                let dir = files::list(client, if parent.is_empty() { "/" } else { parent })?;
                 let entry = dir.entries.iter().find(|e| e.name == name && e.retrieval_allowed).ok_or("binding source unavailable or withheld by Central")?;
                 let reading = files::read(client, &entry.location)?;
                 if reading.revision != expected_revision { return Err("native-expression.source_stale: reread before opening".into()); }
@@ -169,7 +181,10 @@ impl Manager {
             let _ = fs::remove_file(&config_path); return Err(e.to_string());
         }
         drop(file);
-        let child = Command::new(host).arg(worker).arg(&config_path).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn();
+        let mut command = Command::new(host);
+        command.arg(worker).arg(&config_path).stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped());
+        #[cfg(unix)] { use std::os::unix::process::CommandExt; command.process_group(0); }
+        let child = command.spawn();
         let mut child = match child { Ok(child) => child, Err(e) => { let _=fs::remove_file(&config_path); return Err(format!("native-expression.unavailable: {e}")); } };
         let mut input = child.stdin.take().ok_or("native stdin absent")?;
         let mut output = BufReader::new(child.stdout.take().ok_or("native stdout absent")?);
@@ -194,7 +209,7 @@ impl Manager {
                 bytes.extend_from_slice(&chunk[..n]); let excess = bytes.len().saturating_sub(65536); bytes.drain(..excess);
             }
         });
-        let mut owner = Owner { lease: lease.clone(), child, tx: Some(tx), rx, reader: Some(reader), stderr_reader: Some(stderr_reader), stderr, config_path, identity: Value::Null, last_request_id:0 };
+        let mut owner = Owner { lease: lease.clone(), child, tx: Some(tx), rx, reader: Some(reader), stderr_reader: Some(stderr_reader), stderr, config_path, identity: Value::Null, last_request_id:0, stopped:false };
         let receipt = owner.receive()?;
         let _ = fs::remove_file(&owner.config_path); // native host already consumed it
         if receipt["schema"] != "ql.field-host-receipt/v1" || receipt["status"] != "ready" || receipt["available"] != true || receipt["instance_ref"] != binding.host["instance_ref"] {
@@ -220,6 +235,33 @@ mod tests {
         assert_eq!(cursor(&json!("18446744073709551615")).unwrap(),u64::MAX);
         assert!(line(&mut BufReader::new(&b"{}"[..])).is_err());
         assert_eq!(line(&mut BufReader::new(&b"{\"available\":false}\n"[..])).unwrap()["available"],false);
+    }
+    #[cfg(unix)]
+    #[test] fn release_reaps_the_owned_pipe_holding_process_group() {
+        use std::os::unix::fs::PermissionsExt;
+        let dir = std::env::temp_dir().join(format!("native-process-group-test-{}", std::process::id()));
+        fs::create_dir_all(&dir).unwrap();
+        let script = dir.join("host.py");
+        fs::write(&script, r#"#!/usr/bin/env python3
+import json,subprocess,sys,time
+subprocess.Popen([sys.executable,'-c','import time; time.sleep(60)'])
+print(json.dumps({'schema':'ql.field-host-receipt/v1','status':'ready','available':True,'instance_ref':'test:instance','last_request_id':'0','field':{'event_ref':'test:event','subject_ref':'test:subject'}}),flush=True)
+for line in sys.stdin: time.sleep(60)
+"#).unwrap();
+        fs::set_permissions(&script, fs::Permissions::from_mode(0o700)).unwrap();
+        let old_host = std::env::var_os("OI_QL_FIELD_HOST_BIN");
+        let old_worker = std::env::var_os("OI_QL_FIELD_WORKER_BIN");
+        std::env::set_var("OI_QL_FIELD_HOST_BIN", &script);
+        std::env::set_var("OI_QL_FIELD_WORKER_BIN", &script);
+        let mut manager = Manager::default();
+        let result = manager.open(&json!({"schema":"oi.native-expression-binding/v1","host":{"instance_ref":"test:instance"},"presentation":{"units_per_metre":1,"slots_a":[0],"slots_b":[0]}}).to_string(), Value::Null);
+        match old_host {Some(v)=>std::env::set_var("OI_QL_FIELD_HOST_BIN",v),None=>std::env::remove_var("OI_QL_FIELD_HOST_BIN")};
+        match old_worker {Some(v)=>std::env::set_var("OI_QL_FIELD_WORKER_BIN",v),None=>std::env::remove_var("OI_QL_FIELD_WORKER_BIN")};
+        result.unwrap();
+        let started = std::time::Instant::now();
+        drop(manager);
+        assert!(started.elapsed() < Duration::from_secs(3), "owned descendant kept native pipes alive");
+        fs::remove_dir_all(dir).unwrap();
     }
     #[test] fn requests_cannot_choose_programs() {
         assert!(serde_json::from_value::<Request>(json!({"operation":"open","path":"binding.json","expected_revision":"r1","executable":"/bin/sh"})).is_err());

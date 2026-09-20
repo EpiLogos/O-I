@@ -18,7 +18,7 @@ function renderer(){
  const texture=()=>new THREE.DataTexture(new Float32Array([0,0,0,.1,0,0,0,.2,0,0,0,.3,0,0,0,.4]),2,2,THREE.RGBAFormat,THREE.FloatType);
  const value={texWidth:2,texHeight:2,particleCount:4,targetA:texture(),targetB:texture(),sets:0,
   setTargetTextures(a,b){this.actualA=a;this.actualB=b;this.sets++;}};
- return{port:value,native:false,released:0,retainedTargetPort(){return value;},setNativeDomain(v){this.native=v;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(cb){this.callback=cb;return()=>{this.callback=null;};},checkpointRetainedField(){throw new Error('no GPU in controlled unit test');}};
+ return{port:value,native:false,released:0,retainedTopology(){return{tex_width:2,tex_height:2,particle_count:4,slot_count:4};},retainedTargetPort(){return value;},setNativeDomain(v){this.native=v;},releaseRetainedField(){this.released++;},onRetainedRecoveryRequired(cb){this.callback=cb;return()=>{this.callback=null;};},checkpointRetainedField(){throw new Error('no GPU in controlled unit test');}};
 }
 const spec={units_per_metre:400,slots_a:[0,1,0,1],slots_b:[1,0,1,0]};
 const tick=()=>new Promise(r=>setTimeout(r,25));
@@ -62,7 +62,7 @@ test('real driver consumes controlled producer effects, then holds GPU/audio on 
 test('pause/hidden holds one existing driver; inspect returns complete producer sources without new owner',async()=>{
  const port=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(port,r,()=>audio);
  try{await c.connect('source.json','controlled:r1',48000);c.frame(.02,true);assert.equal(c.status,'held');
-  await c.resume();const sources=await c.inspectSources();assert.deepEqual(Object.keys(sources),['m1','m2','m3']);assert.equal(c.status,'held');
+  await c.resume();const sources=await c.inspectSources();assert.equal(sources.current.m3.transcription.sequence,'ACT');assert.equal(c.status,'held');
   assert.equal(port.calls.filter(x=>x.operation==='open').length,1);assert.equal(c.reading.exact_seek,false);
   await assert.rejects(c.saveCheckpoint(),/no GPU/);
  }finally{await c.dispose();}
@@ -78,4 +78,72 @@ test('vendored clients retain exact accepted QL byte identities, rather than ano
  for(const [name,sha] of Object.entries(provenance.files)){const bytes=await readFile(join(base,name));assert.equal(createHash('sha256').update(bytes).digest('hex'),sha);
   if(process.env.QL_SOURCE)assert.deepEqual(bytes,await readFile(join(process.env.QL_SOURCE,'adapters/retained-field',name)));
  }
+});
+
+test('native transcription and material controls modify the existing producer, not an overlay-only imitation',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);
+ try{
+  await c.connect('source.json','controlled:r1',48000);assert.equal(c.reading.domain.m3.sequence,'ACT');
+  await c.editBasis({kind:'transcription',rna:true});assert.equal(c.reading.domain.m3.sequence,'ACU');
+  await c.editBasis({kind:'harmonic-row',row12:4});assert.equal(c.reading.domain.m1.revision,'1');assert.deepEqual(c.reading.domain.m1.quadrature,[0,1]);
+  await c.editBasis({kind:'damping',mode_ref:'controlled:mode',per_second:.75});
+  audio.currentTime=c.reading.native.audio.target_context_seconds;c.frame(0,false);
+  assert.equal(c.inspectTargets().target_b[2],300);assert.equal(c.reading.domain.m2.modes[0].damping_per_second,.75);
+  assert.equal(owner.calls.filter(x=>x.operation==='open').length,1);
+  assert.equal(owner.calls.filter(x=>x.request?.command?.operation==='replace').length,3);
+  assert.equal(owner.sources.current.input.m2.stamp.identity.profile_generation,4);
+  assert.equal(owner.sources.original.input.m2.stamp.identity.profile_generation,1);
+ }finally{await c.dispose();}
+});
+test('missing or foreign complete producer readings fail admission even when attractive targets remain available',async()=>{
+ for(const mutate of [s=>delete s.current.m3,s=>s.current.m3.subject_ref='foreign',s=>s.current.m1.carrier.quadrature=[NaN,0]]){
+  const owner=new ControlledOwner(),request=owner.request.bind(owner),r=renderer(),audio=new ControlledAudio();
+  owner.request=async command=>{const reply=await request(command);if(reply.sources)mutate(reply.sources);return reply;};
+  const c=new NativeFieldController(owner,r,()=>audio);
+  try{await assert.rejects(c.connect('source.json','controlled:r1',48000),/source admission/);assert.equal(c.status,'unavailable');assert.equal(c.frame(.05,false),0);assert.equal(r.native,false);assert.equal(owner.closed,true);}
+  finally{await c.dispose();}
+ }
+});
+test('visibility hold during an asynchronous open never starts an unseen native driver',async()=>{
+ const owner=new ControlledOwner(),request=owner.request.bind(owner),audio=new ControlledAudio(),r=renderer();let complete;
+ const wait=new Promise(resolve=>complete=resolve);owner.request=async command=>{const reply=await request(command);if(command.operation==='open')await wait;return reply;};
+ const c=new NativeFieldController(owner,r,()=>audio),opening=c.connect('source.json','controlled:r1',48000);
+ await tick();c.hold('hidden during source admission');complete();await opening;
+ try{assert.equal(c.status,'held');await tick();assert.equal(owner.calls.filter(x=>x.request?.command.operation==='advance').length,0);}
+ finally{await c.dispose();}
+});
+test('late failed open from a released epoch cannot destroy a later successful connection',async()=>{
+ const owner=new ControlledOwner(),request=owner.request.bind(owner),r=renderer();let fail;let first=true;
+ const wait=new Promise((_,reject)=>fail=reject);
+ owner.request=async command=>{if(command.operation==='open'&&first){first=false;return wait;}return request(command);};
+ const c=new NativeFieldController(owner,r,()=>new ControlledAudio()),opening=c.connect('first.json','r1',48000);
+ await tick();await c.release();await c.connect('second.json','r2',48000);fail(new Error('old transport failed'));await opening;
+ try{assert.equal(c.status,'following');assert.equal(r.native,true);assert.equal(owner.closed,false);}
+ finally{await c.dispose();}
+});
+test('unknown producer failure closes once and cannot automatically replay a write or keep native sound',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);
+ try{await c.connect('source.json','controlled:r1',48000);owner.lost=true;await tick();c.frame(.02,false);assert.equal(c.status,'unavailable');await tick();assert.equal(owner.closed,true);}
+ finally{await c.dispose();}
+ assert.equal(owner.calls.filter(x=>x.operation==='close').length,1);
+});
+test('native edits preserve a deliberate hold and cannot restart work hidden during a pending edit',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),c=new NativeFieldController(owner,r,()=>audio);
+ try{
+  await c.connect('source.json','controlled:r1',48000);c.hold('human pause');
+  await c.editBasis({kind:'transcription',rna:true});assert.equal(c.status,'held');
+  assert.equal(c.reading.domain.m3.rna,true);const count=owner.calls.length;await tick();assert.equal(owner.calls.length,count);
+  await c.resume();let complete;const wait=new Promise(resolve=>complete=resolve),request=owner.request.bind(owner);let first=true;
+  owner.request=async command=>{const reply=await request(command);if(command.request?.command.operation==='inspect'&&first){first=false;await wait;}return reply;};
+  const editing=c.editBasis({kind:'damping',mode_ref:'controlled:mode',per_second:.5});await tick();c.hold('hidden during edit');complete();await editing;
+  assert.equal(c.status,'held');assert.equal(c.frame(.1,false),0);const held=owner.calls.length;await tick();assert.equal(owner.calls.length,held);
+ }finally{await c.dispose();}
+});
+test('slow complete-source inspection rebases the device without advancing the native clock',async()=>{
+ const owner=new ControlledOwner(),audio=new ControlledAudio(),r=renderer(),request=owner.request.bind(owner);
+ owner.request=async command=>{const reply=await request(command);if(command.request?.command.operation==='inspect')audio.currentTime+=2;return reply;};
+ const c=new NativeFieldController(owner,r,()=>audio);
+ try{await c.connect('source.json','controlled:r1',48000);assert.equal(c.status,'following');assert.equal(c.reading.native.acknowledged.samples_elapsed,'0');
+  assert.ok(c.reading.native.audio.target_context_seconds>=2);
+ }finally{await c.dispose();}
 });

@@ -83,6 +83,19 @@ return class RetainedProductionAdapter extends ProductionAdapter {
     return super.command(command);
   }
 
+  /** Read-only shape for an explicit native sample correspondence. RGBA
+   * texture padding is part of the binding even when fewer particles draw. */
+  retainedTopology() {
+    const simulator = this.engine?.simulator;
+    if (!simulator || this.contextLost) return null;
+    return Object.freeze({
+      tex_width: simulator.texWidth, tex_height: simulator.texHeight,
+      particle_count: simulator.particleCount,
+      slot_count: simulator.texWidth * simulator.texHeight,
+      units: "presentation-units-per-metre",
+    });
+  }
+
   retainedTargetPort() {
     if (!this.engine || this.contextLost) throw new Error("The production field must be live before a retained target lease can attach.");
     if (!this.retained) {
