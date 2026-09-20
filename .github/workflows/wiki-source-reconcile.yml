@@ -1,0 +1,39 @@
+name: Wiki source reconciliation
+on:
+  push:
+    branches: [agent/wiki-constellation-loop-20260920]
+    paths: [.github/workflows/wiki-source-reconcile.yml]
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 12
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Export exact held branch and accepted main source
+        run: |
+          git fetch --depth=1 origin b72d763ce026efebe3fac67655749ac0909ea130
+          mkdir -p /tmp/wiki-reconcile
+          git rev-parse HEAD > /tmp/wiki-reconcile/head-revision.txt
+          git diff --stat b72d763ce026efebe3fac67655749ac0909ea130 HEAD > /tmp/wiki-reconcile/head-vs-main.txt
+          python3 - <<'PY'
+          import io, pathlib, subprocess, tarfile
+          suffixes={'.ts','.tsx','.js','.mjs','.cjs','.rs','.toml','.lock','.json','.css','.html','.md','.yml','.yaml','.py','.glsl','.vert','.frag','.wgsl','.svg','.txt'}
+          for name,ref in [('head','HEAD'),('main','b72d763ce026efebe3fac67655749ac0909ea130')]:
+              with tarfile.open('/tmp/wiki-reconcile/'+name+'.tar.gz','w:gz') as out:
+                  paths=subprocess.check_output(['git','ls-tree','-r','--name-only','-z',ref]).decode().split('\0')
+                  for path in paths:
+                      if not path or pathlib.Path(path).suffix not in suffixes: continue
+                      data=subprocess.check_output(['git','show',ref+':'+path])
+                      info=tarfile.TarInfo(path); info.size=len(data); info.mode=0o644
+                      out.addfile(info,io.BytesIO(data))
+          PY
+          cd /tmp/wiki-reconcile && sha256sum *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wiki-reconcile-${{ github.run_id }}
+          path: /tmp/wiki-reconcile/
+          retention-days: 7
