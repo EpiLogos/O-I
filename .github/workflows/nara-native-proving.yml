@@ -1,0 +1,67 @@
+name: Nara native owner proving
+
+on:
+  push:
+    branches: ['agent/nara-personal-review-20260920']
+    paths: ['.github/workflows/nara-native-proving.yml']
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+jobs:
+  source-and-contracts:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: 5970757e25532c7329f07f4819273155c4f3f135
+          path: .native-proving/QL-MEF
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: 2b6b89848aacadef7d8ec0b0e1a2b72b31ad639b
+          path: .native-proving/ai-kit
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Actuation
+          ref: 36bbf93b7896550f11186f6240b8f018208ab3b2
+          path: .native-proving/Actuation
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Locked application dependencies
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Retain exact public source cuts for offline implementation and replay
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nara-native-proving
+          git rev-parse HEAD > /tmp/nara-native-proving/oi-head.txt
+          git archive HEAD desktop/cradle/src desktop/cradle/kernel desktop/cradle/tests desktop/cradle/walk desktop/cradle/package.json desktop/cradle/package-lock.json desktop/cradle/tsconfig.json desktop/cradle/vite.config.ts docs .wayfinder packages/oi-design-system .github/workflows | gzip > /tmp/nara-native-proving/oi-source.tar.gz
+          tar -czf /tmp/nara-native-proving/node-dependencies.tar.gz desktop/cradle/node_modules
+          for owner in QL-MEF ai-kit Actuation; do
+            git -C .native-proving/$owner rev-parse HEAD > /tmp/nara-native-proving/$owner-head.txt
+            git -C .native-proving/$owner archive HEAD | gzip > /tmp/nara-native-proving/$owner-source.tar.gz
+          done
+          sha256sum /tmp/nara-native-proving/*.tar.gz > /tmp/nara-native-proving/SHA256SUMS
+      - name: Current production speech contracts
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs tests/nara-local-acceptance.test.mjs | tee /tmp/nara-native-proving/contracts.log
+      - name: Preserve source and original checks
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: nara-native-source-${{ github.sha }}
+          path: /tmp/nara-native-proving
+          retention-days: 3
+          if-no-files-found: error
