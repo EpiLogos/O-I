@@ -38,8 +38,8 @@ try {
  await page.waitForFunction(()=>window.controlled.modelState().phase==='ready');
  assert.equal(await selector.inputValue(),'test/a');
  await page.evaluate(()=>window.controlled.readonly());
- assert.equal(await selector.isDisabled(),true);
  await page.getByText('This harness has launch-time selection only.',{exact:true}).waitFor();
+ assert.equal(await selector.isDisabled(),true);
  evidence.push('A harness-native read-only selector remains disabled without inventing a universal model roster.');
  await page.evaluate(()=>window.controlled.disconnect());
  await page.locator('.chat-composer[data-connection="disconnected"]').waitFor();
