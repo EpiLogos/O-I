@@ -25,6 +25,7 @@ impl Client {
     pub fn direct_agent(&self, cwd: &Path, operation: &str, argument: Option<(&str,&str)>) -> Result<Value,String> {
         match (operation, argument.map(|(flag,_)|flag)) {
             ("agent-session-scope", None) |
+            ("agent-session-skills", None) |
             ("agent-session-prepare", Some("--request-json")) |
             ("agent-session-find", Some("--request-id")) => (),
             _ => return Err("Unsupported native Agent operation".into()),

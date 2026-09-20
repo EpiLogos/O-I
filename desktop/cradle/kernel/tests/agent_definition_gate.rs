@@ -194,14 +194,30 @@ fn discovery_without_the_native_version_is_not_an_attached_session() {
         "definition": {"id": "session-space/native", "projects": ["control:root"]},
         "agent_sessions": {"agent-session/native": {}}
     });
-    for version in [None, Some(json!("aikit.session-space-application/v0")), Some(json!(1))] {
+    for version in [
+        None,
+        Some(json!("aikit.session-space-application/v0")),
+        Some(json!(1)),
+    ] {
         let mut reading = row.clone();
         if let Some(version) = version {
             reading["version"] = version;
         }
-        fs::write(rig.root.join("discovery.json"), json!([reading]).to_string()).unwrap();
-        for request in [Rig::prepare(), Request::Find { request_id: "request-12345678".into() }] {
-            assert_eq!(rig.call(request).unwrap_err(), "Unsupported native SessionSpace reading");
+        fs::write(
+            rig.root.join("discovery.json"),
+            json!([reading]).to_string(),
+        )
+        .unwrap();
+        for request in [
+            Rig::prepare(),
+            Request::Find {
+                request_id: "request-12345678".into(),
+            },
+        ] {
+            assert_eq!(
+                rig.call(request).unwrap_err(),
+                "Unsupported native SessionSpace reading"
+            );
         }
     }
 }
@@ -241,4 +257,62 @@ fn readback_uses_the_original_request_and_cannot_invoke_an_arbitrary_cli() {
         .direct_agent(&rig.root, "credential-delete", None)
         .is_err());
     assert_eq!(rig.calls().len(), calls.len());
+}
+
+#[test]
+fn native_scope_and_skill_discovery_use_only_the_allowlisted_read_verbs() {
+    let rig = Rig::new();
+    rig.call(Request::Scope).unwrap();
+    rig.call(Request::Skills).unwrap();
+    let calls = rig.calls();
+    assert!(calls[0]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "agent-session-scope"));
+    assert!(calls[1]
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "agent-session-skills"));
+    assert!(!calls.iter().any(|args| args
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "action" || v == "agent-session-prepare")));
+}
+#[test]
+fn partial_preparation_readback_is_not_complete_but_retains_the_original_native_identity() {
+    let rig = Rig::new();
+    fs::write(
+        rig.root.join("override.json"),
+        r#"{"prepared":false,"resume_preparation_allowed":true}"#,
+    )
+    .unwrap();
+    assert!(rig.call(Rig::prepare()).is_err());
+    let partial = rig
+        .call(Request::Find {
+            request_id: "request-12345678".into(),
+        })
+        .unwrap();
+    assert_eq!(partial["prepared"], false);
+    assert_eq!(partial["agent_session"], "agent-session/native");
+    assert!(!rig.calls().iter().any(|args| args
+        .as_array()
+        .unwrap()
+        .iter()
+        .any(|v| v == "encounter")));
+    for patch in [
+        json!({"prepared":false,"resume_preparation_allowed":false}),
+        json!({"prepared":false,"resume_preparation_allowed":true,"project_ref":"project:foreign"}),
+        json!({"prepared":false,"resume_preparation_allowed":true,"request_id":"another"}),
+        json!({"prepared":false,"resume_preparation_allowed":true,"provider_started":true}),
+    ] {
+        fs::write(rig.root.join("override.json"), patch.to_string()).unwrap();
+        assert!(rig
+            .call(Request::Find {
+                request_id: "request-12345678".into()
+            })
+            .is_err());
+    }
 }

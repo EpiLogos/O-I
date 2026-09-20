@@ -44,8 +44,9 @@ const VIEW_HEAD:Record<SettingsView,{label:string;line:string}> = {
 export function SettingsPageV2() {
   const kernel = useKernel();
   const {transport} = kernel;
-  const [view,setView] = useState<SettingsView>(agentSetupSnapshot()?"system":"settings");
-  useEffect(()=>{const target=()=>setView("system");window.addEventListener(AGENT_SETUP_EVENT,target);return()=>window.removeEventListener(AGENT_SETUP_EVENT,target);},[]);
+  const [view,setView] = useState<SettingsView>("settings");
+  const [agentTarget,setAgentTarget]=useState(agentSetupSnapshot()?.destination);
+  useEffect(()=>{const target=()=>{setAgentTarget(agentSetupSnapshot()?.destination);setView("settings");};window.addEventListener(AGENT_SETUP_EVENT,target);return()=>window.removeEventListener(AGENT_SETUP_EVENT,target);},[]);
   const [reading,setReading] = useState<CompositionReading>();
   const [pending,setPending] = useState(false);
   const [error,setError] = useState<string>();
@@ -112,7 +113,7 @@ export function SettingsPageV2() {
       {RAIL.map(item=><button key={item.id} aria-pressed={view===item.id} title={item.hint} onClick={()=>setView(item.id)}>{item.label}</button>)}
     </nav>
     <div className="settings-page-head"><h2>{head.label}</h2></div>
-    {view==="settings"&&<SettingsHome census={reading}/>}
+    {view==="settings"&&<SettingsHome census={reading} target={agentTarget}/>}
     {view==="system"&&<SystemHome
       reading={reading}
       nativeMounts={nativeMounts}

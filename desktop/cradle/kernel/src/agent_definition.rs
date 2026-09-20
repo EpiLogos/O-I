@@ -9,6 +9,8 @@ use std::path::Path;
 #[serde(tag = "action", rename_all = "kebab-case", deny_unknown_fields)]
 pub enum Request {
     Roster,
+    Scope,
+    Skills,
     Propose {
         name: String,
         purpose: String,
@@ -68,6 +70,8 @@ pub fn execute(
     let mut input = scoped(project);
     match request {
         Request::Roster => owner(client, "agent-profile.roster", input),
+        Request::Scope => aikit.direct_agent(cwd, "agent-session-scope", None),
+        Request::Skills => aikit.direct_agent(cwd, "agent-session-skills", None),
         Request::Propose {
             name,
             purpose,
@@ -171,8 +175,12 @@ pub fn execute(
                 Some(("--request-id", request_id)),
             )?;
             if !prepared.is_null() {
-                validate_prepared(&prepared, None, request_id)?;
-                verify_attachment(aikit, cwd, &prepared)?;
+                validate_preparation(&prepared, None, request_id, true)?;
+                if prepared["prepared"] == true {
+                    verify_attachment(aikit, cwd, &prepared)?;
+                } else {
+                    verify_scope(aikit, cwd, &prepared)?;
+                }
             }
             Ok(prepared)
         }
@@ -183,8 +191,18 @@ pub fn validate_prepared(
     profile: Option<&str>,
     request_id: &str,
 ) -> Result<(), String> {
+    validate_preparation(value, profile, request_id, false)
+}
+fn validate_preparation(
+    value: &Value,
+    profile: Option<&str>,
+    request_id: &str,
+    allow_partial: bool,
+) -> Result<(), String> {
+    let legitimate_partial =
+        allow_partial && value["prepared"] == false && value["resume_preparation_allowed"] == true;
     if value["schema"] != "aikit.direct-agent-session/v1"
-        || value["prepared"] != true
+        || (value["prepared"] != true && !legitimate_partial)
         || value["provider_started"] != false
         || value["execution_authority_granted"] != false
         || value["request_id"].as_str() != Some(request_id)
@@ -202,13 +220,17 @@ pub fn validate_prepared(
     }
     Ok(())
 }
-fn verify_attachment(aikit: &agency::Client, cwd: &Path, prepared: &Value) -> Result<(), String> {
+fn verify_scope(aikit: &agency::Client, cwd: &Path, prepared: &Value) -> Result<(), String> {
     let scope = aikit.direct_agent(cwd, "agent-session-scope", None)?;
     if scope["schema"] != "aikit.direct-agent-scope/v1"
         || scope["project_ref"] != prepared["project_ref"]
     {
         return Err("Prepared session belongs to another native Project binding".into());
     }
+    Ok(())
+}
+fn verify_attachment(aikit: &agency::Client, cwd: &Path, prepared: &Value) -> Result<(), String> {
+    verify_scope(aikit, cwd, prepared)?;
     let rows = aikit.read_project(
         cwd,
         prepared["project_ref"]
