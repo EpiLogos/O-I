@@ -20,10 +20,7 @@ import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarMode
 import {publishCentreView} from "./contributions/factory/desk/deskModel";
 import {GroupPane} from "./surface/Workbench";
 import {centreBindingOf, ModeCentreBody, StageCentreMark, warmWorkspaceTrees} from "./surface/retention";
-<<<<<<< HEAD
 import type {HostedAppState} from "./expressions/hostedApp";
-=======
->>>>>>> origin/main
 import {FactoryNavigator} from "./surfaces/navigator/FactoryNavigator";
 /**
  * The Cradle root (U0.3b + U0.4 + U0.6). One layout state, persisted to
@@ -1363,7 +1360,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // living in THAT MODE'S OWN TREE (surface/retention.tsx centreBindingOf).
   // The slot mounts the body directly — no adoption, no DOM move — so a
   // mode round trip flips visibility and the hosted application keeps its
-<<<<<<< HEAD
   // document and in-memory state. A centre opened outside its own mode's
   // tree is pane-tab-presented: the pane's own wrapper mounts the body in
   // place (surface/retention.tsx, spec §7.1 — the park is retired).
@@ -1400,12 +1396,6 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if(!callback){callback=(state:HostedAppState)=>writeEngineCheckpoint(bindingId,state);engineCallbacks.current.set(bindingId,callback);}
     return callback;
   },[writeEngineCheckpoint]);
-=======
-  // document and in-memory state. The park keeps only pane-tab-presented
-  // centres (a centre opened outside its own mode's tree).
-  const stageCentres=STAGE_MODES.map(stageMode=>({mode:stageMode,binding:centreBindingOf(workspace.current,mode,stageMode)}));
-  const modeCentreBinding=stageCentres.find(centre=>centre.mode===mode)?.binding;
->>>>>>> origin/main
   // Owner ruling 2026-09-19 (portal prerequisites): the dedicated stage
   // stands while the mode's tree carries ONLY its centre. The moment the
   // tree holds any other surface — a knowledge page opened from Instrument
@@ -1515,15 +1505,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       {stageCentres.map(({mode: stageMode, binding}) => {
         const presented = stageMode === mode && !!binding;
         return (
-<<<<<<< HEAD
           <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode={stageMode} data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
             {binding && <StageCentreMark binding={binding} presented={presented}/>}
             {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps} onHostedState={engineCallbackFor(binding.id)}/>}
-=======
-          <div key={`mode-stage-${stageMode}`} className="mode-stage" data-mode-stage={stageMode} data-window-corner="true" hidden={!presented || undefined}>
-            {binding && <StageCentreMark binding={binding} presented={presented}/>}
-            {binding && <ModeCentreBody key={binding.id} binding={binding} subject={workspace.current.context?.subject} factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}/>}
->>>>>>> origin/main
           </div>
         );
       })}
