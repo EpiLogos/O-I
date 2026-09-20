@@ -13,53 +13,46 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
-          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-      - name: Receive exact authored corrections and local acceptance checks
+      - name: Receive the authored compact-pane correction and evidence gate
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
           set -euo pipefail
-          for sha in b3cf387bf79b9cb69b9471d67428c82f7876aafa 357e7aa654b991fa79cb035ee3cd6b5d648474c7; do
-            gh api "repos/$GITHUB_REPOSITORY/git/blobs/$sha" --jq .content | base64 --decode >> /tmp/w1-manifest.gz
-          done
-          gzip -dc /tmp/w1-manifest.gz > /tmp/w1-manifest.json
-          echo '60fae28114c90ca0849e50585e52950ec546da3e9211cd86bca4c74dc08c81a0  /tmp/w1-manifest.json' | sha256sum --check
+          gh api "repos/$GITHUB_REPOSITORY/git/blobs/f13e0baa6362822fe2b09200e1df379fd671d908" --jq .content | base64 --decode | gzip -dc > /tmp/w1-manifest.json
+          echo 'be9f3919c92d5b76745d36940a9def082b73401cdeddc8ecd8b138fb480abe22  /tmp/w1-manifest.json' | sha256sum --check
           python3 - <<'PY'
           import hashlib, json
           from pathlib import Path
-          manifest = json.loads(Path('/tmp/w1-manifest.json').read_text())
-          assert len(manifest) == 9
-          pending = []
+          manifest=json.loads(Path('/tmp/w1-manifest.json').read_text())
+          assert len(manifest)==8
+          pending=[]
           for change in manifest:
-              path = Path(change['path'])
+              path=Path(change['path'])
               assert not path.is_absolute() and '..' not in path.parts and not path.is_symlink()
-              assert str(path).startswith(('desktop/cradle/src/', 'desktop/cradle/tests/'))
-              before = path.read_bytes() if path.exists() else None
-              assert (hashlib.sha256(before).hexdigest() if before is not None else None) == change['before'], f'Changed basis: {path}'
-              lines = (before or b'').decode().splitlines(keepends=True)
-              for start, end, text in reversed(change['edits']):
-                  lines[start:end] = text.splitlines(keepends=True)
-              after = ''.join(lines).encode()
-              assert hashlib.sha256(after).hexdigest() == change['after'], f'Invalid result: {path}'
-              pending.append((path, after))
-          for path, after in pending:
-              path.parent.mkdir(parents=True, exist_ok=True)
+              assert str(path).startswith(('desktop/cradle/src/','desktop/cradle/tests/'))
+              before=path.read_bytes() if path.exists() else None
+              assert (hashlib.sha256(before).hexdigest() if before is not None else None)==change['before'], f'Changed basis: {path}'
+              lines=(before or b'').decode().splitlines(keepends=True)
+              for start,end,text in reversed(change['edits']): lines[start:end]=text.splitlines(keepends=True)
+              after=''.join(lines).encode()
+              assert hashlib.sha256(after).hexdigest()==change['after'], f'Invalid result: {path}'
+              pending.append((path,after))
+          for path,after in pending:
+              path.parent.mkdir(parents=True,exist_ok=True)
               path.write_bytes(after)
-          Path('/tmp/w1-paths.txt').write_text('\n'.join(str(p) for p, _ in pending) + '\n')
+          Path('/tmp/w1-paths.txt').write_text('\n'.join(str(p) for p,_ in pending)+'\n')
           PY
           git diff --check
-      - name: Typecheck and test before committing
+      - name: Typecheck and executable state and evidence regressions
         working-directory: desktop/cradle
         run: |
           npm ci --no-audit --no-fund
           npx tsc --noEmit
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs tests/configuration-setup.test.mjs tests/local-shell-acceptance.test.mjs
-          node --check tests/local-shell-acceptance.mjs
-          node --check tests/local-audio-acceptance.mjs
-      - name: Commit readable corrections on this PR only
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/shell-recovery.test.mjs tests/mode-workspaces.test.mjs tests/configuration-setup.test.mjs tests/local-shell-acceptance.test.mjs tests/verify-shell-evidence.test.mjs
+      - name: Commit readable corrections only to this PR
         env:
           EXPECTED_HEAD: ${{ github.event.pull_request.head.sha }}
         run: |
@@ -72,10 +65,10 @@ jobs:
           git diff --cached --name-only | sort > /tmp/w1-staged.txt
           sort /tmp/w1-paths.txt > /tmp/w1-expected.txt
           diff -u /tmp/w1-expected.txt /tmp/w1-staged.txt
-          git commit -m 'fix(shell): give retained centres one visible presenter and add native acceptance checks'
+          git commit -m 'fix(shell): follow the visible compact pane and verify browser evidence identities'
           git push origin "HEAD:refs/heads/$branch"
           git rev-parse HEAD
-      - name: Build production and install browser engines
+      - name: Build production and install actual browser engines
         working-directory: desktop/cradle
         run: |
           npm run build
@@ -85,19 +78,23 @@ jobs:
         continue-on-error: true
         working-directory: desktop/cradle
         run: node tests/shell-recovery.browser.mjs
-      - name: Exercise responsive existing setup forms
+      - name: Exercise responsive setup
         id: setup
         continue-on-error: true
         working-directory: desktop/cradle
         run: node tests/shell-setup.browser.mjs
-      - name: Exercise actual preferences and existing appearance
+      - name: Exercise themes and existing appearance
         id: visuals
         continue-on-error: true
         working-directory: desktop/cradle
         run: |
           node tests/visuals-preview-lifecycle.mjs
           node tests/desktop-appearance.mjs
-      - name: Preserve failures and captures
+      - name: Independently require complete current receipts
+        if: always()
+        working-directory: desktop/cradle
+        run: node tests/verify-shell-evidence.mjs
+      - name: Preserve original failures and exact-source captures
         if: always()
         uses: actions/upload-artifact@v4
         with:
@@ -106,9 +103,9 @@ jobs:
             desktop/cradle/tests/artifacts/shell-recovery
             desktop/cradle/tests/artifacts/shell-setup
             desktop/cradle/tests/artifacts/visuals-preferences
+            desktop/cradle/tests/artifacts/shell-evidence.json
             desktop/cradle/walk/artifacts/ui-convergence
-          if-no-files-found: warn
-      - name: Require every acceptance check
+      - name: Also require every process result
         if: always()
         env:
           SHELL_RESULT: ${{ steps.shell.outcome }}
