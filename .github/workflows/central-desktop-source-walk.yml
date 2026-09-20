@@ -27,6 +27,8 @@ jobs:
           path: native-central
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: clippy
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
@@ -50,7 +52,10 @@ jobs:
           sha256sum "$RUNNER_TEMP/w2-proof/ctrl" "$RUNNER_TEMP/w2-proof/oi" "$RUNNER_TEMP/w2-proof/walk-bridge" > "$RUNNER_TEMP/w2-proof/binaries.txt"
       - name: All desktop kernel regressions
         if: always()
-        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked -- --nocapture 2>&1 | tee "$RUNNER_TEMP/w2-proof/kernel-tests.log"
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets -- --nocapture 2>&1 | tee "$RUNNER_TEMP/w2-proof/kernel-tests.log"
+      - name: Strict desktop kernel lint
+        if: always()
+        run: cargo clippy --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets -- -D warnings 2>&1 | tee "$RUNNER_TEMP/w2-proof/kernel-lint.log"
       - name: Desktop dependencies
         id: deps
         if: always()
@@ -63,7 +68,7 @@ jobs:
       - name: Targeted Central behavioural regressions
         if: always() && steps.deps.outcome == 'success'
         working-directory: desktop/cradle
-        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/central-ground.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/central-node.log"
+        run: node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/central-ground.test.mjs tests/central-save-order.test.mjs 2>&1 | tee "$RUNNER_TEMP/w2-proof/central-node.log"
       - name: Existing repository Node regressions
         if: always() && steps.deps.outcome == 'success'
         working-directory: desktop/cradle
