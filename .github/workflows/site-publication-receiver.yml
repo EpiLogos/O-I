@@ -1,0 +1,51 @@
+name: Public publication receiver
+
+on:
+  push:
+    branches: [site/publication-receiver-20260920]
+    paths: ['site/**', '.github/workflows/site-publication-receiver.yml']
+  pull_request:
+    paths: ['site/**', 'shared-field/**', '.github/workflows/site-publication-receiver.yml']
+
+permissions:
+  contents: read
+
+concurrency:
+  group: site-publication-receiver-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  receiver:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the existing public build dependencies
+        working-directory: site
+        run: npm install --no-audit --no-fund
+      # Temporary tracked-source transfer for the network-isolated editing sandbox.
+      # No Git credentials, runtime stores, user home or untracked source is archived.
+      - name: Transfer exact tracked source and dependency bytes for local regression
+        run: |
+          mkdir -p /tmp/receiver-transfer
+          git rev-parse HEAD > /tmp/receiver-transfer/HEAD.txt
+          git archive --format=tar HEAD site packages desktop docs shared-field scripts tests .wayfinder .github | gzip > /tmp/receiver-transfer/source.tgz
+          tar -czf /tmp/receiver-transfer/dependencies.tgz site/node_modules site/package-lock.json
+      - uses: actions/upload-artifact@v4
+        with:
+          name: receiver-development-source-${{ github.sha }}
+          path: /tmp/receiver-transfer/
+          retention-days: 1
+          if-no-files-found: error
+      - name: Existing source and native publication regressions
+        working-directory: site
+        run: node --test library.test.mjs publication.test.mjs public-content.test.mjs ../shared-field/expression-projection.test.mjs
+      - name: Build the production public edition
+        working-directory: site
+        run: npm run build:public
