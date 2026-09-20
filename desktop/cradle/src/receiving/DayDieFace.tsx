@@ -32,7 +32,22 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
   session.active=true;
   return()=>{session.active=false;const held=snapshot.current;if(held){clearTimeout(held.timer);held.reject(new Error("Day view closed before snapshot"));snapshot.current=undefined;}};
  },[session]);
- useEffect(()=>{session.observe({sourceRef,documentId,revision,payload,fields});refresh();},[session,revision]);
+ useEffect(()=>{
+  const previous=session.basis.revision;
+  session.observe({sourceRef,documentId,revision,payload,fields});
+  // Clean external rereads update the actual original editor, not just its
+  // save basis. Dirty/pending frames retain their draft and explicit conflict.
+  if(session.basis.revision!==previous&&!session.blocked&&shell.current){
+   const next=projectDieDocument(shell.current,session.basis.payload);
+   if(next){setFace(next);setDirty(false);setReview(undefined);}
+   else setFailure("The retained original form cannot project this native revision");
+  }
+  refresh();
+ },[session,revision]);
+ useEffect(()=>{
+  const warn=(event:BeforeUnloadEvent)=>{if(session.edited||session.draft!==undefined||session.busy){event.preventDefault();event.returnValue="";}};
+  window.addEventListener("beforeunload",warn);return()=>window.removeEventListener("beforeunload",warn);
+ },[session]);
  useEffect(()=>{
   let alive=true;setFace(undefined);setFailure(undefined);setReview(undefined);setDirty(false);
   (async()=>{
@@ -93,7 +108,7 @@ export function DayDieFace({payload,revision,sourceRef,documentId,fields,project
    const value=await receiving(kernel.transport,project,{kind:"document",source_ref:sourceRef,document_id:documentId});
    if(session.active)setReview(validateDocumentBasis(value,sourceRef,documentId));
   }catch(error){if(session.active)setMessage(String(error));}
-  finally{if(session.active)setPending(false);}
+  finally{if(session.active){setPending(false);}}
  };
  const discardToReview=()=>{
   if(!review||!shell.current)return;
