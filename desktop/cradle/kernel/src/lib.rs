@@ -39,6 +39,7 @@ pub mod knowledge;
 pub mod shared_field;
 pub mod action;
 pub mod configuration;
+pub mod setup;
 pub mod graph;
 pub mod encounter;
 pub mod agency;
@@ -183,6 +184,7 @@ pub struct Kernel {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "op", rename_all = "snake_case")]
 pub enum KernelOp {
+    Setup { request: serde_json::Value },
     BeingEncounter { request: being::Request },
     Expression { request: expression::Request },
     /// Pull the whole kernel state (read model; emits nothing).
@@ -426,6 +428,7 @@ pub struct KernelOpOutcome {
 #[derive(Clone, Debug, Deserialize, PartialEq, Serialize)]
 #[serde(tag = "result", rename_all = "snake_case")]
 pub enum KernelOpResult {
+    SetupReading { data: serde_json::Value },
     BeingEncounter { data: serde_json::Value },
     Expression { data: serde_json::Value },
     State { snapshot: KernelSnapshot },
@@ -706,6 +709,12 @@ impl Kernel {
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
                 let (plans,errors)=configuration::Client::discover().plan(&cwd,&requests);
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigPlanned{plans,errors}})
+            },
+            KernelOp::Setup {request} => {
+                // First installation must work before Central/root discovery.
+                let cwd=std::env::current_dir().map_err(|e|e.to_string())?;
+                let data=setup::Client::discover().request(&cwd,&request)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SetupReading{data}})
             },
             KernelOp::ConfigApply {requests} => {
                 let root=self.world_map(false).ok();
