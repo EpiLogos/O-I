@@ -14,6 +14,42 @@ on:
 permissions:
   contents: read
 jobs:
+  source-snapshot:
+    if: github.event_name == 'push'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - name: Recover exact native sources (not installation or acceptance)
+        run: |
+          mkdir -p /tmp/agent-source/native
+          while read -r repo revision; do
+            mkdir -p "/tmp/agent-source/native/$repo"
+            curl --fail --silent --show-error --location "https://codeload.github.com/EpiLogos/$repo/tar.gz/$revision" | tar xz --strip-components=1 -C "/tmp/agent-source/native/$repo"
+            printf '%s\n' "$revision" > "/tmp/agent-source/native/$repo/source-revision.txt"
+          done <<'PINS'
+          Central 12ee31313e710378845baae190efc1a4b3e7ebdb
+          ai-kit 37994265f5727af50ec6446687ed629dde047412
+          Actuation 47f4fa3c184850e254ef5089696bf5fbbad907ec
+          PINS
+          git rev-parse HEAD > /tmp/agent-source/source-revision.txt
+          python3 - <<'PY'
+          import pathlib, subprocess, tarfile
+          paths = subprocess.check_output(['git','ls-files','-z']).decode().split('\0')
+          with tarfile.open('/tmp/agent-continuation-source.tar.gz','w:gz') as out:
+              out.add('/tmp/agent-source/source-revision.txt', arcname='source-revision.txt')
+              out.add('/tmp/agent-source/native', arcname='native')
+              for path in paths:
+                  if path and pathlib.Path(path).is_file() and path.endswith(('.md','.rs','.toml','.lock','.json','.ts','.tsx','.mjs','.js','.css','.yml','.yaml','.html','.sh','.py','.c','.h')):
+                      out.add(path)
+          PY
+      - uses: actions/upload-artifact@v4
+        with:
+          name: agent-continuation-source
+          path: /tmp/agent-continuation-source.tar.gz
+          retention-days: 3
   native-consumers:
     runs-on: ubuntu-latest
     timeout-minutes: 20
