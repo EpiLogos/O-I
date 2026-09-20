@@ -120,6 +120,25 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const kernel = useKernel();
   const leader = useSearchLeader();
   const [searchOpen,setSearchOpen] = useState(false);
+  // The macOS traffic lights are the ONLY thing that earns the window-controls
+  // reserve (its corner cutouts and the header's left offset): Tauri on a Mac,
+  // and not fullscreen — the system hides the lights there, and the reserve
+  // then gives the corner's space back. "Is Tauri" alone reserved phantom
+  // lights on Linux; the platform guess alone never watched fullscreen. The
+  // optimistic start is Mac-native-true; the first sync corrects it.
+  const [windowLights,setWindowLights]=useState(() => kernel.transport.kind==="tauri" && /Mac|iPhone|iPad/.test(navigator.platform));
+  useEffect(() => {
+    if (kernel.transport.kind !== "tauri" || !/Mac|iPhone|iPad/.test(navigator.platform)) { setWindowLights(false); return; }
+    let disposed = false; let cleanup: (() => void) | undefined;
+    void import("@tauri-apps/api/window").then(async ({ getCurrentWindow }) => {
+      const appWindow = getCurrentWindow();
+      const sync = () => { if (disposed) return; void appWindow.isFullscreen().then(full => { if (!disposed) setWindowLights(!full); }).catch(() => {}); };
+      const unlisten = await appWindow.onResized(sync);
+      sync();
+      if (disposed) unlisten(); else cleanup = unlisten;
+    }).catch(() => {});
+    return () => { disposed = true; cleanup?.(); };
+  }, [kernel.transport.kind]);
   // The ONE Library (library/): O:I Web is the connective field, not a mode —
   // so the Library is summoned over whatever mode you are in and scoped by
   // it. Once opened it stays mounted (hidden) so a return lands on the same
@@ -1439,7 +1458,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   return (
     <>
       <ExpressionLayout layout={state}/>
-      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         factoryCentre={factoryCentre} factoryTasks={factoryCentreProps}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}

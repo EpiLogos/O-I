@@ -20,6 +20,11 @@ interface Props {
   onRecover:()=>void;
   onToggleNavigator: () => void; onCloseNavigator: () => void;
   native: boolean; arrangementActions: ReactNode;
+  /** The macOS traffic lights are actually present: Tauri on a Mac AND not
+   * fullscreen (the system hides them there). Only this condition earns the
+   * window-controls reserve — its corner cutouts and the header's left
+   * offset — never "is Tauri" alone, and never a static platform guess. */
+  windowLights?: boolean;
   /** The workspace mode. One shell serves every mode: the mode changes what
    * the three regions are curated to show, never the shell, the pane system
    * or the sessions inside them. The mode strip itself lives at the World
@@ -274,7 +279,7 @@ export function DesktopShell(p: Props) {
   // as a broken counter, not a state. Name it, matching the reference
   // vocabulary's "1 group" / "Focused view" register.
   const groupCount = groupsOf(l.root).length;
-  return <div ref={host} className="desktop-shell" data-native={p.native} data-mode={p.mode} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
+  return <div ref={host} className="desktop-shell" data-native={p.native} data-window-lights={p.windowLights ? "true" : undefined} data-mode={p.mode} data-workspace-id={p.workspace.id} style={{"--desktop-left-target":`${leftWidth}px`,"--desktop-right-target":`${rightWidth}px`} as React.CSSProperties}>
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
