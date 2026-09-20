@@ -74,7 +74,17 @@ try{
      if(reference){receipt.checks.push({originalCorner:await page.locator(visible+' [data-window-corner="true"]').evaluateAll(ns=>ns.map(n=>n.dataset.groupId))});return;}
      await corner(page,'upper-right');
      const sep=page.getByRole('separator',{name:'Resize canvas split'}).first();await sep.focus();const old=await sep.getAttribute('aria-valuenow');await sep.press('ArrowRight');assert.notEqual(await sep.getAttribute('aria-valuenow'),old);await corner(page,'upper-right');
+     // The actual app boots under StrictMode. Observe the coalesced write
+     // BEFORE pagehide can flush it; otherwise reload masks a dead autosave
+     // timer after effect cleanup/replay. Then prove that same split restores.
+     const resized=await sep.getAttribute('aria-valuenow');
+     await page.waitForFunction(expected=>{
+      const book=JSON.parse(localStorage.getItem('oi-cradle.workspaces.v1'));
+      const root=book.workspaces.find(w=>w.id===book.active)?.layout.root;
+      return root?.id==='horizontal'&&Math.round(100*root.weights[0]/(root.weights[0]+root.weights[1]))===Number(expected);
+     },resized);
      await page.reload();await page.locator(visible+' [data-group-id="upper-right"]').waitFor();await corner(page,'upper-right');
+     assert.equal(await page.getByRole('separator',{name:'Resize canvas split'}).first().getAttribute('aria-valuenow'),resized,'the durable split restores, not the original seed');
      await page.locator(visible+' [data-group-id="lower-right"] [role="tab"]').click();await page.keyboard.press('Control+Alt+Enter');await corner(page,'lower-right');
      await page.keyboard.press('Escape');await corner(page,'upper-right');
      await page.keyboard.press('Control+Alt+Enter');await page.keyboard.press('Control+w');await page.locator(visible+' [data-group-id="lower-right"]').waitFor({state:'detached'});await corner(page,'upper-right');

@@ -18,7 +18,8 @@ export function receiptIdentity(driver) {
 export function validateReceipt(receipt, expectedCount, identity) {
   assert.equal(receipt.passed,true,'receipt itself must pass');
   assert.equal(receipt.checks?.length,expectedCount,'every declared case must execute');
-  assert.deepEqual(receipt.failures??receipt.errors??[],[],'original failures must remain a red gate');
+  assert.deepEqual(receipt.failures??[],[],'original failures must remain a red gate');
+  assert.deepEqual(receipt.errors??[],[],'errors cannot be hidden by an empty failures array');
   if(identity) {
     assert.equal(receipt.sourceClean,true,'production and test sources must be committed, not an unrecorded working copy');
     assert.equal(receipt.sourceRevision,identity.sourceRevision,'receipt must name the tested source');
