@@ -1,0 +1,17 @@
+.wiki-reader { position:relative; line-height:1.65; overflow-wrap:anywhere; }
+.wiki-reader-tools { display:flex; flex-wrap:wrap; align-items:start; gap:1rem; margin-bottom:1rem; font-size:.82rem; }
+.wiki-reader-tools summary { cursor:pointer; }.wiki-reader-tools nav { display:flex; flex-direction:column; padding:.4rem 0; max-height:16rem; overflow:auto; }
+.wiki-reader a,.wiki-inline-link { color:var(--oi-focus); text-decoration:underline; text-underline-offset:.16em; }
+.wiki-prose p { margin:.85em 0; white-space:normal; }.wiki-prose h1,.wiki-prose h2,.wiki-prose h3 { line-height:1.25; margin:1.25em 0 .45em; }
+.wiki-prose ul,.wiki-prose ol { padding-left:1.5em; }.wiki-prose blockquote { margin:1em 0; padding:.25em 1em; border-left:2px solid var(--oi-relation); color:var(--oi-muted); }
+.wiki-prose pre { overflow:auto; padding:1em; border:1px solid var(--oi-relation); border-radius:.35rem; white-space:pre; }
+.wiki-prose code { font-family:var(--oi-font-mono,monospace); font-size:.9em; }.wiki-literal-html { white-space:pre-wrap; }
+.wiki-table { overflow:auto; }.wiki-table table { border-collapse:collapse; width:100%; }.wiki-table th,.wiki-table td { text-align:left; border-bottom:1px solid var(--oi-relation); padding:.4rem .7rem; }
+.wiki-inline-link { border:0; background:none; cursor:pointer; padding:0; font:inherit; text-align:inherit; display:inline; }
+.wiki-inline-link[data-link-state=unresolved],.wiki-inline-link[data-link-state=ambiguous] { text-decoration-style:dotted; }
+.wiki-link-mark { font-size:.75em; margin-left:.2em; }.wiki-tags { display:flex; flex-wrap:wrap; gap:.4rem; color:var(--oi-muted); }
+.wiki-reader [data-wiki-anchor] { scroll-margin-top:1rem; }.wiki-reader [tabindex="-1"]:focus { outline:none; }
+.wiki-selection-tools { position:sticky; bottom:.5rem; z-index:8; display:flex; flex-wrap:wrap; align-items:center; gap:.5rem; padding:.6rem; background:var(--oi-canvas-ground); color:var(--oi-foreground); border:1px solid var(--oi-relation); border-radius:.5rem; }
+.wiki-selection-tools span { font-size:.8rem; max-width:15rem; overflow:hidden; text-overflow:ellipsis; white-space:nowrap; }
+.wiki-link-preview { position:sticky; bottom:.5rem; padding:.8rem; max-height:18rem; overflow:auto; border:1px solid var(--oi-relation); border-radius:.5rem; background:var(--oi-canvas-ground); z-index:7; font-size:.85rem; }
+.wiki-link-preview header { display:flex; justify-content:space-between; gap:1rem; }.wiki-link-preview p { white-space:pre-wrap; }.wiki-backlinks { margin-top:1.8rem; border-top:1px solid var(--oi-relation); padding-top:.7rem; font-size:.9rem; }.wiki-backlinks blockquote { margin:.3rem 0 .8rem; font-size:.85rem; color:var(--oi-muted); }
