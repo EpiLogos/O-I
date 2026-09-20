@@ -1,3 +1,4 @@
+import {withRetainedField} from "../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs";
 import {TransportState} from '../../src/engine/transportState';
 import {stateSource} from './sourceState';
 import {PointCloudField} from '../../src/engine/PointCloudField';
@@ -14,7 +15,7 @@ import type {EngineFrame,FieldEngineAdapter,EngineCommand} from './engine';
 const mix=(a:number,b:number,t:number)=>a+(b-a)*t;
 function color(a:string,b:string,t:number){return '#'+new Color(a).lerp(new Color(b),t).getHexString();}
 /** Production engine adapter. Only PointCloudField integrates physics and time. */
-export class ProductionAdapter implements FieldEngineAdapter {
+class EmbeddedProductionAdapter implements FieldEngineAdapter {
  readonly capabilities={name:'Native particle field',kind:'production' as const,parameters:[...NATIVE_BINDINGS.map(p=>p.key),...MATERIAL_KEYS,'grain'],physicalResonance:true,runtimeCheckpoints:false,exactSeek:false,
  notes:['GPU particle dynamics and continuous modal resonance. One simulation clock.','10 formations / 8 pins. Configuration saves are not runtime checkpoints.','Live video and native-resolution PNG. Offline controlled clip rendering is not available.']};
  private engine:PointCloudField|null=null;
@@ -22,6 +23,18 @@ export class ProductionAdapter implements FieldEngineAdapter {
  private dirty=false;private signature='';private sceneId='';private target:PointCloudConfig|null=null;
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
  private evaluated:PointCloudConfig|null=null;private applied:PointCloudConfig|null=null;private sources=new Map<string,string>();private sourceStatus:Record<string,string>={};
+ private nativeDomain=false;
+ private nativeConfigs=new WeakMap<PointCloudConfig,PointCloudConfig>();
+ setNativeDomain(active:boolean){this.nativeDomain=active;this.applied=null;this.dirty=true;}
+ private nativeConfig(config:PointCloudConfig):PointCloudConfig{
+  if(!this.nativeDomain)return config;
+  let result=this.nativeConfigs.get(config);
+  if(!result){result={...config,cymatics:config.cymatics?{...config.cymatics,enabled:false}:undefined,
+   toroidalMorph:config.toroidalMorph?{...config.toroidalMorph,enabled:false,autoOscillate:false}:undefined,
+   automations:config.automations?.filter(l=>!l.path.startsWith('cymatics.')&&!l.path.startsWith('toroidalMorph.'))};
+   this.nativeConfigs.set(config,result);}
+  return result;
+ }
  private contextLost=false;private seedRecoveredSources=false;private restoredClock=false;
  private lost=(event:Event)=>{event.preventDefault();this.contextLost=true;this.dirty=true;};
  constructor(readonly canvas:HTMLCanvasElement){canvas.addEventListener('webglcontextlost',this.lost);}
@@ -60,7 +73,7 @@ export class ProductionAdapter implements FieldEngineAdapter {
  render(frame:EngineFrame){
   this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
-  const config=this.configuration(frame);
+  const config=this.nativeConfig(this.configuration(frame));
   if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   if(config!==this.applied)this.syncSources(frame.scene);this.applied=config;
@@ -104,8 +117,9 @@ export class ProductionAdapter implements FieldEngineAdapter {
  capture(width:number,height:number){this.assertCaptureReady();if(!this.engine)throw new Error('No rendered field yet');return this.engine.renderImage(width,height);}
  inspect(readParticles=false){return this.engine?.inspectState(readParticles);}
  projectNative(point:{x:number;y:number;z:number}){return this.engine?.projectWorldToScreen(point.x*WORLD_SCALE,point.y*WORLD_SCALE,point.z*WORLD_SCALE);}
- stations(){const current=this.engine?.getCymaticStations();if(current?.length)return current;const r=new CymaticResonator();r.configure({baseFrequency:this.target?.cymatics?.baseFrequency??40,plateSize:this.target?.cymatics?.plateSize??700});return r.getAnchors().map(a=>({id:a.id,index:a.index,name:`Mode ${a.m}:${a.n}`,frequencyHz:a.frequencyHz,m:a.m,n:a.n,color:'#888888'}));}
+ stations(){if(this.nativeDomain)return [];const current=this.engine?.getCymaticStations();if(current?.length)return current;const r=new CymaticResonator();r.configure({baseFrequency:this.target?.cymatics?.baseFrequency??40,plateSize:this.target?.cymatics?.plateSize??700});return r.getAnchors().map(a=>({id:a.id,index:a.index,name:`Mode ${a.m}:${a.n}`,frequencyHz:a.frequencyHz,m:a.m,n:a.n,color:'#888888'}));}
  command(command:EngineCommand){
+  if(this.nativeDomain&&['recover-context','reset-field','reset-phases'].includes(command.type))throw new Error('Native follow holds resident continuity; disconnect before a destructive presentation reset.');
   if(command.type==='recover-context'){
    this.engine?.destroy();this.engine=null;this.applied=null;this.target=null;this.from=null;this.signature='';this.sources.clear();this.sourceStatus={};this.contextLost=false;this.dirty=true;return;
   }
@@ -125,3 +139,5 @@ export class ProductionAdapter implements FieldEngineAdapter {
  }
  dispose(){this.canvas.removeEventListener('webglcontextlost',this.lost);this.engine?.destroy();this.engine=null;}
 }
+
+export const ProductionAdapter = withRetainedField(EmbeddedProductionAdapter, WORLD_SCALE);
