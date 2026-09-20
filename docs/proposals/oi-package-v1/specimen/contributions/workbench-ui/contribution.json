@@ -1,0 +1,35 @@
+{
+  "schema": "oi.native-source-contribution/v1",
+  "owner": "example-works",
+  "candidate": "specimen-0000000000000000000000000000000000000000",
+  "entry": "contributions/workbench-ui/src/index.ts",
+  "runtime_exports": [
+    "WorkbenchPanel"
+  ],
+  "props_type": "Record<string, never>",
+  "native_view_type": "ExampleWorkbenchView",
+  "styles": [
+    "contributions/workbench-ui/src/workbench.css"
+  ],
+  "files_sha256": {
+    "contributions/workbench-ui/src/WorkbenchPanel.tsx": "cbd62cc60b700bb65289f4252a200cff4e9db8156f608ec9f2438acf338fd51c",
+    "contributions/workbench-ui/src/workbench.css": "c106743d6621c5ac44dfadbf4ea4ff166d6080aec58f5cd04866d249aa158a6a",
+    "contributions/workbench-ui/src/index.ts": "bba287d2ca2613b52bc43fa064bbeb0924c608fb98a9cecd656d066506a8ae81"
+  },
+  "peer_dependencies": {
+    "react": "^19.0.0"
+  },
+  "authority": "Specimen: renders nothing, touches no host state, requests no native operation.",
+  "tests": {
+    "component_tests": 0,
+    "typecheck": true,
+    "isolation": {
+      "css_selectors_scoped": 1,
+      "runtime_exports": [
+        "WorkbenchPanel"
+      ],
+      "react_external": true,
+      "types": true
+    }
+  }
+}

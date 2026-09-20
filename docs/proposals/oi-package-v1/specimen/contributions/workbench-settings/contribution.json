@@ -1,0 +1,22 @@
+{
+  "schema": "oi.configuration-contribution/v1",
+  "contract_revision": "configuration-plane/contribution.1",
+  "about": "Specimen settings disclosure: declares presence and reference only; every field reads writable:false because the specimen owns no settings.",
+  "owner": {
+    "owner_ref": "com.example.workbench/settings",
+    "owner_kind": "package-contribution",
+    "owner_version": "1.0.0",
+    "contribution_command": ["echo", "specimen has no live contribution verb"],
+    "disclosure_schema": "oi.product-settings-disclosure/v2"
+  },
+  "availability": { "state": "available", "reason": null },
+  "degradations": [],
+  "obligations": [
+    "The specimen declares no settings values; it demonstrates the composition of a configuration contribution into a package."
+  ],
+  "operations": {
+    "apply": { "availability": "disclosed", "reason": null },
+    "plan": { "availability": "disclosed", "reason": null },
+    "reset": { "availability": "refused", "reason": "specimen owns no settings to reset" }
+  }
+}

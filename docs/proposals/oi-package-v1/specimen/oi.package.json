@@ -1,0 +1,34 @@
+{
+  "schema": "oi.package/v1",
+  "id": "com.example.workbench",
+  "version": "1.0.0",
+  "owner": {
+    "name": "Example Works",
+    "provenance": "specimen; no signature"
+  },
+  "host_compatibility": {
+    "cradle_contract": ">=7",
+    "tested_host": "6539b266"
+  },
+  "contributions": [
+    {
+      "kind": "native-source-contribution",
+      "manifest": "contributions/workbench-ui/contribution.json"
+    },
+    {
+      "kind": "configuration-contribution",
+      "document": "contributions/workbench-settings/contribution.json"
+    }
+  ],
+  "files_sha256": {
+    "contributions/workbench-settings/contribution.json": "1aa6222058dc6b5a44630058d7b2252b4069b527192b68491855e1fc8afd034d",
+    "contributions/workbench-ui/contribution.json": "0ff36931dc86d6ec555240f841b80e24b5799545f1d07321127a6c78c41a4900",
+    "contributions/workbench-ui/src/WorkbenchPanel.tsx": "cbd62cc60b700bb65289f4252a200cff4e9db8156f608ec9f2438acf338fd51c",
+    "contributions/workbench-ui/src/index.ts": "bba287d2ca2613b52bc43fa064bbeb0924c608fb98a9cecd656d066506a8ae81",
+    "contributions/workbench-ui/src/workbench.css": "c106743d6621c5ac44dfadbf4ea4ff166d6080aec58f5cd04866d249aa158a6a"
+  },
+  "authority": "Specimen: carries two inert documents; loads nothing, renders nothing, mutates nothing.",
+  "trust": {
+    "reviewed": false
+  }
+}
