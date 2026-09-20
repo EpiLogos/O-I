@@ -6,6 +6,30 @@ This set locks the intent of the desktop into durable documentation. It is
 written from the founding positions and the native product visions of the six
 centres — from what the system is *for*.
 
+## Wiki and constellation development — 20 September 2026
+
+The owner has clarified a joined creative practice: first-class linked Markdown
+and an ordinary Wiki without mandatory QL; editable, contextual constellations
+made over that source field; actual 3D Expression/Technè composition and shared
+agent work; native Return of QL relationships, compositions and artifacts into
+the same discoverable field. This is not two Wikis or a read-only graph converter.
+
+Read in this order:
+
+1. [Product decisions WC01–WC15 and their reasons](../positions/WIKI-CONSTELLATION-PRACTICE.md).
+2. [Human and agent UX spine extension](../experience/WIKI-CONSTELLATION-UX.md).
+3. [Joined Wiki/Technè development Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md).
+4. [Implementation specification](WIKI-CONSTELLATION-SPEC.md).
+
+[Architecture §6](02-ARCHITECTURE.md#6-three-state-responsibilities--native-work-retained-resources-presentation)
+now names native authoritative work, retained kernel loading/resources and
+presentation separately. An older no-cache comment does not prohibit the
+existing third-layer continuity work. The new campaign source module attaches
+fifteen decision obligations to the existing stories; it does not create a new
+UX family or certify implementation. Reconcile the incoming pushed mains and
+preserve newer local work. Existing Technè mode, Stage, native ownership and
+#65/C0–C5 programmes remain in place.
+
 ## Reading order
 
 | Document | What it fixes |
