@@ -76,14 +76,28 @@ interface WikiProjectionState {
   selection: WikiProjectionSelection;
   request: WikiSelectionRequest | null;
   revision: number;
+  /** Presentation only, keyed by the stable surface binding; never source content. */
+  entries: Record<string, "home" | "field">;
 }
 
 const REGISTER_KEY_STORAGE = "oi-cradle.techne.m0-register.v1";
+const ENTRY_STORAGE = "oi-cradle.techne.m0-entry.v1";
+function retainedEntries(): Record<string, "home" | "field"> {
+  try {
+    const value: unknown = JSON.parse(window.localStorage.getItem(ENTRY_STORAGE) ?? "{}");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry === "home" || entry === "field"));
+  } catch { return {}; }
+}
+function retainedRegister(): string | null {
+  try { return window.localStorage.getItem(REGISTER_KEY_STORAGE); } catch { return null; }
+}
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause);
 
 let state: WikiProjectionState = {
   registers: [],
-  registerKey: (typeof window !== "undefined" ? window.localStorage.getItem(REGISTER_KEY_STORAGE) : null) ?? null,
+  registerKey: retainedRegister(),
+  entries: retainedEntries(),
   standings: {},
   selection: {registerKey: null, expressionRef: null, sceneRef: null, entityRef: null, subjectRef: null},
   request: null,
@@ -115,6 +129,16 @@ function selectionOf(registerKey: string, standing: RegisterStanding): WikiProje
     entityRef: entityRef ?? null,
     subjectRef: entity?.subject?.subject_ref ?? null,
   };
+}
+
+/** Explicit Home is not the same operation as restoring a working position.
+ * This belongs to the existing projection working model and stores only the
+ * viewer's entry choice, not another Expression or source cache. */
+export function setWikiEntry(surfaceId: string, entry: "home" | "field") {
+  if (!surfaceId.trim()) throw new Error("A Technē entry needs its surface binding");
+  if (state.entries[surfaceId] === entry) return;
+  mutate(current => ({entries: {...current.entries, [surfaceId]: entry}}));
+  try { window.localStorage.setItem(ENTRY_STORAGE, JSON.stringify(state.entries)); } catch { /* ref-only UI convenience */ }
 }
 
 // ---- registers -------------------------------------------------------------

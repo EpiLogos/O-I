@@ -76,6 +76,7 @@ import {
   ensureWikiProjection,
   getWikiProjectionState,
   setWikiProjectionRegister,
+  setWikiEntry,
   setWikiProjectionRegisters,
   useWikiProjectionState,
   wikiRegisterOwning,
@@ -125,7 +126,8 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
 
   // The entry face: instrument 0 opens ONTO the Epii expression; the whole
   // (the projection below) is entered from it — and returns.
-  const [faceOpen, setFaceOpen] = useState(true);
+  const faceOpen = (store.entries[binding.id] ?? "home") === "home";
+  const setFaceOpen = useCallback((open: boolean) => setWikiEntry(binding.id, open ? "home" : "field"), [binding.id]);
   const [error, setError] = useState<string | null>(null);
   const flowRef = useRef<string | null>(null);
 
@@ -269,7 +271,7 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
   const [stageError, setStageError] = useState<string | null>(null);
   const [ready, setReady] = useState(false);
   const [retry, setRetry] = useState(0);
-  const showing = visualsSnapshot.enabled && !!document;
+  const showing = visualsSnapshot.enabled && !!document && !faceOpen;
   const latest = useRef({document});
   latest.current = {document};
 
@@ -302,18 +304,24 @@ export function WikiExpressionBody({binding, subject}: {binding: SurfaceBinding;
   // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [showing, stage, retry, document?.expression_ref, faceOpen]);
 
-  // Re-present the same field on every document change; while the clock is
-  // held the still is LANDED (the Expressions surface's own two-frames law).
+  // Selection is editing decoration, not a new physical field. Only a
+  // material/scene change updates the configuration; focus uses the stage's
+  // existing selection seam without resetting particles, phase or camera.
+  const projectedConfig = useMemo(() => document ? expressionConfig(document) : null, [document]);
+  const materialKey = projectedConfig ? JSON.stringify(projectedConfig) : "";
   useEffect(() => {
     const standingPresentation = presentation.current;
     if (!standingPresentation || !ready || !document) return;
     try {
-      const apply = () => standingPresentation.updateConfig(expressionConfig(document), document.selection.scene_ref, document.selection.entity_ref ? [document.selection.entity_ref] : []);
-      apply();
-      standingPresentation.command({type: "reset-field"});
-      apply();
+      standingPresentation.updateConfig(projectedConfig!, document.selection.scene_ref, document.selection.entity_ref ? [document.selection.entity_ref] : []);
     } catch (cause) { setStageError(cause instanceof Error ? cause.message : String(cause)); }
-  }, [document, ready]);
+  // The key deliberately excludes document revision and focus. Every actual
+  // renderer parameter participates, including relations and body carriers.
+  // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [materialKey, document?.selection.scene_ref, ready]);
+  useEffect(() => {
+    if (ready && document) stage.focusSelection(document.selection.entity_ref ? [document.selection.entity_ref] : []);
+  }, [ready, document?.selection.entity_ref, stage]);
 
   if (!register) return null;
   // The owner-named open path for a wiki page: the frame's knowledge open

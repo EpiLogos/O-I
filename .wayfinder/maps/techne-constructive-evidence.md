@@ -6,7 +6,7 @@ Scope authority: [`techne-expression-mode.md`](techne-expression-mode.md), read 
 
 - Starting remote O:I main: `a222c8bdf46a7b2146084770b704dfbe83ce5027`; tree `05a0a8d301d59beb5b5e421f8d213a3083c41a1d`.
 - Integration branch: `codex/techne-constructive-field-20260920`.
-- Native owner mains: captured by the disposable source-runtime runner; exact pins will be entered after readback. No unmerged owner work is assumed available.
+- Native mains captured and read back by successful source-runtime run `35484923767`: QL-MEF `5970757e25532c7329f07f4819273155c4f3f135`; AIKit `99306d858c255fa258d8cc419b314a433d3f92a4`; Central `12ee31313e710378845baae190efc1a4b3e7ebdb`; Actuation `47f4fa3c184850e254ef5089696bf5fbbad907ec`. The O:I source archive is PR merge ref `1cc1b1b6dfab45703ddce5e1f31e1b889e4f178e` (production source still starting main; runner/ledger on head `960e0869`). No unmerged owner work is assumed available.
 - Execution: one parent, serial T1/T2/T3. No subagent spawn tool exposed. Single writer for shared shell/Stage/working-model integration. Coordination: O:I #375 comment 5747137198; broader #65/#220 standing retained.
 - No owner machines accessed or mutated. Direct sandbox GitHub cloning failed with DNS resolution error. GitHub API branch/file/tree/commit/PR writes and GitHub-hosted CI are available.
 
@@ -32,3 +32,11 @@ Evidence grades: **S** source inspection; **U** deterministic unit/contract; **N
 ## Restrictions / completion discipline
 
 All rows remain open until the operation and required evidence are recorded. The first ordinary-source constructive cut does not close the rest. No installed hardware, private corpus, live Agent/provider, SpaceTimeDB or human acceptance is inferred from fixture or CI success. New code and concrete failed operations will be recorded here as implementation proceeds.
+
+## Execution receipts — first repair batch
+
+- Source-runtime `35484923767` completed successfully: exact native-source archives, locked cradle install, integrated cradle build, existing Expression and knowledge correspondence tests. Artifact `10597113549` was read back into this disposable environment. This is **baseline**, not feature acceptance.
+- Production edits: `ProjectLensBody` always mounts the independent Epii/ground entrance; optional QL disclosure still belongs to its reading. `WikiProjectionStore` retains ref-only Home/field choice on the existing store, with guarded storage access. `WikiExpressionBody` does not acquire the field behind the face and no longer calls `reset-field` for every document/focus revision; focus uses the existing Stage selection operation.
+- Local `npm run build` passed. Existing `expression-engine.mjs`: 58 assertions passed; `knowledge-expression.mjs`: 20 passed. These remain **U**/build, not the new joined proof.
+- New `techne-entry-browser.mjs` mounts the production M0 body and actual providers without a selected Wiki, optional QL provider, Agent session or kernel transport. It checks the entrance through unavailable/loading/no-subject and explicit Home versus remount/reload. Local Chromium navigation refused with `net::ERR_BLOCKED_BY_ADMINISTRATOR`; no browser policy was altered. The same test is assigned to the disposable GitHub runner; its result is not yet claimed.
+- `.github/workflows/techne-remote-edit.yml` is a temporary, integration-branch-only patch transport for the DNS-isolated sandbox. It verifies original blobs using `git apply --index`, restricts paths and pushes without force. No main write or protection bypass. It must be removed before final delivery. A code delivery commit is not a test verdict; normal repository gates must run on its resulting head.
