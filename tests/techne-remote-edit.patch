@@ -1,1 +1,324 @@
-{"schema":"techne.branch-patch/v1","sha256":"722c128b25c1f0b8193adec7020e72707869f2648cedc309899d55422ae9e2da","patch_gzip_base64":"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xTcMxAJqkdIgynJAUmoxXMveqpphDpDPlVLXKWnpznDVUbUGdbsvXiUdCiyCJTNglagLWLBILmRcgXMJLWPtbLpCVavKSODcNUJRkfEsCgMbeDwDutMxUWLPJlJeBUULCFNrMkGOIWAhJBVRUcsXCvwyEhwnIUCHLIrwUJSTLjdWWcxKgfcjjHSrGmNEZWojKFJaSEjXRjuwaxVmUFwTFlQlScdlZaMFOWOPILMxUTdymsGUXDPaVSltLmooQscCEEYKLBNbhPrJnNJJDMaGYOLVDGBFiPYxUDxIPTNeZCqUEJMQEGTcXtFpgySAzpuDTlczHKfEdPLmUFdvISaGIHmdRRSfcuFOTGpOjOkVHfxrTpOPMqMdVuMHshcTuGeMmEkIcGXCuovCBkMrYYQUKACucxuAGHSuTyMCYpCbqiBQIESQaPVhoqsKGnZKFktETGHMKHEFhhAdMxMiFbCdjfPMUsUlFSBMHgDtJhCfQFlEzSdUCiqMBHRNJvaLVXKiotUHjdRDjrIjNvCZunmQlPOelZrsvIvCpMhnuRhPJtKoOMotJJElwRENECMxSOxOfhJlvCcqWYbTSvfSLtytncjhpzpVLoJnDRNXJcipYczMjvuMkPnvuBEBoAYYbDwwKUCioPAkwExLYqCejZZplGjKrNIhBZXjwCWqnmkDSybHJzQBhtmMYEjaCuQCMcWyEXGIaTKguePWHzOwSuMuyJVGYWOdGYCoawkuMJKyyhhRnJYasznBMgfesfFuIgASBTkFfIaSBnsRMWCZIumURNDlSlSJBvLHLAZKyWYMeLjJUOEYGeTWzRCSKwsNPFFDYdYSZAWULiNuDZGFrmTRNDtiPBQQScWWWKvOLNIEhzWfTuTRRTXAGpqIKKIMmvQGRZCOmnkLaSiSMWoISbmWMcqLMgmJVxyLyVAHTWSawSTWNMpysYCBoxSrhTDhyEsNOFVKPHSBBfdubFPFOYjknROakjcJCYelNvxiSCVhxSOdXAjZmgnIOqaWIYFOhZzWMFwdLacFiAQwtRuPyUMnFwUceFmkQBBnDavMCIOWYDIYRgLEFxrrOpSyDVDEzfGOAeFsWSiJvuQiMBUVoKSFpXarDiImvzQADRyMoMGCaygdRJlaiDEAcsiHVASyNlDxnoDSOfoBsijSuXXvqTcPivzOvLkpkFBtaFUgaXMjSHtwNxfklyrQdglEPQEYNIfTayEXBQktGjxPDIUHTdmlThHWqtFSVCttejkLdYOErIAFSXdINElFGIIehKQBVTIpvfgRYqlQCAUXmAJUvDJWCimXZqLBkxMAgNLkRbaWPVFuiBrYKMeUSGaACSNwnauXVDCvyNQTePNxQFMFRhxYOvgFsSqedqWrGMncfoMBrlJBAFLRgAFdlNOpuhLGizDPhYnfHQHIUIbALMvvcxUGpxZrhqqCVAhPJXEWDtjcnDqfDKFNMhWbPQMNvqbEuLwHufKhAfSPvnigXVHGKSSqxmWyuNGazXgiwGSgrcCGLOsAVoYYYCSTOxCugouTGiJQTiXMnlmxnaJCvFURuzMXrxowIiCKppcpAMyuubGoMFITkPiQYFgMUzuIJTaFALJkWpMzKWkbTccZhixUUpLJLpmMYCTUIEqYeEgKXXzMmfEMlRATJOATbyLTfTTfnAgSHdqMDSuhELdoXdTMOMhOhBOAMFtwnRDOnPAjFaUKdCWcrvrJVaMlSUHzCaOpROliEpAJztjAALHBJNKPQZZyhVHnoYYHJtLYIWUzxtrAacfHoIStCIukYVWUpQuLiPcZrzRSaxIjLySYQFYHYRcSiNiTuLXBrzSzBooKeogAA"}
+sha256 78b83aa483ca764a956bc809d5d0b4751fb441b22d07659feedb51208a8c78c0
+diff --git a/desktop/cradle/kernel/src/expression.rs b/desktop/cradle/kernel/src/expression.rs
+index b57b8ef39687d6a2a68a09f368c5b9105f07d4f9..3daf97dc6e3a76d1e6d3e2d3d8c9aae48bbf9887 100644
+--- a/desktop/cradle/kernel/src/expression.rs
++++ b/desktop/cradle/kernel/src/expression.rs
+@@ -108,2 +108,5 @@ pub struct Scene {
+ pub struct Relation {
++    /// Owner supplied by the native relation reading, never inferred from geometry.
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub native_owner: Option<String>,
+     pub binding_ref: String,
+@@ -136,2 +139,5 @@ pub struct Selection {
+     pub entity_ref: Option<String>,
++    /// Exact presentation occurrence of a native relation; exclusive with entity_ref.
++    #[serde(default, skip_serializing_if = "Option::is_none")]
++    pub relation_ref: Option<String>,
+ }
+@@ -236,2 +242,6 @@ pub enum Change {
+     },
++    RelationFocus {
++        scene_ref: String,
++        binding_ref: String,
++    },
+     ParameterSet {
+@@ -435,5 +445,6 @@ pub fn capabilities() -> Value {
+             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
+-        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
++        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
+-        "parameters":{"glyph":{"type":"string","max_length":128},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
++        "composition_budget":{"scenes":64,"entities":LIMIT,"scene_members":LIMIT,"render_formations":10,"render_pins":8},
++        "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
+         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
+@@ -500,2 +511,7 @@ pub(crate) fn bounds(key: &str) -> Option<(f64, f64)> {
+         "share" => Some((0., 1000.)),
++        "width" | "height" => Some((1., 1600.)),
++        "rotation" => Some((-std::f64::consts::TAU, std::f64::consts::TAU)),
++        "frequency" => Some((1., 20_000.)),
++        "force_strength" | "force_spin" => Some((-20., 20.)),
++        "force_radius" => Some((1., 1600.)),
+         _ => None,
+@@ -504,3 +520,19 @@ pub(crate) fn bounds(key: &str) -> Option<(f64, f64)> {
+ pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
+-    if key == "glyph" {
++    if matches!(key, "shape" | "kind" | "yantra" | "force_mode" | "ascii" | "image") {
++        if p.automation.is_some() { return Err("Text/material carrier automation is unsupported".into()); }
++        let value = p.value.as_str().ok_or("Material carrier must be text")?;
++        let valid = match key {
++            "shape" => matches!(value, "glyph" | "ring" | "disc" | "square" | "triangle" | "yantra" | "cymatic"),
++            "kind" => matches!(value, "formation" | "pin"),
++            "yantra" => matches!(value, "muladhara" | "svadhisthana" | "manipura" | "anahata" | "vishuddha" | "ajna" | "sahasrara"),
++            "force_mode" => matches!(value, "none" | "attract" | "repel" | "vortex"),
++            "ascii" => value.len() <= 32_768 && !value.chars().any(|c| c.is_control() && c != '\n' && c != '\r' && c != '\t'),
++            "image" => value.is_empty() || (value.len() <= 384 * 1024 &&
++                ["data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,"].iter()
++                    .any(|prefix| value.strip_prefix(prefix).is_some_and(|bytes|
++                        !bytes.is_empty() && bytes.len() % 4 == 0 && bytes.bytes().all(|b| b.is_ascii_alphanumeric() || b"+/=".contains(&b))))),
++            _ => false,
++        };
++        if !valid { return Err(format!("Invalid or unsupported {key} material")); }
++    } else if key == "glyph" {
+         if !p
+@@ -567,3 +599,3 @@ impl Document {
+             if unique.len() != s.entity_refs.len()
+-                || s.entity_refs.len() > 10
++                || s.entity_refs.len() > LIMIT
+                 || s.entity_refs.iter().any(|r| !self.entities.contains_key(r))
+@@ -634,2 +666,3 @@ impl Document {
+             reading(&r.relation)?;
++            if let Some(owner) = &r.native_owner { text(owner)?; }
+             readings(&r.provenance)?;
+@@ -655,2 +688,12 @@ impl Document {
+         }
++        if let Some(binding_ref) = &self.selection.relation_ref {
++            if self.selection.entity_ref.is_some() {
++                return Err("Select one entity or relation occurrence, not both".into());
++            }
++            let relation = self.relations.get(binding_ref).ok_or("Selected relation is absent")?;
++            if !scene.entity_refs.contains(&relation.from_entity_ref)
++                || !scene.entity_refs.contains(&relation.to_entity_ref) {
++                return Err("Selected relation endpoints are outside selected scene".into());
++            }
++        }
+         let mut representation_refs = BTreeSet::new();
+@@ -795,2 +838,5 @@ impl Document {
+                 }
++                if self.selection.relation_ref.as_ref().is_some_and(|r| !self.relations.contains_key(r)) {
++                    self.selection.relation_ref = None;
++                }
+             }
+@@ -808,2 +854,8 @@ impl Document {
+                 }
++                if self.selection.relation_ref.as_ref() == Some(&binding_ref) {
++                    self.selection.relation_ref = None;
++                }
++            }
++            Change::RelationFocus { scene_ref, binding_ref } => {
++                self.selection = Selection { scene_ref, entity_ref: None, relation_ref: Some(binding_ref) };
+             }
+@@ -816,2 +868,3 @@ impl Document {
+                     entity_ref,
++                    relation_ref: None,
+                 }
+@@ -934,2 +987,13 @@ impl Application {
+         let d = self.documents.get(expression_ref)?;
++        if let Some(relation) = d.selection.relation_ref.as_ref().and_then(|r| d.relations.get(r)) {
++            return Some(crate::refs::SemanticRef {
++                ref_id: relation.relation.r#ref.clone(),
++                kind: "relation".into(),
++                native_owner: relation.native_owner.clone().unwrap_or_else(|| "unknown".into()),
++                provenance: crate::refs::RefProvenance {
++                    source: relation.binding_ref.clone(),
++                    revision: Some(relation.relation.revision.clone()),
++                },
++            });
++        }
+         let entity = d
+@@ -1000,2 +1064,3 @@ impl Application {
+                         entity_ref: None,
++                        relation_ref: None,
+                     },
+@@ -1122,2 +1187,3 @@ impl Application {
+                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
++                d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
+                 d.representations.clear();
+diff --git a/desktop/cradle/kernel/src/expression_world.rs b/desktop/cradle/kernel/src/expression_world.rs
+index 4b7579a16139bd432166333dc813d49c007e2970..659338a40b3d6cf1cef5fcf06ca56926e20af32a 100644
+--- a/desktop/cradle/kernel/src/expression_world.rs
++++ b/desktop/cradle/kernel/src/expression_world.rs
+@@ -376,2 +376,3 @@ pub fn relation_bindings(
+         bindings.push(expression::Relation {
++            native_owner: None,
+             binding_ref: format!(
+@@ -1253,26 +1254,10 @@ impl Kernel {
+             .map_err(|e| format!("Expression document unreadable: {e}"))?;
+-        let mut target: Option<(String, String)> = None;
+-        for (entity_ref, entity) in &document.entities {
+-            if entity
+-                .subject
+-                .as_ref()
+-                .is_some_and(|b| b.subject_ref == subject_ref)
+-            {
+-                let scene_ref = document
+-                    .scenes
+-                    .iter()
+-                    .find(|s| {
+-                        s.scene_ref == document.selection.scene_ref
+-                            && s.entity_refs.contains(entity_ref)
+-                    })
+-                    .or_else(|| {
+-                        document
+-                            .scenes
+-                            .iter()
+-                            .find(|s| s.entity_refs.contains(entity_ref))
+-                    })
+-                    .map(|s| s.scene_ref.clone());
+-                if let Some(scene_ref) = scene_ref {
+-                    target = Some((entity_ref.clone(), scene_ref));
+-                    break;
++        // Preserve an exact current occurrence. A subject-only handoff must
++        // not silently select the first glyph or first scene with that subject.
++        let mut occurrences = Vec::new();
++        for scene in &document.scenes {
++            for entity_ref in &scene.entity_refs {
++                if document.entities.get(entity_ref).and_then(|e| e.subject.as_ref())
++                    .is_some_and(|b| b.subject_ref == subject_ref) {
++                    occurrences.push((entity_ref.clone(), scene.scene_ref.clone()));
+                 }
+@@ -1280,2 +1265,17 @@ impl Kernel {
+         }
++        let selected = document.selection.entity_ref.as_ref().and_then(|r| {
++            occurrences.iter().find(|(entity, scene)| entity == r && scene == &document.selection.scene_ref).cloned()
++        });
++        let in_scene: Vec<_> = occurrences.iter().filter(|(_, scene)| scene == &document.selection.scene_ref).cloned().collect();
++        let target = selected.or_else(|| {
++            if in_scene.len() == 1 { in_scene.first().cloned() }
++            else if occurrences.len() == 1 { occurrences.first().cloned() }
++            else { None }
++        });
++        if target.is_none() && occurrences.len() > 1 {
++            return Ok(json!({"state":"ambiguous_occurrence", "expression_ref":expression_ref,
++                "subject_ref":subject_ref, "occurrences":occurrences.iter().map(|(entity,scene)|
++                    json!({"entity_ref":entity,"scene_ref":scene})).collect::<Vec<_>>(),
++                "detail":"Select an exact scene occurrence; native subject identity is not occurrence identity"}));
++        }
+         let Some((entity_ref, scene_ref)) = target else {
+@@ -1401,2 +1401,3 @@ mod tests {
+                 entity_ref: None,
++                relation_ref: None,
+             },
+@@ -1459,2 +1460,3 @@ mod tests {
+                 entity_ref: None,
++                relation_ref: None,
+             },
+diff --git a/desktop/cradle/kernel/src/lib.rs b/desktop/cradle/kernel/src/lib.rs
+index 948813c59f83d3422783f795b5e146fd7a667691..6f798d2fb258bb1ec3505a226a504503c94f66ec 100644
+--- a/desktop/cradle/kernel/src/lib.rs
++++ b/desktop/cradle/kernel/src/lib.rs
+@@ -590,3 +590,3 @@ impl Kernel {
+                     expression::Request::Edit { expression_ref, changes, .. }
+-                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. })) => Some(expression_ref.clone()),
++                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. } | expression::Change::RelationFocus { .. })) => Some(expression_ref.clone()),
+                     _ => None,
+diff --git a/desktop/cradle/kernel/tests/expression.rs b/desktop/cradle/kernel/tests/expression.rs
+index 8f731b1165a515ef5ac79e54dc54d95a72f092b5..e39bdc5167999fc53de6f9effe4843f89b13fef9 100644
+--- a/desktop/cradle/kernel/tests/expression.rs
++++ b/desktop/cradle/kernel/tests/expression.rs
+@@ -542 +542,69 @@ fn unavailable_bindings_and_wrong_targets_cannot_invoke() {
+ }
++
++#[test]
++fn semantic_scene_keeps_more_than_the_ten_formation_render_budget() {
++    let mut app=Application::default(); create(&mut app);
++    let changes=Value::Array((0..18).map(|i| json!({"change":"entity_add","scene_ref":"expression:test:scene:main","entity_ref":format!("expression:test:entity:m{i}"),"title":format!("Member {i}")})).collect());
++    let data=edit(&mut app,1,changes);
++    assert_eq!(data["document"]["scenes"][0]["entity_refs"].as_array().unwrap().len(),18);
++    let mut fresh=Application::default();
++    let reopened=apply(&mut fresh,json!({"operation":"open","document":data["document"],"actor":"human:reopen"}));
++    assert_eq!(reopened["document"],data["document"]);
++    let mut invalid:Document=serde_json::from_value(data["document"].clone()).unwrap();
++    let duplicate=invalid.scenes[0].entity_refs[0].clone();
++    invalid.scenes[0].entity_refs.push(duplicate);
++    assert!(invalid.validate().is_err(),"duplicate membership is still rejected");
++}
++
++#[test]
++fn native_material_parameters_roundtrip_without_relaxing_source_safety() {
++    let mut app=Application::default();create(&mut app);edit(&mut app,1,json!([entity()]));
++    let changes=Value::Array([
++        ("shape",json!("triangle")),("kind",json!("formation")),("ascii",json!("A\n B")),
++        ("z",json!(80)),("width",json!(180)),("height",json!(240)),("rotation",json!(0.4)),
++        ("force_mode",json!("vortex")),("force_strength",json!(0.5)),("force_radius",json!(120))
++    ].into_iter().map(|(parameter,value)|json!({"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":parameter,"value":value})).collect());
++    let data=edit(&mut app,2,changes);
++    assert_eq!(data["document"]["entities"]["expression:test:entity:a"]["parameters"]["ascii"]["value"],"A\n B");
++    let before=data["document"].clone();
++    for (parameter,value) in [("image",json!("https://private.example/secret.png")),("image",json!("data:image/svg+xml;base64,PHN2Zz4=")),("ascii",json!("bad\u{0}text")),("shape",json!("script"))] {
++        let bad=request(json!({"operation":"edit","expression_ref":"expression:test","expected_revision":3,"actor":"agent:test","changes":[{"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":parameter,"value":value}]}));
++        assert!(app.apply(&CentralClient::discover(),bad).is_err());
++        assert_eq!(apply(&mut app,json!({"operation":"inspect","expression_ref":"expression:test"}))["document"],before);
++    }
++}
++
++#[test]
++fn relation_focus_preserves_exact_native_record_and_occurrence() {
++    let mut app = Application::default();
++    create(&mut app);
++    let relation = |id: &str, native: &str| json!({"change":"relation_bind","binding":{
++        "binding_ref":format!("expression:test:relation:{id}"),"native_owner":"ai-kit",
++        "relation":{"ref":native,"revision":"r8","availability":"available"},
++        "from_entity_ref":"expression:test:entity:a","to_entity_ref":"expression:test:entity:b","provenance":[]}});
++    edit(&mut app, 1, json!([entity(),
++        {"change":"entity_add","scene_ref":"expression:test:scene:main","entity_ref":"expression:test:entity:b","title":"B"},
++        relation("one","wiki:edge:one"),relation("two","wiki:edge:two"),
++        {"change":"scene_create","scene_ref":"expression:test:scene:empty","title":"Empty"},
++        {"change":"relation_focus","scene_ref":"expression:test:scene:main","binding_ref":"expression:test:relation:two"}]));
++    let selected = app.selected_subject("expression:test").unwrap();
++    assert_eq!(selected.ref_id,"wiki:edge:two");
++    assert_eq!(selected.native_owner,"ai-kit");
++    assert_eq!(selected.provenance.source,"expression:test:relation:two");
++    assert_eq!(selected.provenance.revision,Some("r8".into()));
++    let before = apply(&mut app,json!({"operation":"inspect","expression_ref":"expression:test"}));
++    assert_eq!(before["document"]["relations"].as_object().unwrap().len(),2);
++    assert_eq!(before["document"]["selection"]["entity_ref"],Value::Null);
++    for (scene,binding) in [("main","missing"),("empty","two")] {
++        let invalid=request(json!({"operation":"edit","expression_ref":"expression:test","expected_revision":2,"actor":"human:test",
++            "changes":[{"change":"relation_focus","scene_ref":format!("expression:test:scene:{scene}"),"binding_ref":format!("expression:test:relation:{binding}")}]}));
++        assert!(app.apply(&CentralClient::discover(),invalid).is_err());
++        assert_eq!(apply(&mut app,json!({"operation":"inspect","expression_ref":"expression:test"})),before);
++    }
++    let fork=apply(&mut app,json!({"operation":"fork","expression_ref":"expression:test","expected_revision":2,"new_expression_ref":"expression:fork","actor":"human:test"}));
++    assert_eq!(fork["document"]["selection"]["relation_ref"],"expression:fork:relation:two");
++    assert_eq!(fork["document"]["relations"]["expression:fork:relation:two"]["relation"]["ref"],"wiki:edge:two");
++    let removed=edit(&mut app,2,json!([{"change":"relation_remove","binding_ref":"expression:test:relation:two"}]));
++    assert!(removed["document"]["selection"]["relation_ref"].is_null());
++    assert!(removed["document"]["relations"]["expression:test:relation:one"].is_object());
++}
+diff --git a/desktop/cradle/kernel/tests/expression_world.rs b/desktop/cradle/kernel/tests/expression_world.rs
+index 7143a75ce783accf1a5cd256aef09166e88710b5..0d951b04ec0b28c7ebe4eee5bf22a052dc5ec67c 100644
+--- a/desktop/cradle/kernel/tests/expression_world.rs
++++ b/desktop/cradle/kernel/tests/expression_world.rs
+@@ -665 +665,24 @@ fn unknown_operations_and_fields_fail_closed() {
+ }
++
++#[test]
++fn subject_handoff_never_chooses_an_arbitrary_repeated_occurrence() {
++    let mut k=Kernel::discover();
++    bind_and_focus(&mut k);
++    k.apply(KernelOp::Expression { request: serde_json::from_value(json!({
++        "operation":"edit","expression_ref":"expression:lesson","expected_revision":2,"actor":"human:test",
++        "changes":[{"change":"entity_add","scene_ref":"expression:lesson:scene:main","entity_ref":"expression:lesson:entity:b","title":"Second occurrence"},
++        {"change":"subject_bind","entity_ref":"expression:lesson:entity:b","binding":{"subject_ref":SUBJECT,"native_owner":"ai-kit","presentation_role":"thing","sources":[],"readings":[],"actions":[]}}]
++    })).unwrap() }).unwrap();
++    let selected=world(&mut k,json!({"operation":"selection_set","origin":"graph","subject_ref":SUBJECT,
++        "kind":"wiki-node","native_owner":"ai-kit","expression_ref":"expression:lesson"}));
++    assert_eq!(selected["expression"]["state"],"ambiguous_occurrence");
++    assert_eq!(selected["expression"]["occurrences"].as_array().unwrap().len(),2);
++    k.apply(KernelOp::Expression { request: serde_json::from_value(json!({
++        "operation":"edit","expression_ref":"expression:lesson","expected_revision":3,"actor":"human:test",
++        "changes":[{"change":"focus","scene_ref":"expression:lesson:scene:main","entity_ref":"expression:lesson:entity:b"}]
++    })).unwrap() }).unwrap();
++    let selected=world(&mut k,json!({"operation":"selection_set","origin":"graph","subject_ref":SUBJECT,
++        "kind":"wiki-node","native_owner":"ai-kit","expression_ref":"expression:lesson"}));
++    assert_eq!(selected["expression"]["state"],"focused");
++    assert_eq!(selected["expression"]["entity_ref"],"expression:lesson:entity:b");
++}
+diff --git a/desktop/cradle/src/expression/types.ts b/desktop/cradle/src/expression/types.ts
+index 9d78f8ec62afd3928ead997e58a2d30113bc1819..9c3c3b44a2dfa122ecf534d95a5f9ce337c647ed 100644
+--- a/desktop/cradle/src/expression/types.ts
++++ b/desktop/cradle/src/expression/types.ts
+@@ -23,3 +23,3 @@ export interface ProfileAdoption {profile_ref:string;revision:number;overridden_
+ export interface Scene {scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}
+-export interface Relation {binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
++export interface Relation {native_owner?:string;binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
+ export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"projection";representation:ReadingRef;provenance:ReadingRef[]}
+@@ -27,3 +27,3 @@ export interface RefinementDecision {state:"accepted"|"rejected";actor:string;re
+ export interface Refinement {proposal_ref:string;basis_revision:number;proposed_by:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[];decision:RefinementDecision|null}
+-export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
++export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
+ export type Change =
+@@ -36,2 +36,3 @@ export type Change =
+  | {change:"focus";scene_ref:string;entity_ref:string|null}
++ | {change:"relation_focus";scene_ref:string;binding_ref:string}
+  | {change:"parameter_set";entity_ref:string;parameter:string;value:string|number}
