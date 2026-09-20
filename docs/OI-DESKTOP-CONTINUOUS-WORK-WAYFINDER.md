@@ -438,3 +438,63 @@ provider/model identity, microphone permission/playback and independent human
 acceptance retain their separate obligations. Both installable self-inhabiting
 technology and the complete native published corpus remain required; this increment
 closes neither whole-programme outcome by test count.
+
+### W2 interruption recovery, executed result and remaining local obligations
+
+The reviewable stack is Central #201 (`c4bb3605d233426600bdb462832e8ed55ac712b4`),
+O:I #430, then its explicitly dependent A/editor host patch #432. None is merged
+or installed by this remote lane. The dependent patch preserves source/rendered
+Day drafts, canonical Day detection, protected raw source and actual root
+breadcrumbs; it does not rewrite CradleFrame, workspace state or editor commands.
+
+Parent production repair `3a9a85ec6e5fc417c0c4549d1424bbe23cbd8342` fixes a
+reproduced Save failure: native JSON object key ordering is not changed content.
+Recursive JSON value comparison accepts reordered objects while still refusing
+changed array order, missing keys, type changes and contradictory nested values.
+The six added ordering tests were 2-pass/4-fail before repair, unchanged and all
+passing afterwards. Unknown/partial acknowledgement still preserves the draft
+and blocks replay. Strict lint was repaired by deleting the unused root-fallback
+helper, not disabling the lint or changing authority.
+
+**Executed parent cut:** #430 head `ac4116bfd1e835946a07d6cc77678a5a6527ca3b`,
+test-merge `eb5bf1842eed36e5d5090e955d6b716512c02634`, pinned Central head above.
+Joined run **35522182800** passed; downloaded artifact **10608238655**, SHA-256
+`55bd49e508ac465d3fa259d05a23abb06eccac21816ab583f2fc32f497008559`.
+Its retained logs establish 17 real native source-walk checks, 41 focused Node
+checks, 234 repository Node checks at that test-merge, production build, strict
+kernel lint and original-form Save/reopen in both Chromium and WebKit. The
+head-only local Node suite has 170 cases; keep those different cuts distinct.
+Kernel owner-gated ignores remain recorded rather than counted as passes.
+The original Daily Die remains hash
+`c8e81e8a03ce526ab1421908d5e45054fb1d76ea9a19572989061c7c8822bd64`;
+all seventeen original fields and supplied body/media survive native Save.
+Test Return correlations are native receiving records in controlled Worlds,
+not an assertion of live Factory/model-produced work.
+
+The earlier browser Save failure in run35507667218 and strict-lint failure in
+run35507667197 remain historical evidence. A separate shared-shell workflow
+run35522182757 failed on missing shell-recovery.browser.mjs,
+shell-setup.browser.mjs and verify-shell-evidence.mjs: its newer workflow checks
+out the older PR head rather than the same test-merge source. This exact
+workflow/test-source mismatch is returned to W1/A on #375 comment5751075459.
+W2 did not create dummy tests, ignore those failures or take the shared file.
+
+**Local packet receipt binding.** Each explicitly reviewed argv driver now
+receives `OI_CENTRAL_ACCEPTANCE_CONTEXT` (JSON: fresh nonce, check name and
+exact ctrl/oi binary hashes) and `OI_CENTRAL_ACCEPTANCE_RECEIPT` (new output
+path). Write the observation there, echoing those three basis fields and
+adding `observed`, `test_only` and nonempty `evidence_refs`. These references
+name retained local evidence, not private bodies copied into the portable
+summary. A stale/wrong-check/wrong-binary receipt fails. Test-only, unperformed
+or unsupported reports remain pending. Eight executable admission regressions
+are in `tests/test_central_local_acceptance.py`; they are not live Mac tests.
+Driver reports remain attributable reports, not independent verification or
+human acceptance. Default execution remains read-only and performs no model
+prompt, audio activation, installation or remote connection.
+
+The local integrator still owns review/merge, exact combined build/install/
+running receipt, native Mac input/IME/back/reopen, real-provider/Factory Return
+and microphone permission/capture/playback observations. Required same-work
+lineage must be returned to these PRs; no fake Factory ancestry on Direct work.
+Full source-backed corpus/publication and genuinely self-inhabiting installed
+technology remain both required programme outcomes, not closed by this slice.
