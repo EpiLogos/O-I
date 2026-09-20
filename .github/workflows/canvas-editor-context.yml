@@ -2,56 +2,49 @@ name: Canvas editor and context
 on:
   push:
     branches: [agent/canvas-editor-context-20260920]
-    paths: ['scripts/canvas-editor-return.b64']
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/**'
+      - 'desktop/cradle/tests/canvas-editor*'
+      - 'desktop/cradle/kernel/**'
+      - 'desktop/cradle/package*.json'
+      - '.github/workflows/canvas-editor-context.yml'
 permissions:
   contents: read
+concurrency:
+  group: canvas-editor-${{ github.ref }}
+  cancel-in-progress: true
 jobs:
   canvas:
-    if: github.ref == 'refs/heads/agent/canvas-editor-context-20260920'
     runs-on: ubuntu-latest
     timeout-minutes: 25
-    permissions:
-      contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Apply exact bounded source return
-        shell: python
-        run: |
-          from pathlib import Path
-          import base64, lzma, hashlib, subprocess
-          payloads=[Path('scripts/canvas-editor-return.part1'),Path('scripts/canvas-editor-return.part2'),Path('scripts/canvas-editor-return.b64')]
-          patch=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in payloads),validate=True))
-          assert hashlib.sha256(patch).hexdigest()=='72b53776ab5ef85d5bee722e51e2e462844601bfbe2a060dd193f4324bcdf201'
-          paths=[]
-          for line in patch.decode().splitlines():
-              if line.startswith('+++ b/'):
-                  path=line[6:]
-                  assert '..' not in path.split('/')
-                  assert path.startswith(('desktop/cradle/src/editor/','desktop/cradle/src/context/','desktop/cradle/src/material/','desktop/cradle/tests/canvas-editor')) or path in {
-                      'desktop/cradle/src/files/FileSurface.tsx','desktop/cradle/src/browser/BrowserSurface.tsx',
-                      'desktop/cradle/src/agent/planes/ContextPlane.tsx','desktop/cradle/src/encounter/client.ts','desktop/cradle/src/encounter/session.ts',
-                      'desktop/cradle/kernel/src/agency.rs','desktop/cradle/src-tauri/src/browser.rs',
-                      'desktop/cradle/package.json','desktop/cradle/package-lock.json',
-                      'docs/OI-DESKTOP-CRADLE-REBUILD-WAYFINDER.md','.wayfinder/maps/canvas-editor-context.md',
-                      '.superpowers/sdd/cradle-rebuild/progress.md','docs/experience/DOCUMENT-OPERATIONS.md'
-                  },path
-                  paths.append(path)
-          assert len(paths)==38
-          subprocess.run(['git','apply','--index','--unidiff-zero','-'],input=patch,check=True)
-          for p in payloads:
-              p.unlink()
-              subprocess.run(['git','add',str(p)],check=True)
-          subprocess.run(['git','diff','--cached','--check'],check=True)
-          subprocess.run(['git','-c','user.name=O:I canvas implementation','-c','user.email=noreply@openai.com','commit','-m','feat(canvas): join format-aware editing, natural selection and native prepared context'],check=True)
-          subprocess.run(['git','push','origin','HEAD:refs/heads/agent/canvas-editor-context-20260920'],check=True)
-      - name: Tested source identity
-        run: git rev-parse HEAD | tee source-head.txt
+        with:
+          persist-credentials: false
+          fetch-depth: 0
       - uses: actions/setup-node@v4
         with:
           node-version: '22'
+      - name: Tested source identity
+        run: git rev-parse HEAD | tee source-head.txt
       - name: Install locked dependencies
         working-directory: desktop/cradle
         run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Export bounded review inputs
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p /tmp/canvas-review
+          git diff --binary bfc674c529029b77036092891c5f1f52e6d389dd HEAD > /tmp/canvas-review/oi.patch
+          cp source-head.txt /tmp/canvas-review/
+          cp -a desktop/cradle/node_modules/marked /tmp/canvas-review/marked
+          tar -czf canvas-review.tar.gz -C /tmp/canvas-review .
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: canvas-review-inputs
+          path: canvas-review.tar.gz
+          retention-days: 1
       - name: Type and range/lifecycle contracts
         working-directory: desktop/cradle
         run: |
