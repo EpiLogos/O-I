@@ -25,10 +25,10 @@ export function SelectionResolution({project,expression}:{project?:string;expres
  };
  const count=(result?.hits.length??0)+(result?.rows.length??0);
  return <div className="context-resolution">
-  <button type="button" disabled={busy||!expression.trim()} onClick={()=>void resolve()}>{busy?"Resolving…":"Resolve expression"}</button>
+  <button type="button" className="oi-action" disabled={busy||!expression.trim()} onClick={()=>void resolve()}>{busy?"Resolving…":"Resolve expression"}</button>
   {error&&<p role="alert" className="oi-note">{error}</p>}
   {result&&<><p className="oi-note">{count} resolved references · preparation is unchanged</p>
-   <ul>{result.hits.slice(0,8).map((hit,index)=><li key={`${hit.resource}:${index}`}><span title={hit.resource}>{hit.label}</span> <small>{hit.provider}</small> <button type="button" disabled={busy} onClick={()=>void explain(hit.address)}>Explain</button></li>)}
+   <ul>{result.hits.slice(0,8).map((hit,index)=><li key={`${hit.resource}:${index}`}><span title={hit.resource}>{hit.label}</span> <small>{hit.provider}</small> <button type="button" className="oi-action" disabled={busy} onClick={()=>void explain(hit.address)}>Explain</button></li>)}
    {result.rows.slice(0,Math.max(0,8-result.hits.length)).map((row,index)=><li key={`${row.reference}:${index}`} title={row.reference}>{row.label} <small>{row.owner}</small></li>)}</ul>
    {count>8&&<p className="oi-note">Showing 8 of {count} references.</p>}
    {result.absences.map((absence,index)=><p className="oi-note" key={index}>{absence}</p>)}

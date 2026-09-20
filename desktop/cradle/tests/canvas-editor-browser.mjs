@@ -11,6 +11,11 @@ let source=original,revision='r1',draft={revision:0,text:''},sent=[],contexts=ne
 const template=readFileSync(root+'documents/ql-dialogue-flow.html','utf8');
 const docPattern=/<script type="application\/json" id="ql-doc">([\s\S]*?)<\/script>/;
 const flowDoc=JSON.parse(template.match(docPattern)[1]);flowDoc.meta.documentId='controlled-flow';flowDoc.entries=[1,2].map(i=>({id:'entry-'+i,author:'F',at:'2026-09-20',html:'<p>Repeated authored passage.</p>',replyTo:null,touched:false}));
+flowDoc.entries[0].html='<p><strong>Repeated authored passage.</strong> echo echo <a href="jav&#x0a;ascript:window.__flowUnsafe=true">Unsafe link</a><img src="https://example.invalid/private-tracker" onerror="window.__flowUnsafe=true"><svg onload="window.__flowUnsafe=true"></svg><script>window.__flowUnsafe=true</script></p>';
+flowDoc.entries[1].replyTo={entryId:'entry-1',anchor:'echo'};
+flowDoc.notes=[{id:'note-1',entryId:'entry-1',author:'F',anchor:'echo',text:'<em>Preserved note.</em>',replies:[{id:'note-reply',author:'H',text:'<strong>Preserved reply.</strong>'}]}];
+flowDoc.journal=[{id:'journal-1',at:'2026-09-20',html:'<p><em>Journal stays separate.</em></p>'}];
+flowDoc.media=[{id:'media-1',entry:'entry-1',name:'Retained file',mime:'application/octet-stream',data:'unchanged payload',caption:'<p>Authored caption.</p>'}];
 let flowSource=template.replace(docPattern,()=>'<script type="application/json" id="ql-doc">'+JSON.stringify(flowDoc)+'</script>');
 let flowRevision='f1';
 const flowReading=()=>({...reading(),content:flowSource,revision:flowRevision});
@@ -50,7 +55,7 @@ server.middlewares.use('/events',(_q,res)=>{res.setHeader('content-type','applic
 server.middlewares.use('/canvas-editor',async(_q,res)=>{res.setHeader('content-type','text/html');res.end(await server.transformIndexHtml('/canvas-editor','<body class="oi-desktop" style="margin:0"><script>window.__OI_KERNEL_BRIDGE__=location.origin</script><div id="root"></div><script type="module" src="/tests/canvas-editor-page.tsx"></script></body>'));});
 await server.listen();const url=`http://127.0.0.1:${server.httpServer.address().port}/canvas-editor`;
 const browser=await chromium.launch({headless:true,...(process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE?{executablePath:process.env.PLAYWRIGHT_CHROMIUM_EXECUTABLE}:existsSync('/usr/bin/chromium')?{executablePath:'/usr/bin/chromium'}:{})});
-const page=await browser.newPage({viewport:{width:1280,height:820}});const errors=[];page.on('pageerror',e=>errors.push(e.message));const checks=[];
+const page=await browser.newPage({viewport:{width:1280,height:820}});const requests=[];page.on('request',request=>requests.push(request.url()));const errors=[];page.on('pageerror',e=>errors.push(e.message));const checks=[];
 const check=(name,condition)=>{assert.ok(condition,name);checks.push(name);};
 try{
  await page.goto(url);await page.getByRole('tab',{name:'Source',exact:true}).click();await page.getByRole('textbox',{name:'Editing sample.md'}).waitFor();await page.waitForFunction(()=>window.canvasTest);
@@ -100,6 +105,11 @@ try{
  check('switched scope does not keep prepared highlights',await page.locator('.context-prepared-highlight').count()===0);
  // Flow uses the supplied HTML carrier and the production native file write path.
  await page.goto(url+'?flow');await page.getByRole('textbox',{name:'New entry',exact:true}).waitFor();
+ check('rich authored Flow entries are not flattened to text',await page.locator('[data-flow-entry="entry-1"] .flow-thread-body strong').textContent()==='Repeated authored passage.');
+ check('Flow notes and their replies retain their own rich bodies',await page.locator('[data-note-id="note-1"] em').textContent()==='Preserved note.'&&await page.locator('.flow-thread-note-reply strong').textContent()==='Preserved reply.');
+ check('duplicate reply/note anchors require review instead of choosing first',await page.locator('[data-note-anchor-state="ambiguous"]').count()===1&&await page.locator('[data-reply-state="ambiguous"]').count()===1);
+ await page.getByText('Journal pages (1)',{exact:true}).click();check('Journal remains a distinct rich collection',await page.locator('[data-journal-page="journal-1"] em').textContent()==='Journal stays separate.');
+ check('Flow preview cannot activate scripts, handlers, SVG or remote tracking media',!await page.evaluate(()=>window.__flowUnsafe)&&await page.locator('.flow-thread :is(script,svg,[onerror],[onload],[href^="javascript:"])').count()===0&&!requests.some(url=>url.includes('example.invalid/private-tracker')));
  await page.getByRole('textbox',{name:'New entry',exact:true}).fill('An unsaved Flow entry 🙂');
  await page.evaluate(()=>canvasTest.select(3,10));await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
  await page.locator('.prepared-context-item').waitFor();
@@ -115,6 +125,7 @@ try{
  await page.getByRole('button',{name:'Save · ⌘S',exact:true}).click();await page.waitForFunction(()=>canvasTest.document()==='');
  const savedDoc=JSON.parse(flowSource.match(docPattern)[1]);
  check('Flow save preserves document identity, existing entries and template bytes',savedDoc.meta.documentId==='controlled-flow'&&JSON.stringify(savedDoc.entries.slice(0,2))===JSON.stringify(flowDoc.entries)&&flowSource.replace(docPattern,'DATA')===template.replace(docPattern,'DATA'));
+ check('Flow save retains all notes, media, Journal and unknown payload bytes',JSON.stringify(savedDoc.notes)===JSON.stringify(flowDoc.notes)&&JSON.stringify(savedDoc.media)===JSON.stringify(flowDoc.media)&&JSON.stringify(savedDoc.journal)===JSON.stringify(flowDoc.journal));
  await page.reload();await page.locator('.flow-thread-entry').last().waitFor();check('Flow native save roundtrips the new entry',await page.locator('.flow-thread-entry').count()===3);
  await page.screenshot({path:out+'flow-context.png'});
  check('no page errors',errors.length===0);

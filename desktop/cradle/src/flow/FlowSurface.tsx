@@ -6,7 +6,8 @@ import {setContextCues,getContextCues} from "../context/selectionPresentation";
 import {useKernel} from "../kernel/KernelProvider";
 import type {SurfaceBinding} from "../surface/types";
 import {readFlowInstance,writeFlowInstance,type FlowInstance} from "./instances";
-import {appendEntry,htmlToText} from "./instance";
+import {appendEntry} from "./instance";
+import {FlowEntryBody,FlowRichBody} from "./FlowEntryBody";
 import {FlowCognition} from "./contemplate";
 import "./flow.css";
 
@@ -89,13 +90,9 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
  >
   {error&&<p role="alert" className="flow-error">{error}</p>}
   {loaded&&doc&&<ol className="flow-thread" aria-label="Document thread">
-    {doc.entries.map(entry=><li key={entry.id} className="flow-thread-entry" data-flow-entry={entry.id}>
-      <span className="flow-thread-who" data-flow-author={entry.author}>{entry.author}</span>
-      <span className="flow-thread-when">{entry.at}</span>
-      <div className="flow-thread-body">{threadParagraphs(entry.html)}</div>
-    </li>)}
+    {doc.entries.map(entry=><FlowEntryBody key={entry.id} entry={entry} entries={doc.entries} notes={doc.notes} media={doc.media}/>)}
   </ol>}
-  {loaded&&doc&&!!doc.journal.length&&<details className="flow-journal-note"><summary>Journal pages ({doc.journal.length})</summary><p>The document's journal pages travel inside the file; they render in the template's own Journal view.</p></details>}
+  {loaded&&doc&&!!doc.journal.length&&<details className="flow-journal-note"><summary>Journal pages ({doc.journal.length})</summary><p className="oi-note">Journal pages remain a distinct collection in this document.</p><ol className="flow-journal-pages">{doc.journal.map(page=><li key={page.id} data-journal-page={page.id}><time>{page.at}</time><div className="flow-thread-body"><FlowRichBody html={page.html}/></div></li>)}</ol></details>}
   {loaded?<TextEditor ref={input} binding={binding} filename="New entry" aria-label="New entry" value={text} readOnly={!loaded||busy||!!conflict} sourceRevision={instance?.revision} workingCopy onChange={change} onSave={()=>void save()} onAttach={attach}/>:<p className="flow-error" role="status">Opening the flow document…</p>}
   {conflict&&<div className="source-conflict" role="alert" data-conflict-kind="revision-conflict">
     <p className="source-conflict-title">revision conflict — the document moved while this surface was open</p>
@@ -105,7 +102,4 @@ export function FlowSurface({binding}:{binding:SurfaceBinding}){
   {loaded&&binding.flow&&<FlowCognition project={binding.project??null} flowRef={binding.flow.flowRef}/>}
 
  </EditorFrame>;
-}
-function threadParagraphs(html:string){
-  return htmlToText(html).split(/\n{2,}/).filter(p=>p.trim()).map((paragraph,i)=><p key={i}>{paragraph}</p>);
 }

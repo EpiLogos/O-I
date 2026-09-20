@@ -10,7 +10,9 @@ import {useEncounterSession} from '../src/encounter/session';
 import {ContextPlane} from '../src/agent/planes/ContextPlane';
 import '@epilogos/oi-design-system/tokens.css';
 import '@epilogos/oi-design-system/desktop.css';
+import '../src/rest.css';
 import '../src/cradle.css';
+import '../src/workspace/shell.css';
 import '../src/agent/agent.css';
 const sample={id:'sample',kind:'file' as const,ref:'central:source:sample.md',title:'sample.md',project:'demo',location:{root:'central',path:'Work/demo/sample.md',ref:'central:source:sample.md'}};
 const flowBinding={id:'flow',kind:'flow' as const,ref:'central:source:flow.html',title:'Flow.html',project:'demo',location:{root:'central',path:'Work/demo/flow.html',ref:'central:source:flow.html'}};
@@ -30,4 +32,5 @@ function Probe({withAgent}:{withAgent:boolean}){
  return <aside className="agent-layer" aria-label="Agent Context" style={{width:'310px',overflow:'auto',padding:'16px',boxSizing:'border-box'}}>{withAgent?<ContextPlane subject={subject} historyAvailable={false} accompanying={{project:'demo',ref:'agent-session/test',space:'session-space/test'}} session={session}/>:<PreparedContextView project="demo"/>}</aside>;
 }
 function App(){const [withAgent,setWithAgent]=useState(!location.search.includes('noagent'));return <KernelProvider><button id="toggle-agent" onClick={()=>setWithAgent(x=>!x)}>Toggle companion</button><main style={{display:'flex',height:'calc(100vh - 36px)',minHeight:0}}><div data-binding-id={binding.id} style={{flex:1,minWidth:0,display:'flex',flexDirection:'column'}}><>{binding.kind==="flow"?<FlowSurface binding={binding}/>:<FileSurface binding={binding}/>}</></div><Probe withAgent={withAgent}/></main><ContextTray bindings={{[binding.id]:binding}} accompanying={withAgent?{project:'demo',ref:'agent-session/test',space:'session-space/test'}:undefined}/></KernelProvider>;}
+document.getElementById('root')!.classList.add('desktop-shell');
 createRoot(document.getElementById('root')!).render(<App/>);
