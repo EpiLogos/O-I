@@ -1,9 +1,9 @@
 name: Technē bounded branch edit
 
 # Temporary delivery transport for the disconnected development sandbox.
-# It can write only this commission's integration branch, never main. The
-# patch's original blobs must match (`git apply --index`); a concurrent push
-# is refused by ordinary non-forced git push. Remove before final delivery.
+# It writes only this integration branch, never main. Original blobs must
+# match; concurrent changes fail an ordinary non-forced push. Remove before
+# final delivery. Workflow changes use the connected GitHub API, not this job.
 on:
   pull_request:
     paths: ['tests/techne-remote-edit.patch']
@@ -29,13 +29,22 @@ jobs:
         shell: bash
         run: |
           set -euo pipefail
-          test -f tests/techne-remote-edit.patch
-          git apply --check --index tests/techne-remote-edit.patch
-          git apply --index tests/techne-remote-edit.patch
+          python3 - <<'PY'
+          import base64, gzip, hashlib, io, json, os
+          envelope = json.load(open('tests/techne-remote-edit.patch'))
+          assert envelope['schema'] == 'techne.branch-patch/v1'
+          with gzip.GzipFile(fileobj=io.BytesIO(base64.b64decode(envelope['patch_gzip_base64'], validate=True))) as source:
+              patch = source.read(8 * 1024 * 1024 + 1)
+          assert len(patch) <= 8 * 1024 * 1024, 'patch budget exceeded'
+          assert hashlib.sha256(patch).hexdigest() == envelope['sha256'], 'patch digest mismatch'
+          open(os.environ['RUNNER_TEMP'] + '/techne.patch', 'wb').write(patch)
+          PY
+          git apply --check --index "$RUNNER_TEMP/techne.patch"
+          git apply --index "$RUNNER_TEMP/techne.patch"
           python3 - <<'PY'
           import subprocess
           paths = subprocess.check_output(['git', 'diff', '--cached', '--name-only', '-z']).decode().split('\0')
-          allowed = ('desktop/cradle/', 'packages/oi-design-system/', '.wayfinder/maps/techne-', '.github/workflows/techne-')
+          allowed = ('desktop/cradle/', 'packages/oi-design-system/', '.wayfinder/maps/techne-')
           for path in filter(None, paths):
               assert path.startswith(allowed), f'outside assigned implementation boundary: {path}'
               assert '/node_modules/' not in path, 'dependencies are not authored source'
