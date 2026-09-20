@@ -190,6 +190,12 @@ fn run(args: &[OsString]) -> Result<i32, String> {
         "docs" => command_docs(&catalog, &args[1..]),
         "migrate" => command_migrate(&catalog, &args[1..]),
         "catalogue" => command_catalogue(&args[1..]),
+        "skills" => match args.get(1).and_then(|value| value.to_str()) {
+            Some("sync") => command_skills_sync(),
+            _ => Err("'oi skills' only supports 'sync'. Usage: oi skills sync \
+                      (re-project the guardian SkillSet onto the existing ground)"
+                .to_owned()),
+        },
         "version" | "--version" | "-V" => {
             println!(
                 "oi {} ({})",

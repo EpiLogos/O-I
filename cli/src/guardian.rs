@@ -743,6 +743,46 @@ fn refresh_adopted_tree(
     adopt_foreign_tree(aikit, ground, skills_root, lines)
 }
 
+/// Which hand-off the pickup should drive for the `.claude/skills` tree,
+/// given each member's direct-projection state.
+#[derive(Clone, Copy, Debug, PartialEq, Eq)]
+enum PickupRoute {
+    /// No member is AIKit-managed: adopt the whole directly projected root.
+    AdoptDirectTree,
+    /// Every member is AIKit-managed and current: the adoption already
+    /// happened and nothing is stale.
+    SkipAdopted,
+    /// At least one AIKit-managed member differs from the authoritative
+    /// source: undo the recorded adoption, re-project and re-adopt.
+    RefreshManaged,
+    /// AIKit owns some members (all current) while the rest stay directly
+    /// projected. Whole-root adoption would refuse on AIKit's own symlinks;
+    /// the split is disclosed instead of forced to a single owner.
+    MixedOwnership,
+}
+
+/// Classify the pickup route from the projection's `.claude/skills`
+/// destinations. A destination is stale when it is AIKit-managed *and*
+/// carries a difference detail.
+fn pickup_route(destinations: &[&GuardianDestinationOutcome]) -> PickupRoute {
+    let managed = destinations
+        .iter()
+        .filter(|destination| destination.state == DirectProjectionState::AikitManaged)
+        .count();
+    let stale = destinations.iter().any(|destination| {
+        destination.state == DirectProjectionState::AikitManaged && destination.detail.is_some()
+    });
+    if managed == 0 {
+        PickupRoute::AdoptDirectTree
+    } else if stale {
+        PickupRoute::RefreshManaged
+    } else if managed == destinations.len() {
+        PickupRoute::SkipAdopted
+    } else {
+        PickupRoute::MixedOwnership
+    }
+}
+
 /// Hand the projected guardian SkillSet to AIKit, the suite's normal resolver:
 /// adopt the ground's `.claude/skills` tree into AIKit ownership (a digest
 /// bound Procedure driven to completion non-interactively), ensure the
@@ -755,39 +795,61 @@ pub fn aikit_pickup(
 ) -> Result<AikitPickupReport, String> {
     let skills_root = ground.join(".claude/skills");
 
-    // Once AIKit has adopted the tree it owns the harness-visible copies as
-    // store symlinks and refuses to re-survey them; the adopt step is then
-    // already complete — unless the authoritative guardian source has moved
-    // ahead of the managed copies, which takes the refresh cycle.
+    // Once AIKit has adopted a member it owns the harness-visible copy as
+    // store symlinks and refuses to re-survey it; adopting a root that still
+    // contains such a member therefore refuses on AIKit's own files. Route on
+    // the ownership split instead of the old binary all-or-nothing choice.
     let claude_destinations: Vec<&GuardianDestinationOutcome> = projection
         .outcomes
         .iter()
         .flat_map(|outcome| outcome.destinations.iter())
         .filter(|destination| destination.harness_root == ".claude/skills")
         .collect();
-    let tree_managed = claude_destinations
-        .iter()
-        .all(|destination| destination.state == DirectProjectionState::AikitManaged);
-    let stale_managed: Vec<&GuardianDestinationOutcome> = claude_destinations
-        .iter()
-        .filter(|destination| {
-            destination.state == DirectProjectionState::AikitManaged && destination.detail.is_some()
-        })
-        .copied()
-        .collect();
 
     let mut lines = Vec::new();
-    let adopted_capsules = if !tree_managed {
-        adopt_foreign_tree(aikit, ground, &skills_root, &mut lines)?
-    } else if stale_managed.is_empty() {
-        emit_pickup_line(
-            &mut lines,
-            "  aikit: guardian tree already adopted into AIKit ownership; adoption skipped"
-                .to_owned(),
-        );
-        Vec::new()
-    } else {
-        refresh_adopted_tree(aikit, ground, &skills_root, &mut lines)?
+    let adopted_capsules = match pickup_route(&claude_destinations) {
+        PickupRoute::AdoptDirectTree => {
+            adopt_foreign_tree(aikit, ground, &skills_root, &mut lines)?
+        }
+        PickupRoute::SkipAdopted => {
+            emit_pickup_line(
+                &mut lines,
+                "  aikit: guardian tree already adopted into AIKit ownership; adoption skipped"
+                    .to_owned(),
+            );
+            Vec::new()
+        }
+        PickupRoute::RefreshManaged => {
+            refresh_adopted_tree(aikit, ground, &skills_root, &mut lines)?
+        }
+        PickupRoute::MixedOwnership => {
+            // Some members are AIKit-managed (all current — any stale member
+            // routes to the refresh cycle), the rest stay directly projected.
+            // Whole-root adoption would refuse on AIKit's own symlinks, so
+            // name the split and change nothing: both kinds stay
+            // harness-visible, each under its owning product.
+            for destination in &claude_destinations {
+                if destination.state == DirectProjectionState::AikitManaged {
+                    emit_pickup_line(
+                        &mut lines,
+                        format!(
+                            "  aikit: {} stays AIKit-managed; adoption skipped",
+                            destination.destination.display()
+                        ),
+                    );
+                } else {
+                    emit_pickup_line(
+                        &mut lines,
+                        format!(
+                            "  aikit: {} stays directly projected under O:I; not adopted while \
+                             other guardian members are AIKit-managed",
+                            destination.destination.display()
+                        ),
+                    );
+                }
+            }
+            Vec::new()
+        }
     };
 
     // The guardian SkillSet in AIKit's own terms: one named set holding the
@@ -851,4 +913,91 @@ pub fn aikit_pickup(
         generation,
         lines,
     })
+}
+
+#[cfg(test)]
+mod pickup_route_tests {
+    use super::*;
+
+    fn outcome(state: DirectProjectionState, detail: Option<&str>) -> GuardianDestinationOutcome {
+        GuardianDestinationOutcome {
+            harness_root: ".claude/skills".to_owned(),
+            destination: PathBuf::from("/ground/.claude/skills/member"),
+            state,
+            detail: detail.map(str::to_owned),
+        }
+    }
+
+    fn routes(states: &[(DirectProjectionState, Option<&str>)]) -> PickupRoute {
+        let destinations: Vec<GuardianDestinationOutcome> = states
+            .iter()
+            .map(|(state, detail)| outcome(*state, *detail))
+            .collect();
+        let references: Vec<&GuardianDestinationOutcome> = destinations.iter().collect();
+        pickup_route(&references)
+    }
+
+    #[test]
+    fn fully_direct_tree_adopts() {
+        assert_eq!(
+            routes(&[
+                (DirectProjectionState::Created, None),
+                (DirectProjectionState::Updated, None)
+            ]),
+            PickupRoute::AdoptDirectTree
+        );
+    }
+
+    #[test]
+    fn empty_tree_adopts_nothing_but_is_routed_as_direct() {
+        let references: Vec<&GuardianDestinationOutcome> = Vec::new();
+        assert_eq!(pickup_route(&references), PickupRoute::AdoptDirectTree);
+    }
+
+    #[test]
+    fn current_managed_tree_skips_adoption() {
+        assert_eq!(
+            routes(&[(DirectProjectionState::AikitManaged, None)]),
+            PickupRoute::SkipAdopted
+        );
+    }
+
+    #[test]
+    fn stale_managed_tree_takes_the_refresh_cycle() {
+        assert_eq!(
+            routes(&[
+                (DirectProjectionState::AikitManaged, None),
+                (
+                    DirectProjectionState::AikitManaged,
+                    Some("differs from the authoritative guardian source")
+                ),
+            ]),
+            PickupRoute::RefreshManaged
+        );
+    }
+
+    #[test]
+    fn mixed_ownership_with_current_managed_members_never_adopts_the_whole_root() {
+        assert_eq!(
+            routes(&[
+                (DirectProjectionState::AikitManaged, None),
+                (DirectProjectionState::Created, None),
+            ]),
+            PickupRoute::MixedOwnership
+        );
+    }
+
+    #[test]
+    fn mixed_ownership_with_a_stale_managed_member_still_refreshes() {
+        assert_eq!(
+            routes(&[
+                (
+                    DirectProjectionState::AikitManaged,
+                    Some("differs from the authoritative guardian source")
+                ),
+                (DirectProjectionState::Unchanged, None),
+            ]),
+            PickupRoute::RefreshManaged
+        );
+    }
 }
