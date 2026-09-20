@@ -48,11 +48,26 @@ export async function projectionChanges(document:ExpressionDocument,whole:LocalW
  const relationPrefix=`${expressionRef}:relation:k-`;
  const ownerRelations=await Promise.all((whole.ownerRelations??[]).map(async relation=>({binding_ref:`${relationPrefix}${await digest(relation.relation.ref)}`,relation:relation.relation,from_entity_ref:ids.get(relation.from)!,to_entity_ref:ids.get(relation.to)!,provenance:relation.provenance})));
  if(ownerRelations.some(relation=>!relation.from_entity_ref||!relation.to_entity_ref)||new Set(ownerRelations.map(relation=>relation.binding_ref)).size!==ownerRelations.length)throw new Error("Owner relation identities or endpoints are not unique in the bounded whole");
- for(const relation of Object.values(document.relations))if(relation.binding_ref.startsWith(relationPrefix)&&!ownerRelations.some(next=>next.binding_ref===relation.binding_ref))changes.push({change:"relation_remove",binding_ref:relation.binding_ref});
- const scene=document.scenes.find(s=>s.scene_ref===sceneRef);if(!scene)changes.push({change:"scene_create",scene_ref:sceneRef,title:"Knowledge"});const wanted=new Set(ids.values());for(const entity of Object.values(document.entities))if(entity.entity_ref.startsWith(prefix)&&!wanted.has(entity.entity_ref)){if(document.scenes.some(s=>s.scene_ref!==sceneRef&&s.entity_refs.includes(entity.entity_ref)))throw new Error("Managed knowledge member is reused outside its bounded scene");changes.push({change:"entity_remove",entity_ref:entity.entity_ref});}
- whole.members.forEach((member,index)=>{const entity_ref=ids.get(member.node.ref)!,existing=document.entities[entity_ref];if(existing&&existing.subject?.subject_ref!==member.node.ref)throw new Error("Managed knowledge member changed outside its source binding");if(!existing)changes.push({change:"entity_add",scene_ref:sceneRef,entity_ref,title:member.node.label});const next=binding(member);if(!existing||JSON.stringify(existing.subject)!==JSON.stringify(next))changes.push({change:"subject_bind",entity_ref,binding:next});const count=whole.members.length,angle=index*Math.PI*2/Math.max(1,count),radius=count===1?0:180,size=count===1?.85:Math.min(.5,Math.sin(Math.PI/count)*.5),values={glyph:glyph(member,whole),x:Math.cos(angle)*radius,y:Math.sin(angle)*radius,z:0,scale:size*(count>1&&member.node.ref===whole.locus?1.1:1),share:member.node.ref===whole.locus?1:.65};for(const [parameter,value] of Object.entries(values))if(!existing)changes.push({change:"parameter_set",entity_ref,parameter,value});});for(const binding of ownerRelations)if(JSON.stringify(document.relations[binding.binding_ref])!==JSON.stringify(binding))changes.push({change:"relation_bind",binding});const ordered=[...whole.members.map(m=>ids.get(m.node.ref)!),...(scene?.entity_refs??[]).filter(ref=>!ref.startsWith(prefix))];if(!scene||JSON.stringify(scene.entity_refs)!==JSON.stringify(ordered))changes.push({change:"scene_compose",scene_ref:sceneRef,entity_refs:ordered});const focus=ids.get(whole.locus)!;if(document.selection.scene_ref!==sceneRef||document.selection.entity_ref!==focus)changes.push({change:"focus",scene_ref:sceneRef,entity_ref:focus});return changes;
+ // Removals are authoritative only when the owner reading was complete — not
+ // truncated by the bounded render window. A partial page never deletes an
+ // unseen managed member or a relation it simply did not disclose (F07).
+ const complete=whole.truncated===false;
+ if(complete)for(const relation of Object.values(document.relations))if(relation.binding_ref.startsWith(relationPrefix)&&!ownerRelations.some(next=>next.binding_ref===relation.binding_ref))changes.push({change:"relation_remove",binding_ref:relation.binding_ref});
+ const scene=document.scenes.find(s=>s.scene_ref===sceneRef);if(!scene)changes.push({change:"scene_create",scene_ref:sceneRef,title:"Knowledge"});const wanted=new Set(ids.values());if(complete)for(const entity of Object.values(document.entities))if(entity.entity_ref.startsWith(prefix)&&!wanted.has(entity.entity_ref)){if(document.scenes.some(s=>s.scene_ref!==sceneRef&&s.entity_refs.includes(entity.entity_ref)))throw new Error("Managed knowledge member is reused outside its bounded scene");changes.push({change:"entity_remove",entity_ref:entity.entity_ref});}
+ whole.members.forEach((member,index)=>{const entity_ref=ids.get(member.node.ref)!,existing=document.entities[entity_ref];if(existing&&existing.subject?.subject_ref!==member.node.ref)throw new Error("Managed knowledge member changed outside its source binding");if(!existing)changes.push({change:"entity_add",scene_ref:sceneRef,entity_ref,title:member.node.label});const next=binding(member);if(!existing||JSON.stringify(existing.subject)!==JSON.stringify(next))changes.push({change:"subject_bind",entity_ref,binding:next});const count=whole.members.length,angle=index*Math.PI*2/Math.max(1,count),radius=count===1?0:180,size=count===1?.85:Math.min(.5,Math.sin(Math.PI/count)*.5),values={glyph:glyph(member,whole),x:Math.cos(angle)*radius,y:Math.sin(angle)*radius,z:0,scale:size*(count>1&&member.node.ref===whole.locus?1.1:1),share:member.node.ref===whole.locus?1:.65};for(const [parameter,value] of Object.entries(values))if(!existing)changes.push({change:"parameter_set",entity_ref,parameter,value});});for(const binding of ownerRelations)if(JSON.stringify(document.relations[binding.binding_ref])!==JSON.stringify(binding))changes.push({change:"relation_bind",binding});const existingRefs=scene?.entity_refs??[];const disclosedRefs=whole.members.map(m=>ids.get(m.node.ref)!);
+ // A complete reading composes the scene as the full disclosed set plus the
+ // non-managed entities. A truncated one keeps the existing composition and
+ // only appends genuinely new disclosed members, so unseen managed members
+ // keep their place rather than being dropped from the scene (F07).
+ const ordered=complete?[...disclosedRefs,...existingRefs.filter(ref=>!ref.startsWith(prefix))]:[...existingRefs,...disclosedRefs.filter(ref=>!existingRefs.includes(ref))];if(!scene||JSON.stringify(scene.entity_refs)!==JSON.stringify(ordered))changes.push({change:"scene_compose",scene_ref:sceneRef,entity_refs:ordered});const focus=ids.get(whole.locus)!;if(document.selection.scene_ref!==sceneRef||document.selection.entity_ref!==focus)changes.push({change:"focus",scene_ref:sceneRef,entity_ref:focus});return changes;
 }
 async function expression(transport:KernelTransportStatus,request:ExpressionRequest){const r=await kernelOp(transport,{op:"expression",request});if(r.error||r.outcome?.result!=="expression")throw new Error(r.error??"Expression application unavailable");return r.outcome.data;}
+/** The one native signal that an expression has never been created. The kernel
+ * inspect owner returns exactly this when the document is not open
+ * (kernel/src/expression.rs document()). Only this explicit absence justifies
+ * creation; any other inspect failure — denied, offline, incompatible — must
+ * surface unchanged. */
+function isExpressionAbsent(error:unknown):boolean{return /expression is not open/i.test(error instanceof Error?error.message:String(error));}
 export async function projectProvidedLocalWhole(transport:KernelTransportStatus,surface:string,title:string,whole:LocalWhole,signal?:AbortSignal):Promise<ProjectionOutcome>{
  try{
   signal?.throwIfAborted();
@@ -60,7 +75,11 @@ export async function projectProvidedLocalWhole(transport:KernelTransportStatus,
   signal?.throwIfAborted();
   let result:ExpressionResult;
   try{result=await expression(transport,{operation:"inspect",expression_ref});}
-  catch{
+  catch(inspectError){
+   // Create only on the owner's explicit absence. A denied, offline or
+   // incompatible inspect must surface, not enter a create path meant for a
+   // document that has never existed (F08).
+   if(!isExpressionAbsent(inspectError))throw inspectError;
    signal?.throwIfAborted();
    result=await expression(transport,{operation:"create",expression_ref,title:`Knowledge · ${title}`,actor:"human:knowledge-expression"});
   }
