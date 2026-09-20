@@ -17,7 +17,7 @@
  * presents either one through the `oi:library-view` event / the summon's
  * last ask (techneSummon.tsx).
  */
-import {useCallback, useEffect, useMemo, useRef, useState} from "react";
+import {useCallback, useEffect, useMemo, useRef, useState, useSyncExternalStore} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import {resolveCollectionSelection} from "./collectionSelection";
 import {CollectionMembershipEditor} from "./CollectionMembershipEditor";
@@ -93,7 +93,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
   const [readingContext, setReadingContext] = useState("");
   useEffect(() => { opening.current?.abort(); setOpenError(""); }, [contextKey]);
   const [selectedRef, setSelectedRef] = useState<string | undefined>();
-  const [registryGeneration, setRegistryGeneration] = useState(0);
+  const registeredProviders = useSyncExternalStore(subscribeLibraryProviders, libraryProviders, libraryProviders);
   const searchRef = useRef<HTMLInputElement>(null);
   const rootRef = useRef<HTMLDivElement>(null);
 
@@ -111,22 +111,19 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
     return () => window.removeEventListener("oi:library-view", onView);
   }, []);
 
-  // The registry is a module-level store other files register into; a live
-  // subscription keeps a browser mounted before a later provider (Epi-Logos
-  // places) registers current once it does.
-  useEffect(() => subscribeLibraryProviders(() => setRegistryGeneration(generation => generation + 1)), []);
+  // Re-read at subscription time as well as on changes: built-in providers
+  // register in an earlier effect on this same mount. A passive subscription
+  // alone misses those first events and can leave the Library empty forever.
 
   const relevantProviders = useMemo(() => {
     const kinds = scope === "here" ? HERE_KINDS[mode] : undefined;
-    return libraryProviders().filter(provider => {
+    return registeredProviders.filter(provider => {
       if (scope === "shared" && !provider.scopes.includes("shared")) return false;
       if (kinds && !provider.kinds.some(kind => kinds.includes(kind))) return false;
       if (provider.modes && !provider.modes.includes(mode)) return false;
       return true;
     });
-    // registryGeneration is read for its change, not its value.
-    // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [scope, mode, registryGeneration]);
+  }, [scope, mode, registeredProviders]);
 
   useEffect(() => {
     const controller = new AbortController();
@@ -231,7 +228,7 @@ export function LibraryBrowser({mode, onOpen, onMessage, initialScope}: {
         onChange={event => setText(event.target.value)}
         onKeyDown={event => { if (event.key === "Escape") { event.preventDefault(); setText(""); } }}/>
     </div>
-    {openError && <p className="oi-refusal" role="alert">{openError}</p>}
+    {readingContext === contextKey && openError && <p className="oi-refusal" role="alert">{openError}</p>}
     <button type="button" className="oi-action" onClick={() => { opening.current?.abort(); setRefreshGeneration(g => g + 1); }}>Refresh sources</button>
     {visibleItems.find(item => item.ref === selectedRef) && <CollectionMembershipEditor item={visibleItems.find(item => item.ref === selectedRef)!} onChanged={() => setRefreshGeneration(g => g + 1)}/>}
     {view === "browse"

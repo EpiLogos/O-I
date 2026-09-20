@@ -1,0 +1,97 @@
+name: Record bounded collection return
+on:
+  push:
+    branches: [fix/collection-source-identity-20260920]
+    paths: ['.github/workflows/collection-wayfinder-return.yml']
+permissions:
+  contents: write
+jobs:
+  record:
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: fix/collection-source-identity-20260920
+          fetch-depth: 1
+      - name: Append the scoped receipt without rewriting existing requirements
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          test "$(git rev-parse HEAD)" = "$EXPECTED_HEAD"
+          python3 - <<'PY'
+          import hashlib
+          from pathlib import Path
+          p = Path('.wayfinder/maps/techne-expression-mode.md')
+          original = p.read_bytes()
+          assert hashlib.sha256(original).hexdigest() == '2101aec4ffb2cf2af8c0a4ff5eaf5a05ce974d582e2ea01ad40b6104c193123a', 'Wayfinder changed: reconcile before appending'
+          receipt = '''
+
+          ---
+
+          ## W7 collection/source continuation — 20 September 2026
+
+          **Delivery:** [O:I PR #428](https://github.com/EpiLogos/O-I/pull/428), branch `fix/collection-source-identity-20260920`. This is a bounded implementation/evidence increment under §§7–10, 20–25, 32, 38–41. All preceding requirements, including C1–C12, remain in force. This does not close the full corpus or six-instrument commission.
+
+          ### Recovered source and actual failure
+
+          The branch starts from published `a222c8bdf46a7b2146084770b704dfbe83ce5027`; `3939118a1520193eeab964e6af17944ab735cc4c` supplied the initial build-only workflow. The requested newer local-reconciliation receipt was not found in the retrieved #65/#220 comments. Later main `b72d763ce026efebe3fac67655749ac0909ea130` changes no claimed collection/Library files. The earlier integration branch name stopped resolving; its retained commit `060f0165a8ecbdc2fb3bece48c7c4d48d05e2610` was compared rather than discarded or assumed installed.
+
+          The new real-source regression failed because Seven Centres returned Field Studies. `readCollection` had cached one member location by parent directory. `desktop/cradle/tests/evidence/collection-source-baseline.log` preserves that failure. The reader now coalesces directory readings only within one operation and independently resolves every member's exact schema/ref/root/path. A collection occurrence is not a subject identity.
+
+          ### Production consumer contract
+
+          `src/expressions/collectionReadings.ts` retains manifest membership/order, source locations and revisions, manifest revision, per-slot failures, cancellation and explicit body-read coverage. Bodies load in pages of 64 by default, at most four concurrent reads; larger collections remain addressable through pinned-revision pages. Metadata discovery reads no member body. A complete metadata enumeration is labelled deferred content, not complete corpus hydration. Changed manifests, wrong source identities, retired/malformed/wrong-ID members and denied reads are not empty success.
+
+          `src/library/collectionsProvider.ts` discovers existing manifests under native Central-root and ProjectCentral collection locations without creating/migrating folders. Items use native source refs; multiple memberships retain their separate manifest/slot/revision basis. `collectionSelection.ts` revalidates that basis and the exact selected source before opening. `LibraryBrowser.tsx` reports async refusal, cancels obsolete opens, withdraws private items on a shared-scope change and reads the provider registry at subscription time. The browser regression exposed the old first-mount empty-Library race: providers registered before the passive subscription and their initial events were lost. No provider is preloaded to disguise this failure.
+
+          The Library's membership editor uses existing native operations, not a collection database. Central file CAS labels/reorders/removes an existing manifest reference while preserving member files and unknown authored metadata. Native Expression `index` and `collections_set` retain Expression identity. Apply membership and Save to source are separate acts; saves bind Expression and file revisions and verify native readback. A successful write followed by failed readback is reported as saved-but-unverified, never silently retried.
+
+          A legacy Journey is not falsely passed to `summonExpression` as a `collection:...` alias. Its exact native source can be opened; the remaining shared embedded-app Journey-to-native-Expression open/save join belongs to W5's active host/engine writer. This is a precise unfulfilled experience, not an absence claim about existing kernel capabilities.
+
+          ### Executed evidence and limits
+
+          Production code is committed from `53d66d482377b411a811102f6e628750882fe3f3`; `60ef2a8873cc294c95439ac9840fde661c07b47c` corrects the native acceptance setup to exercise the real `OI_BIN` → `oi central` → ctrl route. The first CI packet omitted O:I itself and failed honestly. No wrapper or fake-provider fallback replaces the native suite route.
+
+          [Run 35505412427](https://github.com/EpiLogos/O-I/actions/runs/35505412427) tested synthetic merge `3b13b04bcae280a6f897d2a7b2b030b9f45b25aa`: full Expressions/Cradle build and 23 controlled regressions passed; source-built native Central/O:I/kernel checks passed, including exact member reads, native membership CAS, saved Expression/index, concurrent source-write refusal, kernel restart/reopen and exact source return. The nine native checks record all three executable hashes and Central source `12ee31313e710378845baae190efc1a4b3e7ebdb`. This run's browser check failed at the initial empty Library and caused the subsequent production subscription repair. The PR carries later exact-head browser results; no browser pass is implied by this earlier run.
+
+          Local TypeScript, existing Expressions build and controlled tests passed. Local Chromium navigation was blocked with `ERR_BLOCKED_BY_ADMINISTRATOR`; the untouched failure is retained in `tests/evidence/collection-browser-environment-failure.log`. CI Chromium is a separate executable test environment. Native tests use a uniquely named disposable Central ground, not the person's installed sources. Initial Expression-file provisioning is explicit test setup, not proof that the UI offers first-file creation. Saved document/selection restoration is not an exact particle checkpoint.
+
+          Actual committed material exercised is 40 legacy compositions, one Return-of-Zero essay composition and eight section rooms: 49 members, not the full current authored-world census. Tests do not reclassify those source files as a fixture-generated corpus or certify the complete Bimba/essay/product/Epii collections.
+
+          ### Retained obligations and native handoffs
+
+          | Experience | Implemented/tested here | Precise remaining obligation |
+          |---|---|---|
+          | Collection addressability | Exact source identity, bounded bodies, metadata discovery, named failures; real 49-member native readback | Full live eligible corpus and current canonical census, not just these committed compositions |
+          | Native collection editing | Existing manifest label/order/removal and native Expression membership; CAS, source save, readback and restart | Generic whole/member/role authoring through the existing Wiki/constellation owner, without a renderer store |
+          | Same Expressions application | Existing Library source opening and native Expression index/edit/save consumers | W5 shared app/host relay must expose and use native open/import/fork/save/profile/edition operations; no duplicate bridge or donor demo |
+          | Source/Wiki/graph/field return | Exact collection source return and retained Expression subject/selection tested | Full common Wiki selection, renderer correspondence and same scene/camera/source return across all six instruments |
+          | Corpus production | Existing generated/authored 49 members recovered unchanged | Current Bimba/collections/Atlas; complete Return-of-Zero four-register census and family/whole-Mytheme work; O:I plus six products; distinct Epii M5-1/Antichrist corpus |
+          | Publication | Private local collection discovery is not invoked for shared scope; no source publication inferred | Lane I #417 receives admitted native subject/collection/body/Expression/Projection revisions and actual approved assets; no public-safe edition is manufactured here |
+          | Mac/model/microphone | No installed or human/provide​r evidence claimed | W3/W5/W6 and the local integrator run their real provider, native Mac, audio and machine-specific packets on the selected integrated candidate |
+
+          Claims/joins are in #375 comments 5747137900, 5747194602 and 5749100843. Central source operations remain lane B; AIKit knowledge/index/resolve remains lane C; shared shell and embedded engine retain their current single writers. No merge, force push, installation or personal-machine mutation was performed.
+
+          ### Executable bounded local packet
+
+          From `desktop/cradle`, after the normal locked dependency install:
+
+          ```sh
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/collection-source-identity.test.mjs tests/collection-consumers.test.mjs
+          node tests/collection-browser.mjs
+          OI_BIN=/absolute/source-built/oi OI_CENTRAL_CTRL_BIN=/absolute/source-built/ctrl OI_COLLECTION_BRIDGE_BIN=/absolute/source-built/walk-bridge node --experimental-strip-types --import ./tests/ts-register.mjs tests/collection-native-acceptance.mjs
+          ```
+
+          Evidence is retained under `tests/artifacts/collection-source/`; original failures are not overwritten by a later pass. Native packet setup and cleanup affect only its new temporary ground. For installed acceptance, the local integrator must additionally operate the selected candidate's real Library/source/Expression UI, record source/build/install/running cuts, verify body revisions and rejected concurrent saves, and return actual Mac/provider/voice outcomes to #428/#65. These are verification obligations, not a handoff of the implemented collection repair.
+          '''
+          receipt = '\n'.join(line[10:] if line.startswith('          ') else line for line in receipt.split('\n'))
+          p.write_bytes(original + receipt.encode('utf-8'))
+          PY
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add .wayfinder/maps/techne-expression-mode.md
+          git rm .github/workflows/collection-wayfinder-return.yml
+          git commit -m 'docs(techne): record bounded collection implementation and native evidence'
+          git push origin HEAD:refs/heads/fix/collection-source-identity-20260920
+          git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"

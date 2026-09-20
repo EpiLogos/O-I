@@ -1,0 +1,16 @@
+node:internal/modules/run_main:123
+    triggerUncaughtException(
+    ^
+
+page.goto: net::ERR_BLOCKED_BY_ADMINISTRATOR at http://127.0.0.1:5173/tests/collection-browser-page.html
+Call log:
+  - navigating to "http://127.0.0.1:5173/tests/collection-browser-page.html", waiting until "load"
+
+    at /mnt/data/O-I/desktop/cradle/tests/collection-browser.mjs:38:89 {
+  log: [
+    '  - navigating to "http://127.0.0.1:5173/tests/collection-browser-page.html", waiting until "load"'
+  ],
+  name: 'Error'
+}
+
+Node.js v22.16.0
