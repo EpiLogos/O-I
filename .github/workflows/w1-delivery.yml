@@ -21,9 +21,7 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 22
-          cache: npm
-          cache-dependency-path: desktop/cradle/package-lock.json
-      - name: Apply only exact declared source changes
+      - name: Apply hash-verified bounded source changes
         env:
           GH_TOKEN: ${{ github.token }}
         run: |
@@ -34,9 +32,6 @@ jobs:
           gh api repos/EpiLogos/O-I/git/blobs/7eb294b00fa97a3d0365b539079d5a4af953cee2 --jq .content | base64 --decode > /tmp/w1-manifest.gz
           python3 - <<'PY'
           import base64,gzip,hashlib,json,pathlib,subprocess,os
-          # Four transport transcription corrections, determined by comparing the
-          # returned artifact with the sandbox bytes. Verify BOTH exact hashes
-          # before parsing or modifying any source. No code is executed from it.
           encoded=base64.b64encode(pathlib.Path('/tmp/w1-manifest.gz').read_bytes()).decode()
           for start,end,text in reversed([[6839,6840,''],[14028,14029,''],[17313,17313,'/'],[18064,18064,'/']]):
               encoded=encoded[:start]+text+encoded[end:]
@@ -63,13 +58,23 @@ jobs:
               for start,end,text in reversed(entry['edits']): lines[start:end]=text.splitlines(keepends=True)
               result=''.join(lines).encode()
               assert hashlib.sha256(result).hexdigest()==entry['sha256'],name
+              # The staged-diff gate caught one trailing space in this new file.
+              # Preserve that failed run; repair only this named file and verify
+              # its corrected sandbox hash before committing.
+              if name=='desktop/cradle/tests/verify-shell-evidence.mjs':
+                  assert entry['sha256']=='cf67627675dc2b334481a2cf2beb2de18d67c60a713af3e1ccaaafd4df574acb'
+                  result=('\n'.join(line.rstrip() for line in result.decode().splitlines())+'\n').encode()
+                  assert hashlib.sha256(result).hexdigest()=='46b9d32d70ad4ff12fd83fe4f03f7327d968116fd6a83bf3a0954df4cbb999e6'
+                  entry['delivered_sha256']=hashlib.sha256(result).hexdigest()
               pending.append((path,result))
           for path,result in pending:
               path.parent.mkdir(parents=True,exist_ok=True); path.write_bytes(result)
           pathlib.Path('/tmp/w1-paths.json').write_text(json.dumps(sorted(paths)))
-          pathlib.Path('/tmp/w1-source-manifest.json').write_bytes(raw)
+          pathlib.Path('/tmp/w1-source-manifest.json').write_text(json.dumps(manifest))
+          subprocess.run(['git','add','--',*sorted(paths)],check=True)
+          assert sorted(subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines())==sorted(paths)
           PY
-          git diff --check
+          git diff --cached --check
       - name: Locked dependencies, build and scoped executable regressions
         working-directory: desktop/cradle
         run: |
@@ -81,13 +86,6 @@ jobs:
         run: |
           set -euo pipefail
           test "$(git ls-remote origin "refs/heads/$TARGET" | cut -f1)" = "$EXPECTED"
-          python3 - <<'PY'
-          import json,subprocess
-          paths=json.load(open('/tmp/w1-paths.json'))
-          subprocess.run(['git','add','--',*paths],check=True)
-          actual=subprocess.check_output(['git','diff','--cached','--name-only']).decode().splitlines()
-          assert sorted(actual)==paths
-          PY
           git diff --cached --check
           git config user.name 'W1 shell implementation'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
