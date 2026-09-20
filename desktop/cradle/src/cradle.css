@@ -1065,12 +1065,6 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
  * positions and remounted them on every first mode visit). */
 .rest-host { display: contents; }
 .rest-host[hidden] { display: none; }
-<<<<<<< HEAD
-=======
-.mode-stage .retained-centre-outlet .retained-centre-host > * { flex: none; min-width: 0; min-height: 100%; }
-.desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > * { width: 100%; }
-.desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > main { padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
->>>>>>> origin/main
 
 /* The reveal zone: an invisible, generous approach area rendered only while
  * unpinned (Workbench.tsx) — a pseudo-element cannot carry :hover. It sits
