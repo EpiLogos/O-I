@@ -1,0 +1,54 @@
+name: Canvas editor and context
+
+on:
+  push:
+    branches: [agent/canvas-editor-context-20260920]
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/editor/**'
+      - 'desktop/cradle/src/context/**'
+      - 'desktop/cradle/tests/canvas-editor*'
+      - '.github/workflows/canvas-editor-context.yml'
+
+permissions:
+  contents: read
+
+concurrency:
+  group: canvas-editor-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  editor-context:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install the locked editor dependencies
+        working-directory: desktop/cradle
+        run: npm ci --ignore-scripts
+      - name: Source identity
+        run: |
+          git rev-parse HEAD > source-head.txt
+          git status --short
+      - name: Isolated review workspace
+        if: github.event_name == 'push'
+        run: |
+          # Public tracked source and locked JS dependencies only. No .git,
+          # runner environment, credentials, home directory or private world.
+          mkdir -p /tmp/canvas-editor-source
+          git archive HEAD | tar -x -C /tmp/canvas-editor-source
+          cp -a desktop/cradle/node_modules /tmp/canvas-editor-source/desktop/cradle/
+          cp source-head.txt /tmp/canvas-editor-source/
+          tar -czf canvas-editor-workspace.tar.gz -C /tmp/canvas-editor-source .
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: canvas-editor-workspace
+          path: canvas-editor-workspace.tar.gz
+          retention-days: 1
+          compression-level: 0
