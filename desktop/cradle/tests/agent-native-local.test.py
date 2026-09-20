@@ -40,4 +40,10 @@ class Packet(unittest.TestCase):
   with tempfile.TemporaryDirectory() as tmp:
    run=subprocess.run([sys.executable,p.__file__,'--cwd',tmp,'--receipt',str(Path(tmp)/'r'),'--phase','accept','--execute'],capture_output=True)
    self.assertEqual(run.returncode,2)
+ def test_context_delivery_matches_actual_prepared_skill_digests(self):
+  prepared={'agent_ref':'a','profile_ref':'p','acceptance_ref':'accepted','skill_sources':[{'reference':'skill/native/reader','content_digest':'sha256:actual'}]}
+  event={'kind':'direct-agent-context-submitted',**prepared,'delivery':'native-parent-session-prompt-payload','authority_granted':False,'model_consumption_observed':False,'brokered_child_activation_observed':False,'payload_digest':'blake3:'+'a'*64}
+  self.assertEqual(p.validate_delivery(event,prepared)['skill_sources'],prepared['skill_sources'])
+  for patch in [{'skill_sources':[]},{'profile_ref':'other'},{'payload_digest':'made-up'},{'authority_granted':True},{'model_consumption_observed':True},{'brokered_child_activation_observed':True}]:
+   with self.subTest(patch=patch),self.assertRaises(p.Refused):p.validate_delivery({**event,**patch},prepared)
 if __name__=='__main__':unittest.main()

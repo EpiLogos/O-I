@@ -72,6 +72,20 @@ def validate_review(value: Any, scope: str, reference: str | None = None, accept
             raise Refused('Native acceptance is absent or differs from the exact source.')
     return value
 
+def validate_delivery(event: Any, prepared: dict) -> dict:
+    if not isinstance(event, dict) or event.get('kind') != 'direct-agent-context-submitted':
+        raise Refused('No new native parent context delivery was observed.')
+    expected = {'agent_ref':prepared['agent_ref'], 'profile_ref':prepared['profile_ref'],
+                'acceptance_ref':prepared['acceptance_ref'], 'skill_sources':prepared['skill_sources'],
+                'delivery':'native-parent-session-prompt-payload', 'authority_granted':False,
+                'model_consumption_observed':False, 'brokered_child_activation_observed':False}
+    if any(event.get(k) != v for k,v in expected.items()):
+        raise Refused('Native context delivery differs from the accepted Agent or effective Skills.')
+    digest=event.get('payload_digest','')
+    if not isinstance(digest,str) or not digest.startswith('blake3:') or len(digest)!=71 or any(c not in '0123456789abcdef' for c in digest[7:]):
+        raise Refused('Native context delivery has no bounded payload digest.')
+    return {k:event[k] for k in [*expected,'payload_digest']}
+
 def check_prior(value: Any, basis: dict) -> dict:
     if not isinstance(value, dict) or value.get('schema') != SCHEMA or value.get('basis') != basis:
         raise Refused('Prior receipt does not belong to this exact candidate and working scope.')
@@ -222,11 +236,30 @@ def main() -> int:
             earlier=Path(previous.get('live_receipt',''))
             if not earlier.is_file() or sha(earlier)!=previous.get('live_receipt_sha256'):raise Refused('The previous live receipt is absent or changed.')
             argv+=['--resume','--prior-receipt',str(earlier)]
+        def journal(after: int) -> tuple[int,list[dict]]:
+            events: list[dict]=[]
+            for _ in range(64):
+                page=encounter('read',agent_session=session,after=after,limit=128)
+                if page.get('agent_session')!=session or not isinstance(page.get('events'),list):
+                    raise Refused('Native journal returned another or unreadable session.')
+                cursor=page.get('next_cursor')
+                if not isinstance(cursor,int) or cursor<after:
+                    raise Refused('Native journal cursor did not preserve its reading basis.')
+                events.extend(page['events'])
+                if page.get('more') is False:return cursor,events
+                if cursor<=after:raise Refused('Native journal pagination made no progress.')
+                after=cursor
+            raise Refused('Native journal exceeds this bounded acceptance walk; choose an isolated session.')
+        baseline,_=journal(0)
         save('live-operation-submitted-outcome-unknown')
         run=subprocess.run(argv,env=env,timeout=args.seconds+90,check=False)
         if not live_path.is_file():raise Refused('No live evidence returned; no replay was attempted.')
         live=json.loads(live_path.read_text());result.update(live_receipt=str(live_path.resolve()),live_receipt_sha256=sha(live_path))
         if run.returncode or live.get('standing')!='source-return-observed':raise Refused('Actual source-dependent work is not proved; retain the live receipt and original session.')
+        _,new_events=journal(baseline)
+        deliveries=[row.get('event') for row in new_events if isinstance(row.get('event'),dict) and row['event'].get('kind')=='direct-agent-context-submitted']
+        if not deliveries:raise Refused('The source returned without a fresh accepted-Agent context-delivery receipt.')
+        result['context_delivery']=validate_delivery(deliveries[-1],prepared)
         save('same-native-reopen-and-source-return-observed' if args.phase=='resume' else 'live-source-return-observed');return 0
     except (Refused,OSError,ValueError,KeyError,TypeError,subprocess.TimeoutExpired) as error:
         result['failure']=str(error) if isinstance(error,Refused) else type(error).__name__
