@@ -875,7 +875,11 @@ fn setup_handle(request: AdoptionRequest) -> Result<Value, String> {
             json!({"disposition":journal.as_ref().map(|j|j.disposition()).unwrap_or("not_started"),"journal":journal})
         }
         AdoptionRequest::Apply { plan, approval } => {
-            plan.check_review(&approval, now)?;
+            if let Err(reason) = plan.check_review(&approval, now) {
+                return Ok(
+                    json!({"schema":adoption::SCHEMA,"disposition":"not_applied", "write_started":false,"review_token":plan.review_token,"reason":reason,"replayed":false}),
+                );
+            }
             if plan.selection.composition == "5/0" {
                 let fresh = setup_make_plan(plan.selection.clone(), plan.created_at_unix_ms)?;
                 if fresh.review_token != plan.review_token {
@@ -937,13 +941,13 @@ fn command_setup(args: &[OsString]) -> Result<i32, String> {
         return Ok(0);
     }
     if words.is_empty() {
-        return setup_interactive();
+        return setup_terminal_finish(setup_interactive());
     }
     if words == ["credentials"] {
-        return setup_credentials_terminal();
+        return setup_terminal_finish(setup_credentials_terminal());
     }
     if words == ["configure"] {
-        return setup_configure_terminal();
+        return setup_terminal_finish(setup_configure_terminal());
     }
     let json_mode = words.contains(&"--json");
     let words: Vec<&str> = words.into_iter().filter(|w| *w != "--json").collect();

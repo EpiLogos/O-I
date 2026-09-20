@@ -1,6 +1,54 @@
 // Human terminal consumer; native IDs/JSON remain behind numbered choices.
-// No raw-mode dependency. EOF/back/cancel never submits an operation.
-fn setup_ask(label: &str, default: Option<&str>) -> Result<Option<String>, String> {
+// EOF/cancel exits the interaction; Back returns without submitting a form.
+#[derive(Debug, PartialEq, Eq)]
+enum SetupTerminalError {
+    Cancelled,
+    Failed(String),
+}
+impl From<String> for SetupTerminalError {
+    fn from(s: String) -> Self {
+        Self::Failed(s)
+    }
+}
+impl From<&str> for SetupTerminalError {
+    fn from(s: &str) -> Self {
+        Self::Failed(s.into())
+    }
+}
+fn setup_terminal_finish(result: Result<i32, SetupTerminalError>) -> Result<i32, String> {
+    match result {
+        Ok(code) => Ok(code),
+        Err(SetupTerminalError::Cancelled) => {
+            println!("Setup cancelled. No new operation was submitted.");
+            Ok(0)
+        }
+        Err(SetupTerminalError::Failed(message)) => Err(message),
+    }
+}
+fn setup_answer(
+    line: Option<&str>,
+    default: Option<&str>,
+) -> Result<Option<String>, SetupTerminalError> {
+    let Some(line) = line else {
+        return Err(SetupTerminalError::Cancelled);
+    };
+    let answer = line.trim();
+    if matches!(answer, "q" | "quit" | "cancel") {
+        return Err(SetupTerminalError::Cancelled);
+    }
+    if matches!(answer, "b" | "back") {
+        return Ok(None);
+    }
+    Ok(Some(
+        if answer.is_empty() {
+            default.unwrap_or_default()
+        } else {
+            answer
+        }
+        .into(),
+    ))
+}
+fn setup_ask(label: &str, default: Option<&str>) -> Result<Option<String>, SetupTerminalError> {
     use std::io::Write;
     match default {
         Some(value) => print!("{label} [{value}]: "),
@@ -13,22 +61,11 @@ fn setup_ask(label: &str, default: Option<&str>) -> Result<Option<String>, Strin
         .map_err(|e| e.to_string())?
         == 0
     {
-        return Ok(None);
+        return setup_answer(None, default);
     }
-    let answer = line.trim();
-    if matches!(answer, "q" | "quit" | "cancel" | "b" | "back") {
-        return Ok(None);
-    }
-    Ok(Some(
-        if answer.is_empty() {
-            default.unwrap_or_default()
-        } else {
-            answer
-        }
-        .into(),
-    ))
+    setup_answer(Some(&line), default)
 }
-fn setup_choose(title: &str, choices: &[String]) -> Result<Option<usize>, String> {
+fn setup_choose(title: &str, choices: &[String]) -> Result<Option<usize>, SetupTerminalError> {
     loop {
         println!("\n{title}");
         for (index, label) in choices.iter().enumerate() {
@@ -45,17 +82,18 @@ fn setup_choose(title: &str, choices: &[String]) -> Result<Option<usize>, String
         println!("Choose one of the displayed numbers.");
     }
 }
-fn setup_require_terminal() -> Result<(), String> {
+fn setup_require_terminal() -> Result<(), SetupTerminalError> {
     use std::io::IsTerminal;
     if !std::io::stdin().is_terminal() {
         return Err("Interactive setup needs a terminal. Native noninteractive plan/apply/status operations remain available through oi setup --help.".into());
     }
     Ok(())
 }
-fn setup_interactive() -> Result<i32, String> {
+fn setup_interactive() -> Result<i32, SetupTerminalError> {
     setup_require_terminal()?;
     println!("O:I setup — retain your World; add only what is useful.\nFirst installation, capability setup and day-two maintenance remain separate.\nUse b/back to leave a choice; q/cancel or Ctrl-D submits no new operation.");
-    loop {
+    let mut selection = AdoptionSelection::default();
+    'entry: loop {
         let status = setup_handle(AdoptionRequest::Status)?;
         if status["journal"].is_object() && status["disposition"] != "verified" {
             setup_print(&status);
@@ -82,7 +120,7 @@ fn setup_interactive() -> Result<i32, String> {
                 continue;
             }
         }
-        let discovery = setup_discovery(&AdoptionSelection::default())?;
+        let discovery = setup_discovery(&selection)?;
         setup_print(&json!({"discovery":discovery}));
         let Some(action) = setup_choose(
             "What would be useful now?",
@@ -124,10 +162,10 @@ fn setup_interactive() -> Result<i32, String> {
             continue;
         };
         let choice = &discovery.choices[index];
-        let mut selection = AdoptionSelection {
-            composition: choice.id.clone(),
-            ..Default::default()
-        };
+        if selection.composition != choice.id {
+            selection.composition = choice.id.clone();
+            selection.products.clear();
+        }
         if choice.hosted {
             println!("Hosted Library reading needs no installation or credential. Open the site's existing Library; this terminal has made no local change.");
             continue;
@@ -155,7 +193,7 @@ fn setup_interactive() -> Result<i32, String> {
                     &labels,
                 )?
                 else {
-                    break;
+                    continue 'entry;
                 };
                 if index == discovery.products.len() {
                     break;
@@ -165,6 +203,46 @@ fn setup_interactive() -> Result<i32, String> {
                     selection.products.retain(|p| p != id);
                 } else {
                     selection.products.push(id.clone());
+                }
+            }
+        }
+        let managed = discovery
+            .products
+            .iter()
+            .filter(|p| p.managed)
+            .collect::<Vec<_>>();
+        if !managed.is_empty() {
+            loop {
+                let labels = managed
+                    .iter()
+                    .map(|p| {
+                        format!(
+                            "{} {}",
+                            if selection.remove_products.contains(&p.id) {
+                                "[remove]"
+                            } else {
+                                "[keep]"
+                            },
+                            p.title
+                        )
+                    })
+                    .chain(std::iter::once("Continue without other removals".into()))
+                    .collect::<Vec<_>>();
+                let Some(index) = setup_choose(
+                    "Optional receipt-owned removals (human source is retained)",
+                    &labels,
+                )?
+                else {
+                    continue 'entry;
+                };
+                if index == managed.len() {
+                    break;
+                }
+                let id = &managed[index].id;
+                if selection.remove_products.contains(id) {
+                    selection.remove_products.retain(|p| p != id);
+                } else {
+                    selection.remove_products.push(id.clone());
                 }
             }
         }
@@ -192,7 +270,10 @@ fn setup_interactive() -> Result<i32, String> {
         }
         let Some(ground) = setup_ask(
             "Central directory (existing recognised root or a new empty directory)",
-            Some(&discovery.suggested_ground),
+            selection
+                .ground
+                .as_deref()
+                .or(Some(&discovery.suggested_ground)),
         )?
         else {
             continue;
@@ -236,7 +317,7 @@ fn setup_interactive() -> Result<i32, String> {
                 }
             }
         }
-        let plan = match setup_make_plan(selection, prelocal_now_ms()? as u64) {
+        let plan = match setup_make_plan(selection.clone(), prelocal_now_ms()? as u64) {
             Ok(plan) => plan,
             Err(error) => {
                 println!("{error}");
@@ -259,7 +340,7 @@ fn setup_interactive() -> Result<i32, String> {
         }
     }
 }
-fn setup_begin_work() -> Result<i32, String> {
+fn setup_begin_work() -> Result<i32, SetupTerminalError> {
     let Some(choice) = setup_choose(
         "Begin useful work (no model call or microphone starts automatically)",
         &[
@@ -273,17 +354,17 @@ fn setup_begin_work() -> Result<i32, String> {
     };
     let args: Vec<OsString> = match choice {
         0 => vec!["central".into(), "projects".into()],
-        1 => vec!["aikit".into(), "tui".into()],
+        1 => vec!["aikit".into(), "ui".into()],
         _ => return Ok(0),
     };
     product_command_route(&args).ok_or(
         "The selected native entry is unavailable; retain native work or repair its installation.",
-    )?
+    )?.map_err(SetupTerminalError::from)
 }
 fn setup_terminal_value(
     schema: &oi_cli::configuration::ValueSchema,
     label: &str,
-) -> Result<Option<Value>, String> {
+) -> Result<Option<Value>, SetupTerminalError> {
     use oi_cli::configuration::ValueSchema;
     match schema.kind{
         ValueKind::Boolean=>Ok(setup_choose(label,&["Yes".into(),"No".into()])?.map(|i|json!(i==0))),
@@ -323,7 +404,7 @@ fn setup_terminal_value(
         }
     }
 }
-fn setup_configure_terminal() -> Result<i32, String> {
+fn setup_configure_terminal() -> Result<i32, SetupTerminalError> {
     setup_require_terminal()?;
     if env::var_os("OI_CONFIG_SURFACE_FIXTURES").is_some() {
         return Err("Human setup requires native configuration owners, not fixtures.".into());
@@ -510,11 +591,11 @@ fn setup_print_resolution(reading: &Resolution) {
 /// Enter the existing native TUI with its discovered credential requirements,
 /// provider selection, secure material input, scope and redacted readback.
 /// O:I neither reads secret input nor fabricates an authority/credential store.
-fn setup_credentials_terminal() -> Result<i32, String> {
+fn setup_credentials_terminal() -> Result<i32, SetupTerminalError> {
     setup_require_terminal()?;
     println!("AIKit owns credential setup. In its command palette choose credential setup; select a discovered requirement and review its provider and scope. Cancel leaves credentials unchanged. Return here after the native terminal closes.");
     let status = Command::new(env::current_exe().map_err(|error| error.to_string())?)
-        .args(["aikit", "tui"])
+        .args(["aikit", "ui"])
         .status()
         .map_err(|error| {
             format!(
@@ -525,4 +606,25 @@ fn setup_credentials_terminal() -> Result<i32, String> {
         println!("The native terminal exited unsuccessfully. Credential outcome is not inferred and no operation is retried; use its redacted native readback.");
     }
     Ok(status.code().unwrap_or(1))
+}
+
+#[cfg(test)]
+mod setup_terminal_navigation_tests {
+    use super::*;
+    #[test]
+    fn cancel_and_eof_never_mean_accept_or_back() {
+        for answer in [None, Some("q"), Some("quit\n"), Some(" cancel ")] {
+            assert_eq!(
+                setup_answer(answer, Some("apply")),
+                Err(SetupTerminalError::Cancelled)
+            );
+        }
+        assert_eq!(setup_answer(Some("back"), None), Ok(None));
+        assert_eq!(setup_answer(Some("b"), Some("apply")), Ok(None));
+        assert_eq!(
+            setup_answer(Some(""), Some("keep")),
+            Ok(Some("keep".into()))
+        );
+        assert_eq!(setup_answer(Some("apply"), None), Ok(Some("apply".into())));
+    }
 }
