@@ -68,7 +68,8 @@ try:
             expect(page.get_by_role('link',name='Exact public Projection JSON',exact=True)).to_be_visible()
             page.get_by_role('link',name='Expression',exact=True).click()
             canvas=page.locator('.native-stage canvas[data-rendered="true"]')
-            if page.locator('.native-stage').count():
+            page.wait_for_function("document.querySelector('.publication-stage') || document.querySelector('.publication-empty')")
+            if page.locator('.publication-stage').count():
                 expect(canvas).to_be_visible(timeout=45000)
                 expect(page.get_by_role('button',name='Play field motion',exact=True)).to_be_visible()
                 canvas.focus();page.keyboard.press('ArrowRight');page.keyboard.press('0')
