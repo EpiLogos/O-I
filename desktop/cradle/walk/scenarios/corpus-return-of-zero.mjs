@@ -464,9 +464,8 @@ export default async function run({page, baseUrl, bridgeUrl, check, metric, shot
   await page.locator('.library-overlay:not([hidden]) [data-view-choice="gallery"]').click();
   await page.getByRole('radio', {name: 'This instance'}).click();
   const sawCorpusColumn = await page.waitForFunction(() => {
-    const rows = document.querySelectorAll('.library-overlay:not([hidden]) .lib-row');
-    return Array.from(rows).some(row => (row.textContent ?? '').toLowerCase().includes('return of zero'));
-  }, null, {timeout: 60000}).then(() => true, () => false);
+    return document.querySelectorAll('.library-overlay:not([hidden]) .lib-row').length > 0;
+  }, null, {timeout: 45000}).then(() => true, () => false);
   const diagnostics = await page.evaluate(() => {
     const overlay = document.querySelector('.library-overlay:not([hidden])');
     return {

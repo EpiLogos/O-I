@@ -1,9 +1,15 @@
 # 08 — Wave 5 System contribution: the consumer seam
 
-What the cradle's System surface may now consume, owner by owner, and what
-each reading is honest about. This is the integration contract for the UI
-lead. It describes inputs that exist and were exercised on this machine; it
-is not a design for anything unbuilt.
+**Historical/current boundary:** §§1–7 preserve the 10 September 2026 Wave 5
+record, including its then-open gaps and receipts. They are not a fresh
+machine census or a claim that engagement is still read-only. The current
+19 September human setup/configuration/recovery consumer is recorded in §8.
+
+What the cradle's System surface could consume in the recorded Wave 5 round,
+owner by owner, and what each reading was honest about. This is the
+integration contract for the UI lead. The historical round describes inputs
+that existed and were exercised on that machine; it is not a design for
+anything unbuilt or evidence of a newly inspected machine.
 
 Companion documents: `06-SYSTEM-SETTINGS.md` (the law, L1–L6, and the base
 `v1` descriptor) and `07-WAVE-5-SYSTEM-CONTRIBUTION.md` (the `v2` descriptor,
@@ -219,3 +225,151 @@ remediation wave omitted Central entirely, so its hardcoded availability
 survived a round and was only caught by the re-verification. Worth knowing
 when reading the receipts — the audit found what the brief forgot, not what
 the worker got wrong.
+
+## 8. Human setup and recovery consumer — 19 September 2026
+
+### 8.1 Recover the current implementation before naming a gap
+
+The source inspected for this contribution is O:I
+`0b3583be80868bcc3edfb4a449ae17010f0bbd74`, not the older installed cut in
+§3.1. The accepted [#299 configuration plane](https://github.com/EpiLogos/O-I/issues/299)
+and [#109 native engagement](https://github.com/EpiLogos/O-I/issues/109)
+already supply mutable owner operations. The `v2` System disclosure above
+still does not itself grant write authority: the configuration plane's
+existing contributions, planning, native operations and receipts do that.
+
+```text
+System / Profiles
+  → existing PlanDrawer ingress
+  → ConfigPlaneSource (sourceHost / liveSource)
+  → existing config_* KernelOps
+  → installed oi config / oi profile engine
+  → native owner operation
+  → independent resolution / receipt readback
+```
+
+[#406](https://github.com/EpiLogos/O-I/pull/406) adds a reusable human flow
+on this path, not another store, registry, dispatcher or configuration
+architecture. Its bounded files were claimed with the active #375 Track 1
+owner before editing. It leaves CradleFrame, shared routes/store/styles,
+SettingsHome design and unpublished local UI work untouched. Track 1
+integrates the compatible drawer into the actual current Mac application;
+Track 2 owns the native operations; Track 3 owns QL/Expression facilities.
+
+### 8.2 Human sequence and truthful state
+
+The full setup experience is discovery → intended composition → relevant
+settings → validation/plan → authorised application → native readback →
+useful first action. This contribution implements the contributed-setting
+portion and recovery through the existing System/Profiles entry. It
+supports discovery of actual composition/availability, typed setting and
+scope selection, native path browsing, and a real optional source-reading
+first action. It is not a replacement installer or the final cross-product
+composition picker: installation/adoption/removal remains an operation of
+the installation owner under [the existing variant specification](../experience/INSTALLATION-VARIANTS.md).
+Do not represent product absence as a mutable preference or equate an
+application M′ mode with an installation form.
+
+Back, Cancel and drawer remount retain an **in-memory, app-session draft**;
+this is not a promise of process-restart persistence. Editing invalidates
+the reviewed plan. Discovery, editing and planning do not write native
+settings. Apply explicitly authorises holding the reviewed desired entries
+and invoking native apply. Forms use actual enums, booleans, scopes, numbers
+and structured rows/lists, not a raw-JSON editor. Reference suggestions are
+previously disclosed values; they are not represented as a universal
+resolver. Read-only, unavailable and out-of-composition contributions remain
+read-only. Secret settings transport references from the owner's secure
+mechanism; no credential-material field, profile copy, log or receipt is
+introduced by this flow.
+
+Desired, declared, effective, active and staged values are separately
+rendered. A successful apply does not assert that an old running Session or
+service has restarted. The owner-disclosed restart/reconnect effect stays
+explicit. Incomplete, expired, duplicate or foreign-scope plans cannot
+silently apply a successful subset. Native/desired changes after review
+require a fresh plan. There is no implicit rollback.
+
+A partial desired hold is distinct from native application. Partial native
+results preserve each operation. Only explicitly retryable failed
+setting/scope pairs enter a new plan; successful siblings do not replay.
+Receipt/readback failure retains the apply result and offers a **read**
+retry. A lost apply response is an unknown outcome, not a failed write;
+reconcile it through native state/history rather than automatically trying
+again. Closing or remounting the form must never repeat an operation.
+
+The production `files_list`, `sources_list` and `source_open` adapters
+support a native directory picker and an optional first source read. Root
+work does not fabricate a child Project. The source preview does not invoke
+an Agent, write the file, replace normal pane routing or establish that a
+Factory Run or the whole corpus is ready.
+
+### 8.3 Native dependencies and parity
+
+CLI/headless and desktop remain consumers of the same installed engine and
+native contributions. Native terminal interaction continues through the
+existing AIKit places/session surface and
+`ai-kit/docs/v2/23-TUI-HUMAN-EXPERIENCE-SPEC.md`; a settings form is not a
+terminal replacement. Use the native owner contribution to determine its
+actual supported scopes, reference resolution, authority, effects and
+recovery operations. An absent operation is a precise owner dependency,
+not permission to fake an enabled control.
+
+The current `liveSource.apply` submits bound requests through `config_apply`.
+The renderer's reviewed-plan and preflight checks do **not** establish
+atomic enforcement against a concurrent external write. Track 2 retains
+native tests for authority, plan binding/staleness and concurrent CLI edits
+at the selected engine cut. Secret storage/rotation and any required
+restart remain native-owner responsibilities. The real file/source
+adapters depend on the existing native file service and Central source
+provider, not a browser-supplied filesystem substitute.
+
+### 8.4 Executed-test record and exact remaining interaction checks
+
+The implementation PR contains the executed results and unchanged failed
+runs, with exact head/merge revisions. Its focused commands are:
+
+```sh
+cd desktop/cradle
+npm ci --no-audit --no-fund
+node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-setup.test.mjs
+npx tsc --noEmit
+npx playwright install chromium webkit
+node walk/configuration-setup.test.mjs
+```
+
+The tests use the existing C0 configuration fixtures, the production
+controller/forms/PlanDrawer and the actual live/native adapters against
+controlled typed handlers. They include disconnected-handler and negative
+recovery cases. These are controlled D-scope tests, not an installed native
+owner, Mac interaction or human acceptance claim. Browser artifacts remain
+under the existing test-artifact convention and on the PR's CI run, not a
+new evidence service. A green fixture is not completion of the production
+route.
+
+Track 1 must perform [LOCAL-CAMPAIGN §7.1](../experience/LOCAL-CAMPAIGN.md#71-a-bounded-human-setupconfigurationrecovery-episode)
+on the chosen current Mac cut: System → Settings → select real owner/scope
+→ edit → review → Back/edit → Cancel/reopen → one authorised Apply →
+independent native CLI and desktop readback → actual restart/reconnect if
+required → native path picker and a returned source. Check keyboard,
+IME/Escape, focus, narrow/wide scrolling, draft restoration and terminal
+continuity. Exercise denied/absent owners, stale/expired/incomplete plans,
+partial application, unavailable receipts/readback and uncertain replies;
+retain their original evidence. Track 2 proves native effects/authority and
+concurrency, while Track 3 supplies selected QL consumer facilities.
+
+The [current orientation](../experience/INHABITED-SYSTEM-ORIENTATION.md)
+and [local campaign](../experience/LOCAL-CAMPAIGN.md) set three bounded Mac
+tracks: **three O:I trees total including the primary**, one owner checkout
+per native repository, no fourth verifier tree. Omarchy's bounded independent
+work and Bimba/SharedField hosting do not gate unrelated Mac progress. The
+Day/NOW foundation still gates broad dependent fan-out, not this independent
+useful contribution. No further whole-suite audit or planning approval is
+required before affected implementation/testing.
+
+Actual Factory self-inhabitation and the complete source-backed Epi/Wiki/
+Expression/Technè corpus with real hosted publication remain the two
+near-term outcomes under #65/#220. This setup slice does not claim either
+complete. The latest application-level M4′/M5′ clarification is consumed by
+reference to the Epi lane's coordinated source amendment, as joined in the
+orientation, rather than redefined in this configuration document. No
+personal machine was connected to or mutated for this GitHub contribution.

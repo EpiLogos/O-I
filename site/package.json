@@ -5,18 +5,24 @@
   "type": "module",
   "scripts": {
     "generate:spacetimedb": "spacetime generate --lang typescript --out-dir src/explore/spacetimedb-bindings --module-path ../shared-field/spacetimedb",
-    "dev": "npm run generate:spacetimedb && vite",
-    "build": "npm run generate:spacetimedb && tsc -b && vite build",
-    "preview": "vite preview"
+    "dev": "npm run build:library && npm run generate:spacetimedb && vite",
+    "build": "npm run build:library && npm run generate:spacetimedb && tsc -b && vite build",
+    "preview": "vite preview",
+    "build:library": "node build-library.mjs && node build-publications.mjs && node prepare-public-assets.mjs",
+    "dev:public": "npm run build:library && vite --config vite.public.config.ts",
+    "build:public": "npm run build:library && tsc -p tsconfig.public.json && vite build --config vite.public.config.ts",
+    "test:library": "node --test library.test.mjs publication.test.mjs"
   },
   "dependencies": {
+    "@epilogos/oi-design-system": "file:../packages/oi-design-system",
     "@studio-freight/lenis": "^1.0.42",
     "clsx": "^2.1.1",
     "gsap": "^3.12.5",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
     "spacetimedb": "2.8.1",
-    "tailwind-merge": "^2.5.4"
+    "tailwind-merge": "^2.5.4",
+    "three": "0.186.0"
   },
   "devDependencies": {
     "@types/react": "^18.3.11",

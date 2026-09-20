@@ -12,17 +12,17 @@ export function IndexCollection({ items }: { items: Item[] }) {
     return <ul className="office-grid">{items.map((item, index) => {
       const product = PRODUCTS.find(entry => entry.name === item.name)!;
       return <li className="office-tile" key={item.name}>
-        <a className="office-tile__link" href={product.repo} target="_blank" rel="noreferrer">
+        <a className="office-tile__link" href={`#/library/${product.id}`}>
           <span className="office-tile__head" aria-hidden="true">
             <span className="collection-index">{String(index + 1).padStart(2, '0')}</span>
             <span className="office-tile__locator">{items.map((_, dot) => <i key={dot} className={dot === index ? 'is-current' : undefined} />)}</span>
-            <span className="office-tile__arrow">↗</span>
+            <span className="office-tile__arrow">→</span>
           </span>
           <span className="office-tile__copy">
             <strong className="sec__cell-name">{item.name}</strong>
             {item.detail && <span className="sec__detail">{item.detail}</span>}
           </span>
-          <span className="sr-only"> (opens native centre in a new tab)</span>
+          <span className="sr-only"> (opens the published Expression)</span>
         </a>
       </li>;
     })}</ul>;
