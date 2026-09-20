@@ -37,7 +37,6 @@ jobs:
           mkdir -p /tmp/canvas-review
           git diff --binary bfc674c529029b77036092891c5f1f52e6d389dd HEAD > /tmp/canvas-review/oi.patch
           cp source-head.txt /tmp/canvas-review/
-          cp -a desktop/cradle/node_modules/marked /tmp/canvas-review/marked
           tar -czf canvas-review.tar.gz -C /tmp/canvas-review .
       - uses: actions/upload-artifact@v4
         if: github.event_name == 'push'
