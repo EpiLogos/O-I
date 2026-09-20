@@ -94,7 +94,7 @@ const fixtureSession=(reading:EncounterReading,status:EncounterStatus,draft:stri
     send:async()=>{},recover:async()=>{},connect:async()=>{},reconnect:async()=>{},cancel:()=>{},
     permission:async()=>{},earlier:()=>{},latest:()=>{},
     readJournal:async(after:number)=>({agent_session:"agent-session/fixture",events:[],next_cursor:after,more:false}),
-    sendAddressed:async()=>{},sendGroup:async()=>{},seedA2a:()=>{},sendA2a:async()=>{},
+    reconcileAddressed:async()=>{},sendAddressed:async()=>{},sendGroup:async()=>{},seedA2a:()=>{},sendA2a:async()=>{},
   };
   return {state,actions};
 };

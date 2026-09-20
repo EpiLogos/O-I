@@ -59,6 +59,7 @@ export function ActivityPlane({session,onInspect,conversation}:{
     </OperationRow>
     :<p className="oi-note" data-task={task===null?"absent":"unread"}>{task===null?"No task is bound to this session.":"The owner has served no task reading for this session."}</p>}
    {state.dispatch.kind==="running"&&<div className="agent-now oi-row" data-busy="true" data-phase={state.dispatch.phase}><span className="agent-now-text" role="status">Delivery <code className="oi-ref">{state.dispatch.ref}</code> — {state.dispatch.phase==="preparing"?"committing to the owner…":`phase: ${state.dispatch.phase}`}</span></div>}
+   {(state.dispatch.kind==="unknown"||state.group?.rows.some(row=>row.phase==="unknown"))&&<div className="oi-refusal" role="alert">Native delivery outcome is unknown; no automatic replay.<button className="oi-action" onClick={()=>void actions.reconcileAddressed()}>Read original delivery outcomes</button></div>}
    {state.dispatch.kind==="refused"&&<p className="oi-refusal" role="alert">The owner refused this turn: {state.dispatch.error}</p>}
    {state.deliveries.map(entry=><OperationRow key={entry.ref} kind="delivery" label={`Delivery · ${entry.record.phase}`} line={entry.ref} meta={entry.duplicate?"duplicate read":undefined} attention={entry.record.phase==="failed"||entry.record.phase==="uncertain"}
       onInspect={()=>onInspect({kind:"delivery",ref:entry.ref,title:`Delivery ${entry.record.phase}`,payload:{delivery_ref:entry.ref,receipt:entry.record,duplicate:entry.duplicate,dispatched_packet:entry.packet},source:"Activity"})}>

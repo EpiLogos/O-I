@@ -1,0 +1,36 @@
+import assert from 'node:assert/strict';
+import {createServer} from 'vite';
+import {chromium} from 'playwright';
+import {mkdir,writeFile} from 'node:fs/promises';
+const out=new URL('./agent-native-results/',import.meta.url);await mkdir(out,{recursive:true});
+const server=await createServer({server:{host:'127.0.0.1',port:0}});let browser;const checks=[];
+try{
+ await server.listen();browser=await chromium.launch({headless:true});const page=await browser.newPage({viewport:{width:900,height:1000}});const errors=[];page.on('pageerror',e=>errors.push(String(e)));
+ await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/agent-native-creation-browser.html`);
+ await page.getByRole('textbox',{name:'Agent name',exact:true}).fill('Reading colleague');
+ await page.getByRole('textbox',{name:'Human purpose',exact:true}).fill('Read the permitted source.');
+ const checkbox=page.getByRole('checkbox');await checkbox.check();
+ assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action!=='roster').length),0);
+ await page.getByRole('button',{name:'Open native Agent/session setup',exact:true}).click();
+ await page.getByRole('button',{name:'Return to preserved composer and re-read readiness',exact:true}).click();
+ assert.equal(await page.getByRole('textbox',{name:'Human purpose',exact:true}).inputValue(),'Read the permitted source.');
+ checks.push('Setup excursion preserves the exact held purpose and only refreshes owner readings on return.');
+ await page.getByRole('button',{name:'Create native proposal',exact:true}).click();
+ await page.getByRole('button',{name:'Accept this exact Agent definition',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>window.creation.calls.some(c=>c.action==='accept')),false);
+ checks.push('Native proposal is reviewed before any acceptance or session preparation.');
+ await page.evaluate(()=>window.creation.loseAcceptance());
+ await page.getByRole('button',{name:'Accept this exact Agent definition',exact:true}).click();
+ await page.getByRole('alert').filter({hasText:'Acceptance outcome is unconfirmed'}).waitFor();
+ assert.equal(await page.getByRole('button',{name:'Accept this exact Agent definition',exact:true}).isDisabled(),true);
+ await page.getByRole('button',{name:'Inspect original outcome — no replay',exact:true}).click();
+ await page.getByRole('button',{name:'Prepare Direct session',exact:true}).waitFor();
+ assert.equal(await page.evaluate(()=>window.creation.calls.filter(c=>c.action==='accept').length),1);
+ checks.push('Lost acknowledgement becomes unknown; explicit source read recovers acceptance without a second write.');
+ await page.getByRole('button',{name:'Prepare Direct session',exact:true}).click();
+ await page.getByRole('button',{name:'Open conversation and choose harness',exact:true}).click();
+ const row=await page.evaluate(()=>window.creation.opened());assert.equal(row.ref,'agent-session/browser-created');assert.equal(row.space,'session-space/browser-created');assert.equal(row.project,'');
+ checks.push('Native Agent/session identities enter the existing conversation selector, including Central root.');
+ assert.deepEqual(errors,[]);await page.screenshot({path:new URL('creation.png',out).pathname,fullPage:true});
+ await writeFile(new URL('creation-receipt.json',out),JSON.stringify({standing:'controlled-browser-not-live-model',checks},null,2));console.log(JSON.stringify({passed:checks.length,checks}));
+}finally{await browser?.close();await server.close();}

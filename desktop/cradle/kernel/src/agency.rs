@@ -20,6 +20,30 @@ impl Client {
     pub fn discover() -> Self {
         Self { executable: std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(|| "oi".into()), home: None, suite_route: true }
     }
+    /// Exact native Direct Agent verbs. Neither renderer-selected executables
+    /// nor human credential values can enter this command seam.
+    pub fn direct_agent(&self, cwd: &Path, operation: &str, argument: Option<(&str,&str)>) -> Result<Value,String> {
+        match (operation, argument.map(|(flag,_)|flag)) {
+            ("agent-session-scope", None) |
+            ("agent-session-prepare", Some("--request-json")) |
+            ("agent-session-find", Some("--request-id")) => (),
+            _ => return Err("Unsupported native Agent operation".into()),
+        }
+        let mut command = Command::new(&self.executable);
+        if self.suite_route { command.arg("aikit"); }
+        command.arg("session-space").arg("-C").arg(cwd).arg(operation);
+        if let Some((flag,value))=argument { command.arg(flag).arg(value); }
+        if let Some(home)=&self.home { command.env("AIKIT_HOME",home); }
+        if let Some(root)=std::env::var_os("OI_CENTRAL_ROOT") { command.env("CENTRAL_ROOT",root); }
+        let output=command.output().map_err(|e|format!("Native Agent owner unavailable: {e}"))?;
+        if !output.status.success() { return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned()); }
+        if output.stdout.len()>1024*1024 { return Err("Native Agent response exceeds the bounded reading size".into()); }
+        let mut value:Value=serde_json::from_slice(&output.stdout).map_err(|e|format!("Unreadable native Agent response: {e}"))?;
+        if value.get("ok").and_then(Value::as_bool)==Some(false) { return Err(format!("Native Agent refusal: {}",value["error"])); }
+        if value.get("ok").and_then(Value::as_bool)==Some(true) { value=value.get("data").cloned().ok_or("Native Agent response has no data")?; }
+        Ok(value)
+    }
+
     pub fn read_project(&self, cwd: &Path, project_ref: &str) -> Result<Value, String> {
         read_project_with(&self.executable, self.home.as_deref(), cwd, project_ref, self.suite_route)
     }

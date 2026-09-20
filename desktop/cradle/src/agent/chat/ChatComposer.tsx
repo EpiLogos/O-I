@@ -36,7 +36,7 @@ export interface ComposerConnection {
   openReason?: string;
   model?:NativeModelState;
   modelActions?:NativeModelActions;
-  onRefreshProviders?:()=>void;
+  onSetup?:()=>void;onRefreshProviders?:()=>void;
 }
 
 export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,onPermission,permissionAllowed,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,picking,onPick,listProject,onChooseRow}:{
@@ -95,15 +95,15 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       ?<div className="chat-connect" data-fact="drafting">
         <span className="chat-connect-label"><Glyph name="link" size={11}/> {picking?"Choose a conversation":"No conversation bound yet"}</span>
         {onPick&&<button className="chat-provider oi-chip" disabled={busy} onClick={onPick}>{picking?"Close":"Choose"}</button>}
-        {picking&&listProject&&onChooseRow&&<div className="chat-history-rows oi-scroll"><EncounterList project={listProject} variant="panel" onOpen={onChooseRow}/></div>}
-        {!listProject&&picking&&<span className="oi-note">Select a project in the sidebar to list its conversations.</span>}
+        {picking&&listProject!==undefined&&onChooseRow&&<div className="chat-history-rows oi-scroll"><EncounterList project={listProject} variant="panel" onOpen={onChooseRow}/></div>}
+        {listProject===undefined&&picking&&<span className="oi-note">Select a project in the sidebar to list its conversations.</span>}
       </div>
       :!connected&&<div className="chat-connect" data-fact="disconnected">
       {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}
       <span className="chat-connect-label"><Glyph name="link" size={11}/> Connect with</span>
       {connection.providers.map(provider=><button key={provider.id} className="chat-provider oi-chip" disabled={pending||!connection.openAllowed} title={connection.openReason} onClick={()=>connection.onProvider(provider.id)}>{provider.label}</button>)}
       {!connection.providers.length&&<span className="oi-note">No encounter harness is configured. Configure an eligible native harness in System, then refresh here; your draft stays.</span>}
-      {connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}
+      {connection.onSetup&&<button type="button" className="oi-menu-item" onClick={connection.onSetup}>Repair native harness / model / credentials</button>}{connection.onRefreshProviders&&<button type="button" className="chat-provider oi-chip" disabled={pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}
       {connection.resume&&<button className="chat-provider oi-chip" data-resume="true" disabled={pending} title="The owner holds a recorded native session for this conversation; reconnecting resumes that exact identity." onClick={()=>connection.onReconnect(connection.resume!.provider)}><Glyph name="refresh" size={10}/>Reconnect {connection.resume.provider}</button>}
     </div>}
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}

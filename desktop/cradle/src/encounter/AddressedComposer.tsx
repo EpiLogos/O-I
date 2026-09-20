@@ -12,7 +12,8 @@ export type DispatchState =
   | {kind:"idle"}
   | {kind:"running";ref:string;phase:string}
   | {kind:"settled";ref:string;record:DeliveryRecord;duplicate:boolean}
-  | {kind:"refused";ref:string;error:string};
+  | {kind:"refused";ref:string;error:string}
+  | {kind:"unknown";ref:string;error:string};
 /** `packet` is what this window dispatched under that delivery identity (its
  * shared source refs and audience) — kept beside the owner's receipt so the
  * panel's Context plane can name what an addressed turn actually carried. */
@@ -40,11 +41,11 @@ const TERMINAL_NOTE:Record<string,string>={
   cancelled:"The turn was cancelled.",
   "reconciled-no-replay":"Correlated with reviewed owner evidence; never replayed.",
 };
-export function AddressedComposer({disabled,dispatch,history,service,agentSession,task,group,onGroupSend,onDispatchFields,onSend}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;task?:EncounterTaskReading;group?:GroupState;onGroupSend?:(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>void;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
+export function AddressedComposer({disabled,dispatch,history,service,agentSession,task,group,onGroupSend,onDispatchFields,onSend,onReconcile}:{disabled:boolean;dispatch:DispatchState;history:DeliveryHistoryEntry[];service?:{running:boolean;pid?:number;detail?:string};agentSession?:string;task?:EncounterTaskReading;group?:GroupState;onReconcile?:()=>void;onGroupSend?:(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>void;onDispatchFields?:(fields:AddressedFields)=>void;onSend:(turn:AddressedTurn,fields:AddressedFields)=>void}) {
   const [sender,setSender]=useState("");const [audience,setAudience]=useState("");
   const [basis,setBasis]=useState("");const [sourceRefs,setSourceRefs]=useState("");
   const [text,setText]=useState("");const [selection,setSelection]=useState<{sourceRef:string}|undefined>();
-  const running=dispatch.kind==="running";
+  const running=dispatch.kind==="running"||dispatch.kind==="unknown"||!!group?.rows.some(row=>row.phase==="unknown"||row.phase==="preparing"||ACTIVE_PHASES.includes(row.phase??""));
   const update=(patch:Partial<AddressedFields>)=>{const next={sender,audience,basis,sourceRefs,text,...patch};onDispatchFields?.(next);setSender(next.sender);setAudience(next.audience);setBasis(next.basis);setSourceRefs(next.sourceRefs);setText(next.text);};
   const applyCandidate=(candidate:AddressedCandidate)=>{
     const next={sender,audience,basis,sourceRefs:candidate.sourceRef,text:candidate.text??text};
@@ -96,6 +97,7 @@ export function AddressedComposer({disabled,dispatch,history,service,agentSessio
       <span className="encounter-addressed-preview">{preview}</span>
       <button className="encounter-addressed-send" disabled={disabled||running||!text.trim()||!sender.trim()||!audience.trim()||!basis.trim()} onClick={submit}>Dispatch addressed turn</button>
     </div>
+    {(dispatch.kind==="unknown"||group?.rows.some(row=>row.phase==="unknown"))&&<div role="alert"><p>Native delivery outcome is unknown. Nothing will be replayed.</p>{onReconcile&&<button onClick={onReconcile}>Read original delivery outcomes</button>}</div>}
     {dispatch.kind==="running"&&<p className="encounter-addressed-state" role="status" data-phase={dispatch.phase}>Delivery <code>{dispatch.ref}</code> — {dispatch.phase==="preparing"?"committing to the owner…":`phase: ${dispatch.phase}`}</p>}
     {dispatch.kind==="settled"&&<div className="encounter-addressed-state" role="status" data-phase={dispatch.record.phase}>
       <p>{dispatch.duplicate?"This delivery was already held by the owner — the durable receipt is shown again, nothing was resent.":<>Delivery <code>{dispatch.ref}</code> settled.</>} Phase: <strong>{dispatch.record.phase}</strong>.</p>

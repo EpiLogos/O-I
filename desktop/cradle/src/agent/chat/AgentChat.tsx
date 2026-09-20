@@ -1,3 +1,5 @@
+import {NativeAgentLauncher} from "../../agency/NativeAgentLauncher";
+import {openAgentSetup} from "../../agency/agentSetup";
 import {useEffect,useRef,useState,type DragEvent} from "react";
 import {Glyph} from "../../workspace/Glyph";
 import {useKernel} from "../../kernel/KernelProvider";
@@ -211,7 +213,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
           promptAllowed={allowed("prompt")} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
           onDraft={actions.change} onSend={send} onCancel={actions.cancel}
           onPermission={(id,decision)=>void actions.permission(id,decision)} permissionAllowed={allowed("permission")}
-          connection={{status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
+          connection={{onSetup:()=>openAgentSetup({project:state.project||undefined,reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
           tools={{subject:subject.location?{title:subject.title,attach:()=>attachLocation(subject.location!)}:undefined,pickFiles:attachFiles}}
           draftFailed={state.draftFailed} onRecover={()=>void actions.recover()} paged={state.before!==undefined} onLatest={actions.latest} focusToken={composerFocusToken}/>
       </>
@@ -220,17 +222,18 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
           <p className="chat-welcome-title">{choosing?"Opening the conversation…":"New conversation"}</p>
           <p className="chat-welcome-line oi-note">{choosing?"The conversation binds through the owner's own start and read."
             :project?`Write below — your first message asks which conversation under ${project} carries it, and the draft is kept until it is accepted.`
-            :"Write below — once a project is selected in the sidebar, your first message asks which conversation carries it."}</p>
+            :"Write below — choose or create an Agent in Central root. The draft remains yours while its native session is prepared."}</p>
         </div>
         {!choosing&&suggestions.length>0&&<div className="chat-suggestions" aria-label="Starting suggestions">
           {suggestions.map(suggestion=><button key={suggestion} className="chat-suggestion" onClick={()=>{setLocal(suggestion);setComposerFocusToken(token=>token+1);}}>{suggestion}</button>)}
         </div>}
+        {picking&&onChoose&&<NativeAgentLauncher project={project} onChoose={chooseRow}/>}
         <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing} error={undefined} editable={!choosing}
           promptAllowed={!choosing} cancelAllowed={false}
           onDraft={setLocal} onSend={send} onCancel={()=>{}}
           onPermission={()=>{}} permissionAllowed={false}
           connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined}}
-          tools={{pickFiles:attachFiles}} drafting picking={picking} onPick={()=>{setPicking(value=>!value);setHistoryOpen(false);}} listProject={project} onChooseRow={chooseRow}
+          tools={{pickFiles:attachFiles}} drafting picking={picking} onPick={()=>{setPicking(value=>!value);setHistoryOpen(false);}} listProject={project??""} onChooseRow={chooseRow}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>
       </div>}
     {dropping&&<div className="chat-drop-veil" aria-hidden="true"><Glyph name="attach" size={20}/><span>Drop to attach to the message</span></div>}

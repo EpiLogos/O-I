@@ -1,3 +1,4 @@
+import {unknownDispatch,settledPhase,mayStartDispatch} from "./deliveryOutcome";
 /**
  * One observer per encounter session.
  *
@@ -86,6 +87,7 @@ export interface EncounterSessionActions {
  latest():void;
  readJournal(after:number):Promise<JournalPage>;
  sendAddressed(turn:AddressedTurn,fields:AddressedFields):Promise<void>;
+ reconcileAddressed():Promise<void>;
  sendGroup(sender:string,recipients:GroupRecipient[],packet:AddressedPacket):Promise<void>;
  seedA2a(seed:string):void;
  sendA2a(seed:string,fields:A2aPeerFields):Promise<void>;
@@ -284,19 +286,45 @@ class EncounterSession implements EncounterSessionActions {
    try{record=await this.call<DeliveryRecord>({action:"delivery",agent_session:this.state.agentSession,delivery_ref:ref});}catch{continue;}
    if(!record)return;
    this.set({dispatch:{kind:"running",ref,phase:record.phase}});
-   if(!ACTIVE_PHASES.includes(record.phase)){this.settle({ref,record,duplicate:false,packet});return;}
+   if(settledPhase(record.phase)){this.settle({ref,record,duplicate:false,packet});return;}
   }
  }
  sendAddressed=async(turn:AddressedTurn,_fields:AddressedFields)=>{
+  if(!mayStartDispatch(this.state.dispatch,this.state.group))return;
   const ref=mintDeliveryRef();
   this.set({dispatch:{kind:"running",ref,phase:"preparing"}});
   try{
    const receipt=await this.call<SendReceipt>({action:"send",agent_session:this.state.agentSession,turn:{...turn,delivery_ref:ref}});
    const record=receipt.delivery;
-   if(receipt.duplicate||!ACTIVE_PHASES.includes(record.phase)){this.settle({ref,record,duplicate:receipt.duplicate,packet:turn.packet});return;}
+   if(settledPhase(record.phase)){this.settle({ref,record,duplicate:receipt.duplicate,packet:turn.packet});return;}
    this.set({dispatch:{kind:"running",ref,phase:record.phase}});
    await this.track(ref,turn.packet);
-  }catch(error){this.set({dispatch:{kind:"refused",ref,error:String(error)}});void this.probe();}
+  }catch(error){this.set({dispatch:unknownDispatch(ref,error)});void this.probe();}
+ };
+ // Explicitly reconcile existing native delivery identities. No send is
+ // called here; absence, refusal and unreadable results stay unknown.
+ reconcileAddressed=async()=>{
+  const dispatch=this.state.dispatch;
+  if(dispatch.kind==="unknown"||dispatch.kind==="running"){
+   try{
+    const record=await this.call<DeliveryRecord>({action:"delivery",agent_session:this.state.agentSession,delivery_ref:dispatch.ref});
+    if(this.state.dispatch.kind!=="idle"&&this.state.dispatch.ref===dispatch.ref){
+     if(!record||typeof record.phase!=="string")this.set({dispatch:unknownDispatch(dispatch.ref,"No native receipt yet")});
+     else if(settledPhase(record.phase))this.settle({ref:dispatch.ref,record,duplicate:false});
+     else this.set({dispatch:{kind:"running",ref:dispatch.ref,phase:record.phase}});
+    }
+   }catch(error){this.set({dispatch:unknownDispatch(dispatch.ref,error)});}
+  }
+  const group=this.state.group;
+  if(group){
+   const rows=await Promise.all(group.rows.map(async row=>{
+    if(row.phase===undefined||settledPhase(row.phase))return row;
+    try{const record=await this.call<DeliveryRecord>({action:"delivery",agent_session:row.agentSession,delivery_ref:group.ref});
+     return record&&typeof record.phase==="string"?{...row,phase:record.phase,error:undefined}:{...row,phase:"unknown",error:"No native receipt yet"};
+    }catch(error){return {...row,phase:"unknown",error:String(error)};}
+   }));
+   if(this.state.group?.ref===group.ref)this.set({group:{ref:group.ref,rows}});
+  }
  };
  // Addressed group: one packet, explicit recipients, whole-group admission
  // owner-side, per-recipient durable results, non-atomic fanout.
@@ -313,6 +341,7 @@ class EncounterSession implements EncounterSessionActions {
   }
  }
  sendGroup=async(sender:string,recipients:GroupRecipient[],packet:AddressedPacket)=>{
+  if(!mayStartDispatch(this.state.dispatch,this.state.group))return;
   const ref=mintDeliveryRef();
   this.set({group:{ref,rows:recipients.map(recipient=>({agentSession:recipient.agent_session,phase:"preparing"}))}});
   try{
@@ -320,7 +349,7 @@ class EncounterSession implements EncounterSessionActions {
    const bySession=new Map(receipt.recipients.map(entry=>[entry.agent_session,entry]));
    const rows=recipients.map(recipient=>{
     const entry=bySession.get(recipient.agent_session);
-    if(!entry)return {agentSession:recipient.agent_session,phase:"preparing"};
+    if(!entry)return {agentSession:recipient.agent_session,phase:"unknown",error:"Missing recipient acknowledgement; inspect without replay"};
     if(entry.error)return {agentSession:recipient.agent_session,error:`${entry.error.message} [${entry.error.code}]`};
     return {agentSession:recipient.agent_session,phase:entry.result!.delivery.phase,duplicate:entry.result!.duplicate};
    });
@@ -335,7 +364,7 @@ class EncounterSession implements EncounterSessionActions {
      if(current)this.set({group:{...current,rows:current.rows.map((existing,existingIndex)=>existingIndex===index?{...existing,...row}:existing)}});
     });
    }));
-  }catch(error){this.set({group:{ref,rows:recipients.map(recipient=>({agentSession:recipient.agent_session,error:String(error)}))}});void this.probe();}
+  }catch(error){this.set({group:{ref,rows:recipients.map(recipient=>({agentSession:recipient.agent_session,phase:"unknown",error:String(error)}))}});void this.probe();}
  };
 
  // --- A2A exchange: the resident's own reply is the bounded passage.
@@ -407,7 +436,7 @@ const noSnapshot=()=>undefined;
 export function useEncounterSession(binding:EncounterSessionBinding|undefined):EncounterSessionHandle|undefined {
  const kernel=useKernel();
  const project=binding?.project,ref=binding?.ref,space=binding?.space;
- const session=useMemo(()=>project&&ref?acquire(kernel.transport,{project,ref,space}):undefined,[kernel.transport,project,ref]);
+ const session=useMemo(()=>project!==undefined&&ref?acquire(kernel.transport,{project,ref,space}):undefined,[kernel.transport,project,ref]);
  useEffect(()=>{if(session&&space)session.bind(kernel.transport,space);},[session,space,kernel.transport]);
  useEffect(()=>{if(!session)return;session.retain();return()=>session.release();},[session]);
  const state=useSyncExternalStore<EncounterSessionState|undefined>(session?session.subscribe:noSubscription,session?session.snapshot:noSnapshot);
