@@ -38,6 +38,8 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi recognition list [--json]  disclose accumulated local/embedded recognition adapters");
                 println!("  oi recognition register PACKAGE.json");
                 println!("                                verify and register an oi.world-recognition/v1 package contribution");
+                println!("  oi recognition verify CONTRIBUTION_REF");
+                println!("                                run a registered recognition contribution's own verify operation and print its receipt");
                 println!("  oi recognition unregister CONTRIBUTION_REF");
                 println!("                                remove a locally registered recognition contribution");
                 println!();
