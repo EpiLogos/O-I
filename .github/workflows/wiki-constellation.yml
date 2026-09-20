@@ -60,3 +60,46 @@ jobs:
           name: wiki-exact-cut-${{ github.run_id }}
           path: /tmp/wiki-evidence/
           retention-days: 7
+  native-contract-sources:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - repository: ai-kit
+            revision: 99306d858c255fa258d8cc419b314a433d3f92a4
+          - repository: Central
+            revision: 12ee31313e710378845baae190efc1a4b3e7ebdb
+          - repository: QL-MEF
+            revision: 5970757e25532c7329f07f4819273155c4f3f135
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/${{ matrix.repository }}
+          ref: ${{ matrix.revision }}
+          persist-credentials: false
+      - name: Record pinned public contract source, not installed state
+        env:
+          OWNER_REPOSITORY: ${{ matrix.repository }}
+          OWNER_REVISION: ${{ matrix.revision }}
+        run: |
+          mkdir -p /tmp/native-wiki-source
+          test "$(git rev-parse HEAD)" = "$OWNER_REVISION"
+          git rev-parse HEAD > /tmp/native-wiki-source/source-revision.txt
+          python3 - <<'PY'
+          import os, pathlib, subprocess, tarfile
+          paths = subprocess.check_output(['git', 'ls-files', '-z']).decode().split('\0')
+          suffixes = {'.rs', '.toml', '.lock', '.json', '.csv', '.md', '.py', '.ts', '.tsx', '.js', '.mjs', '.css', '.html', '.yml', '.yaml', '.txt'}
+          with tarfile.open('/tmp/native-wiki-source/source.tar.gz', 'w:gz') as out:
+              for name in paths:
+                  p = pathlib.Path(name)
+                  if p.is_file() and not p.is_symlink() and (p.suffix in suffixes or p.name == 'AGENTS.md'):
+                      out.add(p, arcname=name, recursive=False)
+          PY
+          cd /tmp/native-wiki-source && sha256sum source.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: wiki-contract-${{ matrix.repository }}-${{ matrix.revision }}
+          path: /tmp/native-wiki-source/
+          retention-days: 7
