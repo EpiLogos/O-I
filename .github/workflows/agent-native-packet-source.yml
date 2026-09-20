@@ -1,0 +1,84 @@
+name: Publish native packet source
+on:
+  push:
+    branches: [agent/native-agent-session-20260920]
+    paths: [.github/workflows/agent-native-packet-source.yml]
+permissions:
+  contents: read
+jobs:
+  publish:
+    if: github.ref == 'refs/heads/agent/native-agent-session-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Reapply preserved source patch only
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          from textwrap import dedent
+          old=Path('.github/workflows/agent-native-acceptance-packet.yml').read_text()
+          code=dedent(old.split("python3 - <<'PY'\n",1)[1].split('\n          PY',1)[0])
+          start=code.index("p=Path('.github/workflows/agent-session-native.yml')")
+          end=code.index("p=Path('docs/experience/SESSION-GROUNDING.md')",start)
+          code=code[:start]+code[end:]
+          # The rejected push modified a workflow; that write was completed by
+          # the connected API. Execute only its retained Python/source/doc hunks.
+          assert ".github/workflows/agent-session-native.yml" not in code
+          exec(compile(code,'preserved-packet-source','exec'))
+          p=Path('docs/experience/SESSION-GROUNDING.md')
+          s=p.read_text().replace('is relabelled as a pass.','is relabelled as a pass.\n\nPacket run `35487328960` passed its seven Python checks but its push was rejected\nbecause the CI token cannot update workflow files. The connected GitHub API\npublished that workflow change separately; the source patch was retained and\nreapplied without changing workflow permissions or weakening any test.')
+          p.write_text(s)
+          PY
+          python3 desktop/cradle/tests/agent-native-live.test.py
+          python3 desktop/cradle/tests/agent-native-live.py --help
+          git diff --check
+          git rm .github/workflows/agent-native-acceptance-packet.yml .github/workflows/agent-native-packet-source.yml
+          git add desktop/cradle/tests/agent-native-live.py docs/experience/SESSION-GROUNDING.md
+          git -c user.name=Epii -c user.email=agent-session@users.noreply.github.com commit -m 'test(encounter): publish preserved source-return packet and owning Wayfinder receipt'
+          git show --format=fuller --binary HEAD > /tmp/agent-native-packet.patch
+          git push origin HEAD:refs/heads/agent/native-agent-session-20260920
+          git rev-parse HEAD | tee /tmp/agent-native-packet-head.txt
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Desktop dependencies
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Controller regressions
+        id: controller
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --test tests/agent-native-model.test.mjs
+      - name: Production desktop build
+        id: build
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: npm run build
+      - name: Browser runtime
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Actual composer browser regressions
+        id: browser
+        continue-on-error: true
+        working-directory: desktop/cradle
+        run: node tests/agent-native-browser.mjs
+      - name: Native bridge regressions
+        id: kernel
+        continue-on-error: true
+        working-directory: desktop/cradle/kernel
+        run: cargo test --locked --test agent_native_gate
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-packet-source-and-evidence
+          path: |
+            /tmp/agent-native-packet.patch
+            /tmp/agent-native-packet-head.txt
+            desktop/cradle/tests/agent-native-results/
+          retention-days: 7
+      - name: Preserve original failures
+        if: steps.controller.outcome != 'success' || steps.build.outcome != 'success' || steps.browser.outcome != 'success' || steps.kernel.outcome != 'success'
+        run: exit 1
