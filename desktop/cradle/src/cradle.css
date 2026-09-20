@@ -1037,6 +1037,11 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
   border: var(--oi-shell-edge) solid var(--oi-hairline);
   border-radius: var(--oi-shell-radius); }
 .mode-stage::-webkit-scrollbar { display: none; }
+/* The per-mode stage slots (CradleFrame.tsx): a slot is ALWAYS PRESENT and
+ * hides by visibility alone — the authored display:flex above would
+ * otherwise override the UA [hidden] rule, and an off stage must genuinely
+ * paint nothing while its application stays mounted inside. */
+.mode-stage[hidden] { display: none; }
 /* Children keep their natural height against a full-stage floor: short
  * surfaces still fill the stage, tall ones (Factory's desk sections) grow
  * and THIS stage is their scroll owner. */
@@ -1059,6 +1064,12 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
 .mode-stage-slot { display: contents; }
 .warm-tree-host { display: contents; }
 .warm-tree-host[hidden] { display: none; }
+/* The rest frame (CradleFrame.tsx): one stable sibling beside the stages
+ * and the warm trees — the empty active tree only decides whether it
+ * paints, never whether it exists (branching it moved the tree hosts'
+ * positions and remounted them on every first mode visit). */
+.rest-host { display: contents; }
+.rest-host[hidden] { display: none; }
 .mode-stage .retained-centre-outlet .retained-centre-host > * { flex: none; min-width: 0; min-height: 100%; }
 .desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > * { width: 100%; }
 .desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > main { padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
