@@ -1,0 +1,58 @@
+name: Native session preview interface repair
+on:
+  push:
+    branches: [agent/native-agent-session-20260920]
+    paths: [.github/workflows/agent-native-preview-fix.yml]
+permissions:
+  contents: read
+jobs:
+  repair:
+    if: github.ref == 'refs/heads/agent/native-agent-session-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - name: Complete the dev-only handle without adding a pretend native selector
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          def replace(s,old,new):
+            assert s.count(old)==1, old
+            return s.replace(old,new,1)
+          p=Path('desktop/cradle/src/agent/chat/preview.dev.tsx');s=p.read_text()
+          s=replace(s,'reading,status,providers:[{id:"fixture-acp",label:"Fixture ACP"}],','reading,status,providers:[{id:"fixture-acp",label:"Fixture ACP"}],\n    model:{phase:"unavailable",error:"This dev preview has no native model owner."},')
+          s=replace(s,'    send:async()=>{},recover:async()=>{},connect:async()=>{},','    readModel:async()=>{},selectModel:async()=>{throw new Error("No native selector exists in this dev preview");},refreshProviders:async()=>{},\n    send:async()=>{},recover:async()=>{},connect:async()=>{},')
+          p.write_text(s)
+          p=Path('desktop/cradle/tests/agent-native-browser.mjs');s=p.read_text()
+          s=replace(s," await page.evaluate(()=>window.controlled.readonly());\n assert.equal(await selector.isDisabled(),true);\n await page.getByText('This harness has launch-time selection only.',{exact:true}).waitFor();"," await page.evaluate(()=>window.controlled.readonly());\n await page.getByText('This harness has launch-time selection only.',{exact:true}).waitFor();\n assert.equal(await selector.isDisabled(),true);")
+          p.write_text(s)
+          PY
+          git diff --check
+          git rm .github/workflows/agent-native-preview-fix.yml
+          git add desktop/cradle/src/agent/chat/preview.dev.tsx desktop/cradle/tests/agent-native-browser.mjs
+          git -c user.name=Epii -c user.email=agent-session@users.noreply.github.com commit -m 'fix(encounter): keep dev preview read-only and await browser render before assertions'
+          git push origin HEAD:refs/heads/agent/native-agent-session-20260920
+          git rev-parse HEAD
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Locked desktop install
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Build production desktop
+        working-directory: desktop/cradle
+        run: npm run build
+      - name: Install test browser
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Execute actual composer behaviour checks
+        working-directory: desktop/cradle
+        run: node tests/agent-native-browser.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: native-composer-browser-evidence
+          path: desktop/cradle/tests/agent-native-results/
+          retention-days: 7
