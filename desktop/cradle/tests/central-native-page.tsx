@@ -8,6 +8,10 @@ import {readFile} from '../src/files/client';
 import type {CentralLocation} from '../src/kernel/types';
 import type {SurfaceBinding} from '../src/surface/types';
 import type {ProjectNavigation} from '../src/workspace/store';
+import '@epilogos/oi-design-system/tokens.css';
+import '@epilogos/oi-design-system/desktop.css';
+import '../src/cradle.css';
+import '../src/workspace/shell.css';
 import '../src/receiving/receiving.css';
 window.__OI_KERNEL_BRIDGE__=new URLSearchParams(location.search).get('bridge')!;
 function Page(){
@@ -22,11 +26,11 @@ function Page(){
   if(result?.result!=='source_opened')throw new Error(kernel.lastOpError()??'Native source did not open');
   setSource({id:reading.source.ref,kind:'source',ref:reading.source.ref,title:reading.location.path,project:reading.project?.name});setFront('source');
  }
- return <><p>Controlled ground, real source operations; not installed Mac acceptance.</p><div style={{display:'grid',gridTemplateColumns:'360px 1fr',height:'94vh'}}>
- <WorldNavigator mode="base" onMode={()=>{}} onOpenEncounter={async()=>{throw new Error('No test models')}} centralFiles={files} onCentralFilesChange={setFiles} workspaceSelector={null} projectNavigation={navigation} onNavigationChange={(ref,change)=>setNavigation(n=>({...n,[ref]:{...n[ref],...change}}))} onOpenFile={openFile} onOpenWiki={async()=>{throw new Error('Not a Wiki fixture')}} onMessage={setError}/>
- <main><button onClick={()=>setFront('ground')}>Back to Central ground</button><button disabled={!source} onClick={()=>setFront('source')}>Return to exact open source</button>{error&&<p role="alert">{error}</p>}
+ return <><p>Controlled ground, real source operations; not installed Mac acceptance.</p><div style={{display:'grid',gridTemplateColumns:'360px minmax(0,1fr)',height:'94vh'}}>
+ <div className="desktop-side" style={{position:'relative',minHeight:0}}><WorldNavigator mode="base" onMode={()=>{}} onOpenEncounter={async()=>{throw new Error('No test models')}} centralFiles={files} onCentralFilesChange={setFiles} workspaceSelector={null} projectNavigation={navigation} onNavigationChange={(ref,change)=>setNavigation(n=>({...n,[ref]:{...n[ref],...change}}))} onOpenFile={openFile} onOpenWiki={async()=>{throw new Error('Not a Wiki fixture')}} onMessage={setError}/></div>
+ <main style={{minWidth:0,minHeight:0,overflow:'auto'}}><button onClick={()=>setFront('ground')}>Back to Central ground</button><button disabled={!source} onClick={()=>setFront('source')}>Return to exact open source</button>{error&&<p role="alert">{error}</p>}
  <section hidden={front!=='ground'}><h1>Central native source walk</h1><p>Navigation leaves the existing source host mounted.</p></section>
- {source&&<section hidden={front!=='source'}><SourceSurface key={source.ref} binding={source}/></section>}
+ {source&&<section hidden={front!=='source'} style={{height:'90%'}}><SourceSurface key={source.ref} binding={source}/></section>}
  </main></div></>;
 }
 createRoot(document.getElementById('root')!).render(<React.StrictMode><KernelProvider><Page/></KernelProvider></React.StrictMode>);
