@@ -68,10 +68,27 @@ pub const INSTALL_MODES: [InstallMode; 6] = [
     },
     InstallMode {
         frame: "5/0",
-        name: "Central + Quaternal Logic",
-        products: Some(&[0, 5]),
+        name: "Hosted Library / learning",
+        products: None,
     },
 ];
+
+/// Historical unversioned local 5/0 receipts keep their original meaning.
+/// Current product presence never proves hosted Library availability.
+pub const LEGACY_LOCAL_LEARNING: InstallMode = InstallMode {
+    frame: "5/0",
+    name: "Historical local Central + Quaternal Logic request",
+    products: Some(&[0, 5]),
+};
+
+/// Resolve persisted requests without silently reinterpreting old records.
+pub fn recorded_install_mode(frame: &str, set_by: &str) -> Option<&'static InstallMode> {
+    if frame == "5/0" && !set_by.contains("oi.engagement/2026-09-18") {
+        Some(&LEGACY_LOCAL_LEARNING)
+    } else {
+        install_mode_by_frame(frame)
+    }
+}
 
 /// Look up an install mode by its frame notation.
 pub fn install_mode_by_frame(frame: &str) -> Option<&'static InstallMode> {
@@ -101,7 +118,6 @@ mod tests {
             (&[0, 1, 2][..], "0/1/2"),
             (&[0, 1, 2, 3][..], "0/1/2/3"),
             (&[0, 4][..], "4.5/0"),
-            (&[0, 5][..], "5/0"),
         ];
         for (positions, expected) in cases {
             assert_eq!(
@@ -131,8 +147,21 @@ mod tests {
         // Central + QL only: no agent-development stack.
         let client = install_mode_for(&[0, 4]).unwrap();
         assert_eq!(client.products, Some(&[0u8, 4][..]));
-        let learning = install_mode_for(&[0, 5]).unwrap();
-        assert_eq!(learning.products, Some(&[0u8, 5][..]));
+        assert_eq!(install_mode_for(&[0, 5]), None);
+        let learning = install_mode_by_frame("5/0").unwrap();
+        assert_eq!(learning.products, None);
+        assert_eq!(
+            recorded_install_mode("5/0", "oi mode set")
+                .unwrap()
+                .products,
+            Some(&[0u8, 5][..])
+        );
+        assert_eq!(
+            recorded_install_mode("5/0", "oi setup (oi.engagement/2026-09-18)")
+                .unwrap()
+                .products,
+            None
+        );
     }
 
     #[test]

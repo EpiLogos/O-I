@@ -1,0 +1,291 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-20T18:31:14.556Z",
+  "source": "Return of Zero — the E0 expression corpus (arguments, conjugates A′, episteme, matheme, symbolon, mytheme wholes)",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/collections/return-of-zero"
+    ],
+    "ground": "EpiLogos/Point-Cloud-Demo production/return-of-zero (E0 corpus: arguments-a, conjugates-a-prime, episteme, matheme, mytheme, symbolon) + EpiLogos/Antykathera-Essay-Work sources at dbf3b17 (sha-verified at export)",
+    "exported_at": "2026-09-20T18:31:14.556Z",
+    "generator": {
+      "name": "session fix/corpus-native-members-20260920 (byte-exact copy from production/return-of-zero, sha256-verified per artifact and per scene via bindings)",
+      "revision": "corpus-2026-09-20"
+    },
+    "source_revision": {
+      "repo": "EpiLogos/Antykathera-Essay-Work",
+      "commit": "dbf3b17"
+    },
+    "production_revision": {
+      "repo": "EpiLogos/Point-Cloud-Demo",
+      "commit": "66c767c659abb7bd01be96118e3eb28570b6afc9"
+    },
+    "member_count": 43,
+    "scene_count": 416,
+    "artifact_inventory": "EpiLogos/Antykathera-Essay-Work working/expression-corpus/E0-INVENTORY.json",
+    "bindings": "bindings/*.binding.json per artifact in production/return-of-zero"
+  },
+  "featured": [
+    {
+      "id": "roz-a-arguments",
+      "name": "Return of Zero — Arguments A01–A36",
+      "group": "Arguments",
+      "file": "arguments/roz-a-arguments.journey.json"
+    },
+    {
+      "id": "roz-a-prime-conjugates",
+      "name": "Return of Zero — Conjugates A01′–A36′",
+      "group": "Conjugates A′",
+      "file": "conjugates/roz-a-prime-conjugates.journey.json"
+    },
+    {
+      "id": "roz-ac-root",
+      "name": "Return of Zero — A/C, Root of the Conjugate Field",
+      "group": "Episteme",
+      "file": "episteme/roz-ac-root.journey.json"
+    },
+    {
+      "id": "roz-c-concepts-1",
+      "name": "Return of Zero — Episteme Concepts C01–C32",
+      "group": "Episteme",
+      "file": "episteme/roz-c-concepts-1.journey.json"
+    },
+    {
+      "id": "roz-c-concepts-2",
+      "name": "Return of Zero — Episteme Concepts C33–C64",
+      "group": "Episteme",
+      "file": "episteme/roz-c-concepts-2.journey.json"
+    },
+    {
+      "id": "roz-dossiers",
+      "name": "Return of Zero — Episteme dossiers",
+      "group": "Episteme",
+      "file": "episteme/roz-dossiers.journey.json"
+    },
+    {
+      "id": "roz-etymologies",
+      "name": "Return of Zero — Etymology whole-fields",
+      "group": "Episteme",
+      "file": "episteme/roz-etymologies.journey.json"
+    },
+    {
+      "id": "roz-histories",
+      "name": "Return of Zero — Episteme histories",
+      "group": "Episteme",
+      "file": "episteme/roz-histories.journey.json"
+    },
+    {
+      "id": "roz-lenses-aphorism",
+      "name": "Return of Zero — Lenses and the Aphorism",
+      "group": "Episteme",
+      "file": "episteme/roz-lenses-aphorism.journey.json"
+    },
+    {
+      "id": "roz-s-products",
+      "name": "Return of Zero — S, World and Life: the product field",
+      "group": "Episteme",
+      "file": "episteme/roz-s-products.journey.json"
+    },
+    {
+      "id": "roz-matheme-computation",
+      "name": "Matheme — Computation",
+      "group": "Matheme",
+      "file": "matheme/roz-matheme-computation.journey.json"
+    },
+    {
+      "id": "roz-matheme-formal-neighbours",
+      "name": "Matheme — Formal Neighbours",
+      "group": "Matheme",
+      "file": "matheme/roz-matheme-formal-neighbours.journey.json"
+    },
+    {
+      "id": "roz-matheme-four-files",
+      "name": "Matheme — The Four Files",
+      "group": "Matheme",
+      "file": "matheme/roz-matheme-four-files.journey.json"
+    },
+    {
+      "id": "roz-matheme-logics",
+      "name": "Matheme — The Two Logics",
+      "group": "Matheme",
+      "file": "matheme/roz-matheme-logics.journey.json"
+    },
+    {
+      "id": "roz-matheme-ql-spanda",
+      "name": "Matheme — QL and Spanda",
+      "group": "Matheme",
+      "file": "matheme/roz-matheme-ql-spanda.journey.json"
+    },
+    {
+      "id": "roz-matheme-topology-harmonics",
+      "name": "Matheme — Topology and Harmonics",
+      "group": "Matheme",
+      "file": "matheme/roz-matheme-topology-harmonics.journey.json"
+    },
+    {
+      "id": "roz-symbolon-spine",
+      "name": "Symbolon — the twelvefold spine",
+      "group": "Symbolon",
+      "file": "symbolon/roz-symbolon-spine.journey.json"
+    },
+    {
+      "id": "roz-symbolon-whole",
+      "name": "Symbolon — the whole/register relation",
+      "group": "Symbolon",
+      "file": "symbolon/roz-symbolon-whole.journey.json"
+    },
+    {
+      "id": "roz-mytheme-antikythera-attunement",
+      "name": "Antikythera as Attunement Instrument",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-antikythera-attunement.journey.json"
+    },
+    {
+      "id": "roz-mytheme-apollo-dionysus-daphne",
+      "name": "Apollo, Dionysus and Daphne",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-apollo-dionysus-daphne.journey.json"
+    },
+    {
+      "id": "roz-mytheme-apollo-eros-daphne-peneus",
+      "name": "Apollo · Eros/Cupid · Daphne · Peneus",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-apollo-eros-daphne-peneus.journey.json"
+    },
+    {
+      "id": "roz-mytheme-ares-aphrodite-hephaestus-poseidon",
+      "name": "Ares, Aphrodite, Harmonia, Eros, Hephaestus and Poseidon — the whole relation",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-ares-aphrodite-hephaestus-poseidon.journey.json"
+    },
+    {
+      "id": "roz-mytheme-avatar-image-mask-idol",
+      "name": "Avatar · image · mask · idol",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-avatar-image-mask-idol.journey.json"
+    },
+    {
+      "id": "roz-mytheme-eros-psyche",
+      "name": "Eros and Psyche",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-eros-psyche.journey.json"
+    },
+    {
+      "id": "roz-mytheme-goethe-permanence-change",
+      "name": "Goethe — Permanence in Change",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-goethe-permanence-change.journey.json"
+    },
+    {
+      "id": "roz-mytheme-indra-net",
+      "name": "Indra's jewel net — the whole within each reflection",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-indra-net.journey.json"
+    },
+    {
+      "id": "roz-mytheme-job",
+      "name": "Job",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-job.journey.json"
+    },
+    {
+      "id": "roz-mytheme-maya-eye-veil-frame-horizon",
+      "name": "Māyā — Eye, Veil, Frame, Horizon",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-maya-eye-veil-frame-horizon.journey.json"
+    },
+    {
+      "id": "roz-mytheme-meal-epistemic-metabolism",
+      "name": "The Meal — Epistemic Metabolism and the Shared Table",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-meal-epistemic-metabolism.journey.json"
+    },
+    {
+      "id": "roz-mytheme-mirror-that-moves-first",
+      "name": "The Mirror That Moves First",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-mirror-that-moves-first.journey.json"
+    },
+    {
+      "id": "roz-mytheme-mother-assumption-chiasm",
+      "name": "Mother, Assumption and chiasm",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-mother-assumption-chiasm.journey.json"
+    },
+    {
+      "id": "roz-mytheme-myth-attica-athena-poseidon-cecrops",
+      "name": "Attica — Athena, Poseidon, Cecrops, Olive, Sea, Verdict, and the Remembered Counter-Claim",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-myth-attica-athena-poseidon-cecrops.journey.json"
+    },
+    {
+      "id": "roz-mytheme-myth-hypostasis-archons-norea-sophia",
+      "name": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-myth-hypostasis-archons-norea-sophia.journey.json"
+    },
+    {
+      "id": "roz-mytheme-narrative-fanon-language-gaze-mask-recognition",
+      "name": "Fanon — Language, White Gaze, Racialised Body, Mask, and Recognition",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-narrative-fanon-language-gaze-mask-recognition.journey.json"
+    },
+    {
+      "id": "roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy",
+      "name": "Jung's Aion — Self, Christ/Antichrist, Fishes, Alchemy, and the Historical Shadow",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-narrative-jung-aion-fishes-christ-antichrist-alchemy.journey.json"
+    },
+    {
+      "id": "roz-mytheme-neumann-images",
+      "name": "Neumann images and plate relations",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-neumann-images.journey.json"
+    },
+    {
+      "id": "roz-mytheme-pauli-egg-dream",
+      "name": "Pauli's egg dream — spontaneous division, conscious participation and the circle",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-pauli-egg-dream.journey.json"
+    },
+    {
+      "id": "roz-mytheme-stained-glass-refraction",
+      "name": "Stained Glass — Originating Light, Spectrum, Panes, Seams, and Returning Recognition",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-stained-glass-refraction.journey.json"
+    },
+    {
+      "id": "roz-mytheme-taylor-authored-images",
+      "name": "Taylor — Poetry and Authored Images",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-taylor-authored-images.journey.json"
+    },
+    {
+      "id": "roz-mytheme-the-prisoner",
+      "name": "The Prisoner — Number Six, the changing Two, and the question of One",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-the-prisoner.journey.json"
+    },
+    {
+      "id": "roz-mytheme-travelling-jigsaw-atlas",
+      "name": "The travelling jigsaw — from box-lid to atlas",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-travelling-jigsaw-atlas.journey.json"
+    },
+    {
+      "id": "roz-mytheme-uroboros-trickster",
+      "name": "Uroboros, circulation and trickster",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-uroboros-trickster.journey.json"
+    },
+    {
+      "id": "roz-mytheme-valentinian-sophia-horos-achamoth",
+      "name": "Valentinian Sophia, Horos, Achamoth and Soter",
+      "group": "Mytheme wholes",
+      "file": "mytheme/roz-mytheme-valentinian-sophia-horos-achamoth.journey.json"
+    }
+  ]
+}

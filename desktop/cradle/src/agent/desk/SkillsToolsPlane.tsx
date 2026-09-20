@@ -66,7 +66,7 @@ export function SkillsToolsPlane({subject: _subject,accompanying,onMessage}:Desk
 
    {held.switch==="carried"
     ? <div className="desk-skills-group oi-section">
-       <p className="oi-note" data-fact="carried-repertoire-absent">No owner reading discloses which profile or skill set carried this act. The session's task basis ({carried?carried.request?.central?.task_ref:"none bound"}) names a purpose and source refs, never a repertoire — Factory #222 is the named producer this waits on.</p>
+       <p className="oi-note" data-fact="carried-repertoire-absent">No owner reading discloses which profile or skill set carried this act. The session's task basis ({carried?carried.request?.central?.task_ref:"none bound"}) names a purpose and source refs, never a repertoire — Factory issue 222 is the named producer this waits on.</p>
       </div>
     : <>
     {refusal&&<p className="oi-refusal" role="alert">{refusal}</p>}

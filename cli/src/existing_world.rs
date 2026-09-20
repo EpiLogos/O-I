@@ -1,6 +1,7 @@
 use oi_cli::world_recognition::{
     discover_ground, effective_registrations, register_recognition_package,
-    unregister_recognition_contribution, RecognizedSourceAperture, WorldRecognitionAccount,
+    unregister_recognition_contribution, verify_recognition_contribution,
+    RecognizedSourceAperture, WorldRecognitionAccount,
 };
 
 const EXISTING_WORLD_ADOPTION_SCHEMA: &str = "oi.existing-world-adoption/v1";
@@ -116,6 +117,21 @@ fn command_world_recognition(args: &[OsString]) -> Result<i32, String> {
                 Err(format!("recognition contribution is not registered: {contribution_ref}"))
             }
         }
+        Some("verify") => {
+            let contribution_ref = match args.get(1..) {
+                Some([value]) => value
+                    .to_str()
+                    .ok_or_else(|| "recognition contribution ref must be UTF-8".to_owned())?,
+                _ => return Err("usage: oi recognition verify CONTRIBUTION_REF".to_owned()),
+            };
+            let receipt =
+                verify_recognition_contribution(contribution_ref, &registry_path)?;
+            println!(
+                "{}",
+                serde_json::to_string_pretty(&receipt).map_err(|error| error.to_string())?
+            );
+            Ok(0)
+        }
         Some("list") => {
             let json_mode = match args.get(1..) {
                 Some([]) => false,
@@ -174,7 +190,7 @@ fn command_world_recognition(args: &[OsString]) -> Result<i32, String> {
             Ok(0)
         }
         _ => Err(
-            "usage: oi recognition <inspect PATH [--json]|list [--json]|register PACKAGE.json|unregister CONTRIBUTION_REF>"
+            "usage: oi recognition <inspect PATH [--json]|list [--json]|register PACKAGE.json|verify CONTRIBUTION_REF|unregister CONTRIBUTION_REF>"
                 .to_owned(),
         ),
     }

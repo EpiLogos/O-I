@@ -1,12 +1,16 @@
 # Inhabited system orientation — how to enter, develop and test the whole
 
-**Standing:** owner-directed orientation/index, amended 19 September 2026.  
+**Standing:** owner-directed orientation/index, amended 20 September 2026.  
 **Campaign owner:** O:I #65 and `docs/experience/README.md`; native promotion joins remain #220.  
 **Purpose:** keep the person and fresh Agents oriented across the final parallel development campaigns without creating another master architecture, evidence store or acceptance programme.
 
 This document does not replace the UX specifications, product Wayfinders or native implementation owners. It tells an entrant **which world they are in, which sources govern the experience, which bounded track owns the work, and how those tracks return to the one inhabited-system proving channel.**
 
 ## Current owner direction — two outcomes, three Mac tracks
+
+**20 September execution split:** web Agents implement bounded production changes, regression tests and controlled verification through reviewable PRs. They do not merge, install candidates or operate the person's computers. Local Agents reconcile the exact source/revision receipt on #65/#220, integrate compatible PRs, build the installed candidate and perform real-provider and computer-use episodes. Controlled web results remain useful evidence at their actual scope; absence of live credentials is not permission to leave production routes unfinished.
+
+The three Mac tracks below are **receiving/integration slots**, not three additional web implementation branches or a fourth verifier checkout. Shared files have one writer; consumers publish typed contracts and explicitly dependent ingress changes rather than overwrite the shared shell. Lane A owns visual treatment, lane C Agent/harness composition, and lane D setup/configuration consumers and these campaign amendments. Native setting, credential and authority meaning remains with its owner. Omarchy continues contribution and hosting, not a prerequisite for unrelated Mac work.
 
 The two near-term outcomes are both required:
 
@@ -26,7 +30,7 @@ Omarchy supplies **bounded independent work and Bimba/SharedField hosting**. Its
 
 The existing **Day/NOW foundation gate remains in force for broad dependent fan-out**. Independent bounded implementation, tests and the work making that foundation true continue now. No additional whole-suite audit or planning approval gate precedes useful work.
 
-The human setup contribution is [O:I #406](https://github.com/EpiLogos/O-I/pull/406), through the existing #299 configuration plane/#109 native engagement and [consumer seam](../cradle/08-WAVE-5-CONSUMER-SEAM.md#8-human-setup-and-recovery-consumer--19-september-2026). Its tests and native/Mac interaction obligations do not stand in for either complete outcome above.
+The human capability-setup foundation is [O:I #406](https://github.com/EpiLogos/O-I/pull/406), through the existing #299 configuration plane/#109 native engagement and [consumer seam](../cradle/08-WAVE-5-CONSUMER-SEAM.md#8-human-setup-and-recovery-consumer--19-september-2026). Its extension, [O:I #423](https://github.com/EpiLogos/O-I/pull/423), connects composition/installation and terminal adoption to that existing configuration flow. A dependent System ingress must be integrated with the setup implementation; exporting a component is not desktop wiring. Neither controlled test set stands in for installed Mac/provider proof or either complete outcome above.
 
 ---
 

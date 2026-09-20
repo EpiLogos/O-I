@@ -1,0 +1,1489 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-taylor-authored-images",
+  "name": "Taylor — Poetry and Authored Images",
+  "description": "The authored corpus whole: poems that return to their speaker, the two roads of two, the prose images that retain the relation they expose, and the keeping of the opening in the form.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-tay-0-poems",
+      "name": "A word that can return to its speaker",
+      "character": "Checkmate asks to be played again; mystery deepens as the relation becomes articulate; the One knows the One through no-one; 0 is the One, 1 the All.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e386",
+          "name": "checkmate — and \"Another game?\"",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.07,
+            "z": 0
+          },
+          "size": {
+            "x": 0.147,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♟",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st429",
+                "text": "♟",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e387",
+          "name": "the husk — what comes back when knowing fixes on its object",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st430",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e388",
+          "name": "\"The 0 is the One, the 1 is the All!\" — FT-P04",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0·1",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st431",
+                "text": "0·1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e389",
+          "name": "the institutions which must not devour the humanity that made and makes them (FT-P07)",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.36
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st432",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0–#1 · the Personal Poetry Corpus: ten earlier works, P0–P5, seven journal works",
+          "title": "A word that can return to its speaker",
+          "italic": "The poems demonstrate returns in different bodies: play reopening after checkmate, knowing restored to its conjugal joy, the One keeping its offices through changed case.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The corpus gives twenty-three individual works within one authored whole: ten undated earlier works, the six-work P0→P5 composition, seven dated journal works from March–June 2026. FT-P01 plays to checkmate and asks to play again — the final repetition of play reopening what the ending closed. FT-P02 gives the Unknown relative knowability and removes final possession from the Known, whose exclusive focus spits back the empty husk; Knowing itself is the Mystery, the conjugal joy of Known and Knower. FT-P03 passes \"it",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "takes one to know one\" through three changes of case to no-one, One knowing One. FT-P04 breathes the Two Ones in one line. FT-P07 dreams institutions which respect their constitution and do not devour the humanity that made and makes them — the present tense keeping originating act from becoming exhausted credit. FT-P08 wakes by getting tired; FT-P09's freedom moves from a rule to itself to the Rule of The Self, the message passing the pigeonhole; FT-P10 lets slighting approach slightly without gaining final authority.\n\nOccurrences: checkmate and the replayed game (FT-P01, #5→0); the husk (FT-P02); the three cases of one (FT-P03); the 0/1 line (FT-P04, developed at #1); the devouring institution (FT-P07, returned at #4's black sun).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-tay-1-roads",
+      "name": "Two roads, six works, and the return through the loop",
+      "character": "2 → (−1)+1 = 0 beside 2 → 0/1 → 00,01,10,11 + 0,1 = 4+2; P3's productive play answered by P4's severance; P5's word that points where no word can stand.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e390",
+          "name": "P0 — the fork: cancellation beside generation",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.313,
+            "y": 0.073
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "2→0",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st433",
+                "text": "2→0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e391",
+          "name": "P0 — 4+2: the four pairings with the generating two retained",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4+2",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st434",
+                "text": "4+2",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e392",
+          "name": "P3 — two through the Two Ones, ring around the Rosie, falling down through the loop",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.43,
+            "z": 0
+          },
+          "size": {
+            "x": 0.433,
+            "y": 0.433
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st435",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e393",
+          "name": "P4 — \"we forgot that one really is two\"; humility as prerequisite of precision",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "2",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st436",
+                "text": "2",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e394",
+          "name": "P5 — \"to find the limit, so, to speak\" — the pauses making the finding an act of language",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "…",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st437",
+                "text": "…",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · FT-P11–P16; the complementary lean of P3/P4 (human-amplified: yes)",
+          "title": "Two roads, six works, and the return through the loop",
+          "italic": "The numerical poem demonstrates the fate of relation under two operations: addition cancelling the poles, or the Two Ones generating their four pairings with the generating two retained.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The P0→P5 order belongs to the composition. FT-P11 is the fork in two printed rows: 2 → (−1)+1 = 0, and 2 → 0/1 → 00, 01, 10, 11 + 0, 1 = 4+2 — the difference is the fate of relation under the two operations. FT-P12: what binary cannot compute, where two see the common root, there our powers grow. FT-P13: where language stays understanding frays; let language cave and lay bare the way, over the edge, under the lips. FT-P14 carries two through the Two Ones — never rent asunder, two playing itself apart to 4+2, looking back with love, six",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "perfection seeking recollection, ring around the Rosie until you fall down through the loop. FT-P15 names the age's underlying issue: we forgot that one really is two; the cutting mind is derived, measures by limiting a sky, seals with patterned definition; humility lands as prerequisite of precision. FT-P16 moves God from disputed object to a word pointing where no word can stand, the account including its own release — whereof one must be silent, there one shouldn't speak; and yet the essence of the project is to find the limit, so, to speak.\n\nOccurrences: the fork rows (FT-P11); the common root (FT-P12); the loop's fall (FT-P14, #5→0); the sealed sky and open sky (FT-P15, #4's frame images); the three pauses (FT-P16).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-tay-3-prose",
+      "name": "Images that retain the relation they expose",
+      "character": "The fish describing water; the cage and the window; the kaleidoscope; the Necker cube; centres without a final circumference; the broken token; the erased taijitu.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e395",
+          "name": "the fish — describing the water it lives in",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.178,
+            "y": 0.124
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st438",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e396",
+          "name": "the cage / the window — both need the frame",
+          "kind": "formation",
+          "position": {
+            "x": 0.15,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.123
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "▣☐",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st439",
+                "text": "▣☐",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e397",
+          "name": "the kaleidoscope — a word as local orbital centre",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st440",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e398",
+          "name": "the Necker cube — reversal held by context, not a fourth face",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st441",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e399",
+          "name": "the broken token — each half referring to the absent other",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⧒⧓",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st442",
+                "text": "⧒⧓",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e400",
+          "name": "the erased dots — the outer form kept, the reciprocity gone",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.173,
+            "y": 0.173
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∴",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st443",
+                "text": "∴",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Draft 3; the Singh/Abhinavagupta encounter; the core theorem; the copula programme",
+          "title": "Images that retain the relation they expose",
+          "italic": "Each image demonstrates one operation: definition acknowledging its limit, a frame that opens rather than encloses, manifold interpretation answerable to its object, context holding reversals, fracture kept as recognition's means.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The prose images give the field material operations. The fish attempts to describe the water in which it lives: every distinction is sustained by what it tries to place before itself — Draft 3's faithful definition succeeds by acknowledging the limit at which its subject cannot become one more bounded thing. The definition becomes cage or window: both need the frame; the window keeps a definite frame while admitting what exceeds it (C21's living symbol). The kaleidoscope rearranges relations without licensing every description: a word becomes a local orbital centre, centralising and",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "decentring both belonging to the authored image; it returns-to Vāk. The Necker cube admits a change of orientation; the context holds the readings in relation rather than adding a fourth competing face. Centres without a final circumference remove the demand for a last enclosing spectator (A26). The broken token: keeping the fracture lets relation be authenticated across absence — one half cannot announce itself the whole (A23). The erased taijitu dots: one-dot erases the retained other, the outer form of distinction kept while the reciprocal relation that made it generative disappears (A13).\n\nOccurrences: the fish and the definition (Draft 3, A01); the cage/window (C21); the orbital word (A06); the cube's context (A04, A22); the kept counterpart (A23); the erased dots (A13).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-tay-4-blacksun",
+      "name": "The black sun and the radiating star",
+      "character": "Capture receives energy without answering circulation; the Work/Play inversion; four rings of depth; the attention sequence from cynicism to blankness — and the star that gives outward.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d9cdb4",
+          "#161a20",
+          "#c9b458",
+          "#8c3b2e"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e401",
+          "name": "the black sun — intake without renewal",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.41,
+            "z": 0
+          },
+          "size": {
+            "x": 0.313,
+            "y": 0.313
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#161a20",
+          "tintWeight": 0.85,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st444",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e402",
+          "name": "the four rings — Neptune's distance, Jupiter's gravity, Mercury's fixers, the corona's mutual exposure",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.9,
+            "y": 0.9
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st445",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e403",
+          "name": "the radiating star — what reaches the centre becoming available outward",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✷",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st446",
+                "text": "✷",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e404",
+          "name": "cynicism → exhaustion → blankness — the field ready for re-inscription",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "→→",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st447",
+                "text": "→→",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e405",
+          "name": "city · bomb · surveillance · counterfeit — three distinct failures (destruction, capture, forged source)",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st448",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · the adopted social-power unit; A29, A24, A25, A32 (human-amplified: yes for the adopted operations)",
+          "title": "The black sun and the radiating star",
+          "italic": "The image demonstrates capture against circulation: the public work channel becomes performance while effective decision moves into concealed play — and the return must let work, attention and judgement come back as generative capacity.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Attention and labour move toward a centre; at the public edge actions present as work done for others, while deeper the power to decide their use is less visible. The black sun gathers capture: energy received without answering circulation. The radiating star changes the destination: what reaches the centre becomes available outward as generative power. The adopted unit gives the contrast a complete Work/Play inversion — public work as performance, decision in concealed play — over four concentric rings: outer philanthropy at Neptune's distance, capital's stabilising gravity at Jupiter's, inner fixers at Mercury's proximity,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the innermost corona where mutual vulnerability binds. The false accounting excludes interior experience as unledgerable, then treats exclusion as absence. The attention sequence runs cynicism, exhaustion, blankness — a field ready for re-inscription; exposing the performance alone has not returned power. The city/bomb/surveillance/counterfeit unit differentiates destruction, capture and forged source-image as distinct failures; the God-image enters as the cultural question of what a collective places at the source of organised power. Particular allegations in the raw unit require their own evidence and are not reproduced.\n\nOccurrences: the black sun's intake and the star's radiance (#4); the four rings (#4); the attention sequence (#4); the city/bomb/surveillance/counterfeit distinctions (#4, returned at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-tay-5-return",
+      "name": "Keeping the opening in the form",
+      "character": "Each ending qualifies its work: the replayed game, the loop's fall, the returned shoe. The four operators of alterity; the recursive Bimba office; the way back to the particular words.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e406",
+          "name": "God as Other — source exceeding possession",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "G?",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st449",
+                "text": "G?",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e407",
+          "name": "shadow as other-self · friend as my-self's-other · alien/enemy as externalised uncertainty",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.07,
+            "z": 0
+          },
+          "size": {
+            "x": 0.27,
+            "y": 0.086
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st450",
+                "text": "4",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e408",
+          "name": "the returned shoe — \"Let the shoe fit / But return it\" (FT-P23)",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.425,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st451",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e409",
+          "name": "recursive Bimba — a reference genuinely occupying the local original's office, pratibimba in the wider relation",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "C38",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st452",
+                "text": "C38",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · A11, A01, A06; Neumann's shared structuration; the compilation's order and corrections",
+          "title": "Keeping the opening in the form",
+          "italic": "The whole demonstrates return as more than theme: play beginning again, the six routes falling through the loop, the fitting shoe returned — each ending qualifying the work that precedes it.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The complete poems make return exact: play begins again after checkmate; the six routes fall through their loop; the distressed speaker must reconcile what he could not simply eradicate — two hearts in one breast, the choice between soothing sleep and entrainment, reconciliation of the brothers making him capable of becoming a right light to others (FT-P18's complete aftermath, not the excerpt ending at the kiln); the fitting shoe must still be returned. The final four operators belong to one encounter with alterity: God as Other; shadow as other-self; friend as my-self's-other; alien or",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "enemy as externalised uncertainty — together returning-to A27 without becoming four universal character classes. The Two Ones receive FT-P04 and the P0–P5 movement; faithful definition receives fish, frame and speaking limit; Vāk the language that can yield while remaining precise. The recursive Bimba operation preserves contextual office and wider order of dependence together. The compilation supplies all twenty-three complete poems; the raw site file remains unlocated; the Venus naming vector and protected experiential material keep their gates — the way back to the particular words stays open.\n\nOccurrences: the returned shoe (FT-P23, #5→0); the loop's fall (FT-P14, #2, #5→0); the four operators (#4, #5→0); the authorial sequence corrections (FT-P19, FT-P21, FT-P22 as stated instructions).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

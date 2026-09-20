@@ -22,9 +22,12 @@ mod composition {
     include!("existing_world.rs");
     include!("omarchy_host.rs");
     include!("development_field_command.rs");
+    include!("update_flow.rs");
     include!("development_field_hardening.rs");
     include!("product_command_route.rs");
     include!("config_command.rs");
+    include!("setup_command.rs");
+    include!("setup_terminal.rs");
     include!("config_contribution.rs");
     include!("profile_command.rs");
     include!("desktop_command.rs");
@@ -32,7 +35,6 @@ mod composition {
     include!("frontdoor.rs");
     include!("mode_command.rs");
     include!("factory_proving.rs");
-    include!("update_flow.rs");
 }
 
 fn main() -> std::process::ExitCode {

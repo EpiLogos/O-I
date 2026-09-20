@@ -1,0 +1,1340 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-ac-root",
+ "name": "Return of Zero — A/C, Root of the Conjugate Field",
+ "description": "The canonical dual-form root as its own small expression: the one 0/1 field, its frozen ethic carried by reference, the crossed-zero sequence, the primitive sixfold, and the shared close.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "ac-root",
+   "name": "A/C — Argument / Concept — Root of the Conjugate Field",
+   "character": "The root as one self-describing field.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "ac-ring",
+     "name": "the one field",
+     "kind": "formation",
+     "position": {
+      "x": 0.12,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.5,
+      "y": 1.5
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.5,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-01",
+     "name": "the ruling sign",
+     "kind": "formation",
+     "position": {
+      "x": 0.12,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.92,
+      "y": 0.52
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "0/1",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-01-step0",
+        "text": "0/1",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-pin",
+     "name": "root gather",
+     "kind": "pin",
+     "position": {
+      "x": 0.12,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 0.1,
+      "y": 0.1
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "",
+     "share": 0,
+     "tint": "#20262b",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0.5,
+      "radius": 0.5,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-pin-step0",
+        "text": "",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "A/C · ARGUED",
+     "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+     "italic": "Hangs beneath it: A01–A36 · A01′–A36′ · C01–C64 — the 137-record shared suite · S field to 144",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A/C is the full 0/1 field — not the threshold slash alone: the one field of which both series, A01–A36 and A01′–A36′, are determinations. The prime creates a face, not a second node. Because the root is itself a determination of the field it describes, its description is self-describing: 0/1 writing itself as the ruling and the grammar of its own determinations.",
+     "x": 0.033,
+     "y": 0.46,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "ac-a-face",
+   "name": "A face — the ruling: Respect for Experience",
+   "character": "The ethic every conjugate operation answers to; linked, never rewritten.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "ac-plate",
+     "name": "the frozen ethic",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 1.02,
+      "y": 1.02
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-plate-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-ring2",
+     "name": "unfrozen ruling around it",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 1.66,
+      "y": 1.66
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.25,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-ring2-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "A/C · ARGUED",
+     "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+     "italic": "Respect for Experience — frozen ethic, carried by reference · facticity → dignity → love",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The A face carries the ethic that every conjugate operation answers to: Respect for Experience — right form and clear intention. Its body stays frozen and is linked, not rewritten: six movements — Life is awareness, experience; Form gives experience a world; Intention takes effect; Law carries entrusted power; The common world is apportioned; Experience renews the form. Its ground is the essay’s own: the fact of internality, disclosed in first-person immediacy — “I am undeniable, though nowhere to be seen.”",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "ac-crossed-zero",
+   "name": "The crossed-zero recognition sequence",
+   "character": "Occlusion, mediation, field-availability, recognition — run as a live sequence.",
+   "duration": 14,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "ac-cz-frame",
+     "name": "the zero it crosses",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.42,
+      "y": 1.42
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.3,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-frame-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-cz-t0",
+     "name": "sequence position 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000007,
+      "y": 0.8200000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "0",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-t0-step0",
+        "text": "0",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-cz-t1",
+     "name": "sequence position 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.622102355330306,
+      "y": 0.37999999999999995,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "Ø",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-t1-step0",
+        "text": "Ø",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-cz-t2",
+     "name": "sequence position 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.622102355330306,
+      "y": -0.5000000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.24,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "X",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-t2-step0",
+        "text": "X",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-cz-t3",
+     "name": "sequence position 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999985,
+      "y": -0.94,
+      "z": 0
+     },
+     "size": {
+      "x": 0.38,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "Ø/X",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-t3-step0",
+        "text": "Ø/X",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-cz-t4",
+     "name": "sequence position 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9021023553303058,
+      "y": -0.5000000000000004,
+      "z": 0
+     },
+     "size": {
+      "x": 0.64,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "(0/Ø)/(1/X)",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-t4-step0",
+        "text": "(0/Ø)/(1/X)",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-cz-t5",
+     "name": "sequence position 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.902102355330306,
+      "y": 0.38,
+      "z": 0
+     },
+     "size": {
+      "x": 0.5,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "1 ↺ 0/1",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-cz-t5-step0",
+        "text": "1 ↺ 0/1",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "A/C · ARGUED",
+     "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+     "italic": "Crossed Zero · §1 · #3 introduction · §4 · #3 full development",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The recognition-matheme reads the slash as the Antaḥkaraṇa’s signature on experience: 0 → Ø → X → Ø/X → (0/Ø)/(1/X) → 1 ↺ 0/1. At Ø the medium is occluded into an apparent subject — the computation confused for the computer; the Cartesian cogito and Hume’s empty zero both fixate there. At Ø/X the medium is visible as medium; (0/Ø)/(1/X) holds both recognition-relations together; the affirmed 1 returns as 0/1.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "ac-c-face",
+   "name": "C face — the concept: the primitive field",
+   "character": "The sixfold constitution of the field; recursion does not terminate.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "ac-six-ring",
+     "name": "the constitutional envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.45,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-six-0",
+     "name": "constitutional #0",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.4,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-six-1",
+     "name": "constitutional #1",
+     "kind": "formation",
+     "position": {
+      "x": -0.2583716857408418,
+      "y": 0.16999999999999998,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-six-2",
+     "name": "constitutional #2",
+     "kind": "formation",
+     "position": {
+      "x": -0.25837168574084174,
+      "y": -0.29000000000000004,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-six-3",
+     "name": "constitutional #3",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.52,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-six-4",
+     "name": "constitutional #4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5383716857408417,
+      "y": -0.2900000000000002,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-six-5",
+     "name": "constitutional #5",
+     "kind": "formation",
+     "position": {
+      "x": 0.5383716857408418,
+      "y": 0.17,
+      "z": 0
+     },
+     "size": {
+      "x": 0.2,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-six-5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "A/C · ARGUED",
+     "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+     "italic": "O Core Primitive Field v2 · QL 6×6 + Parent S · author-ratified organisational form",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The C face carries the primitive field in which every determination the essay makes is already formed: the constitutional sixfold #0 identity/centre → #1 form/artifact → #2 potency/praxis → #3 transformation/trajectory → #4 embodiment/actuality → #5 evidence/continuity ↺ renewed ground. QL determines at every level relative to that level; rows S and S0–S5 hold its product positions. A primitive is alive when its generating relation remains operable.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "ac-close",
+   "name": "The shared close — thinging / conditioning",
+   "character": "The ruling as the field’s constitution; the field as the ruling’s only body.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "ac-close-a",
+     "name": "A face",
+     "kind": "formation",
+     "position": {
+      "x": -0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 1.04
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-close-a-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-close-c",
+     "name": "C face",
+     "kind": "formation",
+     "position": {
+      "x": 0.44,
+      "y": -0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 1.04
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.6,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-close-c-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ac-close-sign",
+     "name": "the return reading",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.0,
+      "y": 0.5
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "(0/1)/(1/0)",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ac-close-sign-step0",
+        "text": "(0/1)/(1/0)",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "A/C · ARGUED",
+     "title": "A/C — Argument / Concept — Root of the Conjugate Field",
+     "italic": "The conjugate field read as the essay’s 1/0 · (0/1)/(1/0) held together",
+     "body": "",
+     "x": 0.033,
+     "y": 0.055,
+     "width": 470,
+     "size": 27,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A/C is the thing that is its own condition. The A face states the condition — the ethic resting on the fact of internality no reification can abolish; the C face states the thing — the primitive field in which every determination is already formed. The claim is that these are not two: the ruling operating as the field’s own constitution. In the essay’s notation 1/0 is the achieved determination turned toward the One it cannot contain; what A36 returns as symbol, A36′ returns as the film recognised as film.",
+     "x": 0.033,
+     "y": 0.455,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}

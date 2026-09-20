@@ -168,3 +168,63 @@ bridge): **4/7**.
   Omarchy-side runs, and the human campaign legs under #65 — none claimed.
 - C22/C23 (terminal process continuity, Run-behind-hidden-view) are
   unverified this pass.
+
+
+## W1 shell recovery continuation — 20 September 2026
+
+Owner: #375/#289, single-writer claim #375 comment 5747092804. The interrupted
+implementation is preserved in #416 at production head `874cf761`; its later
+commits only recovered source for reconciliation. The review successor is
+`agent/w1-shell-layout-finish-20260920`, based on published main
+`b72d763ce026efebe3fac67655749ac0909ea130`, not on an assumed unpublished UI tree.
+The requested newer local source/installed-candidate receipt was not available
+in the retrieved #65/#220 comments; no unpublished delta is asserted.
+
+### Reconciliation and boundaries
+
+Preserve #408/#410 retained documents, #406 setup semantics, #425's macOS-safe
+`setupFlowController.ts` rename, and main's **fixed per-mode stage slots**. The
+successor does not restore #416's superseded single moving stage or conditionally
+replace the entire warm-tree/rest subtree. Settings return focuses an existing
+editor; active trees do not consume the hidden-tree retention budget. Stage
+centre bindings are excluded from their own hidden pane presenters.
+
+Spatial cutout ownership follows the visible upper-right boundary (nested
+horizontal/vertical splits, maximise, compact focus and restoration). Close and
+restore reconcile tab/group/active memberships without resetting other documents.
+Rest offers actual writing, library and search routes. System/Settings open with
+side regions collapsed and return to the recorded preceding mode/arrangement.
+Visuals uses the existing light/dark/system preference owner, not a duplicate
+Expression workbench; Open Expressions addresses the actual stage. Non-chat
+sidebar and configuration layout polish and Factory icon emphasis use existing
+tokens. Agent chat/transcript/composer, native operations, setup-controller
+semantics and the complete Expressions application are not redesigned.
+
+### Evidence, including original failures
+
+Original CI run **35487741447**, artifact **10598422365**, tested `874cf761`:
+45 bounded unit checks, build, 36 setup cases and 22 Visuals cases passed; the
+shell's 12-scenario gate remained **8/12**. Chromium compact-return checks raced
+the matchMedia presentation commit; WebKit's Expressions route timed out. Keep
+those receipts red. The continuation waits for the exact expected geometric
+owner then checks its actual bounding box, repeats the 639/640 boundary in both
+directions, exercises the current real Expressions host/refusal and retained DOM,
+and always writes exit diagnostics. No assertion is reduced to source presence.
+
+Sandbox on reconciled source: production build passes; 46 bounded regression
+checks pass. Wider tests: **167/168**, with the existing legacy Day roster test
+expecting 4 while the real roster supplies 5. The same unchanged-main test is
+**33/34** at `b72d763`; do not remove a real corpus carrier to make this lane
+green. The final PR and its exact-head CI receipts record subsequent results;
+this paragraph is not an assertion of a future green run. Sandbox Chromium
+navigation was refused by the execution environment; controlled browser proof
+must come from the named GitHub Actions runs, not an inferred local pass.
+
+See `tests/LOCAL-SHELL-ACCEPTANCE.md` for executable machine-fact, consenting
+single live-provider turn, running-Mac keyboard/return and real microphone/audio
+checks, plus M01–M09 visual captures. These do not install, merge, auto-grant
+permissions or change native settings. Installed WKWebView, real owner/provider,
+physical restart and human visual acceptance remain local integration's
+observational obligations. This update does not close the older C01–C30 audit or
+claim the published corpus / self-inhabiting installable product outcomes merely
+from passing shell tests.

@@ -1,0 +1,2513 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-etymologies",
+ "name": "Return of Zero — Etymology whole-fields",
+ "description": "Six etymology wholes as six-operation fields: centre, envelope, generated relations; evidence registers distinguished.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "etymology-encounter-region-name-count",
+   "name": "Encounter / Region / Name / Count / Countenance / Account",
+   "character": "A whole-field: six operations generated around one centre, returns kept open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "etymology-encounter-region-name-count-centre",
+     "name": "the whole-field centre",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-centre-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-ring",
+     "name": "the field envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-op0",
+     "name": "operation 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-op0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-op1",
+     "name": "operation 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.31033320996790814,
+      "y": 0.17999999999999994,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-op1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-op2",
+     "name": "operation 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.3103332099679081,
+      "y": -0.3400000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-op2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-op3",
+     "name": "operation 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.6,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-op3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-op4",
+     "name": "operation 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.590333209967908,
+      "y": -0.34000000000000025,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-op4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-encounter-region-name-count-op5",
+     "name": "operation 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.5903332099679082,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-encounter-region-name-count-op5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "etymology-encounter-region-name-count · ARGUED",
+     "title": "Encounter / Region / Name / Count / Countenance / Account",
+     "italic": "Argued from · evidence registers: descent, attested sense, operational homology, poetic re-entry kept distinct",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The priority is operative, not a claim that people first met without language and only later invented it. An inherited name can make the meeting possible. Its use nevertheless takes place within a relation which can exceed and revise that use. Taylor's encounter synthesis grounds the whole-field proposition: the with-relation is prior to treating its opposed terms as independently complete.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "etymology-arbitration-hybris-regard-anamnesis",
+   "name": "Whole Field — Arbitration / Hybris / Regard / Anamnesis",
+   "character": "A whole-field: six operations generated around one centre, returns kept open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-centre",
+     "name": "the whole-field centre",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-centre-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-ring",
+     "name": "the field envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-op0",
+     "name": "operation 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-op0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-op1",
+     "name": "operation 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.31033320996790814,
+      "y": 0.17999999999999994,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-op1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-op2",
+     "name": "operation 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.3103332099679081,
+      "y": -0.3400000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-op2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-op3",
+     "name": "operation 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.6,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-op3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-op4",
+     "name": "operation 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.590333209967908,
+      "y": -0.34000000000000025,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-op4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-arbitration-hybris-regard-anamnesis-op5",
+     "name": "operation 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.5903332099679082,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-arbitration-hybris-regard-anamnesis-op5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "etymology-arbitration-hybris-regard-anamnesis · ARGUED",
+     "title": "Whole Field — Arbitration / Hybris / Regard / Anamnesis",
+     "italic": "field E2 · Argued authorial relational construction; source-specific semantic, historical and comparative branches distinguished. · evidence registers: descent, attested sense, operational homology, poetic re-entry kept distinct",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The field does not claim that *arbitration*, *hybris*, *regard* and *anamnesis* descend from one root. Historical derivation and attested senses belong to registers 1 Philological descent and 2 Attested semantic field and must be warranted term by term in the historical/source branch. The conjugate generation below is register 3 Operational homology / authorial relational construction.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "etymology-trust-place-logos-nomos-natio-credere",
+   "name": "Whole Field — Fides / Topos / Logos / Nomos / Natio / Credere",
+   "character": "A whole-field: six operations generated around one centre, returns kept open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-centre",
+     "name": "the whole-field centre",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-centre-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-ring",
+     "name": "the field envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-op0",
+     "name": "operation 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-op0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-op1",
+     "name": "operation 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.31033320996790814,
+      "y": 0.17999999999999994,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-op1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-op2",
+     "name": "operation 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.3103332099679081,
+      "y": -0.3400000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-op2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-op3",
+     "name": "operation 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.6,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-op3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-op4",
+     "name": "operation 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.590333209967908,
+      "y": -0.34000000000000025,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-op4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-trust-place-logos-nomos-natio-credere-op5",
+     "name": "operation 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.5903332099679082,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-trust-place-logos-nomos-natio-credere-op5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "etymology-trust-place-logos-nomos-natio-credere · ARGUED",
+     "title": "Whole Field — Fides / Topos / Logos / Nomos / Natio / Credere",
+     "italic": "Paraphrased lexical and historical witnesses; Argued authorial relational construction; explicitly marked poetic re-entry · evidence registers: descent, attested sense, operational homology, poetic re-entry kept distinct",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Lewis and Short's *fides* entry sources reliance on a person or thing and the credibility granted to testimony. Its Ciceronian examples connect confidence to judgment of competence and justice. These are lexical witnesses in register 2, not a Roman derivation of the essay's formal limit.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "etymology-symbol-account-and-trust",
+   "name": "Whole Field — Symbol / Account / Trust",
+   "character": "A whole-field: six operations generated around one centre, returns kept open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "etymology-symbol-account-and-trust-centre",
+     "name": "the whole-field centre",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-centre-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-ring",
+     "name": "the field envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-op0",
+     "name": "operation 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-op0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-op1",
+     "name": "operation 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.31033320996790814,
+      "y": 0.17999999999999994,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-op1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-op2",
+     "name": "operation 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.3103332099679081,
+      "y": -0.3400000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-op2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-op3",
+     "name": "operation 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.6,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-op3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-op4",
+     "name": "operation 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.590333209967908,
+      "y": -0.34000000000000025,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-op4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-symbol-account-and-trust-op5",
+     "name": "operation 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.5903332099679082,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-symbol-account-and-trust-op5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "etymology-symbol-account-and-trust",
+     "title": "Whole Field — Symbol / Account / Trust",
+     "italic": "evidence registers: descent, attested sense, operational homology, poetic re-entry kept distinct",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "A Symbol is a determinate form that discloses a relation beyond what the form exhausts. An Account is the articulated reckoning or report by which that disclosure becomes answerable and transmissible. Trust is the committed reliance by which an account can guide action without becoming possession of its source.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "etymology-homology-and-analogy",
+   "name": "Whole Field — Homologia / Analogia",
+   "character": "A whole-field: six operations generated around one centre, returns kept open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "etymology-homology-and-analogy-centre",
+     "name": "the whole-field centre",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-centre-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-ring",
+     "name": "the field envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-op0",
+     "name": "operation 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-op0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-op1",
+     "name": "operation 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.31033320996790814,
+      "y": 0.17999999999999994,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-op1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-op2",
+     "name": "operation 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.3103332099679081,
+      "y": -0.3400000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-op2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-op3",
+     "name": "operation 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.6,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-op3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-op4",
+     "name": "operation 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.590333209967908,
+      "y": -0.34000000000000025,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-op4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-homology-and-analogy-op5",
+     "name": "operation 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.5903332099679082,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-homology-and-analogy-op5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "etymology-homology-and-analogy · ARGUED",
+     "title": "Whole Field — Homologia / Analogia",
+     "italic": "Argued from the native Taylor field; historical relations separately scoped in the companion · evidence registers: descent, attested sense, operational homology, poetic re-entry kept distinct",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The essay moves among mathematics, Śaiva metaphysics, Jungian psychology, language, topology, music and technical computation. Without a disciplined relational vocabulary, similarity quickly becomes false identity. Homologia / Analogia provides the grammar by which forms can answer to one another while remaining source-distinct.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "etymology-apportionment-and-economy",
+   "name": "Whole Field — Apportionment / Economy",
+   "character": "A whole-field: six operations generated around one centre, returns kept open.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.45,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "etymology-apportionment-and-economy-centre",
+     "name": "the whole-field centre",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 0.26,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 1.0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-centre-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-ring",
+     "name": "the field envelope",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.08,
+      "z": 0
+     },
+     "size": {
+      "x": 1.3,
+      "y": 1.3
+     },
+     "rotation": 0,
+     "shape": "ring",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.4,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-ring-step0",
+        "text": "",
+        "shape": "ring",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-op0",
+     "name": "operation 1",
+     "kind": "formation",
+     "position": {
+      "x": 0.14000000000000004,
+      "y": 0.44,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-op0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-op1",
+     "name": "operation 2",
+     "kind": "formation",
+     "position": {
+      "x": -0.31033320996790814,
+      "y": 0.17999999999999994,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-op1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-op2",
+     "name": "operation 3",
+     "kind": "formation",
+     "position": {
+      "x": -0.3103332099679081,
+      "y": -0.3400000000000001,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-op2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-op3",
+     "name": "operation 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.13999999999999993,
+      "y": -0.6,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-op3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-op4",
+     "name": "operation 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.590333209967908,
+      "y": -0.34000000000000025,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-op4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "etymology-apportionment-and-economy-op5",
+     "name": "operation 6",
+     "kind": "formation",
+     "position": {
+      "x": 0.5903332099679082,
+      "y": 0.18,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.9,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "etymology-apportionment-and-economy-op5-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "etymology-apportionment-and-economy · ARGUED",
+     "title": "Whole Field — Apportionment / Economy",
+     "italic": "Argued from native relational field; Paraphrased historical branches; operational homology distinguished from descent · evidence registers: descent, attested sense, operational homology, poetic re-entry kept distinct",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Apportionment names the act of distributing a finite share, capacity, role or measure within a wider field. Economy names the ordering/management of a relational whole through which such distributions become operative. The canonical relation is not that these words share one root or one political theory. It is that finite agency repeatedly appears as a distribution of powers inside an order that no single share exhausts.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}
