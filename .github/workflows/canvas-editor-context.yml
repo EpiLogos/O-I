@@ -14,14 +14,14 @@ jobs:
       contents: write
     steps:
       - uses: actions/checkout@v4
-      - name: Apply the bounded source return
+      - name: Apply exact bounded source return
         shell: python
         run: |
           from pathlib import Path
-          import base64, zlib, subprocess
-          payload=Path('scripts/canvas-editor-return.b64')
-          patch=zlib.decompress(base64.b64decode(payload.read_text(),validate=False))
-          assert len(patch)<2_000_000
+          import base64, lzma, hashlib, subprocess
+          payloads=[Path('scripts/canvas-editor-return.part1'),Path('scripts/canvas-editor-return.part2'),Path('scripts/canvas-editor-return.b64')]
+          patch=lzma.decompress(base64.b64decode(''.join(p.read_text().strip() for p in payloads),validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='72b53776ab5ef85d5bee722e51e2e462844601bfbe2a060dd193f4324bcdf201'
           paths=[]
           for line in patch.decode().splitlines():
               if line.startswith('+++ b/'):
@@ -36,11 +36,11 @@ jobs:
                       '.superpowers/sdd/cradle-rebuild/progress.md','docs/experience/DOCUMENT-OPERATIONS.md'
                   },path
                   paths.append(path)
-          assert 20<=len(paths)<=45
-          subprocess.run(['git','apply','--check','-'],input=patch,check=True)
-          subprocess.run(['git','apply','--index','-'],input=patch,check=True)
-          payload.unlink()
-          subprocess.run(['git','add','scripts/canvas-editor-return.b64'],check=True)
+          assert len(paths)==38
+          subprocess.run(['git','apply','--index','--unidiff-zero','-'],input=patch,check=True)
+          for p in payloads:
+              p.unlink()
+              subprocess.run(['git','add',str(p)],check=True)
           subprocess.run(['git','diff','--cached','--check'],check=True)
           subprocess.run(['git','-c','user.name=O:I canvas implementation','-c','user.email=noreply@openai.com','commit','-m','feat(canvas): join format-aware editing, natural selection and native prepared context'],check=True)
           subprocess.run(['git','push','origin','HEAD:refs/heads/agent/canvas-editor-context-20260920'],check=True)
@@ -70,6 +70,10 @@ jobs:
       - uses: dtolnay/rust-toolchain@1.98.0
       - name: Kernel adapter compatibility
         run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
+      - name: Existing experience-source integrity
+        run: |
+          python3 -m unittest discover -s tests/experience -p 'test_*.py'
+          python3 scripts/experience_map.py --output-dir "$RUNNER_TEMP/canvas-experience"
       - uses: actions/upload-artifact@v4
         if: always()
         with:
