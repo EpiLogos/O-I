@@ -941,7 +941,7 @@ impl Kernel {
                 let data=self.agency.encounter(&cwd,project_ref,&request)?;
                 if let agency::EncounterRequest::Read{agent_session,..}=&request {
                     if data["agent_session"].as_str()!=Some(agent_session){return Err("AIKit encounter reading identity mismatch".into());}
-                    let project=focus::ProjectRef::try_from(owner_relation(&project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
+                    let project=focus::ProjectRef::try_from(owner_relation(project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
                     self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
                 }
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
