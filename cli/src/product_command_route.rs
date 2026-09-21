@@ -106,21 +106,7 @@ fn dispatch_product_command(
     product: &oi_cli::product_command::ProductCommandDescriptor,
     args: &[OsString],
 ) -> Result<i32, String> {
-    let executable = if let Some(explicit) = explicit_product_override(product) {
-        explicit
-    } else if let Some(active) = active_suite_executable_s0(&product.id)? {
-        active
-    } else {
-        // Compatibility only while no S0 active receipt exists. Once a receipt
-        // exists, verify the whole immutable artifact, not merely its launcher.
-        let composition = load_composition()?;
-        let registered = composition
-            .modules
-            .get(&product.id)
-            .and_then(|registration| registration.native_executable.as_deref())
-            .unwrap_or(product.executable.as_str());
-        PathBuf::from(registered)
-    };
+    let executable = resolve_product_executable(product)?;
 
     let mut command = std::process::Command::new(&executable);
     command.args(args);
@@ -145,6 +131,48 @@ fn dispatch_product_command(
         })?;
         Ok(status.code().unwrap_or(1))
     }
+}
+
+/// The exact native executable a product command would dispatch to.
+fn resolve_product_executable(
+    product: &oi_cli::product_command::ProductCommandDescriptor,
+) -> Result<std::path::PathBuf, String> {
+    if let Some(explicit) = explicit_product_override(product) {
+        return Ok(explicit);
+    }
+    if let Some(active) = active_suite_executable_s0(&product.id)? {
+        return Ok(active);
+    }
+    // Compatibility only while no S0 active receipt exists. Once a receipt
+    // exists, verify the whole immutable artifact, not merely its launcher.
+    let composition = load_composition()?;
+    let registered = composition
+        .modules
+        .get(&product.id)
+        .and_then(|registration| registration.native_executable.as_deref())
+        .unwrap_or(product.executable.as_str());
+    Ok(PathBuf::from(registered))
+}
+
+/// Run a product's native command as a child of this process, with the
+/// terminal inherited, and wait. Unlike `dispatch_product_command` — which
+/// exec-replaces the process for `oi <product>` passthrough — this keeps
+/// the calling surface alive (the setup terminal returns to its menu after
+/// the native entry finishes or refuses).
+fn run_product_command(
+    product: &oi_cli::product_command::ProductCommandDescriptor,
+    args: &[OsString],
+) -> Result<i32, String> {
+    let executable = resolve_product_executable(product)?;
+    let mut command = std::process::Command::new(&executable);
+    command.args(args);
+    let status = command.status().map_err(|error| {
+        format!(
+            "cannot launch {} native command `{}` for `oi {}`: {error}. Install/register the product command or activate a coherent suite receipt",
+            product.public_name, executable.to_string_lossy(), product.namespace
+        )
+    })?;
+    Ok(status.code().unwrap_or(1))
 }
 
 fn short_revision(revision: &str) -> &str {

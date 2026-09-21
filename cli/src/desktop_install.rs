@@ -932,7 +932,17 @@ pub struct RemovedDesktopReceipt {
     pub version: String,
     pub bundle_sha256: String,
     pub removed: Vec<RemovedResource>,
+    /// Owned artifacts this removal should have deleted but did not. A
+    /// removal that fails to delete aborts before any receipt is written,
+    /// so a written receipt's residuals stay empty; the field remains the
+    /// schema's honest place for them.
+    #[serde(default)]
     pub residuals: Vec<String>,
+    /// Disclosures that are not failures: entries that were already absent,
+    /// authorized replaced-foreign notes, and shared parent directories
+    /// deliberately left in place.
+    #[serde(default)]
+    pub disclosures: Vec<String>,
     pub ground_untouched: bool,
     pub removed_at_ms: u64,
 }
@@ -979,7 +989,8 @@ pub fn commit_remove(
     data_root: &Path,
 ) -> Result<RemovedDesktopReceipt, String> {
     let mut removed = Vec::new();
-    let mut residuals = Vec::new();
+    let residuals: Vec<String> = Vec::new();
+    let mut disclosures = Vec::new();
     for resource in &receipt.owned_resources {
         let path = PathBuf::from(&resource.path);
         // Defense in depth: even a tampered receipt cannot widen removal
@@ -994,11 +1005,11 @@ pub fn commit_remove(
                 .map_err(|error| format!("cannot remove {}: {error}", path.display()))?;
             "removed"
         } else {
-            residuals.push(format!("{} was already absent at removal", path.display()));
+            disclosures.push(format!("{} was already absent at removal", path.display()));
             "already-absent"
         };
         if resource.disposition == "replaced-foreign" {
-            residuals.push(format!(
+            disclosures.push(format!(
                 "{} had a pre-existing file that this install was authorized to replace; it is now removed and the pre-existing content was not preserved",
                 path.display()
             ));
@@ -1010,7 +1021,8 @@ pub fn commit_remove(
         });
     }
     // Parent directories the registrations created may remain; they are
-    // shared locations and are not owned, so their remaining is explained.
+    // shared locations and are not owned, so their remaining is disclosed
+    // rather than treated as a failed removal.
     let mut empty_parents = Vec::new();
     for resource in &receipt.owned_resources {
         let path = PathBuf::from(&resource.path);
@@ -1021,7 +1033,7 @@ pub fn commit_remove(
         }
     }
     if !empty_parents.is_empty() {
-        residuals.push(format!(
+        disclosures.push(format!(
             "shared parent directories remain (not owned, left in place): {}",
             empty_parents.join(", ")
         ));
@@ -1034,6 +1046,7 @@ pub fn commit_remove(
         bundle_sha256: receipt.bundle.sha256.clone(),
         removed,
         residuals,
+        disclosures,
         ground_untouched: true,
         removed_at_ms: now_ms(),
     };

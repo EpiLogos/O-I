@@ -134,5 +134,75 @@ pub fn default_socket_path() -> Result<std::path::PathBuf, String> {
         .map(std::path::PathBuf::from)
         .unwrap_or_else(|| std::path::PathBuf::from(home).join(".local/share"))
         .join("org.epilogos.oi.cradle");
-    Ok(directory.join("expression.sock"))
+    let endpoint = choose_endpoint(&directory, &std::env::temp_dir());
+    if endpoint != directory.join("expression.sock") {
+        if let Some(parent) = endpoint.parent() {
+            std::fs::create_dir_all(parent)
+                .map_err(|e| format!("cannot prepare {}: {e}", parent.display()))?;
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                let _ = std::fs::set_permissions(parent, std::fs::Permissions::from_mode(0o700));
+            }
+        }
+    }
+    Ok(endpoint)
+}
+
+/// A unix socket address must fit the OS `sun_path` buffer (104 bytes on
+/// macOS, 108 on Linux, NUL included). Deeply nested homes — sandbox or
+/// episode roots — overflow it, so both sides fall back to the same short
+/// hashed endpoint under the given directory. The hash covers the real
+/// per-identity directory, so distinct grounds never share a socket.
+#[cfg(unix)]
+fn choose_endpoint(directory: &std::path::Path, short_root: &std::path::Path) -> std::path::PathBuf {
+    let endpoint = directory.join("expression.sock");
+    if endpoint.as_os_str().len() < 100 {
+        return endpoint;
+    }
+    let hash = fnv1a64(directory.as_os_str().as_encoded_bytes());
+    short_root
+        .join(format!("oi-cradle-{hash:08x}"))
+        .join("expression.sock")
+}
+
+#[cfg(unix)]
+fn fnv1a64(bytes: &[u8]) -> u64 {
+    let mut hash: u64 = 0xcbf29ce484222325;
+    for byte in bytes {
+        hash ^= u64::from(*byte);
+        hash = hash.wrapping_mul(0x100000001b3);
+    }
+    hash
+}
+
+#[cfg(all(test, unix))]
+mod endpoint_tests {
+    use super::*;
+
+    #[test]
+    fn a_short_home_keeps_its_own_endpoint() {
+        let directory = std::path::Path::new("/Users/someone/Library/epilogos");
+        assert_eq!(
+            choose_endpoint(directory, std::path::Path::new("/tmp")),
+            directory.join("expression.sock")
+        );
+    }
+
+    #[test]
+    fn a_deep_home_falls_back_to_a_short_hashed_endpoint() {
+        let deep = std::path::PathBuf::from(format!("/private/tmp/{}", "episode-".repeat(6)));
+        let deep = deep.join("desktop-ep/Library/Application Support/org.epilogos.oi.cradle");
+        let temp = std::path::Path::new("/tmp");
+        let endpoint = choose_endpoint(&deep, temp);
+        assert!(
+            endpoint.as_os_str().len() < 100,
+            "fallback endpoint still overflows sun_path: {endpoint:?}"
+        );
+        assert!(endpoint.starts_with(temp));
+        let again = choose_endpoint(&deep, temp);
+        assert_eq!(endpoint, again, "endpoint must be deterministic");
+        let other = choose_endpoint(&deep.parent().unwrap().to_path_buf().join("other"), temp);
+        assert_ne!(endpoint, other, "distinct grounds must not share a socket");
+    }
 }
