@@ -1,3 +1,4 @@
+import {requireExpressionOutcome} from './expressionOutcome';
 import {kernelOp} from '../kernel/bridge';
 import type {CentralLocation, KernelTransportStatus, NativeFileReading} from '../kernel/types';
 import type {ExpressionDocument, ExpressionRequest, ExpressionResult, ReadingRef} from '../expression/types';
@@ -42,7 +43,7 @@ export async function expressionOperation(transport: KernelTransportStatus, requ
   const response = apply ? {outcome: await apply({op: 'expression', request})} : await kernelOp(transport, {op: 'expression', request});
   if (response.outcome?.result !== 'expression') throw new Error(('error' in response ? response.error : undefined) ?? 'The Expression owner did not return a result.');
   const value = response.outcome.data;
-  if (value.state === 'revision_conflict') throw new Error('The composition changed. Reopen its current revision before saving.');
+  requireExpressionOutcome(value, request.operation);
   return value;
 }
 /** Compare JSON documents structurally, independently of property order. */

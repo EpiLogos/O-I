@@ -41,7 +41,7 @@ try{
  const url=`http://127.0.0.1:${server.httpServer.address().port}/tests/wiki-constructive.html?bridge=${encodeURIComponent(bridgeUrl)}`;
  browser=await chromium.launch({headless:true});page=await browser.newPage({viewport:{width:1360,height:960},reducedMotion:'reduce'});page.setDefaultTimeout(20000);
  page.on('pageerror',error=>errors.push(String(error)));
- page.on('response',response=>{if(response.request().method()==='POST'&&response.url().endsWith('/op'))void response.json().then(result=>{if(result.error||result.ok===false)responses.push(result);},()=>{});});
+ page.on('response',response=>{if(response.request().method()==='POST'&&response.url().endsWith('/op'))void response.json().then(result=>{if(result.error||result.ok===false||/(?:refused|failed|conflict|unavailable)$/.test(result.outcome?.data?.state??''))responses.push(result);},()=>{});});
  page.on('request',request=>{if(request.method()==='POST'&&request.url().endsWith('/op')){const body=request.postDataJSON();if(body.op==='invoke_action'||body.op==='expression')writes.push(body);}});
  await page.goto(url);await page.locator('.wiki-prose h1').waitFor();
  await choosePassage('.wiki-prose strong');
@@ -81,7 +81,10 @@ try{
  await page.getByRole('button',{name:'Return to Wiki',exact:true}).click();
  await drawer.getByText('Save and Return composition',{exact:true}).click();
  await drawer.getByLabel('Expression destination folder').fill('Work/Notes');await drawer.getByLabel('Expression filename').fill('inquiry.expression.json');
+ const firstSaveResponse=page.waitForResponse(response=>response.request().method()==='POST'&&response.url().endsWith('/op')&&response.request().postDataJSON()?.request?.operation==='save_as');
  await drawer.getByRole('button',{name:'Save Expression file',exact:true}).click();
+ const firstSave=await (await firstSaveResponse).json();
+ check(firstSave.outcome?.data?.state==='saved',`Native first save returns its actual successful result: ${JSON.stringify(firstSave.outcome?.data)}`);
  await drawer.getByRole('button',{name:'Return saved Expression to constellation',exact:true}).waitFor();
  await drawer.getByRole('button',{name:'Return saved Expression to constellation',exact:true}).click();
  await drawer.getByRole('button',{name:'Returned to constellation',exact:true}).waitFor();

@@ -1430,7 +1430,9 @@ impl Application {
                 if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? { return Ok((conflict, None)); }
                 let document = self.document(&expression_ref)?.clone();
                 let content = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
-                match client.run("central.files.create", json!({"parent":parent,"name":name,"content":content,
+                // The explicit directory already supplies root identity. Suppress the
+                // generic project fallback before the strict file-owner call.
+                match client.run("central.files.create", json!({"project":null,"parent":parent,"name":name,"content":content,
                     "expected_absent":true,"operation_ref":operation_ref,"actor":actor,"actor_kind":actor_kind})) {
                     Ok(data) if data["schema"]=="central.file-mutation/v1" && matches!(data["outcome"].as_str(), Some("created"|"unchanged")) => {
                         match serde_json::from_value::<files::Location>(data["location"].clone()) {

@@ -1,14 +1,29 @@
 //! Strict destination-owner boundary. The final joined browser test separately
 //! executes actual Central; this process fixture detects injected scope fields.
 #![cfg(unix)]
-use oi_cradle_kernel::{expression::{Application, Request}, CentralClient};
+use oi_cradle_kernel::{
+    expression::{Application, Request},
+    CentralClient,
+};
 use serde_json::{json, Value};
-use std::{fs, os::unix::fs::PermissionsExt, path::PathBuf, time::{SystemTime, UNIX_EPOCH}};
+use std::{
+    fs,
+    os::unix::fs::PermissionsExt,
+    path::PathBuf,
+    time::{SystemTime, UNIX_EPOCH},
+};
 
 struct Fixture(PathBuf);
 impl Fixture {
     fn new() -> Self {
-        let root = std::env::temp_dir().join(format!("wiki-save-{}-{}", std::process::id(), SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()));
+        let root = std::env::temp_dir().join(format!(
+            "wiki-save-{}-{}",
+            std::process::id(),
+            SystemTime::now()
+                .duration_since(UNIX_EPOCH)
+                .unwrap()
+                .as_nanos()
+        ));
         fs::create_dir_all(&root).unwrap();
         fs::write(root.join("owner"), r#"#!/usr/bin/env python3
 import json, pathlib, sys
@@ -37,32 +52,69 @@ else:
         Self(root)
     }
 }
-impl Drop for Fixture { fn drop(&mut self) { let _ = fs::remove_dir_all(&self.0); } }
+impl Drop for Fixture {
+    fn drop(&mut self) {
+        let _ = fs::remove_dir_all(&self.0);
+    }
+}
 fn operation(app: &mut Application, client: &CentralClient, request: Value) -> Value {
-    app.apply(client, serde_json::from_value::<Request>(request).unwrap()).unwrap().0
+    app.apply(client, serde_json::from_value::<Request>(request).unwrap())
+        .unwrap()
+        .0
 }
 #[test]
 fn first_expression_save_uses_the_selected_directory_not_the_default_project() {
     let fixture = Fixture::new();
-    let client = CentralClient::with(fixture.0.join("owner"), Some(fixture.0.clone()), "unrelated-configured-project".into());
+    let client = CentralClient::with(
+        fixture.0.join("owner"),
+        Some(fixture.0.clone()),
+        "unrelated-configured-project".into(),
+    );
     let mut app = Application::default();
-    let created = operation(&mut app, &client, json!({"operation":"create","expression_ref":"expression:exact","title":"Exact source","actor":"human:test"}));
+    let created = operation(
+        &mut app,
+        &client,
+        json!({"operation":"create","expression_ref":"expression:exact","title":"Exact source","actor":"human:test"}),
+    );
     let parent = json!({"schema":"central.path-ref/v1","ref":"central:path:directory","root":fixture.0,"path":""});
-    let saved = operation(&mut app, &client, json!({"operation":"save_as","expression_ref":"expression:exact","expected_revision":1,"parent":parent,"name":"work.expression.json","operation_ref":"operation:save","actor":"human:test","actor_kind":"human"}));
+    let saved = operation(
+        &mut app,
+        &client,
+        json!({"operation":"save_as","expression_ref":"expression:exact","expected_revision":1,"parent":parent,"name":"work.expression.json","operation_ref":"operation:save","actor":"human:test","actor_kind":"human"}),
+    );
     assert_eq!(saved["state"], "saved", "{saved}");
     assert_eq!(saved["persisted"], true);
     assert_eq!(saved["readback_verified"], true);
-    let received: Value = serde_json::from_slice(&fs::read(fixture.0.join("request.json")).unwrap()).unwrap();
-    assert!(received.get("project").is_none(), "file creation is root/destination addressed: {received}");
+    let received: Value =
+        serde_json::from_slice(&fs::read(fixture.0.join("request.json")).unwrap()).unwrap();
+    assert!(
+        received.get("project").is_none(),
+        "file creation is root/destination addressed: {received}"
+    );
     assert_eq!(received["parent"], parent);
-    let file: Value = serde_json::from_slice(&fs::read(fixture.0.join("work.expression.json")).unwrap()).unwrap();
+    let file: Value =
+        serde_json::from_slice(&fs::read(fixture.0.join("work.expression.json")).unwrap()).unwrap();
     assert_eq!(file, created["document"]);
-    let current = operation(&mut app, &client, json!({"operation":"inspect","expression_ref":"expression:exact"}));
+    let current = operation(
+        &mut app,
+        &client,
+        json!({"operation":"inspect","expression_ref":"expression:exact"}),
+    );
     assert_eq!(current["dirty"], false);
     assert_eq!(current["document"], created["document"]);
     let before = fs::read(fixture.0.join("work.expression.json")).unwrap();
-    let refused = operation(&mut app, &client, json!({"operation":"save_as","expression_ref":"expression:exact","expected_revision":1,"parent":parent,"name":"work.expression.json","operation_ref":"operation:other","actor":"human:test","actor_kind":"human"}));
+    let refused = operation(
+        &mut app,
+        &client,
+        json!({"operation":"save_as","expression_ref":"expression:exact","expected_revision":1,"parent":parent,"name":"work.expression.json","operation_ref":"operation:other","actor":"human:test","actor_kind":"human"}),
+    );
     assert_eq!(refused["state"], "save_refused");
-    assert_eq!(refused["failure"]["message"], "Existing destination is not overwritten");
-    assert_eq!(fs::read(fixture.0.join("work.expression.json")).unwrap(), before);
+    assert_eq!(
+        refused["failure"]["message"],
+        "Existing destination is not overwritten"
+    );
+    assert_eq!(
+        fs::read(fixture.0.join("work.expression.json")).unwrap(),
+        before
+    );
 }
