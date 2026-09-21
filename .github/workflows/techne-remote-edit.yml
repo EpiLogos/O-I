@@ -1,8 +1,8 @@
 name: Technē bounded branch edit
 
-# Temporary delivery transport for the disconnected development sandbox.
-# Only the commissioned integration branch is writable. Original blobs and
-# readable patch digest must match. No force push, main write or gate bypass.
+# Temporary source transport for the disconnected development sandbox.
+# Only this commissioned branch is writable. No main writes, forced pushes,
+# owner-machine access, deployments or replacement verification statuses.
 on:
   pull_request:
     paths: ['tests/techne-remote-edit.patch']
@@ -21,6 +21,15 @@ jobs:
       - uses: actions/checkout@v4
         with:
           ref: ${{ github.event.pull_request.head.sha }}
+          fetch-depth: 0
+      - name: Reconcile the inspected published main without replacing branch work
+        shell: bash
+        run: |
+          set -euo pipefail
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git fetch origin 948075ac1ccb6c7b0a1d91d225ada3873a43194d
+          git merge --no-edit --no-ff 948075ac1ccb6c7b0a1d91d225ada3873a43194d
       - name: Apply exact readable source patch on integration branch
         shell: bash
         run: |
@@ -44,9 +53,20 @@ jobs:
           git apply --check --index "$RUNNER_TEMP/techne.patch"
           git apply --index "$RUNNER_TEMP/techne.patch"
           git rm tests/techne-remote-edit.patch
-          git config user.name 'github-actions[bot]'
-          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git commit -m 'fix(techne): apply verified constructive-field source edits'
+          git commit -m 'feat(techne): preserve complete native Scene composition and exact occurrence edits'
           git push origin HEAD:refs/heads/codex/techne-constructive-field-20260920
           git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"
-          echo 'Source delivery only. Normal PR gates must run on this resulting revision.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Source delivery only. Normal PR gates must execute on this resulting revision.' >> "$GITHUB_STEP_SUMMARY"
+      - name: Retain the exact resulting source, without credentials or Git internals
+        if: success()
+        run: |
+          mkdir -p "$RUNNER_TEMP/techne-branch-source"
+          git rev-parse HEAD > "$RUNNER_TEMP/techne-branch-source/revision.txt"
+          git archive --format=tar.gz HEAD > "$RUNNER_TEMP/techne-branch-source/source.tar.gz"
+      - uses: actions/upload-artifact@v4
+        if: success()
+        with:
+          name: techne-branch-source-${{ github.run_id }}
+          path: ${{ runner.temp }}/techne-branch-source
+          retention-days: 7
+          if-no-files-found: error
