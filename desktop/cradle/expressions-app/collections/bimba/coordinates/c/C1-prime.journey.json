@@ -1,0 +1,173 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "C1-prime",
+  "name": "C1' — Form'",
+  "description": "Snapshot of Bimba coordinate C1' from the live graph.",
+  "loop": true,
+  "updatedAt": "2026-09-21T00:31:41.231Z",
+  "scenes": [
+    {
+      "engine": {
+        "paletteSource": "custom",
+        "grainProfile": true,
+        "backgroundMode": "solid",
+        "resonatorMode": "resonator",
+        "focusOrder": "listed",
+        "dotShape": "circle",
+        "autoFitSizes": true,
+        "mediumEnabled": false,
+        "collisionEnabled": false,
+        "collisionMode": "obstacle",
+        "pairwiseEnabled": false,
+        "fontFamily": "system-ui, -apple-system, sans-serif",
+        "fontWeight": 900,
+        "resonanceEnabled": true,
+        "morphEnabled": false,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine",
+        "autoOscillate": true,
+        "relationalEnabled": false,
+        "relationalMode": "orbital",
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 2.2,
+        "pointerClickRadius": 0.45,
+        "colorMode": "linearGradient",
+        "colorEnabled": true,
+        "mediumPlane": "vertical",
+        "mediumDimension": "2D",
+        "autoSweep": false,
+        "sweepDirection": "ascent"
+      },
+      "id": "C1-prime-scene-1",
+      "name": "Form'",
+      "character": "Coordinate C1' of the live Bimba graph — Category — ontological foundation. Captured 2026-09-21T00:31:41.231Z.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [],
+      "text": [
+        {
+          "id": "C1-prime-text-1",
+          "visible": true,
+          "kicker": "Bimba · C · Category",
+          "title": "Form'",
+          "italic": "C1'",
+          "body": "Coordinate C1': 10 graph properties carried verbatim in this document's bimba field.",
+          "x": 0.5,
+          "y": 0.42,
+          "width": 680,
+          "size": 28,
+          "align": "center"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "bimba": {
+    "coordinate": "C1'",
+    "uuid": "98cad94e-dd5e-5859-921e-e451592c747b",
+    "labels": [
+      "Bimba",
+      "Coordinate"
+    ],
+    "captured_at": "2026-09-21T00:31:41.231Z",
+    "source": {
+      "neo4j_http": "http://100.92.62.101:7474",
+      "bolt": "bolt://100.92.62.101:7687",
+      "database": "neo4j",
+      "read": "read-only Cypher (no graph writes)"
+    },
+    "properties": {
+      "c_1_name": "Form'",
+      "c_2_uuid": "98cad94e-dd5e-5859-921e-e451592c747b",
+      "c_4_family": "C",
+      "c_4_flags": 33,
+      "c_4_inversion_state": 1,
+      "c_4_layer": "COORDINATE",
+      "c_4_ql_position": 1,
+      "c_4_topo_mode": "TORUS",
+      "c_4_weave_state": 1,
+      "coordinate": "C1'"
+    }
+  }
+}

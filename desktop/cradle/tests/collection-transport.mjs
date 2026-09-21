@@ -49,7 +49,7 @@ export function memoryTransport(files, {root='controlled', deny=[], failDirs={},
  return {fetch,ops,handle};
 }
 export const APP=new URL('../expressions-app/',import.meta.url);
-export const realManifests=['legacy-collections/manifest.json','collections/return-of-zero/essay.manifest.json','collections/return-of-zero/rooms.manifest.json','collections/return-of-zero/corpus.manifest.json'];
+export const realManifests=['legacy-collections/manifest.json','collections/return-of-zero/essay.manifest.json','collections/return-of-zero/rooms.manifest.json','collections/return-of-zero/corpus.manifest.json','collections/bimba/bimba-c.manifest.json','collections/bimba/bimba-p.manifest.json','collections/bimba/bimba-l.manifest.json','collections/bimba/bimba-m.manifest.json','collections/bimba/bimba-s.manifest.json','collections/bimba/bimba-t.manifest.json','collections/bimba/bimba-grounds-weaves.manifest.json'];
 export async function repositoryFiles(){
  const files=new Map();
  for(const manifest of realManifests){

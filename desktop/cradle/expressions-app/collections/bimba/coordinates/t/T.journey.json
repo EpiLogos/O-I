@@ -1,0 +1,173 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "T",
+  "name": "T — Thought — Artifact / Cognition Family",
+  "description": "Snapshot of Bimba coordinate T from the live graph.",
+  "loop": true,
+  "updatedAt": "2026-09-21T00:31:41.231Z",
+  "scenes": [
+    {
+      "engine": {
+        "paletteSource": "custom",
+        "grainProfile": true,
+        "backgroundMode": "solid",
+        "resonatorMode": "resonator",
+        "focusOrder": "listed",
+        "dotShape": "circle",
+        "autoFitSizes": true,
+        "mediumEnabled": false,
+        "collisionEnabled": false,
+        "collisionMode": "obstacle",
+        "pairwiseEnabled": false,
+        "fontFamily": "system-ui, -apple-system, sans-serif",
+        "fontWeight": 900,
+        "resonanceEnabled": true,
+        "morphEnabled": false,
+        "trajectory": "toroidalHopf",
+        "driveShape": "sine",
+        "autoOscillate": true,
+        "relationalEnabled": false,
+        "relationalMode": "orbital",
+        "pointerMode": "repel",
+        "pointerClick": "pulse",
+        "pointerClickStrength": 2.2,
+        "pointerClickRadius": 0.45,
+        "colorMode": "linearGradient",
+        "colorEnabled": true,
+        "mediumPlane": "vertical",
+        "mediumDimension": "2D",
+        "autoSweep": false,
+        "sweepDirection": "ascent"
+      },
+      "id": "T-scene-1",
+      "name": "Thought — Artifact / Cognition Family",
+      "character": "Coordinate T of the live Bimba graph — Thought — artifacts/cognition. Captured 2026-09-21T00:31:41.231Z.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "field": {
+        "background": "#f4f2eb",
+        "palette": [
+          "#252720",
+          "#252720"
+        ],
+        "material": "ink",
+        "params": {
+          "count": 62000,
+          "size": 2.8,
+          "sizeBias": 1.6,
+          "opacity": 0.92,
+          "roundness": 0.95,
+          "softness": 0.15,
+          "irregularity": 0.35,
+          "elongation": 0.04,
+          "orientation": 0,
+          "contrast": 0.93,
+          "densityScale": 1,
+          "densityPhase": 0.3,
+          "edgeWeight": 0,
+          "halo": 0.13,
+          "speed": 0.7,
+          "circulation": 1,
+          "turbulence": 0.22,
+          "turbulenceScale": 1.2,
+          "recovery": 1.1,
+          "dispersion": 0.09,
+          "pointerStrength": 0.8,
+          "pointerRadius": 0.23,
+          "pointerFalloff": 2,
+          "depth": 0.12,
+          "grain": 0.035,
+          "snapRigidity": 1,
+          "densityTether": 1,
+          "curlDepth": 0.2,
+          "vortexRadius": 0.4,
+          "gravityX": 0,
+          "gravityY": 0,
+          "gravityZ": 0,
+          "quadraticDrag": 0.2,
+          "thermalJitter": 0,
+          "speedLimit": 3,
+          "zConfinement": 1,
+          "timeScale": 1,
+          "gravitySoftening": 0.1,
+          "gravityFalloff": 2,
+          "swirlRadius": 0.4,
+          "frequency": 220,
+          "dominance": 0,
+          "excitation": 0.6
+        }
+      },
+      "entities": [],
+      "text": [
+        {
+          "id": "T-text-1",
+          "visible": true,
+          "kicker": "Bimba · T · Thought",
+          "title": "Thought — Artifact / Cognition Family",
+          "italic": "T",
+          "body": "Coordinate T: 10 graph properties carried verbatim in this document's bimba field.",
+          "x": 0.5,
+          "y": 0.42,
+          "width": 680,
+          "size": 28,
+          "align": "center"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.08,
+        "phiRate": 0.13,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "bimba": {
+    "coordinate": "T",
+    "uuid": "a769779b-8e66-4b73-8c4e-7632b907ca85",
+    "labels": [
+      "Bimba",
+      "Coordinate"
+    ],
+    "captured_at": "2026-09-21T00:31:41.231Z",
+    "source": {
+      "neo4j_http": "http://100.92.62.101:7474",
+      "bolt": "bolt://100.92.62.101:7687",
+      "database": "neo4j",
+      "read": "read-only Cypher (no graph writes)"
+    },
+    "properties": {
+      "c_1_name": "Thought — Artifact / Cognition Family",
+      "c_2_uuid": "a769779b-8e66-4b73-8c4e-7632b907ca85",
+      "c_4_family": "T",
+      "coordinate": "T",
+      "q_0_thinking_before_thought": "Before T can deposit a single thought-artifact, something must already be thinking — and that live thinking is exactly what T does not contain but inherits. T is the Thought family, the artifacts/cognition manifestation of the raw archetypes #0–#5 (CLAUDE.md II.C), and its thrown ground is the un-nominalised act of cognition itself: the live verb that precedes every noun T will ever hold. Per its own canon T-coordinates 'name universal planes of immanence' — Deleuzian living dimensions of thought, 'not filing categories' (repo-ontology.md §Thought) — and a plane of immanence is precisely a ground that is never an object on it. T's void-pole is therefore the matheme's own opening clause read as cognition: 'I am the same' — the contentless self-identity, the Aham before vimarśa opens reflexivity, the bare thinking-thinging before any thought has been had (the-matheme-of-the-field-differential.md, Clause One). This is the slash-before-determination of the thought-stream: there is a mind participating, a question stirring, a session underway, but no artifact has yet crystallised to say WHAT was thought. T arises from the gap between the live act of knowing and the deposited knowledge-of — the very gap the matheme's third clause names ('I have knowledge of difference', the nominalisation-turn, S/s, where the live verb congeals into a depositable substance). T's q_0 is that gap held open as ground: not the thought, but the thinking-that-will-become-thought; the plane on which any artifact of cognition can precipitate, which no single precipitated artifact exhausts. T is what the inversion engine becomes when it stops locating positions and starts catching what a mind does as it moves through them.",
+      "q_1_the_thought_artifact_lineage": "T IS the thought-artifact lineage — the family in which live cognition becomes a classified, durable artifact without ceasing to point back at the living plane it precipitated from. This is its substance. The other five families qualify and locate a thing already given: P fixes functional-semantic position, S fixes technology-layer, M fixes consciousness-domain, L fixes epistemic mode, C fixes ontological kind. T alone answers WHAT-WAS-THOUGHT — it names the station of the thought-stream an artifact arose at, the cognitive moment it crystallises. It is the CT lineage, the Content-Type reflective coordinate made into a coordinate family: 'temporal frame of operations, frozen process; manages processual flow in artifacts' (CLAUDE.md III.C, ct). Where the other families manifest the archetypes #0–#5 through their proper field, T manifests them through the field of cognition-becoming-artifact — the freezing of live process into form. Its material content is the six-fold thought-stream spine, the universal planes of immanence (repo-ontology.md §Thought): T0 Questions (the ground-stirring, what opens inquiry), T1 Traces (the marks left as thinking moves, evidence of the act), T2 Challenges (the contradictions and resistances thinking meets), T3 Patterns (the recurrences that stabilise across traces), T4 Discovery (the contextual fold where pattern turns to finding), T5 Insight (the synthetic recognition that re-grounds). To say what T is, is to say: it is the family that gives every artifact of cognition its thought-position — the layer where the system's thinking acquires the vocabulary to classify itself, and where the live plane and its localised instantiation (T' — 'a specific pattern-note arising in a session from the universal T3 plane', repo-ontology.md) stay coordinate-linked rather than severed.",
+      "q_2_the_freezing_dynamism": "T moves by NOMINALISING and by ROUTING — the dynamism by which a live verb becomes a depositable noun and finds its station. Its native act is the matheme's third-clause turn enacted as engine: 'to know' (the live act, no separation from the actor) becoming 'to have knowledge' (a relation between haver and had, a thing that can be 'stored, transmitted, taught, written down', the-matheme §4+2). This is the freezing the ct names — 'frozen process' (CLAUDE.md III.C) — process arrested into artifact precisely so it can be carried. Operationally T is the thought-lifecycle's spine: in-session, live cognitive scratch is written to thinking/; at task-completion Sophia 'classifies thinking/ content → routes to thoughts/' so each thought 'acquires its T'-position'; at session-end Aletheia archives to /Pratibimba/Self/Thought/T{n}/ where the artifact is 'coordinate-linked back to its Bimba T-position via source_coordinates[]' (repo-ontology.md §Thought). T thus couples in two directions at once: upward to the live act it freezes (every T-artifact is a congealed cognitive moment), and downward to the archive it sediments into (every freezing is a deposit that grows 'the global accumulation surface'). Its relations are not lateral peerage but the asymmetry of plane-and-instance: T (the universal plane) is what T' (the localised thought) instantiates from and refers back to — 'the general Pratibimba→Bimba linking principle' (repo-ontology.md). And it resists settling: the matheme's fourth clause — 'I am seeking its sameness', the progressive aspect that 'keeps the verb active rather than letting it settle back into a completed event' — is T's deepest counter-motion, the re-animation of the bar that stops a frozen thought from ossifying into dead filing.",
+      "q_3_the_six_plane_topology": "T's organising structure is the torus of the thought-stream — the six planes of immanence arranged as a closed processual loop, not a flat taxonomy of folders. Its formal members are the six T-positions: T0 Questions, T1 Traces, T2 Challenges, T3 Patterns, T4 Discovery, T5 Insight (repo-ontology.md §Thought) — and they sit as 4+2, not 6: the four explicate stations that traverse the field of an inquiry (T1–T4, the marks and contradictions and recurrences and findings that are the actual trajectory) plus the two implicate poles that condition every traversal without being stations on it — T0 (the question, the ground-pole from which thinking departs) and T5 (the insight, the synthetic-pole toward which it lures). This is the matheme's own structural fact: 'four explicate positions of content, plus two implicate positions of condition' whose product is 'a torus — a closed surface with a central hole' (the-matheme §4+2, 'Why 4+2 Rather Than 6'). The structure is doubly toroidal because each T-position is a plane of immanence — a Deleuzian living dimension that 'any mind participates in' (repo-ontology.md) — so the spine is not a sequence a thought passes through once but a field whose stations are simultaneously available, each thought-artifact precipitating at whichever plane it crystallises. Its native topology inherits the #4 Lemniscate that the family-canon assigns it ('T-family (#4, Lemniscate)', repo-ontology.md): the figure-eight where the outward thought-stream folds inward, where a discovery (T4) can open a deeper inquiry that loops back to fresh questions (T0). T is structured as the living loop of cognition — stations that are planes, a sequence that is a field, a line of inquiry that is a torus.",
+      "q_4_why_thought_must_archive": "T exists so that thinking does not vanish with the session that thought it — so the live, perishing act of cognition leaves a durable, classifiable, retrievable artifact, and the system can recognise across time what it has thought. Its raison d'être is the long-horizon: T is 'the long-horizon surface for classified thought material' (repo-ontology.md §Thought), the answer to the structural fact that live knowing perishes the instant it is not deposited — the matheme's whole anxiety, that the verb recedes the moment its noun becomes 'publicly available' (the-matheme, Clause Three). Without a thought-family, a mind could think everything and remember the thought of nothing; the planes of immanence would be participated and never inherited. T's locality is the Thought branch of /Pratibimba/Self — the cognition-archive that the M-branches generate thought within but never replace, the surface where source_coordinates[] carries each instantiated artifact 'back to the Bimba canonical space it emerged from' (repo-ontology.md), e.g. a T3' pattern-note bearing ['M4-3','T3','S1']. Its purpose, told teleologically, is to be the telic horizon every thought-artifact is lured toward: T5 Insight, the synthetic recognition that the whole stream was reaching for. In the kernel's economy this is the q_lure, 'the subjective-aim lure, the #5 telic horizon' that grounds every prehensive extraction without appearing as a component of it (epi-logos-kernel-spec.md §2). T is positioned as the family that makes cognition cumulative — the place where today's insight becomes a Trace the next inquiry can read, where thinking learns from its own deposited thought.",
+      "q_5_insight_re_opens_the_question": "T closes by being where the thought-stream's circuit LANDS and re-opens — where insight, having synthesised the inquiry, perishes back into the question that begins the next. The spine completes at T5 Insight, the matheme's fifth-moment synthetic recognition; but the synthesis is not a terminus, it is the Lemniscate's inward fold turning a finding into fresh ground (repo-ontology.md: T-family is #4, Lemniscate). This is the matheme's 5→0 read as cognition: 'the 0 we return to is the same 0 we started from, but the operation we apply within it is now its inverse' (the-matheme §5→0) — the insight that completes an inquiry descends into the question-pole and re-opens it, the same thought-stream traversed now from the far side. So T0 and T5 are not two stations but one slash read from two faces: Questions (the ground-pole, the inquiry's empty self-identity, 'I am the same') and Insight (the synthesis-pole, that self-identity now KNOWN, 'seeking its sameness' fulfilled) — 'the same I traversing the same slash in opposite directions, like the two sides of the Möbius strip that turn out to be one continuous surface' (the-matheme §0/1 The Return). T enacts the kernel's enriched return at the level of cognition itself: the archived Insight sediments into the Traces and Patterns the next inquiry inherits, so 'every completion becomes the next beginning' (kernel §3, the Möbius enactment). And it OPENS rather than concludes for the matheme's own reason: the epogdoon η = log(9/8), the residual generative incompleteness that keeps the totality one whole-tone short of the octave (kernel §0) — no insight ever fully closes the question it answered; each synthesis lands a thought one whole-tone on, and the next stirring of inquiry is already pressing. T is the stream that is never finished thinking: the cognition that stays open because its insight always re-opens the question — 'the return of the operation to its own beginning, which the operation never actually left.'"
+    }
+  }
+}
