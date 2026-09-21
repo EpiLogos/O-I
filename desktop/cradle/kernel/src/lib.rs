@@ -43,6 +43,7 @@ pub mod graph;
 pub mod encounter;
 pub mod agency;
 pub mod being;
+pub mod chat_defaults;
 pub mod files;
 pub mod composition;
 pub mod system_composition;
@@ -305,6 +306,29 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The installed harnesses' real status (`aikit --json client status`
+    /// through the suite route): which harnesses are detected on this
+    /// machine, which carry AIKit, their config dirs and gaps. Pull read,
+    /// machine-level — the settings face renders the owner's rows verbatim.
+    HarnessStatus,
+    /// The resolved model catalogue (`aikit model-catalogue show --json`
+    /// through the suite route): first-party seed, provider sources and
+    /// owner entries as the owner resolved them. Pull read.
+    ModelCatalogue,
+    /// The desktop-held default provider for NEW chats
+    /// (`chat_defaults.rs`): the desired-entry-shaped document when one is
+    /// held, `None` when the owner's rows decide (`pi` row, else first).
+    /// The owner's configuration plane carries no setting for this choice —
+    /// its models are "resolved per launch", not addressable — so the
+    /// desktop holds it honestly under its own `oi:cradle` namespace.
+    ChatDefaultRead,
+    /// Hold (or replace) that default: the provider id of one CONFIGURED
+    /// encounter provider row. Machine-local desktop state, never an
+    /// owner write.
+    ChatDefaultHold { provider: String },
+    /// Withdraw the held default — an explicit operation; the discard
+    /// document carries the observed `removed` fact.
+    ChatDefaultDiscard,
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -468,6 +492,15 @@ pub enum KernelOpResult {
     FactoryDevelopmentReading {data:serde_json::Value},
     FactoryAttemptReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
+    /// The harness status rows, verbatim from the owner's `client status`.
+    HarnessStatusReading {data:serde_json::Value},
+    /// The resolved model catalogue, verbatim from the owner.
+    ModelCatalogueReading {data:serde_json::Value},
+    /// The held chat default — the desktop's own document, or `None` when
+    /// the owner's rows decide.
+    ChatDefaultReading {document:Option<serde_json::Value>},
+    ChatDefaultHeld {document:serde_json::Value},
+    ChatDefaultDiscarded {document:serde_json::Value},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
     ConfigRegistryReading { reading: configuration::RegistryReading },
@@ -674,6 +707,28 @@ impl Kernel {
                 args.extend(["status".into(),"--json".into()]);
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"workcell status read failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WorkcellStatusReading{data}})
+            }
+            KernelOp::HarnessStatus => {
+                // Machine-level read: no project disclosure is consulted —
+                // the harnesses are the machine's own facts.
+                let data=self.agency.harness_status()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::HarnessStatusReading{data}})
+            }
+            KernelOp::ModelCatalogue => {
+                let data=self.agency.model_catalogue()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ModelCatalogueReading{data}})
+            }
+            KernelOp::ChatDefaultRead => {
+                let document=chat_defaults::read()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultReading{document}})
+            }
+            KernelOp::ChatDefaultHold {provider} => {
+                let document=chat_defaults::hold(&provider)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultHeld{document}})
+            }
+            KernelOp::ChatDefaultDiscard => {
+                let document=chat_defaults::discard()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultDiscarded{document}})
             }
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.

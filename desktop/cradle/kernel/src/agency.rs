@@ -4,6 +4,7 @@ use serde_json::Value;
 use std::{
     path::{Path, PathBuf},
     process::Command,
+    sync::{atomic::{AtomicU8, Ordering}, Arc},
 };
 
 #[derive(Clone, Debug)]
@@ -11,14 +12,19 @@ pub struct Client {
     executable: PathBuf,
     home: Option<PathBuf>,
     suite_route: bool,
+    /// The per-process verdict on whether the installed suite carries the
+    /// `encounter-agency-mint` verb (0 unknown, 1 present, 2 absent). The
+    /// fallback reuse path is never retried against a suite that already
+    /// answered; clones share the one cell.
+    mint_support: Arc<AtomicU8>,
 }
 
 impl Client {
     pub fn with(executable: PathBuf, home: Option<PathBuf>) -> Self {
-        Self { executable, home, suite_route: false }
+        Self { executable, home, suite_route: false, mint_support: Arc::new(AtomicU8::new(0)) }
     }
     pub fn discover() -> Self {
-        Self { executable: std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(|| "oi".into()), home: None, suite_route: true }
+        Self { executable: std::env::var_os("OI_BIN").map(PathBuf::from).unwrap_or_else(|| "oi".into()), home: None, suite_route: true, mint_support: Arc::new(AtomicU8::new(0)) }
     }
     pub fn read_project(&self, cwd: &Path, project_ref: &str) -> Result<Value, String> {
         read_project_with(&self.executable, self.home.as_deref(), cwd, project_ref, self.suite_route)
@@ -225,15 +231,22 @@ impl Client {
     ///      `project-context` output is the binding, verbatim.
     ///   4. `stage attach-agent-session` → `apply` — a freshly minted
     ///      `agent-session/<id>`.
-    ///   5. `encounter-agency-configure` — the session's native Agency
-    ///      binding. No per-project agency mint exists in the suite (checked:
-    ///      `aikit factory` and `actuation` expose no such verb), so the
-    ///      binding is composed by reusing the owner's most recently ADMITTED
-    ///      agency source: identity fields, agency source (path + digest) and
-    ///      `actuation_bin` are copied verbatim from a stored binding whose
-    ///      source file still exists; the revision label is new and the
-    ///      configure runs the real `actuation agency actualise` admission.
-    ///      This is a disclosed limitation, not a mint.
+    ///   5. `encounter-agency-mint` — the session's native Agency binding,
+    ///      minted per project by the owner's own verb
+    ///      (`techne/agency-mint`: `--agent-session` + `--project-cwd`).
+    ///      When the installed suite does not carry the verb yet, or the
+    ///      mint refuses this one session, the binding falls back to the
+    ///      DISCLOSED REUSE path: the owner's most recently ADMITTED agency
+    ///      source (path + digest) and `actuation_bin` are copied verbatim
+    ///      from a stored binding whose source file still exists; the
+    ///      revision label is new and the configure runs the real
+    ///      `actuation agency actualise` admission. The verdict on the
+    ///      verb's existence is cached for the process, so an installed cut
+    ///      without the mint never pays the probe on every send. Either way
+    ///      the provision result names what happened (`agency`:
+    ///      `minted-per-project` or `reused-admitted-source`) and carries
+    ///      the `agent_ref` the flow attributes the session to — the
+    ///      mint's own when it succeeded, the reused binding's otherwise.
     ///   6. `encounter open` — through the ordinary `encounter` gate, which
     ///      re-verifies the new space's Project membership before opening the
     ///      provider.
@@ -263,25 +276,36 @@ impl Client {
         let staged=self.stage_intent(cwd,&space,&intent)?;
         self.apply_preview(cwd,&staged)?;
 
-        // The session's native Agency binding, reused from the owner's latest
-        // admitted agency (see the doc comment: disclosed reuse, not a mint).
-        let stamp=chat_stamp();
-        let reference=find_reference_binding(&agencies_state_dir())?;
-        let binding=compose_chat_binding(reference,&format!("rev/desktop-chat-{stamp}"));
-        let binding_json=serde_json::to_string(&binding).map_err(|error|format!("Agency binding is not serialisable: {error}"))?;
-        with_temp_json(&binding_json,|path|{
-            self.session_space(cwd,&[
-                "encounter-agency-configure",
-                "--agent-session",&agent_session,
-                "--binding-json",&format!("@{path}"),
-            ])
-        })?;
+        // The session's native Agency binding — mint first, disclosed reuse
+        // as the fallback (see the doc comment). Both arms keep the real
+        // admission effect; neither fakes a mint.
+        let (agent_ref,agency)=match self.mint_agency(cwd,&agent_session) {
+            Ok(data)=>(data["agent_ref"].as_str().unwrap_or(agent_session.as_str()).to_owned(),"minted-per-project"),
+            Err(_mint_refused)=> {
+                let stamp=chat_stamp();
+                let reference=find_reference_binding(&agencies_state_dir())?;
+                let binding=compose_chat_binding(reference,&format!("rev/desktop-chat-{stamp}"));
+                let agent_ref=binding["agent_ref"].as_str().unwrap_or(agent_session.as_str()).to_owned();
+                let binding_json=serde_json::to_string(&binding).map_err(|error|format!("Agency binding is not serialisable: {error}"))?;
+                with_temp_json(&binding_json,|path|{
+                    self.session_space(cwd,&[
+                        "encounter-agency-configure",
+                        "--agent-session",&agent_session,
+                        "--binding-json",&format!("@{path}"),
+                    ])
+                })?;
+                (agent_ref,"reused-admitted-source")
+            }
+        };
 
-        // Provider choice for a new chat: a stable configured provider — the
-        // one literally named `pi` when present, else the owner's first row.
-        // The composer's own connect UI can switch the conversation later.
+        // Provider choice for a new chat: the owner's held default when it
+        // names a configured row, else the row literally named `pi`, else
+        // the owner's first row. The rule that chose it travels with the
+        // result, and the composer's own connect UI can still switch the
+        // conversation later.
         let rows=self.encounter(cwd,project_ref,&EncounterRequest::Providers)?;
-        let provider=default_provider(rows.as_array().map(Vec::as_slice).unwrap_or_default())
+        let configured=rows.as_array().map(Vec::as_slice).unwrap_or_default();
+        let (provider,provider_default)=default_provider_choice(configured,crate::chat_defaults::held_provider().as_deref())
             .ok_or("No ACP provider is configured; connect one in System → Sources, then send again")?;
 
         // The ordinary open — and the ordinary gate: discover runs again and
@@ -292,9 +316,93 @@ impl Client {
             "project":project,
             "space":space,
             "agent_session":agent_session,
+            "agent_ref":agent_ref,
+            "agency":agency,
             "provider":provider,
+            "provider_default":provider_default,
             "open":opened,
         }))
+    }
+
+    /// Ask the owner to mint this session's per-project Agency binding
+    /// (`aikit session-space encounter-agency-mint --agent-session <id>
+    /// --project-cwd <dir>`). Success carries the owner's own data (the
+    /// minted `agent_ref` among it); any failure is the owner's own stderr.
+    /// A stderr naming an unknown subcommand is the suite saying the verb
+    /// does not exist in this installed cut — that verdict is cached for
+    /// this process so later provisions fall back without re-probing.
+    fn mint_agency(&self,cwd:&Path,agent_session:&str)->Result<Value,String> {
+        if self.mint_support.load(Ordering::Relaxed)==2 {
+            return Err("the installed suite has no encounter-agency-mint verb (cached)".into());
+        }
+        let mut command=Command::new(&self.executable);
+        if self.suite_route {command.arg("aikit");}
+        command.arg("session-space");
+        if let Some(home)=&self.home {command.env("AIKIT_HOME",home);}
+        command.args(["encounter-agency-mint","--agent-session",agent_session,"--project-cwd"]).arg(cwd);
+        let output=command.output().map_err(|error|format!("AIKit SessionSpace is unavailable: {error}"))?;
+        if !output.status.success() {
+            let stderr=String::from_utf8_lossy(&output.stderr).trim().to_owned();
+            if mint_verb_absent(&stderr) {self.mint_support.store(2,Ordering::Relaxed);}
+            return Err(stderr);
+        }
+        self.mint_support.store(1,Ordering::Relaxed);
+        let mut data:Value=serde_json::from_slice(&output.stdout)
+            .map_err(|error|format!("Unreadable AIKit agency mint response: {error}"))?;
+        if data.get("ok").and_then(Value::as_bool)==Some(true) {
+            data=data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        Ok(data)
+    }
+
+    /// The installed harnesses' real status through the suite route
+    /// (`aikit --json client status`): which harnesses are detected, which
+    /// have AIKit installed on them, their config dirs and gaps. A
+    /// machine-level read — no project disclosure is consulted and none is
+    /// needed; the payload is the owner's own `data`, verified to carry
+    /// the `clients` rows.
+    pub fn harness_status(&self)->Result<Value,String> {
+        let mut command=Command::new(&self.executable);
+        if self.suite_route {command.arg("aikit");}
+        if let Some(home)=&self.home {command.env("AIKIT_HOME",home);}
+        command.args(["--json","client","status"]);
+        let output=command.output().map_err(|error|format!("AIKit client status is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+        }
+        let mut data:Value=serde_json::from_slice(&output.stdout)
+            .map_err(|error|format!("AIKit client status returned unreadable JSON: {error}"))?;
+        if data.get("ok").and_then(Value::as_bool)==Some(true) {
+            data=data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        if !data.get("clients").is_some_and(Value::is_array) {
+            return Err("AIKit client status carried no clients reading".into());
+        }
+        Ok(data)
+    }
+
+    /// The resolved model catalogue through the suite route
+    /// (`aikit model-catalogue show --json`): first-party seed, provider
+    /// sources and owner entries as the owner resolved them. Machine-level
+    /// read; the payload is the owner's own `data` verbatim.
+    pub fn model_catalogue(&self)->Result<Value,String> {
+        let mut command=Command::new(&self.executable);
+        if self.suite_route {command.arg("aikit");}
+        if let Some(home)=&self.home {command.env("AIKIT_HOME",home);}
+        command.args(["model-catalogue","show","--json"]);
+        let output=command.output().map_err(|error|format!("AIKit model catalogue is unavailable: {error}"))?;
+        if !output.status.success() {
+            return Err(String::from_utf8_lossy(&output.stderr).trim().to_owned());
+        }
+        let mut data:Value=serde_json::from_slice(&output.stdout)
+            .map_err(|error|format!("AIKit model catalogue returned unreadable JSON: {error}"))?;
+        if data.get("ok").and_then(Value::as_bool)==Some(true) {
+            data=data.get("data").cloned().unwrap_or(Value::Null);
+        }
+        if !data.get("entries").is_some_and(Value::is_array) {
+            return Err("AIKit model catalogue carried no entries reading".into());
+        }
+        Ok(data)
     }
 
     /// Run one `session-space` verb and return its stdout (the folded CLI
@@ -329,12 +437,31 @@ impl Client {
     }
 }
 
-/// The provider default for a new chat: the row literally named `pi` when
-/// present, else the first configured row. `None` = nothing is configured.
-pub fn default_provider(rows:&[Value])->Option<String> {
+/// The provider default for a new chat, with the rule that chose it, in
+/// precedence order: the owner's held choice (when it names a configured
+/// row), the row literally named `pi`, else the first configured row.
+/// `None` = nothing is configured. A held choice that no longer names a
+/// configured row falls through honestly — it is never invented back.
+pub fn default_provider_choice(rows:&[Value],owner_choice:Option<&str>)->Option<(String,&'static str)> {
     let ids:Vec<&str>=rows.iter().filter_map(|row|row["id"].as_str()).collect();
     if ids.is_empty() {return None;}
-    Some(if ids.contains(&"pi") {"pi".to_owned()} else {ids[0].to_owned()})
+    if let Some(choice)=owner_choice.map(str::trim).filter(|choice|!choice.is_empty()&&ids.contains(choice)) {
+        return Some((choice.to_owned(),"owner-choice"));
+    }
+    if ids.contains(&"pi") {return Some(("pi".to_owned(),"pi-row"));}
+    Some((ids[0].to_owned(),"first-configured"))
+}
+
+/// The provider default alone (the choice without its rule).
+pub fn default_provider(rows:&[Value],owner_choice:Option<&str>)->Option<String> {
+    default_provider_choice(rows,owner_choice).map(|(provider,_)|provider)
+}
+
+/// Whether a mint refusal is really the suite saying the verb does not
+/// exist in this installed cut (clap's own spelling), not a refusal of
+/// this one session.
+fn mint_verb_absent(stderr:&str)->bool {
+    stderr.contains("unrecognized subcommand")
 }
 
 /// A readable, unique-per-call slug: the project's own name, lowercased and
@@ -439,13 +566,73 @@ mod tests {
     }
 
     #[test]
-    fn provider_default_prefers_pi_then_first_row() {
+    fn provider_default_prefers_owner_choice_then_pi_then_first_row() {
         let row=|id:&str|serde_json::json!({"id":id,"label":id});
-        assert_eq!(default_provider(&[]),None,"no configured provider is an honest None");
-        assert_eq!(default_provider(&[row("claude-code"),row("pi")]).as_deref(),Some("pi"));
-        assert_eq!(default_provider(&[row("claude-code"),row("codex")]).as_deref(),Some("claude-code"));
-        assert_eq!(default_provider(&[row("pi")]).as_deref(),Some("pi"));
-        assert_eq!(default_provider(&[serde_json::json!({"label":"no id"})]),None,"rows without ids never answer");
+        let rows=&[row("claude-code"),row("pi")];
+        // No configured provider is an honest None, whatever was held.
+        assert_eq!(default_provider(&[],Some("pi")),None);
+        assert_eq!(default_provider(&[],None),None);
+        // The owner's held choice wins when it names a configured row.
+        assert_eq!(default_provider_choice(rows,Some("claude-code")),Some(("claude-code".into(),"owner-choice")));
+        assert_eq!(default_provider_choice(rows,Some(" pi ")),Some(("pi".into(),"owner-choice")),"a padded choice is trimmed, not dropped");
+        // Without a held choice: the `pi` row, else the first configured.
+        assert_eq!(default_provider_choice(rows,None),Some(("pi".into(),"pi-row")));
+        assert_eq!(default_provider_choice(&[row("claude-code"),row("codex")],None),Some(("claude-code".into(),"first-configured")));
+        // A held choice that no longer names a configured row falls through —
+        // never invented back into the list.
+        assert_eq!(default_provider_choice(rows,Some("withdrawn-provider")),Some(("pi".into(),"pi-row")));
+        assert_eq!(default_provider_choice(&[row("codex")],Some("withdrawn")),Some(("codex".into(),"first-configured")));
+        // Blank held choices are absence, and rows without ids never answer.
+        assert_eq!(default_provider_choice(rows,Some("  ")).map(|(p,_)|p),Some("pi".to_owned()));
+        assert_eq!(default_provider(&[serde_json::json!({"label":"no id"})],None),None);
+    }
+
+    #[test]
+    fn a_missing_mint_verb_is_recognised_and_cached_per_process() {
+        assert!(mint_verb_absent("error: unrecognized subcommand 'encounter-agency-mint'"));
+        assert!(mint_verb_absent("oi-aikit \n error: unrecognized subcommand"));
+        // A refusal from a present verb is NOT absence — the fallback runs
+        // for this provision but the verb stays cached as present.
+        assert!(!mint_verb_absent("encounter.agency refuses: no admitted source"));
+        assert!(!mint_verb_absent(""));
+        let client=Client::with("definitely-not-a-binary".into(),None);
+        assert_eq!(client.mint_support.load(Ordering::Relaxed),0,"a fresh client has no verdict");
+    }
+
+    /// The mint success shape (`{"ok":true,"data":{...}}`) and the absent-verb
+    /// verdict cache, against stub executables (configuration.rs's pattern).
+    #[test]
+    fn mint_agency_parses_success_and_caches_the_absent_verb() {
+        let dir=std::env::temp_dir().join(format!("oi-mint-test-{}",std::process::id()));
+        let _=std::fs::remove_dir_all(&dir);
+        std::fs::create_dir_all(&dir).unwrap();
+        let script=|name:&str,body:&str| {
+            let path=dir.join(name);
+            std::fs::write(&path,format!("#!/bin/sh\n{body}\n")).unwrap();
+            #[cfg(unix)]
+            {
+                use std::os::unix::fs::PermissionsExt;
+                std::fs::set_permissions(&path,std::fs::Permissions::from_mode(0o755)).unwrap();
+            }
+            path
+        };
+        let ok=script("mint-ok","echo '{\"ok\":true,\"data\":{\"configured\":true,\"standing\":\"minted-per-project-agency\",\"agent_ref\":\"agent/oh-i\"}}'");
+        let absent=script("mint-absent","echo \"error: unrecognized subcommand 'encounter-agency-mint'\" >&2\nexit 2");
+
+        let success=Client::with(ok,None).mint_agency(std::path::Path::new("/tmp"),"agent-session/x").unwrap();
+        assert_eq!(success["standing"],serde_json::json!("minted-per-project-agency"));
+        assert_eq!(success["agent_ref"],serde_json::json!("agent/oh-i"));
+
+        // The absent verb is refused once, the verdict is cached, and the
+        // next call falls back WITHOUT running the executable again.
+        let absent_client=Client::with(absent.clone(),None);
+        let error=absent_client.mint_agency(std::path::Path::new("/tmp"),"agent-session/x").unwrap_err();
+        assert!(mint_verb_absent(&error),"{error}");
+        assert_eq!(absent_client.mint_support.load(Ordering::Relaxed),2);
+        // Rewrite the stub to succeed: the cached verdict still refuses first.
+        std::fs::write(&absent,"#!/bin/sh\necho '{\"ok\":true}'\n").unwrap();
+        assert!(absent_client.mint_agency(std::path::Path::new("/tmp"),"agent-session/x").is_err());
+        let _=std::fs::remove_dir_all(&dir);
     }
 
     #[test]
