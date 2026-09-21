@@ -188,6 +188,17 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
       if(onError)onError(String(e));else console.error(e);
     } finally {setChoosing(false);}
   };
+  const choosePreparedRef=useRef(choose);choosePreparedRef.current=choose;
+  useEffect(()=>{
+    const take=(event:Event)=>{
+      const row=(event as CustomEvent<EncounterRow>).detail;
+      if(!row||typeof row.project!=="string"||typeof row.ref!=="string"||!row.ref.startsWith("agent-session/")||typeof row.space!=="string"||!row.space.startsWith("session-space/"))return;
+      void choosePreparedRef.current(row);
+    };
+    window.addEventListener("oi:agent-session-prepared",take);
+    return()=>window.removeEventListener("oi:agent-session-prepared",take);
+  },[]);
+
 
   const conversation=!accompanying?undefined
     :curation.conversationInCentre?(onOpenConversation?{label:"Open the conversation in the centre",go:()=>onOpenConversation(accompanying)}:undefined)

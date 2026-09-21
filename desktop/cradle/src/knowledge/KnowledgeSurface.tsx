@@ -1,3 +1,4 @@
+import {emphasizeGraph} from './graphEmphasis';
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {useKernel} from "../kernel/KernelProvider";
 import type {KnowledgeAddress,KnowledgeReading} from "../kernel/types";
@@ -81,6 +82,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
   const grouped=useMemo(()=>subjects(model),[model]);
   const nodes=useMemo(()=>grouped.map(s=>s.node),[grouped]);
   const visibleModel=useMemo(()=>model?{...model,nodes}:undefined,[model,nodes]);
+  const emphasis=useMemo(()=>emphasizeGraph(nodes,filters.emphasis),[nodes,filters.emphasis]);
   const filtered=useMemo(()=>visibleModel?filterGraph(visibleModel,filters,visit.selected):undefined,[visibleModel,filters,visit.selected]);
   const displayedModel=useMemo(()=>visibleModel&&filtered?{...visibleModel,nodes:filtered.nodes,edges:filtered.edges}:undefined,[visibleModel,filtered]);
   const focused=useMemo(()=>neighbourhood(displayedModel,visit.selected),[displayedModel,visit.selected]);
@@ -169,7 +171,7 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     {travel.constructionRecovery&&<details className="knowledge-raw"><summary>Recover retained constellation draft</summary><p role="alert">{travel.constructionRecovery.message}</p><pre>{JSON.stringify(travel.constructionRecovery.raw,null,2)}</pre></details>}
     {busy&&<Loading label="Reading graph inputs…" scope="inline"/>}{error&&<p role="alert">{error}</p>}{layout.error&&<p role="alert">{layout.error}</p>}
     {isGraph&&<div className="knowledge-graph" ref={graph} data-focused={Boolean(visit.selected)} data-detail-open={Boolean(detailNode)} data-dense={nodes.length>80}>
-      <GraphCanvas nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={.15} maxZoom={4} onCamera={commitCamera} onOpen={open} onClear={release}/>
+      <GraphCanvas emphasis={emphasis} nodes={filtered?.nodes??nodes} positions={displayedPositions} model={displayedModel} camera={presentation} selected={visit.selected} focused={focused} contextual={filtered?.contextual} labels={filters.labels} arrows={filters.arrows} minZoom={.15} maxZoom={4} onCamera={commitCamera} onOpen={open} onClear={release}/>
       {visibleModel&&filtered&&<GraphFilters reading={visibleModel} result={filtered} filters={filters} selected={visit.selected} onChange={changeFilters} saved={travel.saved??[]} onSave={saveViews}/>}
       {filtered?.nodes.length===0&&<p className="knowledge-graph-empty" role="status">{filtered.localFocusMissing?"Select a subject before using the local view.":"No subjects match these filters."}</p>}
       <div className="knowledge-zoom" role="group" aria-label="Graph view"><button className="oi-tool" aria-label="Zoom out" onClick={()=>setCamera(c=>({...c,zoom:Math.max(.15,c.zoom/1.2)}))}><Glyph name="minus" size={13}/></button><span aria-label="Graph zoom">{Math.round(camera.zoom*100)}%</span><button className="oi-tool" aria-label="Zoom in" onClick={()=>setCamera(c=>({...c,zoom:Math.min(4,c.zoom*1.2)}))}><Glyph name="plus" size={13}/></button><button className="oi-tool" aria-label="Fit graph to view" title="Fit graph to view" onClick={fitView}><Glyph name="expand" size={13}/></button><span className="knowledge-control-hint">Pinch to zoom · two fingers to pan</span></div>

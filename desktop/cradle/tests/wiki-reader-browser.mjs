@@ -76,6 +76,10 @@ try{
    await page.getByText(/1 matches/).waitFor();
    const graphCalls=calls.filter(op=>op.op==='graph');
    check(graphCalls.length===2&&graphCalls.every(op=>op.options.input!=='shared_field'),`${name}: local graph uses independent native inputs without remote dependency`);
+   await page.locator('.knowledge-emphasis-controls > summary').click();
+   await page.getByLabel('Emphasis group name').fill('Opening marks');
+   await page.getByRole('button',{name:'Add emphasis group',exact:true}).click();
+   check(await page.getByLabel('Graph emphasis legend').innerText()==='Opening marks',`${name}: named emphasis is visible outside its controls`);
    await page.getByLabel('Saved graph view name').fill('Opening view');
    await page.getByRole('button',{name:'Save view',exact:true}).click();
    await page.getByRole('button',{name:'Clear filters',exact:true}).click();
@@ -87,6 +91,7 @@ try{
    await page.getByRole('button',{name:'Graph corpus',exact:true}).click();
    await page.getByText(/Filter graph/).first().click();
    check(await page.getByLabel('Filter graph subjects').inputValue()==='Opening',`${name}: existing workspace travel persists graph preferences`);
+   check(await page.getByLabel('Graph emphasis legend').innerText()==='Opening marks',`${name}: emphasis restores with the saved view without source writes`);
    check(errors.length===0,`${name}: no uncaught browser error: ${errors.join('; ')}`);
   }catch(error){receipt.failure={name,message:String(error),errors,lastCalls:calls.slice(-5)};await page.screenshot({path:resolve(out,`${name}-failure.png`)});throw error;}
   finally{await browser.close();}

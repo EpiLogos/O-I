@@ -1,4 +1,5 @@
 import {useState} from 'react';
+import {GraphViewDetails} from './GraphViewDetails';
 import type {GraphReading} from './graph';
 import {defaultGraphFilters, type GraphFilters as FilterState, type FilteredGraph, type SavedGraphView} from './filters';
 
@@ -11,7 +12,7 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
   const relations = [...new Set(reading.edges.map(edge => edge.relation))].sort();
   const families = [...new Set(reading.edges.map(edge => edge.family ?? 'native-semantic'))].sort();
   const tags = [...new Set(reading.nodes.flatMap(node => node.tags ?? []))].sort();
-  const active = Boolean(filters.shared || filters.text || filters.scope === 'local' || filters.kinds.length || filters.relations.length || filters.families.length || filters.tags.length || !filters.isolated || filters.context !== 'structure');
+  const active = Boolean(filters.shared || filters.text || filters.scope === 'local' || filters.kinds.length || filters.relations.length || filters.families.length || filters.tags.length || !filters.isolated || filters.context !== 'structure' || filters.collapsed.length);
   const save = () => {const title = name.trim().slice(0,80); if (!title) return; onSave([...saved.filter(view => view.name !== title), {name: title, filters: {...filters}}].slice(-12)); setName('');};
   return <div className="knowledge-filter-panel">
     <details className="knowledge-filter-controls">
@@ -32,9 +33,10 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
       <label>Constellation context<select aria-label="Graph constellation context" value={filters.context} onChange={event => change({context:event.target.value as FilterState['context']})}><option value="structure">Keep disclosed structure</option><option value="matches">Matches only (partial formations)</option></select></label>
       <label>Labels<select aria-label="Graph labels" value={filters.labels} onChange={event => change({labels:event.target.value as FilterState['labels']})}><option value="automatic">At useful zoom</option><option value="all">All visible subjects</option><option value="focus">Focused subjects</option></select></label>
       <label className="knowledge-filter-check"><input type="checkbox" checked={filters.arrows} onChange={event => change({arrows:event.target.checked})}/>Show relation direction</label>
+      <GraphViewDetails reading={reading} filters={filters} onChange={onChange}/>
       <div className="knowledge-filter-row"><input aria-label="Saved graph view name" placeholder="Name this view" maxLength={80} value={name} onChange={event=>setName(event.target.value)}/><button type="button" className="oi-action" disabled={!name.trim()} onClick={save}>Save view</button></div>
       {saved.length > 0 && <ul aria-label="Saved graph views">{saved.map(view => <li key={view.name}><button type="button" className="oi-action" onClick={()=>onChange({...view.filters})}>{view.name}</button><button type="button" className="oi-tool" aria-label={`Remove view ${view.name}`} onClick={()=>onSave(saved.filter(item=>item.name!==view.name))}>×</button></li>)}</ul>}
-      <button type="button" className="oi-action" onClick={()=>onChange(defaultGraphFilters())}>Clear filters</button>
+      <button type="button" className="oi-action" onClick={()=>onChange({...defaultGraphFilters(),emphasis:filters.emphasis})}>Clear filters</button>
     </details>
     <div className="knowledge-filter-summary" role="status">{result.counts.matched} matches{result.counts.context > 0 && ` + ${result.counts.context} context`} · {result.counts.displayed} of {result.counts.admitted} disclosed subjects</div>
     {active && <div className="knowledge-filter-chips" aria-label="Applied graph filters">
@@ -45,6 +47,8 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
       {!filters.isolated && <button onClick={()=>change({isolated:true})}>Connected only ×</button>}
       {filters.context === 'matches' && <button onClick={()=>change({context:'structure'})}>Matches only ×</button>}
     </div>}
+    {!!filters.emphasis?.length&&<div className="knowledge-emphasis-legend" aria-label="Graph emphasis legend">{filters.emphasis.filter(group=>group.enabled).map(group=><span key={group.id}><i style={{backgroundColor:group.color}} aria-hidden="true"/>{group.label}</span>)}</div>}
+    {result.collapsedFormations.length>0&&<p className="knowledge-filter-summary">{result.collapsedFormations.length} folded wholes · {result.collapsedSubjects.size} subjects and {result.foldedEdges} incident connections hidden by folding. Membership is unchanged.</p>}
     {result.partialFormations.length > 0 && <p className="knowledge-filter-summary">{result.partialFormations.length} partially displayed {result.partialFormations.length === 1 ? 'constellation' : 'constellations'}; membership is unchanged.</p>}
     {reading.truncated && <p className="knowledge-filter-summary">This is a bounded reading, not the complete source field.</p>}
   </div>;

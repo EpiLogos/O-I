@@ -134,7 +134,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       presentation.current = active; active.setContainer(host.current);
       active.updateConfig(config, projected.document.selection.scene_ref, projected.document.selection.entity_ref ? [projected.document.selection.entity_ref] : []);
       await active.ready();
-      if (alive.current && presentation.current === active) setNotice('The live constellation is rendered. Select a body or relation to inspect its native identity.');
+      if (alive.current && presentation.current === active) {host.current?.scrollIntoView({block:'nearest'}); setNotice('The live constellation is rendered. Select a body or relation to inspect its native identity.');}
     } catch (error) {if (alive.current) setError(message(error));}
     finally {if (alive.current) setBusy('');}
   };
