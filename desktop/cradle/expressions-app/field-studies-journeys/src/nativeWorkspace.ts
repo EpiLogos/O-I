@@ -18,7 +18,17 @@ import {NativeSelectionQueue} from './nativeSelectionQueue.js';
  * occurrence currently open. The cradle validates it through the owner. */
 export interface NativeSubject {
  ref:string;kind:'expression';nativeOwner:'oi';revision:number;title:string;
- sceneRef:string|null;entityRef:string|null;relationRef:string|null;
+ project?:string;sceneRef:string|null;entityRef:string|null;relationRef:string|null;
+}
+/** The current native construction's real facets, derived from the open kernel
+ * Expression — what each M′ instrument stands on, so a lens's availability and
+ * content are DISCLOSED by the actual construction, never hardcoded. Null when
+ * no native construction is open. */
+export interface ConstructionFacets {
+ ref:string;revision:number;title:string;
+ members:number;relations:number;
+ scenes:{scene_ref:string;title:string;members:number;relations:number}[];
+ currentScene:string|null;
 }
 export interface NativeWorkspaceHost {
  snapshot:()=>WorkingSnapshot;
@@ -128,6 +138,19 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   return {ref:doc.expression_ref,kind:'expression',nativeOwner:'oi',revision:doc.revision,title:doc.title,
    sceneRef:doc.selection?.scene_ref??null,entityRef:doc.selection?.entity_ref??null,relationRef:doc.selection?.relation_ref??null};
  };
+ // The real facets the M′ instruments stand on, derived from the OPEN kernel
+ // Expression — never a hardcoded guess. A lens uses this to disclose its own
+ // availability and material.
+ const construction=():ConstructionFacets|null=>{
+  const view=work.state?.view,doc=view?.document;if(!view||!doc)return null;
+  const scenes=doc.scenes.map(s=>{
+   const binding=Object.values(view.bindings).find(b=>b.scene_ref===s.scene_ref);
+   return {scene_ref:s.scene_ref,title:s.title,members:s.entity_refs.length,relations:binding?.relations.length??0};
+  });
+  return {ref:doc.expression_ref,revision:doc.revision,title:doc.title,
+   members:Object.keys(doc.entities).length,relations:Object.keys(doc.relations??{}).length,
+   scenes,currentScene:doc.selection?.scene_ref??null};
+ };
  panel.addEventListener('click',event=>{
   const action=(event.target as HTMLElement).closest<HTMLElement>('[data-native]')?.dataset.native;if(!action)return;
   if(action==='close'){panel.hidden=true;return;}
@@ -168,5 +191,15 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   },
   inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
   nativeSubject,
+  construction,
+  // Persist the current composition — its scenes, members and relations —
+  // to the native Expression through the owner (kernel scene_create/edit with
+  // the expected-revision basis check; a stale reply is refused, never
+  // retried). This is the native scene act M3′ commits to, not a browser save.
+  commit:()=>run(async()=>{
+   const snapshot=clone(host.snapshot()),version=host.version();
+   const doc=await work.commit(snapshot);
+   status(`Native working revision ${doc.revision} committed — ${doc.scenes.length} scene${doc.scenes.length===1?'':'s'}, ${Object.keys(doc.entities).length} member${Object.keys(doc.entities).length===1?'':'s'} persisted to the native Expression.${host.version()!==version?' Newer local edits remain a separate draft.':''}`);
+  }),
  };
 }

@@ -20,7 +20,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | §§0–3,9,11–14; C12 | `PointCloudHost` → imported `field-studies-journeys/src/app.ts`; native rail/workspace; retained mode slots | B: current mounted route, Epii no-subject entrance, native file save/restart and relation selection passed 19 checks at 07e32d3. Earlier isolated tests alone did not certify this route. Six working lens controls and correct home/Library/portal experience still require joined proof. |
 | §§4–7,34–35; C1–C4 | Merged Wiki reader, `WikiConstructionPanel`, `constructionDraft`/`constructionProjection`; AIKit native constructor; kernel `construction.rs`/`construction_source.rs` | Native ownership and prior Wiki evidence retained. Full current-app exact passage → working constellation staging, variants/nesting and both creation walks remain unclosed here. No second parser/store. |
 | §§5–6,15,36; C5–C6 | `kernelDocumentBridge`, `sceneCorrespondence`, `kernelComposition`, `nativeCorrespondence`, existing engine bindings and native Scene material | U: existing bridge/composition tests passed. N: complete saved/working material, repeated-entity Scene-local placement and material-binding removal negative passed. B: two distinct native relations drawn/hit-tested in the actual app without remount/clock/camera reset. Broader media/carrier/3D/QL forms still need joined coverage. |
-| §§16–19; C7 | Existing M0′–M5′ native owners and `src/techne/m0m5/**`; imported app rail/Studio/transport | The current app has native composition controls, NOT a completed six-instrument integration. Do not close this row by mounting metadata/count panels or six unrelated applications. |
+| §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B (first cut): the compact M0′–M5′ chooser and floating Lens Studio now stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens presents operative controls carrying the app's own actions — Library/gather (M0′), native composition (M1′), relation/timeline (M2′), scene sequence (M3′) — not reading statistics; M4′/M5′ name honest facet states and the unsurfaced native owner seam, inventing no control (§§18–19,21). `techne-lens-studio-browser.mjs` proves the chooser, per-lens controls-or-honest-facet, M1′ opening the real composition surface, lens continuity (§28) and the lived-cut absence, in a real browser with no host/binaries; gated in the Technē workflow. NOT yet closed: richer inline per-lens controls beyond routing, and wiring M4′ places / M5′ palace to their native owners. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
 | §§1,25,37; C8 | Native Action boundaries, Ta-Onta/Actuation/AIKit; `NativeWorking` and `NativeSelectionQueue` | U: queue scope, supersession, refusal and no retry. N: actual native focus serialization and stale construction refusal. Full canonical Agent co-work/source basis/disclosure/late-return proof remains open. |
 | §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery | N: actual first file save and independent separate-process reopen passed. File-execution removal fails and keeps its pending intent. The full constellation/Journey/Palace/artifact → Wiki/graph/search/Library Return loop is not closed by this file proof. |
 | §§20–22,39; C10 | Existing kernel retained models; imported recovery and native working checkpoint; native selection queue | U/N: latest focus survives in-flight work; invalidated old-work gestures do not cross inquiry; no-op commit is idempotent; restart preserves edited-since-save. Whole mode/lens/portal/restart/source-change walk remains open. |
@@ -125,8 +125,18 @@ binaries), not a regression from this branch, #471, or the reconciliation. It
 does not gate the Technē feature's own workflow. Carried to the kernel/CI
 owner's door rather than blind-patched from this lane.
 
-**Remaining, unchanged in scope:** the actual-current-app six-instrument M0′–M5′
-Lens Studio (§§14–19, C7), the source→construction working field and both
+**Lens Studio first cut (gap 1, §§2,13–19,28) — landed and browser-proven.** The
+compact M0′–M5′ chooser and floating Lens Studio now stand in the live imported
+app (`src/lensStudio.ts` + app.ts), one renderer, on the same construction the
+native workspace holds; each lens presents operative controls (M0′–M3′) or an
+honest facet state (M4′–M5′), and lenses switch without resetting the field.
+Proof `tests/techne-lens-studio-browser.mjs` (whole built app, real browser, no
+host/binaries), gated in the Technē workflow. Depth still open: richer inline
+per-lens controls beyond routing to the app's surfaces, and M4′ places / M5′
+palace wired to their native owners.
+
+**Remaining, unchanged in scope:** the deeper per-instrument operations behind the
+M0′–M5′ Lens Studio (§§14–19, C7), the source→construction working field and both
 creation routes (§§34–35, C1–C4), full instrument effects and whole Return
 through Wiki/graph/search/Library (§§16–19,25,38, C9), the rest of the
 Library/navigator/portal route and its browser evidence (§§7–10,27–33), the

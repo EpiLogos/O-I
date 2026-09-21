@@ -69,6 +69,20 @@ try{
  const ref=saved.expression_ref;
  await frame.getByRole('button',{name:'Commit composition',exact:true}).click();await frame.locator('.native-status').filter({hasText:'Native working revision'}).waitFor();
  const unchanged=await op({op:'expression',request:{operation:'inspect',expression_ref:ref}});check(unchanged.data.document.revision===saved.revision,'An unchanged Scene does not generate a new native revision after JSON key ordering');
+ // The M0′–M5′ Lens Studio stands on the SAME open native construction, not a
+ // hardcoded surface: select the M3′ Journey instrument and it discloses the
+ // real Expression (its basis and its Scenes) and carries the NATIVE commit
+ // (not a browser save); switching to M1′ keeps the same construction — the
+ // subject is carried, never reset (§28 lens continuity over a real subject).
+ await frame.locator('#lens-chooser .lens-choice[data-lens="journey"]').click();
+ await frame.locator('#lens-studio:not([hidden])').waitFor();
+ const m3basis=(await frame.locator('#lens-studio .lens-basis code').first().innerText()).trim();
+ check(m3basis.length>0,'The M3′ Lens Studio discloses the exact open native construction, not a hardcoded blank');
+ check(/scene/i.test(await frame.locator('#lens-studio .lens-material').first().innerText()),'The M3′ Studio discloses the real Scenes of the construction');
+ check(await frame.locator('#lens-studio .lens-control-native[data-action="lens-op"][data-op="commit"]').count()>0,'M3′ commits Scenes through the native owner, not a browser save');
+ await frame.locator('#lens-chooser .lens-choice[data-lens="canvas"]').click();
+ check((await frame.locator('#lens-studio .lens-basis code').first().innerText()).trim()===m3basis,'The open construction survives a lens change — the subject is carried, not reset');
+ await frame.locator('#lens-studio .lens-studio-close').click();
  await frame.getByRole('button',{name:'Account / sources',exact:true}).click();await page.waitForFunction(()=>window.__TECHNE_HOST_PROOF__.summons.some(s=>s.kind==='verso'&&s.subject));
  const versoSummon=await page.evaluate(()=>window.__TECHNE_HOST_PROOF__.summons.find(s=>s.kind==='verso'&&s.subject));
  check(versoSummon.subject.ref===ref&&versoSummon.subject.revision===saved.revision,'The verso summon carries the EXACT open native work (expression ref + current revision), not a bare kind or a global focus');

@@ -423,6 +423,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
  case 'lens':lensStudio.select(el.dataset.lens as LensId);break;
  case 'lens-close':lensStudio.closeStudio();break;
+ case 'lens-op':if(el.dataset.op==='commit'){await nativeWorkspace?.commit();lensStudio.refresh();}break;
  case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home){sequenceOpen=false;beltOpen=false;guidesVisible=false;loadJourney(clone(home));}else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
  case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
@@ -758,7 +759,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false){
 // The M0′–M5′ Lens Studio stands on the SAME native construction the native
 // workspace holds; refreshing it when the construction changes keeps the
 // Studio's basis exact without touching the field.
-const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null});
+const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null,construction:()=>nativeWorkspace?.construction()??null});
 nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;lensStudio.refresh();}});
 lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));

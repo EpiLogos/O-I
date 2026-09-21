@@ -32,7 +32,10 @@ page.on('pageerror', error => errors.push(String(error)));
 
 const LENSES = ['project', 'canvas', 'timeline', 'journey', 'place', 'palace'];
 const OFFICE = {project: 'M0′', canvas: 'M1′', timeline: 'M2′', journey: 'M3′', place: 'M4′', palace: 'M5′'};
+// The surface each routed lens opens, and the lenses whose Studio carries a
+// NATIVE operation (a `lens-op`, not a browser-local save).
 const ROUTED = {project: 'native-library', canvas: 'native-work', timeline: 'open-timeline', journey: 'sequence-panel'};
+const NATIVE_OP = ['canvas', 'journey'];
 const FACET = {place: 'place', palace: 'palace'};
 const receipt = {schema: 'oi.techne-lens-studio/v1', standing: 'current-app instrument surface in a real browser; native operations are a separate host-channel proof', passed: false, lenses: []};
 
@@ -64,22 +67,36 @@ try {
     const studio = page.locator('#lens-studio');
     assert.equal(await studio.getAttribute('data-lens'), id, `the Studio presents the ${id} lens`);
     assert.ok((await studio.locator('.panel-kicker').innerText()).includes(OFFICE[id]), `the Studio names office ${OFFICE[id]}`);
+    // Every lens discloses its material from the construction (§36), never a
+    // blank panel.
+    assert.ok(await studio.locator('.lens-material, .lens-facet').count(), `${id} discloses material or an honest facet`);
+    // No lens routes to a browser-local scene save — the §29/§41 negative that
+    // would fire if an instrument regressed to the shadow store.
+    assert.equal(await studio.locator('[data-action="save-scene"], [data-action="save-next"]').count(), 0, `${id} carries no browser-local save`);
     if (ROUTED[id]) {
-      // M0′–M3′: the Studio CONTAINS operative controls carrying the app's own
-      // actions — not reading statistics.
+      // M0′–M3′: operative controls carrying the app's own actions, not stats.
       assert.ok(await studio.locator(`.lens-control[data-action="${ROUTED[id]}"]`).count(), `${id} presents its real operating control (${ROUTED[id]})`);
       assert.equal(await studio.locator('.lens-facet').count(), 0, `${id} is not an honest-facet placeholder`);
     } else {
-      // M4′/M5′: an honest facet state, its purpose and eligible material — no
-      // fabricated control, no invented coordinate.
+      // M4′/M5′: an honest facet state DERIVED from the construction — its
+      // purpose and eligible material — with no fabricated control or coordinate
+      // (there is no native place/palace owner op in this application to honour).
       assert.ok(await studio.locator(`.lens-facet[data-lens-facet="${FACET[id]}"]`).count(), `${id} names its honest facet state`);
       assert.equal(await studio.locator('.lens-control').count(), 0, `${id} invents no control it cannot honour`);
+    }
+    if (NATIVE_OP.includes(id)) {
+      // M1′/M3′ persist through a NATIVE operation (the owner's commit), not a
+      // browser save — the misroute the review caught.
+      assert.ok(await studio.locator('.lens-control-native[data-action="lens-op"][data-op="commit"]').count(), `${id} commits through the native owner, not a browser save`);
     }
     receipt.lenses.push(id);
   }
 
-  // Lens continuity (§28): moving through every instrument must not reset the
-  // field — the camera and selection stand.
+  // Field continuity (§28): moving through every instrument must not reset the
+  // field — camera and selection stand. (This standalone walk has no host, so
+  // no native construction is open; the subject-CARRYING continuity — a stale
+  // selection/subject handoff surviving a lens change — is proven by the native
+  // application walk where a real construction stands.)
   const after = await state();
   assert.deepEqual(after.camera, before.camera, 'switching instruments does not move the camera');
   assert.deepEqual(after.selected, before.selected, 'switching instruments does not change the selection');
@@ -91,6 +108,15 @@ try {
   await page.locator('#lens-studio .lens-control[data-action="native-work"]').click();
   await page.waitForSelector('#native-work:not([hidden])');
   assert.ok(await page.locator('#native-work:not([hidden])').count(), 'the M1′ control opens the real native composition surface');
+
+  // Keyboard: the chooser is a tablist. Selecting keeps focus on the chosen tab
+  // (the innerHTML-rebuild focus loss the review caught is fixed), and arrow
+  // keys rove between instruments.
+  await active('timeline').click();
+  assert.ok(await page.evaluate(() => document.activeElement?.dataset?.lens === 'timeline'), 'selecting a lens keeps keyboard focus on its tab');
+  await active('timeline').press('ArrowRight');
+  assert.equal((await state()).activeLens, 'journey', 'ArrowRight roves to the next instrument');
+  assert.ok(await page.evaluate(() => document.activeElement?.dataset?.lens === 'journey'), 'the roved instrument takes focus');
 
   // The Studio closes without disturbing the chooser or the field.
   await page.locator('#lens-studio .lens-studio-close').click();

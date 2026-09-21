@@ -235,6 +235,14 @@ export async function readVersoAccount(transport: KernelTransportStatus, subject
           ? `The face selected relation ${subject.relationRef} · ${relation.from_entity_ref} → ${relation.to_entity_ref}.`
           : `The face selected relation ${subject.relationRef}, which the owner's current revision no longer carries.`);
       }
+      // The scene/member occurrence is carried verbatim; a missing anchor is
+      // named explicitly, never silently shown as current (§§25,36).
+      if (subject.sceneRef && !data.document.scenes.some(scene => scene.scene_ref === subject.sceneRef)) {
+        notices.push(`The face stood on scene ${subject.sceneRef}, which the owner's current revision no longer carries.`);
+      }
+      if (subject.entityRef && !data.document.entities[subject.entityRef]) {
+        notices.push(`The face stood on member ${subject.entityRef}, which the owner's current revision no longer carries.`);
+      }
       if (data.file) account.savedFile = {ref: data.file.location.ref, revision: data.file.revision};
       for (const entity of Object.values(data.document.entities)) {
         const binding = entity.subject;
