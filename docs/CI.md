@@ -1,6 +1,7 @@
 # CI
 
-Nine workflows. One gate.
+One gate. The block below lists the principal workflows; additional
+path-scoped surface and evidence workflows run under the same rules.
 
 ```text
 verify.yml            the only pull-request gate; also runs on push to main
@@ -17,7 +18,7 @@ branch-hygiene.yml    weekly branch lifecycle report
 Rules:
 
 - **One gate, once.** A change is gated by `verify.yml` on its pull request. Nothing else re-runs the CLI format/lint/test on the same bytes. The push-to-main run of `verify.yml` exists to catch merge skew, not to re-prove the PR.
-- **A workflow runs only what is uniquely its own.** If a check is a subset of `verify.yml`, it does not get a second workflow. Surface workflows (desktop, site, shared-field, npm) are path-scoped and never build the CLI.
+- **A workflow runs only what is uniquely its own.** If a check is a subset of `verify.yml`, it does not get a second workflow. Surface workflows (desktop, site, shared-field, npm) are path-scoped and never build the CLI. The collection source-identity checks fold this way: the consumer and production-Library regressions run in `desktop.yml`, and the pinned-Central native source/CAS/restart proof in `cross-product.yml` — there is no separate collection workflow.
 - **Siblings gate themselves.** Central, AIKit, Actuation, Factory, Workcell and Quaternal Logic each gate their own main. O:I checks out, builds or tests a sibling only in `cross-product.yml`, weekly. A red job there is a rotted pin or a moved seam; it is repaired in its own change.
 - **Docs do not trigger the gate.** `docs/**`, `**.md`, the essay tree and the ProjectCentral field are ignored by `verify.yml`.
 - **Release is not a gate.** `release.yml` builds from main after the gate passed; it does not test again.

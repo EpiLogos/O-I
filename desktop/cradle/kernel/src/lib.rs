@@ -299,6 +299,18 @@ pub enum KernelOp {
     /// run's actual evidence structure. The payload is carried verbatim after
     /// its contract schema is verified; no second run store is created.
     FactoryAttemptRead { state_path: ::std::path::PathBuf, run_ref: String },
+    /// The task refs a Run's attempt field carries
+    /// (`factory attempt list <state> <run-ref>` → the owner's
+    /// `factory.attempt-task-list-reading/v1`). The state path and run ref are
+    /// the caller's disclosure; the payload is carried verbatim after its
+    /// contract schema is verified — no task list is invented.
+    FactoryAttemptTaskListRead { state_path: ::std::path::PathBuf, run_ref: String },
+    /// One task's attempt reading with the owner's own pagination
+    /// (`factory attempt task <state> <run-ref> <task-ref> [--limit] [--cursor]`
+    /// → `factory.attempt-task-reading/v1`): attempts, verifications, owner
+    /// telemetry correlations and the readable Return. Limit and cursor are the
+    /// owner's grammar, passed through; stale-cursor refusal stays the owner's.
+    FactoryAttemptTaskRead { state_path: ::std::path::PathBuf, run_ref: String, task_ref: String, #[serde(default)] limit: Option<u32>, #[serde(default)] cursor: Option<serde_json::Value> },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
@@ -463,6 +475,8 @@ pub enum KernelOpResult {
     EncounterTaskReading {data:serde_json::Value},
     FactoryDevelopmentReading {data:serde_json::Value},
     FactoryAttemptReading {data:serde_json::Value},
+    FactoryAttemptTaskListReading {data:serde_json::Value},
+    FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
@@ -663,6 +677,24 @@ impl Kernel {
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt read failed".into()))?;
                 if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-reading/v1"){return Err("Factory returned incompatible attempt reading".into());}
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptReading{data}})
+            }
+            KernelOp::FactoryAttemptTaskListRead {state_path,run_ref} => {
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
+                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"list".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),"--json".into()]);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt list failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-list-reading/v1"){return Err("Factory returned incompatible attempt-task list reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskListReading{data}})
+            }
+            KernelOp::FactoryAttemptTaskRead {state_path,run_ref,task_ref,limit,cursor} => {
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
+                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"task".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),task_ref.into(),"--json".into()]);
+                if let Some(limit)=limit {args.push("--limit".into()); args.push(limit.to_string().into());}
+                if let Some(cursor)=cursor {args.push("--cursor".into()); args.push(serde_json::to_string(&cursor).map_err(|e|e.to_string())?.into());}
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt task failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-reading/v1"){return Err("Factory returned incompatible attempt-task reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskReading{data}})
             }
             KernelOp::WorkcellStatusRead => {
                 let workcell=std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);

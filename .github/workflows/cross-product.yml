@@ -523,3 +523,47 @@ jobs:
             ${{ runner.temp }}/development-field
             tests/development-field/probe/Cargo.lock
           if-no-files-found: error
+
+  # ------------------------------------------- collection native source proof
+  # Folded here from the retired collection-source-identity.yml: it checks out
+  # and builds a pinned sibling (Central), so it belongs on the weekly
+  # sibling-backed path, not a per-PR surface workflow. The consumer half of
+  # that workflow moved into desktop.yml; this half keeps the exact-cut native
+  # source, collection CAS/restart and saved-Expression proof.
+  collection-native:
+    name: Collection native source identity, CAS and restart against exact Central
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 12ee31313e710378845baae190efc1a4b3e7ebdb
+          path: native-central
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Build actual Central and kernel; preserve native regression suite
+        run: |
+          cargo build --locked --manifest-path native-central/Cargo.toml -p ctrl
+          cargo build --locked --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
+          cargo build --locked --manifest-path cli/Cargo.toml --bin oi
+          cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml --test expression --test expression_substrate --test expression_world
+      - name: Real native source, collection CAS, saved Expression and restart
+        working-directory: desktop/cradle
+        env:
+          CENTRAL_SOURCE_SHA: 12ee31313e710378845baae190efc1a4b3e7ebdb
+        run: |
+          export OI_BIN="$GITHUB_WORKSPACE/cli/target/debug/oi"
+          export OI_CENTRAL_CTRL_BIN="$GITHUB_WORKSPACE/native-central/target/debug/ctrl"
+          export OI_COLLECTION_BRIDGE_BIN="$GITHUB_WORKSPACE/desktop/cradle/kernel/target/debug/walk-bridge"
+          export OI_SOURCE_SHA="$(git rev-parse HEAD)"
+          node --experimental-strip-types --import ./tests/ts-register.mjs tests/collection-native-acceptance.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: collection-native-evidence-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/collection-source/
+          if-no-files-found: warn
