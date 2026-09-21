@@ -98,6 +98,9 @@ jobs:
         env:
           WIKI_WEBKIT: '1'
         run: node tests/wiki-reader-browser.mjs
+      - name: Exercise controlled save and Return recovery controls
+        working-directory: desktop/cradle
+        run: node tests/wiki-recovery-browser.mjs
       - name: Prove passage to constellation to real Expression file and native Return in Chromium
         working-directory: desktop/cradle
         run: node tests/wiki-constructive-browser.mjs
@@ -132,6 +135,7 @@ jobs:
           if [ -d desktop/cradle/node_modules ]; then tar -czf /tmp/wiki-evidence/cradle-runtime.tar.gz desktop/cradle/node_modules; fi
           cp -r desktop/cradle/tests/artifacts/wiki /tmp/wiki-evidence/browser 2>/dev/null || true
           cp -r desktop/cradle/tests/artifacts/wiki-constructive /tmp/wiki-evidence/constructive 2>/dev/null || true
+          cp -r desktop/cradle/tests/artifacts/wiki-recovery /tmp/wiki-evidence/recovery 2>/dev/null || true
           cp desktop/cradle/tests/fixtures/wiki-native.json /tmp/wiki-evidence/native-readings.json
           cd /tmp/wiki-evidence && sha256sum *.tar.gz native-readings.json > SHA256SUMS
       - uses: actions/upload-artifact@v4

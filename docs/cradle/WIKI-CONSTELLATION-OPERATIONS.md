@@ -48,6 +48,16 @@ Before an artifact save, the exact intended Expression document, destination and
 
 **Restore retained composition** uses the native Expression validator to restore the exact pending working document after a restart. **Retry exact file save** reuses the retained operation only while its intended content still matches. A changed live composition is not submitted under the old creation identity. A failed checkpoint write is surfaced before starting a new native operation; clearing or repairing browser storage is not silently treated as successful recovery.
 
+### Exact save and Return recovery
+
+The file address is the selected native Central directory, not the currently focused Project. The Expression first-save adapter explicitly suppresses automatic Project-operand injection for `central.files.create`. Central keeps rejecting unknown creation fields; its protected-ground, source, symlink and no-overwrite checks remain unchanged.
+
+A refusal now names the native owner's diagnostic. A write acknowledged before readback failed is described as an acknowledged write, not as an unsaved artifact. Successful Return requires the file location and revision in the save receipt to agree with an independent read of the exact destination. The diagnostic never dumps the source document into an alert.
+
+Before **Return saved Expression to constellation**, the drawer retains the exact native Return request and artifact pointer in its existing checkpoint. Failure to retain that checkpoint prevents dispatch. A lost response leaves the artifact saved and makes **Retry exact Return** available. The retry reuses the original operation identity; it does not generate another Expression or re-save its file.
+
+After restart, the retry reads the exact recorded file and checks its source revision and Expression identity. It does not open or replace an unrelated live composition. A changed, redirected or malformed file refuses before the Return action. **Inspect saved state** distinguishes an absent Return from a recorded one. For a recorded Return, both the native operation's actor/basis and the intended current attachment must match; an old historical receipt alone cannot establish that a later-replaced attachment is still current. The same check is applied to an idempotent retry response before the drawer reports completion. Inspection remains read-only.
+
 ## Development verification
 
 The read-only `Wiki constellation integration` workflow pins the actual AIKit Wiki/construction owner and Central first-save owner. It builds each native binary, records Cargo's real executable artifact paths and uses a temporary Central/Notes world. Binary-helper unit tests write their own isolated receipts, never the real build receipt.
@@ -60,6 +70,10 @@ npx tsc --noEmit
 node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/wiki-*.test.mjs
 node tests/knowledge-expression.mjs
 ```
+
+The supplementary `tests/wiki-recovery-browser.mjs` exercises the production drawer in an in-memory browser document with explicitly controlled host responses and checkpoint storage. It covers owner refusal, a lost response, exact retries, checkpoint failure, restart input, current-attachment verification and stale artifact refusal. It is component evidence, not native storage or Stage proof.
+
+The shared successor includes the kernel first-save regression at `kernel/tests/wiki_expression_save.rs`. Run the existing complete kernel suite against the integrated patch; the local component results below do not replace native execution. The configured Project must not appear in the creation input.
 
 The complete browser test is `tests/wiki-constructive-browser.mjs`. It requires the real `OI_BIN`, `OI_AIKIT_BIN`, `OI_CENTRAL_CTRL_BIN` and `WIKI_KERNEL_BIN` executables. It does not mock the kernel transport. The intended walk is selected Markdown passages → native constellation and relation → real Stage/composer → native artifact → Return → separate kernel restart and reopen, followed by frame-first construction and stale-source refusal.
 
