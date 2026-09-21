@@ -18,9 +18,23 @@ export function AdoptionFlow({controller, chooseGround, onClose, onConfigure, on
     if (token && token !== reported.current) {reported.current = token; onApplied();}
   }, [state.journal, onApplied]);
   const choice = state.discovery?.choices.find(row => row.id === state.selection.composition);
-  const locked = !!state.busy || state.unresolved;
   const close = () => {if (controller.canClose()) onClose();};
-  return <section className="config-drawer" role="dialog" aria-label="Install and set up this World" aria-busy={!!state.busy} data-adoption-flow onKeyDown={event => {if (event.key === "Escape" && !event.nativeEvent.isComposing) {event.stopPropagation(); close();}}}>
+  // Escape closes the drawer wherever focus sits: a drawer-scoped handler
+  // goes deaf when the platform moves focus outside it, which reads as a
+  // dead Escape key.
+  const busyRef = useRef(false);
+  busyRef.current = !!state.busy;
+  const canCloseRef = useRef(true);
+  canCloseRef.current = controller.canClose();
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.isComposing && canCloseRef.current && !busyRef.current) close();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
+  const locked = !!state.busy || state.unresolved;
+  return <section className="config-drawer" role="dialog" aria-label="Install and set up this World" aria-busy={!!state.busy} data-adoption-flow>
     <header><h3 ref={heading} tabIndex={-1}>Install and set up this World</h3><button type="button" disabled={!controller.canClose()} onClick={close}>Close</button></header>
     <p>Keep existing tools and Central. Choose what to add, review its effects, verify installation, then configure capabilities. Maintenance uses the same native owners; it does not restart your work.</p>
     {state.busy && <p role="status">{state.busy === "applying" ? "Applying the reviewed native plan. Closing or losing a reply does not roll it back." : state.busy === "preparing" ? "Preparing and checking the native Desktop offer; not installing it." : "Reading native state…"}</p>}

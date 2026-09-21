@@ -411,7 +411,9 @@ fn install_refuses_foreign_file_without_authorization_then_replaces_and_explains
         .collect();
     assert_eq!(dispositions, vec!["replaced-foreign"]);
 
-    // Removal deletes what we replaced and explains the residual honestly.
+    // Removal deletes what we replaced and explains the replaced-foreign
+    // disclosure honestly. Disclosures are not failures: the replacement
+    // succeeded and nothing owned remains.
     let out = output(oi(&sandbox.data_home, &sandbox.home).args(["desktop", "remove", "--json"]));
     assert_success(&out);
     assert!(
@@ -420,14 +422,18 @@ fn install_refuses_foreign_file_without_authorization_then_replaces_and_explains
     );
     let removal: Value =
         serde_json::from_str(&fs::read_to_string(sandbox.removed_receipt()).unwrap()).unwrap();
-    let residuals = removal["residuals"].as_array().unwrap();
     assert!(
-        residuals.iter().any(|r| {
+        removal["residuals"].as_array().unwrap().is_empty(),
+        "a completed removal must not carry residuals:\n{removal:?}"
+    );
+    let disclosures = removal["disclosures"].as_array().unwrap();
+    assert!(
+        disclosures.iter().any(|r| {
             r.as_str()
                 .unwrap()
                 .contains("pre-existing content was not preserved")
         }),
-        "removal does not explain the replaced-foreign residual:\n{residuals:?}"
+        "removal does not explain the replaced-foreign disclosure:\n{disclosures:?}"
     );
 }
 

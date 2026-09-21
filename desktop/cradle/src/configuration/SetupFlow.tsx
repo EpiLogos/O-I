@@ -40,6 +40,18 @@ export function SetupFlow({controller, native, startAtReview = false, onClose, o
   const settings = settingsOf(mounts);
   const locked = state.busy === "applying" || state.busy === "readback";
   const close = () => {if (controller.cancel()) onClose();};
+  // Escape closes the drawer wherever focus sits: a drawer-scoped handler
+  // goes deaf when the platform moves focus outside it (WebKit after a
+  // viewport resize), which reads as a dead Escape key.
+  const lockedRef = useRef(false);
+  lockedRef.current = locked;
+  useEffect(() => {
+    const onKey = (event: KeyboardEvent) => {
+      if (event.key === "Escape" && !event.isComposing && !lockedRef.current) close();
+    };
+    document.addEventListener("keydown", onKey);
+    return () => document.removeEventListener("keydown", onKey);
+  });
   const add = () => {
     const setting = settings[picker];
     const allowed = setting?.allowed_scopes[0];
@@ -52,7 +64,7 @@ export function SetupFlow({controller, native, startAtReview = false, onClose, o
     controller.setRequests([...state.requests, request]);
     setPicker("");
   };
-  return <div className="config-drawer" role="dialog" aria-label="Plan and apply" aria-busy={state.busy !== null} data-config-drawer onKeyDown={event => {if (event.key === "Escape" && !event.nativeEvent.isComposing && !locked) {event.stopPropagation(); close();}}}>
+  return <div className="config-drawer" role="dialog" aria-label="Plan and apply" aria-busy={state.busy !== null} data-config-drawer>
     <header>
       <h4 ref={heading} tabIndex={-1}>{state.step === "result" ? "ChangeSet result" : state.step === "review" ? "Plan" : "Set up your world"}</h4>
       <button type="button" className="config-mini" disabled={locked} onClick={close}>close</button>

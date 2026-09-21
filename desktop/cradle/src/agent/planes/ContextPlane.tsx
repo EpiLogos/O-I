@@ -1,4 +1,5 @@
 import {PreparedContextView} from "../../context/PreparedContextView";
+import {WikiProjectionSection} from "../../context/WikiProjection";
 import {useMemo,useState,type ReactNode} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {Glyph} from "../../workspace/Glyph";
@@ -41,6 +42,7 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
 }) {
   return <div className="agent-context agent-plane oi-sidecar oi-scroll" data-plane="Context">
     <PreparedContextView project={accompanying?.project??subject.project} session={accompanying?.ref} onOpenSubject={onOpenSubject}/>
+    <WikiProjectionSection/>
     <details className="oi-disclosure"><summary>Current source</summary><SubjectContext key={subject.ref ?? "none"} subject={subject} history={history} historyAvailable={historyAvailable} onOpenSubject={onOpenSubject}/></details>
     {session
       ? <SessionContext key={session.state.key} session={session}/>
