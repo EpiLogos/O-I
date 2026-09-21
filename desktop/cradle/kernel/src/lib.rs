@@ -336,11 +336,6 @@ pub enum KernelOp {
     /// and which composition selected them. Read-only disclosure of the
     /// composition's own declaration.
     WikiProjectionSources,
-    /// A scoped, revision-checked correction through the owner's own tool
-    /// (`aikit --json wiki projection update …` with the replacement body on
-    /// stdin). The expected revision, evidence, actor and reason are the
-    /// caller's attribution; a stale basis is refused by AIKit, not by here.
-    WikiProjectionUpdate { root: ::std::path::PathBuf, path: String, expected_revision: String, evidence: String, actor: String, reason: String, body: String },
     /// The installed harnesses' real status (`aikit --json client status`
     /// through the suite route): which harnesses are detected on this
     /// machine, which carry AIKit, their config dirs and gaps. Pull read,
@@ -533,7 +528,6 @@ pub enum KernelOpResult {
     FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
     WikiProjectionReading {data:serde_json::Value},
-    WikiProjectionStored {data:serde_json::Value},
     WikiProjectionSourcesReading {data:serde_json::Value},
     /// The harness status rows, verbatim from the owner's `client status`.
     HarnessStatusReading {data:serde_json::Value},
@@ -780,13 +774,6 @@ impl Kernel {
                 let data=material::invoke(&aikit,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection read failed".into()))?;
                 if data.get("state").and_then(serde_json::Value::as_str).is_none()||data.get("projection").is_none(){return Err("AIKit returned an incompatible wiki projection reading".into());}
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionReading{data}})
-            }
-            KernelOp::WikiProjectionUpdate {root,path,expected_revision,evidence,actor,reason,body} => {
-                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
-                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"-C".into(),root.as_os_str().to_string_lossy().into_owned().into(),"wiki".into(),"projection".into(),"update".into(),"--file".into(),path.into(),"--expected-revision".into(),expected_revision.into(),"--evidence".into(),evidence.into(),"--actor".into(),actor.into(),"--reason".into(),reason.into()];
-                let data=material::invoke(&aikit,&args,Some(body.into_bytes())).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection update failed".into()))?;
-                if data.get("projection").is_none(){return Err("AIKit returned an incompatible wiki projection receipt".into());}
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionStored{data}})
             }
             KernelOp::WikiProjectionSources => {
                 let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
