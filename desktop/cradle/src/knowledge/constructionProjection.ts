@@ -63,6 +63,21 @@ export async function saveCompositionFile(transport: KernelTransportStatus, docu
 export async function attachCompositionReturn(transport: KernelTransportStatus, project: string | undefined, register: WikiRegister, frame: NativeConstruction, artifact: ArtifactReturn, apply?: ApplyKernel): Promise<SavedConstruction> {
   const source_ref = artifact.file.source?.ref ?? artifact.file.location.ref;
   const request = editConstruction(frame, [{change: 'composition_attach', composition: {reference: artifact.document.expression_ref, revision: String(artifact.document.revision), kind: 'expression',
-    source: {source_ref, source_revision: artifact.file.revision}, derivation_refs: frame.constellations[0].members.map(member => member.ref)}}]);
+    source: {source_ref, source_revision: artifact.file.revision, 'oi.expression-file/v1': {location: artifact.file.location}}, derivation_refs: frame.constellations[0].members.map(member => member.ref)}}]);
   return saveConstruction(transport, project, register, request, [], apply, [{source_ref, revision: artifact.file.revision, location: artifact.file.location}]);
+}
+
+/** Reopen the actual native file after a process restart. A retained reference
+ * alone never pretends the working Expression document is already mounted. */
+export async function reopenComposition(transport: KernelTransportStatus, item: {reference: string; revision: string; source: Record<string, unknown>}, apply?: ApplyKernel): Promise<ExpressionDocument> {
+  const facet = item.source['oi.expression-file/v1'] as {location?: CentralLocation} | undefined;
+  const location = facet?.location;
+  if (!location || location.schema !== 'central.path-ref/v1' || !location.ref || !location.root || typeof location.path !== 'string') throw new Error('This older Return has no native artifact location. Open its source file to resume the composition.');
+  const reading = await readFile(transport, location);
+  if (reading.revision !== item.source.source_revision) throw new Error('The returned artifact has changed. Open and review its current source before replacing the recorded composition.');
+  const native = JSON.parse(reading.content) as Partial<ExpressionDocument>;
+  if (native.schema !== 'oi.expression/v1' || native.expression_ref !== item.reference || String(native.revision) !== item.revision) throw new Error('The returned file no longer names this exact Expression revision.');
+  const result = await expressionOperation(transport, {operation: 'open_file', location, actor: ACTOR}, apply);
+  if (!result.document || result.document.expression_ref !== item.reference) throw new Error('The Expression owner did not reopen the returned file.');
+  return result.document;
 }

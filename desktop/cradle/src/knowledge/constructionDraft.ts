@@ -73,7 +73,6 @@ export function draftRequest(draft: ConstructionDraft): ConstructionRequest {
   const relations = new Map(draft.relations.map(edge => [edge.ref, edge]));
   // Retractions precede removal of any member they used to connect.
   for (const edge of draft.original_relations) if (edge[RELATION].standing !== 'retracted' && !relations.has(edge.ref)) changes.push({change: 'relation_retract', relation_ref: edge.ref, expected_revision: edge.revision, reason: 'Removed while editing this constellation'});
-  for (const [reference] of before) if (!draft.members.some(member => member.participation_ref === reference)) changes.push({change: 'member_remove', participation_ref: reference});
   for (const member of draft.members) {
     const previous = before.get(member.participation_ref)?.[PARTICIPATION];
     if (!previous) changes.push({change: 'member_add', member: {subject_ref: member.subject_ref, participation: {participation_ref: member.participation_ref, role_ref: member.role_ref, sources: member.sources, note: member.label}}});
@@ -87,8 +86,10 @@ export function draftRequest(draft: ConstructionDraft): ConstructionRequest {
     if (previous && previous.relation === edge.relation && meta?.from_participation_ref === edge.from && meta.to_participation_ref === edge.to && meta.direction === edge.direction && meta.standing === edge.standing && same(meta.evidence ?? [], edge.evidence)) continue;
     changes.push({change: 'relation_put', relation: {relation_ref: edge.ref, expected_revision: edge.revision ?? null,
       from_participation_ref: edge.from, to_participation_ref: edge.to, relation: edge.relation.trim(), direction: edge.direction, standing: edge.standing, evidence: edge.evidence,
-      ...(meta?.uncertainty ? {uncertainty: meta.uncertainty} : {})}});
+      ...(meta?.uncertainty ? {uncertainty: meta.uncertainty} : {}), ...(meta?.temporal ? {temporal: meta.temporal} : {})}});
   }
+  // Add new endpoints and reconnect retained edges before removing old members.
+  for (const [reference] of before) if (!draft.members.some(member => member.participation_ref === reference)) changes.push({change: 'member_remove', participation_ref: reference});
   if (!changes.length) throw new Error('This constellation already matches its saved revision.');
   if (changes.length > 256) throw new Error('This edit exceeds the native transaction budget. Make a smaller coherent change; the draft is retained.');
   return {schema: 'aikit.constellation-action/v1', frame_ref: draft.frame_ref, expected_revision: draft.basis?.revision ?? 0, actor_ref: ACTOR, operation_ref: newRef('operation:wiki'), changes};

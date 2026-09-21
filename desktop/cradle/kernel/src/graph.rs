@@ -211,6 +211,8 @@ pub struct GraphReading {
     pub counts: GraphCounts,
     #[serde(default, skip_serializing_if = "Vec::is_empty")]
     pub formations: Vec<Value>,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shape_catalog: Option<Value>,
     #[serde(default)]
     pub truncated: bool,
 }
@@ -236,6 +238,7 @@ impl GraphReading {
             nodes: Vec::new(),
             edges: Vec::new(),
             formations: Vec::new(),
+            shape_catalog: None,
             truncated: false,
             counts: GraphCounts {
                 spaces: 0,
@@ -588,7 +591,7 @@ pub fn adapt_native_graph(reading: &mut GraphReading, data: &Value) {
             continue;
         };
         let mut metadata = std::collections::BTreeMap::new();
-        for field in ["address", "tags", "aliases"] {
+        for field in ["address", "tags", "aliases", "subject_ref", "frame_ref"] {
             if let Some(value) = node.get(field) {
                 metadata.insert(field.to_string(), value.clone());
             }
@@ -619,7 +622,7 @@ pub fn adapt_native_graph(reading: &mut GraphReading, data: &Value) {
             continue;
         };
         let mut metadata = std::collections::BTreeMap::new();
-        for field in ["reference", "authored_relation", "origin", "containment"] {
+        for field in ["reference", "authored_relation", "origin", "containment", "family", "standing", "from_subject_ref", "to_subject_ref", "from_participation_ref", "to_participation_ref"] {
             if let Some(value) = edge.get(field).filter(|v| !v.is_null()) {
                 metadata.insert(field.to_string(), value.clone());
             }
@@ -637,6 +640,7 @@ pub fn adapt_native_graph(reading: &mut GraphReading, data: &Value) {
         });
     }
     reading.formations = data["formations"].as_array().cloned().unwrap_or_default();
+    reading.shape_catalog = data.get("shape_catalog").filter(|v| v["schema"] == "aikit.ql-authoring-forms/v1").cloned();
     reading.truncated = data["truncated"] == true;
     reading.counts.knowledge_rows = reading.nodes.len();
     reading.counts.nodes = reading.nodes.len();

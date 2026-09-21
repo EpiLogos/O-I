@@ -1,3 +1,4 @@
+import {preserveFormations} from "./formationLayout";
 import type {GraphReading} from "./graph";
 export interface Point {x:number;y:number;z?:number;scale?:number}
 function seed(ref:string) {let h=2166136261;for(const c of ref)h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0)/4294967296;}
@@ -30,5 +31,5 @@ export function constellation(reading:GraphReading|undefined,_width:number,_heig
     world.forEach((p,i)=>{p.x+=forces[i].x;p.y+=forces[i].y;});
   }
   const projected=new Map(nodes.map((node,i)=>{const p=world[i],scale=800/(800+p.z);return [node.ref,{x:400+p.x*scale,y:260+p.y*scale,z:p.z,scale}];}));
-  return reading.nodes.map(node=>projected.get(node.ref)!);
+  return preserveFormations(reading,reading.nodes.map(node=>projected.get(node.ref)!));
 }

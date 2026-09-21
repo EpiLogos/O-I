@@ -7,13 +7,9 @@ use std::path::{Component, Path, PathBuf};
 
 pub const APPLY: &str = "aikit.constellation.apply";
 const OP: &str = "aikit wiki-construct apply";
-#[derive(Debug, Deserialize)]
-#[serde(deny_unknown_fields)]
-struct Basis {
-    source_ref: String,
-    revision: String,
-    location: Location,
-}
+#[path = "construction_source.rs"]
+mod source;
+use source::Basis;
 #[derive(Debug, Deserialize)]
 #[serde(deny_unknown_fields)]
 struct Input {
@@ -67,17 +63,6 @@ fn request_valid(target: &str, input: &Input) -> Result<(),String> {
     }
     check(&input.request,&input.sources)
 }
-fn verify_sources(client:&CentralClient, sources:&[Basis])->Result<(),String>{
-    for source in sources {
-        if source.revision.is_empty(){return Err("A source basis has no revision".into());}
-        let reading=files::read(client,&source.location)?;
-        let actual=reading.source.as_ref().map(|s|s.source_ref.as_str()).unwrap_or(&reading.location.ref_id);
-        if actual!=source.source_ref || reading.revision!=source.revision {
-            return Err(format!("source_revision_conflict: {} changed or was redirected; inspect and reconcile",source.source_ref));
-        }
-    }
-    Ok(())
-}
 /// Called only through the existing Action boundary with its Central-resolved
 /// context. A payload cannot redirect this operation into a different Wiki.
 pub fn invoke(client:&CentralClient,cwd:&Path,project:Option<&str>,invocation:&ActionInvocation)->ActionDispatch{
@@ -99,7 +84,7 @@ pub fn invoke(client:&CentralClient,cwd:&Path,project:Option<&str>,invocation:&A
     if before.revision!=input.expected_file_revision || wiki["source"]["revision"]!=before.revision {
         return refuse("wiki_revision_conflict: the register changed; preserve the proposal and reconcile");
     }
-    if let Err(e)=verify_sources(client,&input.sources){return refuse(e);}
+    if let Err(e)=source::verify(client,cwd,&input.sources,&input.request){return refuse(e);}
     let Some(path)=expected.to_str() else{return refuse("The native register path is not UTF-8");};
     let input_bytes=json!({"request":input.request,"basis_content":before.content});
     let mut saved=match knowledge::run_input(cwd,&["wiki-construct","apply","--file",path],&input_bytes){
@@ -111,7 +96,7 @@ pub fn invoke(client:&CentralClient,cwd:&Path,project:Option<&str>,invocation:&A
     // Once the native write is acknowledged, failed readback is a read problem,
     // never an instruction to replay the write. Keep its real receipt intact.
     let mut warnings=Vec::new();
-    if let Err(e)=verify_sources(client,&input.sources){warnings.push(e);}
+    if let Err(e)=source::verify(client,cwd,&input.sources,&input.request){warnings.push(e);}
     match files::read(client,&input.location){
         Ok(file)=>{
             saved["native_file"]=json!({"location":file.location,"revision":file.revision});
@@ -135,7 +120,7 @@ pub fn invoke(client:&CentralClient,cwd:&Path,project:Option<&str>,invocation:&A
 fn contains_ref(value:&Value,reference:&str)->bool{
     match value {
         Value::Object(object)=>object.iter().any(|(key,value)|
-            (["ref","ref_id","resource_ref","node_ref","frame_ref","value","subject_ref"].contains(&key.as_str())&&value.as_str()==Some(reference))||contains_ref(value,reference)),
+            (["ref","ref_id","resource_ref","resource","node_ref","frame_ref","value","subject_ref"].contains(&key.as_str())&&value.as_str()==Some(reference))||contains_ref(value,reference)),
         Value::Array(values)=>values.iter().any(|v|contains_ref(v,reference)),
         _=>false,
     }
@@ -148,7 +133,7 @@ mod tests{
         assert!(request_valid("wiki:other",&input()).is_err());
         let mut command=input();command.request["changes"]=json!([{"evidence":[{"source_ref":"native:private","source_revision":"r3"}]}]);
         assert!(request_valid("wiki:whole",&command).is_err());
-        command.sources.push(Basis{source_ref:"native:private".into(),revision:"r3".into(),location:command.location.clone()});
+        command.sources.push(Basis{source_ref:"native:private".into(),revision:"r3".into(),location:Some(command.location.clone())});
         assert!(request_valid("wiki:whole",&command).is_ok());
         assert!(!relative("../private"));assert!(!relative("/other/wiki.json"));
         let mut value=serde_json::to_value(&command.request).unwrap();value["unbounded_authority"]=json!(true);
@@ -156,6 +141,7 @@ mod tests{
     }
     #[test]fn receipts_and_titles_are_not_indexed_subjects(){
         assert!(!contains_ref(&json!({"state":"routed","title":"wiki:subject"}),"wiki:subject"));
+        assert!(contains_ref(&json!({"resource":"wiki:subject"}),"wiki:subject"));
         assert!(contains_ref(&json!({"results":[{"address":{"kind":"wiki","value":"wiki:subject"}}]}),"wiki:subject"));
     }
 }

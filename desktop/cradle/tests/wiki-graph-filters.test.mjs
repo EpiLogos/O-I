@@ -83,3 +83,23 @@ test('ten-thousand-subject filtering is bounded, complete and leaves the index u
   assert.equal(source.nodes.length,10000);
   assert.equal(filterGraph(source,{...defaultGraphFilters(),scope:'local',depth:2},'source:5000').nodes.length,5);
 });
+
+test('native role geometry survives source layout, filters and repeated-source occurrences',()=>{
+  const source=graph(['frame','a0','a1','source'].map(x=>node(x)),[edge('frame','a0'),edge('frame','a1')],{formations:[{ref:'frame',shape_ref:'native:pair',members:[
+    {ref:'a0',subject_ref:'source',role:'0',address:{layout:{x:-1,y:0,z:.2}}},
+    {ref:'a1',subject_ref:'source',role:'1',address:{layout:{x:1,y:0,z:.2}}}]}]});
+  const points=constellation(source,0,0),byRef=new Map(source.nodes.map((n,i)=>[n.ref,points[i]]));
+  assert.equal(byRef.get('a1').x-byRef.get('a0').x,190);
+  assert.equal(byRef.get('a1').y,byRef.get('a0').y);
+  assert.equal(byRef.get('a1').z,19);
+  const previous=topologyKey(source);
+  source.formations[0].members[0].address.layout.x=-2;
+  assert.notEqual(topologyKey(source),previous,'native role layout change invalidates layout, not source label edits');
+});
+
+test('source occurrences and authored QL relations remain separately filterable layers',()=>{
+  const source=graph([node('a'),node('b')],[{...edge('a','b','references'),family:'source-occurrence'},{...edge('a','b','qualifies'),family:'ql-authored'}]);
+  const result=filterGraph(source,{...defaultGraphFilters(),families:['ql-authored']});
+  assert.deepEqual(result.edges.map(e=>e.relation),['qualifies']);
+  assert.equal(source.edges.length,2);
+});

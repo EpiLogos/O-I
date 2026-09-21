@@ -12,7 +12,7 @@ export interface NativeRole {role_ref: string; label: string; address: Record<st
 export interface NativeFrame {shape_ref: string; contract_ref: string; roles: NativeRole[]; provenance: Record<string, unknown>[]; standing: string}
 export interface AuthoringForm extends NativeFrame {id: string; label: string}
 export interface NativeMember {ref: string; position?: number | null; conjugate?: boolean; [PARTICIPATION]: {participation_ref: string; role_ref?: string | null; sources: Record<string, unknown>[]; note?: string}}
-export interface NativeRelation {ref: string; revision: number; from_ref: string; to_ref: string; relation: string; [RELATION]: {from_participation_ref: string; to_participation_ref: string; direction: string; standing: string; evidence: Record<string, unknown>[]; uncertainty?: string | null}}
+export interface NativeRelation {ref: string; revision: number; from_ref: string; to_ref: string; relation: string; [RELATION]: {from_participation_ref: string; to_participation_ref: string; direction: string; standing: string; evidence: Record<string, unknown>[]; uncertainty?: string | null; temporal?: unknown[]}}
 export interface NativeConstruction {
   ref: string; revision: number;
   constellations: {anchor_ref: string; members: NativeMember[]; returns?: unknown[]}[];
@@ -23,9 +23,10 @@ export interface WikiRegister {file: NativeFileReading; source_ref: string; spac
 export interface ConstructionRequest {schema: 'aikit.constellation-action/v1'; frame_ref: string; expected_revision: number; actor_ref: string; operation_ref: string; changes: Record<string, unknown>[]}
 export interface SavedConstruction {schema: string; frame_ref: string; revision: number; persisted: true; state: 'saved' | 'unchanged'; reading: {frame: NativeConstruction; construction: NativeConstruction[typeof CONSTRUCTION]; relations: NativeRelation[]}; native_file?: {location: CentralLocation; revision: string}; indexed_availability_proven?: boolean; continuity_warnings?: string[]}
 export type ApplyKernel = (op: KernelOp) => Promise<KernelOutcome | null | undefined>;
-const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
-const ref = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length < 4096 && !value.includes('\0');
-const revision = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
+export const object = (value: unknown): value is Record<string, unknown> => !!value && typeof value === 'object' && !Array.isArray(value);
+export const validReference = (value: unknown): value is string => typeof value === 'string' && value.trim().length > 0 && value.length < 4096 && !value.includes('\0');
+export const validRevision = (value: unknown): value is number => Number.isSafeInteger(value) && (value as number) > 0;
+const ref = validReference, revision = validRevision;
 export const newRef = (kind: string): string => `${kind}:${crypto.randomUUID()}`;
 
 export async function invoke<T>(transport: KernelTransportStatus, project: string | undefined, action: string, target_ref: string, input?: Record<string, unknown>, apply?: ApplyKernel): Promise<T> {
@@ -51,9 +52,14 @@ export function decodeRegister(file: NativeFileReading, source_ref: string): Wik
       const frame = row as unknown as NativeConstruction;
       if (!revision(frame.revision) || !object(frame[CONSTRUCTION]) || typeof frame[CONSTRUCTION].title !== 'string' || !object(frame[CONSTRUCTION].inquiry) || typeof frame[CONSTRUCTION].inquiry.question !== 'string' || !Array.isArray(frame.constellations) || frame.constellations.length !== 1 || !Array.isArray(frame.constellations[0].members)) throw new Error('A constructive frame is malformed; inspect its native source before editing.');
       for (const member of frame.constellations[0].members) if (!ref(member.ref) || !object(member[PARTICIPATION]) || !ref(member[PARTICIPATION].participation_ref) || !Array.isArray(member[PARTICIPATION].sources)) throw new Error('A native member has no valid contextual participation.');
+      if (frame[CONSTRUCTION].frame && !validNativeFrame(frame[CONSTRUCTION].frame)) throw new Error('The saved frame has malformed native roles. Its register has not been changed.');
       frames.push(frame);
     }
-    if (row.object === 'edge' && object(row[RELATION]) && revision(row.revision)) relations.push(row as unknown as NativeRelation);
+    if (row.object === 'edge' && object(row[RELATION]) && revision(row.revision)) {
+      const meta = row[RELATION];
+      if (!ref(meta.from_participation_ref) || !ref(meta.to_participation_ref) || !ref(row.relation) || !ref(meta.direction) || !ref(meta.standing) || !Array.isArray(meta.evidence)) throw new Error('A constructive relationship is malformed. Inspect its native source.');
+      relations.push(row as unknown as NativeRelation);
+    }
   }
   return {file, source_ref, spaces, frames, relations};
 }
@@ -61,7 +67,7 @@ export function decodeRegister(file: NativeFileReading, source_ref: string): Wik
 /** Central discloses the register and its real location. Paths below are only
  * navigation operands derived from that disclosure, never minted source refs. */
 export async function readRegister(transport: KernelTransportStatus, project?: string): Promise<WikiRegister> {
-  const wiki = await invoke<Record<string, unknown>>(transport, project, project ? 'projectcentral.wiki.read' : 'central.wiki.read', project ?? 'control:root', project ? {project} : {});
+  const wiki = await invoke<Record<string, unknown>>(transport, project, project ? 'projectcentral.wiki.read' : 'central.wiki.read', project ?? 'control:root', project ? {project} : {project: null});
   const source = wiki.source;
   if (wiki.schema !== 'central.wiki-reading/v1' || !object(source) || !ref(source.path) || !ref(source.ref) || !ref(source.revision)) throw new Error('Central did not disclose a current Wiki register.');
   if (source.path.startsWith('/') || source.path.split('/').some(part => !part || part === '.' || part === '..')) throw new Error('The Wiki register location is outside the selected ground.');
@@ -80,9 +86,16 @@ export async function readRegister(transport: KernelTransportStatus, project?: s
   return decodeRegister(file, source.ref);
 }
 
+export function validNativeFrame(item: unknown): item is NativeFrame {
+  return object(item) && ref(item.shape_ref) && ref(item.contract_ref) && ref(item.standing)
+    && Array.isArray(item.provenance) && item.provenance.length <= 256 && item.provenance.every(object)
+    && Array.isArray(item.roles) && item.roles.length <= 256
+    && item.roles.every(role => object(role) && ref(role.role_ref) && ref(role.label) && object(role.address))
+    && new Set(item.roles.map(role => role.role_ref)).size === item.roles.length;
+}
 export function readAuthoringForms(value: unknown): AuthoringForm[] {
   if (!object(value) || value.schema !== 'aikit.ql-authoring-forms/v1' || !Array.isArray(value.forms)) return [];
-  return value.forms.filter((item): item is AuthoringForm => object(item) && ref(item.id) && ref(item.label) && ref(item.shape_ref) && ref(item.contract_ref) && ref(item.standing) && Array.isArray(item.provenance) && Array.isArray(item.roles) && item.roles.length <= 256 && item.roles.every(role => object(role) && ref(role.role_ref) && ref(role.label) && object(role.address)));
+  return value.forms.filter((item): item is AuthoringForm => validNativeFrame(item) && ref((item as AuthoringForm).id) && ref((item as AuthoringForm).label));
 }
 export async function authoringForms(transport: KernelTransportStatus, project?: string): Promise<AuthoringForm[]> {
   const graph = await readGraph(transport, project, '', {input: 'aikit_resolution'});
@@ -127,7 +140,9 @@ export function sourceBases(request: ConstructionRequest): {source_ref: string; 
 /** No optimistic semantic mutation. A rejected/uncertain operation leaves the
  * caller's draft and operation identity intact for inspection or exact retry. */
 export async function saveConstruction(transport: KernelTransportStatus, project: string | undefined, register: WikiRegister, request: ConstructionRequest, passages: WikiPassage[], apply?: ApplyKernel, fileBases: {source_ref: string; revision: string; location: CentralLocation}[] = []): Promise<SavedConstruction> {
-  for (const passage of passages) await revalidatePassage(transport, project, passage);
+  // The shared coordinator deduplicates identical in-flight source reads and
+  // bounds concurrency; no sequential reread per passage from the same file.
+  await Promise.all(passages.map(passage => revalidatePassage(transport, project, passage)));
   const result = await invoke<SavedConstruction>(transport, project, 'aikit.constellation.apply', request.frame_ref,
     {location: register.file.location, expected_file_revision: register.file.revision, request, sources: sourceBases(request).map(basis => fileBases.find(file => file.source_ref === basis.source_ref && file.revision === basis.revision) ?? basis)}, apply);
   if (result.persisted !== true || result.frame_ref !== request.frame_ref || !revision(result.revision) || !['saved', 'unchanged'].includes(result.state) || result.reading?.frame?.ref !== request.frame_ref) throw new Error('No matching native persistence receipt was returned. Keep this draft and inspect the register before retrying.');

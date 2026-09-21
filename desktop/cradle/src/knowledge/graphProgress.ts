@@ -14,6 +14,7 @@ export function joinGraphInputs(parts:Partial<Record<GraphInputName,GraphReading
   for(const name of names){const part=parts[name];
     if(!part){if(pending.includes(name))result.inputs[name]={state:'deferred',owner_operation:operations[name],detail:'Loading'};continue;}
     result.inputs[name]=part.inputs[name];
+    if(part.shape_catalog)result.shape_catalog=part.shape_catalog;
     result.nodes.push(...part.nodes);
     for(const edge of part.edges){const key=JSON.stringify(edge);if(!seen.has(key)){seen.add(key);result.edges.push(edge);}}
     result.formations!.push(...(part.formations??[]));result.truncated ||= part.truncated===true;

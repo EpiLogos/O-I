@@ -6,11 +6,12 @@ type Props = {reading: GraphReading; filters: FilterState; result: FilteredGraph
 export function GraphFilters({reading, filters, result, selected, onChange, saved, onSave}: Props) {
   const [name, setName] = useState('');
   const change = (patch: Partial<FilterState>) => onChange({...filters, ...patch});
-  const toggle = (key: 'kinds' | 'relations' | 'tags', value: string) => change({[key]: filters[key].includes(value) ? filters[key].filter(item => item !== value) : [...filters[key], value]});
+  const toggle = (key: 'kinds' | 'relations' | 'families' | 'tags', value: string) => change({[key]: filters[key].includes(value) ? filters[key].filter(item => item !== value) : [...filters[key], value]});
   const kinds = [...new Set(reading.nodes.map(node => node.kind))].sort();
   const relations = [...new Set(reading.edges.map(edge => edge.relation))].sort();
+  const families = [...new Set(reading.edges.map(edge => edge.family ?? 'native-semantic'))].sort();
   const tags = [...new Set(reading.nodes.flatMap(node => node.tags ?? []))].sort();
-  const active = Boolean(filters.shared || filters.text || filters.scope === 'local' || filters.kinds.length || filters.relations.length || filters.tags.length || !filters.isolated || filters.context !== 'structure');
+  const active = Boolean(filters.shared || filters.text || filters.scope === 'local' || filters.kinds.length || filters.relations.length || filters.families.length || filters.tags.length || !filters.isolated || filters.context !== 'structure');
   const save = () => {const title = name.trim().slice(0,80); if (!title) return; onSave([...saved.filter(view => view.name !== title), {name: title, filters: {...filters}}].slice(-12)); setName('');};
   return <div className="knowledge-filter-panel">
     <details className="knowledge-filter-controls">
@@ -25,6 +26,7 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
       <label>Follow relations<select aria-label="Graph relation direction" value={filters.direction} onChange={event => change({direction: event.target.value as FilterState['direction']})}><option value="both">Both directions</option><option value="outgoing">Outgoing</option><option value="incoming">Incoming / backlinks</option></select></label>
       <details><summary>Subject kinds · {filters.kinds.length || 'all'}</summary>{kinds.map(kind => <label key={kind} className="knowledge-filter-check"><input type="checkbox" checked={filters.kinds.includes(kind)} onChange={() => toggle('kinds',kind)}/>{kind}</label>)}</details>
       <details><summary>Relation types · {filters.relations.length || 'all'}</summary>{relations.map(relation => <label key={relation} className="knowledge-filter-check"><input type="checkbox" checked={filters.relations.includes(relation)} onChange={() => toggle('relations',relation)}/>{relation}</label>)}</details>
+      <details><summary>Relationship layers · {filters.families.length || 'all'}</summary>{families.map(family => <label key={family} className="knowledge-filter-check"><input type="checkbox" checked={filters.families.includes(family)} onChange={() => toggle('families',family)}/>{family}</label>)}</details>
       {tags.length > 0 && <details><summary>Tags · {filters.tags.length || 'all'}</summary>{tags.map(tag => <label key={tag} className="knowledge-filter-check"><input type="checkbox" checked={filters.tags.includes(tag)} onChange={() => toggle('tags',tag)}/>{tag}</label>)}</details>}
       <label className="knowledge-filter-check"><input type="checkbox" checked={filters.isolated} onChange={event => change({isolated:event.target.checked})}/>Include subjects with no disclosed relations</label>
       <label>Constellation context<select aria-label="Graph constellation context" value={filters.context} onChange={event => change({context:event.target.value as FilterState['context']})}><option value="structure">Keep disclosed structure</option><option value="matches">Matches only (partial formations)</option></select></label>
@@ -39,7 +41,7 @@ export function GraphFilters({reading, filters, result, selected, onChange, save
       {filters.shared && <button onClick={()=>change({shared:false})}>Shared Field ×</button>}
       {filters.text && <button onClick={()=>change({text:''})} aria-label="Remove text filter">{filters.text} ×</button>}
       {filters.scope === 'local' && <button onClick={()=>change({scope:'field'})}>Local · {filters.depth} {filters.depth === 1 ? 'hop' : 'hops'} ×</button>}
-      {(['kinds','relations','tags'] as const).flatMap(key=>filters[key].map(value=><button key={`${key}:${value}`} onClick={()=>toggle(key,value)} aria-label={`Remove ${key} filter ${value}`}>{value} ×</button>))}
+      {(['kinds','relations','families','tags'] as const).flatMap(key=>filters[key].map(value=><button key={`${key}:${value}`} onClick={()=>toggle(key,value)} aria-label={`Remove ${key} filter ${value}`}>{value} ×</button>))}
       {!filters.isolated && <button onClick={()=>change({isolated:true})}>Connected only ×</button>}
       {filters.context === 'matches' && <button onClick={()=>change({context:'structure'})}>Matches only ×</button>}
     </div>}

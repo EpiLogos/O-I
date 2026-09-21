@@ -7,6 +7,7 @@ export interface GraphFilters {
   direction: 'both' | 'incoming' | 'outgoing';
   kinds: string[];
   relations: string[];
+  families: string[];
   tags: string[];
   isolated: boolean;
   context: 'structure' | 'matches';
@@ -14,7 +15,7 @@ export interface GraphFilters {
   arrows: boolean;
   shared: boolean;
 }
-export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], tags: [], isolated: true, context: 'structure', labels: 'automatic', arrows: false, shared: false});
+export const defaultGraphFilters = (): GraphFilters => ({text: '', scope: 'field', depth: 1, direction: 'both', kinds: [], relations: [], families: [], tags: [], isolated: true, context: 'structure', labels: 'automatic', arrows: false, shared: false});
 const strings = (value: unknown, max = 64): string[] => Array.isArray(value) ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length <= 256))].slice(0, max) : [];
 /** Decode view state, never source metadata. Invalid preferences do not make a
  * whole workspace unrestorable, and unknown keys confer no native effects. */
@@ -27,7 +28,7 @@ export function restoreGraphFilters(value: unknown): GraphFilters {
     scope: v.scope === 'local' ? 'local' : 'field',
     depth: Number.isInteger(v.depth) ? Math.max(0, Math.min(8, v.depth!)) : 1,
     direction: v.direction === 'incoming' || v.direction === 'outgoing' ? v.direction : 'both',
-    kinds: strings(v.kinds), relations: strings(v.relations), tags: strings(v.tags),
+    kinds: strings(v.kinds), relations: strings(v.relations), families: strings(v.families), tags: strings(v.tags),
     isolated: v.isolated !== false, context: v.context === 'matches' ? 'matches' : 'structure',
     labels: v.labels === 'all' || v.labels === 'focus' ? v.labels : 'automatic', arrows: v.arrows === true, shared: v.shared === true,
   };
@@ -47,7 +48,7 @@ export function filterGraph(reading: GraphReading, filters: GraphFilters, focus?
   const byRef = new Map(reading.nodes.map(node => [node.ref, node]));
   const degree = new Set<string>();
   const traversable = new Map<string, string[]>();
-  const allowedEdge = (edge: GraphEdge) => filters.relations.length === 0 || filters.relations.includes(edge.relation);
+  const allowedEdge = (edge: GraphEdge) => (filters.relations.length === 0 || filters.relations.includes(edge.relation)) && (!filters.families?.length || filters.families.includes(edge.family ?? 'native-semantic'));
   const add = (from: string, to: string) => {
     if (!byRef.has(from) || !byRef.has(to)) return;
     const row = traversable.get(from) ?? [];

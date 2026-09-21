@@ -4,6 +4,7 @@ import type {Point} from './layout';
  * alter topology and therefore must not restart the spatial solver. */
 export function topologyKey(reading: GraphReading): string {
   return JSON.stringify([
+    (reading.formations??[]).map(formation=>[formation.ref,formation.shape_ref,formation.members.map(member=>[member.ref,member.role,member.address])]).sort((a,b)=>String(a[0]).localeCompare(String(b[0]))),
     reading.nodes.map(node => [node.ref,node.kind]).sort((a,b)=>a[0].localeCompare(b[0])),
     reading.edges.map(edge => [edge.from_ref,edge.to_ref,edge.relation]).sort((a,b)=>JSON.stringify(a).localeCompare(JSON.stringify(b))),
   ]);

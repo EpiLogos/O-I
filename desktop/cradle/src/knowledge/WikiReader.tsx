@@ -7,7 +7,7 @@ import {wikiDocument,nodeText,occurrenceFor,resolveWikiAnchor,safeExternalLink,s
 import {WikiSourceTools} from './WikiSourceTools';
 import './wikiReader.css';
 
-type Props = {reading:KnowledgeReading;onNavigate?:WikiNavigate;anchor?:WikiAnchor;transport?:KernelTransportStatus;project?:string;binding?:SurfaceBinding;onSelectSource?:(reading:KnowledgeReading,anchor:WikiAnchor)=>void};
+type Props = {reading:KnowledgeReading;onNavigate?:WikiNavigate;anchor?:WikiAnchor;transport?:KernelTransportStatus;project?:string;binding?:SurfaceBinding;onSelectSource?:(reading:KnowledgeReading,anchor:WikiAnchor,text:string)=>void|Promise<void>};
 /** One reader for the native Markdown facet. No parser, resolver, raw HTML
  * injection, source write or ambient Agent disclosure lives in this component. */
 export function WikiReader(props:Props) {
@@ -24,6 +24,14 @@ export function WikiReader(props:Props) {
   const root=useRef<HTMLDivElement>(null),prefix=useId().replace(/:/g,'');
   const [notice,setNotice]=useState<string>(),[preview,setPreview]=useState<{occurrence:WikiOccurrence;reading?:KnowledgeReading;error?:string}>();
   const [selection,setSelection]=useState<{text:string;start:number;end:number;bounds:DOMRect}>();
+  const [selectionBusy,setSelectionBusy]=useState(false);
+  const selectForConstruction=async()=>{
+    if(!selection||!onSelectSource)return;
+    setSelectionBusy(true);setNotice(undefined);
+    try{await onSelectSource(reading,{revision:reading.revision,start_byte:selection.start,end_byte:selection.end},selection.text);setSelection(undefined);}
+    catch(error){setNotice(error instanceof Error?error.message:String(error));}
+    finally{setSelectionBusy(false);}
+  };
   const request=useRef<AbortController>();
   const parsed=useMemo(()=>{try{return {document:wikiDocument(reading)};}catch(error){return {error:String(error)};}},[reading]);
   const document=parsed.document;
@@ -121,7 +129,7 @@ export function WikiReader(props:Props) {
     {notice&&<p role="status">{notice}</p>}
     {document.syntax.warnings?.map((warning,index)=><p role="status" key={index}>{warning}</p>)}
     <div className="wiki-prose">{document.syntax.blocks.map((node,i)=>render(node,i))}</div>
-    {selection&&<div className="wiki-selection-tools" role="toolbar" aria-label="Selected passage"><span>{selection.text.slice(0,72)}</span>{binding&&transport&&<button type="button" className="oi-action" disabled={!reading.revision} title={!reading.revision?'The owner must supply a source revision before context disclosure':undefined} onMouseDown={event=>event.preventDefault()} onClick={addContext}>Add to Context</button>}{onSelectSource&&<button type="button" className="oi-action" disabled={!reading.revision} onClick={()=>{onSelectSource(reading,{revision:reading.revision,start_byte:selection.start,end_byte:selection.end});setSelection(undefined);}}>Add to constellation</button>}</div>}
+    {selection&&<div className="wiki-selection-tools" role="toolbar" aria-label="Selected passage"><span>{selection.text.slice(0,72)}</span>{binding&&transport&&<button type="button" className="oi-action" disabled={!reading.revision} title={!reading.revision?'The owner must supply a source revision before context disclosure':undefined} onMouseDown={event=>event.preventDefault()} onClick={addContext}>Add to Context</button>}{onSelectSource&&<button type="button" className="oi-action" disabled={!reading.revision||selectionBusy} onClick={()=>void selectForConstruction()}>Add to constellation</button>}</div>}
     {preview&&<aside className="wiki-link-preview" aria-label="Link preview"><header><strong>{preview.reading?.resource??preview.occurrence.target?.value}</strong><button type="button" className="oi-tool" aria-label="Close link preview" onClick={()=>{request.current?.abort();setPreview(undefined);}}>×</button></header>{preview.error?<p role="status">{preview.error}</p>:preview.reading?<p>{preview.reading.content?.slice(0,800)??'No source body was returned.'}</p>:<p role="status">Reading linked source…</p>}<button type="button" className="oi-action" onClick={()=>follow(preview.occurrence,preview.reading?.resource??'Linked source')}>Open linked source</button></aside>}
     <details className="wiki-backlinks" open><summary>Backlinks · {document.incoming.length}</summary>{document.incoming.map((item,index)=><div key={item.reference??`${item.from}:${index}`}><button type="button" className="oi-action" onClick={()=>onNavigate?.(item.address,item.label,{revision:item.evidence.source_revision,start_byte:item.evidence.anchor?.start_byte,end_byte:item.evidence.anchor?.end_byte})}>{item.label}</button><blockquote>{item.evidence.raw_token??item.relation}</blockquote></div>)}{!document.incoming.length&&<p>{document.relations_available?'No backlinks in this reading.':'Backlinks are unavailable from this owner reading.'}</p>}{document.relations_truncated&&<p role="status">The native relation reading is bounded; further backlinks may exist.</p>}</details>
   </div>;
