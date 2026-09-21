@@ -20,7 +20,7 @@ export type TriggerOccasion = "scene_enter"|"scene_leave"|"activate"|"select"|"s
 export interface SceneTrigger {trigger_ref:string;occasion:TriggerOccasion;target:TriggerTarget}
 /** ES3 profile adoption with explicit, legible overrides. */
 export interface ProfileAdoption {profile_ref:string;revision:number;overridden_parameters?:Record<string,Parameter>}
-export interface ScenePresentation {schema:"oi.journey-scene/v1";scene:Record<string,unknown>}
+export interface ScenePresentation {schema:"oi.journey-scene/v1";scene:Record<string,unknown>;saved?:Record<string,unknown>|null}
 export interface CompositionPresentation {schema:"oi.journey-properties/v1";description:string;loop:boolean;shared?:Record<string,unknown>}
 export interface Scene {presentation?:ScenePresentation|null;scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}
 export interface Relation {native_owner?:string;binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}

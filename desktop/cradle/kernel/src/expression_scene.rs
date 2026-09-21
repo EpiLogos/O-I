@@ -14,6 +14,10 @@ pub const SCHEMA: &str = "oi.journey-scene/v1";
 pub struct Presentation {
     pub schema: String,
     pub scene: Value,
+    /// The author's saved version is distinct from the current working draft.
+    /// Absence means this material has not been saved as a presentation Scene.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub saved: Option<Value>,
 }
 
 fn object<'a>(value: &'a Value, name: &str) -> Result<&'a serde_json::Map<String, Value>, String> {
@@ -83,6 +87,14 @@ pub fn validate(presentation: &Presentation, scene: &Scene, document: &Document)
         }
         if !matches!(entity["kind"].as_str(), Some("formation" | "pin")) { return Err("Invalid Scene entity kind".into()); }
     }
+    if let Some(saved) = &presentation.saved {
+        let mut saved_scene = scene.clone();
+        saved_scene.title = saved["name"].as_str().ok_or("Saved Scene requires its own title")?.to_owned();
+        if saved_scene.title.is_empty() || saved_scene.title.len() > 640 {
+            return Err("Saved Scene title is outside its authoring budget".into());
+        }
+        validate(&Presentation {schema: SCHEMA.into(), scene: saved.clone(), saved: None}, &saved_scene, document)?;
+    }
     Ok(())
 }
 
@@ -94,11 +106,12 @@ pub fn fork(presentation: &mut Presentation, old: &str, new: &str) {
             if let Some(suffix) = reference.strip_prefix(&format!("{old}:")) { *value = Value::String(format!("{new}:{suffix}")); }
         }
     };
-    map(&mut presentation.scene["id"]);
-    if let Some(entities) = presentation.scene["entities"].as_array_mut() {
+    for material in std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut()) {
+    map(&mut material["id"]);
+    if let Some(entities) = material["entities"].as_array_mut() {
         for entity in entities { map(&mut entity["id"]); }
     }
-    if let Some(native) = presentation.scene.get_mut("native") {
+    if let Some(native) = material.get_mut("native") {
         for key in ["config", "projection"] {
             if let Some(entities) = native.get_mut(key).and_then(|config| config.get_mut("entities")).and_then(Value::as_array_mut) {
                 for entity in entities { map(&mut entity["id"]); }
@@ -106,18 +119,19 @@ pub fn fork(presentation: &mut Presentation, old: &str, new: &str) {
         }
     }
     for key in ["automation", "propertyTracks", "toolbelt"] {
-        if let Some(values) = presentation.scene.get_mut(key).and_then(Value::as_array_mut) {
+        if let Some(values) = material.get_mut(key).and_then(Value::as_array_mut) {
             for value in values {
                 if value.get("entityId").is_some() { map(&mut value["entityId"]); }
             }
         }
     }
-    if let Some(bindings) = presentation.scene.get_mut("semanticField").and_then(|field| field.get_mut("bindings")).and_then(Value::as_array_mut) {
+    if let Some(bindings) = material.get_mut("semanticField").and_then(|field| field.get_mut("bindings")).and_then(Value::as_array_mut) {
         for binding in bindings {
             if let Some(carriers) = binding["carriers"].as_array_mut() {
                 for carrier in carriers { if carrier["kind"] == "entity" { map(&mut carrier["id"]); } }
             }
         }
+    }
     }
 }
 
@@ -157,21 +171,23 @@ pub fn set_parameter(presentation: &mut Presentation, reference: &str, key: &str
 /// bindings as well. It is not a retraction of that entity's source or native
 /// knowledge relations; those remain owned by the source system.
 pub fn remove_entity(presentation: &mut Presentation, reference: &str) {
-    if let Some(entities) = presentation.scene.get_mut("entities").and_then(Value::as_array_mut) {
+    for material in std::iter::once(&mut presentation.scene).chain(presentation.saved.iter_mut()) {
+    if let Some(entities) = material.get_mut("entities").and_then(Value::as_array_mut) {
         entities.retain(|entity| entity["id"] != reference);
     }
     for key in ["automation", "propertyTracks", "toolbelt"] {
-        if let Some(values) = presentation.scene.get_mut(key).and_then(Value::as_array_mut) {
+        if let Some(values) = material.get_mut(key).and_then(Value::as_array_mut) {
             values.retain(|value| value["entityId"] != reference);
         }
     }
-    if let Some(bindings) = presentation.scene.get_mut("semanticField").and_then(|field| field.get_mut("bindings")).and_then(Value::as_array_mut) {
+    if let Some(bindings) = material.get_mut("semanticField").and_then(|field| field.get_mut("bindings")).and_then(Value::as_array_mut) {
         for binding in bindings.iter_mut() {
             if let Some(carriers) = binding.get_mut("carriers").and_then(Value::as_array_mut) {
                 carriers.retain(|carrier| !(carrier["kind"] == "entity" && carrier["id"] == reference));
             }
         }
         bindings.retain(|binding| binding["carriers"].as_array().is_some_and(|carriers| !carriers.is_empty()));
+    }
     }
 }
 

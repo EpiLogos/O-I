@@ -92,3 +92,25 @@ fn material()->Value {json!({"schema":"oi.journey-scene/v1","scene":{
     let stale=edit(&mut app,2,json!([{"change":"rename","title":"Late Agent response"}])).unwrap();
     assert_eq!(stale["state"],"revision_conflict");assert_eq!(inspect(&mut app),original);
 }
+
+#[test]
+fn saved_scene_is_independent_of_working_draft_through_native_reopen_and_fork() {
+    let mut app = setup();
+    let mut body = material();
+    body["scene"]["name"] = inspect(&mut app)["scenes"][0]["title"].clone();
+    body["saved"] = body["scene"].clone();
+    body["scene"]["duration"] = json!(75);
+    edit(&mut app, 2, json!([{"change":"scene_material_set", "scene_ref":"expression:craft:scene:main", "presentation":body}])).unwrap();
+    let original = inspect(&mut app);
+    let mut fresh = Application::default();
+    let reopened = apply(&mut fresh, json!({"operation":"open","document":original,"actor":"human:reopen"})).unwrap();
+    assert_eq!(reopened["document"]["scenes"][0]["presentation"]["saved"]["duration"], 42);
+    assert_eq!(reopened["document"]["scenes"][0]["presentation"]["scene"]["duration"], 75);
+    let fork = apply(&mut app, json!({"operation":"fork","expression_ref":"expression:craft","expected_revision":3,"new_expression_ref":"expression:variant","actor":"human:craft"})).unwrap();
+    assert_eq!(fork["document"]["scenes"][0]["presentation"]["saved"]["id"], "expression:variant:scene:main");
+    assert_eq!(fork["document"]["scenes"][0]["presentation"]["saved"]["entities"][0]["id"], "expression:variant:entity:one");
+    let mut wrong = body.clone();
+    wrong["saved"]["entities"][0]["id"] = json!("expression:other:entity:private");
+    assert!(edit(&mut app, 3, json!([{"change":"scene_material_set","scene_ref":"expression:craft:scene:main","presentation":wrong}])).is_err());
+    assert_eq!(inspect(&mut app), original);
+}
