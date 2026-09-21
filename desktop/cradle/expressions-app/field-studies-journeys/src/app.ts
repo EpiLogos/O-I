@@ -46,6 +46,7 @@ import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
 import {installKernelExpressions,kernelExpressionsAvailable} from './kernelExpressions.js';
 import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
+import {installLensStudio,type LensId} from './lensStudio.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 mountShell();installPanelResize();installKernelExpressions();
@@ -420,6 +421,8 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'native-work':nativeWorkspace?.toggle();break;
  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
+ case 'lens':lensStudio.select(el.dataset.lens as LensId);break;
+ case 'lens-close':lensStudio.closeStudio();break;
  case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home){sequenceOpen=false;beltOpen=false;guidesVisible=false;loadJourney(clone(home));}else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
  case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
@@ -724,6 +727,7 @@ function setHostMode(mode:'expressions'|'techne'){
  hostMode=mode;
  document.body.classList.toggle('oi-host-techne',mode==='techne');
  renderRail();
+ lensStudio.setMode(mode);
  renderAll();
 }
 window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown}|null;
@@ -741,7 +745,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
 });
 window.addEventListener('pagehide',()=>{if(propertyTake)finishPropertyTake();recorder.stop();lastLibraryWrite=0;void flushDraft();});
 const nativeField=installNativeField(engine,()=>{fieldPaused=false;needsFrame=true;renderAll();});
-window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
+window.__FIELD_STUDIES__={getDocument:()=>clone(store.document),getState:()=>({studioOpen,beltOpen,needsFrame,libraryOpen,librarySection,modesOpen,captureOpen,railKey,railExpanded,sceneIndex,selected:[...selected],textId,editing,inspectorOpen,timelineOpen,tool,simTime,sceneElapsed,playing:scenePlaying,scenePlaying,fieldPaused,journeyPlaying,automationLoop,camera:{...camera},fps,recording:recorder.active,pointerActive:pointer.active,engine:engine.capabilities.name,hostMode,activeLens:lensStudio.active()}),project:(v:Vec3)=>project(v,camera,width,height),unproject:(x:number,y:number)=>unproject(x,y,camera,width,height),selectEntity:(id:string)=>selectEntity(id),setScene:(i:number)=>setScene(i),openEditor:(t:InspectorContext['tab'])=>edit(true,t),pause:()=>{fieldPaused=true;needsFrame=true;renderAll();},play:()=>{fieldPaused=false;needsFrame=true;renderAll();},native:()=>nativeField?.controller.reading,nativeTargets:()=>nativeField?.controller.inspectTargets(),dispose:()=>{nativeField?.dispose();cancelAnimationFrame(rafId);coverObserver?.disconnect();orbitControl.dispose();engine.dispose();},command:(cmd:any)=>{engine.command?.(cmd);needsFrame=true;},capabilities:engine.capabilities,inspect:(read=false)=>engine.inspect?.(read),telemetry:()=>engine.telemetry?.(),nativeProject:(v:Vec3)=>engine.projectNative?.(v),capture:(w:number,h:number)=>engine.capture?.(w,h)};
 function applyNativeView(view:KernelConversion,preservePosition=false){
  const oldScene=scene().id,oldCamera={...camera},oldTime=sceneElapsed,oldSelection=[...selected],oldPlaying=journeyPlaying;
  if(!preservePosition)loadJourney(view.journey,true);else {store.replace(initialiseSceneSaves(initialiseBelts(view.journey)));}
@@ -751,7 +755,12 @@ function applyNativeView(view:KernelConversion,preservePosition=false){
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
  markSaved();renderAll();announceHostState();
 }
-nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;}});
+// The M0′–M5′ Lens Studio stands on the SAME native construction the native
+// workspace holds; refreshing it when the construction changes keeps the
+// Studio's basis exact without touching the field.
+const lensStudio=installLensStudio({subject:()=>nativeWorkspace?.nativeSubject()??null});
+nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;lensStudio.refresh();}});
+lensStudio.setMode(hostMode);
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-library','library','Native Library — My World / O:I Web'));
 Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});
