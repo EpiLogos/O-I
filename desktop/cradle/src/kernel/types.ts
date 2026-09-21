@@ -220,6 +220,9 @@ export type KernelOp =
   | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"workcell_status_read"}
+  | {op:"wiki_projection_read";root:string;path:string}
+  | {op:"wiki_projection_sources"}
+  | {op:"wiki_projection_update";root:string;path:string;expected_revision:string;evidence:string;actor:string;reason:string;body:string}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
@@ -290,6 +293,9 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"wiki_projection_reading";data:unknown }
+  | { result:"wiki_projection_stored";data:unknown }
+  | { result:"wiki_projection_sources_reading";data:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
