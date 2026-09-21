@@ -1,0 +1,101 @@
+name: Nara identity and inhabitation
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/nara/personal/**'
+      - 'desktop/cradle/src/nara/identityPresentation.ts'
+      - 'desktop/cradle/src/nara/NaraSurface.tsx'
+      - 'desktop/cradle/src/expressions/hostedApp.ts'
+      - 'desktop/cradle/expressions-app/field-studies-journeys/src/privateIdentity.ts'
+      - 'desktop/cradle/expressions-app/field-studies-journeys/src/app.ts'
+      - 'desktop/cradle/tests/nara-personal-*'
+      - 'desktop/cradle/kernel/src/action/nara.rs'
+      - 'desktop/cradle/kernel/src/action.rs'
+      - '.github/workflows/nara-identity-inhabitation.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+concurrency:
+  group: nara-identity-${{ github.ref }}
+  cancel-in-progress: false
+jobs:
+  consumer-and-existing-renderer:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - run: npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+      - name: Behaviour contracts including original Nara and dictation
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          mkdir -p tests/artifacts/nara-personal
+          git rev-parse HEAD > tests/artifacts/nara-personal/source-revision.txt
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-personal-contracts.test.mjs tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs tests/nara-local-acceptance.test.mjs | tee tests/artifacts/nara-personal/contracts.log
+      - name: Compile complete Cradle
+        if: ${{ !cancelled() }}
+        run: npm --prefix desktop/cradle run build
+      - name: Compile the actual hosted Expressions app
+        if: ${{ !cancelled() }}
+        run: npm --prefix desktop/cradle/expressions-app run build
+      - name: Install controlled browser
+        if: ${{ !cancelled() }}
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Original speech and new personal UI on the existing native renderer
+        if: ${{ !cancelled() }}
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          node --experimental-strip-types --import ./tests/ts-register.mjs tests/nara-native-browser.mjs | tee tests/artifacts/nara-personal/original-browser.log
+          node tests/nara-personal-browser.mjs | tee tests/artifacts/nara-personal/personal-browser.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nara-identity-consumer-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/nara-personal
+          if-no-files-found: error
+  native-owner-join:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: f84fb896c295fb75d365e558f60e8e4f50fd366d
+          path: .native/QL-MEF
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            desktop/cradle/kernel
+            .native/QL-MEF
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Native transport tests, no private payload in argv or diagnostic events
+        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets
+      - name: Build actual pinned native personal producer
+        run: cargo build --manifest-path .native/QL-MEF/Cargo.toml --locked -p ql-cli --bin ql
+      - name: Production consumer against real QL CLI in a temporary private World
+        working-directory: desktop/cradle
+        env:
+          QL_NARA_TEST_BIN: ${{ github.workspace }}/.native/QL-MEF/target/debug/ql
+          QL_NARA_TEST_REVISION: f84fb896c295fb75d365e558f60e8e4f50fd366d
+        run: |
+          set -o pipefail
+          mkdir -p tests/artifacts/nara-personal
+          node tests/nara-personal-native.mjs | tee tests/artifacts/nara-personal/native.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nara-identity-native-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/nara-personal
+          if-no-files-found: warn
