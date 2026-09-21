@@ -26,6 +26,7 @@ mod composition {
     include!("development_field_hardening.rs");
     include!("product_command_route.rs");
     include!("config_command.rs");
+    include!("package_command.rs");
     include!("config_contribution.rs");
     include!("profile_command.rs");
     include!("desktop_command.rs");

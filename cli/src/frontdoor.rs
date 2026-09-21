@@ -8,6 +8,7 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi capabilities --json        derived child capability records with source hashes; not installed availability");
                 println!("  oi config --help              the configuration plane: list/show/get/set/reset/diff/plan/apply/doctor over the shared registry and owner-native operations");
                 println!("  oi profile --help             sparse O:I World profiles: list/show/create/use/diff/clone/export/import");
+                println!("  oi package validate PATH      validate an oi.package/v1 package (hash inventories, contribution contracts) without installing anything");
                 println!("  oi <namespace> config-contribution --json");
                 println!("                                an owner's configuration contribution through the dispatcher, like `system --json`");
                 println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
@@ -86,6 +87,12 @@ pub fn cli_main() -> ExitCode {
         return match command_config(args.get(1..).unwrap_or_default()) {
             Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
             Err(message) => { eprintln!("oi: {message}"); ExitCode::from(2) }
+        };
+    }
+    if command == Some("package") {
+        return match package_cli(args.get(1..).unwrap_or_default()) {
+            Ok(code) => code,
+            Err(message) => { eprintln!("oi: {message}"); std::process::ExitCode::from(2) }
         };
     }
     if command == Some("profile") {

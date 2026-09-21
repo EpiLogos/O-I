@@ -21,6 +21,7 @@
     }
   ],
   "files_sha256": {
+    "README.md": "4d904e4ca7ee4d5ca83715d59646125614f473f942dbd6398763a90ae49ea785",
     "contributions/workbench-settings/contribution.json": "1aa6222058dc6b5a44630058d7b2252b4069b527192b68491855e1fc8afd034d",
     "contributions/workbench-ui/contribution.json": "0ff36931dc86d6ec555240f841b80e24b5799545f1d07321127a6c78c41a4900",
     "contributions/workbench-ui/src/WorkbenchPanel.tsx": "cbd62cc60b700bb65289f4252a200cff4e9db8156f608ec9f2438acf338fd51c",
