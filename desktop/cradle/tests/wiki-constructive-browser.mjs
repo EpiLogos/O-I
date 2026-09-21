@@ -28,7 +28,7 @@ let bridge,server,browser,page,bridgeUrl;const logs=[],errors=[],writes=[];
 async function startBridge(){
  bridge=spawn(binaries.WIKI_KERNEL_BIN,['127.0.0.1:0'],{cwd:project,env,stdio:['ignore','pipe','pipe']});
  bridge.stderr.on('data',data=>logs.push(data.toString()));
- bridgeUrl=await new Promise((yes,no)=>{let data='';const timer=setTimeout(()=>no(new Error('The actual kernel did not become available')),30000);bridge.on('exit',code=>{clearTimeout(timer);no(new Error(`Kernel exited ${code}: ${logs.slice(-5)}`));});bridge.stdout.on('data',chunk=>{data+=chunk;const match=data.match(/listening on (http:\/\/[^ ]+)/);if(match){clearTimeout(timer);yes(match[1]);}});});
+ bridgeUrl=await new Promise((yes,no)=>{let data='';const timer=setTimeout(()=>no(new Error('The actual kernel did not become available')),30000);bridge.on('error',error=>{clearTimeout(timer);no(new Error(`Kernel could not start: ${error.message}`));});bridge.on('exit',code=>{clearTimeout(timer);no(new Error(`Kernel exited ${code}: ${logs.slice(-5)}`));});bridge.stdout.on('data',chunk=>{data+=chunk;const match=data.match(/listening on (http:\/\/[^ ]+)/);if(match){clearTimeout(timer);yes(match[1]);}});});
 }
 async function op(value){const response=await fetch(`${bridgeUrl}/op`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify(value)});const result=await response.json();assert.equal(result.ok,true,JSON.stringify(result));return result.outcome;}
 function savedFrame(title){return JSON.parse(readFileSync(wikiPath,'utf8')).objects.find(object=>object.object==='frame'&&object['aikit.constellation/v1']?.title===title);}

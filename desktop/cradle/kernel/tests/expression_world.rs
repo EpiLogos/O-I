@@ -79,6 +79,7 @@ fn graph_node() -> GraphNode {
 /// with one declared owner edge (no other edges exist to mint).
 fn graph_reading() -> GraphReading {
     GraphReading {
+        shape_catalog: None,
         formations: Vec::new(),
         truncated: false,
         schema: oi_cradle_kernel::graph::GRAPH_READING_SCHEMA.into(),
