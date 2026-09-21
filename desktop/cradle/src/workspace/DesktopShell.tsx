@@ -4,11 +4,11 @@ const SystemPanel=lazy(()=>import("./SystemPanel").then((module)=>({default:modu
 import type { AgencyDepth, LayoutState } from "../surface/types";
 import type { Workspace } from "./store";
 import "./shell.css";
+import "./sidebar-presentation.css";
 import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { WorldModeStrip } from "../surfaces/navigator/WorldNavigator";
 import { MODE_CURATION, TREE_MODES, type TabPresentation, type WorkspaceMode } from "./mode";
-import { ModeCentreRetention, type FactoryCentreContext } from "../surface/retention";
 
 type Side = "left" | "right";
 const FOOTER_KEY="oi-shell-footer.v2";
@@ -47,12 +47,6 @@ interface Props {
   /** Epi-Logos: a whole-app world state, disclosed and toggled here in the
    * footer (owner ruling 2026-09-18) — never a mode entry or a page. */
   epiLogos?: boolean; onEpiLogosToggle?: () => void;
-  /** Factory's centre retains across mode switches with the other centres
-   * (surface/retention.tsx): the frame-built chat node
-   * (CradleFrame.factoryCentre) and its Desk/Tasks context ride down here so
-   * the retention declarer mounts the ONE FactoryCentre body the stage's and
-   * panes' outlets adopt — the park holds that same node. */
-  factoryCentre?: ReactNode; factoryTasks?: FactoryCentreContext;
   onRecoverAvailable?: () => void; onStartFresh?: () => void; /** One click reloads the workspace (owner ruling 2026-09-19) — the message row and its dismissal both route here while a load failure stands. */ onReload?: () => void;
   navigator: (workspaceSelector: ReactNode) => ReactNode; children: ReactNode;
 }
@@ -311,12 +305,12 @@ export function DesktopShell(p: Props) {
       </aside>
       <main className="desktop-centre" data-region="centre" aria-label="Workspace canvas">
 
-      {/* The mode-centre retention tier (surface/retention.tsx): the shell
-        * declares every retained centre of the ACTIVE workspace in a hidden
-        * layer beside the presenting tree, so a mode switch parks those
-        * bodies suspended instead of unmounting them. The layer renders
-        * nothing visible and owns no layout of its own. */}
-      <ModeCentreRetention workspace={p.workspace} mode={p.mode} factoryCentre={p.factoryCentre} factoryTasks={p.factoryTasks}/>
+      {/* The centre region renders as one stable sibling list owned by the
+        * frame (CradleFrame): the per-mode stage slots, the rest host and
+        * the warm trees. The shell adds no layer of its own here — the
+        * former mode-centre park (surface/retention.tsx) is retired; every
+        * centre mounts in place, in the stage slot or the pane that
+        * presents it. */}
       {p.children}
       </main>
       <aside className={`desktop-side right depth-${right}`} data-region="right" data-depth={right} data-overlay={overlayRight && right === "panel"} data-focus-ref={ref} aria-hidden={!rightOpen} aria-label="Agent and inspector region">
@@ -331,7 +325,7 @@ export function DesktopShell(p: Props) {
            * agent layer replaces it. */}
           {p.right ?? <>
             <div className="region-tools oi-tool-row"><span className="oi-tool-row-title">{p.subject.title}</span><button className="oi-tool" aria-label="Full right region" onClick={() => toggleFull("right")}><Glyph name={right === "full" ? "restore" : "expand"}/></button><button className="oi-tool" aria-label="Collapse right region" onClick={() => setDepth("right", "collapsed")}><Glyph name="close"/></button></div>
-            <nav className="inspector-planes oi-plane-nav" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
+            <nav className="inspector-planes oi-plane-nav" aria-label="Right region planes">{(["context", "history", "system"] as const).map(v => <button key={v} aria-pressed={plane === v} onClick={() => v === "system" ? p.onMode("settings") : setPlane(v)}>{v === "history" ? "History" : v === "system" ? "System" : "Context"}</button>)}</nav>
             <div className="inspector-body oi-sidecar">
               {plane === "system" ? <Suspense fallback={null}><SystemPanel/></Suspense> : plane === "history" ? p.subject.history ?? <p>No history operation is available for this subject.</p> : p.subject.context}
             </div>

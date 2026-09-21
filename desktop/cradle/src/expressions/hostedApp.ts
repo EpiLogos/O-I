@@ -1,3 +1,4 @@
+import {relayNativeChannel} from "./nativeChannel";
 /**
  * Shared hosting for the Expressions application — the vendored app at
  * desktop/cradle/expressions-app (owner ruling 2026-09-19: the application
@@ -111,6 +112,7 @@ const isEnvelope = (data: unknown): data is ChannelEnvelope =>
 /** Relay the kernel host channel into one hosted frame. Returns the
  * teardown, exactly like trackShellCutout. */
 export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus): () => void {
+  const disposeNative = relayNativeChannel(frame, transport);
   let live = true;
   const announce = () => {
     if (live) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "oi-kernel-channel", channel: "kernel-expression"}, "*");
@@ -176,6 +178,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
   announce();
   return () => {
     live = false;
+    disposeNative();
     window.removeEventListener("message", handler);
     frame.removeEventListener("load", announce);
   };

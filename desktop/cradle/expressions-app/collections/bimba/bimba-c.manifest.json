@@ -1,0 +1,110 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-21T00:31:41.231Z",
+  "source": "Bimba — C · Category: the live coordinate lattice of the Epi-Logos graph (the Bimba Atlas navigation ground)",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/collections/bimba"
+    ],
+    "ground": "live Bimba graph: Neo4j 5.26 Community at bolt://100.92.62.101:7687 (HTTP http://100.92.62.101:7474, auth disabled) on the oi-omarchy docker host, served through Work/epi/bimba-portable (stateless MCP 2026-07-28); 2141 :Bimba nodes at capture",
+    "exported_at": "2026-09-21T00:31:41.231Z",
+    "generator": {
+      "name": "collections/bimba/tools/bimba-snapshot.mjs — read-only Cypher over the Neo4j HTTP transactional endpoint; no graph writes; bimba-portable read conventions (bimba:read only)",
+      "revision": "bimba-snapshot-2026-09-21"
+    },
+    "slice_rule": "every :Bimba node whose coordinate contains neither '-' nor '.' — the complete top-level coordinate lattice: six QL families C/P/L/S/T/M (Category, Position, Lens, Subsystem, Stack, Thought), each with its root, prime, positions 0-5 and position primes, plus the # ground row, the CF/CFP/CP/CPF/CT/CS composite roots, the CF_* forms, the Family_* descriptors and the four Weave_* crossings; deep branch coordinates (e.g. M2-5-9) are outside the slice. This manifest carries the group: C · Category",
+    "exclusions": "embedding vector properties (embedding, c_5_embedding) excluded as model-derived and regenerable; embedding metadata (model, dimensions, task type, generated_at) retained",
+    "member_count": 13,
+    "lattice_member_count": 112,
+    "manifest_count": 7,
+    "graph_node_count": 2141,
+    "captured_at": "2026-09-21T00:31:41.231Z",
+    "graph_content_sha256": "12177a8ab7e444d40b9ca980a8376ff85b9494bd3651796b7695d5d1e1190c51",
+    "graph_content_hash_basis": "sha256 over the canonical JSON (sorted keys, no whitespace) of the ordered lattice slice [{coordinate, uuid, labels, properties}] with vector properties excluded — recomputable from the live graph and from the committed member documents, so drift is checkable with --verify",
+    "regeneration": "node collections/bimba/tools/bimba-snapshot.mjs (capture) or --verify (drift check) under collections/bimba/tools, env BIMBA_HTTP",
+    "atlas_disposition": "the travelling-jigsaw Atlas surface is already carried by its committed corpus journey (roz-mytheme-travelling-jigsaw-atlas, return-of-zero mytheme family); the Bimba Atlas navigation ground itself is what this collection binds, as exact-source lattice snapshots"
+  },
+  "featured": [
+    {
+      "id": "C",
+      "name": "C — Category — Ontological Foundation Family",
+      "file": "coordinates/c/C.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C0",
+      "name": "C0 — Bimba",
+      "file": "coordinates/c/C0.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C0-prime",
+      "name": "C0' — Bimba'",
+      "file": "coordinates/c/C0-prime.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C1",
+      "name": "C1 — Form",
+      "file": "coordinates/c/C1.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C1-prime",
+      "name": "C1' — Form'",
+      "file": "coordinates/c/C1-prime.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C2",
+      "name": "C2 — Entity",
+      "file": "coordinates/c/C2.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C2-prime",
+      "name": "C2' — Entity'",
+      "file": "coordinates/c/C2-prime.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C3",
+      "name": "C3 — Process",
+      "file": "coordinates/c/C3.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C3-prime",
+      "name": "C3' — Process'",
+      "file": "coordinates/c/C3-prime.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C4",
+      "name": "C4 — Type",
+      "file": "coordinates/c/C4.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C4-prime",
+      "name": "C4' — Type'",
+      "file": "coordinates/c/C4-prime.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C5",
+      "name": "C5 — Pratibimba",
+      "file": "coordinates/c/C5.journey.json",
+      "group": "C · Category"
+    },
+    {
+      "id": "C5-prime",
+      "name": "C5' — Pratibimba'",
+      "file": "coordinates/c/C5-prime.journey.json",
+      "group": "C · Category"
+    }
+  ]
+}

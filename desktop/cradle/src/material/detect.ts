@@ -16,7 +16,7 @@ const PDF_EXTENSIONS = new Set(["pdf"]);
 const UNSUPPORTED_EXTENSIONS = new Set([
   "bin", "exe", "dylib", "so", "dll", "zip", "tar", "gz", "7z", "dmg", "app",
   "wasm", "ttf", "otf", "woff", "woff2", "mp3", "mp4", "mov", "wav", "ogg",
-  "avi", "sqlite", "db",
+  "avi", "sqlite", "db", "doc", "docx", "xls", "xlsx", "ppt", "pptx", "odt", "ods", "odp", "pages", "numbers", "key", "rtf", "epub", "rar", "bz2", "xz",
 ]);
 
 function extensionOf(path?: string): string | undefined {
@@ -48,12 +48,24 @@ function fromExtension(extension: string | undefined): MaterialFormat {
 
 export function detectFormat(input: { path?: string; mimeHint?: string | null }): MaterialFormat {
   if (input.mimeHint) {
-    const fromHint = fromMimeHint(input.mimeHint);
+    const hint=input.mimeHint.split(";")[0].trim().toLowerCase();
+    const fromHint = fromMimeHint(hint);
     if (fromHint) return fromHint;
     // A disclosed but unrecognised hint (e.g. an owner mime the renderer
     // has no treatment for) is still honestly "unsupported", never
     // silently treated as text.
-    if (!input.mimeHint.startsWith("text/")) return "unsupported";
+    if (!hint.startsWith("text/")) return "unsupported";
   }
   return fromExtension(extensionOf(input.path));
 }
+
+/** Actual desktop adapter capabilities, not a claim of universal editing.
+ * Edit additionally requires the native source owner's write availability. */
+export function materialCapabilities(format:MaterialFormat){return {
+ edit:["text","markdown","html"].includes(format),
+ preview:format!=="unsupported",
+ split:format==="markdown"||format==="html",
+ textSelection:["text","markdown","html"].includes(format),
+ componentSelection:["markdown","html","image"].includes(format),
+ exportSource:["text","markdown","html"].includes(format),
+};}

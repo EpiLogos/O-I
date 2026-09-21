@@ -719,7 +719,7 @@ export const ChakraPanel: React.FC<ChakraPanelProps> = ({
                         key={st.index}
                         type="button"
                         id={`btn-resonator-station-${st.index}`}
-                        title={`${st.name} · ${Math.round(st.frequencyHz)} Hz · m=${st.m} n=${st.n}`}
+                        title={`Resonance ${st.index + 1} · ${Math.round(st.frequencyHz)} Hz · m=${st.m} n=${st.n}`}
                         onClick={() =>
                           updateCymatics({
                             frequencyHz: st.frequencyHz,
@@ -731,7 +731,7 @@ export const ChakraPanel: React.FC<ChakraPanelProps> = ({
                       >
                         <span
                           className="w-1.5 h-1.5 rounded-full border border-white/30 group-hover/tick:scale-125 transition-transform"
-                          style={{ backgroundColor: st.color }}
+                          style={{ backgroundColor: 'currentColor' }}
                         />
                         <span className="text-[7px] font-mono opacity-60 group-hover/tick:opacity-100 whitespace-nowrap">
                           {Math.round(st.frequencyHz)}
@@ -835,9 +835,9 @@ export const ChakraPanel: React.FC<ChakraPanelProps> = ({
                         }`}
                       >
                         <div className="flex items-center gap-2">
-                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: st.color }} />
+                          <span className="w-2.5 h-2.5 rounded-full flex-shrink-0" style={{ backgroundColor: 'currentColor' }} />
                           <div>
-                            <span className="text-[10.5px] font-bold">{st.name}</span>
+                            <span className="text-[10.5px] font-bold">{`Resonance ${st.index + 1}`}</span>
                             <span className="text-[8.5px] opacity-60 ml-1.5">mode ({st.m}, {st.n})</span>
                           </div>
                         </div>

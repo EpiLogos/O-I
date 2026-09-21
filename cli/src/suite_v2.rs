@@ -702,7 +702,7 @@ fn resolve_verification_scope(
         return whole_suite("every recorded suite product is verified (--all)");
     }
     if let Some(requested) = requested {
-        if let Some(mode) = oi_cli::context_frames::install_mode_by_frame(&requested.frame)
+        if let Some(mode) = oi_cli::context_frames::recorded_install_mode(&requested.frame, &requested.set_by)
             .filter(|mode| mode.products.is_some())
         {
             let selected = mode
@@ -1333,7 +1333,7 @@ fn write_removal_receipt(
 /// The products named by a requested install mode that a removal just took
 /// away — the shortfall the request will now name, in display order.
 fn requested_mode_shortfall_products(requested: &RequestedMode, outcomes: &[ProductRemovalOutcome]) -> Vec<String> {
-    let Some(mode) = oi_cli::context_frames::install_mode_by_frame(&requested.frame) else { return Vec::new() };
+    let Some(mode) = oi_cli::context_frames::recorded_install_mode(&requested.frame, &requested.set_by) else { return Vec::new() };
     let Some(products) = mode.products else { return Vec::new() };
     oi_cli::current_world::PRODUCT_POSITIONS.iter()
         .filter(|(position, id, _)| {

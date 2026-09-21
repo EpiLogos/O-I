@@ -1,8 +1,7 @@
 /* Styles for the rebuilt settings page (settings/v2/). Standalone on
    purpose: nothing classic leaks in. Tokens only — the --oi-* vocabulary.
-   Layout law (2026-09-18 pass): tight chrome, content capped for
-   readability, and every settings SECTION reads as a full box — a
-   bordered, filled card — instead of rows floating on hairlines. */
+   Full-workspace consultation: open sections, readable columns and a single
+   page scroll. Native configuration semantics remain with their owners. */
 
 .settings-page-head { margin: 0 0 8px; }
 .settings-page-head h2 { font-size: var(--oi-shell-type-heading); font-weight: 500; margin: 2px 0; }
@@ -38,7 +37,7 @@
 .settings-group-about { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); margin: 1px 0 0; max-width: 68ch; }
 
 /* The full box: bordered, filled, inner padding — the section is a thing. */
-.settings-section { border: 1px solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-surface); padding: 0 16px 6px; margin: 0 0 14px; }
+.settings-section { border: 0; border-top: 1px solid var(--oi-hairline-soft); border-radius: 0; background: transparent; padding: 0 0 6px; margin: 0 0 14px; }
 .settings-section > h4 { font-size: var(--oi-shell-type-ui); text-transform: uppercase; letter-spacing: .07em; color: var(--oi-muted-2); margin: 12px 0 4px; font-weight: 600; }
 
 .settings-row { display: flex; gap: 18px; justify-content: space-between; align-items: flex-start; padding: 11px 0; border-bottom: 1px solid var(--oi-hairline-soft); line-height: 1.45; }
@@ -76,7 +75,7 @@
 .config-mono { font-family: var(--oi-font-mono); }
 
 .settings-groundpanel { display: grid; gap: 10px; margin-top: 2px; }
-.settings-groundpanel > * { border: 1px solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-surface); padding: 4px 13px 10px; margin: 0; }
+.settings-groundpanel > * { border: 0; border-top: 1px solid var(--oi-hairline-soft); border-radius: 0; background: transparent; padding: 10px 0; margin: 0; }
 .settings-groundpanel .ground-chooser { border: none; padding: 0; }
 .settings-suited h3 { font-size: var(--oi-shell-type-heading); font-weight: 500; margin: 4px 0; }
 
@@ -100,7 +99,7 @@
 .settings-bootstrap { margin: 10px 0 12px; }
 .settings-bootstrap h3 { font-size: var(--oi-shell-type-heading); font-weight: 500; margin: 0 0 2px; }
 .settings-bootstrap ol { list-style: none; margin: 8px 0; padding: 0; display: grid; gap: 10px; max-width: 72ch; counter-reset: step; }
-.settings-bootstrap li { border: 1px solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-surface); padding: 8px 13px; }
+.settings-bootstrap li { border: 0; border-bottom: 1px solid var(--oi-hairline-soft); background: transparent; padding: 8px 0; }
 .settings-bootstrap strong { font-weight: 500; }
 .settings-bootstrap p { margin: 2px 0; color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); max-width: 64ch; }
 .product-native-path { color: var(--oi-muted-2); font-style: normal; font-size: var(--oi-shell-type-ui); }
@@ -109,7 +108,7 @@
 .system-actions button:disabled { opacity: .5; cursor: default; }
 
 /* Census sections (System surface) read as boxes too. */
-.product-section { border: 1px solid var(--oi-hairline-soft); border-radius: var(--oi-shell-radius); background: var(--oi-surface); padding: 0 13px 8px; margin: 0 0 10px; }
+.product-section { border: 0; border-top: 1px solid var(--oi-hairline-soft); border-radius: 0; background: transparent; padding: 0 0 8px; margin: 0 0 14px; }
 .product-section > summary { font-size: var(--oi-shell-type-ui); padding: 7px 0; cursor: pointer; display: flex; gap: 10px; align-items: baseline; justify-content: space-between; }
 .product-section > summary > span:last-child { color: var(--oi-muted-2); font-size: var(--oi-shell-type-ui); }
 .product-about { color: var(--oi-muted-2); margin: 2px 0 8px; max-width: 64ch; font-size: var(--oi-shell-type-ui); }
@@ -187,4 +186,45 @@
 
 @media (prefers-reduced-motion: reduce) {
   .settings-rail button, .native-setting > summary { transition: none; }
+}
+
+/* W1 shared presentation — #406 forms and owner state remain untouched. */
+.mode-stage:has(.system-panel) { overflow: hidden; }
+.mode-stage .system-panel { height: 100%; min-height: 0; max-width: 1280px; overflow: auto; overscroll-behavior: contain; container: settings-content / inline-size; padding: 16px clamp(16px, 3vw, 40px) 40px; }
+.system-panel :is(section, form, fieldset, label, details, dl, dd) { min-width: 0; overflow-wrap: anywhere; }
+.system-panel :is(input, select, textarea) { box-sizing: border-box; min-width: 0; max-width: 100%; font: inherit; }
+.settings-workspace-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; margin-bottom: 20px; padding-left: max(0px, calc(var(--window-cutout, 0px) - 12px)); padding-right: max(0px, calc(var(--window-cutout-right, 0px) - 12px)); }
+.settings-workspace-toolbar .settings-rail { margin: 0; flex-wrap: wrap; }
+.settings-return { display: inline-flex; align-items: center; gap: 6px; padding: 6px 0; border: 0; background: transparent; color: var(--oi-foreground); font: inherit; cursor: pointer; }
+.settings-return svg { flex: none; }
+.settings-return:focus-visible { outline: var(--oi-focus-ring-width) solid var(--oi-accent); outline-offset: var(--oi-focus-ring-offset); }
+.system-panel .settings-world-facts { display: grid; grid-template-columns: repeat(auto-fit, minmax(min(100%, 180px), 1fr)); flex: 1 1 420px; gap: 8px 20px; }
+.settings-world-facts > div { display: grid; grid-template-columns: minmax(60px, .6fr) minmax(0, 1.4fr); min-width: 0; gap: 8px; }
+.settings-row-actions { flex: 0 1 auto; max-width: 100%; }
+.settings-select, .settings-scopepicker { max-width: 100%; min-width: 0; }
+.settings-fact, .config-axis { min-width: 0; flex-wrap: wrap; }
+.settings-fact :is(dd, .settings-fact-value) { min-width: 0; overflow-wrap: anywhere; }
+.native-table { table-layout: fixed; }
+.visuals-preferences { display: grid; gap: 20px; max-width: 68ch; }
+.visuals-preferences h3 { margin: 0 0 6px; }
+.visuals-preferences > button { justify-self: start; }
+.visuals-preferences .visuals-check { align-items: start; margin-block: 10px; color: var(--oi-foreground); }
+@container settings-content (max-width: 760px) {
+  .settings-layout { grid-template-columns: minmax(0, 1fr); gap: 16px; }
+  .settings-toc { position: static; display: flex; flex-wrap: wrap; gap: 6px; }
+  .settings-toc button { flex: 1 1 150px; }
+  .settings-main { max-width: 100%; }
+  .profiles-layout { flex-direction: column; }
+  .profiles-list { min-width: 0; width: 100%; }
+  .profile-detail { width: 100%; }
+}
+@container settings-content (max-width: 520px) {
+  .settings-row { flex-direction: column; gap: 8px; }
+  .settings-row-actions { display: flex; justify-items: start; flex-wrap: wrap; }
+  .settings-world-header, .product-row { flex-direction: column; align-items: stretch; }
+  .settings-world-facts > div { grid-template-columns: minmax(0, .7fr) minmax(0, 1.3fr); }
+  .settings-searchrow, .settings-scopepicker, .settings-tray-actions { flex-wrap: wrap; }
+  .settings-search { flex-basis: 100%; }
+  .product-row dt { min-width: 0; }
+  .settings-bootstrap ol { max-width: 100%; }
 }

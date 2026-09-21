@@ -165,6 +165,8 @@ export type ProfileEditOpWire =
   | { action: "set_description"; description: string | null };
 
 export type KernelOp =
+  | {op: "native_expression"; request: {operation: "open"; path: string; expected_revision: string} | {operation: "exchange"; lease: string; request: unknown} | {operation: "close"; lease: string}}
+  | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
   | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}
@@ -209,13 +211,31 @@ export type KernelOp =
   | { op: "agency_read"; project: string }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
+  /** Provision one fresh chat conversation (new-chat first Send): the kernel
+   * replays the owner's own SessionSpace CLI sequence and opens the result. */
+  | {op:"encounter_provision";project:string}
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
   | {op:"factory_build_snapshot";project?:string;state_path:string;project_ref:string;run_ref:string}
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
+  | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
+  | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"workcell_status_read"}
+  /** The installed harnesses' real status (`aikit --json client status`,
+   * kernel `agency.rs`): detected/installed/config-dir per harness. Pull
+   * read, machine-level. */
+  | {op:"harness_status"}
+  /** The resolved model catalogue (`aikit model-catalogue show --json`):
+   * the owner's entries verbatim. Pull read, machine-level. */
+  | {op:"model_catalogue"}
+  /** The desktop-held default provider for NEW chats (kernel
+   * `chat_defaults.rs`, `oi:cradle:chat.default-provider`): a desired-entry
+   * shaped document when held, null when the owner's rows decide. */
+  | {op:"chat_default_read"}
+  | {op:"chat_default_hold";provider:string}
+  | {op:"chat_default_discard"}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
@@ -249,6 +269,8 @@ export type KernelOp =
  * The Rust seam serialises `{ receipts, #[serde(flatten)] result }`, so on
  * the wire the tag and the payload sit flat beside `receipts`. */
 export type KernelOpResult =
+  | {result: "native_expression"; data: unknown}
+  | {result: "setup_reading"; data: unknown}
   | {result:"being_encounter";data:unknown}
   | {result:"expression";data:import("../expression/types").ExpressionResult}
   | {result:"graph_reading";reading:import("../knowledge/graph").GraphReading}
@@ -276,12 +298,20 @@ export type KernelOpResult =
   | { result: "config_receipts"; document: unknown }
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
+  | { result:"encounter_provisioned";data:unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
   | { result:"factory_development_reading";data:unknown }
   | { result:"factory_attempt_reading";data:unknown }
+  | { result:"factory_attempt_task_list_reading";data:unknown }
+  | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"harness_status_reading";data:unknown }
+  | { result:"model_catalogue_reading";data:unknown }
+  | { result:"chat_default_reading";document:unknown }
+  | { result:"chat_default_held";document:unknown }
+  | { result:"chat_default_discarded";document:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }

@@ -308,85 +308,53 @@ fn init_delegates_to_real_central_shape_and_is_idempotent() {
 
 #[cfg(unix)]
 #[test]
-fn init_establishes_default_continuous_work_authority() {
-    // A fresh ground with no recognised placement policy is made runnable out of
-    // the box: oi init writes a default policy covering Work/ and records the
-    // recognised relation, so agent sessions no longer stall at the strap.
+fn init_discloses_missing_authority_without_claiming_human_consent() {
     let bin = TempDir::new().unwrap();
     fake_central(bin.path(), 0);
-
-    let home = TempDir::new().unwrap();
-    let ground = home.path().join("Central");
-    // Give the fresh ground a project under Work/ so the default grants it.
-    fs::create_dir_all(ground.join("Work/Demo")).unwrap();
-    let established = output(
-        oi(home.path(), bin.path())
-            .env("FAKE_CENTRAL_POLICY", "absent")
-            .args(["init", "--personal-ground"])
-            .arg(&ground),
-    );
-    assert!(
-        established.status.success(),
-        "{}",
-        text(&established.stderr)
-    );
-    let told = text(&established.stdout);
-    assert!(
-        told.contains("Established a default work-placement policy"),
-        "init did not establish a default policy; stdout was:\n{told}"
-    );
-
-    // The policy file is written with the placement schema and the project.
-    let policy: Value =
-        serde_json::from_slice(&fs::read(ground.join("Control/user/placement.json")).unwrap())
-            .unwrap();
-    assert_eq!(policy["schema"], "central.work-placement-policy/v1");
-    assert_eq!(policy["enforcement"], "native-actions");
-    let writable: Vec<&str> = policy["writable"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .filter_map(|grant| grant["path"].as_str())
-        .collect();
-    assert!(
-        writable.contains(&"Work/Demo"),
-        "Work/Demo not granted: {writable:?}"
-    );
-
-    // The recognised relation is recorded (human-adopted, architecture-contract).
-    let relations: Value = serde_json::from_slice(
-        &fs::read(ground.join("Control/relations/source-relations.json")).unwrap(),
-    )
-    .unwrap();
-    let relation = relations["relations"]
-        .as_array()
-        .unwrap()
-        .iter()
-        .find(|relation| {
-            relation["roles"].as_array().is_some_and(|roles| {
-                roles
-                    .iter()
-                    .any(|r| r.as_str() == Some("work-placement-policy"))
-            })
-        })
-        .expect("a work-placement-policy relation");
-    assert_eq!(relation["provenance"], "human-adopted");
-    assert_eq!(relation["standing"], "architecture-contract");
-
-    // A ground that already carries a recognised policy is left untouched.
-    let home2 = TempDir::new().unwrap();
-    let ground2 = home2.path().join("Central");
-    let adopted = output(
-        oi(home2.path(), bin.path())
-            .env("FAKE_CENTRAL_POLICY", "adopted")
-            .args(["init", "--personal-ground"])
-            .arg(&ground2),
-    );
-    assert!(adopted.status.success(), "{}", text(&adopted.stderr));
-    assert!(
-        !ground2.join("Control/user/placement.json").exists(),
-        "must not establish a policy when one is already recognised"
-    );
+    for native_policy in ["absent", "adopted"] {
+        let home = TempDir::new().unwrap();
+        let ground = home.path().join("Central");
+        fs::create_dir_all(ground.join("Work/Demo")).unwrap();
+        let established = output(
+            oi(home.path(), bin.path())
+                .env("FAKE_CENTRAL_POLICY", native_policy)
+                .args(["init", "--personal-ground"])
+                .arg(&ground),
+        );
+        assert!(
+            established.status.success(),
+            "{}",
+            text(&established.stderr)
+        );
+        if native_policy == "absent" {
+            assert!(
+                text(&established.stdout).contains("Continuous-work authority is not yet adopted")
+            );
+        }
+        assert!(
+            !ground.join("Control/user/placement.json").exists(),
+            "install must not grant Work/Demo authority"
+        );
+        let relations = ground.join("Control/relations/source-relations.json");
+        if relations.exists() {
+            let value: Value = serde_json::from_slice(&fs::read(relations).unwrap()).unwrap();
+            assert!(!value["relations"]
+                .as_array()
+                .unwrap()
+                .iter()
+                .any(|row| row["roles"]
+                    .as_array()
+                    .is_some_and(|roles| roles.iter().any(|r| r == "work-placement-policy"))));
+        }
+        let state: Value =
+            serde_json::from_slice(&fs::read(home.path().join("composition.json")).unwrap())
+                .unwrap();
+        assert_eq!(
+            state["personal_ground"],
+            ground.display().to_string(),
+            "ground setup remains useful without forged authority"
+        );
+    }
 }
 
 #[cfg(unix)]

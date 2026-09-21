@@ -2,11 +2,11 @@
 
 Start at [#65 and the campaign map](README.md). Use [stories](STORIES.md), [paired record profile](STORY-PROFILE.md) and [practice conditions](PRACTICE-CONDITIONS.md). Load the source-owned [campaign Method](../../skills/experience-campaign/SKILL.md) explicitly for this commissioned bootstrap when it is not yet discoverable through the actual installed AIKit source. That explicit load is not a claim that normal discovery works.
 
-**Current owner update — 19 September 2026:** use the [existing orientation's three bounded Mac tracks](INHABITED-SYSTEM-ORIENTATION.md#current-owner-direction--two-outcomes-three-mac-tracks): (1) O:I/Desktop/whole-product UX, (2) S0–S4 functionality/performance/Factory plus Run-in-Expressions, (3) QL-MEF/Expressions/Technè/Nara/Epii. The primary checkout is included within **three O:I Mac trees total**; each native repository has **one owner checkout**. No fourth Mac verifier tree. Track 1 owns shell integration and Mac UX proof; Track 2 owns native operations; Track 3 owns QL/Expression facilities. Claim disjoint files before edits and preserve unpublished local work. Verification uses the existing owner checkout and isolated outputs/episodes, not an additional Mac tree.
+**Current owner update — 20 September 2026:** use the [existing orientation's three bounded Mac tracks](INHABITED-SYSTEM-ORIENTATION.md#current-owner-direction--two-outcomes-three-mac-tracks): (1) O:I/Desktop/whole-product UX, (2) S0–S4 functionality/performance/Factory plus Run-in-Expressions, (3) QL-MEF/Expressions/Technè/Nara/Epii. The primary checkout is included within **three O:I Mac trees total**; each native repository has **one owner checkout**. No fourth Mac verifier tree. Track 1 owns shell integration and Mac UX proof; Track 2 owns native operations; Track 3 owns QL/Expression facilities. Claim disjoint files before edits and preserve unpublished local work. Verification uses the existing owner checkout and isolated outputs/episodes, not an additional Mac tree.
 
 Omarchy contributes **bounded independent work and Bimba/SharedField hosting**, without gating unrelated Mac progress. This supersedes the 18 September sandbox-default/Omarchy-first execution wording, not the historical sandbox observations or material evidence. `5/0` remains the hosted Library/Expression learning encounter, not a visitor-side install: [INSTALLATION-VARIANTS.md](INSTALLATION-VARIANTS.md) retains that correction and clean-browser walk. Both useful installed products with actual Factory self-inhabitation **and** the complete source-backed corpus with real hosted publication remain required outcomes. A representative slice is not closure of either.
 
-The existing Day/NOW gate still bounds broad dependent fan-out. Independent useful implementation and affected tests continue without another whole-suite audit or planning approval phase. This GitHub-only setup/planning contribution does not authorise connection to or mutation of the person's machines; local operations below require their own current authority. Native matrices, C0–C5 and historical receipts keep their scopes.
+The existing Day/NOW gate still bounds broad dependent fan-out. Independent useful implementation and affected tests continue without another whole-suite audit or planning approval phase. Web Agents now deliver production implementation and controlled verification through PRs; local Agents alone integrate and perform real-provider/computer-use acceptance. This GitHub implementation commission does not authorise connection to or mutation of the person's machines; local operations below require their own current authority. Native matrices, C0–C5 and historical receipts keep their scopes.
 
 ## 1. Your job and why it exists
 
@@ -205,6 +205,36 @@ For the selected real setting: navigate System → Settings, select its owner/sc
 Exercise denied/absent/unavailable owners, invalid input, externally changed native state, expired or incomplete plans, double-click, partial desired holding, partial native application, missing receipt/readback and a lost apply reply. Preserve successful operations and original failures. Retry reads without replaying writes; only explicit retryable failed operations can enter a fresh plan. Unknown effects need native reconciliation, not an automatic repeat. Keep credential material out of drafts, ordinary profiles, logs, browser test output and receipts; transport references through the secure owner mechanism.
 
 Track 1 checks the current integrated Mac shell's focus, keyboard/IME/Escape, scrolling/resizing, state restoration and native terminal continuity. Track 2 verifies the native plan/authority/staleness/apply/readback contract at its exact cut, including concurrent CLI changes. Track 3 checks the selected QL/Expression consumer, not a duplicate setup authority. Return the exact commands, cases, native revisions and residual checks to #406/#299/#220/#65. Do not add a whole-suite audit gate before this useful slice.
+
+### 7.2 Installation/adoption extension — #423 / #268 / #299 / #109
+
+Use the exact PR head and its explicitly dependent System ingress, preserving the current UI successor from #65/#220. Local integration, not a web branch, determines the installed candidate. First install, first-use capability setup and day-two System maintenance remain distinct connected activities. `oi setup` is the terminal entry; `oi setup configure` uses native contributed-setting forms; `oi setup credentials` enters the existing AIKit terminal's discovered credential requirements and secure provider flow. Native CLI/headless plan/apply/status/recheck remains available.
+
+The production path is recognise an existing World → choose useful composition → retain/establish Central → review install effects and exact authority → one apply → native readback → existing #406 configuration flow → ordinary native work. No automatic session, model, microphone, Control grant or new Agent authority follows installation. Missing optional products remain absent. Hosted `5/0` stays the existing public Library, not a product-install task. Initialisation/project placement must not write a `human-adopted` policy on the person's behalf. A fresh ground lacking recognised work-placement authority must disclose that native-owner adoption obligation instead of inventing consent.
+
+Run the bounded executable packet before the material episode:
+
+```sh
+cargo test --manifest-path cli/Cargo.toml --all-targets --locked
+cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked
+cargo clippy --manifest-path cli/Cargo.toml --all-targets --locked -- -D warnings
+python3 scripts/test-adoption-local.py --oi /absolute/candidate/oi --output /approved/evidence/adoption-cli.json
+cd desktop/cradle
+node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-setup.test.mjs tests/adoption-lifecycle.test.mjs
+npx tsc --noEmit
+node walk/configuration-setup.test.mjs
+node walk/adoption-lifecycle.test.mjs
+```
+
+The Python packet uses a disposable HOME, actual native protocol, a real pseudo-terminal and native journal/readback. Its absent-Desktop teardown is explicitly a no-op plus real intent recording, **not installability proof**. `--native-read` additionally reads the current World. `--native-check /approved/native-checker` executes an already-authorised provider/computer-use checker once, retaining its exit and output hashes; the owner's full source/model/provider/receipt evidence remains required. It does not promote a successful exit to proof of inference or human acceptance.
+
+On each selected receiving Mac, pin app/binary/source hashes and the Day/NOW episode, then execute a clean install and an existing installation using actual native offers. Retain existing Central, foreign binaries, unselected products and Control bytes. Exercise partial and independent products, adding/removing Desktop, native CLI edits after review, expiration, interruption before/after dispatch, lost replies, partial apply, process restart and independent readback. A running/unknown/applied-but-unverified journal offers reads, not write replay. Scope rollback only to a native receipt that actually supports it; test exact before/after artifact hashes and retained source. Current source-build activation and receipt-owned bundle teardown are different owner lifecycles.
+
+Use native Mac computer interaction through System → Install and set up → composition/folder choices → Back/Cancel/reopen → explicit review/apply → configuration. Check focus, keyboard/IME/Escape, scrolling/narrow layout, same-session draft recovery, process-restart journal recovery and TUI continuity. Confirm that external CLI edits are reflected rather than overwritten. Validate new/rotated/revoked credential references through AIKit's real secure operations, exact scope, denied authority and redacted readback; do not paste secret material into configuration fields or logs. Start the selected real provider/model only under its own bounded authority and retain the actual model/provider/runtime result.
+
+For explicitly authorised Mac media checks, add `--mac-microphone` and/or `--mac-audio-output` to the packet. The former requests native permission and samples two seconds in memory, retaining only frame/peak facts; the latter emits one quiet 200 ms tone. Permission denial, missing device and silent input are failures, not successful fixture fallback. Physical audibility and the application's real voice path still need human/computer-use observation; the Swift probe is not proof of the app's microphone wiring. No media flag is on by default.
+
+Return failed and passed runs, exact heads/dependencies, native owner versions, installed paths, actual effects and remaining obligations to #423/#268/#299/#109 and the existing #65/#220 episode. Keep C0–C5, native matrices, full corpus/self-inhabitation scope and Day/NOW sequencing unchanged. No extra master campaign, machine mutation authority or serial Omarchy gate is introduced.
 
 ## 8. How the person enters the campaign
 

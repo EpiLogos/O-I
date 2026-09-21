@@ -145,7 +145,7 @@ export function MintAgent({ project, onMessage }: { project?: string; onMessage?
         </div>
         {(!getSkillSearchSource() || !getSetupInferenceSource()) && (
           <p className="oi-refusal" data-agency-inference-unavailable>
-            {!getSkillSearchSource() ? "No Skill search source is registered (AIKit #34/#118/#122). " : ""}
+            {!getSkillSearchSource() ? "No Skill search source is registered (AIKit issues 34/118/122). " : ""}
             {!getSetupInferenceSource() ? "No bounded setup-inference source is registered — the small comparison step in §handoff-3 supplies it once wired. " : ""}
             Manual search above stays fully usable without it.
           </p>
@@ -228,7 +228,7 @@ function ReviewActions({ draft, mintBound, onMessage, kernel, kernelOpFn }: {
 
       <ApplyRepertoireAction draft={draft} onMessage={onMessage} kernel={kernel} kernelOpFn={kernelOpFn}/>
 
-      <UnavailableActionRow label="Start work" reason="No owner operation starts a fresh unit of work from a minted Agent yet — Factory/AIKit session dispatch supplies it (O:I #220)."/>
+      <UnavailableActionRow label="Start work" reason="No owner operation starts a fresh unit of work from a minted Agent yet — Factory/AIKit session dispatch supplies it (O:I issue 220)."/>
       <UnavailableActionRow label="Change a running session" reason="Encounter sessions exist on the seam (kernel op “encounter”), but this Agency surface has no encounter host bound to render a changed session in — the integrator wires that pane."/>
       <UnavailableActionRow label="Grant authority" reason="No owner operation grants scoped authority to an Agent from this surface yet — native-action-authority supplies the grant, not Agency."/>
     </div>

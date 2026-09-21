@@ -1,0 +1,3299 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-histories",
+ "name": "Return of Zero — Episteme histories",
+ "description": "Ten register histories as streams in time: stations mark each record’s own sections; bodies carry the record’s opening movement.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "history-ancient-philosophy",
+   "name": "Ancient Philosophy — Measure, Tension, and the Form of Relation",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-ancient-philosophy-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-ancient-philosophy-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-ancient-philosophy-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-ancient-philosophy-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-ancient-philosophy-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.09999999999999998,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-ancient-philosophy-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-ancient-philosophy-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.49999999999999994,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-ancient-philosophy-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-ancient-philosophy-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-ancient-philosophy-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-ancient-philosophy · HISTORY",
+     "title": "Ancient Philosophy — Measure, Tension, and the Form of Relation",
+     "italic": "Movements 03-s01-p2-definition-cut-gift-danger 13-s1-p0-sign-migrates 19-s2-p0-difference-cannot-be-escaped 22-s2-p3-ares-aphrodite-harmonia +4 more · domain ancient-philosophy",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The earliest Greek mathematical presence in the current source pool arrives indirectly through Kaplan's history of zero. Greek arithmetic and geometry achieved powerful forms without a positional zero, while Hellenistic astronomical tables used a circular sign to hold an absent degree, minute, or second. The sign had a local office inside measurement; it had not yet become the freely operating arithmetic zero developed in India.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-indian-philosophy",
+   "name": "Indian Philosophy — Differentiation, Emptiness, Manifestation, Recognition",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-indian-philosophy-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-indian-philosophy-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-indian-philosophy-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-indian-philosophy-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-indian-philosophy-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-indian-philosophy-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-indian-philosophy-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-indian-philosophy-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-indian-philosophy-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-indian-philosophy-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-indian-philosophy-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-indian-philosophy-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-indian-philosophy · HISTORY",
+     "title": "Indian Philosophy — Differentiation, Emptiness, Manifestation, Recognition",
+     "italic": "Movements 02-s01-p1-define-subject 03-s01-p2-definition-cut-gift-danger 07-s0-p0-awareness-bends-display 08-s0-p1-inner-instrument +7 more · domain indian-philosophy",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The *Sāṃkhya Kārikā* in the Colebrooke/Wilson carrier supplies an early functional discrimination among *buddhi*, *ahaṃkāra*, and *manas*: determination, appropriation under the form of I and mine, and coordination among presentations and alternatives. These belong to *prakṛti*'s articulated apparatus. *Puruṣa* occupies a different position as witness or experient.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-language-law-nation-centralisation",
+   "name": "Language, Law, Nation, and Centralisation — The Historical Tree of Topos, Logos, Nomos, Natio",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-language-law-nation-centralisation-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-law-nation-centralisation-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-law-nation-centralisation-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-law-nation-centralisation-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-law-nation-centralisation-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-law-nation-centralisation-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-law-nation-centralisation-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-law-nation-centralisation-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-law-nation-centralisation-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-law-nation-centralisation-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-law-nation-centralisation-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-law-nation-centralisation-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-language-law-nation-centralisation · HISTORY",
+     "title": "Language, Law, Nation, and Centralisation — The Historical Tree of Topos, Logos, Nomos, Natio",
+     "italic": "Episteme historical register · domain language-law-nation-centralisation",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "The historical work carries two simultaneous offices already native to the essay's Jungian attitude to history.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-language-symbol-dialogue",
+   "name": "Language, Symbol, and Dialogue — How Meaning Moves",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-language-symbol-dialogue-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-symbol-dialogue-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-symbol-dialogue-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-symbol-dialogue-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-symbol-dialogue-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-symbol-dialogue-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-symbol-dialogue-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-symbol-dialogue-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-symbol-dialogue-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-symbol-dialogue-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-language-symbol-dialogue-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-language-symbol-dialogue-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-language-symbol-dialogue · HISTORY",
+     "title": "Language, Symbol, and Dialogue — How Meaning Moves",
+     "italic": "Movements 03-s01-p2-definition-cut-gift-danger 04-s01-p3-formal-limit-genealogy 09-s0-p2-vikalpa-samkalpa 10-s0-p3-apoha +9 more · domain language-symbol-dialogue",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Dignāga's theory of *apoha* reaches the project through Pind's historical reconstruction and the debates collected in *Apoha: Buddhist Nominalism and Human Cognition*. A word does not need to grasp a universal essence shared by every object it names. It can determine its range by excluding what is other: “cow” functions through the exclusion of non-cow.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-mathematics",
+   "name": "Mathematics — From the Empty Place to Recursive Return",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-mathematics-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-mathematics-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-mathematics-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-mathematics-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-mathematics-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-mathematics-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-mathematics-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-mathematics-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-mathematics-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-mathematics-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-mathematics-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-mathematics-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-mathematics · HISTORY",
+     "title": "Mathematics — From the Empty Place to Recursive Return",
+     "italic": "Movements 04-s01-p3-formal-limit-genealogy 13-s1-p0-sign-migrates 14-s1-p1-sunya-operational 15-s1-p2-empty-set-generates-one +15 more · domain mathematics",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Kaplan's historical spine separates three achievements often compressed into one invention. Babylonian scribes developed a separator for an absent internal place in sexagesimal notation. Hellenistic astronomers used a circular mark for an absent degree, minute, or second. Indian mathematicians brought zero into positional and arithmetic practice, where rules could state what it did under addition, subtraction, multiplication, and division.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-myth",
+   "name": "Myth — Genealogy, Transformation, and Technē",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-myth-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-myth-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-myth-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-myth-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-myth-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-myth-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-myth-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-myth-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-myth-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-myth-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-myth-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#7a3b2e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-myth-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-myth · HISTORY",
+     "title": "Myth — Genealogy, Transformation, and Technē",
+     "italic": "Movements 22-s2-p3-ares-aphrodite-harmonia 23-s2-p4-complex-dynamism 33-s4-p2-complexio-quaternity-senarius 35-s4-p4-gebser-apollo-dionysus +3 more · domain myth",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Hesiod's *Theogony* provides the genealogy. The selected passages identify Cytherea with Aphrodite and place Harmonia among the children born to Aphrodite and Ares, alongside Panic and Fear. The poem gives a family relation, not a theory of reconciliation. That restraint makes the image stronger in §2 · #3: the essay's reading begins from a genuine genealogy and asks what it means that war and love can bear both terror and concord.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-process-systems-science",
+   "name": "Process, Systems, and Science — From Substance to Participating Field",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-process-systems-science-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-process-systems-science-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-process-systems-science-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-process-systems-science-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-process-systems-science-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-process-systems-science-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-process-systems-science-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-process-systems-science-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-process-systems-science-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-process-systems-science-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-process-systems-science-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-process-systems-science-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-process-systems-science · HISTORY",
+     "title": "Process, Systems, and Science — From Substance to Participating Field",
+     "italic": "Movements 04-s01-p3-formal-limit-genealogy 06-s01-p5-return-zero 07-s0-p0-awareness-bends-display 11-s0-p4-tattvic-compression +11 more · domain process-systems-science",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Cusa's *On Learned Ignorance* develops coincidence, maximum and minimum, and geometrical figures whose limiting transformations approach an infinite relation without turning a finite construction into infinity itself. Flasch's study of Meister Eckhart situates Eckhart's distinctions between God and Godhead, intellect, creation, and the *in quantum* relation by which an identity holds according to a determinate respect.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-psychology",
+   "name": "Psychology — Crowd, Complex, Psychoid, and Provisional Self",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-psychology-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-psychology-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-psychology-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-psychology-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-psychology-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-psychology-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-psychology-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-psychology-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-psychology-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-psychology-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-psychology-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#5c6a74",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-psychology-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-psychology · HISTORY",
+     "title": "Psychology — Crowd, Complex, Psychoid, and Provisional Self",
+     "italic": "Movements 05-s01-p4-gebser-diaphaneity 12-s0-p5-objective-internality 20-s2-p1-dia-ballein 21-s2-p2-sym-ballein +12 more · domain psychology",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Le Bon's *The Crowd* gives the source pool's earliest sustained account of a psychological crowd. His narrow structural point survives the racial and evolutionary doctrines that surround it: under shared influence, a collectivity can make its participants feel, think, and act differently from their isolated condition, and this formation can occur without physical assembly. The crowd is a combination that produces new characteristics.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-technology-politics",
+   "name": "Technology, Politics, and Institutions — From Mass Formation to Planetary Technē",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-technology-politics-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-technology-politics-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-technology-politics-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-technology-politics-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-technology-politics-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-technology-politics-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-technology-politics-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-technology-politics-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-technology-politics-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-technology-politics-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-technology-politics-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#33424e",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-technology-politics-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-technology-politics · HISTORY",
+     "title": "Technology, Politics, and Institutions — From Mass Formation to Planetary Technē",
+     "italic": "Movements 01-s01-p0-question-before-mechanism 12-s0-p5-objective-internality 20-s2-p1-dia-ballein 21-s2-p2-sym-ballein +14 more · domain technology-politics-institutions",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Le Bon's 1895 crowd psychology already allows a nation to become a psychological crowd under shared influences without physical assembly. Broadcast and network media later provide the channels for this distributed formation. Jung's *The Undiscovered Self* adds the relation between statistical abstraction, mass identity, collectivised responsibility, and a State that appears as a quasi-personality.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "history-zero-subject-advent",
+   "name": "Zero, Subject, and the Advent of Integral Logic",
+   "character": "A stream of the Logos in time; stations mark its movement.",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#e9ece7",
+    "palette": [
+     "#20262b",
+     "#5c6a74"
+    ],
+    "material": "print",
+    "params": {
+     "count": 62000,
+     "size": 2.6,
+     "opacity": 0.9,
+     "contrast": 0.82,
+     "speed": 0.5,
+     "dispersion": 0.035,
+     "roundness": 0.2
+    }
+   },
+   "entities": [
+    {
+     "id": "history-zero-subject-advent-trunk",
+     "name": "the stream",
+     "kind": "formation",
+     "position": {
+      "x": 0.14,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 1.46,
+      "y": 0.055
+     },
+     "rotation": 0,
+     "shape": "square",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.7,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-zero-subject-advent-trunk-step0",
+        "text": "",
+        "shape": "square",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-zero-subject-advent-st0",
+     "name": "station 1",
+     "kind": "formation",
+     "position": {
+      "x": -0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-zero-subject-advent-st0-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-zero-subject-advent-st1",
+     "name": "station 2",
+     "kind": "formation",
+     "position": {
+      "x": 0.0,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-zero-subject-advent-st1-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-zero-subject-advent-st2",
+     "name": "station 3",
+     "kind": "formation",
+     "position": {
+      "x": 0.3,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-zero-subject-advent-st2-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-zero-subject-advent-st3",
+     "name": "station 4",
+     "kind": "formation",
+     "position": {
+      "x": 0.5999999999999999,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-zero-subject-advent-st3-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "history-zero-subject-advent-st4",
+     "name": "station 5",
+     "kind": "formation",
+     "position": {
+      "x": 0.9,
+      "y": -0.1,
+      "z": 0
+     },
+     "size": {
+      "x": 0.13,
+      "y": 0.13
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "",
+     "share": 1,
+     "tint": "#20262b",
+     "tintWeight": 0.95,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "history-zero-subject-advent-st4-step0",
+        "text": "",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "editorial",
+     "visible": true,
+     "kicker": "history-zero-subject-advent · HISTORY",
+     "title": "Zero, Subject, and the Advent of Integral Logic",
+     "italic": "Movements 05-s01-p4-gebser-diaphaneity 13-s1-p0-sign-migrates 14-s1-p1-sunya-operational 17-s1-p4-zero-outside-math +8 more · domain transverse-history",
+     "body": "",
+     "x": 0.033,
+     "y": 0.05,
+     "width": 470,
+     "size": 25,
+     "align": "left"
+    },
+    {
+     "id": "body",
+     "visible": true,
+     "kicker": "",
+     "title": "",
+     "italic": "",
+     "body": "Kaplan supplies the narrative movement from Babylonian separator through astronomical absence-marker, Indian arithmetic, Arabic transmission, European reception, set-theoretic construction, and the boundary pair `0/1`, `1/0`. The source's force lies in the changing office of the sign.",
+     "x": 0.033,
+     "y": 0.44,
+     "width": 620,
+     "size": 15,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T00:00:00.000Z"
+}

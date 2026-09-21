@@ -1,0 +1,1153 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-narrative-fanon-language-gaze-mask-recognition",
+  "name": "Fanon — Language, White Gaze, Racialised Body, Mask, and Recognition",
+  "description": "The recovered field in sequence: language installing a measure, the racial hail returning the body, the mask as inward criterion, recognition that must change the relation, and the historical person remaining available to answer.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-fan-0-language",
+      "name": "Speaking opens access and installs a measure",
+      "character": "Metropolitan French carries education, prestige, institutional authority: the speaker must speak in a field that has already attached a value to his manner of appearing.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#26221f",
+          "#8c3b2e",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e451",
+          "name": "the language — access and inherited judgement at once",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.13,
+            "z": 0
+          },
+          "size": {
+            "x": 0.361,
+            "y": 0.217
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "℘",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st494",
+                "text": "℘",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e452",
+          "name": "the speaker — acquiring real capacity; hearing himself through the standard",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.18,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st495",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e453",
+          "name": "the measure turned inward — then applied to others",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st496",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Peau noire, masques blancs, chapter I (French text, PDF pp.36–56)",
+          "title": "Speaking opens access and installs a measure",
+          "italic": "The scene demonstrates the double movement: real acquisition, and the alienation that can accompany it — the mask is socially effective because it can do something.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The Antillean speaker enters a language whose social authority precedes his arrival. Speech is heard through education, prestige and institutional authority; a sentence can secure a hearing because of the world it signals as well as what it says. The inherited whole places real acquisition at the beginning: linguistic skill opens capacities of participation, and treating it as an empty disguise would erase those capacities. But the authority attached to the skill",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "can become a rule for self-evaluation: the speaker begins to hear himself through the standard by which the dominant world hears him. The movement can also change his relation to others — an inward criterion used to judge those whose speech does not satisfy it, reproducing the distribution of prestige. The difference between capacity and its social valuation is indispensable: one can retain what was learned while disputing the hierarchy that claims authority over it.\n\nOccurrences: the acquired skill and its prestige (#1); the inward criterion (#1, deepened at #3); the reproduction of the hierarchy (#1, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-fan-1-gaze",
+      "name": "The body returns from a gaze that precedes it",
+      "character": "The racial hail on the train: from a smile toward the child's fear; the body-schema gives way to the epidermal racial schema; the chapter's aftermath refuses a completed reconciliation.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#26221f",
+          "#8c3b2e",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e454",
+          "name": "the train carriage — the practical bodily orientation interrupted",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.614,
+            "y": 0.307
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st497",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e455",
+          "name": "the hail — \"Look, a Negro!\" — the smile becoming the child's fear",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "!",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st498",
+                "text": "!",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e456",
+          "name": "historico-racial schema → epidermal racial schema — the field giving the visible body its force",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.8,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡→◦",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st499",
+                "text": "≡→◦",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · chapter V, PDF pp.118–148 (hail at pp.120–122)",
+          "title": "The body returns from a gaze that precedes it",
+          "italic": "The scene demonstrates a socially prepared image reorganising lived bodily possibility — not history become biology, but the occasion through which the image arrives.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "A person moves through a public world with a practical bodily orientation: the relation between body and surroundings makes movement possible before the body must be considered as an object of racial classification. The racial hail interrupts. In the train scene the repeated hail moves from a smile toward the child's fear; Fanon is made responsible for body, race and ancestors, and the space left around him becomes part of the event. The body-schema gives way to the epidermal racial schema. The two schemata stay",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "distinguishable: the historico-racial schema carries the inherited field through which the body is interpreted; the epidermal schema gives that field its force at the visible body — not history become biology, but the racialised appearance as occasion through which a socially prepared image reorganises lived bodily possibility. Chapter V continues beyond the hail through attempted answers and their frustration; its ending supplies no completed reconciliation, preventing the scene from becoming an illustration solved by naming its schema.\n\nOccurrences: the train and the child's fear (#2); the two schemata (#2); the frustrated answers and open ending (#2, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-fan-2-mask",
+      "name": "The mask becomes an inward criterion",
+      "character": "Accomplishment in the forms the dominant world recognises, with the standard of recognition administering the life it measures. No untouched private essence beneath.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#26221f",
+          "#8c3b2e",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e457",
+          "name": "the mask — legible form, opened participation",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.27,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.368
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st500",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e458",
+          "name": "the inward measure — anticipation, editing, the unapproved response as defect",
+          "kind": "formation",
+          "position": {
+            "x": 0.4,
+            "y": 0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st501",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e459",
+          "name": "the double edge — access reinforcing the measure admission depended on",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st502",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the title-field; persona and chameleon kept distinct",
+          "title": "The mask becomes an inward criterion",
+          "italic": "The mask embodies the passage from participation into self-administration — the whole cannot end by peeling a surface to reveal an untouched essence beneath.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The title's white mask gathers the pressure of appearing through a world that distributes recognisable humanity unevenly. It cannot be confined to intentional pretending: a subject may become accomplished in the forms through which the dominant world recognises him while the standard of recognition becomes a rule for administering his own life — the social relation acting through judgements that can feel like his own. The source field joins language, culture, desire and self-image: not four detachable masks, but ways the same hierarchy becomes",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "consequential — speech concerns being heard, self-image how one becomes available to oneself, recognition the response through which another affirms or withholds value. The double edge remains: a legible form opens participation, and participation reinforces the measure admission depended on. The person has not become unreal; what requires examination is the relation by which a contingent measure stands as the condition of value. Jungian persona and the lived chameleon image retain their own histories; the racial-colonial relation owns this whole.\n\nOccurrences: the recognising forms and their mastery (#1, #3); the inward administration (#3); the refused surface/essence ending (#3, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-fan-4-recognition",
+      "name": "Recognition must change the relation that distributes it",
+      "character": "Chapter VII: comparison under a socially governing standard; the reciprocal demand inside an unequal history; de-alienation answerable to material situations.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#26221f",
+          "#8c3b2e",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e460",
+          "name": "recognition — more than one participant's changed self-description",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.27,
+            "y": 0.099
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉◉",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st503",
+                "text": "◉◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e461",
+          "name": "the unequal history — one participant inheriting an authority to classify",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≠",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st504",
+                "text": "≠",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e462",
+          "name": "the revised terms — who determines the conditions of recognition",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st505",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · chapter VII, PDF pp.207–220; conclusion, pp.221–229",
+          "title": "Recognition must change the relation that distributes it",
+          "italic": "The whole demonstrates the destination: not private self-esteem but the social relation becoming revisable — a transformation of recognition makes its terms answerable to the person they concern.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The language and body scenes make private self-esteem an insufficient destination: a person can improve his self-account while continuing to be received through the same inherited racial measure. Chapter VII distinguishes comparison under a socially governing white standard from individually centred rivalry; recognition is pursued through a relation requiring more than one participant's changed self-description. If access is granted only on condition that the hierarchy remains authoritative,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "increased access does not change the relation that demanded the mask. The relation is reciprocal as a demand while the historical distribution of power stays unequal: one participant can inherit an authority to classify that the other does not possess in the same way. The conclusion keeps de-alienation answerable to different material situations — the demand cannot be reduced to intellectual self-revision, and the earlier bodily disruption is not forgotten when recognition becomes thinkable.\n\nOccurrences: the demanding reciprocity (#4); the inherited authority to classify (#1, #4); the conclusion's material answerability (#2, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-fan-5-return",
+      "name": "The historical person remains available to answer",
+      "character": "Four inherited comparisons stay unratified; the cross-whole neighbours keep their distinct worlds; A27 carries the primary proposed return.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#26221f",
+          "#8c3b2e",
+          "#c99a3c",
+          "#ddd3c1"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e463",
+          "name": "the mask returned to the scene that made it meaningful",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.626,
+            "y": 0.522
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st506",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e464",
+          "name": "the four flags — adaptive interface, category before encounter, co-internality, idol/image: all human-amplified: no",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4×",
+          "share": 1,
+          "tint": "#c99a3c",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st507",
+                "text": "4×",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e465",
+          "name": "Number Six · Apollo–Daphne · the moving mirror · Attica — comparisons that must return to distinct worlds",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◌",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st508",
+                "text": "◌",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e466",
+          "name": "A27 — the other's reality not exhausted by a prior image (project synthesis, human-amplified: no)",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A27",
+          "share": 1,
+          "tint": "#ddd3c1",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st509",
+                "text": "A27",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · the four inherited flags; the cross-whole ledger; the source standing",
+          "title": "The historical person remains available to answer",
+          "italic": "The return keeps the whole load-bearing: a mask without its world is a portable symbol of disguise; a world without the person's capacity to answer makes its classifications final.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The mask can return to the scene that made it meaningful: language carried a prestige hierarchy; the racial hail returned the body through inherited stories; the mask could become a criterion of self-administration; recognition required the social relation itself to become revisable. Removing any movement changes the image's force. The four inherited comparisons keep their unratified standing — mask as adaptive interface, category before encounter, Objective Co-Internality, idol/image — each with its return route named and none promoted by the permission to develop the whole. The cross-whole neighbours stay distinct:",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Number Six's fictional designation differs from a historically reproduced racial schema; Apollo–Daphne's erotic pursuit differs from colonial racial power; the moving mirror adds machine-mediated recursion; Attica's binding determination differs from an already-imposed hierarchy. The primary proposed return is A27 — recognition where the other's reality cannot be exhausted by a prior image — a project synthesis, human-amplified: no. The source standing holds: complete introduction, chapters I, V, VII and conclusion admitted from the French electronic text; English translation selection and quotation collation remain separate.\n\nDeclared cross-story: The Prisoner, the Ovidian Daphne, the moving mirror and Attica as named comparisons with their differences carried. ↳ Occurrences: the four scenes' retention (#0–#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

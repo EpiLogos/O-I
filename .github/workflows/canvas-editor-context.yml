@@ -1,0 +1,78 @@
+name: Canvas editor and context
+on:
+  push:
+    branches: [agent/canvas-editor-context-20260920]
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/**'
+      - 'desktop/cradle/tests/canvas-editor*'
+      - 'desktop/cradle/kernel/**'
+      - 'desktop/cradle/package*.json'
+      - '.github/workflows/canvas-editor-context.yml'
+permissions:
+  contents: read
+concurrency:
+  group: canvas-editor-${{ github.ref }}
+  cancel-in-progress: true
+jobs:
+  canvas:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+          fetch-depth: 0
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Tested source identity
+        run: git rev-parse HEAD | tee source-head.txt
+      - name: Install locked dependencies
+        working-directory: desktop/cradle
+        run: npm ci --ignore-scripts --no-audit --no-fund
+      - name: Export bounded review inputs
+        if: github.event_name == 'push'
+        run: |
+          mkdir -p /tmp/canvas-review
+          git diff --binary bfc674c529029b77036092891c5f1f52e6d389dd HEAD > /tmp/canvas-review/oi.patch
+          cp source-head.txt /tmp/canvas-review/
+          tar -czf canvas-review.tar.gz -C /tmp/canvas-review .
+      - uses: actions/upload-artifact@v4
+        if: github.event_name == 'push'
+        with:
+          name: canvas-review-inputs
+          path: canvas-review.tar.gz
+          retention-days: 1
+      - name: Type and range/lifecycle contracts
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          npx tsc --noEmit 2>&1 | tee ../../canvas-types.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs 2>&1 | tee ../../canvas-contracts.log
+      - name: Install browser
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Production editor selection and send interaction
+        working-directory: desktop/cradle
+        run: set -o pipefail; node tests/canvas-editor-browser.mjs 2>&1 | tee ../../canvas-browser.log
+      - name: Production bundle
+        working-directory: desktop/cradle
+        run: set -o pipefail; npx vite build 2>&1 | tee ../../canvas-build.log
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - name: Kernel adapter compatibility
+        run: set -o pipefail; cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --locked --all-targets 2>&1 | tee canvas-kernel.log
+      - name: Existing experience-source integrity
+        run: |
+          python3 -m unittest discover -s tests/experience -p 'test_*.py'
+          python3 scripts/experience_map.py --output-dir "$RUNNER_TEMP/canvas-experience"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: canvas-editor-context-proof
+          path: |
+            source-head.txt
+            canvas-*.log
+            desktop/canvas-*.log
+            desktop/cradle/tests/artifacts/canvas-editor
+          retention-days: 7

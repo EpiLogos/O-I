@@ -51,12 +51,34 @@ jobs:
         run: |
           npm ci --prefix desktop/cradle --no-audit --no-fund
           npm --prefix desktop/cradle run build
+      - name: Guard executable source — no unresolved markers, runner entry points parse
+        working-directory: desktop/cradle
+        run: |
+          # The bundle build never imports the walk runner, so a syntax error
+          # or an unresolved merge marker there is invisible to tsc/vite. Catch
+          # both cheaply against tracked executable source (F01/F02).
+          if git grep -lnE '^(<<<<<<<|>>>>>>>|=======$)' -- '*.mjs' '*.ts' '*.tsx'; then
+            echo "::error::unresolved conflict markers in executable source"; exit 1
+          fi
+          for f in $(git ls-files 'walk/*.mjs' 'walk/scenarios/*.mjs' 'tests/*.mjs'); do
+            node --check "$f" || { echo "::error::syntax error in $f"; exit 1; }
+          done
+          node --test tests/walk-runner.test.mjs
       - name: Prove Expression projection through the declared native engine
         working-directory: desktop/cradle
         run: node tests/expression-engine.mjs
       - name: Prove knowledge projection identity and provenance preservation
         working-directory: desktop/cradle
         run: node tests/knowledge-expression.mjs
+      - name: Prove the Factory attempt-task consumer joins the native reads honestly
+        working-directory: desktop/cradle
+        run: node tests/factory-attempt-task.mjs
+      - name: Prove collection source identity and native-protocol consumer regressions
+        working-directory: desktop/cradle
+        run: |
+          mkdir -p tests/artifacts/collection-source
+          set -o pipefail
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/collection-source-identity.test.mjs tests/collection-consumers.test.mjs | tee tests/artifacts/collection-source/controlled.log
       - name: Prove Explore travel, field search and primary projection readings (SF1)
         working-directory: desktop/cradle
         run: node --test tests/explore-field.test.mjs
@@ -75,6 +97,9 @@ jobs:
       - name: Prove search component and literal query transport (D)
         working-directory: desktop/cradle
         run: node tests/search-overlay.mjs
+      - name: Interact with the production Library on controlled owner protocol
+        working-directory: desktop/cradle
+        run: node tests/collection-browser.mjs
       - name: Prove Expression page placement and capture on one WebGL context
         working-directory: desktop/cradle
         run: node tests/expression-stage-placement.mjs
@@ -100,6 +125,13 @@ jobs:
         with:
           name: search-component-${{ github.sha }}
           path: desktop/cradle/tests/artifacts/search
+      - name: Retain collection source-identity consumer evidence
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: collection-consumer-evidence-${{ github.sha }}
+          path: desktop/cradle/tests/artifacts/collection-source/
+          if-no-files-found: warn
           if-no-files-found: warn
 
   native-shell:

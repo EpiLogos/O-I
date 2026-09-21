@@ -10,7 +10,7 @@
 
 // @ts-ignore -- language-neutral layout codec, unit-tested in tests/workspace-continuity.test.mjs.
 import { validBinding, validPane } from "./layout-codec.mjs";
-import { contains, groupsOf } from "./engine";
+import { contains, groupsOf, reconcileLayout } from "./engine";
 import { isTabPresentation, isWorkspaceMode, WORKSPACE_MODES } from "../workspace/mode";
 import {
   AGENCY_DEPTHS,
@@ -51,10 +51,11 @@ export function decodeLayout(value: unknown): LayoutState {
     // construction: an invalid record or a split is no canvas, never a guess.
     const sidePanePane = asPane(parsed.sidePane, surfaces);
     const sidePane = sidePanePane?.type === "group" ? sidePanePane : undefined;
+    const openIds = new Set([...groupsOf(root).flatMap(g => g.tabs), ...(sidePane?.tabs ?? [])]);
     const closedStack = Array.isArray(parsed.closedStack)
       ? (parsed.closedStack as unknown[]).filter(
           (id): id is SurfaceId =>
-            typeof id === "string" && !!surfaces[id] && !(root && contains(root, id)),
+            typeof id === "string" && !!surfaces[id] && !openIds.has(id) && surfaces[id].kind !== "blank",
         )
       : [];
     const depth = AGENCY_DEPTHS.includes(parsed.agencyDepth as AgencyDepth)
@@ -74,6 +75,7 @@ export function decodeLayout(value: unknown): LayoutState {
     // saved before they existed) restores as base mode with a tab strip, and
     // a value that is not one of the known names is dropped, never guessed.
     const mode = isWorkspaceMode(parsed.mode) && parsed.mode !== "base" ? parsed.mode : undefined;
+    const settingsReturnMode = isWorkspaceMode(parsed.settingsReturnMode) && parsed.settingsReturnMode !== "settings" ? parsed.settingsReturnMode : undefined;
     const tabPresentation = isTabPresentation(parsed.tabPresentation) && parsed.tabPresentation !== "strip" ? parsed.tabPresentation : undefined;
     const panelPlanesRaw = parsed.panelPlanes && typeof parsed.panelPlanes === "object" ? parsed.panelPlanes as Record<string, unknown> : {};
     const panelPlaneEntries = WORKSPACE_MODES.filter(name => typeof panelPlanesRaw[name] === "string" && (panelPlanesRaw[name] as string).length <= 64).map(name => [name, panelPlanesRaw[name] as string]);
@@ -85,7 +87,7 @@ export function decodeLayout(value: unknown): LayoutState {
     const detached = Array.isArray(parsed.detached) ? parsed.detached.filter((d): d is NonNullable<LayoutState["detached"]>[number] => !!d && typeof d === "object" && typeof d.surfaceId === "string" && !!surfaces[d.surfaceId] && typeof d.groupId === "string" && Number.isInteger(d.index) && d.index >= 0 && typeof d.pinned === "boolean") : [];
     if (!root) {
       // Austere rest: no chrome, depth clamped, nothing carried visually.
-      return { ...freshLayout(), mode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
+      return { ...freshLayout(), mode, settingsReturnMode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions, accompanying, detached, sidePane, subjectPlanes, windowBounds, surfaces, closedStack, agencyDepth: depth, rightDepth: AGENCY_DEPTHS.includes(parsed.rightDepth as AgencyDepth) ? parsed.rightDepth as AgencyDepth : "strip", leftWidth: typeof parsed.leftWidth === "number" ? Math.max(200, Math.min(600, parsed.leftWidth)) : 260, rightWidth: typeof parsed.rightWidth === "number" ? Math.max(240, Math.min(720, parsed.rightWidth)) : 320 };
     }
     let focusedGroupId =
       typeof parsed.focusedGroupId === "string" && contains(root, parsed.focusedGroupId)
@@ -94,7 +96,7 @@ export function decodeLayout(value: unknown): LayoutState {
     if (!groupsOf(root).some((g) => g.id === focusedGroupId))
       focusedGroupId = groupsOf(root)[0].id;
     const state: LayoutState = {
-      mode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions,
+      mode, settingsReturnMode, epiLogos: parsed.epiLogos === true ? true : undefined, panelPlanes, modeRegions,
       accompanying,
       sidePane,
       subjectPlanes,windowBounds,
@@ -116,7 +118,7 @@ export function decodeLayout(value: unknown): LayoutState {
         pane.type==="split" ? {...pane, children: pane.children.map(withPresentation)} : {...pane, tabPresentation};
       state.root = withPresentation(state.root);
     }
-    return state;
+    return reconcileLayout(state);
   } catch {
     return freshLayout();
   }

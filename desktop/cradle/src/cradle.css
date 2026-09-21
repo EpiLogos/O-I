@@ -1047,17 +1047,12 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
  * and THIS stage is their scroll owner. */
 .mode-stage > * { flex: none; min-width: 0; min-height: 100%; }
 
-/* Mode-centre retention (surface/retention.tsx): the shell's hidden park
- * layer owns no box; a parked container is display:none — genuinely
- * off-screen, which is what the surfaces' own viewport suspension laws
- * observe. When an outlet adopts the container, both wrappers are
- * layout-transparent (display:contents), so the centre's own root element
- * keeps the exact sizing and flow it had as the stage's/tabpanel's direct
- * child — the depth-matched rules below restore the two child-combinator
- * laws the extra wrappers would otherwise hide from `.mode-stage > *` and
- * `.mode-stage > main`. */
-.mode-centre-retention { display: none; }
-.retained-centre-outlet, .retained-centre-host { display: contents; }
+/* Mode-centre retention (surface/retention.tsx): the former hidden park
+ * layer and its adopt outlets are retired (spec §7.1) — every centre mounts
+ * in place, in the stage slot or the pane's own `.surface-retained`
+ * wrapper, so no park layer, layout-transparent wrappers or depth-matched
+ * child rules are needed here any more. `.mode-stage > *` above now reaches
+ * the centre body directly. */
 /* The warm trees (surface/retention.tsx): each warm tree renders whole at a
  * stable position; visibility flips, the DOM never moves — a hidden tree's
  * documents, editors and sessions stay alive for its return. */
@@ -1070,9 +1065,6 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
  * positions and remounted them on every first mode visit). */
 .rest-host { display: contents; }
 .rest-host[hidden] { display: none; }
-.mode-stage .retained-centre-outlet .retained-centre-host > * { flex: none; min-width: 0; min-height: 100%; }
-.desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > * { width: 100%; }
-.desktop-shell .mode-stage .retained-centre-outlet .retained-centre-host > main { padding-left: 0; padding-right: 0; border-left: none; border-right: none; }
 
 /* The reveal zone: an invisible, generous approach area rendered only while
  * unpinned (Workbench.tsx) — a pseudo-element cannot carry :hover. It sits
@@ -1104,11 +1096,10 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
    * under the right corner, so it gives none of its width away. With the
    * tools at the column's foot, the list's tabs start below the controls'
    * cut band instead of beside them. */
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="pinned-vertical"] > .tab-strip,
-  .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane[data-tab-presentation="pinned-vertical"] > .tab-strip,
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { padding: 0; }
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="pinned-vertical"] > .tab-strip > .tab-scroll,
-  .desktop-shell [data-window-corner="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip > .tab-scroll { padding-top: var(--oi-shell-tabbar); }
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="pinned-vertical"] > .tab-strip,
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip { padding: 0; }
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="pinned-vertical"] > .tab-strip > .tab-scroll,
+  .desktop-shell [data-window-corner-left="true"][data-tab-presentation="unpinned"][data-tab-orientation="vertical"] > .tab-strip > .tab-scroll { padding-top: var(--oi-shell-tabbar); }
 }
 
 @media (prefers-reduced-motion: reduce) {

@@ -35,7 +35,7 @@ import {
   hexToRgb,
 } from '../engine/colorPalettes';
 import { DEFAULT_COLOR_CONFIG } from '../engine/PointCloudField';
-import { CurvedSlider } from './CurvedSlider';
+import { ParamRow } from './ParamRow';
 
 interface ColorSystemPanelProps {
   config: PointCloudConfig;
@@ -558,7 +558,7 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
         {/* Ambient Glow Intensity Slider (if glow or adaptive active) */}
         {(activeBgMode === 'ambientGlow' || activeBgMode === 'adaptive') && (
           <div className="pt-1">
-            <CurvedSlider
+            <ParamRow
               id="bg-glow-intensity-slider"
               label="Atmospheric Back-Light Glow"
               value={activeGlowIntensity}
@@ -567,7 +567,6 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
               step={0.05}
               unit=""
               onChange={(v) => updateBackground(activeBgColor, activeBgMode, v)}
-              isLight={isLight}
             />
           </div>
         )}
@@ -609,7 +608,7 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
         </div>
 
         {/* Wave Propagation Speed */}
-        <CurvedSlider
+        <ParamRow
           id="color-cycle-speed-slider"
           label="Wave Cycle Speed"
           value={color.cycleSpeed}
@@ -618,11 +617,10 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.1}
           unit=" rad/s"
           onChange={(v) => updateColor({ cycleSpeed: v, enabled: true })}
-          isLight={isLight}
         />
 
         {/* Continuous Hue Shift */}
-        <CurvedSlider
+        <ParamRow
           id="color-hue-shift-slider"
           label="Continuous Hue Rotation"
           value={color.hueShiftSpeed}
@@ -631,13 +629,12 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.05}
           unit=" rev/s"
           onChange={(v) => updateColor({ hueShiftSpeed: v, enabled: true })}
-          isLight={isLight}
         />
 
         {/* Wave Angle & Direction */}
         <div className="space-y-1">
           <div className="flex items-center justify-between">
-            <CurvedSlider
+            <ParamRow
               id="color-angle-slider"
               label="Wave Angle (Direction)"
               value={color.angle}
@@ -646,7 +643,6 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
               step={5}
               unit="°"
               onChange={(v) => updateColor({ angle: v, enabled: true })}
-              isLight={isLight}
             />
           </div>
           <div className="flex items-center gap-1 justify-end">
@@ -667,7 +663,7 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
         </div>
 
         {/* Spatial Wave Frequency */}
-        <CurvedSlider
+        <ParamRow
           id="color-frequency-slider"
           label="Wave Band Frequency (Density)"
           value={color.waveFrequency}
@@ -676,7 +672,6 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.1}
           unit="x"
           onChange={(v) => updateColor({ waveFrequency: v, enabled: true })}
-          isLight={isLight}
         />
       </div>
 
@@ -690,7 +685,7 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
         </div>
 
         {/* Fluid Turbulence Marbling */}
-        <CurvedSlider
+        <ParamRow
           id="color-turbulence-slider"
           label="Fluid Noise Marbling (Warping)"
           value={color.turbulenceModulation}
@@ -699,11 +694,10 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.05}
           unit=""
           onChange={(v) => updateColor({ turbulenceModulation: v, enabled: true })}
-          isLight={isLight}
         />
 
         {/* Speed-Reactive Velocity Boost */}
-        <CurvedSlider
+        <ParamRow
           id="color-speed-reactive-slider"
           label="Kinetic Velocity Ignite (Speed Boost)"
           value={color.speedReactiveIntensity}
@@ -712,11 +706,10 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.05}
           unit="x"
           onChange={(v) => updateColor({ speedReactiveIntensity: v, enabled: true })}
-          isLight={isLight}
         />
 
         {/* Density Core Depth */}
-        <CurvedSlider
+        <ParamRow
           id="color-density-weight-slider"
           label="Stroke Density Weighting"
           value={color.densityWeight}
@@ -725,11 +718,10 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.05}
           unit=""
           onChange={(v) => updateColor({ densityWeight: v, enabled: true })}
-          isLight={isLight}
         />
 
         {/* Contrast / Sharpness */}
-        <CurvedSlider
+        <ParamRow
           id="color-contrast-slider"
           label="Gradient Band Sharpness (Contrast)"
           value={color.contrast}
@@ -738,7 +730,6 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           step={0.05}
           unit=""
           onChange={(v) => updateColor({ contrast: v, enabled: true })}
-          isLight={isLight}
         />
       </div>
 
@@ -757,7 +748,7 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
           </button>
         </div>
         <div className="grid grid-cols-2 gap-2">
-          <CurvedSlider
+          <ParamRow
             id="color-offset-x-slider"
             label="X Offset"
             value={color.fieldCenterOffset?.[0] ?? 0}
@@ -770,9 +761,8 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
                 fieldCenterOffset: [v, color.fieldCenterOffset?.[1] ?? 0],
               })
             }
-            isLight={isLight}
           />
-          <CurvedSlider
+          <ParamRow
             id="color-offset-y-slider"
             label="Y Offset"
             value={color.fieldCenterOffset?.[1] ?? 0}
@@ -785,7 +775,6 @@ export const ColorSystemPanel: React.FC<ColorSystemPanelProps> = ({
                 fieldCenterOffset: [color.fieldCenterOffset?.[0] ?? 0, v],
               })
             }
-            isLight={isLight}
           />
         </div>
       </div>

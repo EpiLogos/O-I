@@ -9,7 +9,13 @@ fn current_source_install_ready(id: &str, root: PathBuf, accepted: Option<String
             state.branch.as_deref().unwrap_or("unknown")
         ));
     }
-    if state.dirty {
+    // Only what can change the built artifact blocks a current-main
+    // install: tracked modifications and untracked files under the
+    // workspace's build paths. ProjectCentral is a repository's ground and
+    // documentation tree (never compiled, never shipped in the artifact), so
+    // owner-ground and session notes landing there must not wedge the
+    // installer — while any dirt elsewhere still refuses loudly.
+    if build_relevant_dirty(&state.path) {
         return Err(format!(
             "{id}: refusing current-main install from a dirty worktree; preserve/reconcile local work first"
         ));
@@ -30,4 +36,24 @@ fn current_source_install_ready(id: &str, root: PathBuf, accepted: Option<String
         ));
     }
     Ok(())
+}
+
+/// True when the worktree carries changes that could alter a build of this
+/// repository: modified or untracked files anywhere except ProjectCentral
+/// (that directory is ground and documentation by repo convention).
+fn build_relevant_dirty(root: &Path) -> bool {
+    match git_output(
+        root,
+        &[
+            "status",
+            "--porcelain",
+            "--",
+            ".",
+            ":(exclude)ProjectCentral/**",
+        ],
+    ) {
+        Ok(status) => !status.trim().is_empty(),
+        // If git itself fails, stay conservative and refuse the install.
+        Err(_) => true,
+    }
 }

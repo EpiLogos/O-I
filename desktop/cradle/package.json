@@ -12,7 +12,8 @@
     "prebuild": "node documents/build-personal.mjs",
     "test:personal-web": "node documents/build-personal.mjs && node --test tests/personal-web.test.mjs && node tests/personal-web-browser.mjs",
     "test:configuration-live": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-live-source.test.mjs",
-    "test:configuration-composition": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-composition.test.mjs"
+    "test:configuration-composition": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/configuration-composition.test.mjs",
+    "test:canvas-editor": "node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/canvas-editor-contract.test.mjs tests/material-html-lifecycle.test.mjs && node tests/canvas-editor-browser.mjs"
   },
   "dependencies": {
     "@codemirror/commands": "^6.11.0",
@@ -36,7 +37,9 @@
     "codemirror": "^6.0.2",
     "react": "^18.3.1",
     "react-dom": "^18.3.1",
-    "three": "0.186.0"
+    "three": "0.186.0",
+    "@lezer/markdown": "1.7.2",
+    "@lezer/common": "1.5.2"
   },
   "devDependencies": {
     "@tauri-apps/cli": "2.11.4",

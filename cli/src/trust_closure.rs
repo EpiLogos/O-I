@@ -42,8 +42,7 @@ fn trust_closure_route(args: &[OsString]) -> Option<Result<i32, String>> {
     let command = args.first().and_then(|value| value.to_str())?;
     match command {
         "install"
-            if args.len() == 2
-                || (args.len() == 4 && args[2].to_str() == Some("--source")) =>
+            if args.len() == 2 || (args.len() == 4 && args[2].to_str() == Some("--source")) =>
         {
             let module = args[1].to_string_lossy().to_ascii_lowercase();
             if matches!(module.as_str(), "central" | "ctrl") {
@@ -55,12 +54,20 @@ fn trust_closure_route(args: &[OsString]) -> Option<Result<i32, String>> {
                 None
             }
         }
-        "init" if args.iter().skip(1).any(|value| {
-            value
-                .to_str()
-                .map(|value| value == "--personal-ground" || value.starts_with("--personal-ground="))
-                .unwrap_or(false)
-        }) => Some(command_init_current_personal(args.get(1..).unwrap_or_default())),
+        "init"
+            if args.iter().skip(1).any(|value| {
+                value
+                    .to_str()
+                    .map(|value| {
+                        value == "--personal-ground" || value.starts_with("--personal-ground=")
+                    })
+                    .unwrap_or(false)
+            }) =>
+        {
+            Some(command_init_current_personal(
+                args.get(1..).unwrap_or_default(),
+            ))
+        }
         "skills" if args.len() == 2 && args[1].to_str() == Some("sync") => {
             Some(command_skills_sync())
         }
@@ -98,7 +105,9 @@ fn current_central_compatible(executable: &Path) -> bool {
         return false;
     };
     if !version.status.success()
-        || !String::from_utf8_lossy(&version.stdout).trim().starts_with("ctrl ")
+        || !String::from_utf8_lossy(&version.stdout)
+            .trim()
+            .starts_with("ctrl ")
     {
         return false;
     }
@@ -126,7 +135,9 @@ fn current_central_compatible(executable: &Path) -> bool {
         .iter()
         .filter_map(|action| action["id"].as_str())
         .collect::<HashSet<_>>();
-    CURRENT_CENTRAL_ACTIONS.iter().all(|required| ids.contains(required))
+    CURRENT_CENTRAL_ACTIONS
+        .iter()
+        .all(|required| ids.contains(required))
 }
 
 /// Install sources are exclusive-and-declared (#192): discover every
@@ -170,7 +181,9 @@ fn command_install_current_central(choice: Option<InstallSourceChoice>) -> Resul
         }
     }
     if let Some(on_path) = on_path.as_ref() {
-        let already_listed = existing.iter().any(|(_, path)| same_executable(path, on_path));
+        let already_listed = existing
+            .iter()
+            .any(|(_, path)| same_executable(path, on_path));
         if !already_listed && (!managed_present || !same_executable(on_path, &managed)) {
             existing.push(("PATH", on_path.clone()));
         }
@@ -211,7 +224,16 @@ fn command_install_current_central(choice: Option<InstallSourceChoice>) -> Resul
     }
 
     if choice == Some(InstallSourceChoice::Pinned) {
-        return install_pinned_central(&catalog, surface, &reference, &revision, &package_path, &install_root, &managed, managed_present);
+        return install_pinned_central(
+            &catalog,
+            surface,
+            &reference,
+            &revision,
+            &package_path,
+            &install_root,
+            &managed,
+            managed_present,
+        );
     }
 
     if let Some(registered) = registered.as_ref() {
@@ -232,7 +254,12 @@ fn command_install_current_central(choice: Option<InstallSourceChoice>) -> Resul
     if let Some(on_path) = on_path.as_ref() {
         if managed_present && same_executable(on_path, &managed) {
             println!("Found managed current-main Central installation on PATH; registering it.");
-            return register_central_modality(&catalog, surface, on_path.clone(), "oi-managed-pinned-source");
+            return register_central_modality(
+                &catalog,
+                surface,
+                on_path.clone(),
+                "oi-managed-pinned-source",
+            );
         }
         println!("Found Central with the current ProjectCentral contract; registering it.");
         return register_central_modality(&catalog, surface, on_path.clone(), "existing-path-ctrl");
@@ -244,7 +271,16 @@ fn command_install_current_central(choice: Option<InstallSourceChoice>) -> Resul
         );
     }
 
-    install_pinned_central(&catalog, surface, &reference, &revision, &package_path, &install_root, &managed, managed_present)
+    install_pinned_central(
+        &catalog,
+        surface,
+        &reference,
+        &revision,
+        &package_path,
+        &install_root,
+        &managed,
+        managed_present,
+    )
 }
 
 /// Register a Central executable under the modality the Central install
@@ -259,7 +295,13 @@ fn register_central_modality(
     let modality = declared_install_modality(surface);
     println!("Modality: {}", modality.as_str());
     println!("Install source: {install_source}");
-    register_existing_in_modality(catalog, surface, executable, modality, Some(install_source.to_owned()))
+    register_existing_in_modality(
+        catalog,
+        surface,
+        executable,
+        modality,
+        Some(install_source.to_owned()),
+    )
 }
 
 /// The modality the surface's install descriptor declares; the frame the
@@ -288,13 +330,19 @@ fn install_pinned_central(
 ) -> Result<i32, String> {
     if managed_present {
         println!("Found managed current-main Central installation; registering it.");
-        return register_central_modality(catalog, surface, managed.to_path_buf(), "oi-managed-pinned-source");
+        return register_central_modality(
+            catalog,
+            surface,
+            managed.to_path_buf(),
+            "oi-managed-pinned-source",
+        );
     }
 
     let git = resolve_executable("git")
         .ok_or_else(|| "git is required for the current-main Central source install".to_owned())?;
-    let cargo = resolve_executable("cargo")
-        .ok_or_else(|| "cargo is required for the current-main Central source install".to_owned())?;
+    let cargo = resolve_executable("cargo").ok_or_else(|| {
+        "cargo is required for the current-main Central source install".to_owned()
+    })?;
     let scratch = unique_temp_dir("oi-central-current-source")?;
 
     let init = Command::new(&git)
@@ -304,7 +352,10 @@ fn install_pinned_central(
         .map_err(|error| format!("failed to start git init: {error}"))?;
     if !init.success() {
         let _ = fs::remove_dir_all(&scratch);
-        return Err("Central source checkout initialization failed; composition state was not changed".to_owned());
+        return Err(
+            "Central source checkout initialization failed; composition state was not changed"
+                .to_owned(),
+        );
     }
     let remote = Command::new(&git)
         .arg("-C")
@@ -315,7 +366,10 @@ fn install_pinned_central(
         .map_err(|error| format!("failed to configure Central source remote: {error}"))?;
     if !remote.success() {
         let _ = fs::remove_dir_all(&scratch);
-        return Err("Central source remote configuration failed; composition state was not changed".to_owned());
+        return Err(
+            "Central source remote configuration failed; composition state was not changed"
+                .to_owned(),
+        );
     }
     let fetch = Command::new(&git)
         .arg("-C")
@@ -325,7 +379,10 @@ fn install_pinned_central(
         .map_err(|error| format!("failed to fetch Central current-main source: {error}"))?;
     if !fetch.success() {
         let _ = fs::remove_dir_all(&scratch);
-        return Err("Central current-main source fetch failed; composition state was not changed".to_owned());
+        return Err(
+            "Central current-main source fetch failed; composition state was not changed"
+                .to_owned(),
+        );
     }
     let checkout = Command::new(&git)
         .arg("-C")
@@ -335,7 +392,10 @@ fn install_pinned_central(
         .map_err(|error| format!("failed to check out Central current-main source: {error}"))?;
     if !checkout.success() {
         let _ = fs::remove_dir_all(&scratch);
-        return Err("Central current-main source checkout failed; composition state was not changed".to_owned());
+        return Err(
+            "Central current-main source checkout failed; composition state was not changed"
+                .to_owned(),
+        );
     }
     let head = Command::new(&git)
         .arg("-C")
@@ -351,8 +411,12 @@ fn install_pinned_central(
         ));
     }
 
-    fs::create_dir_all(install_root)
-        .map_err(|error| format!("cannot create Central install root {}: {error}", install_root.display()))?;
+    fs::create_dir_all(install_root).map_err(|error| {
+        format!(
+            "cannot create Central install root {}: {error}",
+            install_root.display()
+        )
+    })?;
     let install = Command::new(&cargo)
         .args(["install", "--locked", "--path"])
         .arg(scratch.join(package_path))
@@ -362,13 +426,21 @@ fn install_pinned_central(
         .map_err(|error| format!("failed to start Central cargo install: {error}"))?;
     let _ = fs::remove_dir_all(&scratch);
     if !install.success() {
-        return Err("Central current-main cargo install failed; prior composition state remains unchanged".to_owned());
+        return Err(
+            "Central current-main cargo install failed; prior composition state remains unchanged"
+                .to_owned(),
+        );
     }
     if !is_executable(managed) || !current_central_compatible(managed) {
         return Err("Central installed but does not expose the current ProjectCentral contract; prior composition state remains unchanged".to_owned());
     }
 
-    register_central_modality(catalog, surface, managed.to_path_buf(), "oi-pinned-source-build")
+    register_central_modality(
+        catalog,
+        surface,
+        managed.to_path_buf(),
+        "oi-pinned-source-build",
+    )
 }
 
 /// Path identity for candidate comparison: canonical paths when both
@@ -408,7 +480,10 @@ fn verify_current_central_root(executable: &Path, root: &Path) -> Result<(), Str
         .output()
         .map_err(|error| format!("failed to invoke Central doctor: {error}"))?;
     if !output.status.success() {
-        return Err(format!("Central doctor failed with status {}", output.status.code().unwrap_or(1)));
+        return Err(format!(
+            "Central doctor failed with status {}",
+            output.status.code().unwrap_or(1)
+        ));
     }
     let payload: serde_json::Value = serde_json::from_slice(&output.stdout)
         .map_err(|error| format!("Central doctor returned invalid structured output: {error}"))?;
@@ -424,7 +499,9 @@ fn verify_current_central_root(executable: &Path, root: &Path) -> Result<(), Str
         "Work",
     ] {
         if !root.join(required).is_dir() {
-            return Err(format!("current Central root is missing required path {required}"));
+            return Err(format!(
+                "current Central root is missing required path {required}"
+            ));
         }
     }
     if !root.join("Control/agents/wiki/wiki.json").is_file() {
@@ -459,7 +536,9 @@ fn command_init_current_personal(args: &[OsString]) -> Result<i32, String> {
         oi_cli::modality::InstallModality::FreshGround,
         Some(install_source),
     )?;
-    composition.modules.insert("central".to_owned(), registration);
+    composition
+        .modules
+        .insert("central".to_owned(), registration);
 
     let init = Command::new(&executable)
         .arg("--root")
@@ -510,7 +589,10 @@ fn command_init_current_personal(args: &[OsString]) -> Result<i32, String> {
     // fall back to naming the gap and the owner's adoption step.
     establish_or_disclose_placement_authority(&executable, &path);
 
-    println!("Initialized current-main {{O:I}} composition: {}", state_path()?.display());
+    println!(
+        "Initialized current-main {{O:I}} composition: {}",
+        state_path()?.display()
+    );
     println!("Personal ground: {}", path.display());
     println!("Central: {}", executable.display());
     println!("Modality: fresh-ground");
@@ -526,262 +608,39 @@ fn command_init_current_personal(args: &[OsString]) -> Result<i32, String> {
     Ok(0)
 }
 
-/// Ensure the freshly established ground can run agent sessions out of the box.
-///
-/// A fresh ground carries the guardian Skills but no recognised work-placement
-/// policy, so the first NOW/DAY allocation would otherwise stall at the strap.
-/// Best-effort: read Central's `central.work.policy`; if a recognised policy
-/// already governs the ground, do nothing. If none is recognised, establish a
-/// sensible default — every project under `Work/` writable, the `Control/*`
-/// regions protected — recorded as the ground's adopted policy (running the
-/// install is the adoption). If a default cannot be established safely, fall
-/// back to naming the gap and the owner's own adoption step rather than leaving
-/// a silent stall. This never changes init's success.
+/// Installation discovers authority; it never manufactures human adoption.
+/// Central owns recognised policy and its authenticated source operations.
 fn establish_or_disclose_placement_authority(executable: &Path, root: &Path) {
-    let Ok(output) = Command::new(executable)
+    let output = Command::new(executable)
         .arg("--root")
         .arg(root)
         .args(["--json", "action", "run", "central.work.policy", "{}"])
-        .output()
-    else {
-        return;
-    };
-    let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
-        return;
-    };
-    match payload.get("ok").and_then(serde_json::Value::as_bool) {
-        // A recognised policy already governs this ground: nothing to do.
-        Some(true) => {}
-        Some(false)
-            if payload
-                .pointer("/error/code")
-                .and_then(serde_json::Value::as_str)
-                == Some("policy_or_source_denied") =>
-        {
-            match establish_default_placement_policy(root) {
-                Ok(writable) => {
-                    println!();
-                    println!(
-                        "Established a default work-placement policy so agent sessions can run here."
-                    );
-                    if writable.is_empty() {
-                        println!(
-                            "  No projects under Work/ yet — bring one in and it joins the policy."
-                        );
-                    } else {
-                        println!("  Writable projects: {}", writable.join(", "));
-                    }
-                    println!(
-                        "  Recorded as your adopted policy at Control/user/placement.json — edit it to change what agents may write."
-                    );
-                }
-                Err(reason) => disclose_placement_gap(&reason),
+        .stdin(Stdio::null())
+        .output();
+    match output {
+        Ok(output) if output.status.success() => {
+            match serde_json::from_slice::<Value>(&output.stdout) {
+                Ok(payload) if payload["ok"] == true => {}
+                _ => disclose_placement_gap("Central did not disclose an adopted placement policy"),
             }
         }
-        _ => {}
+        _ => disclose_placement_gap("Central's native authority reading is unavailable"),
     }
 }
-
-/// Establish the default work-placement policy on a ground that has none.
-///
-/// Writes `Control/user/placement.json` (every project directly under `Work/`
-/// writable as a repository; the `Control/*` regions protected) and records the
-/// recognised `work-placement-policy` source relation. The policy file is
-/// written before the relation, so a recognised relation never points at a
-/// missing policy. Refuses (returns `Err`) rather than clobber an existing
-/// placement relation. Returns the writable project names for the confirmation.
-pub(crate) fn establish_default_placement_policy(root: &Path) -> Result<Vec<String>, String> {
-    use serde_json::json;
-
-    let mut writable: Vec<String> = Vec::new();
-    if let Ok(entries) = std::fs::read_dir(root.join("Work")) {
-        for entry in entries.flatten() {
-            if entry.path().is_dir() {
-                if let Ok(name) = entry.file_name().into_string() {
-                    if !name.starts_with('.') {
-                        writable.push(name);
-                    }
-                }
-            }
-        }
-    }
-    writable.sort();
-
-    let grants: Vec<serde_json::Value> = writable
-        .iter()
-        .map(|name| json!({"path": format!("Work/{name}"), "class": "repository"}))
-        .collect();
-    let policy = json!({
-        "schema": "central.work-placement-policy/v1",
-        "scope_ref": "control:root",
-        "writable": grants,
-        "protected": [
-            "Control/user",
-            "Control/relations",
-            "Control/agents/governance",
-            "Control/agents/wiki",
-            "Control/agents/expressions",
-            "Control/agents/machines"
-        ],
-        "enforcement": "native-actions",
-        "required_coverage": ["file-content"],
-        "lease_seconds": 3600
-    });
-
-    let relations_dir = root.join("Control/relations");
-    let relations_path = relations_dir.join("source-relations.json");
-    let mut relations_doc: serde_json::Value = if relations_path.exists() {
-        let raw = std::fs::read_to_string(&relations_path)
-            .map_err(|error| format!("could not read source relations: {error}"))?;
-        serde_json::from_str(&raw)
-            .map_err(|error| format!("source relations are not valid JSON: {error}"))?
-    } else {
-        json!({
-            "schema": "central.control.ground-relations/v1",
-            "project_id": "control:root",
-            "relations": []
-        })
-    };
-    let relations = relations_doc
-        .get_mut("relations")
-        .and_then(serde_json::Value::as_array_mut)
-        .ok_or_else(|| "source relations file has no relations array".to_owned())?;
-    if relations.iter().any(|relation| {
-        relation
-            .get("roles")
-            .and_then(serde_json::Value::as_array)
-            .is_some_and(|roles| {
-                roles
-                    .iter()
-                    .any(|role| role.as_str() == Some("work-placement-policy"))
-            })
-    }) {
-        return Err("a placement-policy relation already exists".to_owned());
-    }
-    let now = std::time::SystemTime::now()
-        .duration_since(std::time::UNIX_EPOCH)
-        .map(|elapsed| elapsed.as_secs())
-        .unwrap_or(0);
-    relations.push(json!({
-        "ref": "central:source:control:root:Control/user/placement.json",
-        "path": "Control/user/placement.json",
-        "roles": ["work-placement-policy"],
-        "provenance": "human-adopted",
-        "standing": "architecture-contract",
-        "treatment": "projectcentral-user",
-        "recognition": "oi-init-established-default-work-placement",
-        "recorded_at_unix_seconds": now
-    }));
-
-    // Policy file first: a recognised relation must never point at a missing
-    // policy. Both are created fresh on a ground that had none.
-    let user_dir = root.join("Control/user");
-    std::fs::create_dir_all(&user_dir)
-        .map_err(|error| format!("could not create Control/user: {error}"))?;
-    let mut policy_text = serde_json::to_string_pretty(&policy)
-        .map_err(|error| format!("could not encode placement policy: {error}"))?;
-    policy_text.push('\n');
-    std::fs::write(user_dir.join("placement.json"), policy_text)
-        .map_err(|error| format!("could not write placement.json: {error}"))?;
-
-    std::fs::create_dir_all(&relations_dir)
-        .map_err(|error| format!("could not create Control/relations: {error}"))?;
-    let mut relations_text = serde_json::to_string_pretty(&relations_doc)
-        .map_err(|error| format!("could not encode source relations: {error}"))?;
-    relations_text.push('\n');
-    let temp_path = relations_dir.join(".source-relations.json.tmp");
-    std::fs::write(&temp_path, relations_text)
-        .map_err(|error| format!("could not stage source relations: {error}"))?;
-    std::fs::rename(&temp_path, &relations_path)
-        .map_err(|error| format!("could not record source relations: {error}"))?;
-
-    Ok(writable)
-}
-
-/// Name the missing continuous-work authority and the owner's adoption step —
-/// the fallback when a default cannot be established (for example an existing
-/// draft placement relation, or a read-only ground).
 fn disclose_placement_gap(reason: &str) {
-    println!();
     println!("Continuous-work authority is not yet adopted for this ground.");
     println!("  {reason}.");
-    println!("  The ground exists and the guardian Skills are projected, but agent");
-    println!("  sessions that allocate a NOW/DAY field will stop at the session strap");
-    println!("  until a recognised work-placement-policy (central.work-placement-policy/v1)");
-    println!("  is adopted as your own human source.");
-    println!("  Re-check after adopting with: oi ctrl action run central.work.policy");
+    println!(
+        "  Installation and Project placement do not author Control or grant new Agent writes."
+    );
+    println!("  Keep ordinary native work usable; review the exact policy through Central's human-authorised source/adoption operation before starting an Agent session that requires it.");
+    println!("  No human-adopted provenance or authority grant was fabricated by O:I.");
 }
-
-/// Bring a project placed under `Work/` into the ground's work-placement policy
-/// so agent sessions can work in it at once. Best-effort: reads
-/// `central.work.policy`; extends a recognised policy with the project (adding
-/// the grant if missing), or establishes a default covering it when none is yet
-/// recognised. Any failure is silent and never fails the completed placement.
+/// Retain a placed Project without silently extending its write authority.
+/// A caller may be an Agent; placement is not consent to widen its privileges.
 pub(crate) fn ensure_project_in_placement(executable: &Path, root: &Path, project: &str) {
-    let Ok(output) = Command::new(executable)
-        .arg("--root")
-        .arg(root)
-        .args(["--json", "action", "run", "central.work.policy", "{}"])
-        .output()
-    else {
-        return;
-    };
-    let Ok(payload) = serde_json::from_slice::<serde_json::Value>(&output.stdout) else {
-        return;
-    };
-    match payload.get("ok").and_then(serde_json::Value::as_bool) {
-        Some(true) => {
-            if let Ok(true) = add_grant_to_policy(root, project) {
-                println!("  Added {project} to your work-placement policy; agents can work in it.");
-            }
-        }
-        Some(false)
-            if payload
-                .pointer("/error/code")
-                .and_then(serde_json::Value::as_str)
-                == Some("policy_or_source_denied")
-                && establish_default_placement_policy(root).is_ok() =>
-        {
-            println!(
-                "  Established a default work-placement policy covering Work/, including {project}."
-            );
-        }
-        _ => {}
-    }
-}
-
-/// Add one `Work/<project>` repository grant to an existing recognised policy,
-/// preserving every other field. Returns `true` when a grant was added, `false`
-/// when it was already present. Writes atomically (temp then rename).
-fn add_grant_to_policy(root: &Path, project: &str) -> Result<bool, String> {
-    use serde_json::json;
-
-    let policy_path = root.join("Control/user/placement.json");
-    let raw = std::fs::read_to_string(&policy_path)
-        .map_err(|error| format!("could not read placement policy: {error}"))?;
-    let mut policy: serde_json::Value = serde_json::from_str(&raw)
-        .map_err(|error| format!("placement policy is not valid JSON: {error}"))?;
-    let grants = policy
-        .get_mut("writable")
-        .and_then(serde_json::Value::as_array_mut)
-        .ok_or_else(|| "placement policy has no writable array".to_owned())?;
-    let target = format!("Work/{project}");
-    if grants
-        .iter()
-        .any(|grant| grant.get("path").and_then(serde_json::Value::as_str) == Some(target.as_str()))
-    {
-        return Ok(false);
-    }
-    grants.push(json!({"path": target, "class": "repository"}));
-    let mut text = serde_json::to_string_pretty(&policy)
-        .map_err(|error| format!("could not encode placement policy: {error}"))?;
-    text.push('\n');
-    let temp_path = policy_path.with_extension("json.tmp");
-    std::fs::write(&temp_path, text)
-        .map_err(|error| format!("could not stage placement policy: {error}"))?;
-    std::fs::rename(&temp_path, &policy_path)
-        .map_err(|error| format!("could not update placement policy: {error}"))?;
-    Ok(true)
+    println!("  Retained Project {project}; existing work-placement authority is unchanged.");
+    establish_or_disclose_placement_authority(executable, root);
 }
 
 /// The observed result of the `machine.adopt-current` fresh-ground step.
@@ -834,9 +693,8 @@ fn ctrl_version_label(executable: &Path) -> String {
         .output()
         .ok()
         .and_then(|output| {
-            (output.status.success()).then(|| {
-                String::from_utf8_lossy(&output.stdout).trim().to_owned()
-            })
+            (output.status.success())
+                .then(|| String::from_utf8_lossy(&output.stdout).trim().to_owned())
         })
         .filter(|value| !value.is_empty())
         .unwrap_or_else(|| "version unknown".to_owned())
@@ -872,8 +730,7 @@ fn adopt_current_machine_through_ctrl(
         .stdin(Stdio::null())
         .output()
         .map_err(|error| format!("failed to invoke {MACHINE_ADOPT_CURRENT_ACTION}: {error}"))?;
-    classify_machine_adoption(&output.stdout, &output.stderr)
-        .map(MachineAdoptionReport::Adopted)
+    classify_machine_adoption(&output.stdout, &output.stderr).map(MachineAdoptionReport::Adopted)
 }
 
 /// Interpret the ctrl ActionResult envelope for the adoption step. Pure,
@@ -923,10 +780,18 @@ fn classify_machine_adoption(stdout: &[u8], stderr: &[u8]) -> Result<MachineAdop
 }
 
 fn current_accepted_revision(catalog: &Catalog, id: &str) -> Option<String> {
-    catalog.surfaces.iter().find(|surface| surface.id == id).map(|surface| surface.docs_ref.clone())
+    catalog
+        .surfaces
+        .iter()
+        .find(|surface| surface.id == id)
+        .map(|surface| surface.docs_ref.clone())
 }
 
-fn current_dev_states(manifest: &SuiteManifest, catalog: &Catalog, ground: &Path) -> Vec<DevRepoState> {
+fn current_dev_states(
+    manifest: &SuiteManifest,
+    catalog: &Catalog,
+    ground: &Path,
+) -> Vec<DevRepoState> {
     dev_repo_ids(manifest)
         .into_iter()
         .map(|id| {
@@ -937,7 +802,10 @@ fn current_dev_states(manifest: &SuiteManifest, catalog: &Catalog, ground: &Path
 }
 
 fn command_current_dev(args: &[OsString]) -> Result<i32, String> {
-    let sub = args.first().and_then(|value| value.to_str()).unwrap_or("status");
+    let sub = args
+        .first()
+        .and_then(|value| value.to_str())
+        .unwrap_or("status");
     match sub {
         "status" => command_current_dev_status(args.get(1..).unwrap_or_default()),
         "sync" => command_dev_sync_v2(args.get(1..).unwrap_or_default()),
@@ -983,10 +851,21 @@ fn command_current_dev_status(args: &[OsString]) -> Result<i32, String> {
         })).map_err(|error| error.to_string())?);
     } else {
         println!("Current-main developer federation");
-        println!("{:<19} {:<10} {:<8} {:<8} {:<8} Head / observed origin/main", "Source", "Branch", "Dirty", "Ahead", "Behind");
+        println!(
+            "{:<19} {:<10} {:<8} {:<8} {:<8} Head / observed origin/main",
+            "Source", "Branch", "Dirty", "Ahead", "Behind"
+        );
         for state in states {
             if !state.present {
-                println!("{:<19} {:<10} {:<8} {:<8} {:<8} {}", state.id, "missing", "—", "—", "—", state.path.display());
+                println!(
+                    "{:<19} {:<10} {:<8} {:<8} {:<8} {}",
+                    state.id,
+                    "missing",
+                    "—",
+                    "—",
+                    "—",
+                    state.path.display()
+                );
                 continue;
             }
             println!(
@@ -994,10 +873,20 @@ fn command_current_dev_status(args: &[OsString]) -> Result<i32, String> {
                 state.id,
                 state.branch.as_deref().unwrap_or("?"),
                 state.dirty,
-                state.ahead.map(|value| value.to_string()).unwrap_or_else(|| "?".to_owned()),
-                state.behind.map(|value| value.to_string()).unwrap_or_else(|| "?".to_owned()),
+                state
+                    .ahead
+                    .map(|value| value.to_string())
+                    .unwrap_or_else(|| "?".to_owned()),
+                state
+                    .behind
+                    .map(|value| value.to_string())
+                    .unwrap_or_else(|| "?".to_owned()),
                 state.head.as_deref().unwrap_or("?"),
-                git_output(&state.path, &["rev-parse", "refs/remotes/origin/main^{commit}"]).unwrap_or_else(|_| "unavailable".into()),
+                git_output(
+                    &state.path,
+                    &["rev-parse", "refs/remotes/origin/main^{commit}"]
+                )
+                .unwrap_or_else(|_| "unavailable".into()),
             );
         }
     }
@@ -1030,26 +919,39 @@ fn command_current_dev_install(args: &[OsString]) -> Result<i32, String> {
             run_dev_command(&root, &command)?;
             let source = root.join("cli/target/release/oi");
             if !is_executable(&source) {
-                return Err(format!("O:I current-main build did not produce {}", source.display()));
+                return Err(format!(
+                    "O:I current-main build did not produce {}",
+                    source.display()
+                ));
             }
             let data_root = oi_data_root()?;
             ensure_managed_layout(&data_root)?;
             let target = data_root.join("bin/oi");
             let temp = data_root.join("bin/.oi.current-main.tmp");
-            fs::copy(&source, &temp).map_err(|error| format!("cannot stage current-main O:I binary: {error}"))?;
+            fs::copy(&source, &temp)
+                .map_err(|error| format!("cannot stage current-main O:I binary: {error}"))?;
             #[cfg(unix)]
             {
                 use std::os::unix::fs::PermissionsExt;
-                let mut permissions = fs::metadata(&temp).map_err(|error| error.to_string())?.permissions();
+                let mut permissions = fs::metadata(&temp)
+                    .map_err(|error| error.to_string())?
+                    .permissions();
                 permissions.set_mode(0o755);
                 fs::set_permissions(&temp, permissions).map_err(|error| error.to_string())?;
             }
-            fs::rename(&temp, &target).map_err(|error| format!("cannot promote current-main O:I binary: {error}"))?;
-            println!("oi: installed current-main developer build at {}", target.display());
+            fs::rename(&temp, &target)
+                .map_err(|error| format!("cannot promote current-main O:I binary: {error}"))?;
+            println!(
+                "oi: installed current-main developer build at {}",
+                target.display()
+            );
             continue;
         }
 
-        let product = manifest.products.iter().find(|product| product.id == id)
+        let product = manifest
+            .products
+            .iter()
+            .find(|product| product.id == id)
             .ok_or_else(|| format!("missing release build contract for {id}"))?;
         if !product.dev.build.is_empty() {
             run_dev_command(&root, &product.dev.build)?;
@@ -1061,7 +963,10 @@ fn command_current_dev_install(args: &[OsString]) -> Result<i32, String> {
             .map(|entry| root.join("target/release").join(entry))
             .filter(|path| is_executable(path));
         if product.artifact.entry.is_some() && executable.is_none() {
-            return Err(format!("{} build did not produce expected release executable", id));
+            return Err(format!(
+                "{} build did not produce expected release executable",
+                id
+            ));
         }
         let surface = find_surface(&catalog, &id)?;
         let registration = registration_in_modality(
@@ -1073,7 +978,11 @@ fn command_current_dev_install(args: &[OsString]) -> Result<i32, String> {
             Some("developer-source-build".to_owned()),
         )?;
         composition.modules.insert(id.clone(), registration);
-        println!("{id}: registered current-main source/build at {} @ {}", root.display(), surface.docs_ref);
+        println!(
+            "{id}: registered current-main source/build at {} @ {}",
+            root.display(),
+            surface.docs_ref
+        );
     }
     save_composition(&composition)?;
     Ok(0)
@@ -1098,7 +1007,10 @@ fn command_current_dev_acceptance(args: &[OsString]) -> Result<i32, String> {
             reasons.push("source checkout missing".to_owned());
         } else {
             if state.branch.as_deref() != Some("main") {
-                reasons.push(format!("branch is {}, expected main", state.branch.as_deref().unwrap_or("unknown")));
+                reasons.push(format!(
+                    "branch is {}, expected main",
+                    state.branch.as_deref().unwrap_or("unknown")
+                ));
             }
             if state.dirty {
                 reasons.push("worktree is dirty".to_owned());
@@ -1106,17 +1018,29 @@ fn command_current_dev_acceptance(args: &[OsString]) -> Result<i32, String> {
             if state.ahead.unwrap_or(0) != 0 || state.behind.unwrap_or(0) != 0 {
                 reasons.push(format!(
                     "upstream divergence ahead={} behind={}",
-                    state.ahead.map(|value| value.to_string()).unwrap_or_else(|| "?".to_owned()),
-                    state.behind.map(|value| value.to_string()).unwrap_or_else(|| "?".to_owned()),
+                    state
+                        .ahead
+                        .map(|value| value.to_string())
+                        .unwrap_or_else(|| "?".to_owned()),
+                    state
+                        .behind
+                        .map(|value| value.to_string())
+                        .unwrap_or_else(|| "?".to_owned()),
                 ));
             }
             if let Some(accepted) = state.accepted.as_deref() {
                 if state.head.as_deref() != Some(accepted) {
-                    reasons.push(format!("HEAD {} != accepted current main {accepted}", state.head.as_deref().unwrap_or("unknown")));
+                    reasons.push(format!(
+                        "HEAD {} != accepted current main {accepted}",
+                        state.head.as_deref().unwrap_or("unknown")
+                    ));
                 }
             } else if let Ok(upstream) = git_output(&state.path, &["rev-parse", "@{upstream}"]) {
                 if state.head.as_deref() != Some(upstream.as_str()) {
-                    reasons.push(format!("HEAD {} != upstream main {upstream}", state.head.as_deref().unwrap_or("unknown")));
+                    reasons.push(format!(
+                        "HEAD {} != upstream main {upstream}",
+                        state.head.as_deref().unwrap_or("unknown")
+                    ));
                 }
             }
         }
@@ -1137,7 +1061,10 @@ fn command_current_dev_acceptance(args: &[OsString]) -> Result<i32, String> {
     let composition = load_composition()?;
     let central_surface = find_surface(&catalog, "central")?;
     let central_executable = current_central_from_composition(central_surface, &composition);
-    let central_ok = central_executable.as_ref().map(|path| current_central_compatible(path)).unwrap_or(false);
+    let central_ok = central_executable
+        .as_ref()
+        .map(|path| current_central_compatible(path))
+        .unwrap_or(false);
     if !central_ok {
         ok = false;
     }
@@ -1164,19 +1091,42 @@ fn command_current_dev_acceptance(args: &[OsString]) -> Result<i32, String> {
     });
 
     if json_mode {
-        println!("{}", serde_json::to_string_pretty(&result).map_err(|error| error.to_string())?);
+        println!(
+            "{}",
+            serde_json::to_string_pretty(&result).map_err(|error| error.to_string())?
+        );
     } else {
-        println!("Current-main software-world acceptance: {}", if ok { "PASS" } else { "FAIL" });
+        println!(
+            "Current-main software-world acceptance: {}",
+            if ok { "PASS" } else { "FAIL" }
+        );
         for row in result["repositories"].as_array().unwrap_or(&Vec::new()) {
             println!(
                 "  {:<19} {}{}",
                 row["id"].as_str().unwrap_or("?"),
                 if row["ok"] == true { "PASS" } else { "FAIL" },
-                row["reasons"].as_array().filter(|items| !items.is_empty()).map(|items| format!(" — {}", items.iter().filter_map(|item| item.as_str()).collect::<Vec<_>>().join("; "))).unwrap_or_default(),
+                row["reasons"]
+                    .as_array()
+                    .filter(|items| !items.is_empty())
+                    .map(|items| format!(
+                        " — {}",
+                        items
+                            .iter()
+                            .filter_map(|item| item.as_str())
+                            .collect::<Vec<_>>()
+                            .join("; ")
+                    ))
+                    .unwrap_or_default(),
             );
         }
-        println!("  Central contract      {}", if central_ok { "PASS" } else { "FAIL" });
-        println!("  Central root shape    {}", if root_ok { "PASS" } else { "FAIL" });
+        println!(
+            "  Central contract      {}",
+            if central_ok { "PASS" } else { "FAIL" }
+        );
+        println!(
+            "  Central root shape    {}",
+            if root_ok { "PASS" } else { "FAIL" }
+        );
     }
     Ok(if ok { 0 } else { 4 })
 }
@@ -1256,30 +1206,22 @@ mod trust_closure_modality_tests {
     }
 
     #[test]
-    fn add_grant_to_policy_appends_once_and_is_idempotent() {
+    fn project_placement_does_not_widen_or_mint_control_authority() {
         let root = tempfile::TempDir::new().unwrap();
         let user = root.path().join("Control/user");
         std::fs::create_dir_all(&user).unwrap();
-        std::fs::write(
-            user.join("placement.json"),
-            r#"{"schema":"central.work-placement-policy/v1","scope_ref":"control:root","writable":[{"path":"Work/One","class":"repository"}],"protected":["Control/user"],"enforcement":"native-actions","required_coverage":["file-content"],"lease_seconds":3600}"#,
-        )
-        .unwrap();
-
-        // First add joins the writable set; a second add is idempotent.
-        assert!(add_grant_to_policy(root.path(), "Two").unwrap());
-        assert!(!add_grant_to_policy(root.path(), "Two").unwrap());
-
-        let policy: serde_json::Value =
-            serde_json::from_slice(&std::fs::read(user.join("placement.json")).unwrap()).unwrap();
-        let paths: Vec<&str> = policy["writable"]
-            .as_array()
-            .unwrap()
-            .iter()
-            .filter_map(|grant| grant["path"].as_str())
-            .collect();
-        assert_eq!(paths, vec!["Work/One", "Work/Two"]);
-        // Pre-existing fields are preserved.
-        assert_eq!(policy["enforcement"], "native-actions");
+        let policy = br#"{"schema":"central.work-placement-policy/v1","writable":[{"path":"Work/One","class":"repository"}],"protected":["Control/user"]}"#;
+        std::fs::write(user.join("placement.json"), policy).unwrap();
+        // Missing native authority read is a degradation, not permission to edit.
+        let missing = root.path().join("absent-native-central");
+        ensure_project_in_placement(&missing, root.path(), "Two");
+        assert_eq!(std::fs::read(user.join("placement.json")).unwrap(), policy);
+        assert!(!root
+            .path()
+            .join("Control/relations/source-relations.json")
+            .exists());
+        let fresh = tempfile::TempDir::new().unwrap();
+        ensure_project_in_placement(&missing, fresh.path(), "New");
+        assert!(!fresh.path().join("Control").exists());
     }
 }

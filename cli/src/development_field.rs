@@ -1,5 +1,6 @@
 use serde::{Deserialize, Serialize};
 use sha2::{Digest, Sha256};
+use std::cmp::Ordering;
 use std::collections::{BTreeMap, BTreeSet};
 
 pub const DEVELOPMENT_PROTOCOL: &str = "1.0";
@@ -25,7 +26,7 @@ impl ProtocolRange {
     pub fn validate(&self) -> Result<(), String> {
         let min = parse_version(&self.protocol_min)?;
         let max = parse_version(&self.protocol_max)?;
-        if min > max {
+        if version_cmp(&min, &max) == Ordering::Greater {
             return Err(format!(
                 "protocol range is inverted: {} > {}",
                 self.protocol_min, self.protocol_max
@@ -39,7 +40,8 @@ impl ProtocolRange {
         let protocol = parse_version(protocol)?;
         let min = parse_version(&self.protocol_min)?;
         let max = parse_version(&self.protocol_max)?;
-        Ok(protocol >= min && protocol <= max)
+        Ok(version_cmp(&protocol, &min) != Ordering::Less
+            && version_cmp(&protocol, &max) != Ordering::Greater)
     }
 }
 
@@ -340,6 +342,55 @@ fn parse_version(value: &str) -> Result<Vec<u64>, String> {
                 .map_err(|_| format!("protocol version component overflows in `{value}`"))
         })
         .collect()
+}
+
+/// Protocol versions compare with trailing zeros elided: `1.0` and `1.0.0`
+/// are the same version, so a declared range of `1.0.0..=1.0.0` must admit a
+/// runtime protocol of `1.0`. Raw vector comparison would call `[1,0]` less
+/// than `[1,0,0]` and reject that envelope.
+fn version_cmp(left: &[u64], right: &[u64]) -> Ordering {
+    let width = left.len().max(right.len());
+    let padded = |values: &[u64]| {
+        let mut padded = values.to_vec();
+        padded.resize(width, 0);
+        padded
+    };
+    padded(left).cmp(&padded(right))
+}
+
+#[cfg(test)]
+mod protocol_version_tests {
+    use super::*;
+
+    fn range(min: &str, max: &str) -> ProtocolRange {
+        ProtocolRange {
+            protocol_min: min.to_owned(),
+            protocol_max: max.to_owned(),
+        }
+    }
+
+    #[test]
+    fn a_runtime_protocol_below_the_range_is_refused() {
+        assert!(!range("1.1.0", "2.0.0").supports("1.0").unwrap());
+    }
+
+    #[test]
+    fn trailing_zeros_do_not_exclude_the_runtime_protocol() {
+        assert!(range("1.0.0", "1.0.0").supports("1.0").unwrap());
+        assert!(range("1.0.0", "2.0.0").supports("1.0").unwrap());
+        assert!(range("0.9", "1.0").supports("1.0.0").unwrap());
+    }
+
+    #[test]
+    fn an_inverted_range_is_refused() {
+        assert!(range("2.0.0", "1.0").validate().is_err());
+        assert!(range("1.0.1", "1.0").validate().is_err());
+    }
+
+    #[test]
+    fn a_protocol_above_the_range_is_refused() {
+        assert!(!range("1.0", "1.0").supports("2.0").unwrap());
+    }
 }
 
 fn hex_sha256(bytes: &[u8]) -> String {

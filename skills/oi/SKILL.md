@@ -46,7 +46,7 @@ oi ctrl action list --json
 
 `oi install central` registers a compatible existing `ctrl` first. Otherwise it follows the pinned native Central source-install contract. `oi init --personal-ground` requires the real native surface; never create a partial Control/Work imitation when Central is absent.
 
-A fresh Central root must contain `Control/user`, `Control/agents`, `Control/machines`, `.central`, and `Work`. The three Control roots initially remain empty.
+A fresh Central root must contain `Control/user`, `Control/agents`, `Control/machines`, `.central`, and `Work`. Bootstrap establishes the owner-commissioned defaults a fresh ground needs to run agents out of the box (O:I #65): `Control/user/placement.json` (the `central.work-placement-policy/v1`), a current-machine declaration under `Control/machines`, and the root `Control/agents/wiki/wiki.json`, each recognised through its recorded source relation; `Control/agents/governance` starts empty. These are adopted policy, not agent-generated content — durable Control beyond them stays human-authored or explicitly adopted (below).
 
 ## Guardian SkillSet and refresh
 

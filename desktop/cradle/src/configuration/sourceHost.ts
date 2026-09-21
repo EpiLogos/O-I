@@ -20,6 +20,8 @@
  */
 import type {ConfigPlaneSource} from "./source";
 import {createUnboundConfigPlaneSource} from "./source";
+import type {HarnessSource} from "./harnessSource";
+import {createUnboundHarnessSource} from "./harnessSource";
 import {detectTransport, kernelOp} from "../kernel/bridge";
 
 declare const __CRADLE_WALK__: boolean;
@@ -66,4 +68,33 @@ export function fixtureWorld(): Promise<FixtureWorldActions | null> {
     }));
   }
   return Promise.resolve(null);
+}
+
+// ---------------------------------------------------------------------------
+// the harness/chat face's source (same gate, same honest absence)
+
+let harnessCached: Promise<HarnessSource> | null = null;
+
+/** Which `HarnessSource` this build renders the "Chat & harnesses" panel
+ * from — the same walk/production gate as `configPlaneSource`: fixture in
+ * dev/walk builds (labelled on screen), the live kernel binding in
+ * production, and the honest absence where no kernel transport exists. */
+export function harnessPlaneSource(): Promise<HarnessSource> {
+  if (!harnessCached) {
+    if (__CRADLE_WALK__) {
+      harnessCached = import("./harnessFixture").then((module) => module.createFixtureHarnessSource());
+    } else {
+      const transport = detectTransport();
+      if (transport.kind === "unavailable") {
+        harnessCached = Promise.resolve(createUnboundHarnessSource(
+          `no kernel transport is reachable (${transport.reason}); the harness face needs the Tauri host`,
+        ));
+      } else {
+        harnessCached = import("./harnessSource").then((module) =>
+          module.createLiveHarnessSource((op) => kernelOp(transport, op)),
+        );
+      }
+    }
+  }
+  return harnessCached;
 }

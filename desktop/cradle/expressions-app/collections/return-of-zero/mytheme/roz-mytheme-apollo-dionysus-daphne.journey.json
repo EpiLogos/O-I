@@ -1,0 +1,1688 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-apollo-dionysus-daphne",
+  "name": "Apollo, Dionysus and Daphne",
+  "description": "The composed philosophical whole: a world becomes a view, the view grows confident, Dionysus opens the enclosure, participation risks its own overriding image, Daphne requires someone to remain other, the view becomes transparent to its context, and form returns with its source still able to answer.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-apd-0-view",
+      "name": "A world becomes a view",
+      "character": "Apollo names the achievement of communicable form: a boundary makes something distinct and holdable long enough to be intelligible.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#a5623a",
+          "#c9b458"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e122",
+          "name": "the world — before the view",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 1.044,
+            "y": 0.737
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#4a5d7e",
+          "tintWeight": 0.35,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st131",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e123",
+          "name": "Apollo's boundary — the communicable image",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.758,
+            "y": 0.614
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.8,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st132",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e124",
+          "name": "what stands out",
+          "kind": "formation",
+          "position": {
+            "x": -0.2,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.221,
+            "y": 0.204
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.2,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st133",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · the authored whole; Nietzsche and Gebser in distinct registers",
+          "title": "A world becomes a view",
+          "italic": "Apollo embodies form's gift: the image lets one person show another what has been seen, and gives the seer something definite to revisit and change.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "A finite being gives the world a form it can inhabit and communicate. Something stands out; a boundary makes it distinct; an image holds it long enough to become intelligible. In Taylor's Mytheme, Apollo names this achievement. The image lets one person show another what has been seen without requiring them to have occupied the same place — and gives the seer something definite to revisit, question and change. This is the explicitly composed whole of Taylor's Apollo–Dionysus–Daphne programme; the combination with Daphne belongs to this authored Mytheme, and its sequence takes place in the activity of seeing, participating and answering.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the standing-out and its boundary (#0); the communicable image (#0, #1); the revisitable view (#0, #5→0).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-apd-1-confidence",
+      "name": "The view grows confident of its own completeness",
+      "character": "The view conceals the life from which it was selected, then treats what escapes its measure as deficient. The absent Father gives the concealment its authorial image.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#c9b458",
+          "#8c3b2e"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e125",
+          "name": "the enclosure — now claiming completeness",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.921,
+            "y": 0.676
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1.4,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st134",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e126",
+          "name": "the absent Father — surrogate authority, self-exemption",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.116,
+            "y": 0.116
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st135",
+                "text": "∅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e127",
+          "name": "what escapes the measure — now read as deficiency",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "·",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st136",
+                "text": "·",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e128",
+          "name": "the invested viewer — body, history, language, concern",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.38,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st137",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Gebser pp.11–21, 255–58 (paraphrased); Taylor's P5 carrier; A20",
+          "title": "The view grows confident of its own completeness",
+          "italic": "Possession begins when the image's valuation governs what its source is allowed to be — the aloof neutrality presents situated authority as though its conditions had vanished.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The movement begins when formation grows confident: the view conceals the life from which it was selected, then treats whatever escapes its measure as deficient. Gebser gives perspectivity its achievement — Giotto's depth, Petrarch's landscape, Alberti's construction — and its restriction when one sector claims exclusive validity. Taylor's P5 carrier brings the pressure inside the viewer: body, history,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "language and concern affect what becomes salient. The absent Father gives this concealment its authorial image — lack numbed, a surrogate presence invoked as ultimate warrant while the view's own position exempts itself from the order it imposes. A20 receives the transition: possession occurs when the image's valuation governs what its source is allowed to be; the difference appears when the source resists.\n\nOccurrences: the confident enclosure (#0–#1); the invoked Father as warrant and displacement (#1); the resistant source (#1, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-apd-2-dionysus",
+      "name": "Dionysus opens the enclosure and returns through form",
+      "character": "What dies is the form's claim to stand complete in itself; what returns must acquire a form through which living relation can continue.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#5a4a8a",
+          "#c9b458",
+          "#3c6e71"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e129",
+          "name": "the enclosure opened",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 1.8,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st139",
+                "text": "",
+                "shape": "square",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.798,
+                    "y": 0.583
+                  },
+                  "rotation": 0,
+                  "tint": "#4a5d7e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st140",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.798,
+                    "y": 0.798
+                  },
+                  "rotation": 0,
+                  "tint": "#5a4a8a",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st141",
+                "text": "",
+                "shape": "square",
+                "hold": 2.4,
+                "transition": 1.4,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.798,
+                    "y": 0.583
+                  },
+                  "rotation": 0,
+                  "tint": "#4a5d7e",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e130",
+          "name": "Dionysus — dismemberment and death/rebirth of bounded identity",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "ϴ",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st142",
+                "text": "ϴ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e131",
+          "name": "Nietzsche §21 — each power expressive through the other",
+          "kind": "formation",
+          "position": {
+            "x": -0.66,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♪",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st143",
+                "text": "♪",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e132",
+          "name": "life returning through reconstitution",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.106,
+            "y": 0.106
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "❋",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st144",
+                "text": "❋",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Nietzsche Birth of Tragedy §1 (p.21) and §21 (p.167); the central plan's dismemberment",
+          "title": "Dionysus opens the enclosure and returns through form",
+          "italic": "Dionysus names the release through which the view's implication in life becomes available again — within this composition, what dies is the form's claim, and what returns must be communicable enough to answer for.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Participation restores the view to the living relation its self-sufficiency concealed. The central plan gives this release the force of dismemberment and death/rebirth: within this Taylor-authored sequence, what dies is the form's claim to stand complete in itself; what returns must acquire a form through which living relation can continue. Nietzsche supplies the artistic relation: in §1, art develops through the duplexity of the Apollonian",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "and Dionysian; in §21, Dionysus speaks Apollo's language and Apollo finally speaks Dionysus's. The formed account must let its participation affect what it says, and participation must become communicable enough for a particular speaker to answer for it. Yet a moment of openness does not settle the question: participation can itself become an overriding image, an assertion of unity deciding in advance what another being's difference must mean.\n\nOccurrences: the opened enclosure (#2); Dionysian dismemberment and reconstitution (#2); reciprocal expression, §21 (#2); fusion as the pathology distinguished in the programme (#2, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-apd-3-daphne",
+      "name": "Daphne requires someone to remain other",
+      "character": "Apollo cannot make illumination into entitlement; Dionysus cannot make participation into permission to absorb. Her alterity requires both powers to return differently.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#3f5a36",
+          "#c9b458",
+          "#5a4a8a"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e133",
+          "name": "Daphne — the centre that exceeds what either power makes of her",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.56,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Daphne",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st145",
+                "text": "Daphne",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e134",
+          "name": "the transformed tree's recoil — preserved with the seeming assent",
+          "kind": "formation",
+          "position": {
+            "x": -0.3,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.491,
+            "y": 0.552
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st146",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e135",
+          "name": "Apollo — articulation without final possession",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.116,
+            "y": 0.116
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A",
+          "share": 1,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st147",
+                "text": "A",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e136",
+          "name": "Dionysus — openness without dissolving the responder",
+          "kind": "formation",
+          "position": {
+            "x": 0.64,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "ϴ",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st148",
+                "text": "ϴ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the alterity check (human-amplified: yes); the Ovidian whole kept distinct",
+          "title": "Daphne requires someone to remain other",
+          "italic": "Daphne proves-discloses the difference between failures: appropriation through determination and appropriation through undifferentiation — her separate literary whole bears its own cast, pursuit, transformation and afterlife.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Daphne changes what the mutuality must accomplish: a relation can be vivid and shared while still failing to let the other answer in their own right. Apollo cannot make illumination into entitlement; Dionysus cannot make participation into permission to absorb. Her office is the particular centre whose existence exceeds what either power makes of it. Her separate literary whole is Ovid's Apollo, Eros, Daphne and Peneus — its own cast, pursuit,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "transformation and public laurel afterlife; the movement-35 return preserves the tree's recoil together with the narrator's seeming assent, so no easy tale of union or final refusal replaces the source. What this composition receives is appropriation after withdrawal: the failure of possession at one level need not end the image's symbolic continuation. She asks of participation equally: unity invoked to cancel refusal has repeated the appropriation by other means.\n\nOccurrences: Daphne's required otherness (#3); the recoil and seeming assent kept together (#3, via movement 35); Dionysus' entry through Taylor's composition, not Ovid's cast (#0, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-apd-4-diaphaneity",
+      "name": "The view becomes transparent to its context",
+      "character": "The 180°→360° operation: positions, counter-positions and the conditions of their transition become available together; the knower has a position within that field.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#4a5d7e",
+          "#c9b458",
+          "#3c6e71"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e137",
+          "name": "the perspectival triangle — 180°",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.37,
+            "z": 0
+          },
+          "size": {
+            "x": 0.522,
+            "y": 0.46
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.2,
+          "tint": "#4a5d7e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st149",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e138",
+          "name": "opened into the contextual field — 360°",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.83,
+            "y": 0.83
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.4,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st150",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e139",
+          "name": "the viewer within the field — fourth-person",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.12,
+            "y": 0.12
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#2b2733",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st151",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e140",
+          "name": "Gebser's aperspectivity — no amalgamation of structures",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∴",
+          "share": 1,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st152",
+                "text": "∴",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e141",
+          "name": "care and telos — being with text and subtext",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "❤",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st153",
+                "text": "❤",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Gebser pp.1–3, 24–28, 470–86 (paraphrased); Q27 180°→360°; P5 third/fourth-person",
+          "title": "The view becomes transparent to its context",
+          "italic": "The diaphanous form embodies determination visible together with the conditions through which it became a view — promising no exhaustive panorama.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The resulting form is diaphanous: its determination remains visible together with the conditions through which it has become a view. Gebser's aperspectivity releases perspective from exclusive validity without amalgamating earlier structures; his Picasso/Braque discussion makes time and multiple aspects material to representation. Q27's contextual-field programme gives the movement its 180°→360° expression: the perspectival triangle opens",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "into a field where positions, counter-positions and transitions are available together — and the knower has a position within that field. A wider collection of views cannot accomplish this by accumulation; their limits, relations and means of transformation have to become intelligible. P5's concern gives transparency a lived direction: equanimity requires acknowledging concern; the pose of having no stake can conceal a governing preference.\n\nOccurrences: the triangle's opening (#4); the viewer's implication disclosed alongside the viewed (#1, #4); the absent-ground movement returned as owned finite judgment (#1, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-apd-5-return",
+      "name": "Form returns with its source still able to answer",
+      "character": "Apollo returns to articulation; Dionysus remains effective within its communicability; Daphne remains effective within that participation.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2b2733",
+          "#c9b458",
+          "#3f5a36",
+          "#5a4a8a"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e142",
+          "name": "the finite act of seeing — renewed",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.737,
+            "y": 0.614
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#c9b458",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st154",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e143",
+          "name": "the other's answer — remaining their own",
+          "kind": "formation",
+          "position": {
+            "x": 0.52,
+            "y": -0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#3f5a36",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st155",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e144",
+          "name": "A20 — the source's continuing capacity to revise the image",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.04,
+            "z": 0
+          },
+          "size": {
+            "x": 0.156,
+            "y": 0.073
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A20",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st156",
+                "text": "A20",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e145",
+          "name": "A21 — individuation retains the mediating relation",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.44,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A21",
+          "share": 1,
+          "tint": "#d9cdb4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st157",
+                "text": "A21",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e146",
+          "name": "Draft 3 — recognition recurrent, never completed possession",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↺",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st158",
+                "text": "↺",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · A20/A21; Movement 35; Draft 3; the shared Neumann ground",
+          "title": "Form returns with its source still able to answer",
+          "italic": "What returns is a form capable of being changed by the world it discloses — the sequence closes in another finite act of seeing, where the other's answer remains their own.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The shared Neumann whole grounds the declared A20/A21 relation through differentiation, the image's power and transformed recognition; the composed whole gives that structuration its form–participation–alterity movement. Apollo returns to articulation — a definite image again offered, now bearing an acknowledged relation to the life it expresses and the difference it cannot appropriate. Dionysus remains effective within its communicability; Daphne remains",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "effective within that participation — another centre can answer without being pre-assigned the answer that would complete the speaker's image. Draft 3 gives the double demand: truth beyond any frame, truth encountered through this particular angle and life; a form once opened can close again, and the renewed encounter has to affect its valuation. Movement 35 receives the communicable perspective made transparent to participation, counter-perspective and context.\n\nDeclared cross-story: Daphne ↔ the Apollo/Dionysus bracket — the Ovidian whole and the philosophical composition retain distinct casts and operations; Dionysus is not an additional actor in Ovid's episode. ↳ Occurrences: the renewed finite seeing (#0, #5→0); the answer that remains the other's own (#3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}
