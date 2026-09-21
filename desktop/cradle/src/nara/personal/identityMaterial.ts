@@ -48,12 +48,23 @@ export function identitySourceLocation(ref:string):CentralLocation {
 /** Used before review, seal and presentation. Source text is discarded and is
  * never sent to QL, Epii, the renderer or a model by this currentness check. */
 export async function verifyIdentitySources(record:PersonalRecord,read:(location:CentralLocation)=>Promise<NativeFileReading>):Promise<void> {
+  const selected=new Map<string,{location:CentralLocation;revision:string}>();
+  const include=(ref:string,revision:string)=>{
+    const location=identitySourceLocation(ref),prior=selected.get(ref);
+    if(prior&&prior.revision!==revision)throw new Error('An identity source has conflicting revisions. Reselect the current source basis before continuing');
+    selected.set(ref,{location,revision:text(revision,'Identity source revision')});
+  };
   for(const slot of record.domain.identity.slots){
     if(!slot.protected_value_ref)continue;
     const ref=slot.protected_value_ref;
     if(ref.owner_ref!=='central'||!slot.source)throw new Error('Identity source ownership or provenance is unavailable');
-    const location=identitySourceLocation(ref.ref_id),reading=await read(location);
-    if(reading.schema!=='central.file-reading/v1'||reading.automatic_agent_or_model_invocation!==false||!equal(reading.location,location)||reading.revision!==ref.revision||reading.revision!==slot.source.revision)throw new Error('An identity source changed or was withheld. Reselect its current revision before acceptance or presentation');
+    // A derived value and its evidence can have different source addresses.
+    // Checking only the value would overlook a changed underlying source.
+    include(ref.ref_id,ref.revision);include(slot.source.source_ref,slot.source.revision);
+  }
+  for(const {location,revision} of selected.values()){
+    const reading=await read(location);
+    if(reading.schema!=='central.file-reading/v1'||reading.automatic_agent_or_model_invocation!==false||!equal(reading.location,location)||reading.revision!==revision)throw new Error('An identity source changed or was withheld. Reselect its current revision before acceptance or presentation');
   }
 }
 

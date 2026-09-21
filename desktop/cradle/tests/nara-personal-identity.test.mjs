@@ -31,3 +31,15 @@ test('a failed physical reset keeps privacy protection instead of falsely report
  const port=m.privateIdentityEngine(owner,{canPresent:()=>true,requestFrame(){}});port.engine.render(pub);port.begin(await acceptedPattern(m,record(),'cymatic'));port.engine.render(pub);
  assert.throws(()=>port.end(),/reset failed/);assert.equal(port.active,true);assert.throws(()=>port.engine.capture(),/Private identity/);assert.equal(port.engine.inspect().private,true);
 });
+
+test('derived value and underlying source are both checked without merging their identities',async()=>{
+ const r=clone(record()),underlying={...clone(source),location:{...source.location,path:'Control/user/evidence.md',ref:'central:path:/test:Control/user/evidence.md'},revision:'evidence:r2'};
+ r.domain.identity.slots[0].source={source_ref:underlying.location.ref,revision:underlying.revision,standing_ref:'reported'};
+ const calls=[];await m.verifyIdentitySources(r,async location=>{calls.push(location.ref);return clone(location.ref===underlying.location.ref?underlying:source);});
+ assert.deepEqual(calls,[source.location.ref,underlying.location.ref]);
+ await assert.rejects(m.verifyIdentitySources(r,async location=>({...clone(location.ref===underlying.location.ref?underlying:source),...(location.ref===underlying.location.ref?{revision:'new-evidence'}:{})})),/changed/);
+});
+test('conflicting revisions of the same native source refuse before a source read',async()=>{
+ const r=clone(record());r.domain.identity.slots[0].source.revision='conflicting';let reads=0;
+ await assert.rejects(m.verifyIdentitySources(r,async()=>{++reads;return clone(source);}),/conflicting/);assert.equal(reads,0);
+});

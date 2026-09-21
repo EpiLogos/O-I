@@ -3,8 +3,8 @@
 .nara-personal p { margin:4px 0; }
 .nara-personal label { display:grid; gap:4px; }
 .nara-personal label:has(input[type=checkbox]) { display:flex; gap:8px; align-items:flex-start; }
-.nara-personal input:not([type=checkbox]),.nara-personal select { min-width:0; width:100%; box-sizing:border-box; font:inherit; color:inherit; background:transparent; border:1px solid var(--oi-line); border-radius:4px; padding:6px; }
-.nara-personal button { font:inherit; color:inherit; background:transparent; border:1px solid var(--oi-line); border-radius:4px; padding:6px 9px; cursor:pointer; }
+.nara-personal input:not([type=checkbox]),.nara-personal select { min-width:0; width:100%; box-sizing:border-box; font:inherit; color:inherit; background:transparent; border:1px solid var(--oi-hairline); border-radius:4px; padding:6px; }
+.nara-personal button { font:inherit; color:inherit; background:transparent; border:1px solid var(--oi-hairline); border-radius:4px; padding:6px 9px; cursor:pointer; }
 .nara-personal button:disabled { opacity:.5; cursor:default; }
 .nara-personal button:focus-visible,.nara-personal summary:focus-visible { outline:2px solid currentColor; outline-offset:2px; }
 .nara-personal fieldset { border:0; padding:0; margin:0; display:grid; gap:8px; min-width:0; }
@@ -12,10 +12,10 @@
 .nara-personal h4 { margin:8px 0 2px; font-size:1em; }
 .nara-personal-tabs,.nara-personal-actions { display:flex; gap:6px; flex-wrap:wrap; }
 .nara-personal-tabs button[aria-pressed=true] { font-weight:700; border-color:currentColor; }
-.nara-personal-review { border:1px solid var(--oi-line); padding:10px; display:grid; gap:8px; }
+.nara-personal-review { border:1px solid var(--oi-hairline); padding:10px; display:grid; gap:8px; }
 .nara-personal-fields { display:grid; grid-template-columns:repeat(2,minmax(0,1fr)); gap:8px; }
 .nara-personal-sources ul { max-height:240px; overflow:auto; padding:0; list-style:none; }
 .nara-personal-sources li { display:flex; gap:6px; flex-wrap:wrap; padding:5px 0; }
 .nara-personal-sources li>span:first-child { flex:1; min-width:100px; overflow-wrap:anywhere; }
-.nara-personal textarea { width:100%; box-sizing:border-box; font:inherit; color:inherit; background:transparent; border:1px solid var(--oi-line); border-radius:4px; padding:8px; resize:vertical; }
-.nara-personal-day { min-height:480px; position:relative; border:1px solid var(--oi-line); }
+.nara-personal textarea { width:100%; box-sizing:border-box; font:inherit; color:inherit; background:transparent; border:1px solid var(--oi-hairline); border-radius:4px; padding:8px; resize:vertical; }
+.nara-personal-day { min-height:480px; position:relative; border:1px solid var(--oi-hairline); }
