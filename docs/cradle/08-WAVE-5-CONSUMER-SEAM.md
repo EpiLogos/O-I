@@ -373,3 +373,14 @@ complete. The latest application-level M4′/M5′ clarification is consumed by
 reference to the Epi lane's coordinated source amendment, as joined in the
 orientation, rather than redefined in this configuration document. No
 personal machine was connected to or mutated for this GitHub contribution.
+
+
+### 8.5 Adoption/composition extension — 20 September 2026
+
+#423 extends #406 instead of replacing it. `AdoptionEntry` / `AdoptionFlow` consume `oi.setup/v1` through the additive `setup` / `setup_reading` kernel adapter. The fixed stdin protocol is `oi setup --request-file - --json`, available before Central is bound. Native `setup.rs` owns review binding and durable no-retry recovery; `setup_command.rs` invokes the existing source-build/activation, Central and Desktop lifecycle owners. There is no renderer installer, authority database or credential store.
+
+After installation/readback, the entry passes into the existing `PlanDrawer` and `SetupFlowController` with discovery-first entry. Existing callers retain direct review by default. Lane A owns the shared System ingress and visual treatment; the small dependent ingress PR must accompany the native/controller implementation. Lane C retains Agent/harness session composition. A component-only export is not an installed, wired desktop.
+
+Native reply dispositions, exact journal identity and per-step states are checked before recovery unlocks a new plan. Contradictory success, missing journals and lost/foreign replies remain unknown. Stale native composition/receipt changes before apply are refused before writes; changes between operations stop subsequent work and retain preceding effects. Terminal configuration stops on an unverified ChangeSet rather than entering another write. Secure credential setup delegates to AIKit's existing terminal/provider operations; no password input or policy adoption is smuggled into installation.
+
+The [local adoption packet and Mac/TUI checks](../experience/LOCAL-CAMPAIGN.md#72-installationadoption-extension--423--268--299--109) distinguish controlled browser tests, actual CLI/journal tests, actual package installation, provider inference, native Mac computer interaction, and microphone/audio observations. Web implements and controls verification through reviewable PRs; the same three Mac receiving slots integrate and perform material testing. Omarchy contributes/hosts. C0–C5, native matrices, full published corpus, Factory self-inhabitation and Day/NOW sequencing remain unchanged. No source-presence or settings-fixture result closes installation or either whole-product outcome.

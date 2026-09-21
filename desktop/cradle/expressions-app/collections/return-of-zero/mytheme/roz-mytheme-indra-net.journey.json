@@ -1,0 +1,1845 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-indra-net",
+  "name": "Indra's jewel net — the whole within each reflection",
+  "description": "The Huayan contemplation in sequence: the chosen jewel, recursive entry without leaving, the ink-dot test, the simile's self-limitation, answerability of use, and return to the southwest jewel.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-indra-0-net",
+      "name": "A jewel is chosen within the net",
+      "character": "The contemplating eye meets a field in which phenomena enter one another; the choice gives attention an exact place to begin.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e38",
+          "name": "Indra's net — the celestial image-world",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.992,
+            "y": 0.992
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 2.2,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st41",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e39",
+          "name": "inner spread of jewels",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.83,
+            "y": 0.83
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.2,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st42",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e40",
+          "name": "the southwest jewel — selected",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st43",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e41",
+          "name": "Indra",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.66,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Indra",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st44",
+                "text": "Indra",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Dushun-attributed contemplation; Cleary 2000 excerpt; T45 no. 1867, 513a20–513c16",
+          "title": "A jewel is chosen within the net",
+          "italic": "The image demonstrates knowing placed within relation: the eye cannot secure an independent beginning outside the field and look down upon the result.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "If phenomena arise through conditions, how can they be known? The answer places knowing within their relation. The jewels are clear; in every jewel the others appear, and what appears includes their reflections of one another. Choose a jewel in the southwest: all the other jewels are reflected there together, and each of those also reflects the whole,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "including the selected jewel. Nothing reserves this for the southwest — begin elsewhere and the same relation holds; every jewel supplies a particular entrance, none has to travel to a privileged centre. The claim works through simultaneous manifestation and the absence of coming and going; the sentences' sequence must not become signals taking successive journeys.\n\nOccurrences: the net and its jewels (#0); the southwest selection (#0); reflections including reflections (#0, #1); Indra's naming (#1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-indra-1-entry",
+      "name": "Entering the others without leaving this one",
+      "character": "Remaining here is the condition of entry; the movement reverses without losing its starting place.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e42",
+          "name": "the selected jewel — held as starting place",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.5,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st45",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e43",
+          "name": "the others present within this one",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.921,
+            "y": 0.921
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st46",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e44",
+          "name": "the net reopened inside its own appearance",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.614,
+            "y": 0.614
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#4e7c59",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st47",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e45",
+          "name": "the interlocutor's question — how enter all, remaining here?",
+          "kind": "formation",
+          "position": {
+            "x": 0.72,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "?",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st48",
+                "text": "?",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the questions and the answering voice",
+          "title": "Entering the others without leaving this one",
+          "italic": "The contemplation demonstrates that leaving the jewel would abandon the very relation through which the others are disclosed.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "To enter all the jewels from here is to discover their presence in this one; in those jewels this one is present again. Reflections contain reflections which contain the first reflection, with no final image at which the relation is exhausted. The interlocutor presses: how can one enter all while remaining here? The reply makes remaining here the condition of entry. And if the many are present within this one, why a net of many jewels? Because the one in its comprehensive aspect includes the many — remove that constitutive participation and the net is not preserved. Each apparent opposition returns to how each is present through the others.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: remaining-in-entry (#1); the two questions and replies (#1); the one's comprehensive aspect (#1).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-indra-1b-dot",
+      "name": "The ink-dot test",
+      "character": "Something done at this definite place becomes present through the others; the others disclose this place in turn.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e46",
+          "name": "the marked jewel",
+          "kind": "formation",
+          "position": {
+            "x": -0.62,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 2.2,
+          "tint": "#111008",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st49",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e47",
+          "name": "the dot present throughout the reflected field",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 1.105,
+            "y": 1.105
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.4,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st50",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e48",
+          "name": "inner reflection carrying the mark",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.722,
+            "y": 0.722
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st51",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e49",
+          "name": "no one went around marking every jewel",
+          "kind": "formation",
+          "position": {
+            "x": 0.68,
+            "y": 0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∅",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st52",
+                "text": "∅",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the final test",
+          "title": "The ink-dot test",
+          "italic": "The mark proves-discloses an inspectable return: a local act appears throughout the reflection without a messenger touring the net.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Put an ink dot upon the southwest jewel. The dot appears throughout the reflected field; its many appearances do not require someone to have gone around physically marking every jewel. Begin with another jewel and the relation can be followed from there as well. The mark makes a return inspectable: something done at this definite place becomes present through the others, and the others disclose this place in turn. The expanded sequence is recoverable in the Chinese text, T45 no. 1867, 513a20–513c16; the account is a prose paraphrase, not a newly certified quotation from Cleary's printed edition.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the ink dot (#1); its appearance throughout the reflections (#1); the absence of physical marking (#1); the alternative starting places (#0–#1).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-indra-2-simile",
+      "name": "The image teaches where its own likeness ends",
+      "character": "Jewel images enter one another while their substances remain separate; the source immediately restricts its own simile.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e50",
+          "name": "jewel substance — separate",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.398,
+            "y": 0.398
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.2,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st53",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e51",
+          "name": "jewel substance — separate",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.55,
+            "y": 0.55
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.2,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st54",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e52",
+          "name": "images entering one another — substances do not",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.678,
+            "y": 0.678
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st55",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e53",
+          "name": "closing verses — Vairocana's activity for beings",
+          "kind": "formation",
+          "position": {
+            "x": 0.66,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "卍",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st56",
+                "text": "卍",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · the simile's qualification; Van Norden–Jones §1.3 and §3; C24 fusion",
+          "title": "The image teaches where its own likeness ends",
+          "italic": "The teaching demonstrates its own limit immediately after its most forceful demonstration — the optical apparatus is not a complete account of the reality contemplated.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The teaching does not end with the dot; it turns upon its simile. Jewels have images which enter one another while their material substances remain separate; the phenomena contemplated interpenetrate more completely. The restriction belongs to the source's own movement, preventing the observer from taking the optics as the whole account. The closing verses direct the teaching toward Vairocana's activity for beings: formless reality",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "manifests forms. Van Norden–Jones qualify the reading: dependence for existence and identity (§1.3), and Zhiyan's Ten Mysteries preserving distinction within mutual inclusion (§3). C24 (fusion) qualifies the essay's comparison at this precise point — an account of inclusion fails when it erases the differences through which relation can occur. This is the essay's criterion for crossing registers, not a substitution for Huayan's own account.\n\nOccurrences: the simile qualification (#2); the closing verses (#2); the separate jewel substances (#2); the Ten Mysteries' preserved distinction (#2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-indra-3-native",
+      "name": "The definite jewel carries its constituting field",
+      "character": "A11/C49 two Ones; A12 Mono/Poly; the apoha braid; A18 eightfold; Dia/Syn — the image lets the movement be followed without manufacturing eight ancient jewels.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e54",
+          "name": "0 = One = Self-Identity",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st57",
+                "text": "0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e55",
+          "name": "1 = All = Self-Difference",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "1",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st58",
+                "text": "1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e56",
+          "name": "(0/1)/(1/0) — the orientations held together",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "(0/1)/(1/0)",
+          "share": 1,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st59",
+                "text": "(0/1)/(1/0)",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e57",
+          "name": "the braid: apoha · dependent arising · saṃkalpa",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.29,
+            "z": 0
+          },
+          "size": {
+            "x": 0.641,
+            "y": 0.189
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.4,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st60",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Taylor's native core; Draft 3; A11/A12/A18; Dia/Syn; A05/C13",
+          "title": "The definite jewel carries its constituting field",
+          "italic": "The chosen jewel figures a determination through which an already active relation becomes locally available — the image lets the eightfold be followed without assigning each determination a jewel.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The native core grounds the QL relation before its refraction here: 0 = One, Self-Identity; 1 = All, Self-Difference. A12 grounds the whole-first consequence: the whole contains real particulars (inclusive aspect) and is their constituting relation (generative aspect). The braid has three distinguishable tasks — A08/C18 apoha qualifies determination through constitutive exclusion; dependent arising names conditioned occurrence; saṃkalpa's world-building office joins them; the net supplies",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "recursive mutual inclusion without teaching all three as one doctrine. A05/C13 qualify the reflective crossing: an inert reflected picture does not perform self-apprehension — the jewel cannot establish consciousness by being reflective. A18's eight determinations are followed without manufacturing eight ancient jewels; the reader's traversed relation to the image is the mythemic work. Native 2+2²=6 retains two terms and their four ordered pairings — not a count discovered in the treatise.\n\nOccurrences: the selected jewel's definiteness (#0–#2) carrying the Two Ones (#3); the recursive entry (#1) carrying Mono/Poly and Dia/Syn (#3); the simile limit (#2) carrying apoha's exclusion (#3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-indra-4-account",
+      "name": "A reflection becomes answerable for its use",
+      "character": "Symbol answers to source; account does not replace source; trust keeps the return route active; account re-enters source-field.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e58",
+          "name": "Symbol — answers to source",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.06,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Σ",
+          "share": 1,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st61",
+                "text": "Σ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e59",
+          "name": "Account — does not replace source",
+          "kind": "formation",
+          "position": {
+            "x": -0.2,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Λ",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st62",
+                "text": "Λ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e60",
+          "name": "Trust — the return route stays active",
+          "kind": "formation",
+          "position": {
+            "x": 0.2,
+            "y": 0.36,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Τ",
+          "share": 1,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st63",
+                "text": "Τ",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e61",
+          "name": "the dot done at this place — return inspectable, institutions distinct",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.34,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.6,
+          "tint": "#111008",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st64",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Symbol/Account/Trust field; A20; C38; A26; A23; A27; A30/C42",
+          "title": "A reflection becomes answerable for its use",
+          "italic": "The whole demonstrates the four operations: disclosure, answerable account, committed reliance, and consequences that change the next account.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Symbol answers to source: this net conducts a source-specific relation, including the passage's qualification of its own simile; A20 receives the consequence that an impressive image must remain alterable by what it represents. Account does not replace source: C38's Bimba–Pratibimba gives a locally agreed reference real local authority answerable beyond that office; A26 receives the worldhood distinction without turning Huayan into",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "database architecture. Trust keeps the return route active: the jewel's clarity supplies no promise that another person will answer (A23, A27). Account re-enters source-field: the ink dot is a precise source image of a local mark appearing throughout reflection; the essay's further operation concerns conduct changing the conditions of future description (A30/C42) — a reflected mark is not evidence such institutional revisions occurred.\n\nDeclared cross-story: the Ares–Aphrodite–Hephaestus–Poseidon whole — the double-net comparison distinguishes mutual implication from capture organised as public evidence; Homer's bonds keep their actors, this net keeps its jewels; the relation is the essay's Offered comparison. ↳ Occurrences: the simile qualification answering to source (#2, #4); the ink dot (#1, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-indra-5-return",
+      "name": "Return to the jewel whose brightness depends on the others",
+      "character": "A29/C54; C62; A35; M10, M22, M46; A36 — the chosen jewel can no longer be understood apart from the relations its brightness makes visible.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#12241d",
+        "palette": [
+          "#e8e2d0",
+          "#1d3a2f",
+          "#4e7c59",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e62",
+          "name": "the southwest jewel — return",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.36
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.6,
+          "tint": "#e8e2d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st65",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e63",
+          "name": "the net it can no longer leave",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 1.105,
+            "y": 1.105
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#4e7c59",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st66",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e64",
+          "name": "the mark that remains particular",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#111008",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st67",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e65",
+          "name": "the source's final qualification — no completed optical picture",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.44
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.4,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st68",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · returns-to M10, M22, M46; A36",
+          "title": "Return to the jewel whose brightness depends on the others",
+          "italic": "The return leaves a definite place from which to look again — the local office sustains the relation through which its own capacity is possible.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "A29 tests whether receipt of a product admits the labour, costs and consequences borne elsewhere; C54 defines the practical powers at stake: set terms, refuse, revise, leave, reconnect. C62 extends the question to energy, labour, infrastructure, authority — shining jewels cannot stand in for their measurement. A35 grounds the loving sensitivity which keeps origins consequential. The three programme movements receive their yields: M10 (apoha —",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the selected member's constitutive field), M22 (the two-net encounter), M46 (sovereign commons — locally authoritative centres that can contest a reference field; Offered). The shared Neumann ground qualifies relation, differentiation and return without dating the transmission or establishing doctrinal ancestry. The mark remains particular; the source's final qualification prevents possessing the teaching through a completed optical picture.\n\nOccurrences: the returned southwest jewel (#5→0); the retained mark (#1, #5→0); the simile's standing limit (#2, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

@@ -1,0 +1,1454 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-matheme-logics",
+ "name": "Matheme — The Two Logics",
+ "description": "Dia/Syn and Mono/Poly: the locked expressions / = −/− → (−1)/(+1) → (−1)+/−(+1) and (0/1)/(1/0); configuration and passage; one field through many notations. Source revision dbf3b17; census T25.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "dia",
+   "name": "dia — the cut",
+   "character": "dia — the cut",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "dia-lock",
+     "name": "the bare relation",
+     "kind": "formation",
+     "position": {
+      "x": 0.55,
+      "y": 0.55,
+      "z": 0
+     },
+     "size": {
+      "x": 0.54,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "/ = −/−",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "dia-lock-s0",
+        "text": "/ = −/−",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "dia-main",
+     "name": "the operator changes",
+     "kind": "formation",
+     "position": {
+      "x": 0.32000000000000006,
+      "y": -0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 3,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "(-1)/(+1)",
+     "share": 3,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 2.4,
+      "steps": [
+       {
+        "id": "dia-main-st0-40",
+        "text": "(-1)/(+1) — polarity retained",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "dia-main-st1-41",
+        "text": "(-1)+(+1) = 0 — cancels",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "dia-main-st2-42",
+        "text": "(-1)−(+1) = −2 — appropriates",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "dia-main-st3-43",
+        "text": "(+1)−(−1) = +2 — from the other pole",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "dia-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-dia-syn-dia · ARGUED",
+     "title": "Dia — The Cut",
+     "italic": "The operator changed from a retained polar relation to a scalar result.",
+     "body": "The bare relation is / = −/−. The carriers: (−1)+(+1)=0 cancels; (−1)−(+1)=−2 and (+1)−(−1)=+2 measure the whole span, orientation-dependent — the operator changed from retained polarity to scalar result. A zero sum forgets its summands; a difference of 2 forgets its endpoints: cancellation and appropriation, exactly demonstrable losses. A returned selection keeps input, criterion, result and the effects of exclusion.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "syn",
+   "name": "syn — the gathering",
+   "character": "syn — the gathering",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "syn-main",
+     "name": "the held seam",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 1.35,
+      "y": 0.28868400000000005
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "(0/1)/(1/0)",
+     "share": 4,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "syn-main-s0",
+        "text": "(0/1)/(1/0)",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "syn-pairs",
+     "name": "four ordered pairings",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.35,
+      "z": 0
+     },
+     "size": {
+      "x": 1.35,
+      "y": 0.18000000000000002
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "00 · 01 · 10 · 11",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "syn-pairs-s0",
+        "text": "00 · 01 · 10 · 11",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "syn-cnt",
+     "name": "terms retained with their pairings",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.72,
+      "z": 0
+     },
+     "size": {
+      "x": 1.1,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "2+2²=6 = 4+2",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "syn-cnt-s0",
+        "text": "2+2²=6 = 4+2",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "syn-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-dia-syn-syn · ARGUED",
+     "title": "Syn — The Gathering",
+     "italic": "Composing while source, inverse reading and affected context stay retrievable.",
+     "body": "Syn composes while source, inverse reading and affected context stay retrievable. The seam is held in (0/1)/(1/0): ordinary arithmetic computes 0/1 and leaves 1/0 undefined; treating the outer stroke as fraction division loses the operation where it matters. Terms plus their four pairings: 2+2² = 6 = 4+2 — retention, not averaging. Deleting a measurement is loss; one unsupported figure is fusion; withholding the condition is counterfeit gathering.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "chronic",
+   "name": "chronic — configuration and passage",
+   "character": "chronic — configuration and passage",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "ch-main",
+     "name": "two trajectories, one organisation",
+     "kind": "formation",
+     "position": {
+      "x": -0.33000000000000007,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 1.14,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "8",
+     "share": 2,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 1.7,
+      "steps": [
+       {
+        "id": "ch-main-st0-44",
+        "text": "8",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-main-st1-45",
+        "text": "4",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-main-st2-46",
+        "text": "2",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-main-st3-47",
+        "text": "1",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-main-st4-48",
+        "text": "1/2",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-main-st5-49",
+        "text": "→ 0",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ch-neg",
+     "name": "another history",
+     "kind": "formation",
+     "position": {
+      "x": 1.06,
+      "y": 0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 1.52,
+      "y": 0.3
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "−4",
+     "share": 2,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 1.7,
+      "steps": [
+       {
+        "id": "ch-neg-st0-50",
+        "text": "−4",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-neg-st1-51",
+        "text": "−2",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-neg-st2-52",
+        "text": "−1",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-neg-st3-53",
+        "text": "−1/2",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "ch-neg-st4-54",
+        "text": "→ 0",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ch-fp",
+     "name": "attracting fixed point",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.35,
+      "z": 0
+     },
+     "size": {
+      "x": 0.16,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "disc",
+     "text": "0",
+     "share": 2,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ch-fp-s0",
+        "text": "0",
+        "shape": "disc",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "ch-rule",
+     "name": "the configuration",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.75,
+      "z": 0
+     },
+     "size": {
+      "x": 0.48,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "f(x) = x/2",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "ch-rule-s0",
+        "text": "f(x) = x/2",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "chronic-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-dia-syn-chronic · ARGUED",
+     "title": "Chronic — Configuration and Passage",
+     "italic": "A synchronic cut and a diachronic gathering are independent readings — neither classifies the other.",
+     "body": "f(x) = x/2: state-space, rule and fixed point 0 form one configuration — every starting value converges. Histories differ: 8, 4, 2, 1, … and −4, −2, −1, … — the basin does not say which occurred. The crossing: a synchronic cut severs when the common condition is suppressed; a diachronic gathering severs when succession conceals its field. A schema is not automatically Syn; a narrative not automatically Dia.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "mono",
+   "name": "mono — one field through its notations",
+   "character": "mono — one field through its notations",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "mo-short",
+     "name": "definition/quilt chain",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 1.02,
+      "y": 0.14434200000000003
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "0/1 = 4+2 = 5→0 = 0/1",
+     "share": 3,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "mo-short-s0",
+        "text": "0/1 = 4+2 = 5→0 = 0/1",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "mo-full",
+     "name": "process/music chain",
+     "kind": "formation",
+     "position": {
+      "x": -0.008157040000000615,
+      "y": -0.12,
+      "z": 0
+     },
+     "size": {
+      "x": 1.38,
+      "y": 0.10628820000000004
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "mo-full-s0",
+        "text": "0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "mo-mp",
+     "name": "Mono/Poly at Becoming {2,3}",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.68,
+      "z": 0
+     },
+     "size": {
+      "x": 0.95,
+      "y": 0.26
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "0/1 ⇄ 1/0",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "mo-mp-s0",
+        "text": "0/1 ⇄ 1/0",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "mono-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-mono-poly-mono · ARGUED",
+     "title": "Mono — One Field through Its Notations",
+     "italic": "The difference between the short chain and the full circuit is an operation of the four-file body.",
+     "body": "One subject, two earned chains: the short 0/1 = 4+2 = 5→0 = 0/1 of definition and quilt; the full 0/1 = 4+2 = 5→0 = 1/0 = 4′+2′ = 5′→0′ = 0/1 of process and music. The difference is an operation of the four-file circuit, lost if every file is normalised to whichever chain is read first. Monoisation: a local representation claiming the source-office. The test: can it return through its derivation, conditions and exclusions?",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "poly",
+   "name": "poly — the many notations",
+   "character": "poly — the many notations",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "po-q1",
+     "name": "qualitative ?/! at #1",
+     "kind": "formation",
+     "position": {
+      "x": -0.5527999999999997,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.72,
+      "y": 0.14400000000000002
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "?/! @ #1 — qualitative",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "po-q1-s0",
+        "text": "?/! @ #1 — qualitative",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "po-q2",
+     "name": "processual ?/! at #3",
+     "kind": "formation",
+     "position": {
+      "x": 0.6103999999999998,
+      "y": 0.20439999999999997,
+      "z": 0
+     },
+     "size": {
+      "x": 0.78,
+      "y": 0.14400000000000002
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "?/! @ #3 — processual",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "po-q2-s0",
+        "text": "?/! @ #3 — processual",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "po-r1",
+     "name": "pure ratio",
+     "kind": "formation",
+     "position": {
+      "x": -0.732,
+      "y": -0.05,
+      "z": 0
+     },
+     "size": {
+      "x": 0.63,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "9/8 — exact ratio",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "po-r1-s0",
+        "text": "9/8 — exact ratio",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "po-r2",
+     "name": "tempered step",
+     "kind": "formation",
+     "position": {
+      "x": 0.6039999999999999,
+      "y": -0.414,
+      "z": 0
+     },
+     "size": {
+      "x": 0.96,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "2^(2/12) — tempered",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "po-r2-s0",
+        "text": "2^(2/12) — tempered",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "po-six",
+     "name": "three exact sixes",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.7,
+      "z": 0
+     },
+     "size": {
+      "x": 1.14,
+      "y": 0.12960000000000002
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "2+2² · 1+2+3 · 6 classes",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "po-six-s0",
+        "text": "2+2² · 1+2+3 · 6 classes",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "poly-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-mono-poly-poly · ARGUED",
+     "title": "Poly — The Many Notations",
+     "italic": "A repeated glyph can change office without changing its printed shape.",
+     "body": "A repeated glyph can change office without changing shape: ?/! is the qualitative determination at #1 and the zero-denominator limit at #3; primed addresses are inverse phase (File 2) or Night pass (File 3). 9/8 is an exact ratio; 2^(2/12) a tempered step — pitch-class association is not frequency equality. Six as 2+2², as 1+2+3, as six pitch classes: each exact; correspondence requires the stated map, not shared cardinality.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "translations",
+   "name": "translations — correspondence with its proof boundary",
+   "character": "translations — correspondence with its proof boundary",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "tr-exact",
+     "name": "exact reduction",
+     "kind": "formation",
+     "position": {
+      "x": -0.7639999999999998,
+      "y": 0.34,
+      "z": 0
+     },
+     "size": {
+      "x": 1,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "64/36 = 16/9",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "tr-exact-s0",
+        "text": "64/36 = 16/9",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "tr-coord",
+     "name": "coordinatewise comparison",
+     "kind": "formation",
+     "position": {
+      "x": 0.5728851199999998,
+      "y": 0.08880301500000003,
+      "z": 0
+     },
+     "size": {
+      "x": 1.7,
+      "y": 0.12990780000000002
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "(4:2)/(3:3) ↦ (4/3, 2/3)",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "tr-coord-s0",
+        "text": "(4:2)/(3:3) ↦ (4/3, 2/3)",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "tr-scalar",
+     "name": "scalar collapse — the lost pair",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.2,
+      "z": 0
+     },
+     "size": {
+      "x": 1.35,
+      "y": 0.22
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "(4/2)/(3/3) = 2",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "tr-scalar-s0",
+        "text": "(4/2)/(3/3) = 2",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "tr-vn",
+     "name": "construction vs synthesis",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.7,
+      "z": 0
+     },
+     "size": {
+      "x": 1.44,
+      "y": 0.10206000000000003
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "1={∅} exact · linker: synthesis",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "tr-vn-s0",
+        "text": "1={∅} exact · linker: synthesis",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "translations-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-mono-poly-translations · ARGUED",
+     "title": "Translations — Correspondence with Its Proof Boundary",
+     "italic": "Naming the operator preserves the authored pair without misreporting scalar arithmetic.",
+     "body": "Three claims stay separate: internal derivation, exact construction, argued interpretation. 64/36 = 16/9 needs no bridge; (4:2) against (3:3) coordinatewise gives (4/3, 2/3), while (4/2)/(3/3) = 2 loses the pair — naming the operator preserves the authored pair. 1={∅} is exact; reading it as symbolic linker is a declared synthesis. A translation records what it leaves out, and keeps source terms whenever return needs them.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T01:30:04.398Z"
+}

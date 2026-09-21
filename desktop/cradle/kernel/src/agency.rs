@@ -119,6 +119,9 @@ fn read_project_with(
 #[derive(Clone, Debug, serde::Deserialize, PartialEq, serde::Serialize)]
 #[serde(tag="action", rename_all="kebab-case")]
 pub enum EncounterRequest {
+    /// Scope is stamped from Central below, never supplied by the renderer.
+    Context { agent_session:Option<String>, request:Value },
+    PromptContext { agent_session:String, draft_revision:u64, context:Value },
     Start,
     Providers,
     Open { space:String, agent_session:String, provider:String },
@@ -167,6 +170,8 @@ pub enum PermissionDecision {Selected {option_id:String},Cancelled}
 impl EncounterRequest {
     fn sessions(&self)->Vec<&str> {match self {
         Self::Start|Self::Providers|Self::Health=>Vec::new(),
+        Self::Context{agent_session,..}=>agent_session.iter().map(String::as_str).collect(),
+        Self::PromptContext{agent_session,..}=>vec![agent_session],
         Self::Permission{agent_session,..}|Self::View{agent_session,..}|Self::Open{agent_session,..}|Self::Read{agent_session,..}|Self::Draft{agent_session,..}|Self::Prompt{agent_session,..}|Self::Cancel{agent_session,..}|Self::Status{agent_session}|Self::Send{agent_session,..}|Self::Delivery{agent_session,..}|Self::Reconnect{agent_session,..}=>vec![agent_session],
         // The attachment gate covers every named participant of a group: a
         // session outside this Project's SessionSpaces is refused here, before
@@ -193,6 +198,12 @@ impl Client {
         if matches!(request,EncounterRequest::Start) {command.arg("encounter-start");}
         else {
             let mut body=serde_json::to_value(request).map_err(|error|error.to_string())?;
+            if let EncounterRequest::Context{agent_session,request:operation}=request {
+                body=serde_json::json!({"action":"context","request":{"scope":{"project":project_ref,"agent_session":agent_session},"request":operation}});
+            }
+            if let EncounterRequest::PromptContext{agent_session,context,..}=request {
+                if context["scope"]["project"].as_str()!=Some(project_ref)||context["scope"]["agent_session"].as_str()!=Some(agent_session){return Err("Prepared context does not belong to this native Project and AgentSession".into());}
+            }
             if matches!(request,EncounterRequest::Open{..}|EncounterRequest::Reconnect{..}) {body["cwd"]=serde_json::json!(cwd);}
             command.args(["encounter","--request-json"]).arg(body.to_string());
         }
@@ -208,6 +219,10 @@ impl Client {
                 Some(code)=>Err(format!("{message} [{code}]")),
                 None=>Err(message.into()),
             };
+        }
+        if let EncounterRequest::Context{agent_session,..}=request {
+            let data=&response["data"];
+            if data["scope"]["project"].as_str()!=Some(project_ref)||data["scope"]["agent_session"].as_str()!=agent_session.as_deref(){return Err("Native prepared-context response changed Project or session".into());}
         }
         Ok(response["data"].clone())
     }

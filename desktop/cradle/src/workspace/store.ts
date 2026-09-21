@@ -90,7 +90,10 @@ export function switchWorkspaceMode(workspace: Workspace, next: WorkspaceMode): 
   if (from === next || !TREE_MODES.includes(next)) return workspace;
   const { [next]: saved, ...rest } = { ...workspace.modeLayouts, [from]: { ...workspace.layout, modeRegions: undefined } };
   const base: LayoutState = saved ?? { ...initialLayout(), rightDepth: next === "base" ? "collapsed" : "panel" };
-  const layout: LayoutState = { ...base, ...sharedAcrossModes(workspace.layout), mode: next === "base" ? undefined : next, modeRegions: undefined };
+  const layout: LayoutState = { ...base, ...sharedAcrossModes(workspace.layout), mode: next === "base" ? undefined : next, modeRegions: undefined,
+    // System/Settings uses the whole workspace on entry. The previous tree,
+    // focus and side-region depths remain exactly where they were saved.
+    ...(next === "settings" ? { agencyDepth: "collapsed", rightDepth: "collapsed", settingsReturnMode: from as Exclude<WorkspaceMode, "settings"> } : {}) };
   const context: WorldContext | undefined = next === "epi-logos" ? { ...workspace.context, world: "epi-logos" } : workspace.context;
   return { ...workspace, layout, modeLayouts: rest, context };
 }
@@ -337,7 +340,13 @@ export function useWorkspaces() {
     return () => {
       window.removeEventListener("pagehide", onPageHide);
       document.removeEventListener("visibilitychange", onVisibility);
-      if (writeTimer.current !== undefined) window.clearTimeout(writeTimer.current);
+      if (writeTimer.current !== undefined) {
+        window.clearTimeout(writeTimer.current);
+        // Effect replay cancels the first scheduled flush. Clear its handle as
+        // well, so the next setup/book change can schedule the retained dirty
+        // candidate. A cancelled timer must never masquerade as pending work.
+        writeTimer.current = undefined;
+      }
     };
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -386,6 +395,20 @@ export function useWorkspaces() {
   const windowBounds = (workspaceId:string,surfaceId:string,bounds:import("../surface/types").NativeWindowBounds) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[surfaceId]?{...w,layout:{...w.layout,windowBounds:{...w.layout.windowBounds,[surfaceId]:bounds}}}:w)}));
   const replaceSurface=(workspaceId:string,binding:import("../surface/types").SurfaceBinding)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[binding.id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[binding.id]:binding}}}:w)}));
   const surfaceView=(workspaceId:string,id:string,view:NonNullable<import("../surface/types").SurfaceBinding["view"]>)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>w.id===workspaceId&&w.layout.surfaces[id]?{...w,layout:{...w.layout,surfaces:{...w.layout.surfaces,[id]:{...w.layout.surfaces[id],view}}}}:w)}));
+  /** The hosted engine's checkpoint (surface/types.ts `engine`), named by
+   * workspace like every presentation write. The binding may stand in the
+   * active mode's tree or in a waiting tree's `modeLayouts` (a hidden
+   * stage's centre) — the writer finds it wherever it lives; exactly one
+   * layout per workspace carries the binding. */
+  const surfaceEngine=(workspaceId:string,id:string,engine:NonNullable<import("../surface/types").SurfaceBinding["engine"]>)=>setBook(book=>({...book,workspaces:book.workspaces.map(w=>{
+    if(w.id!==workspaceId)return w;
+    const write=(layout:import("../surface/types").LayoutState):import("../surface/types").LayoutState=>layout.surfaces[id]?{...layout,surfaces:{...layout.surfaces,[id]:{...layout.surfaces[id],engine}}}:layout;
+    const active=write(w.layout);
+    if(active!==w.layout)return {...w,layout:active};
+    if(!w.modeLayouts||!Object.values(w.modeLayouts).some(layout=>layout.surfaces[id]))return w;
+    const modeLayouts=Object.fromEntries(Object.entries(w.modeLayouts).map(([mode,layout])=>[mode,write(layout)])) as Workspace["modeLayouts"];
+    return {...w,modeLayouts};
+  })}));
   const redock = (workspaceId:string,surfaceId:string) => setBook(b=>({...b,workspaces:b.workspaces.map(w=>w.id===workspaceId?{...w,layout:redockBinding(w.layout,surfaceId)}:w)}));
   /** One click, one reload (owner ruling 2026-09-19): retry the load from
    * the protected storage; success clears the standing message, failure
@@ -409,5 +432,5 @@ export function useWorkspaces() {
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setSaveError("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError].filter(Boolean).join(" ")||null;
-  return { switchMode, setContext, replaceSurface, surfaceView, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); } };
+  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); } };
 }

@@ -1466,7 +1466,7 @@ fn execute_registration(
             "recognition artifact {} exited {}: {}",
             registration.artifact,
             output.status,
-            String::from_utf8_lossy(&output.stderr).trim()
+            child_diagnostic(&output.stdout, &output.stderr)
         ));
     }
     let result: RecognitionProviderResult =
@@ -1478,6 +1478,21 @@ fn execute_registration(
         })?;
     validate_provider_result(&result)?;
     Ok(Some(result))
+}
+
+/// Child processes often explain failures on stdout (git's "nothing to
+/// commit" does), so a refusal that quotes only stderr can surface as an
+/// empty diagnostic. Prefer stderr, fall back to stdout, and never report
+/// silence as if it were an explanation.
+fn child_diagnostic(stdout: &[u8], stderr: &[u8]) -> String {
+    let stderr = String::from_utf8_lossy(stderr).trim().to_owned();
+    let stdout = String::from_utf8_lossy(stdout).trim().to_owned();
+    match (stderr.is_empty(), stdout.is_empty()) {
+        (true, true) => "(the child produced no diagnostic output)".to_owned(),
+        (true, false) => stdout,
+        (false, true) => stderr,
+        (false, false) => format!("{stderr}; stdout: {stdout}"),
+    }
 }
 
 fn validate_provider_result(result: &RecognitionProviderResult) -> Result<(), String> {
@@ -1566,7 +1581,7 @@ fn verify_artifact(artifact: &str) -> Result<(), String> {
     if !output.status.success() {
         return Err(format!(
             "recognition artifact verification failed for {artifact}: {}",
-            String::from_utf8_lossy(&output.stderr).trim()
+            child_diagnostic(&output.stdout, &output.stderr)
         ));
     }
     let verification: RecognitionVerificationResult = serde_json::from_slice(&output.stdout)
@@ -1579,6 +1594,84 @@ fn verify_artifact(artifact: &str) -> Result<(), String> {
         ));
     }
     Ok(())
+}
+
+/// Run a registered recognition contribution's own `verify --json` and return
+/// its receipt. This is the executable form of the
+/// `oi recognition verify CONTRIBUTION_REF` operation that package manifests
+/// already declare as their `native_verification.operation`.
+pub fn verify_recognition_contribution(
+    contribution_ref: &str,
+    registry_path: &Path,
+) -> Result<serde_json::Value, String> {
+    let registry = load_registry(registry_path)?;
+    let registration = registry
+        .registrations
+        .iter()
+        .find(|registration| registration.contribution_ref == contribution_ref)
+        .ok_or_else(|| format!("recognition contribution is not registered: {contribution_ref}"))?;
+    if registration.artifact == "builtin:herdr" {
+        return Ok(serde_json::json!({
+            "schema": WORLD_RECOGNITION_VERIFICATION_SCHEMA,
+            "contribution_ref": registration.contribution_ref,
+            "package_ref": registration.package_ref,
+            "artifact": registration.artifact,
+            "receipt": {
+                "schema": WORLD_RECOGNITION_VERIFICATION_SCHEMA,
+                "ok": true,
+                "evidence": ["embedded artifact; verified by O:I's own herdr integration"]
+            }
+        }));
+    }
+    let mut attempt = 0;
+    let output = loop {
+        match Command::new(&registration.artifact)
+            .args(["verify", "--json"])
+            .stdin(Stdio::null())
+            .output()
+        {
+            Ok(output) => break output,
+            Err(error)
+                if error.kind() == std::io::ErrorKind::ExecutableFileBusy && attempt < 20 =>
+            {
+                attempt += 1;
+                std::thread::sleep(std::time::Duration::from_millis(25));
+            }
+            Err(error) => {
+                return Err(format!(
+                    "failed to verify recognition artifact {}: {error}",
+                    registration.artifact
+                ))
+            }
+        }
+    };
+    if !output.status.success() {
+        return Err(format!(
+            "recognition artifact verification failed for {}: {}",
+            registration.artifact,
+            child_diagnostic(&output.stdout, &output.stderr)
+        ));
+    }
+    let verification: RecognitionVerificationResult = serde_json::from_slice(&output.stdout)
+        .map_err(|error| {
+            format!(
+                "recognition artifact {} returned invalid verification JSON: {error}",
+                registration.artifact
+            )
+        })?;
+    if verification.schema != WORLD_RECOGNITION_VERIFICATION_SCHEMA || !verification.ok {
+        return Err(format!(
+            "recognition artifact {} did not return a successful `{WORLD_RECOGNITION_VERIFICATION_SCHEMA}` receipt",
+            registration.artifact
+        ));
+    }
+    Ok(serde_json::json!({
+        "schema": WORLD_RECOGNITION_VERIFICATION_SCHEMA,
+        "contribution_ref": registration.contribution_ref,
+        "package_ref": registration.package_ref,
+        "artifact": registration.artifact,
+        "receipt": verification
+    }))
 }
 
 fn resolve_artifact(manifest_path: &Path, artifact: &str) -> Result<String, String> {
@@ -1600,9 +1693,15 @@ fn resolve_artifact(manifest_path: &Path, artifact: &str) -> Result<String, Stri
             .join(path)
     };
     let resolved = absolute_path(&resolved)?;
+    if !resolved.exists() {
+        return Err(format!(
+            "recognition artifact does not exist: {}",
+            resolved.display()
+        ));
+    }
     if !is_executable(&resolved) {
         return Err(format!(
-            "recognition artifact is not executable: {}",
+            "recognition artifact exists but is not executable (missing execute permission): {}",
             resolved.display()
         ));
     }

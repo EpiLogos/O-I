@@ -1,0 +1,20 @@
+/* Membership controls compose the existing desktop grammar; no shell tokens. */
+.lib-membership-editor {
+  flex: none;
+  min-width: 0;
+  max-height: 45vh;
+  overflow: auto;
+  margin: 0 var(--oi-space-3);
+  padding: var(--oi-space-2) 0;
+}
+.lib-membership-editor > label {
+  display: flex;
+  flex-direction: column;
+  gap: var(--oi-space-1);
+  margin: var(--oi-space-2) 0;
+  min-width: 0;
+  font-size: var(--oi-shell-type-ui);
+}
+.lib-membership-editor .oi-input { width: 100%; min-width: 0; }
+.lib-membership-editor .oi-action-group { flex-wrap: wrap; }
+.lib-membership-editor > p { margin-top: var(--oi-space-2); overflow-wrap: anywhere; }

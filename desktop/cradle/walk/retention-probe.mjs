@@ -7,10 +7,12 @@
 //      is instant from the listing cache (no re-read), and pending shows ONE
 //      tree-level indicator, never a per-node affordance;
 //   C. mode-centre tier — the expressions centre's iframe is the SAME DOM
-//      node across mode switches away and back (parked, not reloaded);
+//      node AND the SAME document across mode switches away and back
+//      (stage-owned: it mounts in its own mode's stage slot, concealed
+//      while the mode waits — never parked, never moved);
 //   C2. mode-centre tier, factory — the frame-built centre (the chat node
-//      the frame passes down through the shell) parks identically: the SAME
-//      main.factory-centre node returns after a mode round trip;
+//      the frame passes down through the shell) stages identically: the
+//      SAME main.factory-centre node returns after a mode round trip;
 //   D. book quarantine — one corrupted workspace record empties and names
 //      itself in the footer while the book still loads.
 import {chromium} from 'playwright';
@@ -133,40 +135,59 @@ check((listingReads['Work']??0)===readsBefore,'re-expansion performs NO new owne
 check(!indicatorTripped,'the tree-level indicator does not trip on a cached re-expansion');
 
 // --- C. mode-centre tier: the expressions iframe survives mode switches --
+// The stage law (2026-09-20): a stage-owned centre mounts DIRECTLY in its
+// mode's own always-present stage slot and never moves — the same node AND
+// the same document return; while the mode waits the slot is concealed, not
+// emptied, and the park is never involved.
+const appDocIdentity=async(frameEl)=>{
+  const frame=await frameEl.contentFrame();
+  if(!frame)return {token:null};
+  try{
+    return await Promise.race([
+      frame.evaluate(()=>({token:window.__retentionProbeToken??null})),
+      new Promise(resolve=>setTimeout(()=>resolve({token:null}),1500)),
+    ]);
+  }catch{return {token:null};}
+};
 await page.locator('.world-mode-strip [data-mode="expressions"]').click();
-await page.waitForSelector('.mode-stage .pcd-host-frame',{timeout:30000});
+await page.waitForSelector('.mode-stage:not([hidden]) .pcd-host-frame',{timeout:30000});
 await page.waitForTimeout(2500);
-const frameBefore=await page.evaluate(()=>{const f=document.querySelector('.mode-stage .pcd-host-frame');window.__exprFrame=f;return {src:f.getAttribute('src'),parked:!!f.closest('.mode-centre-retention')};});
+const exprHandle=await page.locator('.mode-stage:not([hidden]) .pcd-host-frame').first().elementHandle();
+const exprFrame=await exprHandle.contentFrame();
+const exprToken=await exprFrame.evaluate(()=>(window.__retentionProbeToken??=Math.random().toString(36).slice(2)+'.'+Date.now()));
+const frameBefore=await exprHandle.evaluate(f=>{window.__exprFrame=f;return {src:f.getAttribute('src'),slot:!!f.closest('[data-mode-stage="expressions"]'),inPark:!!f.closest('.mode-centre-retention')};});
 check(frameBefore.src&&frameBefore.src.length>0,'the expressions centre mounts its application iframe',frameBefore.src.slice(0,60));
+check(frameBefore.slot&&!frameBefore.inPark,'the stage-owned centre mounts in its own mode stage slot, never in the park',JSON.stringify(frameBefore));
 await page.locator('.world-mode-strip [data-mode="base"]').click();
 await page.waitForTimeout(1200);
-const parked=await page.evaluate(()=>{const f=window.__exprFrame;return {connected:f?.isConnected??false,parked:!!f?.closest('.mode-centre-retention'),inStage:!!f?.closest('.mode-stage'),src:f?.getAttribute('src')};});
-check(parked.connected&&parked.parked&&!parked.inStage,'switching modes parks the SAME iframe in the hidden retention layer — unmounted never happens',JSON.stringify({connected:parked.connected,parked:parked.parked,inStage:parked.inStage}));
-check(parked.src===frameBefore.src,'the parked iframe keeps its src (no reload)');
+const concealed=await page.evaluate(()=>{const f=window.__exprFrame;return {connected:f?.isConnected??false,inOwnSlot:!!f?.closest('[data-mode-stage="expressions"]'),concealed:!!f?.closest('.mode-stage[hidden]'),inPark:!!f?.closest('.mode-centre-retention'),src:f?.getAttribute('src')};});
+check(concealed.connected&&concealed.inOwnSlot&&concealed.concealed&&!concealed.inPark,'switching modes conceals the SAME iframe in its own stage slot — mounted, never moved, never parked',JSON.stringify({connected:concealed.connected,inOwnSlot:concealed.inOwnSlot,concealed:concealed.concealed,inPark:concealed.inPark}));
+check(concealed.src===frameBefore.src,'the concealed iframe keeps its src (no reload)');
 await page.locator('.world-mode-strip [data-mode="expressions"]').click();
 await page.waitForTimeout(1200);
-const returnedCentre=await page.evaluate(()=>{const f=window.__exprFrame;const visible=f&&f.getClientRects().length>0;return {same:f===document.querySelector('.pcd-host-frame'),inStage:!!f?.closest('.mode-stage'),visible,src:f?.getAttribute('src')};});
-check(returnedCentre.same&&returnedCentre.inStage&&returnedCentre.visible,'returning to the mode presents the SAME iframe in the stage — the centre did not rebuild',JSON.stringify({same:returnedCentre.same,inStage:returnedCentre.inStage,visible:returnedCentre.visible}));
-check(returnedCentre.src===frameBefore.src,'the centre never reloaded across the round trip');
+const exprTokenBack=await appDocIdentity(exprHandle);
+const returnedCentre=await page.evaluate(()=>{const f=window.__exprFrame;const visible=f&&f.getClientRects().length>0;return {same:f===document.querySelector('.mode-stage:not([hidden]) .pcd-host-frame'),inOwnSlot:!!f?.closest('[data-mode-stage="expressions"]'),visible,src:f?.getAttribute('src')};});
+check(returnedCentre.same&&returnedCentre.inOwnSlot&&returnedCentre.visible,'returning to the mode presents the SAME iframe in its stage slot — the centre did not rebuild',JSON.stringify({same:returnedCentre.same,inOwnSlot:returnedCentre.inOwnSlot,visible:returnedCentre.visible}));
+check(exprTokenBack.token===exprToken,'the centre never re-navigated across the round trip — the SAME application document (token kept)',`token ${exprToken===exprTokenBack.token?'kept':'lost: '+String(exprTokenBack.token)}`);
 
-// --- C2. mode-centre tier, factory: the frame-built centre parks too -----
+// --- C2. mode-centre tier, factory: the frame-built centre stages too ----
 // Factory's Desk/Tasks body composes the frame-built chat node
-// (CradleFrame.factoryCentre) — the frame passes it down through the shell
-// and the retention declarer mounts the ONE FactoryCentre body with it, so
-// the park law covers Factory exactly like the other centres.
+// (CradleFrame.factoryCentre) — the frame passes it down and the factory
+// mode's own stage slot mounts it in place, exactly like the other centres.
 await page.locator('.world-mode-strip [data-mode="factory"]').click();
-await page.waitForSelector('.mode-stage main.factory-centre',{timeout:30000});
+await page.waitForSelector('.mode-stage:not([hidden]) main.factory-centre',{timeout:30000});
 await page.waitForTimeout(1500);
-const factoryBefore=await page.evaluate(()=>{const el=document.querySelector('.mode-stage main.factory-centre');window.__factoryCentre=el;return {view:el?.getAttribute('data-centre-view'),label:el?.getAttribute('aria-label'),parked:!!el?.closest('.mode-centre-retention')};});
+const factoryBefore=await page.evaluate(()=>{const el=document.querySelector('.mode-stage:not([hidden]) main.factory-centre');window.__factoryCentre=el;return {view:el?.getAttribute('data-centre-view'),label:el?.getAttribute('aria-label'),slot:!!el?.closest('[data-mode-stage="factory"]'),inPark:!!el?.closest('.mode-centre-retention')};});
 check(factoryBefore.view&&factoryBefore.label==='Factory','the factory centre mounts its Desk body in the stage',JSON.stringify(factoryBefore));
+check(factoryBefore.slot&&!factoryBefore.inPark,'the frame-built factory centre is stage-owned in its own slot, never in the park',JSON.stringify({slot:factoryBefore.slot,inPark:factoryBefore.inPark}));
 await page.locator('.world-mode-strip [data-mode="base"]').click();
 await page.waitForTimeout(1200);
-const factoryParked=await page.evaluate(()=>{const el=window.__factoryCentre;return {connected:el?.isConnected??false,parked:!!el?.closest('.mode-centre-retention'),inStage:!!el?.closest('.mode-stage'),view:el?.getAttribute('data-centre-view')};});
-check(factoryParked.connected&&factoryParked.parked&&!factoryParked.inStage,'switching modes parks the SAME factory centre node in the hidden retention layer — the frame-built body never unmounts',JSON.stringify(factoryParked));
+const factoryConcealed=await page.evaluate(()=>{const el=window.__factoryCentre;return {connected:el?.isConnected??false,inOwnSlot:!!el?.closest('[data-mode-stage="factory"]'),concealed:!!el?.closest('.mode-stage[hidden]'),inPark:!!el?.closest('.mode-centre-retention'),view:el?.getAttribute('data-centre-view')};});
+check(factoryConcealed.connected&&factoryConcealed.inOwnSlot&&factoryConcealed.concealed&&!factoryConcealed.inPark,'switching modes conceals the SAME factory centre node in its own stage slot — the frame-built body never unmounts',JSON.stringify(factoryConcealed));
 await page.locator('.world-mode-strip [data-mode="factory"]').click();
 await page.waitForTimeout(1200);
-const factoryBack=await page.evaluate(()=>{const el=window.__factoryCentre;const visible=!!el&&el.getClientRects().length>0;return {same:el===document.querySelector('.mode-stage main.factory-centre'),inStage:!!el?.closest('.mode-stage'),visible,view:el?.getAttribute('data-centre-view')};});
-check(factoryBack.same&&factoryBack.inStage&&factoryBack.visible,'returning to Factory presents the SAME centre node in the stage — the chat-bearing body did not rebuild',JSON.stringify(factoryBack));
+const factoryBack=await page.evaluate(()=>{const el=window.__factoryCentre;const visible=!!el&&el.getClientRects().length>0;return {same:el===document.querySelector('.mode-stage:not([hidden]) main.factory-centre'),inOwnSlot:!!el?.closest('[data-mode-stage="factory"]'),visible,view:el?.getAttribute('data-centre-view')};});
+check(factoryBack.same&&factoryBack.inOwnSlot&&factoryBack.visible,'returning to Factory presents the SAME centre node in its stage slot — the chat-bearing body did not rebuild',JSON.stringify(factoryBack));
 
 // --- D. book quarantine: one broken record empties and names itself ------
 const quarantineSeed={

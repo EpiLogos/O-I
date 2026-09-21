@@ -1,0 +1,2076 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-uroboros-trickster",
+  "name": "Uroboros, circulation and trickster",
+  "description": "The native toroidal whole in eight movements: the round and its trickster costume, position, opposition, the metabolic fork, superposition, interposition (torus and winding), discharge/confinement, and the return with the hole intact.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-urob-0-round",
+      "name": "The snake bends until its head meets its tail",
+      "character": "The costume succeeds by making an actual feature exhaustive: head and tail complete a visible circumference, and the mouth, the depth, and the opening disappear into the outline.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e66",
+          "name": "the uroboros — apparent circle",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.56,
+            "z": 0
+          },
+          "size": {
+            "x": 0.887,
+            "y": 0.887
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 2.4,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st69",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e67",
+          "name": "head at tail — the visible completion",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.29,
+            "z": 0
+          },
+          "size": {
+            "x": 0.136,
+            "y": 0.136
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.6,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st70",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e68",
+          "name": "the trickster — circle or sphere as costume",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.705,
+            "y": 0.705
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.16,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st71",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e69",
+          "name": "what the outline hides: mouth, depth, opening",
+          "kind": "formation",
+          "position": {
+            "x": 0.7,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "?",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st72",
+                "text": "?",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · native QL/Mytheme register; authored whole-image recovery; quilt §§3–6 toroidal correction",
+          "title": "The snake bends until its head meets its tail",
+          "italic": "The trickster embodies the round presented as the whole truth of the creature — the whole image is toroidal, and its wholeness keeps the opening around which it takes form.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The snake bends until its head meets its tail; hunger moves along a relation in which eater and eaten belong to one life. This is the whole image developed in Taylor's native register: the uroboros is toroidal, and its wholeness keeps the opening. The trickster wears the circle as costume: head and tail appear to complete a circumference, and that visible completion offers itself as the whole truth. Two consequences are already in",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the mouth — assimilation lets what enters change the life that receives it; devouring closure takes everything into an order whose continuation must leave that order untouched. In the Saturnine image the gut is blocked: consumption arrests the generation it claims to sustain. Human-amplified: yes for the toroidal whole, circle/sphere trickster, metabolic fork, Eden relation and complete eightfold recapitulation in the authored quilt.\n\nOccurrences: the bent snake and its mouth (#0); the trickster's circle costume (#0, #1); the Saturnine blocked gut (#0, #2); the quilt's ratified toroidal correction (#0, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-urob-1-position",
+      "name": "Position and opposition",
+      "character": "Position gives the creature a face; the signed cancellation (-1)+(+1)=0 assigns completeness the office of a terminated account. Opposition restores head and tail as oriented terms.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e70",
+          "name": "the circle seen as an outline — position",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.599,
+            "y": 0.599
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.4,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st73",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e71",
+          "name": "the filled perfection — sphere; the costume's first office",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.522,
+            "y": 0.522
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.22,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st74",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e72",
+          "name": "(-1)+(+1) = 0 — the terminated account",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.9,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "(-1)+(+1)=0",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st75",
+                "text": "(-1)+(+1)=0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e73",
+          "name": "head — reaches",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.2,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st76",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e74",
+          "name": "tail — reached",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.184,
+            "y": 0.16
+          },
+          "rotation": 180,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.2,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st77",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · position and opposition; A11 two Ones; A12 monopoly",
+          "title": "Position and opposition",
+          "italic": "The equation demonstrates the cost of the costume: once all difference is inverse quantity, the outcome has no place for the mouth's activity or the body's changed return — it proves no property of circles.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Position gives the creature a face: seen as outline, its body is a circle; conceived as filled perfection, the round becomes a sphere. A circle is real as a circle; the error begins when its completeness answers for the living whole. The quilt sharpens this through (-1)+(+1)=0 — the cancelling zero takes the office of a terminated account; the arithmetic is exact, its mythemic work is to make the cost felt. Opposition restores head and tail",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "as oriented terms: the head reaches, the tail is reached; hunger gives the orientation urgency. Neumann's pp.27–35 sequence follows nourishment through hunger, ingestion, excretion and self-formation. The two Ones preserve what the costume conceals: 0 as One, Self-Identity; 1 as All, Self-Difference — neither office can swallow the other. The hungry head becomes tyrannical at the crossing from local appetite to exhaustive authority (A12).\n\nOccurrences: circle and sphere (#1); the signed cancellation (#1); head/tail orientation and hunger (#0–#1); the Neumann digestive sequence (#1, shared archetypal ground).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-urob-2-fork",
+      "name": "The metabolic fork",
+      "character": "Assimilation changes the receiver; Saturnine detention receives without generating; the Eden-serpent trades the hole for the fork.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e75",
+          "name": "the mouth — the operative opening",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.399
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "",
+          "share": 1.6,
+          "tint": "#252720",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": true,
+            "clock": "seconds",
+            "order": "loop",
+            "easing": "smoothstep",
+            "steps": [
+              {
+                "id": "st79",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.552,
+                    "y": 0.552
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st80",
+                "text": "",
+                "shape": "disc",
+                "hold": 2.4,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.43,
+                    "y": 0.43
+                  },
+                  "rotation": 0,
+                  "tint": "#c9a227",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              },
+              {
+                "id": "st81",
+                "text": "",
+                "shape": "ring",
+                "hold": 2.4,
+                "transition": 1.2,
+                "position": null,
+                "objectState": {
+                  "size": {
+                    "x": 0.552,
+                    "y": 0.552
+                  },
+                  "rotation": 0,
+                  "tint": "#4b3f63",
+                  "tintWeight": 1,
+                  "force": {
+                    "kind": "none",
+                    "strength": 0,
+                    "radius": 0.45,
+                    "spin": 0
+                  }
+                }
+              }
+            ]
+          }
+        },
+        {
+          "id": "e76",
+          "name": "assimilation — what enters changes the life that receives",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": 0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "→",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st82",
+                "text": "→",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e77",
+          "name": "Saturn — blocked gut: reception becomes detention",
+          "kind": "formation",
+          "position": {
+            "x": -0.66,
+            "y": -0.06,
+            "z": 0
+          },
+          "size": {
+            "x": 0.156,
+            "y": 0.156
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♄",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st83",
+                "text": "♄",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e78",
+          "name": "the Eden-serpent — the hole traded for the fork",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⑂",
+          "share": 1,
+          "tint": "#a5623a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st84",
+                "text": "⑂",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e79",
+          "name": "C24 fusion — a mouth that takes every answer as confirmation",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st85",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · superposition of orientations; A03; meta-ballein/metabolism, samāveśa; C24; A27",
+          "title": "The metabolic fork",
+          "italic": "The image embodies the difference between assimilation that renews and detention that prevents generation — participation never authorises one participant to assimilate another.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Taylor's notation holds both orientations in (0/1)/(1/0): form proceeding from source and form returning to source stay active, the slash retaining their mutual relation. The mouth is the operative opening through which the two orientations meet. Assimilation develops through real change in what receives — meta-ballein/metabolism, with samāveśa carrying the assimilative relation in the authored cross-reading. Saturn-devouring is the obstructed version: monopoly has a blocked gut,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "its intake disguising lost circulation. The distinction reaches love: a mouth that takes every answer as confirmation has already become the closed account (C24, A27). The Eden-serpent enters at this authored turn — the hole traded for the fork, good and evil severed from the condition of their discrimination; Frank's Neumann encounter at pp.114–121 reads differentiation's gain together with guilt and loss. This is Taylor's QL refraction, not a claim that Genesis names a torus.\n\nOccurrences: the mouth as opening (#0, #2); Saturnine detention (#0, #2); the Eden fork (#2); samāveśa's authored assimilative relation (#2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-urob-3-torus",
+      "name": "Interposition — the toroidal winding",
+      "character": "The four explicate field-lines and two implicates wind; the path γ(t)=[2t,−t] returns home while its lift ends at (2,−1).",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e80",
+          "name": "the torus — formed surface around an opening it cannot convert into surface",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 1.105,
+            "y": 0.829
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 2,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st86",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e81",
+          "name": "the opening — Anuttara/Paramaśiva owns it; Māyā is the measure wound around it",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#161a20",
+          "tintWeight": 0.9,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st87",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e82",
+          "name": "γ(t)=[2t,−t] — returns to its start; lift ends at (2,−1)",
+          "kind": "formation",
+          "position": {
+            "x": 0.62,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "(2,−1)",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st88",
+                "text": "(2,−1)",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e83",
+          "name": "χ(T²)=0 · π₁(T²)≅ℤ×ℤ — the topological neighbour",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "T²=ℝ²/ℤ²",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st89",
+                "text": "T²=ℝ²/ℤ²",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the torus-cover matheme; A17; C52; A09/C14/C15",
+          "title": "Interposition — the toroidal winding",
+          "italic": "The matheme grounds the exact neighbour: local closure can retain a difference in the wider relation — the mythemic comparison preserves that retained difference.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Interposition gives the creature its winding: mouth, head, tail, body, inner and outer surfaces, and retained opening in one articulated movement. Taylor's 4+2 keeps four explicate twisting field-lines and two implicates; the quilt gathers axis and hole at #0 while #5 enfolds the differentiated winding. The torus-cover matheme states T²=ℝ²/ℤ², χ(T²)=0, π₁≅ℤ×ℤ: the square's four sides and two generators have different counted objects from the quilt's",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "four-field-lines/axis-and-hole — a drawing's central aperture is not a third generating loop. The path γ(t)=[2t,−t] returns to its starting address while its lift ends at (2,−1): homecoming with retained displacement (A17). In the authored appointment Anuttara/Paramaśiva owns the opening; Māyā is the measure-field wound around it — the opening never becomes one more bounded patch. The trick succeeds when the formed pattern makes its dependence unavailable to its own account.\n\nOccurrences: the winding body (#3); the retained opening (#0, #3); the displaced lift (#3); Māyā as measure, not hole (#3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-urob-3b-energy",
+      "name": "Discharge and confinement",
+      "character": "Earthlight carries unconfined discharge; the tokamak holds charged plasma so its activity can continue within arranged containment. An opening is not simply a leak; containment need not be devouring closure.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#c9a227",
+          "#161a20",
+          "#3c6e71",
+          "#e07020"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e84",
+          "name": "earthlight — the excluded ground's return as event",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.32,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.246
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✦",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st90",
+                "text": "✦",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e85",
+          "name": "tokamak — the doughnut chamber; magnetic confinement",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 1,
+            "y": 0.8
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#3c6e71",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st91",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e86",
+          "name": "plasma held so activity can continue",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚡",
+          "share": 1,
+          "tint": "#e07020",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st92",
+                "text": "⚡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e87",
+          "name": "Q27 energetics — release and holding do different work",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∓",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st93",
+                "text": "∓",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Q27 energetics; ITER source house (bounded technical instance)",
+          "title": "Discharge and confinement",
+          "italic": "The two images witness the native operation without proving it: what the completed surface left out becomes an event it must receive; a field which holds activity through an answerable arrangement can sustain a further passage.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Q27's earthlight and tokamak pair carries two relations to energetic power. Earthlight carries unconfined discharge: what the completed surface left out becomes an event it must receive. The tokamak holds charged plasma so its activity continues within an arranged containment. An opening is not simply a leak to be sealed, and containment need not be devouring closure. The quilt places the latent dot at the reserve beneath extension, the − under the manifest +: a formed field which denies",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "its conditions cannot account for their return; a field which holds activity through an answerable arrangement can sustain a further passage. ITER's source supplies the bounded instance — doughnut-shaped vacuum chamber, charged plasma, magnetic confinement — not a universal preference for toroidal confinement. No particular earthlight event is verified here. Human-amplified: yes for the admitted discharge/confinement comparison. This whole returns-to A17 and A18 with reserve/extension intact.\n\nOccurrences: earthlight as quilt-named image (#3); the tokamak's chamber and confinement (#3); the latent dot beneath the manifest + (#3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-urob-4-variants",
+      "name": "The Neumann ground and its variants",
+      "character": "World parents, Prajāpati, En-Soph, the self-rolling wheel, Aion and Gebser — substantial differences in what the images do, not interchangeable costumes for the snake.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e88",
+          "name": "mother and child — nourishment through differentiated dependency",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.261,
+            "y": 0.178
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#4b3f63",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st94",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e89",
+          "name": "Prajāpati's self-offering; horse/universe (p.29 lead)",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "प्र",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st95",
+                "text": "प्र",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e90",
+          "name": "En-Soph; the self-rolling wheel (p.18)",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.425,
+            "y": 0.204
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◯↻",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st96",
+                "text": "◯↻",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e91",
+          "name": "world parents — day at #5, night at #0, four directions at #1–#4 (p.108)",
+          "kind": "formation",
+          "position": {
+            "x": -0.58,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊕",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st97",
+                "text": "⊕",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e92",
+          "name": "Jung's Self/shadow horizon; Gebser's changed seeing",
+          "kind": "formation",
+          "position": {
+            "x": 0.58,
+            "y": -0.48,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☉☀",
+          "share": 1,
+          "tint": "#7a6a52",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st98",
+                "text": "☉☀",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Neumann source house; Frank's protected encounter pp.11–35, 104–121; Jung Aion; Gebser",
+          "title": "The Neumann ground and its variants",
+          "italic": "The shared ground qualifies the native operation without delimiting it: extracting only a perfect circle would lose the bodily and developmental middle that gives the round life.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Neumann's round is encountered within a sustained account of formation: pp.12–18 open womb, parents, mark and page, and the self-rolling wheel; pp.27–35 give appetite, digestive passage and centroversion; pp.104–121 carry the world parents — separation, light, orientation, guilt. Prajāpati's self-creation and the horse/universe image arrive through Neumann's mediation of Deussen, a nested encounter, not a newly verified Vedic telling. En-Soph",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "(p.18) and tohubohu (p.106) belong to different inherited traditions read at the indistinct pole without historical identity. The mark-paper-erasure scene compares a second performable return. Jung's Aion sources the Self/shadow horizon; Gebser historicises perspective's release from exclusive claim — neither derives the torus. The paśu correction holds: in the p.105 Ātman passage, I-am recognition precedes the separation into husband and wife.\n\nOccurrences: the self-rolling wheel (p.18) extending continuing formation (#4); the world-parent day/night 4+2 (p.108, #4); the paśu correction (#4, shared with the Māyā whole); centroversion's return beyond gathering (#4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-urob-5-return",
+      "name": "The snake returns with its hole intact",
+      "character": "Hunger still moves, but a received thing can change the terms of receiving. The Māyā-not-the-hole distinction stands; the eightfold recapitulation is complete.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#161a20",
+        "palette": [
+          "#d8d2c4",
+          "#1c1a22",
+          "#4b3f63",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e93",
+          "name": "the round — wholeness keeping its opening",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.7,
+            "z": 0
+          },
+          "size": {
+            "x": 0.754,
+            "y": 0.754
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 2,
+          "tint": "#4b3f63",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st99",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e94",
+          "name": "the intact hole — constitutive, not absent",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.28,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.246
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#161a20",
+          "tintWeight": 0.95,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st100",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e95",
+          "name": "C21 living symbol / idol — the image's efficacy stays in relation to what it cannot exhaust",
+          "kind": "formation",
+          "position": {
+            "x": 0.66,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⋰/⋯",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st101",
+                "text": "⋰/⋯",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e96",
+          "name": "the eight determinations −/− → 0/1 → ?/! → −/+ → X/x → AM/IS → ∞/dx → 1/0",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.72,
+            "z": 0
+          },
+          "size": {
+            "x": 1.1,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "−/−→1/0",
+          "share": 1,
+          "tint": "#d8d2c4",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st102",
+                "text": "−/−→1/0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e97",
+          "name": "rest — the next circuit need not be demanded",
+          "kind": "formation",
+          "position": {
+            "x": 0.68,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.14,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "∙",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st103",
+                "text": "∙",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · C21; Arbitration/Hybris/Regard/Anamnesis field; A26; A17; Draft 3; A36; Homologia/Analogia",
+          "title": "The snake returns with its hole intact",
+          "italic": "Recognition restores the relation within the differentiated body: the head remains head, the tail remains tail, and what the passage has changed remains changed — Māyā is the measure, never the hole; the paśu correction holds the ontological order.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "What seemed an absence becomes intelligible as constitutive of the form. C21 defines the return: the image's efficacy remains in relation to what it cannot exhaust; it becomes an idol when its success prohibits the relation from changing it. The Arbitration field grounds the lived consequence: hybris flowers when the local measure claims source authority; regard and anamnesis permit reconciliation and return. A17 qualifies circulation: a completed act can return into another performance, and can come",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "to rest — making wholeness depend on perpetual production would restore the consuming hunger at the very point of release. Draft 3 sources the terminal consequence: the completed offering is released into lives whose future it cannot command. The eight determinations remain active through the image — eight turns of one relation, not eight phases of a snake. Human-amplified: yes for the eightfold recapitulation and the Māyā-not-the-hole distinction; the paśu correction is shared with the Neumann whole.\n\nDeclared cross-story: torus ↔ uroboros with the Māyā-not-the-hole distinction and the paśu correction carried; the Neumann self-rolling wheel extends continuing formation. ↳ Occurrences: the intact opening (#0, #3, #5→0); rest without demanded continuation (#5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

@@ -1,0 +1,2317 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-job",
+  "name": "Job",
+  "description": "The whole biblical movement: the councils Job never hears, the losses, the friends' seven-day silence and three rounds of explanation, wisdom's place, the oath, Elihu, the two whirlwind speeches with their creatures, and the return through intercession and the named daughters — first losses retained.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-job-0-councils",
+      "name": "The councils Job never hears",
+      "character": "The reader is shown what Job and his friends are not: the wager precedes the suffering, and the account that suffering proves wrongdoing will confront a man whose integrity the opening affirmed.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3a2c1e",
+          "#7c5a33",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e205",
+          "name": "the council — sons of God presenting; Satan among them",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.22,
+            "z": 0
+          },
+          "size": {
+            "x": 0.676,
+            "y": 0.43
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st223",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e206",
+          "name": "\"Doth Job fear God for nought?\"",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "?",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st224",
+                "text": "?",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e207",
+          "name": "Job — upright; sacrifices toward a fault he has not witnessed",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Job",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st225",
+                "text": "Job",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e208",
+          "name": "the permission — what Job has, not his person; then his flesh, life spared",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊣",
+          "share": 1,
+          "tint": "#3a2c1e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st226",
+                "text": "⊣",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Job 1:1–2:13 (q001, q002; KJV eBible witness)",
+          "title": "The councils Job never hears",
+          "italic": "The narrative demonstrates an asymmetry of knowledge running through the whole encounter: the reader watches servants and children die in a test addressed to someone else's fidelity.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "In Uz, Job's uprightness has a household: seven sons, three daughters, livestock, servants, recurring feasts; his sacrifices reach toward a fault he has not witnessed. When the sons of God present themselves, Satan comes among them. The LORD points to Job's integrity; Satan answers: \"Doth Job fear God for nought?\" — remove the hedge and he will curse the giver. Permission reaches what Job has, not his person. The losses arrive through exhausted human mouths, each messenger still speaking when the next comes: Sabeans,",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "fire, Chaldeans, and the great wind on the children's feast house. Job tears his mantle, shaves his head, worships; he has not charged God foolishly — and the council stays undisclosed to him. The second council shifts the bargain from possessions to body; sores cover him; his wife urges curse and die; he answers through receiving evil as well as good. The three friends arrive, rend their clothing, and sit with him seven days and nights in silence — the first companionship that their later failure must be read against.\n\nOccurrences: the two councils (#0); the four messengers and the wind (#0); the potsherd and ashes (#0); the wife's words (#0); the seven-day silence (#0, recalled at #1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-1-rounds",
+      "name": "The three rounds: comfort becoming accusation",
+      "character": "Eliphaz, Bildad and Zophar explain; Job answers, protests, and asks for a hearing — the explanation begins to add an injury of its own.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3a2c1e",
+          "#7c5a33",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e209",
+          "name": "Eliphaz — the innocent do not perish; affliction as chastening",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.184,
+            "y": 0.086
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "E1",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st227",
+                "text": "E1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e210",
+          "name": "Bildad — divine justice; the children's death explained",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": 0,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "B",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st228",
+                "text": "B",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e211",
+          "name": "Zophar — God exacts less than your iniquity deserves",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Z",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st229",
+                "text": "Z",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e212",
+          "name": "Job — miserable comforters; \"he is not a man as I am\"; no daysman",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.18
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Job",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st230",
+                "text": "Job",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e213",
+          "name": "the engraving — \"written, engraved with iron and lead, cut into rock\" (19:23–24)",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✎",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st231",
+                "text": "✎",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e214",
+          "name": "the prosperous wicked — evidence against the friends' rule (ch. 21)",
+          "kind": "formation",
+          "position": {
+            "x": -0.05,
+            "y": -0.55,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#3a2c1e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st232",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Job 3–27 (q002, q003)",
+          "title": "The three rounds: comfort becoming accusation",
+          "italic": "The friends' certainty embodies the protected account: contradiction is received as further evidence of the judged person's defect.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Job breaks the silence cursing the day of his birth — the curse directed at his life's arrival, not the curse Satan predicted. Eliphaz begins from Job's former strength and the innocency question; Job answers with flesh not stone, asks for the pity a friend owes, and compares them to seasonal brooks failing caravans. Bildad insists on divine justice — the children's death then explicable through transgression; Job answers in chs. 9–10 that divine magnitude is the difficulty of obtaining a hearing: no daysman to lay a hand on them both. Zophar intensifies the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "accusation; Job replies that wisdom is not the friends' possession and asks whether they will speak dishonestly for God. The second round: Job's words become evidence against him; he wants his speech preserved — written, engraved with iron and lead, cut into rock — with the living redeemer and the hope of seeing. The third round: Eliphaz alleges concrete cruelties as his own accusations; chapter 24 widens the witness to workers hungry while handling food. The poem keeps its complexity: Job too describes the wicked person's ruin, and Zophar gets no third speech.\n\nOccurrences: the brooks simile (#1); the daysman (#1); the iron-and-lead engraving (#1); the prosperous wicked (#1); the missing third Zophar speech (#1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-2-wisdom",
+      "name": "Chapter 28 — where wisdom's place is not",
+      "character": "Human skill reaches the earth's hidden interior; wisdom's place is not found by the same achievement. \"The fear of the Lord, that is wisdom.\"",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3a2c1e",
+          "#7c5a33",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e215",
+          "name": "the miner's shafts — hidden ore brought to light",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.13,
+            "z": 0
+          },
+          "size": {
+            "x": 0.217,
+            "y": 0.217
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⛏",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st233",
+                "text": "⛏",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e216",
+          "name": "the channels cut through rock; water restrained",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.25,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st234",
+                "text": "≡",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e217",
+          "name": "Abaddon and Death — have heard the report thereof with their ears",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#3a2c1e",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st235",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e218",
+          "name": "wisdom's place — known to God; wind, water, rain and thunder exceed the miner's reach",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st236",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Job 28 (q004)",
+          "title": "Chapter 28 — where wisdom's place is not",
+          "italic": "The chapter honours discovery while asking after a knowledge extraction cannot secure — depth and sea cannot supply it; gold cannot purchase it.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Between the disputed judgments and Job's final oath, chapter 28 follows human skill underground: shafts opened, hidden ore brought to light, channels cut through rock, water restrained from dripping. The earth that feeds them has another interior their labour can reach. Wisdom's place does not become available by the same achievement: the deep says, It is not in me; the sea says, It is not with me; gold and",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "precious stones cannot be given for it. Destruction and death say they have heard the report with their ears. God knows the place — within an ordering of wind, water, rain and thunder that exceeds the miner's reach. The chapter gives human beings reverence and departure from evil as their relation to wisdom. No character named Sophia enters this biblical scene; the composition's historical questions remain separate.\n\nOccurrences: the mining shafts and ore (#2); Abaddon and Death's report (#2); the fear of the Lord as wisdom (#2).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-2b-oath",
+      "name": "The oath and Elihu",
+      "character": "Job binds his claim to contestable particulars and asks for the adversary's written charge; Elihu changes the proposed work of suffering yet still defends justice.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3a2c1e",
+          "#7c5a33",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e219",
+          "name": "the oath of ch. 31 — desire, servants, the widow and orphan, the stranger, the enemy; \"let thine answer be a scroll\"",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.18,
+            "z": 0
+          },
+          "size": {
+            "x": 0.217,
+            "y": 0.145
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✍",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st237",
+                "text": "✍",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e220",
+          "name": "the written charge — carried on the shoulder, as a crown",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≡+",
+          "share": 1,
+          "tint": "#7c5a33",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st238",
+                "text": "≡+",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e221",
+          "name": "Elihu — angry at both sides; spirit over seniority; belly like wine",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Eh",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st239",
+                "text": "Eh",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e222",
+          "name": "the weather gathering — clouds, rain, frost, light, thunder (36–37)",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☁",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st240",
+                "text": "☁",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · Job 29–37 (q003, q005)",
+          "title": "The oath and Elihu",
+          "italic": "The oath names the relations under which innocence could be examined; Elihu's intervention must be heard in tension — the offered explanation is more various, yet justice is again defended at the sufferer's expense.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Job remembers his public righteousness with concrete recipients — the poor, fatherless, widow, blind, lame — and chapter 30 records the inversion: those he once despised now mock him, his own harsh distinctions preserved in the witness. The oath of chapter 31 binds his claim to particulars which can be contested: desire, adultery, treatment of servants, hunger, nakedness, the stranger's lodging, conduct toward an enemy; against contempt for a servant's cause he invokes their common making in the womb. He asks for the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Almighty's answer and the adversary's written charge, to be carried openly on his shoulder and as a crown. Elihu then takes six chapters: angry both at Job's self-justification and at the friends' condemnation without answer; understanding through spirit rather than seniority; suffering as instruction that can turn a person from pride — yet chapters 34–35 bring Job's speech under fresh judgment. The weather begins to displace the imagined courtroom; Elihu's absence from the named rebuke in 42 certifies none of his claims.\n\nOccurrences: the oath's particulars (#2); the shoulder and crown (#2); Elihu's wine and mediation (#2); the gathering weather (#2, leading to #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-3-whirlwind",
+      "name": "The whirlwind: foundations, rain where no man is, wild creatures",
+      "character": "The answer questions the knowledge of the one who questions: measures, morning stars, sea's womb, rain in the wilderness, lion and raven, wild ass, ostrich, horse, hawk and eagle.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#20242c",
+        "palette": [
+          "#e6e0d0",
+          "#20242c",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e223",
+          "name": "the whirlwind — the LORD answering out of it",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.34,
+            "z": 0
+          },
+          "size": {
+            "x": 0.377,
+            "y": 0.377
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.8,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st241",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e224",
+          "name": "foundations and measures — \"where wast thou when I laid the foundations?\"",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.29,
+            "z": 0
+          },
+          "size": {
+            "x": 0.374,
+            "y": 0.374
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st242",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e225",
+          "name": "rain where no man is — the wilderness satisfied",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st243",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e226",
+          "name": "lion and raven fed; wild ass beyond the driver; ostrich, horse, hawk, eagle",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "𓅃",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st244",
+                "text": "𓅃",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e227",
+          "name": "Job's first answer — \"I will lay mine hand upon my mouth\" (40:3–5)",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": -0.52,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "✋",
+          "share": 1,
+          "tint": "#e6e0d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st245",
+                "text": "✋",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Job 38:1–40:5 (q006)",
+          "title": "The whirlwind: foundations, rain where no man is, wild creatures",
+          "italic": "The creatures are neither pastoral backdrop nor tools awaiting use: their difference changes the extent of the question — no council transcript is delivered, no secret offences listed.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The LORD answers out of the whirlwind by questioning the knowledge of the one who questions: where was Job when the foundations were laid, its measures determined, the morning stars sang together? The sea comes from a womb, meets doors and bars; morning, death's gates, light and darkness open different reaches. Rain falls where no man lives, satisfying the wilderness — consequential precisely without serving Job's",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "household. Feeding the lion and raven places need within an order that also contains predation. Chapter 39: wild goats and deer, the wild ass beyond the driver's voice, the ostrich's harsh exposure of eggs and extraordinary speed, the horse meeting battle, hawk and eagle. There is a first answer inside the encounter: at 40:3–5 Job lays his hand upon his mouth — and the second speech is not collapsed into that silence.\n\nOccurrences: the foundation questions (#3); the sea's doors and bars (#3); rain without a human place (#3); the wild animals (#3); the hand on the mouth (#3, before the second speech).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-3b-behemoth",
+      "name": "Behemoth and Leviathan — no hook draws him out",
+      "character": "The challenge turns the wish for just judgement toward the power and extent required to administer it; the creatures are displayed, not slain.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#20242c",
+        "palette": [
+          "#e6e0d0",
+          "#20242c",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e228",
+          "name": "Behemoth — made with Job; untroubled before the rushing river",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.43,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st246",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e229",
+          "name": "Leviathan — hook, cord, covenant-as-servant, plaything, trade: all refused by his strength",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.05,
+            "z": 0
+          },
+          "size": {
+            "x": 0.7,
+            "y": 0.55
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1.6,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st247",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e230",
+          "name": "\"king over all the children of pride\"",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♛",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st248",
+                "text": "♛",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e231",
+          "name": "swords, spears, darts — counted as stubble",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚔",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st249",
+                "text": "⚔",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · Job 40:6–41:34 (q006)",
+          "title": "Behemoth and Leviathan — no hook draws him out",
+          "italic": "The second speech cannot be collapsed into the first silence: the whirlwind challenges Job to clothe himself in majesty — to administer what he would judge.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The LORD speaks again from the whirlwind: would Job condemn God in order to establish his own righteousness? Can he abase the proud and establish his own arm's salvation? Behemoth is presented as a creature made with Job — grass-eating, reed-resting, untroubled by the swollen river. Leviathan brings capture into successive human practices: can Job draw him with a hook, pierce his jaw, bind him by covenant as a lasting",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "servant, keep him as a plaything for daughters, sell him among merchants? Weapons are counted as stubble; his breath kindles coals; the boiling sea and luminous wake develop a strength these uses cannot master. The close names his kingship over the children of pride. The LORD displays these creatures; Job does not slay them; the witness does not identify Leviathan with Satan or assign either animal a determinate QL position.\n\nOccurrences: Behemoth's river (#3); the hook, covenant, trade questions (#3); the pride kingship (#3); the displayed-not-slain relation (#3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-4-return",
+      "name": "\"Now mine eye seeth thee\" — intercession and the named daughters",
+      "character": "The friends' account is rejected; their restoration passes through Job's prayer. Livestock doubled, daughters named and given inheritance — and the first losses are not cancelled.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#3a2c1e",
+          "#c8b070",
+          "#54626f",
+          "#e6e0d0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e232",
+          "name": "\"I have heard of thee by the hearing of the ear: but now mine eye seeth thee\" (42:5)",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.11,
+            "z": 0
+          },
+          "size": {
+            "x": 0.136,
+            "y": 0.136
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#e6e0d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st250",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e233",
+          "name": "the LORD's anger at Eliphaz, Bildad, Zophar — \"ye have not spoken of me the thing that is right, as my servant Job hath\"",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.217,
+            "y": 0.217
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st251",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e234",
+          "name": "Job's intercession — seven bullocks, seven rams; their restoration through his prayer",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.1,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.4,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st252",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e235",
+          "name": "Jemima, Kezia, Keren-happuch — named; inheritance among the brothers",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⁂",
+          "share": 1,
+          "tint": "#e6e0d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st253",
+                "text": "⁂",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e236",
+          "name": "the first household — not resurrected in the text; the renewed life carries its history",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st254",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · Job 42:1–17 (q007, q008); Jung's Answer to Job as a second, attributed whole (CW11 §§609–628, 746–757)",
+          "title": "\"Now mine eye seeth thee\" — intercession and the named daughters",
+          "italic": "The ending demonstrates the protected account's criterion: can the witness alter the authority of the account under which the witness is received? (human-amplified: yes, the ratified A20/C27 relation).",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Job answers: he has uttered what he understood not; \"I have heard of thee by the hearing of the ear: but now mine eye seeth thee, wherefore I abhor myself, and repent in dust and ashes\" — and the text's next movement stands with it: the LORD's anger burns against the three friends, who have not spoken rightly as Job has. The one they instructed to correct himself becomes their intercessor: seven bullocks and seven rams, Job praying, his acceptance consequential for them. Restoration accompanies his prayer. Family and acquaintances return; livestock",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "doubles; seven sons and three daughters — Jemima, Kezia, Keren-happuch named, with inheritance among their brothers. He lives 140 years and sees four generations. The ending does not resurrect the first children or cancel the dead servants: the book returns to household life carrying a history household prosperity cannot erase. Jung's Answer to Job enters as a separate attributed whole: the moral contradiction within the God-image, Sophia's remembrance, continuing incarnation in empirical consciousness — distinct registers, not additional speeches.\n\nOccurrences: the eye-sees turn and repentance (#4); the rebuke of the friends (#4); the intercession (#4); the daughters' names and inheritance (#4); the retained first losses (#0, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-job-5-return",
+      "name": "Return: the protected account, trust, and where consequence can arrive",
+      "character": "The essay's appointments carried whole: C27's criterion; A24's usurped measure; A23 trust; A25 mediation; A29 consequence; A31/A32 revision of criterion and frame; the native eightfold without biblical derivation.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#20242c",
+        "palette": [
+          "#e6e0d0",
+          "#20242c",
+          "#54626f",
+          "#c8b070"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e237",
+          "name": "C27 protected account — the criterion of the whole",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.167,
+            "y": 0.073
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "C27",
+          "share": 1,
+          "tint": "#e6e0d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st255",
+                "text": "C27",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e238",
+          "name": "A24 arbitration — whose criterion can be questioned",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.32,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A24",
+          "share": 1,
+          "tint": "#e6e0d0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st256",
+                "text": "A24",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e239",
+          "name": "A23/A25 — address persisting after safety fails; mediation received, not owning the source",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.32,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A23",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st257",
+                "text": "A23",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e240",
+          "name": "A29/A35 — where consequence can arrive; origins cared for in judgement",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.32,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A29",
+          "share": 1,
+          "tint": "#c8b070",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st258",
+                "text": "A29",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e241",
+          "name": "the native field −/− → … → 1/0 — grounds the terms; the tale supplies no derivation",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.765,
+            "y": 0.102
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "1/0",
+          "share": 1,
+          "tint": "#54626f",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st259",
+                "text": "1/0",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · A19–A25, A27, A29, A31–A36; C21, C25–C27, C31, C48, C53, C56; the shared Neumann ground",
+          "title": "Return: the protected account, trust, and where consequence can arrive",
+          "italic": "The whole returns-to its appointments with human-amplified: yes standing for the ratified operations; a biblical derivation of QL has human-amplified: no standing.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The essay appoints this whole to the Protected Account: contradictory witness made defective because the image through which it is judged must remain right (A20; C27's criterion — can the witness alter the authority of the account?). A19/C31 receive the governing image acting through feeling and valuation; C21 the difference between a God-image through which address remains possible and one protected by denying the life that contradicts it. The disputed court returns-to A24: a criterion becomes usurping when its relation to the field can no longer be questioned; the Arbitration field's regard and anamnesis name the renewed",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "attention and return. A23/C48 receive address persisting after its first account of safety fails; A25 receives intercession as real mediation that remains received and answerable. A29/C53 receive the council's permissions and the losses borne below it as a question about where consequence can arrive — the killed servants are not incidental materials. A31 receives the passage from inherited explanation to changed encounter; A32 receives the question whether the image can initiate its own return before requiring the interlocutor to conform. The native eightfold grounds the terms; no speaker is assigned one determination as a fixed identity.\n\nOccurrences: the friends' explanations and the final rebuke (#1, #4); the intercession (#4); the whirlwind's creatures (#3); the retained losses (#0, #4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

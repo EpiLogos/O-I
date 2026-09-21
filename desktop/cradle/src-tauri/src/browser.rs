@@ -446,6 +446,7 @@ fn control_on_main(
                 Some("take") => "window.__OI_PAGE_CONTEXT__?.take() ?? null".into(),
                 Some("selection") => "window.__OI_PAGE_CONTEXT__?.selection() ?? null".into(),
                 Some("validate") => format!("window.__OI_PAGE_CONTEXT__?.validate({key}) ?? false"),
+                Some("mark") => format!("window.__OI_PAGE_CONTEXT__?.mark({key}) ?? false"),
                 _ => return Err("Unknown context reading".into()),
             };
             let request_id = request["request"].as_str().ok_or("Context request id is missing")?.to_owned();

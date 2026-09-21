@@ -36,7 +36,9 @@
  *   - absent facets are data: an empty honest state, never an error.
  */
 import { useEffect, useId, useMemo, useState } from "react";
-import "../chrome.css";
+// The techne chrome tier (tokens + panel/bar/rail grammar). Formerly vendored
+// as ../chrome.css (T3 port); the package exports the identical file now.
+import "@epilogos/oi-design-system/techne.css";
 import "./place.css";
 import { resolveActionRoute, techneSource } from "../adapter";
 import type { TechneActionReceipt } from "../../contract";

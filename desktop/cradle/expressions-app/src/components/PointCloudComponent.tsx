@@ -25,6 +25,10 @@ export interface PointCloudComponentProps extends Partial<PointCloudConfig> {
 
 export interface PointCloudComponentRef {
   getEngine: () => PointCloudField | null;
+  // These operations already delegate to the resident engine below.
+  setActiveEntity: PointCloudField['setActiveEntity'];
+  resetField: PointCloudField['resetField'];
+  getEntityCentre: PointCloudField['getEntityCentre'];
   triggerDisperse: (strength?: number) => void;
   setCameraOrbit: (pitch: number, yaw: number) => void;
   setCameraPan: (panX: number, panY: number) => void;
