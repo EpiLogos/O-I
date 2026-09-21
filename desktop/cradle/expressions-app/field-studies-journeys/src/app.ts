@@ -45,7 +45,7 @@ import {OrbitControl} from './orbitControl.js';
 import {RailItem,railPressed} from './rail.js';
 import {featuredExpressions,startingPoints,nativeSeven,forkExpression,libraryHTML,modesHTML,compositionCover} from './expressions.js';
 import {installKernelExpressions,kernelExpressionsAvailable} from './kernelExpressions.js';
-import {installNativeWorkspace} from './nativeWorkspace.js';
+import {installNativeWorkspace,type NativeSubject} from './nativeWorkspace.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import type {KernelConversion} from './kernelDocumentBridge.js';
 mountShell();installPanelResize();installKernelExpressions();
@@ -417,7 +417,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'present':presenting=true;selected=[];shapePickerOpen=false;renderAll();break;
  case 'exit-present':presenting=false;renderAll();break;
  case 'library':case 'preset-browser':case 'keep':openLibrary();break;
- case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso'}});break;
+ case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'native-work':nativeWorkspace?.toggle();break;
  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
  case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home){sequenceOpen=false;beltOpen=false;guidesVisible=false;loadJourney(clone(home));}else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
@@ -706,7 +706,7 @@ function renderRail(){
     ?DEEP_TOOLS.map(([a,i,l,extra])=>ib(a,i,l,extra??'')).join('<span class="toolbar-divider" aria-hidden="true"></span>')
     :livedRailHTML;
 }
-function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string}}){
+function hostRequest(payload:{request:string;mode?:string;detail?:{kind:string;subject?:NativeSubject}}){
  if(window.parent===window)return;
  try{window.parent.postMessage({v:1,kind:'host-request',...payload},'*');}catch{/* nothing sent rather than a wrong-channel throw */}
 }
@@ -751,7 +751,7 @@ function applyNativeView(view:KernelConversion,preservePosition=false){
  else {applySceneView();const nativeRef=view.document.selection?.entity_ref;const occurrence=view.bindings[scene().id]?.occurrences.find(o=>o.entity_ref===nativeRef);selected=occurrence?[occurrence.view_entity_id]:[];}
  markSaved();renderAll();announceHostState();
 }
-nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:kind=>hostRequest({request:'summon',detail:{kind}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;}});
+nativeWorkspace=installNativeWorkspace({snapshot:()=>({journey:clone(store.document),sceneId:scene().id,entityId:selected[0]??null}),version:()=>store.revision,load:applyNativeView,toast,summon:(kind,subject)=>hostRequest({request:'summon',detail:{kind,subject}}),correspondence:(rows,selection)=>{nativeConnectionRows=rows;nativeSelectedRelation=selection;needsFrame=true;}});
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-work','save','Native composition — save and reopen'));
 (document.querySelector('#workspace-menu') as HTMLElement)?.insertAdjacentHTML('beforeend',ib('native-library','library','Native Library — My World / O:I Web'));
 Object.assign(window.__FIELD_STUDIES__,{nativeWorking:()=>nativeWorkspace?.inspect(),nativeConnections:()=>engine.inspectConnections?.(),openNative:(reference:string)=>nativeWorkspace?.open(reference),openNativeFile:(path:string)=>nativeWorkspace?.openFile(path)});

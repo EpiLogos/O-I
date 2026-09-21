@@ -129,14 +129,17 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: 
   // events land in the seams that already exist.
   useEffect(() => {
     const handler = (event: MessageEvent) => {
-      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string}} | null;
+      const data = event.data as {v?: number; kind?: string; request?: string; mode?: string; kind2?: string; detail?: {kind?: string; subject?: unknown}} | null;
       if (!data || data.v !== 1 || data.kind !== "host-request") return;
       if (event.source !== frame.current?.contentWindow) return;
       if (data.request === "workspace-mode" && (data.mode === "expressions" || data.mode === "techne")) {
         window.dispatchEvent(new CustomEvent("oi:host-workspace-mode", {detail: {mode: data.mode}}));
       }
       if (data.request === "summon" && data.detail?.kind) {
-        window.dispatchEvent(new CustomEvent("oi:techne-summon", {detail: {kind: data.detail.kind}}));
+        // The application may carry the exact native work it is standing on
+        // (a verso summon). It is untrusted frame data — a pointer only,
+        // sanitised and validated through the owner where it is consumed.
+        window.dispatchEvent(new CustomEvent("oi:techne-summon", {detail: {kind: data.detail.kind, subject: data.detail.subject}}));
       }
     };
     window.addEventListener("message", handler);

@@ -69,7 +69,9 @@ try{
  const ref=saved.expression_ref;
  await frame.getByRole('button',{name:'Commit composition',exact:true}).click();await frame.locator('.native-status').filter({hasText:'Native working revision'}).waitFor();
  const unchanged=await op({op:'expression',request:{operation:'inspect',expression_ref:ref}});check(unchanged.data.document.revision===saved.revision,'An unchanged Scene does not generate a new native revision after JSON key ordering');
- await frame.getByRole('button',{name:'Account / sources',exact:true}).click();await page.waitForFunction(()=>window.__TECHNE_HOST_PROOF__.events.includes('verso'));check(true,'The verso request crosses the real iframe host with its envelope intact (not full portal acceptance)');
+ await frame.getByRole('button',{name:'Account / sources',exact:true}).click();await page.waitForFunction(()=>window.__TECHNE_HOST_PROOF__.summons.some(s=>s.kind==='verso'&&s.subject));
+ const versoSummon=await page.evaluate(()=>window.__TECHNE_HOST_PROOF__.summons.find(s=>s.kind==='verso'&&s.subject));
+ check(versoSummon.subject.ref===ref&&versoSummon.subject.revision===saved.revision,'The verso summon carries the EXACT open native work (expression ref + current revision), not a bare kind or a global focus');
  await page.screenshot({path:resolve(out,'native-saved.png')});
  // A second kernel must read the actual native file, not the first process or
  // a browser-memory imitation of it. Open uses real file and kernel operations.

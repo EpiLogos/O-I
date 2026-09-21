@@ -13,12 +13,19 @@ import type {ConnectionBinding} from '../../../../../packages/oi-design-system/e
 import {prepareCompositionEdit} from './kernelComposition.js';
 import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 
+/** The exact native work a summon carries to the cradle's verso account —
+ * refs only, the pointer to the Expression / Scene / entity-or-relation
+ * occurrence currently open. The cradle validates it through the owner. */
+export interface NativeSubject {
+ ref:string;kind:'expression';nativeOwner:'oi';revision:number;title:string;
+ sceneRef:string|null;entityRef:string|null;relationRef:string|null;
+}
 export interface NativeWorkspaceHost {
  snapshot:()=>WorkingSnapshot;
  version:()=>number;
  load:(view:KernelConversion,preservePosition?:boolean)=>void;
  toast:(message:string,duration?:number)=>void;
- summon:(kind:'library'|'verso'|'search')=>void;
+ summon:(kind:'library'|'verso'|'search',subject?:NativeSubject)=>void;
  correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
@@ -111,10 +118,20 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   const updated={...record,view:next};await writeWorkingCheckpoint(record.draft_id,updated,scope);work.restore(updated,snapshot.journey);
   host.load(next,true);status('Only the loaded member page changed. Native identity, membership, sources and file are unchanged.');
  };
+ // The exact native work the verso must account for: the open Expression on
+ // its current revision, and the exact Scene / entity-or-relation occurrence
+ // the native selection stands on. Null when no native work is open (the
+ // verso then falls back to the host's own subject). Refs only — the cradle
+ // reads the content and revalidates the revision through the owner.
+ const nativeSubject=():NativeSubject|null=>{
+  const doc=work.state?.view?.document;if(!doc)return null;
+  return {ref:doc.expression_ref,kind:'expression',nativeOwner:'oi',revision:doc.revision,title:doc.title,
+   sceneRef:doc.selection?.scene_ref??null,entityRef:doc.selection?.entity_ref??null,relationRef:doc.selection?.relation_ref??null};
+ };
  panel.addEventListener('click',event=>{
   const action=(event.target as HTMLElement).closest<HTMLElement>('[data-native]')?.dataset.native;if(!action)return;
   if(action==='close'){panel.hidden=true;return;}
-  if(action==='library'||action==='verso'){host.summon(action);return;}
+  if(action==='library'||action==='verso'){host.summon(action,action==='verso'?nativeSubject()??undefined:undefined);return;}
   void run(async()=>{
    if(!kernelExpressionsAvailable())throw new Error('The native host channel is not ready. No native operation has been staged.');
    if(action==='refresh'){await refresh();return;}
@@ -150,5 +167,6 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
    catch(error){if(generation===restoreGeneration){status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
   inspect(){const state=work.state;return {native_ref:state?.view?.document.expression_ref,revision:state?.view?.document.revision,file:state?.file,pending:state?.pending?.kind,notes:state?.view?.notes??[],bindings:state?.view?.bindings};},
+  nativeSubject,
  };
 }
