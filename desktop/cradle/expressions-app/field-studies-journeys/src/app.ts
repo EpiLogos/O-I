@@ -56,9 +56,10 @@ let workspace=defaultWorkspace(),workspaceStorageError=false;
 try{const saved=localStorage.getItem(WORKSPACE_KEY);if(saved)workspace=validateWorkspace(JSON.parse(saved));}catch{workspaceStorageError=true;}
 const sceneNames=new Map<string,string>();
 let monitoredLane='';let monitorMode:MonitorMode='cycle';let monitorDocked=false;let assignmentTarget='',assignmentGroup='';let beltPickerOpen=false;const pendingBelt=new Set<string>();let contextKind:''|'objects'|'text'|'pointer'='';
-let sequenceOpen=true;let studioSection="physics";
+const startsInTechne=new URLSearchParams(location.search).get('mode')==='techne';
+let sequenceOpen=!startsInTechne;let studioSection="physics";
 let customFontEdit=false;
-let beltOpen=innerWidth>1000,studioOpen=false;
+let beltOpen=!startsInTechne&&innerWidth>1000,studioOpen=false;
 let studioDocked=false,studioSizeMemo:{width:string;height:string}|null=null;let beltWasOpen=false;
 // The instrument opens on the O:I mark — the light/dark theme expression
 // that matches the base O:I image (owner direction 2026-09-19). A last-opened
@@ -417,7 +418,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso'}});break;
  case 'native-work':nativeWorkspace?.toggle();break;
  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
- case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home)loadJourney(clone(home));else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
+ case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home){sequenceOpen=false;beltOpen=false;guidesVisible=false;loadJourney(clone(home));}else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
  case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
  case 'close-library':closeLibrary();break;

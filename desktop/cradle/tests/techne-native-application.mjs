@@ -41,6 +41,7 @@ try{
  await mount();
  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument().id==='source-twelve-faces'),'The actual Technē mode opens the approved Epii face without a preselected Wiki subject');
  check(await frame.locator('canvas').count()>0,'The current imported renderer is mounted through the native material host');
+ check(await frame.locator('#live-workspace').isHidden()&&await frame.locator('#toolbelt-panel').isHidden(),'The Technē entrance does not replace native navigation with duplicate formation and physics panels');
  await page.screenshot({path:resolve(out,'epii-home.png')});
  // The existing browser authoring library supplies new work; it is not a
  // substitute for native collection/search readback, which is tested elsewhere.
