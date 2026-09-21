@@ -1,0 +1,7 @@
+import {useState,useSyncExternalStore} from "react";
+import {agentSetupSnapshot,returnFromAgentSetup,subscribeAgentSetup,openAgentSetup} from "./agentSetup";
+export function AgentSetupReturn(){
+ const target=useSyncExternalStore(subscribeAgentSetup,agentSetupSnapshot);const [busy,setBusy]=useState(false);const [error,setError]=useState<string>();
+ if(!target)return null;
+ return <section className="oi-section" aria-label="Agent session repair"><strong>Repair Agent/session setup · {target.project??"Central root"}</strong><p className="oi-note">{target.reason}</p><p className="oi-note" data-agent-setup-target={target.destination?.topic}>Native destination: {target.destination?.owner} → {target.destination?.topic}{target.destination?.nativeAction&&<> · <code>{target.destination.nativeAction}</code></>}</p><p className="oi-note">The Agent form and conversation draft remain held. Use the native owner's secure credential setup; credential material is never entered into this conversation or stored by this excursion.</p><>{target.destination?.owner==="ai-kit"&&<button className="oi-action" onClick={()=>openAgentSetup({...target,destination:{owner:"ai-kit",topic:"credentials"}})}>Open credential presence and references</button>}</><button className="oi-action" disabled={busy} onClick={()=>{setBusy(true);void returnFromAgentSetup().catch(error=>setError(String(error))).finally(()=>setBusy(false));}}>Return to preserved composer and re-read readiness</button>{error&&<p role="alert">{error}</p>}</section>;
+}

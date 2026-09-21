@@ -44,6 +44,7 @@ pub mod setup;
 pub mod graph;
 pub mod encounter;
 pub mod agency;
+pub mod agent_definition;
 pub mod being;
 pub mod chat_defaults;
 pub mod files;
@@ -260,6 +261,7 @@ pub enum KernelOp {
         #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
     },
     AgencyRead { project: String },
+    AgentDefinition { project: Option<String>, request: agent_definition::Request },
     /// Wave 6E: pending Returns tray — list/read plus human review/include
     /// through Central's native receiving operations (owner-validated).
     /// `project` names the project register's field; `None` is the ROOT
@@ -521,6 +523,7 @@ pub enum KernelOpResult {
     /// The provisioned chat conversation: the minted space and session refs,
     /// the chosen default provider and the owner's own open result, verbatim.
     EncounterProvisioned {data:serde_json::Value},
+    AgentDefinitionReading { data: serde_json::Value },
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
@@ -965,12 +968,20 @@ impl Kernel {
                     content_base64: reading.content_base64,
                 }})
             }
+            KernelOp::AgentDefinition {project,request} => {
+                if project.as_deref()==Some("") { return Err("Use explicit null for the Central root Agent definition scope".into()); }
+                let cwd=self.agent_location(project.as_deref())?;
+                let data=agent_definition::execute(&self.client,&self.agency,project.as_deref(),&cwd,&request)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgentDefinitionReading {data}})
+            }
             KernelOp::Encounter {project,request} => {
-                let (cwd,project_ref)=self.project_ground(&project)?;
-                let data=self.agency.encounter(&cwd,&project_ref,&request)?;
+                let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let owned_ref=self.agent_project_ref(&project,&cwd)?;
+                let project_ref=owned_ref.as_str();
+                let data=self.agency.encounter(&cwd,project_ref,&request)?;
                 if let agency::EncounterRequest::Read{agent_session,..}=&request {
                     if data["agent_session"].as_str()!=Some(agent_session){return Err("AIKit encounter reading identity mismatch".into());}
-                    let project=focus::ProjectRef::try_from(owner_relation(&project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
+                    let project=focus::ProjectRef::try_from(owner_relation(project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
                     self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
                 }
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
@@ -985,11 +996,8 @@ impl Kernel {
             }
             KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),
             KernelOp::AgencyRead { project } => {
-                let root=self.world_map(false).map_err(|e|e.to_string())?;
-                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
-                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                let inspection=self.inspect_project(&project,false).ok_or("Central has not bound a canonical ProjectRef")?;
-                let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+                let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let project_ref=self.agent_project_ref(&project,&cwd)?;
                 // The spaces reading spawns the AIKit owner (~100 ms); the
                 // disclosure re-reads it on every branch expansion, so the
                 // short horizon serves the repeat. A fresh stamp is minted
@@ -1325,6 +1333,31 @@ impl Kernel {
     // Cached owner readings — the same owner operations as before, served
     // from the short-horizon cache when a fresh reading was not demanded.
     // -----------------------------------------------------------------------
+
+    /// The empty conversation Project label is the explicit renderer ROOT
+    /// selection, not a native Project id or a fallback to the configured child.
+    fn agent_location(&mut self, project: Option<&str>) -> Result<std::path::PathBuf,String> {
+        let root=self.world_map(false).map_err(|e|e.to_string())?;
+        let base=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?);
+        match project {
+            None=>Ok(base.to_path_buf()),
+            Some(project)=>{
+                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                Ok(base.join(row["path"].as_str().ok_or("Project location unavailable")?))
+            }
+        }
+    }
+    fn agent_project_ref(&mut self, project: &str, cwd: &std::path::Path) -> Result<String,String> {
+        if !project.is_empty() {
+            let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+            return inspection["manifest"]["project_id"].as_str().map(str::to_owned).ok_or("Central has not bound a canonical ProjectRef".into());
+        }
+        let scope=self.agency.direct_agent(cwd,"agent-session-scope",None)?;
+        if scope["schema"]!="aikit.direct-agent-scope/v1" || scope["execution_authority_granted"]!=false {
+            return Err("AIKit did not disclose the native root Project binding".into());
+        }
+        scope["project_ref"].as_str().filter(|s|!s.is_empty()).map(str::to_owned).ok_or("No native root Project binding".into())
+    }
 
     fn world_map(&mut self, fresh: bool) -> Result<serde_json::Value, String> {
         if fresh { self.reads.invalidate("world"); }

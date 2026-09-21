@@ -1,3 +1,4 @@
+import {NativeAgentLauncher} from "./NativeAgentLauncher";
 /**
  * MintAgent — intent-led minting (COMMON-BRIEF §handoff 3). Begins with
  * "What should this agency take care of?", retains the exact intent text,
@@ -38,7 +39,11 @@ const DURABILITY_OPTIONS: { value: AgentDurability; label: string; detail: strin
   { value: "temporary", label: "Bounded temporary help", detail: "Need not become a durable profile." },
 ];
 
-export function MintAgent({ project, onMessage }: { project?: string; onMessage?: (message: string) => void }) {
+export function MintAgent(props: { project?: string; onMessage?: (message: string) => void }) {
+  const [kind,setKind]=useState<"durable"|"other">("durable");
+  return <><div className="oi-segment" aria-label="Agent identity or temporary formation"><button onClick={()=>setKind("durable")} aria-pressed={kind==="durable"}>Reusable native Agent</button><button onClick={()=>setKind("other")} aria-pressed={kind==="other"}>Temporary help / team composition</button></div>{kind==="durable"?<NativeAgentLauncher project={props.project}/>:<FormationDraft {...props}/>}</>;
+}
+function FormationDraft({ project, onMessage }: { project?: string; onMessage?: (message: string) => void }) {
   const kernel = useKernel();
   const [, force] = useState(0);
   useEffect(() => { const listener = () => force((n) => n + 1); draftListeners.add(listener); return () => { draftListeners.delete(listener); }; }, []);

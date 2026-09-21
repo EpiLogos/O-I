@@ -1,0 +1,40 @@
+<!doctype html>
+<html lang="en"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<meta http-equiv="Content-Security-Policy" content="default-src 'none'; script-src 'unsafe-inline'; style-src 'unsafe-inline'; media-src blob:; connect-src 'none'">
+<title>Local native device check</title>
+<style>body{font:17px/1.6 system-ui;max-width:48rem;margin:3rem auto;padding:0 1.5rem}button{font:inherit;padding:.5rem 1rem;margin:.4rem .4rem .4rem 0}pre{white-space:pre-wrap;overflow-wrap:anywhere}audio{display:block;width:100%;margin:1rem 0}</style></head>
+<body><h1>Local microphone and audio check</h1>
+<p>Open this page in the actual Cradle candidate's HTML surface to test that surface. Opening it in another browser tests only that browser. This is not an Agent turn, native dictation proof, or a substitute for the Mac app walk.</p>
+<p>Nothing is captured until you press Record. Capture stops after five seconds or when you press Stop. Audio stays in this page's memory, can be played here, and is discarded on close. There is no network destination, file upload, browser persistence, device-name collection or background recording.</p>
+<label>Surface being tested <select id="surface"><option value="unspecified">Choose the actual surface</option><option value="cradle-candidate">Installed Cradle candidate</option><option value="ordinary-browser">Ordinary browser only</option></select></label>
+<div><button id="record">Record five seconds</button><button id="stop" disabled>Stop now</button><button id="heard" disabled>I heard my recording clearly</button></div>
+<p id="status" role="status">Not observed.</p><audio id="playback" controls></audio><pre id="receipt"></pre>
+<script>
+'use strict';
+const byId=id=>document.getElementById(id);
+let stream,recorder,audioContext,timer,url,frame,busy=false;
+let result={schema:'oi.local-device-check/v1',surface:'unspecified',secure_context:isSecureContext,capture:'not-observed',signal:'not-observed',playback:'not-observed',dictation:'not-tested',native_mac_interaction:'not-proved-by-this-page'};
+function render(){byId('receipt').textContent=JSON.stringify(result,null,2);}
+function release(){clearTimeout(timer);cancelAnimationFrame(frame);stream?.getTracks().forEach(track=>track.stop());stream=undefined;if(audioContext){void audioContext.close();audioContext=undefined;}busy=false;byId('record').disabled=false;byId('stop').disabled=true;}
+function stop(){if(recorder&&recorder.state!=='inactive')recorder.stop();else release();}
+byId('record').onclick=async()=>{
+ if(busy)return;
+ if(byId('surface').value==='unspecified'){byId('status').textContent='Choose the surface you are actually testing.';return;}
+ if(!navigator.mediaDevices?.getUserMedia||!window.MediaRecorder){result.capture='unavailable-on-this-surface';byId('status').textContent='This surface does not expose microphone capture and recording. No workaround or synthetic device was substituted.';render();return;}
+ busy=true;byId('record').disabled=true;byId('heard').disabled=true;byId('playback').removeAttribute('src');if(url){URL.revokeObjectURL(url);url=undefined;}
+ result={...result,surface:byId('surface').value,observed_at:new Date().toISOString(),capture:'permission-pending',signal:'not-observed',playback:'not-observed'};render();
+ try{
+  stream=await navigator.mediaDevices.getUserMedia({audio:true,video:false});
+  recorder=new MediaRecorder(stream);const chunks=[];let maximumRms=0;
+  const Context=window.AudioContext||window.webkitAudioContext;
+  if(Context){audioContext=new Context();const analyser=audioContext.createAnalyser();audioContext.createMediaStreamSource(stream).connect(analyser);const data=new Uint8Array(analyser.fftSize);const sample=()=>{analyser.getByteTimeDomainData(data);let sum=0;for(const value of data){const n=(value-128)/128;sum+=n*n;}maximumRms=Math.max(maximumRms,Math.sqrt(sum/data.length));frame=requestAnimationFrame(sample);};sample();}
+  recorder.ondataavailable=event=>{if(event.data.size)chunks.push(event.data);};
+  recorder.onerror=event=>{result.capture='recording-failed';result.failure=event.error?.name||'RecorderError';byId('status').textContent='Recording failed; no audio proof is claimed.';release();render();};
+  recorder.onstop=()=>{const blob=new Blob(chunks,{type:recorder.mimeType});result.capture=blob.size?'captured-local-audio':'empty-capture';result.signal=maximumRms>0.01?'non-silent-signal-observed':'not-proved';result.audio_bytes=blob.size;if(blob.size){url=URL.createObjectURL(blob);byId('playback').src=url;byId('heard').disabled=false;}byId('status').textContent='Capture stopped. Play the local recording, then record your actual listening observation.';release();render();};
+  recorder.start();byId('stop').disabled=false;result.capture='recording';byId('status').textContent='Recording now. Say a short test phrase, not personal information.';render();timer=setTimeout(stop,5000);
+ }catch(error){result.capture='unavailable-or-denied';result.failure=error.name;byId('status').textContent='Microphone permission was denied or this surface could not capture audio. This remains an observed failure, not a pass.';release();render();}
+};
+byId('stop').onclick=stop;
+byId('heard').onclick=()=>{result.playback='human-reported-clear';byId('status').textContent='Your listening observation is recorded below; it is not machine-verified dictation.';render();};
+window.addEventListener('pagehide',()=>{stop();release();if(url)URL.revokeObjectURL(url);});render();
+</script></body></html>
