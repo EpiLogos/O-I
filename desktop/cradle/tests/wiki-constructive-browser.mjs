@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -13,7 +13,10 @@ import {chromium,webkit} from 'playwright';
 const engineName=process.env.WIKI_BROWSER==='webkit'?'webkit':'chromium';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),out=resolve(root,'tests/artifacts/wiki-constructive',engineName);mkdirSync(out,{recursive:true});
 const binaries=Object.fromEntries(['OI_BIN','OI_AIKIT_BIN','OI_CENTRAL_CTRL_BIN','WIKI_KERNEL_BIN'].map(key=>{assert.ok(process.env[key],`${key} must name the actual built executable`);return [key,resolve(process.env[key])];}));
-const ground=mkdtempSync(resolve(tmpdir(),'wiki-constructive-')),project=resolve(ground,'Work/Notes');mkdirSync(project,{recursive:true});
+// Canonicalise the ground so a symlinked temp root (macOS /var -> /private/var)
+// matches the native owner's own path canonicalisation; a no-op where temp is not
+// symlinked (Linux CI). Without it the constellation register/space refs mismatch.
+const ground=realpathSync(mkdtempSync(resolve(tmpdir(),'wiki-constructive-'))),project=resolve(ground,'Work/Notes');mkdirSync(project,{recursive:true});
 const env={PATH:process.env.PATH??'/usr/bin:/bin',HOME:resolve(ground,'isolated-home'),AIKIT_HOME:resolve(ground,'isolated-aikit'),...binaries,OI_CENTRAL_ROOT:ground,OI_CENTRAL_PROJECT_QUERY:'Notes'};
 mkdirSync(env.HOME,{recursive:true});
 const receipt={scope:'N+B: real CLI, files, dev kernel and production UI on a controlled temporary ground; no installed, live-model or human acceptance',checks:[],native:[],passed:false};
@@ -36,8 +39,12 @@ function savedFrame(title){return JSON.parse(readFileSync(wikiPath,'utf8')).obje
 async function choosePassage(selector){await page.locator(selector).evaluate(element=>{const range=document.createRange();range.selectNodeContents(element);const selection=window.getSelection();selection.removeAllRanges();selection.addRange(range);element.dispatchEvent(new MouseEvent('mouseup',{bubbles:true}));});await page.getByRole('button',{name:'Add to constellation',exact:true}).click();}
 try{
  await startBridge();
- const actual=await op({op:'knowledge',project:'Notes',request:{action:'read',address:{kind:'source',value:'source:a'}}});
+ const readRequest={op:'knowledge',project:'Notes',request:{action:'read',address:{kind:'source',value:'source:a'}}};
+ const coldStart=performance.now(),actual=await op(readRequest);
+ receipt.timings={scope:'Two-source temporary native world; transport/owner readings only, not installed-app latency',coldSourceMs:performance.now()-coldStart};
  check(actual.result==='knowledge'&&actual.data.document?.schema==='aikit.markdown-reading/v1','The actual native owner supplies the Markdown reading');
+ const warm=[];for(let i=0;i<8;i++){const start=performance.now(),value=await op(readRequest);assert.equal(value.data.resource,actual.data.resource);assert.equal(value.data.revision,actual.data.revision);warm.push(performance.now()-start);}
+ warm.sort((a,b)=>a-b);receipt.timings.warmSourceP95Ms=warm.at(-1);receipt.timings.warmSamples=warm.length;
  server=await createServer({root,configFile:false,plugins:[react()],resolve:{alias:{three:resolve(root,'node_modules/three')}},define:{__CRADLE_WALK__:'false'},server:{host:'127.0.0.1',port:0,fs:{allow:[root,resolve(root,'../../packages/oi-design-system')]}}});await server.listen();
  const url=`http://127.0.0.1:${server.httpServer.address().port}/tests/wiki-constructive.html?bridge=${encodeURIComponent(bridgeUrl)}`;
  browser=await (engineName==='webkit'?webkit:chromium).launch({headless:true});receipt.browser={name:engineName,version:browser.version()};page=await browser.newPage({viewport:{width:1360,height:960},reducedMotion:'reduce'});page.setDefaultTimeout(20000);
@@ -73,7 +80,8 @@ try{
  check(stageBounds&&stageBounds.width>200&&stageBounds.height>150&&stageBounds.y<960,'The actual live Stage is visible in its working surface');
  await page.screenshot({path:resolve(out,'live-constellation.png')});
  await drawer.getByRole('button',{name:'Edit glyphs, text, media and motion',exact:true}).click();
- const composer=page.getByRole('region',{name:'Expression composition'});await composer.waitFor();
+ const composer=page.getByRole('region',{name:'Expression composition'});
+ await page.locator('[aria-label="Expression composition"][data-expression-ref]').waitFor();
  const expressionRef=await composer.getAttribute('data-expression-ref');
  await composer.getByLabel('Entity x',{exact:true}).fill('173');await composer.getByLabel('Entity x',{exact:true}).press('Enter');
  await page.waitForFunction(()=>!document.querySelector('[aria-label="Expression composition"] fieldset:disabled'));
@@ -89,21 +97,21 @@ try{
  const firstSaveResponse=page.waitForResponse(response=>response.request().method()==='POST'&&response.url().endsWith('/op')&&response.request().postDataJSON()?.request?.operation==='save_as');
  await drawer.getByRole('button',{name:'Save Expression file',exact:true}).click();
  const firstSave=await (await firstSaveResponse).json();
- check(firstSave.outcome?.data?.state==='saved',`Native first save returns its actual successful result: ${JSON.stringify(firstSave.outcome?.data)}`);
+ assert.equal(firstSave.outcome?.data?.state,'saved',JSON.stringify(firstSave.outcome?.data));
+ check(true,'Native first save confirms its actual file and independent readback');
  await drawer.getByRole('button',{name:'Return saved Expression to constellation',exact:true}).waitFor();
  await drawer.getByRole('button',{name:'Return saved Expression to constellation',exact:true}).click();
  await drawer.getByRole('button',{name:'Returned to constellation',exact:true}).waitFor();
  const artifact=JSON.parse(readFileSync(resolve(project,'inquiry.expression.json'),'utf8'));
  check(artifact.expression_ref===expressionRef&&Object.values(artifact.entities).some(entity=>entity.parameters.x?.value===173),'The actual saved artifact preserves the human-edited composition');
  frame=savedFrame('Native passage inquiry');check(frame['aikit.constellation/v1'].compositions[0].reference===expressionRef,'The saved composition Returns to its actual native constellation');
- // Stop the kernel, not just the page. Reopen is tested in another process.
  bridge.kill('SIGTERM');await new Promise(resolve=>bridge.once('exit',resolve));await startBridge();
  await page.goto(`http://127.0.0.1:${server.httpServer.address().port}/tests/wiki-constructive.html?bridge=${encodeURIComponent(bridgeUrl)}`);
  await page.locator('.wiki-prose h1').waitFor();await page.getByRole('button',{name:'Constellations',exact:true}).click();
- await drawer.getByText(/expression · r/).last().click();await composer.waitFor();
+ await drawer.getByText(/expression · r/).last().click();
+ await page.locator('[aria-label="Expression composition"][data-expression-ref]').waitFor();
  check(await composer.getAttribute('data-expression-ref')===expressionRef,'A returned composition reopens from its native artifact after a kernel restart');
  await page.getByRole('button',{name:'Return to Wiki',exact:true}).click();
- // Frame-first is a native save with no fabricated source members.
  await drawer.getByRole('button',{name:'New inquiry',exact:true}).click();
  await drawer.getByLabel('Constellation title').fill('Frame before material');await drawer.getByLabel('Constellation inquiry').fill('What belongs in these open roles?');
  await drawer.getByLabel('Constellation frame').selectOption(form);await drawer.getByRole('button',{name:'Save constellation',exact:true}).click();

@@ -9,10 +9,10 @@ import type {WikiNavigate} from './wikiDocument';
 import type {WikiPassage} from './selection';
 import {listFiles} from '../files/client';
 import {CONSTRUCTION, authoringForms, newRef, readRegister, saveConstruction,
-  type AuthoringForm, type ConstructionRequest, type NativeConstruction, type SavedConstruction, type WikiRegister} from './construction';
+  type AuthoringForm, type ConstructionRequest, type SavedConstruction, type WikiRegister} from './construction';
 import {emptyDraft, fromNative, withForm, withPassage, withoutMember, draftRequest, type ConstructionDraft} from './constructionDraft';
-import {projectConstruction, attachCompositionReturn, reopenComposition, type ArtifactReturn} from './constructionProjection';
-import {prepareArtifactSave, performArtifactSave, inspectArtifactSave, restorePendingArtifactDocument, type ArtifactSaveIntent} from './artifactRecovery';
+import {projectConstruction, attachCompositionReturn, compositionReturnRequest, compositionAttached, compositionReturnRecorded, reopenComposition, type ArtifactReturn} from './constructionProjection';
+import {prepareArtifactSave, performArtifactSave, inspectArtifactSave, restorePendingArtifactDocument, readSavedArtifact, type ArtifactSaveIntent} from './artifactRecovery';
 import './wikiConstruction.css';
 
 import {memberAnchor, type ConstructionCheckpoint} from './constructionCheckpoint';
@@ -37,6 +37,8 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   const [showDiscard, setShowDiscard] = useState(false);
   const presentation = useRef<StagePresentation | null>(null), host = useRef<HTMLDivElement>(null);
   const current = useRef(draft); current.current = draft;
+  const pendingReturn = pending?.changes.length === 1 && pending.changes[0].change === 'composition_attach';
+  const artifactPointer = artifact ? {location: artifact.file.location, revision: artifact.file.revision, expression_ref: artifact.document.expression_ref} : artifactLocation;
   const wantedFrame = useRef<string>();
   const alive = useRef(true), initialized = useRef(false), incomingKey = useRef<WikiPassage>();
   const checkpointRef = useRef(onCheckpoint); checkpointRef.current = onCheckpoint;
@@ -87,7 +89,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     let request: ConstructionRequest;
     try {request = pending ?? draftRequest(draft);} catch (error) {setError(message(error)); setBusy(''); return;}
     try {
-      checkpointRef.current({draft,pending:request,saved:!dirty,artifactSave,artifact:artifactLocation});
+      checkpointRef.current({draft,pending:request,saved:!dirty,artifactSave,artifact:artifactPointer});
       setPending(request);
       const value = await saveConstruction(kernel.transport, binding.project, register, request, draft.members.flatMap(member => member.passage ? [member.passage] : []), kernel.apply);
       if (!alive.current) return;
@@ -102,11 +104,16 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     try {
       const value = await read(), found = value.frames.find(frame => frame.ref === draft.frame_ref);
       if (pending) {
-        const applied = found?.[CONSTRUCTION] as (NativeConstruction[typeof CONSTRUCTION] & {applied?: Record<string, unknown>}) | undefined;
+        const applied = found?.[CONSTRUCTION];
         if (applied?.applied?.[pending.operation_ref]) {
+          if (pendingReturn && !compositionReturnRecorded(found!, pending)) {
+            setError('The Return operation is recorded, but the current attachment no longer matches this request. The artifact remains saved; inspect the newer constellation before reconciling it.');
+            return;
+          }
           setDraft(fromNative(found!, value.relations)); setDirty(false); setPending(undefined); setNotice('The previous operation was saved. The native result has been recovered; no duplicate was created.'); onSaved();
         } else if ((!found && pending.expected_revision === 0) || found?.revision === pending.expected_revision) {
-          setPending(undefined); setNotice('The previous operation is not recorded. Your proposal is retained and may be revised or saved.');
+          if (pendingReturn) setNotice('The Return is not recorded at this revision. Retry the exact retained Return; the artifact is still saved.');
+          else {setPending(undefined); setNotice('The previous operation is not recorded. Your proposal is retained and may be revised or saved.');}
         } else setError('Another edit advanced this constellation. Your draft is retained. Open the saved revision separately before reconciling it.');
       } else setNotice('The native register has been refreshed. Your unsaved input is unchanged.');
     } catch (error) {setError(message(error));}
@@ -149,7 +156,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
           : {parent: (await listFiles(kernel.transport, folder, true)).location, name: filename || 'constellation.expression.json', operation_ref: newRef('operation:expression')};
         intent = await prepareArtifactSave(kernel.transport, document!.expression_ref, destination);
         // Retain the exact intended document and operation before the native act.
-        checkpointRef.current({draft, pending, saved: !dirty, artifactSave: intent, artifact: artifactLocation});
+        checkpointRef.current({draft, pending, saved: !dirty, artifactSave: intent, artifact: artifactPointer});
         setArtifactSave(intent);
       }
       const value = await performArtifactSave(kernel.transport, intent, kernel.apply);
@@ -180,8 +187,27 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     setBusy('Returning saved Expression…'); setError('');
     try {
       const fresh = await read();
-      const value = await attachCompositionReturn(kernel.transport, binding.project, fresh, draft.basis, artifact, kernel.apply);
+      const request = compositionReturnRequest(draft.basis, artifact);
+      // Persist before dispatch. A lost Return response is resolved through the
+      // existing pending-operation inspection, never by minting another Return.
+      checkpointRef.current({draft, pending: request, saved: !dirty, artifactSave,
+        artifact: {location: artifact.file.location, revision: artifact.file.revision, expression_ref: artifact.document.expression_ref}});
+      setPending(request);
+      const value = await attachCompositionReturn(kernel.transport, binding.project, fresh, draft.basis, artifact, kernel.apply, request);
       acceptSaved(value); setArtifact({...artifact, returned: value});
+      await read().catch(error => setNotice(`Returned; refresh remains unavailable: ${message(error)}`));
+    } catch (error) {setError(`The artifact remains saved. ${message(error)}`);}
+    finally {setBusy('');}
+  };
+  const retryReturn = async () => {
+    if (!pending || !pendingReturn || !draft.basis || dirty) return;
+    setBusy('Retrying exact Return…'); setError('');
+    try {
+      const held = artifact ?? (artifactLocation ? await readSavedArtifact(kernel.transport, artifactLocation) : undefined);
+      if (!held) throw new Error('Inspect the saved artifact before retrying its Return.');
+      const fresh = await read();
+      const value = await attachCompositionReturn(kernel.transport, binding.project, fresh, draft.basis, held, kernel.apply, pending);
+      acceptSaved(value); setArtifact({...held, returned: value});
       await read().catch(error => setNotice(`Returned; refresh remains unavailable: ${message(error)}`));
     } catch (error) {setError(`The artifact remains saved. ${message(error)}`);}
     finally {setBusy('');}
@@ -210,6 +236,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     </fieldset>
     <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy || !!pending || !register || !dirty} onClick={()=>void save()}>Save constellation</button><button className="oi-action" disabled={!!busy || !!pending || dirty || !draft.basis || !draft.members.length} onClick={()=>void live()}>Open live composition</button></div>
     {pending&&<p className="wiki-construction-hint">This proposal is retained with its operation identity. Inspect the native result before retrying or editing.</p>}
+    {pendingReturn&&<button className="oi-action" disabled={!!busy||dirty||(!artifact&&!artifactLocation)} onClick={()=>void retryReturn()}>Retry exact Return</button>}
     {saved?.continuity_warnings?.map((warning,index)=><p role="status" key={index}>{warning}</p>)}
     {artifactSave&&<section aria-label="Pending Expression save"><p>The exact file-save operation is retained, including its intended composition.</p><button className="oi-action" disabled={!!busy} onClick={()=>void inspectFileSave()}>Inspect pending Expression file</button><button className="oi-action" disabled={!!busy||dirty||!!pending} onClick={()=>void saveArtifact()}>Retry exact file save</button><button className="oi-action" disabled={!!busy} onClick={()=>void restoreFileComposition()}>Restore retained composition</button></section>}
     <div ref={host} className="wiki-construction-stage" hidden={!document} onPointerUp={event=>{
@@ -220,7 +247,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
       }else setNotice(`Connection ${hit.relation.ref} · r${hit.relation.revision}`);
     }}/>
 
-    {document&&<section aria-label="Constellation Expression"><p>Expression r{document.revision} · {Object.keys(document.entities).length} bodies</p><button className="oi-action" onClick={()=>{closePresentation();summonExpression(document.expression_ref);}}>Edit glyphs, text, media and motion</button><details><summary>Save and Return composition</summary><label>Existing destination directory<input aria-label="Expression destination folder" value={folder} onChange={event=>setFolder(event.target.value)}/></label><label>Filename<input aria-label="Expression filename" value={filename} onChange={event=>setFilename(event.target.value)} placeholder="constellation.expression.json"/></label><button className="oi-action" disabled={!!busy||dirty||!!pending} onClick={()=>void saveArtifact()}>Save Expression file</button>{artifact&&<><p>Saved at {artifact.file.location.path}.</p><button className="oi-action" disabled={!!busy||dirty||!!pending||!!artifact.returned} onClick={()=>void returnArtifact()}>{artifact.returned?'Returned to constellation':'Return saved Expression to constellation'}</button></>}</details></section>}
+    {document&&<section aria-label="Constellation Expression"><p>Expression r{document.revision} · {Object.keys(document.entities).length} bodies</p><button className="oi-action" onClick={()=>{closePresentation();summonExpression(document.expression_ref);}}>Edit glyphs, text, media and motion</button><details><summary>Save and Return composition</summary><label>Existing destination directory<input aria-label="Expression destination folder" value={folder} onChange={event=>setFolder(event.target.value)}/></label><label>Filename<input aria-label="Expression filename" value={filename} onChange={event=>setFilename(event.target.value)} placeholder="constellation.expression.json"/></label><button className="oi-action" disabled={!!busy||dirty||!!pending} onClick={()=>void saveArtifact()}>Save Expression file</button>{artifact&&<><p>Saved at {artifact.file.location.path}.</p><button className="oi-action" disabled={!!busy||dirty||!!pending||!!artifact.returned||compositionAttached(draft.basis,artifact)} onClick={()=>void returnArtifact()}>{artifact.returned||compositionAttached(draft.basis,artifact)?'Returned to constellation':'Return saved Expression to constellation'}</button></>}</details></section>}
     {draft.basis?.[CONSTRUCTION].compositions?.length ? <section aria-label="Returned compositions"><h3>Returned work</h3>{draft.basis[CONSTRUCTION].compositions!.map(item=><p key={item.reference}><button className="oi-action" onClick={()=>{setBusy('Reopening returned composition…');setError('');void reopenComposition(kernel.transport,item,kernel.apply).then(value=>{setDocument(value);summonExpression(value.expression_ref);},error=>setError(message(error))).finally(()=>setBusy(''));}}>{item.kind} · r{item.revision}</button></p>)}</section> : null}
   </aside>;
 }

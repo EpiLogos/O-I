@@ -31,7 +31,10 @@ export function selectedPassage(reading: KnowledgeReading, anchor: WikiAnchor, t
 }
 
 export function passageKey(passage: WikiPassage): string {
-  return JSON.stringify([passage.source_ref, passage.source_revision, passage.selector.start_byte, passage.selector.end_byte]);
+  // The native parser may disclose an enclosing text span for more than one
+  // rendered selection. Its exact quote is part of the existing selector, so
+  // two phrases in that span are distinct passages rather than duplicate input.
+  return JSON.stringify([passage.source_ref, passage.source_revision, passage.selector.start_byte, passage.selector.end_byte, passage.text]);
 }
 export function appendPassage(passages: WikiPassage[], passage: WikiPassage): WikiPassage[] {
   if (passages.some(item => passageKey(item) === passageKey(passage))) return passages;
