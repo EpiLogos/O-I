@@ -1,0 +1,37 @@
+{
+  "01-CONVERSATION.md": {
+    "sha256": "38ff3632ab49dc03fc0f55bfa6800f8a2e1db12faa15725db9159b98ff67e832",
+    "characters": 1588,
+    "source_file_sha256": "5a69da52ce494d86759f55aae52beb95fdf5dc62352e50fee6b9d17f52f069e3"
+  },
+  "03-AGENTS-CONTEXT.md": {
+    "sha256": "455b44b3dafb41b61f616ab5c0b81542334a84ca0e24ac95a1c2e46366f0b328",
+    "characters": 2787,
+    "source_file_sha256": "019afcdbdcef7ca7012adb81d69df80a689fff8edb7c19442e92602e2205bf8f"
+  },
+  "05-SETTINGS.md": {
+    "sha256": "13bea4bb11d2a8324bff3b75f0a2f5967e1a76651e643d9178c3baa2cbb56d15",
+    "characters": 1928,
+    "source_file_sha256": "1fb7e88870a20a0df8539ea92e359e1a7756551576e9f431fc775d330771bfb2"
+  },
+  "04-NAVIGATOR-INBOX-LAUNCHER.md": {
+    "sha256": "380272bbbac5ed757c464fe0837b697b02b6a83fa91b13d7fd2f64b1d11be958",
+    "characters": 1811,
+    "source_file_sha256": "547cbb26ab0653386de478707c083f7d68427220470ed3bb9b226adca5400f63"
+  },
+  "00-EXPERIENCE-CONSTITUTION.md": {
+    "sha256": "280a408765c956c3570e35d98c33ea37b4910b86029305eda80dc16be8da49cf",
+    "characters": 1447,
+    "source_file_sha256": "17a90d3a73d3d946e495366f1f66875e51cc550c515d9ed012232dbe6b5bf325"
+  },
+  "06-SPACE-EXPLORE.md": {
+    "sha256": "599a8979cb14682fd32899edef0cf4f137d17b04ed159928614bbbf4642508fd",
+    "characters": 1680,
+    "source_file_sha256": "e5c0b125c9a5de5707dc7b65aaf4ce5a283f59fb3c33a8afbbaa6a3852d2f275"
+  },
+  "02-RUN.md": {
+    "sha256": "254d90d8825bc98358809f1b249af4283bf1dfa17f4841ec5f117dc201f1b177",
+    "characters": 2049,
+    "source_file_sha256": "17c7836396445a3e30282e3fe3c9698ce0a0fdcdb914b192ab59ab541f951839"
+  }
+}
