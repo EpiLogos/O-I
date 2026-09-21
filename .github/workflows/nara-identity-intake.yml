@@ -47,16 +47,19 @@ jobs:
           stats=subprocess.check_output(['git','apply','--numstat','/tmp/nara-intake/implementation.patch'],text=True)
           names=[line.split('\t',2)[2] for line in stats.splitlines()]
           assert sorted(names)==sorted(allowed),'unexpected patch write surface'
-          subprocess.run(['git','apply','--check','--index','/tmp/nara-intake/implementation.patch'],check=True)
-          subprocess.run(['git','apply','--index','/tmp/nara-intake/implementation.patch'],check=True)
-          print('Exact implementation patch applied to claimed paths only')
+          # The Actions token cannot publish workflow changes. The connected
+          # GitHub API publishes that exact file with its separate permission.
+          args=['--exclude=.github/workflows/nara-identity-inhabitation.yml']
+          subprocess.run(['git','apply','--check','--index',*args,'/tmp/nara-intake/implementation.patch'],check=True)
+          subprocess.run(['git','apply','--index',*args,'/tmp/nara-intake/implementation.patch'],check=True)
+          print('Exact implementation patch applied to claimed production paths')
           PY
-      - name: Publish only this checked implementation to its own branch
+      - name: Publish checked non-workflow implementation to its own branch
         run: |
           set -euo pipefail
           rustfmt --edition 2021 desktop/cradle/kernel/src/action/nara.rs
           git add desktop/cradle/kernel/src/action/nara.rs
-          git rm -r .github/nara-identity-intake .github/workflows/nara-identity-intake.yml
+          git rm -r .github/nara-identity-intake
           git diff --cached --stat
           git config user.name Epii
           git config user.email noreply@openai.com
