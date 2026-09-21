@@ -1,4 +1,6 @@
 name: Technē pinned main reconciliation
+# Temporary transport of the merge already reviewed in the disposable checkout.
+# Writes only this integration branch. No force, main mutation or gate bypass.
 on:
   push:
     branches: ['codex/techne-constructive-field-20260920']
@@ -14,83 +16,71 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
-          fetch-depth: 100
-      - name: Merge pinned main and the one inspected retained-field conflict
+          fetch-depth: 0
+      - name: Preserve merged Wiki ownership and apply the verified Scene source
         shell: bash
         run: |
           set -euo pipefail
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          main=fe93a3907c8c18170db096e19d467ada74adebb0
-          git fetch --depth=100 origin "$main"
-          if git merge-base --is-ancestor "$main" HEAD; then exit 0; fi
-          git merge --no-commit --no-ff "$main" || {
-            test "$(git diff --name-only --diff-filter=U)" = 'packages/oi-design-system/expressions-engine/oi/retained.mjs'
-          }
-          cat > packages/oi-design-system/expressions-engine/oi/retained.mjs <<'SOURCE'
-          /** O:I host bindings over the shared retained-field capability. */
-          import { ProductionAdapter as NativeProductionAdapter } from "../shell/production.mjs";
-          import { WORLD_SCALE } from "../shell/nativeParameters.mjs";
-          import { withRetainedField } from "./retained-capability.mjs";
-          import { ExpressionConnectionLayer } from "./expressionBindings.mjs";
-
-          const RetainedBase = withRetainedField(NativeProductionAdapter, WORLD_SCALE);
-          export class RetainedProductionAdapter extends RetainedBase {
-            expressionBindings = [];
-            connectionLayer = null;
-            setExpressionBindings(bindings = []) {
-              this.expressionBindings = bindings;
-              this.dirty = true;
+          main=c91d25b0d6a7b55acea0cb954f1245803c691174
+          git fetch origin "$main"
+          if ! git merge-base --is-ancestor "$main" HEAD; then
+            git merge --no-commit --no-ff "$main" || {
+              python3 - <<'PY'
+          import pathlib, subprocess
+          ours = {'.github/workflows/techne-source-recovery.yml', '.github/workflows/techne-remote-edit.yml', '.github/workflows/techne-main-reconcile.yml'}
+          theirs = {'.github/workflows/wiki-constellation.yml',
+            'desktop/cradle/src/knowledge/GraphViewDetails.tsx',
+            'desktop/cradle/src/knowledge/WikiConstructionPanel.tsx',
+            'desktop/cradle/src/knowledge/artifactRecovery.ts',
+            'desktop/cradle/src/knowledge/construction.ts',
+            'desktop/cradle/src/knowledge/constructionProjection.ts',
+            'desktop/cradle/src/knowledge/expressionOutcome.ts',
+            'desktop/cradle/src/knowledge/filters.css',
+            'desktop/cradle/src/knowledge/graphEmphasis.ts',
+            'desktop/cradle/src/knowledge/selection.ts',
+            'desktop/cradle/src/knowledge/wikiConstruction.css',
+            'desktop/cradle/tests/wiki-constructive-browser.mjs',
+            'desktop/cradle/tests/wiki-constructive.html',
+            'desktop/cradle/tests/wiki-native-binaries.test.mjs',
+            'docs/cradle/WIKI-CONSTELLATION-OPERATIONS.md'}
+          native = 'desktop/cradle/kernel/src/expression.rs'
+          paths = subprocess.check_output(['git','diff','--name-only','--diff-filter=U'],text=True).splitlines()
+          assert set(paths) <= ours | theirs | {native}, 'Unexpected merge conflict; no automatic resolution'
+          for path in paths:
+              if path == native:
+                  text = pathlib.Path(path).read_text()
+                  assert text.count('<<<<<<< HEAD\n') == 1, 'Unexpected native conflict'
+                  before, rest = text.split('<<<<<<< HEAD\n',1)
+                  own, rest = rest.split('=======\n',1)
+                  other, after = rest.split('>>>>>>> ',1)
+                  _, after = after.split('\n',1)
+                  assert '"changes"' in own and '"scene_presentation"' in own and '"changes"' in other
+                  assert 'pub fn' not in own + other and '=>' not in own + other
+                  pathlib.Path(path).write_text(before + own + after)
+              else:
+                  subprocess.run(['git','checkout','--ours' if path in ours else '--theirs','--',path],check=True)
+              subprocess.run(['git','add',path],check=True)
+          PY
             }
-            render(frame) {
-              // Install on the actual field, never another renderer. onBeforeRender
-              // sees the current evaluated 3D poses after the native simulation step.
-              if (this.connectionLayer && this.connectionLayer.engine !== this.engine) {
-                this.connectionLayer.dispose(); this.connectionLayer = null;
-              }
-              this.connectionLayer?.configure(this.expressionBindings, frame.selectedIds);
-              super.render(frame);
-              if (this.expressionBindings.length && !this.connectionLayer && this.engine) {
-                this.connectionLayer = new ExpressionConnectionLayer(this.engine);
-                this.connectionLayer.configure(this.expressionBindings, frame.selectedIds);
-                // First attachment paints once without advancing/reseeding the clock.
-                this.engine.renderer.render(this.engine.scene, this.engine.camera);
-              }
-            }
-            hitTestExpression(x, y) {
-              if (!this.engine || this.contextLost) return null;
-              const relation = this.connectionLayer?.hitTest(x, y);
-              // Prefer an actual member centre within 12px; connections retain their
-              // own independently selectable midpoints, including parallel records.
-              let member = null, distance = 12;
-              for (const pose of this.engine.lastPoses ?? []) {
-                const p = this.engine.projectWorldToScreen(pose.x, pose.y, pose.z ?? 0);
-                if (!p.visible) continue;
-                const d = Math.hypot(x-p.x,y-p.y);
-                if (d <= distance) {distance=d;member={kind:"entity",entity_ref:pose.entityId,distance:d};}
-              }
-              return member ?? relation ?? null;
-            }
-            expressionBindingSnapshot() {
-              return this.connectionLayer?.inspect() ?? {rendered:[],unavailable:this.expressionBindings.map(b=>b.binding_ref)};
-            }
-            dispose() {
-              this.connectionLayer?.dispose();
-              this.connectionLayer = null;
-              super.dispose();
-            }
-          }
-          export { RetainedProductionAdapter as ProductionAdapter };
-          SOURCE
-          git add packages/oi-design-system/expressions-engine/oi/retained.mjs
-          test -z "$(git diff --name-only --diff-filter=U)"
-          # Main already contains conflict markers in historical evidence files.
-          # Preserve those exact bytes, disclose them, and check this lane's delta
-          # against main. Never rewrite an inherited execution receipt into a pass.
-          git diff --cached --exit-code "$main" -- desktop/cradle/docs/experience/MODE-ENGINE-STATE-PERSISTENCE.md desktop/cradle/walk/artifacts desktop/cradle/tests/evidence
-          git diff --cached --check "$main"
-          echo 'Pinned main retains existing markers in historical mode/corpus evidence. Those bytes were preserved; they are not new passing evidence.' >> "$GITHUB_STEP_SUMMARY"
-          git commit -m 'merge: current main into Technē constructive field; preserve native retained capability'
+            test -z "$(git diff --name-only --diff-filter=U)"
+            git diff --cached --check
+            git commit -m 'merge: preserve merged Wiki native recovery and Technē Scene ownership'
+          fi
+          python3 - <<'PY'
+          import hashlib, pathlib
+          header, patch = pathlib.Path('tests/techne-remote-edit.patch').read_bytes().split(b'\n',1)
+          digest = hashlib.sha256(patch).hexdigest()
+          assert digest == 'b9e594321cd23d03a29b4689e4933938a11355d69f44ef37ff460eb8d67477b7'
+          assert header.decode() == 'sha256 ' + digest
+          pathlib.Path('/tmp/techne-scene.patch').write_bytes(patch)
+          PY
+          git apply --check --index /tmp/techne-scene.patch
+          git apply --index /tmp/techne-scene.patch
+          git rm tests/techne-remote-edit.patch
+          git diff --cached --check
+          git commit -m 'feat(techne): retain complete native Scene material and composition properties'
           git push origin HEAD:refs/heads/codex/techne-constructive-field-20260920
           git rev-parse HEAD >> "$GITHUB_STEP_SUMMARY"
-          echo 'No main write, no forced update. Ordinary PR gates still apply to resulting source.' >> "$GITHUB_STEP_SUMMARY"
+          echo 'Source delivery only; the resulting revision requires normal PR verification.' >> "$GITHUB_STEP_SUMMARY"
