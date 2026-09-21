@@ -1,3 +1,4 @@
+import {ExpressionConnectionLayer,type ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import {withRetainedField} from "../../../../../packages/oi-design-system/expressions-engine/oi/retained-capability.mjs";
 import {TransportState} from '../../src/engine/transportState';
 import {stateSource} from './sourceState';
@@ -19,6 +20,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  readonly capabilities={name:'Native particle field',kind:'production' as const,parameters:[...NATIVE_BINDINGS.map(p=>p.key),...MATERIAL_KEYS,'grain'],physicalResonance:true,runtimeCheckpoints:false,exactSeek:false,
  notes:['GPU particle dynamics and continuous modal resonance. One simulation clock.','10 formations / 8 pins. Configuration saves are not runtime checkpoints.','Live video and native-resolution PNG. Offline controlled clip rendering is not available.']};
  private engine:PointCloudField|null=null;
+ private connections:ExpressionConnectionLayer|null=null;
+ private connectionRows:readonly ConnectionBinding[]|undefined;
+ private selectedConnection:string|null|undefined;
  private width=innerWidth;private height=innerHeight;private dpr=devicePixelRatio||1;
  private dirty=false;private signature='';private sceneId='';private target:PointCloudConfig|null=null;
  private from:PointCloudConfig|null=null;private transitionStart=0;private duration=0;
@@ -74,9 +78,13 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.dirty=false;
   if(this.contextLost)throw new Error('GPU context was lost. Your expression is retained. Restore the field explicitly; its physical state must be reseeded.');
   const config=this.nativeConfig(this.configuration(frame));
-  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.seedRecoveredSources=true;}
+  if(!this.engine){this.engine=new PointCloudField(this.canvas,config,true);this.connections=new ExpressionConnectionLayer(this.engine);this.connectionRows=undefined;this.selectedConnection=undefined;this.seedRecoveredSources=true;}
   else if(config!==this.applied)this.engine.replaceConfig(config);
   if(config!==this.applied)this.syncSources(frame.scene);this.applied=config;
+  if(frame.connections!==this.connectionRows||frame.selectedConnection!==this.selectedConnection){
+   this.connectionRows=frame.connections;this.selectedConnection=frame.selectedConnection;
+   this.connections?.configure(frame.connections??[],frame.selectedConnection?[frame.selectedConnection]:[]);
+  }
   this.engine.setSelection(frame.selectedIds);this.engine.setGridMode(frame.scaffold??'off');
   const {a,b}=basis(frame.camera),o=stageCentre(this.width,this.height);
   this.engine.setHostView({width:this.width,height:this.height,pixelRatio:this.dpr,originX:o.x+frame.camera.panX,originY:o.y+frame.camera.panY,pixelsPerUnit:stageScale(this.width,this.height)*frame.camera.zoom/WORLD_SCALE,right:a,up:b});
@@ -84,6 +92,9 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   this.engine.advance(frame.delta);if(this.seedRecoveredSources&&Object.values(this.sourceStatus).every(v=>v.includes('source active'))){if(this.sources.size||this.restoredClock)this.engine.seedCurrentTargets();this.seedRecoveredSources=false;this.restoredClock=false;this.engine.advance(0);}
   this.evaluated=this.engine.getEvaluation().config;
  }
+ hitEntity(x:number,y:number){return this.connections?.pickEntity(x,y)??null;}
+ hitConnection(x:number,y:number){return this.connections?.hitTest(x,y)??null;}
+ inspectConnections(){return { ...this.connections?.inspect(),paths:this.connections?.paths.map(path=>({binding_ref:path.binding.binding_ref,points:path.points.map(p=>this.engine?.projectWorldToScreen(p.x,p.y,p.z))}))??[]};}
  transportState(){return this.engine?.getTransportState();}
  restoreTransport(state:TransportState){this.engine?.restoreTransportState(state);this.seedRecoveredSources=true;this.restoredClock=true;this.dirty=true;}
  telemetry(){
@@ -121,7 +132,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
  command(command:EngineCommand){
   if(this.nativeDomain&&['recover-context','reset-field','reset-phases'].includes(command.type))throw new Error('Native follow holds resident continuity; disconnect before a destructive presentation reset.');
   if(command.type==='recover-context'){
-   this.engine?.destroy();this.engine=null;this.applied=null;this.target=null;this.from=null;this.signature='';this.sources.clear();this.sourceStatus={};this.contextLost=false;this.dirty=true;return;
+   this.connections?.dispose();this.connections=null;this.engine?.destroy();this.engine=null;this.applied=null;this.target=null;this.from=null;this.signature='';this.sources.clear();this.sourceStatus={};this.contextLost=false;this.dirty=true;return;
   }
   if(!this.engine)throw new Error('The native engine has not rendered yet.');
   if(command.type==='reset-field')this.engine.resetField();
@@ -137,7 +148,7 @@ class EmbeddedProductionAdapter implements FieldEngineAdapter {
   }else this.engine.fireAutomation(command.id,command.delay??0);
   this.dirty=true;
  }
- dispose(){this.canvas.removeEventListener('webglcontextlost',this.lost);this.engine?.destroy();this.engine=null;}
+ dispose(){this.canvas.removeEventListener('webglcontextlost',this.lost);this.connections?.dispose();this.connections=null;this.engine?.destroy();this.engine=null;}
 }
 
 export const ProductionAdapter = withRetainedField(EmbeddedProductionAdapter, WORLD_SCALE);

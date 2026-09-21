@@ -104,6 +104,19 @@ export class ExpressionConnectionLayer {
   hitTest(x,y,radius=7) {
     return hitConnection(this.paths,x,y,p=>this.engine.projectWorldToScreen(p.x,p.y,p.z),radius);
   }
+  /** Hit the same evaluated occurrence pose used by the visible connection,
+   * rather than an old authored coordinate while the physical carrier moves. */
+  pickEntity(x,y,radius=25) {
+    let selected=null,best=radius;
+    for(const pose of this.engine.lastPoses??[]) {
+      const p=point(pose);if(!p)continue;
+      const projected=this.engine.projectWorldToScreen(p.x,p.y,p.z);
+      if(!projected?.visible)continue;
+      const distance=Math.hypot(projected.x-x,projected.y-y);
+      if(distance<=best){best=distance;selected=pose.entityId??pose.id;}
+    }
+    return selected;
+  }
   inspect() {return {rendered:this.paths.map(p=>p.binding.binding_ref),unavailable:[...this.unavailable]};}
   dispose() {
     if(this.engine.scene.onBeforeRender===this.before)this.engine.scene.onBeforeRender=this.previous;
