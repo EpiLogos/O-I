@@ -18,11 +18,21 @@
  *
  * Outputs land OUTSIDE public/ (site/publications/return-of-zero/); only
  * build-publications.mjs admits them into browser assets.
+ *
+ * Envelope parametrisation (publication-tuple candidate lane, 2026-09-21):
+ * OI_PUBLICATION_ENVELOPE points the SAME producer at a fuller candidate
+ * envelope (e.g. collections/return-of-zero/PUBLICATION-CANDIDATE.json, the
+ * 92-member edition candidate on O:I #417). Default remains the landed
+ * PUBLICATION.json and its byte-identical outputs. Candidate outputs land in
+ * site/publications/return-of-zero-candidate/. Members whose manifest carries
+ * `member_root` resolve their journey files relative to that directory; member
+ * bodies generalise to the journey's own scene editorial/prose texts, or a
+ * disclosed formation-only reading when a journey carries no scene prose.
  */
 import { readFile, writeFile, mkdir } from 'node:fs/promises';
 import { execFile } from 'node:child_process';
 import { promisify } from 'node:util';
-import { resolve, dirname } from 'node:path';
+import { resolve, dirname, basename } from 'node:path';
 import { existsSync } from 'node:fs';
 import { createHash } from 'node:crypto';
 import { fileURLToPath } from 'node:url';
@@ -35,14 +45,22 @@ const exec = promisify(execFile);
 const site = dirname(fileURLToPath(import.meta.url));
 const repo = resolve(site, '..');
 const envelopeDir = resolve(repo, 'desktop/cradle/expressions-app/collections/return-of-zero');
+const envelopePath = process.env.OI_PUBLICATION_ENVELOPE
+  ? resolve(repo, process.env.OI_PUBLICATION_ENVELOPE)
+  : resolve(envelopeDir, 'PUBLICATION.json');
+const envelopeStem = basename(envelopePath, '.json');
+const outDirName = envelopeStem === 'PUBLICATION' ? 'return-of-zero' : `return-of-zero-${envelopeStem.replace(/^publication-/i, '').toLowerCase().replace(/_/g, '-')}`;
+const outDir = process.env.OI_PUBLICATION_OUTDIR
+  ? resolve(repo, process.env.OI_PUBLICATION_OUTDIR)
+  : resolve(site, 'publications', outDirName);
 const essayRepo = process.env.OI_ESSAY_REPO
   || [resolve(repo, 'Antykathera-Essay-Work'), resolve(repo, '..', '..', 'Antykathera-Essay-Work')].find((candidate) => existsSync(candidate))
   || resolve(repo, '..', '..', 'Antykathera-Essay-Work');
-const outDir = resolve(site, 'publications/return-of-zero');
 const sha = (value) => createHash('sha256').update(value).digest('hex');
 
-const envelope = JSON.parse(await readFile(resolve(envelopeDir, 'PUBLICATION.json'), 'utf8'));
+const envelope = JSON.parse(await readFile(envelopePath, 'utf8'));
 if (envelope.schema !== 'oi.collection-publication/v1') throw new Error(`Unexpected collection envelope schema: ${envelope.schema}`);
+await mkdir(outDir, { recursive: true });
 const publishedAt = envelope.exported_at;
 const sourceCommit = envelope.source_revision.commit;
 
@@ -56,6 +74,10 @@ async function blobAt(commit, path) {
   catch { return null; }
 }
 for (const manifest of envelope.manifests) {
+  // corpus/legacy manifests carry their per-member source-returns in the
+  // candidate block (verified at assembly); only pinned-binding manifests
+  // reconcile here.
+  if (!manifest.source_bindings) continue;
   for (const binding of manifest.source_bindings) {
     const pinned = await blobAt(sourceCommit, binding.path);
     const current = await blobAt('HEAD', binding.path);
@@ -66,7 +88,7 @@ for (const manifest of envelope.manifests) {
   }
 }
 for (const asset of envelope.required_assets) {
-  const bytes = await readFile(resolve(envelopeDir, '..', '..', asset.asset)).catch(() => null);
+  const bytes = await readFile(resolve(repo, asset.asset)).catch(() => readFile(resolve(envelopeDir, '..', '..', asset.asset))).catch(() => null);
   const ok = Boolean(bytes) && sha(bytes) === asset.sha256;
   reconciliation.assets.push({ asset: asset.asset, present_and_pinned: ok });
   if (!ok) throw new Error(`Required collection asset ${asset.asset} is missing or does not match its pinned digest.`);
@@ -80,20 +102,31 @@ const FIELD = 'field:return-of-zero-public';
 const EXPRESSION_FIELD = 'field:return-of-zero-expressions';
 const COLLECTION_REF = 'world:return-of-zero/wiki:return-of-zero';
 const MEMBER_REVISION = sourceCommit;
+const manifestRevision = (member) => envelope.manifests.find((manifest) => manifest.manifest === member.manifest)?.source_revision?.commit ?? null;
 const publisherIdentity = 'human:frank-sovereign'; // the envelope's declared ownership
 const provenance = [{ kind: 'collection-publication', ref: 'desktop/cradle/expressions-app/collections/return-of-zero', source_system: 'o-i', revision: 'track3-2026-09-19' }];
 
 const members = [];
 for (const manifest of envelope.manifests) {
-  const manifestDoc = JSON.parse(await readFile(resolve(envelopeDir, manifest.manifest.split('return-of-zero/')[1]), 'utf8'));
-  for (const featured of manifestDoc.featured) members.push({ ...featured, manifest: manifest.manifest });
+  const manifestPath = manifest.member_root
+    ? resolve(repo, 'desktop/cradle/expressions-app', manifest.member_root, basename(manifest.manifest))
+    : resolve(envelopeDir, manifest.manifest.split('return-of-zero/')[1]);
+  const manifestDoc = JSON.parse(await readFile(manifestPath, 'utf8'));
+  const featured = [...(manifestDoc.featured ?? []), ...(manifestDoc.starters ?? [])];
+  if (featured.length !== manifest.members) throw new Error(`Manifest ${manifest.manifest} lists ${manifest.members} members but carries ${featured.length}.`);
+  for (const featuredMember of featured) members.push({ ...featuredMember, manifest: manifest.manifest, memberRoot: manifest.member_root ? resolve(repo, 'desktop/cradle/expressions-app', manifest.member_root) : envelopeDir });
 }
-if (members.length !== 9) throw new Error(`Expected the nine published members, found ${members.length}.`);
+const memberIds = new Set(members.map((m) => m.id));
+if (memberIds.size !== members.length) throw new Error('Duplicate member ids across manifests; the edition would collide on output files.');
+const expectedMembers = envelope.manifests.reduce((total, manifest) => total + manifest.members, 0);
+if (members.length !== expectedMembers) throw new Error(`Expected ${expectedMembers} envelope members, found ${members.length}.`);
+if (members.length !== 9 && !envelope.candidate) throw new Error(`Expected the nine published members, found ${members.length}.`);
 
 // ---------------------------------------------------------------------------
 // 3. Reading bodies: the pinned section-room prose; the essay member carries
-//    its authored reading-path movements. Markdown navigation chrome is
-//    dropped; no prose is rewritten.
+//    its authored reading-path movements; corpus members carry their scene
+//    editorial/prose; formation-only journeys disclose exactly that. Markdown
+//    navigation chrome is dropped; no prose is rewritten.
 // ---------------------------------------------------------------------------
 function plainMarkdown(markdown) {
   const withoutFrontMatter = markdown.replace(/^---\r?\n[\s\S]*?\r?\n---\r?\n/, '');
@@ -120,15 +153,43 @@ function essayReadingBody(journey) {
 }
 
 const roomDir = (id) => id.replace(/^roz-room-/, '');
+function memberFile(member) {
+  return resolve(member.memberRoot ?? envelopeDir, member.file);
+}
+function sceneProseBody(journey) {
+  const lines = [];
+  for (const scene of journey.scenes) {
+    const texts = scene.text ?? [];
+    const editorial = texts.find((t) => t.id === 'editorial');
+    const body = texts.find((t) => t.id === 'body');
+    const heading = editorial?.title ?? scene.name ?? scene.id;
+    const prose = [editorial?.kicker, body?.body?.trim() || editorial?.body?.trim()].filter(Boolean);
+    lines.push([`## ${heading}${editorial?.italic ? ` — ${editorial.italic}` : ''}`, ...prose].join('\n\n'));
+  }
+  return lines.join('\n\n');
+}
 async function readingBody(member) {
+  const journey = JSON.parse(await readFile(memberFile(member), 'utf8'));
   if (member.id === 'roz-essay-reading') {
-    const journey = JSON.parse(await readFile(resolve(envelopeDir, member.file), 'utf8'));
     return { text: essayReadingBody(journey), sources: ['submission-package/essay/THE-RETURN-OF-ZERO.md'] };
   }
-  const path = `submission-package/essay/section-rooms/${roomDir(member.id)}/ROOM.md`;
-  const pinned = await blobAt(sourceCommit, path);
-  if (!pinned) throw new Error(`The pinned room source for ${member.id} is absent: ${path}`);
-  return { text: plainMarkdown(pinned.toString('utf8')), sources: [path] };
+  if (member.id.startsWith('roz-room-')) {
+    const path = `submission-package/essay/section-rooms/${roomDir(member.id)}/ROOM.md`;
+    const pinned = await blobAt(sourceCommit, path);
+    if (!pinned) throw new Error(`The pinned room source for ${member.id} is absent: ${path}`);
+    return { text: plainMarkdown(pinned.toString('utf8')), sources: [path] };
+  }
+  const journeySha = sha(await readFile(memberFile(member)));
+  if (journey.scenes.some((scene) => (scene.text ?? []).some((t) => (t.body ?? '').trim().length > 0))) {
+    return {
+      text: sceneProseBody(journey),
+      sources: [{ ref: `production/return-of-zero/bindings/${member.id}.binding.json`, revision: envelope.corpus?.production_revision?.commit ?? sourceCommit }],
+    };
+  }
+  return {
+    text: [journey.name ?? member.name, journey.description, `(Formation-only reading: ${journey.scenes.length} scene${journey.scenes.length === 1 ? '' : 's'}; the complete body is the native journey document at ${member.file}, sha256 ${journeySha.slice(0, 16)}….)`].filter(Boolean).join('\n\n'),
+    sources: [{ ref: member.file, revision: journeySha }],
+  };
 }
 
 // ---------------------------------------------------------------------------
@@ -143,8 +204,9 @@ const corpusReceipt = { members: [], envelope: { title: envelope.title, exported
 for (const member of members) {
   const ref = `${WORLD}/wiki:${member.id}`;
   const memberRef = (suffix) => `expression:return-of-zero:${member.id}${suffix}`;
-  const journey = JSON.parse(await readFile(resolve(envelopeDir, member.file), 'utf8'));
+  const journey = JSON.parse(await readFile(memberFile(member), 'utf8'));
   const body = await readingBody(member);
+  const memberRevision = manifestRevision(member) ?? MEMBER_REVISION;
 
   readingBindings.push({
     schema: 'oi.presentation-binding/v1',
@@ -159,7 +221,7 @@ for (const member of members) {
 
   worldEntries.push(createExploreEntry({
     ref, kind: 'wiki-node', world_ref: WORLD, label: member.name,
-    revision: MEMBER_REVISION, aliases: [member.id], provenance, locators: [],
+    revision: memberRevision, aliases: [member.id], provenance, locators: [],
     meta: { collection_member: member.id, journey: member.file },
   }));
   worldRelations.push({ relation_ref: `wiki-contains:return-of-zero:${member.id}`, from: COLLECTION_REF, to: ref, relation: 'wiki.contains', origin: 'wiki', provenance });
@@ -181,7 +243,9 @@ for (const member of members) {
           subject_ref: ref,
           native_owner: 'return-of-zero',
           presentation_role: 'thing',
-          sources: body.sources.map((source) => ({ ref: source, revision: sourceCommit, availability: 'available' })),
+          sources: body.sources.map((source) => (typeof source === 'string'
+            ? { ref: source, revision: sourceCommit, availability: 'available' }
+            : { ref: source.ref, revision: source.revision, availability: 'available' })),
         },
         parameters: {
           glyph: { value: glyphFor(entity.shape), automation: null },
@@ -236,7 +300,9 @@ const collectionBinding = {
   subject_ref: COLLECTION_REF,
   props: {
     title: envelope.title,
-    text: `The deliberately published Return-of-Zero collection: the sovereign reading path and its eight section rooms, each with its published Expression. Grounded in the sha-verified essay sources at ${sourceCommit}; the owner remains the recognition authority for anything beyond these surfaces.`,
+    text: envelope.candidate
+      ? `The Return-of-Zero public edition candidate: ${members.length} committed native members, each readable at full disclosed length with its derived Expression. Grounded in the sha-verified essay sources at ${sourceCommit} and the pinned Point-Cloud-Demo production corpus; the owner remains the recognition authority, and nothing is published until the owner approves on O:I #417.`
+      : `The deliberately published Return-of-Zero collection: the sovereign reading path and its eight section rooms, each with its published Expression. Grounded in the sha-verified essay sources at ${sourceCommit}; the owner remains the recognition authority for anything beyond these surfaces.`,
     refs: worldEntries.map((entry) => entry.ref),
   },
   fallback: { title: envelope.title },
@@ -248,7 +314,9 @@ const presentation = createWorldPresentation({
   world_ref: WORLD,
   revision: 1,
   title: envelope.title,
-  summary: 'Nine published subjects: the sovereign reading path and eight section rooms, each readable at full disclosed length with its native Expression.',
+  summary: envelope.candidate
+    ? `${members.length} committed native members: the sovereign reading path, the eight section rooms, the E0 corpus families and the legacy collections, each readable at full disclosed length with its derived Expression.`
+    : 'Nine published subjects: the sovereign reading path and eight section rooms, each readable at full disclosed length with its native Expression.',
   theme: { tokens: {} },
   provenance,
   regions: [{ region_ref: 'reading', role: 'reading', bindings: [collectionBinding, ...readingBindings] }],
@@ -286,7 +354,9 @@ await writeFile(resolve(outDir, 'world-publication.json'), JSON.stringify(world,
 const receipt = {
   schema: 'oi.return-of-zero-producer-receipt/v1',
   standing: 'produced-from-pinned-native-sources',
-  owner_authority: 'Owner commission on 2026-09-20: publish the delivered Return-of-Zero collection through the site receiver; publisher identity is the envelope-declared frank-sovereign ownership.',
+  owner_authority: envelope.candidate
+    ? 'Owner commission 2026-09-20/21 (O:I #417): assemble the full committed Return-of-Zero corpus as a publication-tuple candidate; the producer runs as a local dry-run only and nothing is published or deployed until the owner approves on #417.'
+    : 'Owner commission on 2026-09-20: publish the delivered Return-of-Zero collection through the site receiver; publisher identity is the envelope-declared frank-sovereign ownership.',
   deterministic: { published_at: publishedAt, source_commit: sourceCommit },
   reconciliation,
   corpus: corpusReceipt,

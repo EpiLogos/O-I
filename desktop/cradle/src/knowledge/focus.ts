@@ -1,9 +1,12 @@
 import type {GraphNode,GraphReading} from './graph';
-/** One visible subject per exact ref. Every owner disclosure remains attached. */
+/** One visible subject per exact ref. Keep every owner disclosure, but prefer
+ * the addressed native reading over an earlier summary row. Do not blend
+ * attributes from distinct owner/revision readings into invented provenance. */
 export function subjects(reading:GraphReading|undefined) {
   const rows=new Map<string,GraphNode[]>();
-  for(const node of reading?.nodes??[])rows.set(node.ref,[...(rows.get(node.ref)??[]),node]);
-  return [...rows.values()].map(disclosures=>({node:disclosures[0],disclosures}));
+  for(const node of reading?.nodes??[]){const disclosures=rows.get(node.ref)??[];disclosures.push(node);rows.set(node.ref,disclosures);}
+  const detail=(node:GraphNode)=>Number(Boolean(node.address))*4+Number(Boolean(node.aliases?.length))+Number(Boolean(node.tags?.length));
+  return [...rows.values()].map(disclosures=>({node:disclosures.reduce((chosen,node)=>detail(node)>detail(chosen)?node:chosen),disclosures}));
 }
 export function neighbourhood(reading:GraphReading|undefined,ref?:string) {
   const refs=new Set<string>();if(!ref)return refs;refs.add(ref);

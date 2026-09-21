@@ -36,7 +36,7 @@
 .editor-mode-toolkit{overflow-x:visible;flex:none}
 .editor-command-tools{overflow-x:auto}
 .editor-command-line button:focus-visible,.editor-selection-actions button:focus-visible{outline:2px solid var(--oi-accent-ink);outline-offset:-2px}
-.editor-selection-actions{position:fixed;display:flex;align-items:center;z-index:116;border:1px solid var(--oi-hairline-soft);border-radius:6px;background:var(--oi-sidebar-ground,var(--oi-canvas-ground));box-shadow:0 3px 12px #0002;max-width:calc(100vw - 12px)}
+.editor-selection-actions{position:fixed;display:flex;align-items:center;z-index:116;border:1px solid var(--oi-hairline-soft);border-radius:6px;background:var(--oi-sidebar-ground,var(--oi-canvas-ground));box-shadow:0 3px 12px color-mix(in srgb, var(--oi-foreground) 14%, transparent);max-width:calc(100vw - 12px)}
 .editor-selection-actions button{display:flex;align-items:center;gap:6px;white-space:nowrap;border:0;padding:7px;background:transparent;color:var(--oi-accent-ink);font:var(--oi-shell-type-ui) var(--oi-font-sans);cursor:pointer}
 .context-prepared-highlight{background:color-mix(in srgb,var(--oi-accent-ink) 8%,transparent);box-shadow:inset 0 -1px var(--oi-accent-ink)}
 @media(max-width:600px){.editor-command-line{padding-left:4px}.editor-command-tools{gap:1px}.editor-footer{gap:6px}}

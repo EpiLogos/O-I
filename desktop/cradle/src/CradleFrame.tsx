@@ -6,7 +6,7 @@ import {DRAFT_KEY} from "./flow/DraftSurface";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
-import {encounter} from "./encounter/client";
+import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
@@ -848,15 +848,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }).catch(fail);
     };
     const message=(event:Event)=>{const text=detail<{message?:string}>(event)?.message;if(text)setWindowError(text);};
-    const settings=()=>enterModeRef.current("settings");
+    // The agent setup flow records the mode it left so its own return event
+    // can restore it; the general settings close still uses the frame's
+    // settingsReturnMode successor.
+    let agentSetupReturnMode:WorkspaceMode|undefined;
+    const settings=(event:Event)=>{if((event as CustomEvent<{agentSetup?:boolean}>).detail?.agentSetup&&agentSetupReturnMode===undefined)agentSetupReturnMode=stateRef.current.mode??"base";enterModeRef.current("settings");};
     const closeSettings=()=>{
       if ((stateRef.current.mode ?? "base") !== "settings") return;
       enterModeRef.current(stateRef.current.settingsReturnMode ?? "base");
       requestAnimationFrame(() => document.querySelector<HTMLElement>('.warm-tree-host:not([hidden]) .pane.focused .cm-content, .warm-tree-host:not([hidden]) .pane.focused [role="tab"][aria-selected="true"]')?.focus());
     };
+    const agentSetupReturn=()=>{if(agentSetupReturnMode!==undefined){const mode=agentSetupReturnMode;agentSetupReturnMode=undefined;enterModeRef.current(mode);}};
     // Results' "Open in centre": the subject's own tab if it is open here, else its file.
     const openSubject=(event:Event)=>{const subject=detail<{subject?:{ref?:string;location?:CentralLocation}}>(event)?.subject;if(!subject)return;if(subject.location){void openFileRef.current(subject.location).catch(fail);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)setState(s=>executeFrameAction(s,"surface.activate",{surfaceId:held.id}));};
-    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
+    const pairs:[string,(event:Event)=>void][]=[["oi:open-agency",agencyOpen],["oi:panel-open-subject",openSubject],["oi:workspace-message",message],["oi:open-settings",settings],["oi:close-settings",closeSettings],["oi:agent-setup-return",agentSetupReturn],["oi:library-open",libraryOpen],["oi:epi-open-expression",expression],["oi:epi-examine",examine],["oi:epi-open-source",source],["oi:epi-open-knowledge",knowledgeOpen],["oi:context-return",back]];
     for(const [name,handler] of pairs)window.addEventListener(name,handler);
     return()=>{for(const [name,handler] of pairs)window.removeEventListener(name,handler);};
   },[]);
@@ -1337,7 +1342,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       subject={{title:subjectTitle,location:subjectBinding?.location}}
       onMessage={message=>setWindowError(message)}
       onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
-      onChoose={row=>factoryChoose(row)}/>;
+      onChoose={row=>factoryChoose(row)}
+      onProvision={async provisionProject=>{
+        // New-chat first Send: the kernel provisions the conversation (the
+        // owner's own SessionSpace sequence, one op) and this binds it — the
+        // parked draft is applied and sent by the chat face once the shared
+        // observer is live. No chooser.
+        const provisioned=await encounterProvision(kernel.transport,provisionProject);
+        setState(s=>({...s,accompanying:{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space}}));
+      }}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface
   // reads as selected — `subjectBinding` above is already that binding.
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;

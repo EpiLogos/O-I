@@ -1,3 +1,4 @@
+import {preserveFormations} from "./formationLayout";
 import type {GraphReading} from "./graph";
 export interface Point {x:number;y:number;z?:number;scale?:number}
 function seed(ref:string) {let h=2166136261;for(const c of ref)h=Math.imul(h^c.charCodeAt(0),16777619);return (h>>>0)/4294967296;}
@@ -5,7 +6,9 @@ function seed(ref:string) {let h=2166136261;for(const c of ref)h=Math.imul(h^c.c
  * disposable visual coordinate; it never asserts importance or a relation. */
 export function constellation(reading:GraphReading|undefined,_width:number,_height:number):Point[] {
   if(!reading)return [];
-  const nodes=reading.nodes;
+  // Native order may change as providers arrive. Stable reference order keeps
+  // an unchanged topology spatially identical without imposing a source order.
+  const nodes=[...reading.nodes].sort((a,b)=>a.ref.localeCompare(b.ref));
   const first=new Map<string,number>();nodes.forEach((n,i)=>{if(!first.has(n.ref))first.set(n.ref,i);});
   const edges=reading.edges.flatMap(e=>{const a=first.get(e.from_ref),b=first.get(e.to_ref);return a!==undefined&&b!==undefined&&a!==b?[[a,b]]:[];});
   const reach=Math.max(260,Math.sqrt(nodes.length)*48);
@@ -13,7 +16,8 @@ export function constellation(reading:GraphReading|undefined,_width:number,_heig
   const anchors=new Map<number,Point>();
   spaces.forEach((index,i)=>{const angle=i*2.399963,r=Math.sqrt(i/Math.max(1,spaces.length-1))*reach;anchors.set(index,{x:Math.cos(angle)*r,y:Math.sin(angle)*r*.72});});
   const membership=new Map<number,number>();
-  for(const [a,b] of edges){if(anchors.has(a)&&!anchors.has(b)&&!membership.has(b))membership.set(b,a);if(anchors.has(b)&&!anchors.has(a)&&!membership.has(a))membership.set(a,b);}
+  const memberships=reading.edges.filter(e=>e.relation==="space-node"||e.relation==="space-child-space").flatMap(e=>{const a=first.get(e.from_ref),b=first.get(e.to_ref);return a!==undefined&&b!==undefined?[[a,b]]:[];});
+  for(const [a,b] of memberships){if(anchors.has(a)&&!anchors.has(b)&&!membership.has(b))membership.set(b,a);if(anchors.has(b)&&!anchors.has(a)&&!membership.has(a))membership.set(a,b);}
   const ordinals=new Map<number,number>();
   const world=nodes.map((n,i)=>{const parent=membership.get(i),center=anchors.get(i)??(parent===undefined?{x:0,y:0}:anchors.get(parent)!);const ordinal=ordinals.get(parent??-1)??0;ordinals.set(parent??-1,ordinal+1);const angle=ordinal*2.399963+seed(n.ref)*.7;const r=anchors.has(i)?0:Math.sqrt(ordinal+1)*36;return {x:center.x+Math.cos(angle)*r,y:center.y+Math.sin(angle)*r,z:seed(`${n.ref}:depth`)*650-140};});
   // Bounded local collision relaxation. Spatial buckets avoid a quadratic
@@ -26,5 +30,6 @@ export function constellation(reading:GraphReading|undefined,_width:number,_heig
     for(const [a,b] of edges){const x=world[b].x-world[a].x,y=world[b].y-world[a].y,d=Math.max(1,Math.hypot(x,y)),f=(d-190)*.002;forces[a].x+=x/d*f;forces[a].y+=y/d*f;forces[b].x-=x/d*f;forces[b].y-=y/d*f;}
     world.forEach((p,i)=>{p.x+=forces[i].x;p.y+=forces[i].y;});
   }
-  return world.map(p=>{const scale=800/(800+p.z);return {x:400+p.x*scale,y:260+p.y*scale,z:p.z,scale};});
+  const projected=new Map(nodes.map((node,i)=>{const p=world[i],scale=800/(800+p.z);return [node.ref,{x:400+p.x*scale,y:260+p.y*scale,z:p.z,scale}];}));
+  return preserveFormations(reading,reading.nodes.map(node=>projected.get(node.ref)!));
 }

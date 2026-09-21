@@ -1,7 +1,7 @@
 import type {ContextOperation,ContextExpectation} from "../context/nativeContext";
 import {kernelOp} from "../kernel/bridge";
 import type {KernelTransportStatus} from "../kernel/types";
-export type EncounterRequest = {action:"context";agent_session?:string;request:ContextOperation} | {action:"prompt-context";agent_session:string;draft_revision:number;context:ContextExpectation} | {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"send";agent_session:string;turn:AddressedTurn} | {action:"send-group";delivery_ref:string;sender:string;packet:AddressedPacket;recipients:GroupRecipient[]} | {action:"delivery";agent_session:string;delivery_ref:string} | {action:"reconnect";space:string;agent_session:string;provider:string};
+export type EncounterRequest = import("./nativeModel").NativeModelRequest | {action:"context";agent_session?:string;request:ContextOperation} | {action:"prompt-context";agent_session:string;draft_revision:number;context:ContextExpectation} | {action:"start"|"providers"|"health"} | {action:"open";space:string;agent_session:string;provider:string} | {action:"read";agent_session:string;after:number;limit:number} | {action:"view";agent_session:string;before?:number} | {action:"draft";agent_session:string;basis:number;text:string} | {action:"prompt";agent_session:string;draft_revision:number} | {action:"cancel";agent_session:string;reason?:string} | {action:"status";agent_session:string} | {action:"permission";agent_session:string;request_id:string;decision:PermissionDecision} | {action:"send";agent_session:string;turn:AddressedTurn} | {action:"send-group";delivery_ref:string;sender:string;packet:AddressedPacket;recipients:GroupRecipient[]} | {action:"delivery";agent_session:string;delivery_ref:string} | {action:"reconnect";space:string;agent_session:string;provider:string};
 /** Owner wire contract (bound ai-kit revision, `encounter_agency.rs`); field names verbatim. */
 export interface AddressedPacket {text:string;source_refs:string[];audience:string[]}
 /** `expected_task` is the owner's EncounterTaskBasis, validated owner-side
@@ -39,6 +39,19 @@ export async function encounter<T>(transport:KernelTransportStatus,project:strin
   const result=await kernelOp(transport,{op:"encounter",project,request});
   if(result.error || result.outcome?.result!=="encounter_reading")throw new Error(result.error??"AIKit did not return an encounter reading");
   return result.outcome.data as T;
+}
+/** One freshly provisioned chat conversation (new-chat first Send): the minted
+ * refs, the owner's own project spelling and the default provider the kernel
+ * opened. The transcript, draft and every later action stay the ordinary
+ * encounter actions — provision creates the plumbing once, nothing else. */
+export interface EncounterProvisioning {project:string;space:string;agent_session:string;provider:string}
+/** Ask the kernel to provision a new conversation for a project (create the
+ * SessionSpace, bind the project context, attach a fresh agent session,
+ * configure its agency binding and open the provider) and return the refs. */
+export async function encounterProvision(transport:KernelTransportStatus,project:string):Promise<EncounterProvisioning> {
+  const result=await kernelOp(transport,{op:"encounter_provision",project});
+  if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not provision a chat conversation");
+  return result.outcome.data as EncounterProvisioning;
 }
 /** The session's task record (`aikit.encounter-task/v1`), read through the
  * owner's `encounter-task-read`. `null` is honest absence — no task is bound

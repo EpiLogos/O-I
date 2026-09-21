@@ -23,6 +23,18 @@ class ExperienceMapTests(unittest.TestCase):
         self.root = Path(self.temp.name)
         # Copy the declared public source module field, never a private World.
         shutil.copytree(ROOT / "docs/experience", self.root / "docs/experience")
+        # A declared module can reference a contract outside docs/experience.
+        # Include those real dependencies; do not weaken missing-source checks.
+        config = json.loads((self.root / "docs/experience/campaign.json").read_text())
+        for module_path in config.get("source_modules", []):
+            module = json.loads(em.source_path(ROOT, module_path).read_text())
+            for key in ("story_source", "document_operations_source"):
+                relative = module.get(key)
+                if relative:
+                    target = em.source_path(self.root, relative)
+                    if not target.exists():
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(em.source_path(ROOT, relative), target)
 
     def tearDown(self):
         self.temp.cleanup()
@@ -38,6 +50,33 @@ class ExperienceMapTests(unittest.TestCase):
             self.assertEqual(story["extensions"]["runtime_readiness"], "not-assessed")
             self.assertEqual(story["extensions"]["execution_evidence"], [])
             self.assertIsNone(story["extensions"]["human_experience"])
+
+    def test_wiki_contract_outside_experience_is_retained_and_required(self):
+        key = "docs/cradle/WIKI-CONSTELLATION-SPEC.md"
+        result = em.load_sources(self.root)
+        document = result["source_documents"][key]
+        self.assertEqual(document["text"], (ROOT / key).read_text())
+        self.assertEqual(document["digest"], em.digest((ROOT / key).read_bytes()))
+        (self.root / key).unlink()
+        with self.assertRaises(OSError):
+            em.load_sources(self.root)
+
+    def test_wiki_decisions_extend_existing_stories_without_new_family(self):
+        result = em.load_sources(self.root)
+        path = self.root / "docs/experience/wiki-constellation.json"
+        module = json.loads(path.read_text())
+        self.assertEqual(module["families"], [])
+        expected = {f"wc65:WC{i:02}" for i in range(1, 16)}
+        adaptive = {f"adaptive65:AP{i:02}" for i in range(1, 9)}
+        self.assertEqual(set(module["required_obligation_ids"]), expected | adaptive)
+        obligations = [o for o in result["inherited_obligations"] if o["id"].startswith("wc65:")]
+        self.assertEqual({o["id"] for o in obligations}, expected)
+        stories = {s["id"] for s in result["stories"]}
+        for obligation in obligations:
+            self.assertTrue(set(obligation["story_ids"]).issubset(stories))
+            self.assertTrue(obligation["required_branches"])
+        self.assertFalse(module["runtime_or_human_acceptance"])
+        self.assertIsNone(result["feature_verdict"])
 
     def test_source_omission_does_not_shrink_parent(self):
         path = self.root / "docs/experience/STORIES.md"
@@ -141,10 +180,14 @@ class ExperienceMapTests(unittest.TestCase):
         self.assertIn("headless", result["config"]["composition_examples"])
 
     def test_method_description_has_the_real_prefix(self):
+        # The METHOD: prefix on the skill's description is a real contract and
+        # is kept. The former `assertIn("Source publication does", text)` was a
+        # brittle exact-prose match on the skill body — a documentation-wording
+        # check, not product acceptance, that broke on any rewording of the same
+        # distinction — so it is removed rather than protected (F09).
         text = (ROOT / "skills/experience-campaign/SKILL.md").read_text()
         description = next(line for line in text.splitlines() if line.startswith("description:"))
         self.assertTrue(description.split(":", 1)[1].strip().strip('"').startswith("METHOD:"))
-        self.assertIn("Source publication does", text)
 
     def test_output_is_new_derived_planning_only(self):
         output = self.root / "generated"

@@ -15,8 +15,8 @@
  * poll loop), the Produced material section (CandidateReading subject
  * browser + FactoryMaterialSurface reading, fixture-labelled when the
  * labelled dev scenario carries the Run), and the attempt-handoff section
- * (FactoryHandoffSurface with its honest owner-read-unavailable state — the
- * attempt-task kernel ops are not carried by this cut).
+ * (FactoryHandoffSurface reading the owner's task-scoped attempt list and task
+ * through the live kernel).
  */
 import {useCallback, useEffect, useRef, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
@@ -165,12 +165,12 @@ export function DeskRunDetail({locator, project, onBack, onOpenTask}:{
         : <p className="oi-note">The owner's reading retained no produced candidate or evidence for this Run.</p>}
     </section>}
 
-    {/* Attempt handoff: retained task handoff documents. The owner attempt
-        task reads are not carried by this kernel cut — the surface says so
-        and invents nothing (FactoryHandoffSurface / attempt-task.ts). */}
+    {/* Attempt handoff: the owner's task-scoped attempt list and task reading,
+        reached through the live kernel; the surface renders the real read
+        states and invents nothing (FactoryHandoffSurface / attempt-task.ts). */}
     {view && <section className="desk-detail-handoff" aria-label="Attempt handoff">
       <h2><Glyph name="report" size={13}/> Attempt handoff</h2>
-      <FactoryHandoffSurface statePath={locator.statePath} runRef={locator.runRef}/>
+      <FactoryHandoffSurface transport={kernel.transport} statePath={locator.statePath} runRef={locator.runRef}/>
     </section>}
 
     <section className="desk-detail-tasks" aria-label="Task conversations">

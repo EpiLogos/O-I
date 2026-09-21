@@ -1,3 +1,4 @@
+import {NativeAgentLauncher} from "./NativeAgentLauncher";
 /**
  * AgencySurface — fills its host, composes the roster, mint flow and
  * Guardian repertoire (COMMON-BRIEF §handoff 2/3/7). Owns no scrolling
@@ -25,10 +26,9 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
   const [selected, setSelected] = useState<AgencySessionRow | null>(null);
 
   useEffect(() => {
-    if (!project) { setReading(null); setError(null); setSelected(null); return; }
     let live = true;
     setPending(true);
-    void readAgency(kernel.transport, project).then((outcome) => {
+    void readAgency(kernel.transport, project??"").then((outcome) => {
       if (!live) return;
       if ("error" in outcome) { setError(outcome.error); return; }
       setError(null);
@@ -49,16 +49,9 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
     return () => cleanup?.();
   }, []);
 
-  if (!project) {
-    return <div className="agency-surface oi-empty">
-      <strong>No project selected</strong>
-      <p>Agency reads a project's SessionSpace roster (`agency_read`) and needs an open Project. Open one to see its Agents and current work.</p>
-    </div>;
-  }
-
   return <div className="agency-surface">
     <header className="oi-panel-head">
-      <span className="oi-eyebrow">Agency · {project}</span>
+      <span className="oi-eyebrow">Agency · {project??"Central root"}</span>
       <div className="oi-segment" role="tablist" aria-label="Agency view">
         <button type="button" role="tab" aria-selected={view === "roster"} onClick={() => setView("roster")}>Roster</button>
         <button type="button" role="tab" aria-selected={view === "mint"} onClick={() => setView("mint")}>Mint Agent</button>
@@ -68,12 +61,12 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
 
     <div className="agency-body oi-scroll">
       {view === "roster" && (
-        <div className="agency-roster-layout">
+        <div><NativeAgentLauncher project={project}/><div className="agency-roster-layout">
           <AgencyRoster reading={reading} pending={pending} error={error} selected={selected} onSelect={setSelected}/>
           {selected
             ? <AgentDetail row={selected} siblingSessions={reading?.rows.filter((row) => row.spaceRef === selected.spaceRef) ?? []}/>
             : <div className="oi-empty agency-detail-placeholder"><span>Select a session to see its Purpose, Skills & tools, Sessions, Knowledge and History.</span></div>}
-        </div>
+        </div></div>
       )}
       {view === "mint" && <MintAgent project={project} onMessage={onMessage}/>}
       {view === "guardians" && <GuardianRepertoire project={project}/>}

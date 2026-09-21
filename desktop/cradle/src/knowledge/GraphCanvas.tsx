@@ -1,11 +1,12 @@
-import {memo,useEffect,useRef} from 'react';
+import {memo,useEffect,useRef,useState} from 'react';
 import type {GraphNode,GraphReading} from './graph';
 import type {Point} from './layout';
 import {screenPoint,segmentVisible,zoomAt,type Camera} from './camera';
-interface Props {nodes:GraphNode[];positions:Point[];model?:GraphReading;camera:Camera;selected?:string;focused:Set<string>;minZoom:number;maxZoom:number;onCamera:(camera:Camera)=>void;onOpen:(node:GraphNode)=>void;onClear:()=>void}
+interface Props {emphasis?:ReadonlyMap<string,{label:string;color:string}>;nodes:GraphNode[];positions:Point[];model?:GraphReading;camera:Camera;selected?:string;focused:Set<string>;contextual?:Set<string>;labels?:'automatic'|'all'|'focus';arrows?:boolean;minZoom:number;maxZoom:number;onCamera:(camera:Camera)=>void;onOpen:(node:GraphNode)=>void;onClear:()=>void}
 /** One demand-driven drawing loop. Pointer/wheel updates never render React
  * or persist state per frame. The accessibility subjects keep exact refs. */
 export const GraphCanvas=memo(function GraphCanvas(props:Props) {
+  const [accessPage,setAccessPage]=useState(0);
   const canvas=useRef<HTMLCanvasElement>(null),current=useRef(props);current.current=props;
   const engine=useRef<{target:(camera:Camera)=>void;redraw:()=>void;focus:(ref:string)=>void}>();
   useEffect(()=>{
@@ -40,14 +41,15 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
       // Batch paths by focus state, retaining every admitted segment; missing
       // endpoints are represented by the related-subject UI, never invented.
       for(const receded of [true,false]){ctx!.beginPath();for(const relation of p.model?.edges??[]){if(Boolean(p.selected)&&!(p.focused.has(relation.from_ref)&&p.focused.has(relation.to_ref))!==receded)continue;if(!p.selected&&receded)continue;const a=lookup.get(relation.from_ref),b=lookup.get(relation.to_ref);if(a&&b&&segmentVisible(a,b,width,height)){ctx!.moveTo(a.x,a.y);ctx!.lineTo(b.x,b.y);}}ctx!.strokeStyle=edge;ctx!.lineWidth=line;ctx!.globalAlpha=receded?.12:.55;ctx!.stroke();}
+      if(p.arrows){ctx!.fillStyle=edge;ctx!.globalAlpha=.55;for(const relation of p.model?.edges??[]){const a=lookup.get(relation.from_ref),b=lookup.get(relation.to_ref);if(!a||!b||!segmentVisible(a,b,width,height))continue;const d=Math.hypot(b.x-a.x,b.y-a.y);if(d<16)continue;const ux=(b.x-a.x)/d,uy=(b.y-a.y)/d,x=b.x-ux*8,y=b.y-uy*8;ctx!.beginPath();ctx!.moveTo(x,y);ctx!.lineTo(x-ux*5-uy*3,y-uy*5+ux*3);ctx!.lineTo(x-ux*5+uy*3,y-uy*5-ux*3);ctx!.closePath();ctx!.fill();}}
       if(hover){ctx!.fillStyle=accent;ctx!.globalAlpha=.65;for(const relation of p.model?.edges??[]){if(relation.from_ref!==hover&&relation.to_ref!==hover)continue;const a=lookup.get(relation.from_ref),b=lookup.get(relation.to_ref);if(!a||!b||!segmentVisible(a,b,width,height))continue;const t=reduced.matches?.5:(time/Math.max(1,duration*16))%1;ctx!.beginPath();ctx!.arc(a.x+(b.x-a.x)*t,a.y+(b.y-a.y)*t,dot,0,Math.PI*2);ctx!.fill();}}
       const labelBoxes:{x:number;y:number;w:number;h:number}[]=[];
       screen.sort((a,b)=>Number(a.node.ref===p.selected||a.node.ref===hover)-Number(b.node.ref===p.selected||b.node.ref===hover));
-      for(const item of screen){const {node,x,y,r}=item,selected=node.ref===p.selected,active=selected||node.ref===hover,receded=Boolean(p.selected)&&!p.focused.has(node.ref);
+      for(const item of screen){const {node,x,y,r}=item,selected=node.ref===p.selected,active=selected||node.ref===hover,receded=(Boolean(p.selected)&&!p.focused.has(node.ref))||Boolean(p.contextual?.has(node.ref));
         ctx!.globalAlpha=receded?.28:Math.min(1,.45+(item.p.scale??1)*.45);
         if(active){ctx!.beginPath();ctx!.arc(x,y,r+hit*.55,0,Math.PI*2);ctx!.fillStyle=ground;ctx!.fill();ctx!.strokeStyle=accent;ctx!.lineWidth=line;ctx!.stroke();}
-        ctx!.beginPath();ctx!.arc(x,y,r,0,Math.PI*2);ctx!.fillStyle=selected?accent:ink;ctx!.fill();
-        if(active||(!receded&&node.kind==='wiki-space'&&view.zoom>.4)){
+        ctx!.beginPath();ctx!.arc(x,y,r,0,Math.PI*2);ctx!.fillStyle=selected?accent:(p.emphasis?.get(node.ref)?.color??ink);ctx!.fill();
+        if(active||(p.labels!=='focus'&&!receded&&(p.labels==='all'||(node.kind==='wiki-space'&&view.zoom>.4)||view.zoom>1.5))){
           ctx!.font=`${font}px ${fontFamily}`;const w=ctx!.measureText(node.label).width,box={x:x-w/2,y:y+r+hit*.65,w,h:font*1.5};
           if(active||!labelBoxes.some(b=>b.x<box.x+box.w&&b.x+b.w>box.x&&b.y<box.y+box.h&&b.y+b.h>box.y)){labelBoxes.push(box);ctx!.globalAlpha=active?1:.8;ctx!.fillStyle=active?ink:muted;ctx!.textAlign='center';ctx!.fillText(node.label,x,box.y+font);}
         }
@@ -77,6 +79,8 @@ export const GraphCanvas=memo(function GraphCanvas(props:Props) {
     el.addEventListener('pointerdown',down);el.addEventListener('pointermove',move);el.addEventListener('pointerup',up);el.addEventListener('pointercancel',cancel);el.addEventListener('lostpointercapture',cancel);el.addEventListener('pointerleave',leave);el.addEventListener('wheel',wheel,{passive:false});el.addEventListener('keydown',key);el.addEventListener('gesturestart',gestureStart,{passive:false});el.addEventListener('gesturechange',gestureChange,{passive:false});el.addEventListener('gestureend',gestureEnd);reduced.addEventListener('change',schedule);resize();
     return()=>{if(drag||wheelTimer||nativeGesture)commit();disposed=true;cancelAnimationFrame(frame);clearTimeout(wheelTimer);observer.disconnect();themeObserver.disconnect();engine.current=undefined;el.removeEventListener('pointerdown',down);el.removeEventListener('pointermove',move);el.removeEventListener('pointerup',up);el.removeEventListener('pointercancel',cancel);el.removeEventListener('lostpointercapture',cancel);el.removeEventListener('pointerleave',leave);el.removeEventListener('wheel',wheel);el.removeEventListener('keydown',key);el.removeEventListener('gesturestart',gestureStart);el.removeEventListener('gesturechange',gestureChange);el.removeEventListener('gestureend',gestureEnd);reduced.removeEventListener('change',schedule);};
   },[]);
-  useEffect(()=>{engine.current?.target(props.camera);engine.current?.redraw();},[props.camera.x,props.camera.y,props.camera.zoom,props.nodes,props.positions,props.model,props.selected,props.focused]);
-  return <><canvas ref={canvas} className="knowledge-canvas" tabIndex={0} aria-label="Knowledge graph. Drag or two-finger scroll to pan. Pinch or Control plus scroll to zoom. Arrow keys pan; plus and minus zoom."/><div className="knowledge-node-accessibility">{props.nodes.map(node=><button key={node.ref} data-knowledge-ref={node.ref} aria-pressed={node.ref===props.selected} onFocus={()=>engine.current?.focus(node.ref)} onClick={()=>props.onOpen(node)}>Open {node.label}</button>)}</div></>;
+  useEffect(()=>{engine.current?.target(props.camera);engine.current?.redraw();},[props.camera.x,props.camera.y,props.camera.zoom,props.nodes,props.positions,props.model,props.selected,props.focused,props.contextual,props.labels,props.arrows,props.emphasis]);
+  // Keep every subject addressable while bounding hidden accessibility DOM.
+  const lastPage=Math.max(0,Math.ceil(props.nodes.length/100)-1),page=Math.min(accessPage,lastPage);
+  return <><canvas ref={canvas} className="knowledge-canvas" tabIndex={0} aria-label="Knowledge graph. Drag or two-finger scroll to pan. Pinch or Control plus scroll to zoom. Arrow keys pan; plus and minus zoom."/><div className="knowledge-node-accessibility">{props.nodes.length>100&&<div role="group" aria-label="Graph subject pages"><button disabled={page===0} onClick={()=>setAccessPage(page-1)}>Previous subjects</button><span>Subjects {page*100+1}–{Math.min(props.nodes.length,(page+1)*100)} of {props.nodes.length}</span><button disabled={page===lastPage} onClick={()=>setAccessPage(page+1)}>Next subjects</button></div>}{props.nodes.slice(page*100,(page+1)*100).map(node=><button key={node.ref} data-knowledge-ref={node.ref} aria-label={props.emphasis?.has(node.ref)?`Open ${node.label} · emphasis ${props.emphasis.get(node.ref)!.label}`:undefined} aria-pressed={node.ref===props.selected} onFocus={()=>engine.current?.focus(node.ref)} onClick={()=>props.onOpen(node)}>Open {node.label}</button>)}</div></>;
 });

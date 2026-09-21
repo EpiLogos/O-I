@@ -21,6 +21,18 @@ class DeveloperFieldTests(unittest.TestCase):
         self.temp = tempfile.TemporaryDirectory()
         self.root = Path(self.temp.name)
         shutil.copytree(ROOT / "docs/experience", self.root / "docs/experience")
+        # Modules may declare public contracts outside the experience directory.
+        # Copy the declared dependencies without making missing sources optional.
+        config = json.loads((self.root / "docs/experience/campaign.json").read_text())
+        for module_path in config.get("source_modules", []):
+            module = json.loads(em.source_path(ROOT, module_path).read_text())
+            for key in ("story_source", "document_operations_source"):
+                relative = module.get(key)
+                if relative:
+                    target = em.source_path(self.root, relative)
+                    if not target.exists():
+                        target.parent.mkdir(parents=True, exist_ok=True)
+                        shutil.copy2(em.source_path(ROOT, relative), target)
         self.module_path = self.root / "docs/experience/developer-field.json"
 
     def tearDown(self):

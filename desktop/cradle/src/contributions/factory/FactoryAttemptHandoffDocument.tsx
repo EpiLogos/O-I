@@ -21,14 +21,17 @@ export function FactoryAttemptHandoffDocument({reading}:{reading:FactoryAttemptT
 
 function AttemptDocument({reading, attempt}:{reading:FactoryAttemptTaskReading; attempt:FactoryAttemptTaskView}) {
   const returned = attempt.record.readableReturn;
-  const [copied, setCopied] = useState<string>();
+  const [copied, setCopied] = useState<{key: string; status: "copied" | "unavailable" | "failed"}>();
   const continuations = uiContinuations(reading, attempt);
-  const copy = async (prompt: string, label: string) => {
-    try {
-      if (typeof navigator !== "undefined" && navigator.clipboard?.writeText) await navigator.clipboard.writeText(prompt);
-      setCopied(label);
-    } catch { setCopied(undefined); }
+  const copy = async (prompt: string, key: string) => {
+    // "Copied" must follow an actual successful copy. A missing clipboard is an
+    // honest unavailable state; a rejected write is an honest failure — neither
+    // is a success (F04).
+    if (typeof navigator === "undefined" || !navigator.clipboard?.writeText) { setCopied({key, status: "unavailable"}); return; }
+    try { await navigator.clipboard.writeText(prompt); setCopied({key, status: "copied"}); }
+    catch { setCopied({key, status: "failed"}); }
   };
+  const copyLabel = (key: string) => copied?.key !== key ? "Copy" : copied.status === "copied" ? "Copied" : copied.status === "unavailable" ? "Copy unavailable" : "Copy failed";
   return <article className="desk-handoff-document" data-variant="handoff" aria-label="Handoff document">
     <header className="desk-handoff-document-head">
       <p className="desk-material-kicker">Handoff</p>
@@ -52,7 +55,10 @@ function AttemptDocument({reading, attempt}:{reading:FactoryAttemptTaskReading; 
 
     {(returned?.artifactRefs.length ?? 0) > 0 && <section className="desk-handoff-section" aria-label="Artifacts">
       <h5>Artifacts</h5>
-      <ul className="desk-handoff-artifacts">{returned!.artifactRefs.map((ref, index) => <li key={ref}><strong>{`Artifact ${index + 1}`}</strong><code>{ref}</code><small>No native opening target was disclosed for this material.</small></li>)}</ul>
+      {/* The owner discloses these as references only. Show the ref itself as
+          the identity — never a fabricated "Artifact N" title — and say
+          truthfully that it is a reference, not a resolved opening target. */}
+      <ul className="desk-handoff-artifacts">{returned!.artifactRefs.map(ref => <li key={ref}><code>{ref}</code><small>Owner-disclosed reference; no resolvable opening target for this reading.</small></li>)}</ul>
     </section>}
 
     {(attempt.status || attempt.record.executionRef || attempt.ownerTelemetryCorrelations.length > 0) && <section className="desk-handoff-section" aria-label="Runtime observations">
@@ -73,13 +79,19 @@ function AttemptDocument({reading, attempt}:{reading:FactoryAttemptTaskReading; 
       <ul className="desk-handoff-outstanding">{attempt.unresolvedOwnerOperations.map(operation => <li key={operation.receiptRef}><strong>{`${operation.ownerRef} · ${operation.operationRef}`}</strong><Reference summary="Outstanding reference" value={operation.receiptRef}/></li>)}</ul>
     </section>}
 
-    <section className="desk-handoff-section" aria-label="Continue">
-      <h5>Continue</h5>
+    {/* Manual recovery text, not the primary working loop: these are
+        O:I-authored resumption prompts composed from the retained identity, to
+        copy into a session by hand. They are not an executable continuation and
+        not an owner-authored record, so they live in secondary recovery detail
+        (F04). */}
+    <details className="desk-handoff-recovery" aria-label="Manual recovery prompts">
+      <summary>Manual recovery prompts</summary>
+      <p className="desk-handoff-standing">Copy into a session by hand to resume; read the current Factory attempt state before acting. Not an executable continuation.</p>
       <ol className="desk-handoff-continuations">{continuations.map((continuation, index) => <li key={index}>
         <div><small>{continuation.label}</small><code>{continuation.prompt}</code></div>
-        <button type="button" onClick={() => void copy(continuation.prompt, `copy-${index}`)}>{copied === `copy-${index}` ? "Copied" : "Copy"}</button>
+        <button type="button" onClick={() => void copy(continuation.prompt, `copy-${index}`)}>{copyLabel(`copy-${index}`)}</button>
       </li>)}</ol>
-    </section>
+    </details>
 
     <details className="desk-material-provenance"><summary>Provenance and basis</summary><dl>
       <div><dt>Project</dt><dd><code>{reading.projectRef}</code></dd></div>

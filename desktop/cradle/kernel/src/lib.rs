@@ -26,6 +26,13 @@
 //! The kernel never writes native source files or mints native subject refs.
 //! Expression-local presentation refs do not acquire native subject identity.
 
+pub mod action;
+pub mod agency;
+pub mod being;
+pub mod commission;
+pub mod composition;
+pub mod configuration;
+pub mod encounter;
 pub mod events;
 pub mod expression;
 pub mod native_expression;
@@ -34,32 +41,27 @@ pub mod expression_carrier;
 pub mod expression_profile;
 pub mod expression_transport;
 pub mod expression_trigger;
+pub mod factory;
+pub mod files;
 pub mod flow;
+pub mod flow_cognition;
+pub mod focus;
+pub mod graph;
+pub mod ground;
 pub mod history;
 pub mod knowledge;
 pub mod construction;
 pub mod shared_field;
-pub mod action;
-pub mod configuration;
 pub mod setup;
-pub mod graph;
-pub mod encounter;
-pub mod agency;
-pub mod being;
-pub mod files;
-pub mod composition;
+pub mod agent_definition;
+pub mod chat_defaults;
 pub mod system_composition;
-pub mod ground;
 pub mod material;
-pub mod factory;
-pub mod focus;
-pub mod refs;
-pub mod world;
-pub mod commission;
-pub mod flow_cognition;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
 /// (see the module's own law). Private to the kernel's apply path.
 mod read_cache;
+pub mod refs;
+pub mod world;
 // --- expression_world (ES1 knowledge side + ES4 joint focus/deixis/portals),
 // lane aikit/es-one-state-relation: the shared selection relation, Surface
 // portals, ExpressiveAct and bounded local-whole bindings over exact refs.
@@ -72,7 +74,7 @@ use std::collections::BTreeMap;
 use serde::{Deserialize, Serialize};
 
 use events::{KernelEvent, KernelEventLog, KernelEventReceipt};
-use flow::{CRADLE_ACTOR, CRADLE_ACTOR_KIND, SourceReading, SourceWriteFailure};
+use flow::{SourceReading, SourceWriteFailure, CRADLE_ACTOR, CRADLE_ACTOR_KIND};
 use focus::GlobalFocus;
 use refs::{source_semantic_ref, SemanticRef};
 use world::{participating_sources, SourceListing};
@@ -118,8 +120,10 @@ pub struct SourceBuffer {
     /// Owner query retained at open; later selection never reroutes a save.
     #[serde(default)]
     pub project: String,
-    #[serde(default)] pub world_ref: String,
-    #[serde(default)] pub project_ref: Option<String>,
+    #[serde(default)]
+    pub world_ref: String,
+    #[serde(default)]
+    pub project_ref: Option<String>,
     /// The cradle-held buffer (presentation layer).
     pub content: String,
     /// The canonical content at `base_revision`.
@@ -171,7 +175,7 @@ pub struct Kernel {
     navigator: world::NavigatorReading,
     file_refs: BTreeMap<String, (SemanticRef, Option<focus::ProjectRef>)>,
     knowledge_refs: BTreeMap<String, SemanticRef>,
-    encounter_refs: BTreeMap<String,(SemanticRef,focus::ProjectRef)>,
+    encounter_refs: BTreeMap<String, (SemanticRef, focus::ProjectRef)>,
     knowledge_projects: BTreeMap<String, Option<focus::ProjectRef>>,
     reads: read_cache::OwnerReadCache,
 }
@@ -194,11 +198,22 @@ pub enum KernelOp {
     /// Pull the whole kernel state (read model; emits nothing).
     State,
     WorldRead,
-    ProjectRead { project: String },
+    ProjectRead {
+        project: String,
+    },
     /// `fresh` bypasses the read cache for this one reading — the explicit
     /// refresh affordance, not the ordinary browse.
-    WorldBrowse { #[serde(default, skip_serializing_if = "Option::is_none")] fresh: Option<bool> },
-    Knowledge { #[serde(default)] project: Option<String>, request: knowledge::Request },
+    WorldBrowse {
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        fresh: Option<bool>,
+    },
+    Knowledge {
+        #[serde(default)]
+        project: Option<String>,
+        request: knowledge::Request,
+        #[serde(default, skip_serializing_if = "knowledge::not_fresh")]
+        fresh: bool,
+    },
     /// Assemble the typed graph input for U3.1/U3.4 presentation: Central's
     /// wiki read model (cell C1) composed with AIKit's owner-side resolution
     /// rows (cell C2) and the hosted Shared Field projection (Lane C step
@@ -206,7 +221,14 @@ pub enum KernelOp {
     /// carries its owner ref, owner operation and owner provenance
     /// verbatim; a failed input degrades honestly as an explicit
     /// unavailable input. Emits nothing (pull read).
-    Graph { #[serde(default)] project: Option<String>, #[serde(default)] query: String },
+    Graph {
+        #[serde(default)]
+        project: Option<String>,
+        #[serde(default)]
+        query: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        options: Option<graph::ReadOptions>,
+    },
     /// One request to the O:I-owned SharedField client (`shared_field.rs`,
     /// cell S→S0 · aperture mode): `status` | `snapshot` | `read {ref}` |
     /// `publish {args}` | `participant` | `admit` | `contact`, carried
@@ -215,7 +237,9 @@ pub enum KernelOp {
     /// environment; an unbound target or unreachable field returns an
     /// explicit `{state:"unavailable", detail}` reading as data, never an
     /// error; the owner's own refusal is returned in the owner's words.
-    SharedField { request: serde_json::Value },
+    SharedField {
+        request: serde_json::Value,
+    },
     /// Compose the W3-A AIKit session-lifecycle read with the W3-B
     /// Actuation request-correlation read for ONE permission request
     /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
@@ -237,14 +261,22 @@ pub enum KernelOp {
     /// owner operation are explicit unsupported states. Owner-side effects
     /// happen through the owner operation and are provable through the
     /// owner store; the kernel records nothing and emits nothing.
-    InvokeAction { #[serde(default)] project: Option<String>, invocation: action::ActionInvocation },
+    InvokeAction {
+        #[serde(default)]
+        project: Option<String>,
+        invocation: action::ActionInvocation,
+    },
     /// Compose the W1.5 changed-since-thought read (`flow_cognition.rs`):
     /// the kernel supplies the KnowledgeChangeHorizon adapted from Central's
     /// own `projectcentral.change.horizon` seam and calls the AIKit owner's
     /// `flow changed-since`; ONE typed reading comes back with both owner
     /// sides explicit — a side that could not be queried is named, never
     /// faked empty. Emits nothing (pull read + owner read).
-    FlowChangedSince { #[serde(default)] project: Option<String>, thought: serde_json::Value },
+    FlowChangedSince {
+        #[serde(default)]
+        project: Option<String>,
+        thought: serde_json::Value,
+    },
     /// Commission one selection inside a flow instance (U4.1/U4.2 loop
     /// mode, `commission.rs`): the desktop composes the next instance
     /// through the template's own append-entry contract and hands it
@@ -257,52 +289,142 @@ pub enum KernelOp {
         location: files::Location,
         expected_revision: String,
         content: String,
-        #[serde(default, skip_serializing_if = "Option::is_none")] agent_session_ref: Option<String>,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        agent_session_ref: Option<String>,
     },
-    AgencyRead { project: String },
+    AgencyRead {
+        project: String,
+    },
+    AgentDefinition { project: Option<String>, request: agent_definition::Request },
     /// Wave 6E: pending Returns tray — list/read plus human review/include
     /// through Central's native receiving operations (owner-validated).
     /// `project` names the project register's field; `None` is the ROOT
     /// register's field (a Day document lives there) — the scope follows the
     /// owner's own ref grammar, never the desktop's configured route.
-    Receiving { #[serde(default)] project: Option<String>, request: flow::ReceivingRequest },
+    Receiving {
+        #[serde(default)]
+        project: Option<String>,
+        request: flow::ReceivingRequest,
+    },
     /// NOW-relations (queue cell 1): read allocated NOW clearings by list or
     /// exact ref. Read-only; `project` follows the same explicit-null root
     /// law as `Receiving` — the register is the caller's to name.
-    Now { #[serde(default)] project: Option<String>, request: flow::NowRequest },
+    Now {
+        #[serde(default)]
+        project: Option<String>,
+        request: flow::NowRequest,
+    },
     /// Task-basis cell (queue cell 2): read one session's task record through
     /// the owner's `encounter-task-read`. Read-only; absence is a null
     /// reading, never a fabricated record.
-    EncounterTaskRead { project: String, agent_session: String },
+    EncounterTaskRead {
+        project: String,
+        agent_session: String,
+    },
     /// The human Day route: read the current today pointer (or one exact
     /// DayRef) through the owner. The disclosure carries the Day source's
     /// canonical ref — the only identity the desktop opens it by.
-    DayRead { #[serde(default)] day_ref: Option<String> },
+    DayRead {
+        #[serde(default)]
+        day_ref: Option<String>,
+    },
     /// Open the Day document's source buffer through the owner's Day route.
     /// There is no project-scoped source read for a root-register source:
     /// the buffer is built from `central.day.read`'s own disclosure.
     DaySourceOpen { #[serde(default)] day_ref: Option<String> },
     Encounter {project:String,request:agency::EncounterRequest},
+    /// Provision ONE fresh chat conversation for a project and open it — the
+    /// desktop's new-chat first Send. The kernel replays the owner's own
+    /// SessionSpace CLI sequence (`project-context` → create →
+    /// bind-project-context → attach-agent-session → encounter-agency-configure
+    /// → encounter open) and returns the minted refs plus the open result.
+    /// Every other encounter action keeps its attachment gate; this is the one
+    /// path allowed to create the attachment it needs.
+    EncounterProvision {project:String},
     MaterialRead {target:material::Target},
     /// The re-pinned build view (queue cell B): the owner CLI reads it as
     /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
     /// `build discover`/`--binding` grammar is gone from the installed cut.
     /// Refs and state path are the caller's disclosure; payload verbatim
     /// after the contract schemas are verified.
-    FactoryBuildSnapshot { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, project_ref: String, run_ref: String },
+    FactoryBuildSnapshot {
+        #[serde(default)]
+        project: Option<String>,
+        state_path: ::std::path::PathBuf,
+        project_ref: String,
+        run_ref: String,
+    },
     /// 6D first consumer (queue cell 3): one developmental read through the
     /// owner's own `factory development` family. The state path is the
     /// caller's disclosure — the desktop never invents a Factory state.
-    FactoryDevelopmentRead { #[serde(default)] project: Option<String>, state_path: ::std::path::PathBuf, read: String, #[serde(default)] subject: Option<String> },
+    FactoryDevelopmentRead {
+        #[serde(default)]
+        project: Option<String>,
+        state_path: ::std::path::PathBuf,
+        read: String,
+        #[serde(default)]
+        subject: Option<String>,
+    },
     /// Run-in-Expressions: the whole SSSF attempt reading
     /// (`factory attempt read <state> <run-ref>`) — legs, attempts,
     /// verifications and the readable Return — so the Expression presents the
     /// run's actual evidence structure. The payload is carried verbatim after
     /// its contract schema is verified; no second run store is created.
     FactoryAttemptRead { state_path: ::std::path::PathBuf, run_ref: String },
+    /// The task refs a Run's attempt field carries
+    /// (`factory attempt list <state> <run-ref>` → the owner's
+    /// `factory.attempt-task-list-reading/v1`). The state path and run ref are
+    /// the caller's disclosure; the payload is carried verbatim after its
+    /// contract schema is verified — no task list is invented.
+    FactoryAttemptTaskListRead { state_path: ::std::path::PathBuf, run_ref: String },
+    /// One task's attempt reading with the owner's own pagination
+    /// (`factory attempt task <state> <run-ref> <task-ref> [--limit] [--cursor]`
+    /// → `factory.attempt-task-reading/v1`): attempts, verifications, owner
+    /// telemetry correlations and the readable Return. Limit and cursor are the
+    /// owner's grammar, passed through; stale-cursor refusal stays the owner's.
+    FactoryAttemptTaskRead { state_path: ::std::path::PathBuf, run_ref: String, task_ref: String, #[serde(default)] limit: Option<u32>, #[serde(default)] cursor: Option<serde_json::Value> },
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The Agent Wiki operational projection behind one source
+    /// (`aikit --json wiki projection read --file <path>`): the current body,
+    /// its exact SHA-256 revision and the attributed feedback ledger. AIKit
+    /// owns the source grammar and eligibility; the desktop only discloses
+    /// the reading and never edits the file itself.
+    WikiProjectionRead { root: ::std::path::PathBuf, path: String },
+    /// The composed projection selection (`aikit --json context current` →
+    /// the continuity tuning): which sources the active composition named,
+    /// and which composition selected them. Read-only disclosure of the
+    /// composition's own declaration.
+    WikiProjectionSources,
+    /// A scoped, revision-checked correction through the owner's own tool
+    /// (`aikit --json wiki projection update …` with the replacement body on
+    /// stdin). The expected revision, evidence, actor and reason are the
+    /// caller's attribution; a stale basis is refused by AIKit, not by here.
+    WikiProjectionUpdate { root: ::std::path::PathBuf, path: String, expected_revision: String, evidence: String, actor: String, reason: String, body: String },
+    /// The installed harnesses' real status (`aikit --json client status`
+    /// through the suite route): which harnesses are detected on this
+    /// machine, which carry AIKit, their config dirs and gaps. Pull read,
+    /// machine-level — the settings face renders the owner's rows verbatim.
+    HarnessStatus,
+    /// The resolved model catalogue (`aikit model-catalogue show --json`
+    /// through the suite route): first-party seed, provider sources and
+    /// owner entries as the owner resolved them. Pull read.
+    ModelCatalogue,
+    /// The desktop-held default provider for NEW chats
+    /// (`chat_defaults.rs`): the desired-entry-shaped document when one is
+    /// held, `None` when the owner's rows decide (`pi` row, else first).
+    /// The owner's configuration plane carries no setting for this choice —
+    /// its models are "resolved per launch", not addressable — so the
+    /// desktop holds it honestly under its own `oi:cradle` namespace.
+    ChatDefaultRead,
+    /// Hold (or replace) that default: the provider id of one CONFIGURED
+    /// encounter provider row. Machine-local desktop state, never an
+    /// owner write.
+    ChatDefaultHold { provider: String },
+    /// Withdraw the held default — an explicit operation; the discard
+    /// document carries the observed `removed` fact.
+    ChatDefaultDiscard,
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -317,34 +439,55 @@ pub enum KernelOp {
     /// the engine's own desired store, native axes passed through
     /// unmodified from the owner's v2 reading (09 §7). A refused pairing
     /// comes back WITH a reconciliation status, never omitted.
-    ConfigResolutionsRead { pairs: Vec<configuration::ConfigPair> },
+    ConfigResolutionsRead {
+        pairs: Vec<configuration::ConfigPair>,
+    },
     /// Hold (or replace) one desired entry in the engine's desired store —
     /// no owner is touched. Secret-kind holds carry the reference only.
-    ConfigDesiredHold { request: configuration::ConfigRequest },
+    ConfigDesiredHold {
+        request: configuration::ConfigRequest,
+    },
     /// Withdraw one held desired entry — an explicit operation, never
     /// implicit; the discard document carries the observed `removed` fact.
-    ConfigDesiredDiscard { setting_ref: String, scope: configuration::ConfigScope },
+    ConfigDesiredDiscard {
+        setting_ref: String,
+        scope: configuration::ConfigScope,
+    },
     /// Owner-native plans through `oi config plan` (09 §6): owner-minted
     /// plans verbatim, refused requests as their own `oi.config-error/v1`.
-    ConfigPlan { requests: Vec<configuration::ConfigRequest> },
+    ConfigPlan {
+        requests: Vec<configuration::ConfigRequest>,
+    },
     /// Apply the requests under ONE client-minted ChangeSet (09 §8) through
     /// `oi config apply`: the engine validates, orchestrates the owner
     /// verbs, takes the re-read verification (09 §9) and persists; the
     /// executed ChangeSet and owner-minted receipts cross back verbatim.
-    ConfigApply { requests: Vec<configuration::ConfigRequest> },
+    ConfigApply {
+        requests: Vec<configuration::ConfigRequest>,
+    },
     /// The stored `oi.profile/v1` documents beside the explicit active
     /// mark (09 §12).
     ProfileList,
-    ProfileRead { profile_ref: String },
+    ProfileRead {
+        profile_ref: String,
+    },
     /// The inspectable use plan: what the profile would hold beside what is
     /// currently held — BEFORE anything moves (09 §12; `use` writes only
     /// the active mark and moves no native state).
-    ProfileUsePlan { profile_ref: String },
+    ProfileUsePlan {
+        profile_ref: String,
+    },
     /// Make the profile active — only ever AFTER its use plan was rendered
     /// and accepted (the mark is the engine's only write here).
-    ProfileUseApply { profile_ref: String },
+    ProfileUseApply {
+        profile_ref: String,
+    },
     /// Create an empty sparse profile.
-    ProfileCreate { profile_ref: String, #[serde(default)] title: Option<String> },
+    ProfileCreate {
+        profile_ref: String,
+        #[serde(default)]
+        title: Option<String>,
+    },
     /// Edit a stored profile in place through the engine's own `oi profile
     /// edit` verb (09 §12, additive): an explicit operation set, judged and
     /// stored by the engine's own laws. Nothing is applied to any owner.
@@ -356,8 +499,13 @@ pub enum KernelOp {
     /// refs, never a second store; the owner's own history stays the record
     /// of record.
     ConfigReceipts,
-    Ground {request:ground::Request},
-    CompositionRead {#[serde(default)] owners:bool},
+    Ground {
+        request: ground::Request,
+    },
+    CompositionRead {
+        #[serde(default)]
+        owners: bool,
+    },
     /// Wave 5 (docs/cradle/07): mount each of the six owners' own native
     /// `<product> system --json` disclosure, unmodified, alongside its
     /// honest availability. Distinct from `CompositionRead`, which reads
@@ -365,58 +513,96 @@ pub enum KernelOp {
     SystemCompositionRead,
     /// `fresh` bypasses the cached listing for this one read — the explicit
     /// tree refresh, not an ordinary expansion.
-    FilesList { path: String, #[serde(default, skip_serializing_if = "Option::is_none")] fresh: Option<bool> },
-    FileOperation {location:files::Location,request:files::Request},
-    FileRead { location: files::Location },
+    FilesList {
+        path: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        fresh: Option<bool>,
+    },
+    FileOperation {
+        location: files::Location,
+        request: files::Request,
+    },
+    FileRead {
+        location: files::Location,
+    },
     /// Binary-safe material read (FND-04): the owner's base64 encoding,
     /// never the UTF-8 text contract. Distinct name from the Workcell
     /// `MaterialRead` op above — this reads a native Central file, not a
     /// Workcell material target.
-    FileBytes { location: files::Location },
-    ProjectBrowse { project: String, #[serde(default, skip_serializing_if = "Option::is_none")] fresh: Option<bool> },
+    FileBytes {
+        location: files::Location,
+    },
+    ProjectBrowse {
+        project: String,
+        #[serde(default, skip_serializing_if = "Option::is_none")]
+        fresh: Option<bool>,
+    },
     /// List a project's participating sources from the owner's
     /// disclosures (read-only; emits nothing).
-    SourcesList { #[serde(default)] project: Option<String> },
+    SourcesList {
+        #[serde(default)]
+        project: Option<String>,
+    },
     /// Open a source into the buffer layer through the owner's read.
     SourceOpen {
-        #[serde(default)] project: Option<String>,
+        #[serde(default)]
+        project: Option<String>,
         source_ref: String,
     },
     /// Set the cradle-held buffer content. Emits `buffer_dirty` exactly
     /// once per clean/dirty crossing — continued typing emits nothing.
-    SourceEdit { source_ref: String, content: String },
-    SourceHistory { source_ref: String },
-    SourceRestore { source_ref: String, content: String, base_revision: String, saved_content: String },
+    SourceEdit {
+        source_ref: String,
+        content: String,
+    },
+    SourceHistory {
+        source_ref: String,
+    },
+    SourceRestore {
+        source_ref: String,
+        content: String,
+        base_revision: String,
+        saved_content: String,
+    },
     /// CAS-save the buffer through `projectcentral.source.write`.
     SourceSave {
-        #[serde(default)] project: Option<String>,
+        #[serde(default)]
+        project: Option<String>,
         source_ref: String,
     },
     /// Re-read the canonical layer (the conflict reconcile path): rebases
     /// the buffer's base revision, keeps the dirty buffer content.
     SourceReread {
-        #[serde(default)] project: Option<String>,
+        #[serde(default)]
+        project: Option<String>,
         source_ref: String,
     },
     /// Register a surface binding (frame state, law 12).
     SurfaceOpen {
         surface_id: String,
         kind: String,
-        #[serde(default)] source_ref: Option<String>,
+        #[serde(default)]
+        source_ref: Option<String>,
         title: String,
     },
     /// Close a surface binding. Closing the focused surface also clears
     /// the focus relation — two state changes, two receipts.
-    SurfaceClose { surface_id: String },
+    SurfaceClose {
+        surface_id: String,
+    },
     /// Make a surface's ref the one current focus subject. Emits
     /// `focus_changed` only when the relation actually moved.
-    SurfaceFocus { surface_id: String },
+    SurfaceFocus {
+        surface_id: String,
+    },
     // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation): the
     // generic world operations — shared selection/deictic context,
     // SurfacePortal inspect/open/close/redock, ExpressiveAct
     // perform/interrupt/checkpoint/restore and bounded local-whole
     // bind/inspect/rebase over exact native refs. See expression_world.rs.
-    ExpressionWorld { request: expression_world::Request },
+    ExpressionWorld {
+        request: expression_world::Request,
+    },
 }
 
 /// What an operation produced: its payload plus the receipts of the state
@@ -442,7 +628,9 @@ pub enum KernelOpResult {
     GraphReading { reading: graph::GraphReading },
     /// The SharedField client's own reading (`oi.shared-field.*/v1`), or
     /// the explicit unavailable state — verbatim either way.
-    SharedFieldReading { data: serde_json::Value },
+    SharedFieldReading {
+        data: serde_json::Value,
+    },
     /// The typed encounter join (`encounter.rs`): both owner views, the
     /// grant-record seam and the failure-taxonomy disposition.
     EncounterJoined {
@@ -450,38 +638,75 @@ pub enum KernelOpResult {
     },
     /// The typed result of one owner-Action dispatch (`action.rs`): the
     /// owner payload verbatim, or an explicit named state.
-    ActionDispatched { dispatch: action::ActionDispatch },
+    ActionDispatched {
+        dispatch: action::ActionDispatch,
+    },
     /// The typed changed-since-thought compose (`flow_cognition.rs`): both
     /// owner sides of the read, explicit.
-    FlowChangedSince { reading: flow_cognition::ChangedSinceReading },
+    FlowChangedSince {
+        reading: flow_cognition::ChangedSinceReading,
+    },
     /// The typed selection commission outcome (`commission.rs`): owner
     /// revision, structured conflict, or the owner's own refusal.
     InstanceCommissioned { outcome: commission::CommissionOutcome },
     AgencyReading { project_ref: String, spaces: serde_json::Value, observed_at_unix_ms: u64 },
     EncounterReading {data:serde_json::Value},
+    /// The provisioned chat conversation: the minted space and session refs,
+    /// the chosen default provider and the owner's own open result, verbatim.
+    EncounterProvisioned {data:serde_json::Value},
+    AgentDefinitionReading { data: serde_json::Value },
     ReceivingReading {data:serde_json::Value},
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
     FactoryDevelopmentReading {data:serde_json::Value},
     FactoryAttemptReading {data:serde_json::Value},
+    FactoryAttemptTaskListReading {data:serde_json::Value},
+    FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
+    WikiProjectionReading {data:serde_json::Value},
+    WikiProjectionStored {data:serde_json::Value},
+    WikiProjectionSourcesReading {data:serde_json::Value},
+    /// The harness status rows, verbatim from the owner's `client status`.
+    HarnessStatusReading {data:serde_json::Value},
+    /// The resolved model catalogue, verbatim from the owner.
+    ModelCatalogueReading {data:serde_json::Value},
+    /// The held chat default — the desktop's own document, or `None` when
+    /// the owner's rows decide.
+    ChatDefaultReading {document:Option<serde_json::Value>},
+    ChatDefaultHeld {document:serde_json::Value},
+    ChatDefaultDiscarded {document:serde_json::Value},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
-    ConfigRegistryReading { reading: configuration::RegistryReading },
+    ConfigRegistryReading {
+        reading: configuration::RegistryReading,
+    },
     /// One resolution per requested pair, in order (09 §7 documents
     /// verbatim; refused pairings as named reconciliations).
-    ConfigResolutions { resolutions: Vec<serde_json::Value> },
+    ConfigResolutions {
+        resolutions: Vec<serde_json::Value>,
+    },
     /// The held desired entry as the engine recorded it.
-    ConfigDesiredHeld { entry: serde_json::Value },
+    ConfigDesiredHeld {
+        entry: serde_json::Value,
+    },
     /// The discard document, with its observed `removed` fact.
-    ConfigDesiredDiscarded { document: serde_json::Value },
+    ConfigDesiredDiscarded {
+        document: serde_json::Value,
+    },
     /// Owner-minted plans plus the structured errors for the requests that
     /// could not be planned.
-    ConfigPlanned { plans: Vec<serde_json::Value>, errors: Vec<serde_json::Value> },
+    ConfigPlanned {
+        plans: Vec<serde_json::Value>,
+        errors: Vec<serde_json::Value>,
+    },
     /// The executed ChangeSet beside the owner-minted receipts (09 §8/§9),
     /// verbatim. `owner_receipts` — not `receipts` — so the field never
     /// collides with the kernel event receipts beside it on the wire.
-    ConfigApplied { changeset: serde_json::Value, #[serde(rename = "owner_receipts")] owner_receipts: Vec<serde_json::Value> },
+    ConfigApplied {
+        changeset: serde_json::Value,
+        #[serde(rename = "owner_receipts")]
+        owner_receipts: Vec<serde_json::Value>,
+    },
     /// The stored profiles beside the explicit active mark; a document
     /// that stopped reading is named in `degraded`, never silently dropped.
     ProfileListing {
@@ -490,29 +715,59 @@ pub enum KernelOpResult {
         #[serde(default, skip_serializing_if = "Vec::is_empty")]
         degraded: Vec<serde_json::Value>,
     },
-    ProfileReading { profile: serde_json::Value },
+    ProfileReading {
+        profile: serde_json::Value,
+    },
     /// The inspectable profile-use plan (09 §12).
-    ProfileUsePlanning { plan: configuration::UsePlan },
+    ProfileUsePlanning {
+        plan: configuration::UsePlan,
+    },
     /// The activation document the engine recorded (the mark, nothing else).
-    ProfileUsed { activation: serde_json::Value },
-    ProfileCreated { profile: serde_json::Value },
+    ProfileUsed {
+        activation: serde_json::Value,
+    },
+    ProfileCreated {
+        profile: serde_json::Value,
+    },
     /// The edited document beside the per-operation record — the
     /// `oi.profile-edit/v1` envelope, verbatim.
-    ProfileEdited { document: serde_json::Value },
+    ProfileEdited {
+        document: serde_json::Value,
+    },
     /// The recorded receipt references — the `oi.config-receipts/v1`
     /// envelope, verbatim; an absent history is an empty list.
-    ConfigReceipts { document: serde_json::Value },
+    ConfigReceipts {
+        document: serde_json::Value,
+    },
     /// The owner's own `central.day.read` reading, carried verbatim — the
     /// Day's source identity is the owner's disclosure, never a ref the
     /// desktop derives from a path.
-    DayReading {data:serde_json::Value},
-    FileOperation {data:serde_json::Value},
-    NativeOwnerReading {owner:String,data:Option<serde_json::Value>,failure:Option<serde_json::Value>},
-    GroundReading {reading:serde_json::Value},
-    CompositionReading {reading:composition::Reading},
-    SystemCompositionReading {reading:system_composition::Reading},
-    DirectoryRead { directory: files::Directory },
-    FileRead { reading: files::Reading },
+    DayReading {
+        data: serde_json::Value,
+    },
+    FileOperation {
+        data: serde_json::Value,
+    },
+    NativeOwnerReading {
+        owner: String,
+        data: Option<serde_json::Value>,
+        failure: Option<serde_json::Value>,
+    },
+    GroundReading {
+        reading: serde_json::Value,
+    },
+    CompositionReading {
+        reading: composition::Reading,
+    },
+    SystemCompositionReading {
+        reading: system_composition::Reading,
+    },
+    DirectoryRead {
+        directory: files::Directory,
+    },
+    FileRead {
+        reading: files::Reading,
+    },
     FileBytes {
         location: files::Location,
         revision: String,
@@ -520,10 +775,18 @@ pub enum KernelOpResult {
         mime_hint: Option<String>,
         content_base64: String,
     },
-    SourcesListed { listing: SourceListing },
-    SourceOpened { buffer: SourceBuffer },
-    SourceHistory { history: history::SourceHistory },
-    BufferEdited { buffer: SourceBuffer },
+    SourcesListed {
+        listing: SourceListing,
+    },
+    SourceOpened {
+        buffer: SourceBuffer,
+    },
+    SourceHistory {
+        history: history::SourceHistory,
+    },
+    BufferEdited {
+        buffer: SourceBuffer,
+    },
     /// A save that recorded a change (or landed unchanged on an equal
     /// canonical): the receipt revision is the canonical layer now.
     SourceSaved {
@@ -538,12 +801,22 @@ pub enum KernelOpResult {
         buffer: SourceBuffer,
         failure: SourceWriteFailure,
     },
-    SourceReread { buffer: SourceBuffer },
-    SurfaceOpened { snapshot: KernelSnapshot },
-    SurfaceClosed { snapshot: KernelSnapshot },
-    SurfaceFocused { snapshot: KernelSnapshot },
+    SourceReread {
+        buffer: SourceBuffer,
+    },
+    SurfaceOpened {
+        snapshot: KernelSnapshot,
+    },
+    SurfaceClosed {
+        snapshot: KernelSnapshot,
+    },
+    SurfaceFocused {
+        snapshot: KernelSnapshot,
+    },
     // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation).
-    ExpressionWorld { data: serde_json::Value },
+    ExpressionWorld {
+        data: serde_json::Value,
+    },
 }
 
 impl Kernel {
@@ -607,7 +880,12 @@ impl Kernel {
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
                 let mut receipts = Vec::new();
                 if let Some(change) = changed {
-                    receipts.push(self.log.record(KernelEvent::ExpressionChanged { expression_ref: change.expression_ref, revision: change.revision, actor: change.actor, activity_ref: change.activity_ref }));
+                    receipts.push(self.log.record(KernelEvent::ExpressionChanged {
+                        expression_ref: change.expression_ref,
+                        revision: change.revision,
+                        actor: change.actor,
+                        activity_ref: change.activity_ref,
+                    }));
                 }
                 if data["persisted"]==true && data["data"]["changed"]==true {
                     if let Some(path)=data["file"]["location"]["path"].as_str().or_else(||data["data"]["location"]["path"].as_str()) {
@@ -619,8 +897,14 @@ impl Kernel {
                     if let Some(expression_ref) = focus_ref.as_deref() {
                         if let Some(subject) = self.expressions.selected_subject(expression_ref) {
                             let before = self.focus.clone();
-                            self.focus.focus_subject(subject.clone()).map_err(|e| e.to_string())?;
-                            if before != self.focus { receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() })); }
+                            self.focus
+                                .focus_subject(subject.clone())
+                                .map_err(|e| e.to_string())?;
+                            if before != self.focus {
+                                receipts.push(self.log.record(KernelEvent::FocusChanged {
+                                    focus: self.focus.clone(),
+                                }));
+                            }
                             // --- expression_world (ES1/ES4, lane aikit/es-one-state-relation):
                             // an Expression focus edit IS the shared selection relation
                             // moving. The graph, Wiki and constellation presentations
@@ -629,75 +913,260 @@ impl Kernel {
                             // every depth is a presentation over it). No separate
                             // event: the move already emitted FocusChanged when the
                             // relation changed, and `selection_read` is the pull.
-                            self.world.record_expression_selection(expression_ref, &subject);
+                            self.world
+                                .record_expression_selection(expression_ref, &subject);
                         }
                     }
                 }
-                Ok(KernelOpOutcome { receipts, result: KernelOpResult::Expression { data } })
+                Ok(KernelOpOutcome {
+                    receipts,
+                    result: KernelOpResult::Expression { data },
+                })
             }
-            KernelOp::MaterialRead{target} => native_owner_reading("workcell",material::Client::discover().read(&target)),
-            KernelOp::FactoryBuildSnapshot {project,state_path,project_ref,run_ref} => {
-                if let Some(project)=&project {
-                    let root=self.world_map(false).map_err(|e|e.to_string())?;
-                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+            KernelOp::MaterialRead { target } => {
+                native_owner_reading("workcell", material::Client::discover().read(&target))
+            }
+            KernelOp::FactoryBuildSnapshot {
+                project,
+                state_path,
+                project_ref,
+                run_ref,
+            } => {
+                if let Some(project) = &project {
+                    let root = self.world_map(false).map_err(|e| e.to_string())?;
+                    root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| {
+                            rows.iter()
+                                .find(|r| r["name"].as_str() == Some(project.as_str()))
+                        })
+                        .ok_or("Project is outside Central's disclosed ground")?;
                 }
-                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route)=match direct {
-                    Some(path)=>(path, false),
-                    None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")), true),
+                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable, suite_route) = match direct {
+                    Some(path) => (path, false),
+                    None => (
+                        std::env::var_os("OI_BIN")
+                            .map(std::path::PathBuf::from)
+                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
+                        true,
+                    ),
                 };
-                let data=factory::Client::with(executable).build_snapshot(&state_path,&project_ref,&run_ref,suite_route).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory build snapshot failed".into()))?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
+                let data = factory::Client::with(executable)
+                    .build_snapshot(&state_path, &project_ref, &run_ref, suite_route)
+                    .map_err(|e| {
+                        serde_json::to_string(&e)
+                            .unwrap_or_else(|_| "factory build snapshot failed".into())
+                    })?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::FactoryDevelopmentReading { data },
+                })
             }
-            KernelOp::FactoryDevelopmentRead {project,state_path,read,subject} => {
-                if let Some(project)=&project {
-                    let root=self.world_map(false).map_err(|e|e.to_string())?;
-                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+            KernelOp::FactoryDevelopmentRead {
+                project,
+                state_path,
+                read,
+                subject,
+            } => {
+                if let Some(project) = &project {
+                    let root = self.world_map(false).map_err(|e| e.to_string())?;
+                    root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| {
+                            rows.iter()
+                                .find(|r| r["name"].as_str() == Some(project.as_str()))
+                        })
+                        .ok_or("Project is outside Central's disclosed ground")?;
                 }
-                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
-                let (executable, suite_route)=match direct {
-                    Some(path)=>(path, false),
-                    None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")), true),
+                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable, suite_route) = match direct {
+                    Some(path) => (path, false),
+                    None => (
+                        std::env::var_os("OI_BIN")
+                            .map(std::path::PathBuf::from)
+                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
+                        true,
+                    ),
                 };
-                let args=factory::development_read_args(&state_path,&read,subject.as_deref(),suite_route);
-                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory development read failed".into()))?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryDevelopmentReading{data}})
+                let args = factory::development_read_args(
+                    &state_path,
+                    &read,
+                    subject.as_deref(),
+                    suite_route,
+                );
+                let data = material::invoke(&executable, &args, None).map_err(|e| {
+                    serde_json::to_string(&e)
+                        .unwrap_or_else(|_| "factory development read failed".into())
+                })?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::FactoryDevelopmentReading { data },
+                })
             }
-            KernelOp::FactoryAttemptRead {state_path,run_ref} => {
+            KernelOp::FactoryAttemptRead {
+                state_path,
+                run_ref,
+            } => {
+                let direct = std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable, suite_route) = match direct {
+                    Some(path) => (path, false),
+                    None => (
+                        std::env::var_os("OI_BIN")
+                            .map(std::path::PathBuf::from)
+                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
+                        true,
+                    ),
+                };
+                let mut args: Vec<std::ffi::OsString> = Vec::new();
+                if suite_route {
+                    args.push("factory".into());
+                }
+                args.extend([
+                    "attempt".into(),
+                    "read".into(),
+                    state_path.as_os_str().to_string_lossy().into_owned().into(),
+                    run_ref.into(),
+                    "--json".into(),
+                ]);
+                let data = material::invoke(&executable, &args, None).map_err(|e| {
+                    serde_json::to_string(&e)
+                        .unwrap_or_else(|_| "factory attempt read failed".into())
+                })?;
+                if data.get("contract").and_then(serde_json::Value::as_str)
+                    != Some("factory.attempt-reading/v1")
+                {
+                    return Err("Factory returned incompatible attempt reading".into());
+                }
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::FactoryAttemptReading { data },
+                })
+            }
+            KernelOp::FactoryAttemptTaskListRead {state_path,run_ref} => {
                 let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
                 let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
-                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"read".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),"--json".into()]);
-                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt read failed".into()))?;
-                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-reading/v1"){return Err("Factory returned incompatible attempt reading".into());}
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptReading{data}})
+                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"list".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),"--json".into()]);
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt list failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-list-reading/v1"){return Err("Factory returned incompatible attempt-task list reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskListReading{data}})
+            }
+            KernelOp::FactoryAttemptTaskRead {state_path,run_ref,task_ref,limit,cursor} => {
+                let direct=std::env::var_os("OI_FACTORY_BIN").map(std::path::PathBuf::from);
+                let (executable,suite_route)=match direct {Some(path)=>(path,false),None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("oi")),true)};
+                let mut args:Vec<std::ffi::OsString>=Vec::new(); if suite_route {args.push("factory".into());} args.extend(["attempt".into(),"task".into(),state_path.as_os_str().to_string_lossy().into_owned().into(),run_ref.into(),task_ref.into(),"--json".into()]);
+                if let Some(limit)=limit {args.push("--limit".into()); args.push(limit.to_string().into());}
+                if let Some(cursor)=cursor {args.push("--cursor".into()); args.push(serde_json::to_string(&cursor).map_err(|e|e.to_string())?.into());}
+                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"factory attempt task failed".into()))?;
+                if data.get("contract").and_then(serde_json::Value::as_str)!=Some("factory.attempt-task-reading/v1"){return Err("Factory returned incompatible attempt-task reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::FactoryAttemptTaskReading{data}})
             }
             KernelOp::WorkcellStatusRead => {
-                let workcell=std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
+                let workcell = std::env::var_os("OI_WORKCELL_BIN").map(std::path::PathBuf::from);
                 let (executable, namespace): (std::path::PathBuf, Option<&str>) = match workcell {
-                    Some(path)=>(path, None),
-                    None=>(std::env::var_os("OI_BIN").map(std::path::PathBuf::from).unwrap_or_else(|| std::path::PathBuf::from("oi")), Some("workcell")),
+                    Some(path) => (path, None),
+                    None => (
+                        std::env::var_os("OI_BIN")
+                            .map(std::path::PathBuf::from)
+                            .unwrap_or_else(|| std::path::PathBuf::from("oi")),
+                        Some("workcell"),
+                    ),
                 };
-                let mut args:Vec<std::ffi::OsString>=Vec::new();
-                if let Some(name)=namespace { args.push(name.into()); }
-                args.extend(["status".into(),"--json".into()]);
-                let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"workcell status read failed".into()))?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WorkcellStatusReading{data}})
+                let mut args: Vec<std::ffi::OsString> = Vec::new();
+                if let Some(name) = namespace {
+                    args.push(name.into());
+                }
+                args.extend(["status".into(), "--json".into()]);
+                let data = material::invoke(&executable, &args, None).map_err(|e| {
+                    serde_json::to_string(&e)
+                        .unwrap_or_else(|_| "workcell status read failed".into())
+                })?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::WorkcellStatusReading { data },
+                })
+            }
+            KernelOp::WikiProjectionRead {root,path} => {
+                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
+                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"-C".into(),root.as_os_str().to_string_lossy().into_owned().into(),"wiki".into(),"projection".into(),"read".into(),"--file".into(),path.into()];
+                let data=material::invoke(&aikit,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection read failed".into()))?;
+                if data.get("state").and_then(serde_json::Value::as_str).is_none()||data.get("projection").is_none(){return Err("AIKit returned an incompatible wiki projection reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionReading{data}})
+            }
+            KernelOp::WikiProjectionUpdate {root,path,expected_revision,evidence,actor,reason,body} => {
+                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
+                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"-C".into(),root.as_os_str().to_string_lossy().into_owned().into(),"wiki".into(),"projection".into(),"update".into(),"--file".into(),path.into(),"--expected-revision".into(),expected_revision.into(),"--evidence".into(),evidence.into(),"--actor".into(),actor.into(),"--reason".into(),reason.into()];
+                let data=material::invoke(&aikit,&args,Some(body.into_bytes())).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection update failed".into()))?;
+                if data.get("projection").is_none(){return Err("AIKit returned an incompatible wiki projection receipt".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionStored{data}})
+            }
+            KernelOp::WikiProjectionSources => {
+                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
+                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"context".into(),"current".into()];
+                let data=material::invoke(&aikit,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection sources read failed".into()))?;
+                if data.get("continuity").is_none(){return Err("AIKit returned a context reading without continuity".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionSourcesReading{data}})
+            }
+            KernelOp::HarnessStatus => {
+                // Machine-level read: no project disclosure is consulted —
+                // the harnesses are the machine's own facts.
+                let data=self.agency.harness_status()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::HarnessStatusReading{data}})
+            }
+            KernelOp::ModelCatalogue => {
+                let data=self.agency.model_catalogue()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ModelCatalogueReading{data}})
+            }
+            KernelOp::ChatDefaultRead => {
+                let document=chat_defaults::read()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultReading{document}})
+            }
+            KernelOp::ChatDefaultHold {provider} => {
+                let document=chat_defaults::hold(&provider)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultHeld{document}})
+            }
+            KernelOp::ChatDefaultDiscard => {
+                let document=chat_defaults::discard()?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultDiscarded{document}})
             }
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.
                 self.reads.clear();
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::GroundReading{reading:ground::operate(request)?}})
-            },
-            KernelOp::CompositionRead{owners} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::CompositionReading{reading:composition::Client::discover().read_with_owners(&cwd,owners)}})
-            },
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::GroundReading {
+                        reading: ground::operate(request)?,
+                    },
+                })
+            }
+            KernelOp::CompositionRead { owners } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::CompositionReading {
+                        reading: composition::Client::discover().read_with_owners(&cwd, owners),
+                    },
+                })
+            }
             KernelOp::SystemCompositionRead => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SystemCompositionReading{reading:system_composition::Client::discover().read(&cwd)}})
-            },
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::SystemCompositionReading {
+                        reading: system_composition::Client::discover().read(&cwd),
+                    },
+                })
+            }
             KernelOp::ConfigRegistryRead => {
                 let root=self.world_map(false).ok();
                 let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
@@ -739,53 +1208,125 @@ impl Kernel {
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigApplied{changeset,owner_receipts}})
             },
             KernelOp::ProfileList => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let listing=configuration::Client::discover().profile_list(&cwd)?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileListing{active_profile_ref:listing.active_profile_ref,profiles:listing.profiles,degraded:listing.degraded}})
-            },
-            KernelOp::ProfileRead {profile_ref} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let profile=configuration::Client::discover().profile_read(&cwd,&profile_ref)?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileReading{profile}})
-            },
-            KernelOp::ProfileUsePlan {profile_ref} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let plan=configuration::Client::discover().profile_use_plan(&cwd,&profile_ref)?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileUsePlanning{plan}})
-            },
-            KernelOp::ProfileUseApply {profile_ref} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let activation=configuration::Client::discover().profile_use_apply(&cwd,&profile_ref)?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileUsed{activation}})
-            },
-            KernelOp::ProfileCreate {profile_ref,title} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let profile=configuration::Client::discover().profile_create(&cwd,&profile_ref,title.as_deref())?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileCreated{profile}})
-            },
-            KernelOp::ProfileEdit {profile_ref,operations} => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let document=configuration::Client::discover().profile_edit(&cwd,&profile_ref,&operations)?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProfileEdited{document}})
-            },
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let listing = configuration::Client::discover().profile_list(&cwd)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ProfileListing {
+                        active_profile_ref: listing.active_profile_ref,
+                        profiles: listing.profiles,
+                        degraded: listing.degraded,
+                    },
+                })
+            }
+            KernelOp::ProfileRead { profile_ref } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let profile = configuration::Client::discover().profile_read(&cwd, &profile_ref)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ProfileReading { profile },
+                })
+            }
+            KernelOp::ProfileUsePlan { profile_ref } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let plan =
+                    configuration::Client::discover().profile_use_plan(&cwd, &profile_ref)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ProfileUsePlanning { plan },
+                })
+            }
+            KernelOp::ProfileUseApply { profile_ref } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let activation =
+                    configuration::Client::discover().profile_use_apply(&cwd, &profile_ref)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ProfileUsed { activation },
+                })
+            }
+            KernelOp::ProfileCreate { profile_ref, title } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let profile = configuration::Client::discover().profile_create(
+                    &cwd,
+                    &profile_ref,
+                    title.as_deref(),
+                )?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ProfileCreated { profile },
+                })
+            }
+            KernelOp::ProfileEdit {
+                profile_ref,
+                operations,
+            } => {
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let document = configuration::Client::discover().profile_edit(
+                    &cwd,
+                    &profile_ref,
+                    &operations,
+                )?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ProfileEdited { document },
+                })
+            }
             KernelOp::ConfigReceipts => {
-                let root=self.world_map(false).ok();
-                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
-                let document=configuration::Client::discover().config_receipts(&cwd)?;
-                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ConfigReceipts{document}})
-            },
-            KernelOp::FileOperation {location,request} => {
-                let data=files::operate(&self.client,&location,&request)?;
+                let root = self.world_map(false).ok();
+                let cwd = root
+                    .as_ref()
+                    .and_then(|value| value["root"].as_str())
+                    .map(std::path::PathBuf::from)
+                    .unwrap_or(std::env::current_dir().map_err(|e| e.to_string())?);
+                let document = configuration::Client::discover().config_receipts(&cwd)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ConfigReceipts { document },
+                })
+            }
+            KernelOp::FileOperation { location, request } => {
+                let data = files::operate(&self.client, &location, &request)?;
                 // A write changed what a directory contains; the parent
                 // listing is the one cached reading it invalidates by name.
-                if matches!(request,files::Request::Write{..}|files::Request::Restore{..}) {
-                    self.reads.invalidate(&format!("dir:{}",files::parent_path(&location.path)));
+                if matches!(
+                    request,
+                    files::Request::Write { .. } | files::Request::Restore { .. }
+                ) {
+                    self.reads
+                        .invalidate(&format!("dir:{}", files::parent_path(&location.path)));
+                    self.reads.invalidate_prefix("knowledge:");
+                    self.reads.invalidate_prefix("graph:");
                 }
                 // One state change, one event (the seam's law): a write or
                 // restore the owner actually recorded (`created`/`written`)
@@ -794,29 +1335,73 @@ impl Kernel {
                 // same "look again" relation the expressions surfaces keep
                 // with `expression_changed`. An unchanged write mutated
                 // nothing and emits nothing.
-                let receipt=matches!(request,files::Request::Write{..}|files::Request::Restore{..})
-                    .then(|| match data["outcome"].as_str() {
-                        Some("created")=>Some(self.log.record(KernelEvent::FileChanged{path:location.path.clone(),summary:"A file was created through the owner's write.".into()})),
-                        Some("written")=>Some(self.log.record(KernelEvent::FileChanged{path:location.path.clone(),summary:"A file changed through the owner's write.".into()})),
-                        _=>None,
-                    })
-                    .flatten();
-                Ok(KernelOpOutcome{receipts:receipt.into_iter().collect(),result:KernelOpResult::FileOperation {data}})
-            },
-            KernelOp::FilesList {path,fresh} => Ok(KernelOpOutcome { receipts:Vec::new(), result:KernelOpResult::DirectoryRead {directory:self.directory_listing(&path,fresh.unwrap_or(false))?} }),
-            KernelOp::FileRead {location} => {
-                let reading = match files::read(&self.client,&location) {
-                    Ok(reading) => reading,
-                    Err(error) => { self.file_refs.remove(&location.ref_id); return Err(error); }
-                };
-                let project = reading.project.as_ref().and_then(|p| p.project_ref.as_ref()).map(|id|focus::ProjectRef::try_from(owner_relation(id,"project","central.files.read"))).transpose().map_err(|e|e.to_string())?;
-                self.file_refs.insert(reading.location.ref_id.clone(),(owner_relation(&reading.location.ref_id,"file","central.files.read"),project));
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileRead {reading}})
+                let receipt = matches!(
+                    request,
+                    files::Request::Write { .. } | files::Request::Restore { .. }
+                )
+                .then(|| match data["outcome"].as_str() {
+                    Some("created") => Some(self.log.record(KernelEvent::FileChanged {
+                        path: location.path.clone(),
+                        summary: "A file was created through the owner's write.".into(),
+                    })),
+                    Some("written") => Some(self.log.record(KernelEvent::FileChanged {
+                        path: location.path.clone(),
+                        summary: "A file changed through the owner's write.".into(),
+                    })),
+                    _ => None,
+                })
+                .flatten();
+                Ok(KernelOpOutcome {
+                    receipts: receipt.into_iter().collect(),
+                    result: KernelOpResult::FileOperation { data },
+                })
             }
-            KernelOp::FileBytes {location} => {
-                let reading = match files::read_bytes(&self.client,&location) {
+            KernelOp::FilesList { path, fresh } => Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                result: KernelOpResult::DirectoryRead {
+                    directory: self.directory_listing(&path, fresh.unwrap_or(false))?,
+                },
+            }),
+            KernelOp::FileRead { location } => {
+                let reading = match files::read(&self.client, &location) {
                     Ok(reading) => reading,
-                    Err(error) => { self.file_refs.remove(&location.ref_id); return Err(error); }
+                    Err(error) => {
+                        self.file_refs.remove(&location.ref_id);
+                        return Err(error);
+                    }
+                };
+                let project = reading
+                    .project
+                    .as_ref()
+                    .and_then(|p| p.project_ref.as_ref())
+                    .map(|id| {
+                        focus::ProjectRef::try_from(owner_relation(
+                            id,
+                            "project",
+                            "central.files.read",
+                        ))
+                    })
+                    .transpose()
+                    .map_err(|e| e.to_string())?;
+                self.file_refs.insert(
+                    reading.location.ref_id.clone(),
+                    (
+                        owner_relation(&reading.location.ref_id, "file", "central.files.read"),
+                        project,
+                    ),
+                );
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::FileRead { reading },
+                })
+            }
+            KernelOp::FileBytes { location } => {
+                let reading = match files::read_bytes(&self.client, &location) {
+                    Ok(reading) => reading,
+                    Err(error) => {
+                        self.file_refs.remove(&location.ref_id);
+                        return Err(error);
+                    }
                 };
                 // FND-04: a binary material file (image/pdf/unsupported) is
                 // opened as a surface through this op, never `FileRead` — the
@@ -824,110 +1409,220 @@ impl Kernel {
                 // through Central before opening its surface") checks
                 // `file_refs` regardless of which read resolved the ref, so
                 // this registration is required exactly as `FileRead`'s is.
-                let project = reading.project.as_ref().and_then(|p| p.project_ref.as_ref()).map(|id|focus::ProjectRef::try_from(owner_relation(id,"project","central.files.read"))).transpose().map_err(|e|e.to_string())?;
-                self.file_refs.insert(reading.location.ref_id.clone(),(owner_relation(&reading.location.ref_id,"file","central.files.read"),project));
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FileBytes {
-                    location: reading.location,
-                    revision: reading.revision,
-                    byte_len: reading.byte_len,
-                    mime_hint: reading.mime_hint,
-                    content_base64: reading.content_base64,
-                }})
+                let project = reading
+                    .project
+                    .as_ref()
+                    .and_then(|p| p.project_ref.as_ref())
+                    .map(|id| {
+                        focus::ProjectRef::try_from(owner_relation(
+                            id,
+                            "project",
+                            "central.files.read",
+                        ))
+                    })
+                    .transpose()
+                    .map_err(|e| e.to_string())?;
+                self.file_refs.insert(
+                    reading.location.ref_id.clone(),
+                    (
+                        owner_relation(&reading.location.ref_id, "file", "central.files.read"),
+                        project,
+                    ),
+                );
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::FileBytes {
+                        location: reading.location,
+                        revision: reading.revision,
+                        byte_len: reading.byte_len,
+                        mime_hint: reading.mime_hint,
+                        content_base64: reading.content_base64,
+                    },
+                })
+            }
+            KernelOp::AgentDefinition {project,request} => {
+                if project.as_deref()==Some("") { return Err("Use explicit null for the Central root Agent definition scope".into()); }
+                let cwd=self.agent_location(project.as_deref())?;
+                let data=agent_definition::execute(&self.client,&self.agency,project.as_deref(),&cwd,&request)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgentDefinitionReading {data}})
             }
             KernelOp::Encounter {project,request} => {
-                let root=self.world_map(false).map_err(|e|e.to_string())?;
-                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
-                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
-                let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?;
+                let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let owned_ref=self.agent_project_ref(&project,&cwd)?;
+                let project_ref=owned_ref.as_str();
                 let data=self.agency.encounter(&cwd,project_ref,&request)?;
                 if let agency::EncounterRequest::Read{agent_session,..}=&request {
                     if data["agent_session"].as_str()!=Some(agent_session){return Err("AIKit encounter reading identity mismatch".into());}
                     let project=focus::ProjectRef::try_from(owner_relation(project_ref,"project","projectcentral.inspect")).map_err(|e|e.to_string())?;
                     self.encounter_refs.insert(agent_session.clone(),(SemanticRef {ref_id:agent_session.clone(),kind:"agent-session".into(),native_owner:"ai-kit".into(),provenance:refs::RefProvenance {source:"aikit.encounter.read".into(),revision:None}},project));
                 }
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterReading {data}})
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::EncounterReading { data },
+                })
+            }
+            KernelOp::EncounterProvision {project} => {
+                // The same disclosure gate as every project-scoped op: the
+                // project must be inside Central's disclosed ground, and the
+                // canonical ProjectRef is Central's own, never the caller's.
+                let (cwd,project_ref)=self.project_ground(&project)?;
+                let data=self.agency.provision(&cwd,&project_ref)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterProvisioned {data}})
             }
             KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),
             KernelOp::AgencyRead { project } => {
-                let root=self.world_map(false).map_err(|e|e.to_string())?;
-                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
-                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                let inspection=self.inspect_project(&project,false).ok_or("Central has not bound a canonical ProjectRef")?;
-                let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+                let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let project_ref=self.agent_project_ref(&project,&cwd)?;
                 // The spaces reading spawns the AIKit owner (~100 ms); the
                 // disclosure re-reads it on every branch expansion, so the
                 // short horizon serves the repeat. A fresh stamp is minted
                 // for every answer, cached or not.
-                let cache_key=format!("agency:{}:{project_ref}",cwd.display());
-                let spaces=if let Some(value)=self.reads.get(&cache_key,read_cache::HORIZON_TTL) {
-                    value
-                } else {
-                    let spaces=self.agency.read_project(&cwd,&project_ref)?;
-                    self.reads.put(cache_key,spaces.clone());
-                    spaces
-                };
-                let observed_at_unix_ms=std::time::SystemTime::now().duration_since(std::time::UNIX_EPOCH).map(|d|d.as_millis() as u64).unwrap_or(0);
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::AgencyReading {project_ref,spaces,observed_at_unix_ms}})
+                let cache_key = format!("agency:{}:{project_ref}", cwd.display());
+                let spaces =
+                    if let Some(value) = self.reads.get(&cache_key, read_cache::HORIZON_TTL) {
+                        value
+                    } else {
+                        let spaces = self.agency.read_project(&cwd, &project_ref)?;
+                        self.reads.put(cache_key, spaces.clone());
+                        spaces
+                    };
+                let observed_at_unix_ms = std::time::SystemTime::now()
+                    .duration_since(std::time::UNIX_EPOCH)
+                    .map(|d| d.as_millis() as u64)
+                    .unwrap_or(0);
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::AgencyReading {
+                        project_ref,
+                        spaces,
+                        observed_at_unix_ms,
+                    },
+                })
             }
-            KernelOp::Receiving {project,request} => {
+            KernelOp::Receiving { project, request } => {
                 // Same disclosure gate as every project-scoped read: a named
                 // project must be inside Central's disclosed ground. `None`
                 // is the root register's own field — a Day document lives
                 // there, and its receiving field is the root's.
-                if let Some(project)=&project {
-                    let root=self.world_map(false).map_err(|e|e.to_string())?;
-                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                if let Some(project) = &project {
+                    let root = self.world_map(false).map_err(|e| e.to_string())?;
+                    root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| {
+                            rows.iter()
+                                .find(|r| r["name"].as_str() == Some(project.as_str()))
+                        })
+                        .ok_or("Project is outside Central's disclosed ground")?;
                 }
-                let data=self.client.receiving(project.as_deref(),&request).map_err(|e|e.to_string())?;
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::ReceivingReading {data}})
+                let data = self
+                    .client
+                    .receiving(project.as_deref(), &request)
+                    .map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::ReceivingReading { data },
+                })
             }
-            KernelOp::Now {project,request} => {
+            KernelOp::Now { project, request } => {
                 // Same disclosure gate as `Receiving`: a named project must be
                 // inside Central's disclosed ground; `None` is the root
                 // register, carried as an explicit null to the owner.
-                if let Some(project)=&project {
-                    let root=self.world_map(false).map_err(|e|e.to_string())?;
-                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project.as_str()))).ok_or("Project is outside Central's disclosed ground")?;
+                if let Some(project) = &project {
+                    let root = self.world_map(false).map_err(|e| e.to_string())?;
+                    root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| {
+                            rows.iter()
+                                .find(|r| r["name"].as_str() == Some(project.as_str()))
+                        })
+                        .ok_or("Project is outside Central's disclosed ground")?;
                 }
-                let data=self.client.now(project.as_deref(),&request).map_err(|e|e.to_string())?;
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::NowReading {data}})
+                let data = self
+                    .client
+                    .now(project.as_deref(), &request)
+                    .map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::NowReading { data },
+                })
             }
-            KernelOp::EncounterTaskRead {project,agent_session} => {
+            KernelOp::EncounterTaskRead {
+                project,
+                agent_session,
+            } => {
                 // The standard project-disclosure gate and cwd resolution —
                 // the task record belongs to a session attached to THIS
                 // project's SessionSpaces, exactly like the encounter reads.
-                let root=self.world_map(false).map_err(|e|e.to_string())?;
-                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(&project))).ok_or("Project is outside Central's disclosed ground")?;
-                let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                let data=self.agency.task_read(&cwd,&agent_session).map_err(|e|e.to_string())?;
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterTaskReading {data}})
+                let root = self.world_map(false).map_err(|e| e.to_string())?;
+                let row = root["work"]["projects"]
+                    .as_array()
+                    .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(&project)))
+                    .ok_or("Project is outside Central's disclosed ground")?;
+                let cwd = std::path::Path::new(
+                    root["root"]
+                        .as_str()
+                        .ok_or("Central root location unavailable")?,
+                )
+                .join(row["path"].as_str().ok_or("Project location unavailable")?);
+                let data = self
+                    .agency
+                    .task_read(&cwd, &agent_session)
+                    .map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::EncounterTaskReading { data },
+                })
             }
-            KernelOp::DayRead {day_ref} => {
+            KernelOp::DayRead { day_ref } => {
                 // The Day is a ROOT-register carrier: an explicit null
                 // project is the kernel's own convention for naming the
                 // Central root register (absence would take the configured
                 // project co-reference, which has no today pointer).
-                let mut input=serde_json::Map::new();
-                input.insert("project".to_owned(),serde_json::Value::Null);
-                if let Some(day_ref)=day_ref { input.insert("day_ref".to_owned(),serde_json::Value::String(day_ref)); }
-                let data=self.client.run("central.day.read",serde_json::Value::Object(input)).map_err(|e|e.to_string())?;
-                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::DayReading {data}})
+                let mut input = serde_json::Map::new();
+                input.insert("project".to_owned(), serde_json::Value::Null);
+                if let Some(day_ref) = day_ref {
+                    input.insert("day_ref".to_owned(), serde_json::Value::String(day_ref));
+                }
+                let data = self
+                    .client
+                    .run("central.day.read", serde_json::Value::Object(input))
+                    .map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::DayReading { data },
+                })
             }
-            KernelOp::DaySourceOpen {day_ref} => {
+            KernelOp::DaySourceOpen { day_ref } => {
                 // The owner's Day route is the only reader of a
                 // root-register Day source: the buffer is built from
                 // `central.day.read`'s own disclosure — its canonical ref,
                 // revision and content — never a path-derived ref.
-                let mut input=serde_json::Map::new();
-                input.insert("project".to_owned(),serde_json::Value::Null);
-                if let Some(day_ref)=day_ref { input.insert("day_ref".to_owned(),serde_json::Value::String(day_ref)); }
-                let data=self.client.run("central.day.read",serde_json::Value::Object(input)).map_err(|e|e.to_string())?;
-                let source_ref=data["source"]["ref"].as_str().ok_or("Central's Day reading disclosed no source ref")?.to_owned();
-                let path=data["source"]["path"].as_str().ok_or("Central's Day reading disclosed no source path")?.to_owned();
-                let revision=data["revision"]["revision"].as_str().ok_or("Central's Day reading disclosed no source revision")?.to_owned();
-                let content=data["content"].as_str().ok_or("Central's Day reading disclosed no content")?.to_owned();
-                let buffer=SourceBuffer {
+                let mut input = serde_json::Map::new();
+                input.insert("project".to_owned(), serde_json::Value::Null);
+                if let Some(day_ref) = day_ref {
+                    input.insert("day_ref".to_owned(), serde_json::Value::String(day_ref));
+                }
+                let data = self
+                    .client
+                    .run("central.day.read", serde_json::Value::Object(input))
+                    .map_err(|e| e.to_string())?;
+                let source_ref = data["source"]["ref"]
+                    .as_str()
+                    .ok_or("Central's Day reading disclosed no source ref")?
+                    .to_owned();
+                let path = data["source"]["path"]
+                    .as_str()
+                    .ok_or("Central's Day reading disclosed no source path")?
+                    .to_owned();
+                let revision = data["revision"]["revision"]
+                    .as_str()
+                    .ok_or("Central's Day reading disclosed no source revision")?
+                    .to_owned();
+                let content = data["content"]
+                    .as_str()
+                    .ok_or("Central's Day reading disclosed no content")?
+                    .to_owned();
+                let buffer = SourceBuffer {
                     source_ref: source_ref.clone(),
                     project: String::new(),
                     world_ref: String::new(),
@@ -940,87 +1635,277 @@ impl Kernel {
                     path: Some(path),
                     root_register: true,
                 };
-                self.buffers.insert(source_ref.clone(),buffer.clone());
-                let receipt=self.log.record(KernelEvent::SourceOpened {
-                    source: source_semantic_ref(&source_ref,Some(&buffer.base_revision)).unwrap_or_else(|_| fallback_source_ref(&source_ref)),
+                self.buffers.insert(source_ref.clone(), buffer.clone());
+                let receipt = self.log.record(KernelEvent::SourceOpened {
+                    source: source_semantic_ref(&source_ref, Some(&buffer.base_revision))
+                        .unwrap_or_else(|_| fallback_source_ref(&source_ref)),
                     revision: buffer.base_revision.clone(),
-                    summary: format!("Opened from the owner's Day reading at revision {} ({} bytes).",short_revision(&buffer.base_revision),buffer.content.len()),
+                    summary: format!(
+                        "Opened from the owner's Day reading at revision {} ({} bytes).",
+                        short_revision(&buffer.base_revision),
+                        buffer.content.len()
+                    ),
                 });
-                Ok(KernelOpOutcome {receipts:vec![receipt],result:KernelOpResult::SourceOpened {buffer}})
+                Ok(KernelOpOutcome {
+                    receipts: vec![receipt],
+                    result: KernelOpResult::SourceOpened { buffer },
+                })
             }
-            KernelOp::Knowledge { project, request } => {
+            KernelOp::Knowledge {
+                project,
+                request,
+                fresh,
+            } => {
                 // Central discloses the scope; renderer-supplied filesystem paths
                 // and stale persisted authority never become invocation context.
                 let root = self.world_map(false).map_err(|e| e.to_string())?;
                 let project = if let knowledge::Request::Read { address } = &request {
-                    root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|row|row["projectcentral"]["agent_wiki"]["wiki"]["space_ref"].as_str()==Some(address.reference())))
-                        .and_then(|row|row["name"].as_str()).map(str::to_owned).or(project)
-                } else { project };
-                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                    root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| {
+                            rows.iter().find(|row| {
+                                row["projectcentral"]["agent_wiki"]["wiki"]["space_ref"].as_str()
+                                    == Some(address.reference())
+                            })
+                        })
+                        .and_then(|row| row["name"].as_str())
+                        .map(str::to_owned)
+                        .or(project)
+                } else {
+                    project
+                };
+                let base = root["root"]
+                    .as_str()
+                    .ok_or("Central root location unavailable")?;
                 let cwd = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
-                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
-                } else { std::path::PathBuf::from(base) };
+                    let row = root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
+                        .ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base)
+                        .join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else {
+                    std::path::PathBuf::from(base)
+                };
                 if let knowledge::Request::Use { address } = &request {
-                    if !self.knowledge_refs.contains_key(address.reference()) { return Err("Read the native subject successfully before recording use".into()); }
+                    if !self.knowledge_refs.contains_key(address.reference()) {
+                        return Err(
+                            "Read the native subject successfully before recording use".into()
+                        );
+                    }
                 }
-                let data = knowledge::call(&cwd, &request)?;
+                let cacheable = matches!(
+                    request,
+                    knowledge::Request::Read { .. } | knowledge::Request::Relations { .. }
+                );
+                let key = format!(
+                    "knowledge:{}:{}",
+                    cwd.display(),
+                    serde_json::to_string(&request).map_err(|e| e.to_string())?
+                );
+                if fresh {
+                    self.reads.invalidate(&key);
+                }
+                let held = if cacheable && !fresh {
+                    self.reads.get(&key, read_cache::KNOWLEDGE_TTL)
+                } else {
+                    None
+                };
+                let data = if let Some(value) = held {
+                    value
+                } else {
+                    let value = knowledge::call(&cwd, &request)?;
+                    if cacheable {
+                        self.reads.put(key, value.clone());
+                    }
+                    value
+                };
                 if let knowledge::Request::Read { address } = &request {
-                    if data["resource"].as_str() != Some(address.reference()) { return Err("AIKit reading identity does not match the requested subject".into()); }
+                    if data["resource"].as_str() != Some(address.reference()) {
+                        return Err(
+                            "AIKit reading identity does not match the requested subject".into(),
+                        );
+                    }
                     let project_ref = if let Some(project) = project.as_ref() {
-                        self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).ok()
+                        self.client
+                            .run(
+                                "projectcentral.inspect",
+                                serde_json::json!({"project":project}),
+                            )
+                            .ok()
                             .and_then(|v| v["manifest"]["project_id"].as_str().map(str::to_owned))
-                            .map(|r| focus::ProjectRef::try_from(owner_relation(&r,"project","projectcentral.inspect"))).transpose().map_err(|e| e.to_string())?
-                    } else { None };
-                    self.knowledge_projects.insert(address.reference().into(), project_ref);
-                    self.knowledge_refs.insert(address.reference().into(), SemanticRef {
-                        ref_id: address.reference().into(), kind: "knowledge".into(), native_owner: "ai-kit".into(),
-                        provenance: refs::RefProvenance { source: "aikit.knowledge.read".into(), revision: data["revision"].as_str().map(str::to_owned) },
-                    });
+                            .map(|r| {
+                                focus::ProjectRef::try_from(owner_relation(
+                                    &r,
+                                    "project",
+                                    "projectcentral.inspect",
+                                ))
+                            })
+                            .transpose()
+                            .map_err(|e| e.to_string())?
+                    } else {
+                        None
+                    };
+                    self.knowledge_projects
+                        .insert(address.reference().into(), project_ref);
+                    self.knowledge_refs.insert(
+                        address.reference().into(),
+                        SemanticRef {
+                            ref_id: address.reference().into(),
+                            kind: "knowledge".into(),
+                            native_owner: "ai-kit".into(),
+                            provenance: refs::RefProvenance {
+                                source: "aikit.knowledge.read".into(),
+                                revision: data["revision"].as_str().map(str::to_owned),
+                            },
+                        },
+                    );
                 }
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::Knowledge { data } })
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::Knowledge { data },
+                })
             }
-            KernelOp::Graph { project, query } => {
+            KernelOp::Graph {
+                project,
+                query,
+                options,
+            } => {
+                let options = options.unwrap_or_default();
+                options.validate()?;
                 // Central discloses the scope; the wiki read register and the
                 // AIKit project context both come from the owner root map.
                 let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let base = root["root"]
+                    .as_str()
+                    .ok_or("Central root location unavailable")?;
                 let (wiki_action, wiki_input, cwd) = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
-                    let cwd = std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?);
-                    ("projectcentral.wiki.read", serde_json::json!({ "project": project }), cwd)
+                    let row = root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
+                        .ok_or("Project is outside Central's disclosed ground")?;
+                    let cwd = std::path::Path::new(base)
+                        .join(row["path"].as_str().ok_or("Project location unavailable")?);
+                    (
+                        "projectcentral.wiki.read",
+                        serde_json::json!({ "project": project }),
+                        cwd,
+                    )
                 } else {
-                    ("central.wiki.read", serde_json::json!({}), std::path::PathBuf::from(base))
+                    (
+                        "central.wiki.read",
+                        serde_json::json!({}),
+                        std::path::PathBuf::from(base),
+                    )
                 };
-                let reading = graph::assemble(&self.client, wiki_action, &wiki_input, &cwd, &query);
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::GraphReading { reading } })
+                let key = format!(
+                    "graph:{}:{:?}:{}:{}:{}",
+                    cwd.display(),
+                    options.input,
+                    options.max_nodes,
+                    options.max_edges,
+                    query
+                );
+                if options.fresh {
+                    self.reads.invalidate(&key);
+                }
+                // Hosted access/projection changes are always checked at its owner.
+                let cacheable = matches!(
+                    options.input,
+                    graph::InputSelection::CentralWiki | graph::InputSelection::AikitResolution
+                );
+                let held = if cacheable && !options.fresh {
+                    self.reads
+                        .get(&key, read_cache::GRAPH_TTL)
+                        .and_then(|value| serde_json::from_value(value).ok())
+                } else {
+                    None
+                };
+                let reading = if let Some(reading) = held {
+                    reading
+                } else {
+                    let reading = graph::assemble_selected(
+                        &self.client,
+                        wiki_action,
+                        &wiki_input,
+                        &cwd,
+                        &query,
+                        &options,
+                    );
+                    let available = match options.input {
+                        graph::InputSelection::CentralWiki => {
+                            reading.inputs.central_wiki.is_available()
+                        }
+                        graph::InputSelection::AikitResolution => {
+                            reading.inputs.aikit_resolution.is_available()
+                        }
+                        _ => false,
+                    };
+                    if cacheable && available {
+                        if let Ok(value) = serde_json::to_value(&reading) {
+                            self.reads.put(key, value);
+                        }
+                    }
+                    reading
+                };
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::GraphReading { reading },
+                })
             }
             KernelOp::SharedField { request } => {
                 // The kernel passes the request through on the desktop's own
                 // account; the client resolves its target and token from its
                 // own environment. Nothing is recorded, nothing is emitted.
                 let data = shared_field::reading(&request)?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SharedFieldReading { data } })
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::SharedFieldReading { data },
+                })
             }
-            KernelOp::EncounterJoin { session, request_ref, reply } => {
+            KernelOp::EncounterJoin {
+                session,
+                request_ref,
+                reply,
+            } => {
                 // Central discloses the context anchor, exactly as the
                 // Graph/Knowledge arms; the lifecycle store itself is the
                 // AIKit owner's (AIKIT_HOME), never renderer-supplied.
                 let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let cwd = std::path::PathBuf::from(root["root"].as_str().ok_or("Central root location unavailable")?);
+                let cwd = std::path::PathBuf::from(
+                    root["root"]
+                        .as_str()
+                        .ok_or("Central root location unavailable")?,
+                );
                 let reading = encounter::assemble(&cwd, &session, &request_ref, reply.as_ref());
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::EncounterJoined { reading } })
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::EncounterJoined { reading },
+                })
             }
-            KernelOp::InvokeAction { project, invocation } => {
+            KernelOp::InvokeAction {
+                project,
+                invocation,
+            } => {
                 // Central discloses the scope, exactly as the Knowledge/Graph
                 // arms: renderer-supplied paths never become invocation context.
                 let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let base = root["root"]
+                    .as_str()
+                    .ok_or("Central root location unavailable")?;
                 let cwd = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
-                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
-                } else { std::path::PathBuf::from(base) };
+                    let row = root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
+                        .ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base)
+                        .join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else {
+                    std::path::PathBuf::from(base)
+                };
                 let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
+                self.reads.invalidate_prefix("knowledge:");
+                self.reads.invalidate_prefix("graph:");
                 let mut receipts=Vec::new();
                 if invocation.action==construction::APPLY {
                     if let action::ActionDispatch::Invoked{data,..}=&dispatch {
@@ -1039,25 +1924,64 @@ impl Kernel {
                 // the InvokeAction arm: Central discloses the scope,
                 // renderer-supplied paths never become context.
                 let root = self.world_map(false).map_err(|e| e.to_string())?;
-                let base = root["root"].as_str().ok_or("Central root location unavailable")?;
+                let base = root["root"]
+                    .as_str()
+                    .ok_or("Central root location unavailable")?;
                 let cwd = if let Some(project) = project.as_ref() {
-                    let row = root["work"]["projects"].as_array().and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project))).ok_or("Project is outside Central's disclosed ground")?;
-                    std::path::Path::new(base).join(row["path"].as_str().ok_or("Project location unavailable")?)
-                } else { std::path::PathBuf::from(base) };
-                let reading = flow_cognition::changed_since(&self.client, project.as_deref().unwrap_or_else(|| self.client.configured_project()), &cwd, &thought).map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::FlowChangedSince { reading } })
+                    let row = root["work"]["projects"]
+                        .as_array()
+                        .and_then(|rows| rows.iter().find(|r| r["name"].as_str() == Some(project)))
+                        .ok_or("Project is outside Central's disclosed ground")?;
+                    std::path::Path::new(base)
+                        .join(row["path"].as_str().ok_or("Project location unavailable")?)
+                } else {
+                    std::path::PathBuf::from(base)
+                };
+                let reading = flow_cognition::changed_since(
+                    &self.client,
+                    project
+                        .as_deref()
+                        .unwrap_or_else(|| self.client.configured_project()),
+                    &cwd,
+                    &thought,
+                )
+                .map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::FlowChangedSince { reading },
+                })
             }
-            KernelOp::InstanceCommission { location, expected_revision, content, agent_session_ref } => {
-                let outcome = commission::commission(&self.client, &location, &expected_revision, &content, agent_session_ref.as_deref()).map_err(|e| e.to_string())?;
+            KernelOp::InstanceCommission {
+                location,
+                expected_revision,
+                content,
+                agent_session_ref,
+            } => {
+                let outcome = commission::commission(
+                    &self.client,
+                    &location,
+                    &expected_revision,
+                    &content,
+                    agent_session_ref.as_deref(),
+                )
+                .map_err(|e| e.to_string())?;
                 // The commission landed as a file write: the parent listing
                 // it invalidates by name.
-                self.reads.invalidate(&format!("dir:{}",files::parent_path(&location.path)));
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::InstanceCommissioned { outcome } })
+                self.reads
+                    .invalidate(&format!("dir:{}", files::parent_path(&location.path)));
+                self.reads.invalidate_prefix("knowledge:");
+                self.reads.invalidate_prefix("graph:");
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::InstanceCommissioned { outcome },
+                })
             }
             KernelOp::WorldRead => self.navigate(None, false, false),
             KernelOp::ProjectRead { project } => self.navigate(Some(&project), false, false),
             KernelOp::WorldBrowse { fresh } => self.navigate(None, true, fresh.unwrap_or(false)),
-            KernelOp::ProjectBrowse { project, fresh } => self.navigate(Some(&project), true, fresh.unwrap_or(false)),
+            KernelOp::ProjectBrowse { project, fresh } => {
+                self.navigate(Some(&project), true, fresh.unwrap_or(false))
+            }
             KernelOp::State => Ok(KernelOpOutcome {
                 receipts: Vec::new(),
                 result: KernelOpResult::State {
@@ -1070,42 +1994,73 @@ impl Kernel {
                     listing: self.participating_sources_cached(project.as_deref()),
                 },
             }),
-            KernelOp::SourceRestore { source_ref, content, base_revision, saved_content } => {
-                let current = self.buffers.get(&source_ref).ok_or("open the owner source before restoring writing")?.clone();
-                if current.dirty { return Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SourceOpened { buffer: current } }); }
+            KernelOp::SourceRestore {
+                source_ref,
+                content,
+                base_revision,
+                saved_content,
+            } => {
+                let current = self
+                    .buffers
+                    .get(&source_ref)
+                    .ok_or("open the owner source before restoring writing")?
+                    .clone();
+                if current.dirty {
+                    return Ok(KernelOpOutcome {
+                        receipts: Vec::new(),
+                        result: KernelOpResult::SourceOpened { buffer: current },
+                    });
+                }
                 let mut outcome = self.source_edit(&source_ref, content)?;
                 let buffer = self.buffers.get_mut(&source_ref).expect("opened source");
                 if buffer.dirty {
                     buffer.base_revision = base_revision.clone();
                     buffer.saved_content = saved_content;
                     if current.base_revision != base_revision {
-                        buffer.conflict = Some(SourceConflict { expected_revision: base_revision.clone(), current_revision: current.base_revision.clone(), canonical_content: current.content });
+                        buffer.conflict = Some(SourceConflict {
+                            expected_revision: base_revision.clone(),
+                            current_revision: current.base_revision.clone(),
+                            canonical_content: current.content,
+                        });
                         outcome.receipts.push(self.log.record(KernelEvent::SourceWriteConflict {
                             source: source_semantic_ref(&source_ref, Some(&base_revision))?, expected_revision: base_revision,
                             current_revision: current.base_revision, summary: "Restored writing has a different base from the current owner revision; both sides retained.".into(),
                         }));
                     }
                 }
-                outcome.result = KernelOpResult::SourceOpened { buffer: buffer.clone() };
+                outcome.result = KernelOpResult::SourceOpened {
+                    buffer: buffer.clone(),
+                };
                 Ok(outcome)
             }
             KernelOp::SourceHistory { source_ref } => {
-                let buffer = self.buffers.get(&source_ref).ok_or("open the source before reading its history")?;
-                let history = history::read(&self.client, &buffer.project, &source_ref).map_err(|e| e.to_string())?;
-                Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SourceHistory { history } })
+                let buffer = self
+                    .buffers
+                    .get(&source_ref)
+                    .ok_or("open the source before reading its history")?;
+                let history = history::read(&self.client, &buffer.project, &source_ref)
+                    .map_err(|e| e.to_string())?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::SourceHistory { history },
+                })
             }
-            KernelOp::SourceOpen { project, source_ref } => {
-                self.source_open(project.as_deref(), &source_ref)
-            }
-            KernelOp::SourceEdit { source_ref, content } => {
-                self.source_edit(&source_ref, content)
-            }
-            KernelOp::SourceSave { project, source_ref } => {
-                self.source_save(project.as_deref(), &source_ref)
-            }
-            KernelOp::SourceReread { project, source_ref } => {
-                self.source_reread(project.as_deref(), &source_ref)
-            }
+            KernelOp::SourceOpen {
+                project,
+                source_ref,
+            } => self.source_open(project.as_deref(), &source_ref),
+            KernelOp::SourceEdit {
+                source_ref,
+                content,
+            } => self.source_edit(&source_ref, content),
+            KernelOp::SourceSave {
+                project,
+                source_ref,
+            } => self.source_save(project.as_deref(), &source_ref),
+            KernelOp::SourceReread {
+                project,
+                source_ref,
+            } => self.source_reread(project.as_deref(), &source_ref),
             KernelOp::SurfaceOpen {
                 surface_id,
                 kind,
@@ -1123,14 +2078,27 @@ impl Kernel {
     // Source buffers — the two state layers
     // -----------------------------------------------------------------------
 
-    fn navigate(&mut self, project: Option<&str>, browse_only: bool, fresh: bool) -> Result<KernelOpOutcome, String> {
+    fn navigate(
+        &mut self,
+        project: Option<&str>,
+        browse_only: bool,
+        fresh: bool,
+    ) -> Result<KernelOpOutcome, String> {
         let before = self.navigator.clone();
         let old_focus = self.focus.clone();
         let result = if let Some(query) = project {
             // Resolve only a project the owner's current root map disclosed.
-            let known = self.navigator.root.as_ref().and_then(|r| r["work"]["projects"].as_array())
+            let known = self
+                .navigator
+                .root
+                .as_ref()
+                .and_then(|r| r["work"]["projects"].as_array())
                 .is_some_and(|rows| rows.iter().any(|p| p["name"].as_str() == Some(query)));
-            if !known { return Err("Project is outside the disclosed World mapping; refresh World first".into()); }
+            if !known {
+                return Err(
+                    "Project is outside the disclosed World mapping; refresh World first".into(),
+                );
+            }
             self.navigate_project(query, fresh)
         } else {
             self.navigate_root(fresh)
@@ -1138,15 +2106,26 @@ impl Kernel {
         self.navigator.error = result.err();
         // Browsing changes the navigation reading, not the semantic subject
         // currently bound to open work. Explicit focus remains a separate act.
-        if browse_only { self.focus = old_focus.clone(); }
+        if browse_only {
+            self.focus = old_focus.clone();
+        }
         let mut receipts = Vec::new();
         if self.navigator != before {
-            receipts.push(self.log.record(KernelEvent::WorldChanged { summary: "Central navigator reading changed".into() }));
+            receipts.push(self.log.record(KernelEvent::WorldChanged {
+                summary: "Central navigator reading changed".into(),
+            }));
         }
         if self.focus != old_focus {
-            receipts.push(self.log.record(KernelEvent::FocusChanged { focus: self.focus.clone() }));
+            receipts.push(self.log.record(KernelEvent::FocusChanged {
+                focus: self.focus.clone(),
+            }));
         }
-        Ok(KernelOpOutcome { receipts, result: KernelOpResult::WorldRead { snapshot: self.snapshot() } })
+        Ok(KernelOpOutcome {
+            receipts,
+            result: KernelOpResult::WorldRead {
+                snapshot: self.snapshot(),
+            },
+        })
     }
 
     /// The root mapping arm of `navigate` — owner calls through the cache,
@@ -1171,25 +2150,45 @@ impl Kernel {
         let bound = reading["project"]["projectcentral"]["state"] != "absent";
         let sources = bound.then(|| self.participating_sources_cached(Some(query)));
         let project_ref = if bound {
-            self.inspect_project(query, fresh)
-                .and_then(|v| v["manifest"]["project_id"].as_str().filter(|id| !id.trim().is_empty()).map(str::to_owned))
-        } else { None };
+            self.inspect_project(query, fresh).and_then(|v| {
+                v["manifest"]["project_id"]
+                    .as_str()
+                    .filter(|id| !id.trim().is_empty())
+                    .map(str::to_owned)
+            })
+        } else {
+            None
+        };
         self.focus.project = None;
         self.focus.world = None;
         self.focus.clear_subject();
         let semantic = |id: String, kind: &str| SemanticRef {
-            ref_id: id, kind: kind.into(), native_owner: "central".into(),
-            provenance: refs::RefProvenance { source: "projectcentral.inspect".into(), revision: None },
+            ref_id: id,
+            kind: kind.into(),
+            native_owner: "central".into(),
+            provenance: refs::RefProvenance {
+                source: "projectcentral.inspect".into(),
+                revision: None,
+            },
         };
         if let Some(id) = project_ref.as_ref() {
             let reference = semantic(id.clone(), "project");
-            self.focus.bind_project(focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"));
-            self.focus.focus_subject(reference).expect("owner project ref");
+            self.focus.bind_project(
+                focus::ProjectRef::try_from(reference.clone()).expect("owner project ref"),
+            );
+            self.focus
+                .focus_subject(reference)
+                .expect("owner project ref");
         }
-        if let Some(id) = sources.as_ref().and_then(|s| s.world_ref.as_ref()).filter(|id| !id.trim().is_empty()) {
+        if let Some(id) = sources
+            .as_ref()
+            .and_then(|s| s.world_ref.as_ref())
+            .filter(|id| !id.trim().is_empty())
+        {
             let mut reference = semantic(id.clone(), "world");
             reference.provenance.source = "projectcentral.change.horizon".into();
-            self.focus.bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
+            self.focus
+                .bind_world(focus::WorldRef::try_from(reference).expect("owner world ref"));
         }
         self.navigator.project = Some(reading);
         self.navigator.sources = sources;
@@ -1202,18 +2201,62 @@ impl Kernel {
     // from the short-horizon cache when a fresh reading was not demanded.
     // -----------------------------------------------------------------------
 
+    /// The empty conversation Project label is the explicit renderer ROOT
+    /// selection, not a native Project id or a fallback to the configured child.
+    fn agent_location(&mut self, project: Option<&str>) -> Result<std::path::PathBuf,String> {
+        let root=self.world_map(false).map_err(|e|e.to_string())?;
+        let base=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?);
+        match project {
+            None=>Ok(base.to_path_buf()),
+            Some(project)=>{
+                let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+                Ok(base.join(row["path"].as_str().ok_or("Project location unavailable")?))
+            }
+        }
+    }
+    fn agent_project_ref(&mut self, project: &str, cwd: &std::path::Path) -> Result<String,String> {
+        if !project.is_empty() {
+            let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+            return inspection["manifest"]["project_id"].as_str().map(str::to_owned).ok_or("Central has not bound a canonical ProjectRef".into());
+        }
+        let scope=self.agency.direct_agent(cwd,"agent-session-scope",None)?;
+        if scope["schema"]!="aikit.direct-agent-scope/v1" || scope["execution_authority_granted"]!=false {
+            return Err("AIKit did not disclose the native root Project binding".into());
+        }
+        scope["project_ref"].as_str().filter(|s|!s.is_empty()).map(str::to_owned).ok_or("No native root Project binding".into())
+    }
+
     fn world_map(&mut self, fresh: bool) -> Result<serde_json::Value, String> {
-        if fresh { self.reads.invalidate("world"); }
-        else if let Some(value) = self.reads.get("world", read_cache::WORLD_TTL) { return Ok(value); }
+        if fresh {
+            self.reads.invalidate("world");
+        } else if let Some(value) = self.reads.get("world", read_cache::WORLD_TTL) {
+            return Ok(value);
+        }
         let reading = world::read_world(&self.client)?;
         self.reads.put("world".into(), reading.clone());
         Ok(reading)
     }
 
+    /// The project-scoped ground every project-named op shares: the project
+    /// must be inside Central's disclosed ground, the cwd comes from that
+    /// disclosure, and the canonical ProjectRef is Central's own inspect
+    /// reading — never a caller-supplied path or ref.
+    fn project_ground(&mut self, project: &str) -> Result<(std::path::PathBuf, String), String> {
+        let root=self.world_map(false)?;
+        let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project))).ok_or("Project is outside Central's disclosed ground")?;
+        let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
+        let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
+        let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
+        Ok((cwd,project_ref))
+    }
+
     fn project_map(&mut self, project: &str, fresh: bool) -> Result<serde_json::Value, String> {
         let key = format!("project:{project}");
-        if fresh { self.reads.invalidate(&key); }
-        else if let Some(value) = self.reads.get(&key, read_cache::PROJECT_TTL) { return Ok(value); }
+        if fresh {
+            self.reads.invalidate(&key);
+        } else if let Some(value) = self.reads.get(&key, read_cache::PROJECT_TTL) {
+            return Ok(value);
+        }
         let reading = world::read_project(&self.client, project)?;
         self.reads.put(key, reading.clone());
         Ok(reading)
@@ -1221,9 +2264,18 @@ impl Kernel {
 
     fn inspect_project(&mut self, project: &str, fresh: bool) -> Option<serde_json::Value> {
         let key = format!("inspect:{project}");
-        if fresh { self.reads.invalidate(&key); }
-        else if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) { return Some(value); }
-        let value = self.client.run("projectcentral.inspect", serde_json::json!({"project": project})).ok()?;
+        if fresh {
+            self.reads.invalidate(&key);
+        } else if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) {
+            return Some(value);
+        }
+        let value = self
+            .client
+            .run(
+                "projectcentral.inspect",
+                serde_json::json!({"project": project}),
+            )
+            .ok()?;
         self.reads.put(key, value.clone());
         Some(value)
     }
@@ -1233,23 +2285,32 @@ impl Kernel {
     fn participating_sources_cached(&mut self, project: Option<&str>) -> SourceListing {
         let key = format!("horizon:{}", project.unwrap_or(""));
         if let Some(value) = self.reads.get(&key, read_cache::HORIZON_TTL) {
-            if let Ok(listing) = serde_json::from_value(value) { return listing; }
+            if let Ok(listing) = serde_json::from_value(value) {
+                return listing;
+            }
         }
         let listing = participating_sources(&self.client, project);
         if matches!(listing.availability, world::ListingAvailability::Horizon) {
-            if let Ok(value) = serde_json::to_value(&listing) { self.reads.put(key, value); }
+            if let Ok(value) = serde_json::to_value(&listing) {
+                self.reads.put(key, value);
+            }
         }
         listing
     }
 
     fn directory_listing(&mut self, path: &str, fresh: bool) -> Result<files::Directory, String> {
         let key = format!("dir:{path}");
-        if fresh { self.reads.invalidate(&key); }
-        else if let Some(value) = self.reads.get(&key, read_cache::DIR_TTL) {
-            if let Ok(directory) = serde_json::from_value(value) { return Ok(directory); }
+        if fresh {
+            self.reads.invalidate(&key);
+        } else if let Some(value) = self.reads.get(&key, read_cache::DIR_TTL) {
+            if let Ok(directory) = serde_json::from_value(value) {
+                return Ok(directory);
+            }
         }
         let directory = files::list(&self.client, path)?;
-        if let Ok(value) = serde_json::to_value(&directory) { self.reads.put(key, value); }
+        if let Ok(value) = serde_json::to_value(&directory) {
+            self.reads.put(key, value);
+        }
         Ok(directory)
     }
 
@@ -1284,7 +2345,9 @@ impl Kernel {
             .as_ref()
             .map(|buffer| buffer.base_revision != reading.revision.revision)
             .unwrap_or(true);
-        let route = project.unwrap_or(self.client.configured_project()).to_owned();
+        let route = project
+            .unwrap_or(self.client.configured_project())
+            .to_owned();
         let buffer = self.sync_buffer_from_reading(&reading, true, &route);
         let receipt = changed.then(|| {
             self.log.record(KernelEvent::SourceOpened {
@@ -1307,7 +2370,12 @@ impl Kernel {
     /// Re-read the canonical layer and sync the buffer to it. A clean
     /// buffer mirrors the canonical content; a dirty buffer keeps its
     /// content and only rebases (both layers stay distinct).
-    fn sync_buffer_from_reading(&mut self, reading: &SourceReading, reset_content: bool, project: &str) -> SourceBuffer {
+    fn sync_buffer_from_reading(
+        &mut self,
+        reading: &SourceReading,
+        reset_content: bool,
+        project: &str,
+    ) -> SourceBuffer {
         let source_ref = reading.source.source_ref.clone();
         let previous = self.buffers.get(&source_ref);
         let keep_dirty = previous.map(|buffer| buffer.dirty).unwrap_or(false);
@@ -1321,7 +2389,18 @@ impl Kernel {
             source_ref: source_ref.clone(),
             project: project.to_owned(),
             world_ref: reading.world_ref.clone(),
-            project_ref: self.client.run("projectcentral.inspect", serde_json::json!({"project":project})).ok().and_then(|v| v.pointer("/manifest/project_id").and_then(serde_json::Value::as_str).map(str::to_owned)),
+            project_ref: self
+                .client
+                .run(
+                    "projectcentral.inspect",
+                    serde_json::json!({"project":project}),
+                )
+                .ok()
+                .and_then(|v| {
+                    v.pointer("/manifest/project_id")
+                        .and_then(serde_json::Value::as_str)
+                        .map(str::to_owned)
+                }),
             content,
             saved_content: reading.content.clone(),
             base_revision: reading.revision.revision.clone(),
@@ -1334,7 +2413,11 @@ impl Kernel {
         buffer
     }
 
-    fn source_edit(&mut self, source_ref: &str, content: String) -> Result<KernelOpOutcome, String> {
+    fn source_edit(
+        &mut self,
+        source_ref: &str,
+        content: String,
+    ) -> Result<KernelOpOutcome, String> {
         let Some(buffer) = self.buffers.get_mut(source_ref) else {
             return Err(format!(
                 "no open buffer for `{source_ref}`; a buffer exists only after the source is opened"
@@ -1369,9 +2452,16 @@ impl Kernel {
         source_ref: &str,
     ) -> Result<KernelOpOutcome, String> {
         let Some(buffer) = self.buffers.get(source_ref) else {
-            return Err(format!("no open buffer for `{source_ref}`; nothing to save"));
+            return Err(format!(
+                "no open buffer for `{source_ref}`; nothing to save"
+            ));
         };
-        let route = if buffer.project.is_empty() { project.unwrap_or(self.client.configured_project()) } else { &buffer.project }.to_owned();
+        let route = if buffer.project.is_empty() {
+            project.unwrap_or(self.client.configured_project())
+        } else {
+            &buffer.project
+        }
+        .to_owned();
         let project = Some(route.as_str());
         let expected = buffer.base_revision.clone();
         let content = buffer.content.clone();
@@ -1387,6 +2477,10 @@ impl Kernel {
                 let previous_revision = receipt.previous_revision.clone();
                 let revision = receipt.revision.revision.clone();
                 let changed = receipt.changed;
+                if changed {
+                    self.reads.invalidate_prefix("knowledge:");
+                    self.reads.invalidate_prefix("graph:");
+                }
                 // Sync both layers to the canonical state the owner recorded.
                 // One state change — the save — one event: SourceChanged
                 // (only when Central recorded a change; an unchanged write
@@ -1446,8 +2540,7 @@ impl Kernel {
                                         current: current.revision.revision.clone(),
                                     };
                                     let canonical_content = current.content.clone();
-                                    let current_revision =
-                                        current.revision.revision.clone();
+                                    let current_revision = current.revision.revision.clone();
                                     if let Some(buffer) = self.buffers.get_mut(source_ref) {
                                         buffer.conflict = Some(SourceConflict {
                                             expected_revision: expected.clone(),
@@ -1485,7 +2578,11 @@ impl Kernel {
                                     .to_owned(),
                         })
                     });
-                let buffer = self.buffers.get(source_ref).cloned().expect("save path holds it");
+                let buffer = self
+                    .buffers
+                    .get(source_ref)
+                    .cloned()
+                    .expect("save path holds it");
                 Ok(KernelOpOutcome {
                     receipts: conflict_event.into_iter().collect(),
                     result: KernelOpResult::SourceSaveFailed { buffer, failure },
@@ -1503,11 +2600,22 @@ impl Kernel {
         // route) re-reads through that same route: the project-scoped
         // `projectcentral.source.read` cannot serve its ref, so without this
         // branch an external Day change could never reach the open surface.
-        if self.buffers.get(source_ref).map(|b| b.root_register).unwrap_or(false) {
+        if self
+            .buffers
+            .get(source_ref)
+            .map(|b| b.root_register)
+            .unwrap_or(false)
+        {
             return self.day_reread(source_ref);
         }
-        let route = self.buffers.get(source_ref).map(|b| b.project.as_str()).filter(|p| !p.is_empty())
-            .or(project).unwrap_or(self.client.configured_project()).to_owned();
+        let route = self
+            .buffers
+            .get(source_ref)
+            .map(|b| b.project.as_str())
+            .filter(|p| !p.is_empty())
+            .or(project)
+            .unwrap_or(self.client.configured_project())
+            .to_owned();
         let project = Some(route.as_str());
         let had_conflict = self
             .buffers
@@ -1557,11 +2665,18 @@ impl Kernel {
         };
         let day_ref = serde_json::from_str::<serde_json::Value>(&held.content)
             .ok()
-            .and_then(|doc| doc.get("day_ref").and_then(|v| v.as_str()).map(str::to_owned));
+            .and_then(|doc| {
+                doc.get("day_ref")
+                    .and_then(|v| v.as_str())
+                    .map(str::to_owned)
+            });
         let mut input = serde_json::Map::new();
         input.insert("project".to_owned(), serde_json::Value::Null);
         if let Some(day_ref) = &day_ref {
-            input.insert("day_ref".to_owned(), serde_json::Value::String(day_ref.clone()));
+            input.insert(
+                "day_ref".to_owned(),
+                serde_json::Value::String(day_ref.clone()),
+            );
         }
         let data = self
             .client
@@ -1641,11 +2756,27 @@ impl Kernel {
         source_ref: Option<String>,
         title: String,
     ) -> Result<KernelOpOutcome, String> {
-        if kind == "encounter" && !source_ref.as_ref().is_some_and(|r|self.encounter_refs.contains_key(r)){return Err("Encounter surface requires a current AIKit reading".into());}
-        if kind == "file" && !source_ref.as_ref().is_some_and(|r| self.file_refs.contains_key(r)) {
-            return Err("File must be read successfully through Central before opening its surface".into());
+        if kind == "encounter"
+            && !source_ref
+                .as_ref()
+                .is_some_and(|r| self.encounter_refs.contains_key(r))
+        {
+            return Err("Encounter surface requires a current AIKit reading".into());
         }
-        if kind == "knowledge" && !source_ref.as_ref().is_some_and(|r| self.knowledge_refs.contains_key(r)) {
+        if kind == "file"
+            && !source_ref
+                .as_ref()
+                .is_some_and(|r| self.file_refs.contains_key(r))
+        {
+            return Err(
+                "File must be read successfully through Central before opening its surface".into(),
+            );
+        }
+        if kind == "knowledge"
+            && !source_ref
+                .as_ref()
+                .is_some_and(|r| self.knowledge_refs.contains_key(r))
+        {
             return Err("Knowledge surface requires a current owner reading".into());
         }
         let surface = SurfaceState {
@@ -1656,10 +2787,15 @@ impl Kernel {
         };
         self.surfaces.insert(surface_id.clone(), surface.clone());
         let semantic = surface.source_ref.as_deref().and_then(|reference| {
-            if surface.kind == "knowledge" { self.knowledge_refs.get(reference).cloned() }
-            else if surface.kind == "file" { self.file_refs.get(reference).map(|r|r.0.clone()) }
-            else if surface.kind == "encounter" {self.encounter_refs.get(reference).map(|r|r.0.clone())}
-            else { source_semantic_ref(reference, None).ok() }
+            if surface.kind == "knowledge" {
+                self.knowledge_refs.get(reference).cloned()
+            } else if surface.kind == "file" {
+                self.file_refs.get(reference).map(|r| r.0.clone())
+            } else if surface.kind == "encounter" {
+                self.encounter_refs.get(reference).map(|r| r.0.clone())
+            } else {
+                source_semantic_ref(reference, None).ok()
+            }
         });
         let receipt = self.log.record(KernelEvent::SurfaceChanged {
             surface_id,
@@ -1680,15 +2816,17 @@ impl Kernel {
         };
         let mut receipts = vec![self.log.record(KernelEvent::SurfaceChanged {
             surface_id: surface.surface_id.clone(),
-            surface_ref: surface
-                .source_ref
-                .as_deref()
-                .and_then(|reference| {
-                    if surface.kind == "knowledge" { self.knowledge_refs.get(reference).cloned() }
-            else if surface.kind == "file" { self.file_refs.get(reference).map(|r|r.0.clone()) }
-            else if surface.kind == "encounter" {self.encounter_refs.get(reference).map(|r|r.0.clone())}
-                    else { source_semantic_ref(reference, None).ok() }
-                }),
+            surface_ref: surface.source_ref.as_deref().and_then(|reference| {
+                if surface.kind == "knowledge" {
+                    self.knowledge_refs.get(reference).cloned()
+                } else if surface.kind == "file" {
+                    self.file_refs.get(reference).map(|r| r.0.clone())
+                } else if surface.kind == "encounter" {
+                    self.encounter_refs.get(reference).map(|r| r.0.clone())
+                } else {
+                    source_semantic_ref(reference, None).ok()
+                }
+            }),
             summary: format!("Surface closed: {}.", surface.title),
         })];
         // Closing the focused subject's surface clears the focus relation —
@@ -1747,27 +2885,67 @@ impl Kernel {
         let old_focus = self.focus.clone();
         if let Some(buffer) = self.buffers.get(&source_ref) {
             if !buffer.world_ref.is_empty() {
-                self.focus.bind_world(focus::WorldRef::try_from(owner_relation(&buffer.world_ref, "world", "projectcentral.source.read")).map_err(|e| e.to_string())?);
+                self.focus.bind_world(
+                    focus::WorldRef::try_from(owner_relation(
+                        &buffer.world_ref,
+                        "world",
+                        "projectcentral.source.read",
+                    ))
+                    .map_err(|e| e.to_string())?,
+                );
             }
-            self.focus.project = buffer.project_ref.as_ref().map(|r| focus::ProjectRef::try_from(owner_relation(r, "project", "projectcentral.inspect"))).transpose().map_err(|e| e.to_string())?;
+            self.focus.project = buffer
+                .project_ref
+                .as_ref()
+                .map(|r| {
+                    focus::ProjectRef::try_from(owner_relation(
+                        r,
+                        "project",
+                        "projectcentral.inspect",
+                    ))
+                })
+                .transpose()
+                .map_err(|e| e.to_string())?;
         }
         let subject = if surface.kind == "encounter" {
-            let (subject,project)=self.encounter_refs.get(&source_ref).cloned().ok_or("Encounter must be resolved through AIKit")?;
-            self.focus.project=Some(project);self.focus.world=None;subject
+            let (subject, project) = self
+                .encounter_refs
+                .get(&source_ref)
+                .cloned()
+                .ok_or("Encounter must be resolved through AIKit")?;
+            self.focus.project = Some(project);
+            self.focus.world = None;
+            subject
         } else if surface.kind == "file" {
-            let (subject,project) = self.file_refs.get(&source_ref).cloned().ok_or("File must be resolved through Central")?;
+            let (subject, project) = self
+                .file_refs
+                .get(&source_ref)
+                .cloned()
+                .ok_or("File must be resolved through Central")?;
             self.focus.project = project;
             self.focus.world = None;
             subject
         } else if surface.kind == "knowledge" {
             self.focus.project = self.knowledge_projects.get(&source_ref).cloned().flatten();
             self.focus.world = None;
-            self.knowledge_refs.get(&source_ref).cloned().ok_or("Knowledge subject must be resolved through AIKit")?
-        } else { source_semantic_ref(&source_ref, None)? };
+            self.knowledge_refs
+                .get(&source_ref)
+                .cloned()
+                .ok_or("Knowledge subject must be resolved through AIKit")?
+        } else {
+            source_semantic_ref(&source_ref, None)?
+        };
         self.focus
             .focus_subject(subject)
             .map_err(|error| error.to_string())?;
-        if self.focus == old_focus { return Ok(KernelOpOutcome { receipts: Vec::new(), result: KernelOpResult::SurfaceFocused { snapshot: self.snapshot() } }); }
+        if self.focus == old_focus {
+            return Ok(KernelOpOutcome {
+                receipts: Vec::new(),
+                result: KernelOpResult::SurfaceFocused {
+                    snapshot: self.snapshot(),
+                },
+            });
+        }
         let receipt = self.log.record(KernelEvent::FocusChanged {
             focus: self.focus.clone(),
         });
@@ -1804,15 +2982,39 @@ fn fallback_source_ref(source_ref: &str) -> SemanticRef {
 }
 
 fn owner_relation(reference: &str, kind: &str, source: &str) -> SemanticRef {
-    SemanticRef { ref_id: reference.into(), kind: kind.into(), native_owner: "central".into(), provenance: refs::RefProvenance { source: source.into(), revision: None } }
+    SemanticRef {
+        ref_id: reference.into(),
+        kind: kind.into(),
+        native_owner: "central".into(),
+        provenance: refs::RefProvenance {
+            source: source.into(),
+            revision: None,
+        },
+    }
 }
 
-fn native_owner_reading<T:Serialize>(owner:&str,result:Result<T,material::Error>)->Result<KernelOpOutcome,String>{
-    let (data,failure)=match result {
-        Ok(value)=>(Some(serde_json::to_value(value).map_err(|e|e.to_string())?),None),
-        Err(error)=>(None,Some(serde_json::to_value(error).map_err(|e|e.to_string())?)),
+fn native_owner_reading<T: Serialize>(
+    owner: &str,
+    result: Result<T, material::Error>,
+) -> Result<KernelOpOutcome, String> {
+    let (data, failure) = match result {
+        Ok(value) => (
+            Some(serde_json::to_value(value).map_err(|e| e.to_string())?),
+            None,
+        ),
+        Err(error) => (
+            None,
+            Some(serde_json::to_value(error).map_err(|e| e.to_string())?),
+        ),
     };
-    Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::NativeOwnerReading{owner:owner.into(),data,failure}})
+    Ok(KernelOpOutcome {
+        receipts: Vec::new(),
+        result: KernelOpResult::NativeOwnerReading {
+            owner: owner.into(),
+            data,
+            failure,
+        },
+    })
 }
 
 #[cfg(test)]
@@ -1906,13 +3108,28 @@ else:
             let wrapper = std::env::temp_dir().join(format!("{stem}.sh"));
             let log = std::env::temp_dir().join(format!("{stem}.log"));
             std::fs::write(&script, FAKE_OWNER).unwrap();
-            std::fs::write(&wrapper, format!("#!/bin/sh\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n", log.display(), script.display())).unwrap();
+            std::fs::write(
+                &wrapper,
+                format!(
+                    "#!/bin/sh\nFAKE_OWNER_LOG={} exec python3 {} \"$@\"\n",
+                    log.display(),
+                    script.display()
+                ),
+            )
+            .unwrap();
             std::fs::set_permissions(&wrapper, std::fs::Permissions::from_mode(0o755)).unwrap();
             let _ = std::fs::remove_file(&log);
-            Self { executable: wrapper, log }
+            Self {
+                executable: wrapper,
+                log,
+            }
         }
         fn kernel(&self) -> Kernel {
-            Kernel::new(CentralClient::with(self.executable.clone(), None, "test".into()))
+            Kernel::new(CentralClient::with(
+                self.executable.clone(),
+                None,
+                "test".into(),
+            ))
         }
         /// How many times the named action reached the owner executable.
         fn spawns(&self, action: &str) -> usize {
@@ -1927,7 +3144,10 @@ else:
         fn drop(&mut self) {
             let stem = self.executable.with_extension("");
             for suffix in [".sh", ".py"] {
-                let _ = std::fs::remove_file(std::path::PathBuf::from(format!("{}{suffix}", stem.display())));
+                let _ = std::fs::remove_file(std::path::PathBuf::from(format!(
+                    "{}{suffix}",
+                    stem.display()
+                )));
             }
             let _ = std::fs::remove_file(&self.log);
         }
@@ -1939,11 +3159,29 @@ else:
         let owner = FakeOwner::spawn_counter("directory-cache");
         let mut kernel = owner.kernel();
         for _ in 0..3 {
-            kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
+            kernel
+                .apply(KernelOp::FilesList {
+                    path: "Work/proj".into(),
+                    fresh: None,
+                })
+                .unwrap();
         }
-        assert_eq!(owner.spawns("central.files.list"), 1, "repeats inside the TTL are one owner read");
-        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: Some(true) }).unwrap();
-        assert_eq!(owner.spawns("central.files.list"), 2, "the explicit fresh read re-asks the owner");
+        assert_eq!(
+            owner.spawns("central.files.list"),
+            1,
+            "repeats inside the TTL are one owner read"
+        );
+        kernel
+            .apply(KernelOp::FilesList {
+                path: "Work/proj".into(),
+                fresh: Some(true),
+            })
+            .unwrap();
+        assert_eq!(
+            owner.spawns("central.files.list"),
+            2,
+            "the explicit fresh read re-asks the owner"
+        );
     }
 
     #[cfg(unix)]
@@ -1951,18 +3189,37 @@ else:
     fn a_file_write_invalidates_the_parent_listing_by_name() {
         let owner = FakeOwner::spawn_counter("write-invalidation");
         let mut kernel = owner.kernel();
-        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
-        kernel.apply(KernelOp::FileOperation {
-            location: files::Location {
-                schema: "central.path-ref/v1".into(),
-                ref_id: "ref:Work/proj/a.md".into(),
-                root: "R".into(),
-                path: "Work/proj/a.md".into(),
-            },
-            request: files::Request::Write { expected_revision: "r1".into(), content: "new".into() },
-        }).unwrap();
-        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
-        assert_eq!(owner.spawns("central.files.list"), 2, "the written directory is re-read after its write");
+        kernel
+            .apply(KernelOp::FilesList {
+                path: "Work/proj".into(),
+                fresh: None,
+            })
+            .unwrap();
+        kernel
+            .apply(KernelOp::FileOperation {
+                location: files::Location {
+                    schema: "central.path-ref/v1".into(),
+                    ref_id: "ref:Work/proj/a.md".into(),
+                    root: "R".into(),
+                    path: "Work/proj/a.md".into(),
+                },
+                request: files::Request::Write {
+                    expected_revision: "r1".into(),
+                    content: "new".into(),
+                },
+            })
+            .unwrap();
+        kernel
+            .apply(KernelOp::FilesList {
+                path: "Work/proj".into(),
+                fresh: None,
+            })
+            .unwrap();
+        assert_eq!(
+            owner.spawns("central.files.list"),
+            2,
+            "the written directory is re-read after its write"
+        );
     }
 
     #[cfg(unix)]
@@ -1973,21 +3230,45 @@ else:
         // invalidates on); a non-mutating request discloses nothing.
         let owner = FakeOwner::spawn_counter("file-changed-receipt");
         let mut kernel = owner.kernel();
-        let outcome = kernel.apply(KernelOp::FileOperation {
-            location: files::Location {
-                schema: "central.path-ref/v1".into(),
-                ref_id: "ref:Work/proj/a.md".into(),
-                root: "R".into(),
-                path: "Work/proj/a.md".into(),
-            },
-            request: files::Request::Write { expected_revision: "r1".into(), content: "new".into() },
-        }).unwrap();
-        let receipt = outcome.receipts.iter().find(|logged| logged.envelope.event.tag() == "file_changed")
+        let outcome = kernel
+            .apply(KernelOp::FileOperation {
+                location: files::Location {
+                    schema: "central.path-ref/v1".into(),
+                    ref_id: "ref:Work/proj/a.md".into(),
+                    root: "R".into(),
+                    path: "Work/proj/a.md".into(),
+                },
+                request: files::Request::Write {
+                    expected_revision: "r1".into(),
+                    content: "new".into(),
+                },
+            })
+            .unwrap();
+        let receipt = outcome
+            .receipts
+            .iter()
+            .find(|logged| logged.envelope.event.tag() == "file_changed")
             .expect("a written file discloses one file_changed receipt");
-        assert_eq!(receipt.envelope.event.subject(), None, "the changed path rides the payload, not a semantic subject");
-        kernel.apply(KernelOp::FilesList { path: "Work/proj".into(), fresh: None }).unwrap();
+        assert_eq!(
+            receipt.envelope.event.subject(),
+            None,
+            "the changed path rides the payload, not a semantic subject"
+        );
+        kernel
+            .apply(KernelOp::FilesList {
+                path: "Work/proj".into(),
+                fresh: None,
+            })
+            .unwrap();
         let listed = kernel.event_log().since(0);
-        assert_eq!(listed.iter().filter(|logged| logged.envelope.event.tag() == "file_changed").count(), 1, "reads change no kernel state and emit nothing");
+        assert_eq!(
+            listed
+                .iter()
+                .filter(|logged| logged.envelope.event.tag() == "file_changed")
+                .count(),
+            1,
+            "reads change no kernel state and emit nothing"
+        );
     }
 
     #[cfg(unix)]
@@ -1997,8 +3278,18 @@ else:
         let mut kernel = owner.kernel();
         kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
         kernel.apply(KernelOp::WorldBrowse { fresh: None }).unwrap();
-        assert_eq!(owner.spawns("central.world"), 1, "repeat browses inside the TTL are one owner read");
-        kernel.apply(KernelOp::WorldBrowse { fresh: Some(true) }).unwrap();
-        assert_eq!(owner.spawns("central.world"), 2, "the explicit refresh re-asks the owner");
+        assert_eq!(
+            owner.spawns("central.world"),
+            1,
+            "repeat browses inside the TTL are one owner read"
+        );
+        kernel
+            .apply(KernelOp::WorldBrowse { fresh: Some(true) })
+            .unwrap();
+        assert_eq!(
+            owner.spawns("central.world"),
+            2,
+            "the explicit refresh re-asks the owner"
+        );
     }
 }

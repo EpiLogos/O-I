@@ -26,6 +26,7 @@ import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
 import { chromium } from "playwright";
+import { normalizeRegistry, resolveScenarioNames, classifyFailure, DisposerStack, dirtyTreeDigest, buildInputIdentity } from "./run-support.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
 const cradleRoot = resolve(here, "..");
@@ -40,14 +41,23 @@ if (loadedEngineProvenance !== expectedEngineProvenance) {
   throw new Error(`The walk's engine dependency resolves outside its checkout: ${loadedEngineProvenance}. Run npm ci inside this checkout's desktop/cradle; do not borrow another checkout's node_modules.`);
 }
 const engineProvenance = JSON.parse(readFileSync(loadedEngineProvenance, "utf8"));
+const runGit = (args) => execFileSync("git", args, {cwd:repositoryRoot, encoding:"utf8"});
 const sourceContext = {
   repository_root: repositoryRoot,
-  repository_head: execFileSync("git", ["rev-parse", "HEAD"], {cwd:repositoryRoot, encoding:"utf8"}).trim(),
-  tracked_changes: execFileSync("git", ["diff", "--name-only", "HEAD"], {cwd:repositoryRoot, encoding:"utf8"}).trim().split("\n").filter(Boolean),
+  repository_head: runGit(["rev-parse", "HEAD"]).trim(),
+  tracked_changes: runGit(["diff", "--name-only", "HEAD"]).trim().split("\n").filter(Boolean),
+  // A digest of the dirty tree (status + diff, hashed — never the contents),
+  // so a receipt binds to the exact uncommitted state that produced it and a
+  // reused build can be told from current source.
+  dirty_digest: dirtyTreeDigest(runGit),
   engine_provenance_path: loadedEngineProvenance,
   engine_source: engineProvenance.source,
   engine_revision: engineProvenance.sha,
 };
+// How the served bytes were obtained (fresh build, reused dist or external
+// URL) with a bundle fingerprint — filled once the preview is up, so every
+// receipt can bind its result to the exact build it exercised.
+let buildInput = null;
 
 const PREVIEW_PORT = Number(process.env.WALK_PREVIEW_PORT ?? 4173);
 if (!Number.isInteger(PREVIEW_PORT) || PREVIEW_PORT < 1024 || PREVIEW_PORT > 65535) throw new Error("WALK_PREVIEW_PORT must be a port from 1024 to 65535");
@@ -73,7 +83,6 @@ const SCENARIOS = {
   "sf6-joined-two-worlds": { module: "scenarios/sf6-joined-two-worlds.mjs", kernel: true, aliases: ["sf6"] },
   "nara-speech": { module: "scenarios/nara-speech.mjs", kernel: true, aliases: ["nara"] },
   "nara-stage-focus": { module: "scenarios/nara-stage-focus.mjs", kernel: true, aliases: ["nara-stage"] },
-
   visuals: { module: "scenarios/visuals.mjs", kernel: true, aliases: [] },
   surfaces: { module: "scenarios/surfaces.mjs", kernel: true, aliases: ["u0.3b"] },
   modes: { module: "scenarios/modes.mjs", kernel: true, aliases: [] },
@@ -131,6 +140,11 @@ const SCENARIOS = {
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
   "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
 };
+
+// Every entry must name a module and carry an alias list before any name or
+// alias is resolved — a malformed runner is rejected here, not surfaced later
+// as a misleading scenario failure.
+normalizeRegistry(SCENARIOS);
 
 // ---------------------------------------------------------------------------
 // process plumbing
@@ -234,6 +248,7 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
       bridge_url: kernelScenario ? bridgeUrl : null,
       viewport: "1280x820",
       bundle: "walk (WALK=1) served by vite preview",
+      build_input: buildInput,
       node: process.version,
       platform: process.platform,
       source: sourceContext,
@@ -367,83 +382,146 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
 // ---------------------------------------------------------------------------
 // scenario lifecycle
 
+/** A durable receipt for a scenario that failed before its body could produce
+ * one — setup-unavailable, harness or application. It records the stage, the
+ * primary error and any cleanup errors distinctly, and never reads as a pass. */
+function failedReceipt({ name, kernelScenario, baseUrl, startedAt, failure, cleanup }) {
+  return {
+    schema: "oi.cradle.walk.scenario/v1",
+    scenario: name,
+    generated_at: new Date().toISOString(),
+    environment: {
+      base_url: baseUrl,
+      bridge_url: kernelScenario ? BRIDGE_URL : null,
+      viewport: "1280x820",
+      bundle: "walk (WALK=1) served by vite preview",
+      build_input: buildInput,
+      node: process.version,
+      platform: process.platform,
+      source: sourceContext,
+    },
+    passed: false,
+    error: failure?.error ?? "the scenario failed before any receipt was produced",
+    failure_stage: classifyFailure(failure?.stage),
+    cleanup_errors: cleanup.errors,
+    duration_ms: now() - startedAt,
+    checks: [],
+    ops: [],
+    metrics: {},
+    screenshots: [],
+  };
+}
+
 async function runScenario(name, { baseUrl }) {
   const spec = SCENARIOS[name];
   console.log(`\n=== scenario: ${name} ===`);
   mkdirSync(artifactsDir, { recursive: true });
 
-  const scenario = await import(`${fileURLToPath(new URL(spec.module, import.meta.url))}`);
-  const provision = await scenario.setup?.({ cradleRoot });
-  let bridgeUrl = null;
-  let bridgeService = null;
-  if (spec.kernel) {
-    bridgeService = spawnService(
-      "walk-bridge",
-      "cargo",
-      [
-        "run",
-        "--quiet",
-        "--manifest-path",
-        join(cradleRoot, "kernel/Cargo.toml"),
-        "--bin",
-        "walk-bridge",
-        "--",
-        `127.0.0.1:${BRIDGE_PORT}`,
-      ],
-      { env: { ...process.env, ...provision?.env } },
-    );
-    await waitForHttp(`${BRIDGE_URL}/state`, "the walk bridge", 180_000);
-    console.log(`  walk bridge up: ${BRIDGE_URL} (fresh kernel, seq from 1)`);
-    bridgeUrl = BRIDGE_URL;
-  }
+  // The whole lifecycle — setup, bridge, browser, page and body — runs inside
+  // one boundary. Disposers are registered as resources are acquired and torn
+  // down in reverse on the way out, so an early failure still produces a
+  // durable receipt and never strands a browser, bridge or setup resource.
+  const disposers = new DisposerStack();
+  const startedAt = now();
+  let stage = "setup";
+  let receipt = null;
+  let failure = null;
 
-  const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
-  // An explicit context: leave/re-enter scenarios open a second page in the
-  // SAME context (shared storage = the restored frame), which the implicit
-  // browser.newPage() context refuses.
-  const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
-  const page = await context.newPage();
-  if (bridgeUrl) {
-    await page.addInitScript((url) => {
-      window.__OI_KERNEL_BRIDGE__ = url;
-    }, bridgeUrl);
-  }
-  // Walks exercise the continuing app, so the welcome frontstate stands
-  // down for them — except when a scenario explicitly asks for it via
-  // ?frontstate (the welcome scenario runs the real first-open path).
-  await page.addInitScript(() => {
-    if (!new URLSearchParams(location.search).has("frontstate")) {
-      // Opaque-origin frames (the sandboxed material iframes) refuse storage
-      // access entirely — the touch must not throw there; only the top
-      // document's stand-down matters.
-      try {
-        sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
-      } catch { /* opaque frame: no storage authority, no stand-down needed */ }
-    }
-  });
-
-  const ctx = makeHarness({ scenario: name, page, baseUrl, bridgeUrl, kernelScenario: spec.kernel });
-  ctx.provision = provision;
-  let receipt;
   try {
-    await scenario.default(ctx);
-    receipt = ctx.finish();
-  } catch (error) {
-    receipt = ctx.finish();
-    receipt.passed = false;
-    receipt.error = String(error?.stack ?? error);
-    await page.screenshot({path:join(here,"artifacts",`${name}-failure.png`)}).catch(()=>{});
-    console.error(`  SCENARIO ERROR: ${receipt.error}`);
-  } finally {
-    await browser.close();
-    provision?.cleanup?.();
-  }
+    const scenario = await import(`${fileURLToPath(new URL(spec.module, import.meta.url))}`);
+    const provision = await scenario.setup?.({ cradleRoot });
+    // Setup's cleanup is registered the moment it exists, so a later bridge or
+    // browser failure still unwinds it (setup owns any resource it created
+    // before throwing).
+    if (provision?.cleanup) disposers.push("provision.cleanup", () => provision.cleanup());
 
-  // A fresh bridge per kernel scenario: stop just the bridge (the preview
-  // keeps serving) so the next scenario's log starts at seq 1.
-  if (bridgeService) {
-    stopService(bridgeService);
-    await sleep(500);
+    let bridgeUrl = null;
+    if (spec.kernel) {
+      stage = "bridge";
+      const bridgeService = spawnService(
+        "walk-bridge",
+        "cargo",
+        [
+          "run",
+          "--quiet",
+          "--manifest-path",
+          join(cradleRoot, "kernel/Cargo.toml"),
+          "--bin",
+          "walk-bridge",
+          "--",
+          `127.0.0.1:${BRIDGE_PORT}`,
+        ],
+        { env: { ...process.env, ...provision?.env } },
+      );
+      // A fresh bridge per kernel scenario: stop just the bridge (the preview
+      // keeps serving) so the next scenario's log starts at seq 1.
+      disposers.push("walk-bridge", () => stopService(bridgeService));
+      await waitForHttp(`${BRIDGE_URL}/state`, "the walk bridge", 180_000);
+      console.log(`  walk bridge up: ${BRIDGE_URL} (fresh kernel, seq from 1)`);
+      bridgeUrl = BRIDGE_URL;
+    }
+
+    stage = "browser";
+    const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
+    disposers.push("browser", () => browser.close());
+
+    stage = "page";
+    // An explicit context: leave/re-enter scenarios open a second page in the
+    // SAME context (shared storage = the restored frame), which the implicit
+    // browser.newPage() context refuses.
+    const context = await browser.newContext({ viewport: { width: 1280, height: 820 } });
+    const page = await context.newPage();
+    if (bridgeUrl) {
+      await page.addInitScript((url) => {
+        window.__OI_KERNEL_BRIDGE__ = url;
+      }, bridgeUrl);
+    }
+    // Walks exercise the continuing app, so the welcome frontstate stands
+    // down for them — except when a scenario explicitly asks for it via
+    // ?frontstate (the welcome scenario runs the real first-open path).
+    await page.addInitScript(() => {
+      if (!new URLSearchParams(location.search).has("frontstate")) {
+        // Opaque-origin frames (the sandboxed material iframes) refuse storage
+        // access entirely — the touch must not throw there; only the top
+        // document's stand-down matters.
+        try {
+          sessionStorage.setItem("oi-cradle.welcome.v1", "walk-continuing-session");
+        } catch { /* opaque frame: no storage authority, no stand-down needed */ }
+      }
+    });
+
+    stage = "scenario";
+    const ctx = makeHarness({ scenario: name, page, baseUrl, bridgeUrl, kernelScenario: spec.kernel });
+    ctx.provision = provision;
+    try {
+      await scenario.default(ctx);
+      receipt = ctx.finish();
+    } catch (error) {
+      receipt = ctx.finish();
+      receipt.passed = false;
+      receipt.error = String(error?.stack ?? error);
+      receipt.failure_stage = classifyFailure("scenario");
+      await page.screenshot({path:join(here,"artifacts",`${name}-failure.png`)}).catch(()=>{});
+      console.error(`  SCENARIO ERROR: ${receipt.error}`);
+    }
+  } catch (error) {
+    // A failure acquiring setup, bridge, browser or page: no harness receipt
+    // exists, so one is synthesised below rather than losing the scenario to
+    // the top-level handler with no record and no classification.
+    failure = { stage, error: String(error?.stack ?? error) };
+    console.error(`  ${classifyFailure(stage).toUpperCase().replace(/-/g, " ")} (${stage}): ${failure.error}`);
+  } finally {
+    const cleanup = await disposers.disposeAll();
+    if (receipt) {
+      if (cleanup.errors.length) {
+        receipt.cleanup_errors = cleanup.errors;
+        for (const { label, error } of cleanup.errors) console.error(`  cleanup error (${label}): ${error}`);
+      }
+    } else {
+      receipt = failedReceipt({ name, kernelScenario: spec.kernel, baseUrl, startedAt, failure, cleanup });
+    }
+    // Let a freed bridge port settle before the next kernel scenario claims it.
+    if (spec.kernel) await sleep(500);
   }
 
   const file = join(artifactsDir, `${name}.json`);
@@ -459,18 +537,10 @@ async function runScenario(name, { baseUrl }) {
 // entrypoint
 
 function resolveNames(args) {
-  if (args.length === 0 || args.includes("all")) {
-    return Object.keys(SCENARIOS);
-  }
-  const names = [];
-  for (const arg of args) {
-    const canonical =
-      SCENARIOS[arg] ? arg : Object.keys(SCENARIOS).find((n) => SCENARIOS[n].aliases.includes(arg));
-    if (!canonical) {
-      console.error(`unknown scenario \`${arg}\`; known: ${Object.keys(SCENARIOS).join(", ")}, all`);
-      process.exit(2);
-    }
-    names.push(canonical);
+  const { names, unknown } = resolveScenarioNames(SCENARIOS, args);
+  if (unknown.length) {
+    console.error(`unknown scenario \`${unknown[0]}\`; known: ${Object.keys(SCENARIOS).join(", ")}, all`);
+    process.exit(2);
   }
   return names;
 }
@@ -499,6 +569,11 @@ try {
     await waitForHttp(baseUrl, "the preview server", 60_000);
   }
   console.log(`serving the cradle at ${baseUrl}${externalUrl ? " (external)" : ""}`);
+
+  // Record how the served bytes were obtained now that the bundle is settled,
+  // so every scenario receipt carries the exact build identity it exercised.
+  buildInput = buildInputIdentity({ walkUrl: externalUrl, skipBuild: process.env.SKIP_BUILD === "1", distDir: join(cradleRoot, "dist") });
+  console.log(`  build input: ${buildInput.mode}${buildInput.bundle_fingerprint ? ` (${buildInput.bundle_fingerprint.slice(0, 12)}…)` : ""}`);
 
   const results = [];
   for (const name of names) {

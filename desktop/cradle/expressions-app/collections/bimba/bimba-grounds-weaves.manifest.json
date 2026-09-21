@@ -1,0 +1,212 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-21T00:31:41.231Z",
+  "source": "Bimba — Grounds and weaves: the live coordinate lattice of the Epi-Logos graph (the Bimba Atlas navigation ground)",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/collections/bimba"
+    ],
+    "ground": "live Bimba graph: Neo4j 5.26 Community at bolt://100.92.62.101:7687 (HTTP http://100.92.62.101:7474, auth disabled) on the oi-omarchy docker host, served through Work/epi/bimba-portable (stateless MCP 2026-07-28); 2141 :Bimba nodes at capture",
+    "exported_at": "2026-09-21T00:31:41.231Z",
+    "generator": {
+      "name": "collections/bimba/tools/bimba-snapshot.mjs — read-only Cypher over the Neo4j HTTP transactional endpoint; no graph writes; bimba-portable read conventions (bimba:read only)",
+      "revision": "bimba-snapshot-2026-09-21"
+    },
+    "slice_rule": "every :Bimba node whose coordinate contains neither '-' nor '.' — the complete top-level coordinate lattice: six QL families C/P/L/S/T/M (Category, Position, Lens, Subsystem, Stack, Thought), each with its root, prime, positions 0-5 and position primes, plus the # ground row, the CF/CFP/CP/CPF/CT/CS composite roots, the CF_* forms, the Family_* descriptors and the four Weave_* crossings; deep branch coordinates (e.g. M2-5-9) are outside the slice. This manifest carries the group: Grounds and weaves",
+    "exclusions": "embedding vector properties (embedding, c_5_embedding) excluded as model-derived and regenerable; embedding metadata (model, dimensions, task type, generated_at) retained",
+    "member_count": 30,
+    "lattice_member_count": 112,
+    "manifest_count": 7,
+    "graph_node_count": 2141,
+    "captured_at": "2026-09-21T00:31:41.231Z",
+    "graph_content_sha256": "12177a8ab7e444d40b9ca980a8376ff85b9494bd3651796b7695d5d1e1190c51",
+    "graph_content_hash_basis": "sha256 over the canonical JSON (sorted keys, no whitespace) of the ordered lattice slice [{coordinate, uuid, labels, properties}] with vector properties excluded — recomputable from the live graph and from the committed member documents, so drift is checkable with --verify",
+    "regeneration": "node collections/bimba/tools/bimba-snapshot.mjs (capture) or --verify (drift check) under collections/bimba/tools, env BIMBA_HTTP",
+    "atlas_disposition": "the travelling-jigsaw Atlas surface is already carried by its committed corpus journey (roz-mytheme-travelling-jigsaw-atlas, return-of-zero mytheme family); the Bimba Atlas navigation ground itself is what this collection binds, as exact-source lattice snapshots"
+  },
+  "featured": [
+    {
+      "id": "sharp",
+      "name": "# — Non-Dual Self-Inversion",
+      "file": "coordinates/grounds/sharp.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "sharp-0",
+      "name": "#0 — Ground",
+      "file": "coordinates/grounds/sharp-0.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "sharp-1",
+      "name": "#1 — Form",
+      "file": "coordinates/grounds/sharp-1.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "sharp-2",
+      "name": "#2 — Operation",
+      "file": "coordinates/grounds/sharp-2.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "sharp-3",
+      "name": "#3 — Pattern",
+      "file": "coordinates/grounds/sharp-3.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "sharp-4",
+      "name": "#4 — Context",
+      "file": "coordinates/grounds/sharp-4.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "sharp-5",
+      "name": "#5 — Integration",
+      "file": "coordinates/grounds/sharp-5.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF",
+      "name": "CF — CF",
+      "file": "coordinates/grounds/CF.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CFP",
+      "name": "CFP — CFP",
+      "file": "coordinates/grounds/CFP.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_BINARY",
+      "name": "CF_BINARY — CF_BINARY",
+      "file": "coordinates/grounds/CF_BINARY.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_FRACTAL",
+      "name": "CF_FRACTAL — CF_FRACTAL",
+      "file": "coordinates/grounds/CF_FRACTAL.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_MOBIUS",
+      "name": "CF_MOBIUS — CF_MOBIUS",
+      "file": "coordinates/grounds/CF_MOBIUS.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_QUATERNAL",
+      "name": "CF_QUATERNAL — CF_QUATERNAL",
+      "file": "coordinates/grounds/CF_QUATERNAL.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_SYNTHESIS",
+      "name": "CF_SYNTHESIS — CF_SYNTHESIS",
+      "file": "coordinates/grounds/CF_SYNTHESIS.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_TRIKA",
+      "name": "CF_TRIKA — CF_TRIKA",
+      "file": "coordinates/grounds/CF_TRIKA.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CF_VOID",
+      "name": "CF_VOID — CF_VOID",
+      "file": "coordinates/grounds/CF_VOID.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CP",
+      "name": "CP — CP",
+      "file": "coordinates/grounds/CP.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CPF",
+      "name": "CPF — CPF",
+      "file": "coordinates/grounds/CPF.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CS",
+      "name": "CS — CS",
+      "file": "coordinates/grounds/CS.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "CT",
+      "name": "CT — CT",
+      "file": "coordinates/grounds/CT.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Family_C",
+      "name": "Family_C — Category",
+      "file": "coordinates/grounds/Family_C.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Family_L",
+      "name": "Family_L — Lens",
+      "file": "coordinates/grounds/Family_L.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Family_M",
+      "name": "Family_M — Subsystem",
+      "file": "coordinates/grounds/Family_M.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Family_P",
+      "name": "Family_P — Position",
+      "file": "coordinates/grounds/Family_P.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Family_S",
+      "name": "Family_S — Stack",
+      "file": "coordinates/grounds/Family_S.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Family_T",
+      "name": "Family_T — Thought",
+      "file": "coordinates/grounds/Family_T.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Weave_0_0",
+      "name": "Weave_0_0 — Weave_0_0",
+      "file": "coordinates/weaves/Weave_0_0.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Weave_0_5",
+      "name": "Weave_0_5 — Weave_0_5",
+      "file": "coordinates/weaves/Weave_0_5.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Weave_5_0",
+      "name": "Weave_5_0 — Weave_5_0",
+      "file": "coordinates/weaves/Weave_5_0.journey.json",
+      "group": "Grounds and weaves"
+    },
+    {
+      "id": "Weave_5_5",
+      "name": "Weave_5_5 — Weave_5_5",
+      "file": "coordinates/weaves/Weave_5_5.journey.json",
+      "group": "Grounds and weaves"
+    }
+  ]
+}

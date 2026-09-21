@@ -61,6 +61,7 @@ fn bind_and_focus(kernel: &mut Kernel) {
 
 fn graph_node() -> GraphNode {
     GraphNode {
+        metadata: Default::default(),
         ref_id: SUBJECT.into(),
         kind: "wiki-node".into(),
         label: "Lesson".into(),
@@ -78,6 +79,9 @@ fn graph_node() -> GraphNode {
 /// with one declared owner edge (no other edges exist to mint).
 fn graph_reading() -> GraphReading {
     GraphReading {
+        shape_catalog: None,
+        formations: Vec::new(),
+        truncated: false,
         schema: oi_cradle_kernel::graph::GRAPH_READING_SCHEMA.into(),
         inputs: oi_cradle_kernel::graph::GraphInputs {
             central_wiki: oi_cradle_kernel::graph::GraphInput::Available {
@@ -95,6 +99,7 @@ fn graph_reading() -> GraphReading {
         },
         nodes: vec![graph_node()],
         edges: vec![GraphEdge {
+            metadata: Default::default(),
             relation: "space-node".into(),
             from_ref: "wiki:space:root".into(),
             to_ref: SUBJECT.into(),

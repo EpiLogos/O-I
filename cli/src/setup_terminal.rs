@@ -145,7 +145,10 @@ fn setup_interactive() -> Result<i32, SetupTerminalError> {
                 setup_print(&setup_handle(AdoptionRequest::Status)?);
                 continue;
             }
-            3 => return setup_begin_work(),
+            3 => {
+                setup_begin_work()?;
+                continue;
+            }
             4 => {
                 setup_credentials_terminal()?;
                 continue;
@@ -340,7 +343,7 @@ fn setup_interactive() -> Result<i32, SetupTerminalError> {
         }
     }
 }
-fn setup_begin_work() -> Result<i32, SetupTerminalError> {
+fn setup_begin_work() -> Result<(), SetupTerminalError> {
     let Some(choice) = setup_choose(
         "Begin useful work (no model call or microphone starts automatically)",
         &[
@@ -350,16 +353,38 @@ fn setup_begin_work() -> Result<i32, SetupTerminalError> {
         ],
     )?
     else {
-        return Ok(0);
+        return Ok(());
     };
-    let args: Vec<OsString> = match choice {
-        0 => vec!["central".into(), "projects".into()],
-        1 => vec!["aikit".into(), "ui".into()],
-        _ => return Ok(0),
+    let (command, verb) = match choice {
+        0 => ("central", "projects"),
+        1 => ("aikit", "ui"),
+        _ => return Ok(()),
     };
-    product_command_route(&args).ok_or(
-        "The selected native entry is unavailable; retain native work or repair its installation.",
-    )?.map_err(SetupTerminalError::from)
+    // The native entry runs as a child, never as an exec replacement: the
+    // setup terminal stays alive and returns to its menu afterwards.
+    let catalogue = oi_cli::product_command::product_command_catalogue()
+        .map_err(SetupTerminalError::from)?;
+    let Some(product) = catalogue.resolve(command) else {
+        println!("The selected native entry is unavailable; retain native work or repair its installation.");
+        return Ok(());
+    };
+    let args = vec![OsString::from(verb)];
+    match run_product_command(product, &args) {
+        Ok(0) => Ok(()),
+        Ok(code) => {
+            // The retained native owner ran and refused — for example an
+            // installed Central older than this surface. Its own words are
+            // already on the terminal; nothing is retried, and setup
+            // returns to its menu.
+            println!("The native entry ended with exit {code}. Nothing was retried; setup returns to its menu.");
+            Ok(())
+        }
+        Err(error) => {
+            eprintln!("{error}");
+            println!("The native owner refused this entry. Nothing was retried; setup returns to its menu.");
+            Ok(())
+        }
+    }
 }
 fn setup_terminal_value(
     schema: &oi_cli::configuration::ValueSchema,

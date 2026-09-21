@@ -186,27 +186,6 @@ export function executeFrameAction(state: LayoutState, ref: string, arg?: Action
     const width=clampTabListWidth(arg?.n);
     return width===undefined?state:{...state,tabListWidth:width};
   }
-  // The pin only pins or unpins the current orientation; orientation is its
-  // own control (frame.tabs-orient). Owner ruling 2026-09-17: one control,
-  // one meaning.
-  if(ref==="frame.tabs-pin") {
-    const groupId=arg?.groupId??state.focusedGroupId;
-    return groupId?mapGroupPane(state,groupId,(group)=>{
-      const unpinned=(group.tabPresentation??"pinned-horizontal")==="unpinned";
-      const orientation=group.tabPinOrientation??"horizontal";
-      return unpinned
-        ? {...group,tabPresentation:orientation==="vertical"?"pinned-vertical":undefined,tabPinOrientation:orientation}
-        : {...group,tabPresentation:"unpinned"};
-    }):state;
-  }
-  if(ref==="frame.tabs-orient") {
-    const groupId=arg?.groupId??state.focusedGroupId;
-    return groupId?mapGroupPane(state,groupId,(group)=>{
-      const next=(group.tabPinOrientation??"horizontal")==="horizontal"?"vertical":"horizontal";
-      const unpinned=(group.tabPresentation??"pinned-horizontal")==="unpinned";
-      return unpinned?{...group,tabPinOrientation:next}:{...group,tabPresentation:next==="vertical"?"pinned-vertical":undefined,tabPinOrientation:next};
-    }):state;
-  }
   // Focusing a tab no longer folds the bar: the unpinned reveal law (cradle.css)
   // is the one hiding law, so this is plain activation.
   if(ref==="surface.focus-tab") {const id=arg?.surfaceId??activeBindingId(state);return id?activateSurface(state,id):state;}

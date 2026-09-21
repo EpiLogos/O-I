@@ -169,7 +169,7 @@ export type KernelOp =
   | {op: "setup"; request: import("../configuration/adoptionController").AdoptionRequest}
   | {op:"being_encounter";request:Record<string,unknown>}
   | {op:"expression";request:import("../expression/types").ExpressionRequest}
-  | {op:"graph";project?:string;query:string}
+  | {op:"graph";project?:string;query:string;options?:import("../knowledge/graph").GraphReadOptions}
   /** One request to the O:I-owned SharedField client (kernel
    * `shared_field.rs`): `status` | `snapshot` | `read {ref}` | `publish
    * {args}` | …, carried verbatim; the hosting target and token are the
@@ -209,18 +209,40 @@ export type KernelOp =
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
   | { op: "agency_read"; project: string }
+  | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
+  /** Provision one fresh chat conversation (new-chat first Send): the kernel
+   * replays the owner's own SessionSpace CLI sequence and opens the result. */
+  | {op:"encounter_provision";project:string}
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
   | {op:"factory_build_snapshot";project?:string;state_path:string;project_ref:string;run_ref:string}
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
+  | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
+  | {op:"factory_attempt_task_read";state_path:string;run_ref:string;task_ref:string;limit?:number;cursor?:unknown}
   | {op:"workcell_status_read"}
+  | {op:"wiki_projection_read";root:string;path:string}
+  | {op:"wiki_projection_sources"}
+  | {op:"wiki_projection_update";root:string;path:string;expected_revision:string;evidence:string;actor:string;reason:string;body:string}
+  /** The installed harnesses' real status (`aikit --json client status`,
+   * kernel `agency.rs`): detected/installed/config-dir per harness. Pull
+   * read, machine-level. */
+  | {op:"harness_status"}
+  /** The resolved model catalogue (`aikit model-catalogue show --json`):
+   * the owner's entries verbatim. Pull read, machine-level. */
+  | {op:"model_catalogue"}
+  /** The desktop-held default provider for NEW chats (kernel
+   * `chat_defaults.rs`, `oi:cradle:chat.default-provider`): a desired-entry
+   * shaped document when held, null when the owner's rows decide. */
+  | {op:"chat_default_read"}
+  | {op:"chat_default_hold";provider:string}
+  | {op:"chat_default_discard"}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
-  | { op: "knowledge"; project?: string; request: KnowledgeRequest }
+  | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
   | { op: "state" }
   | { op: "world_read" }
   | { op: "world_browse"; fresh?: boolean }
@@ -280,12 +302,24 @@ export type KernelOpResult =
   | { result: "config_receipts"; document: unknown }
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
+  | { result:"encounter_provisioned";data:unknown }
+  | { result: "agent_definition_reading"; data: unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
   | { result:"factory_development_reading";data:unknown }
   | { result:"factory_attempt_reading";data:unknown }
+  | { result:"factory_attempt_task_list_reading";data:unknown }
+  | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
+  | { result:"wiki_projection_reading";data:unknown }
+  | { result:"wiki_projection_stored";data:unknown }
+  | { result:"wiki_projection_sources_reading";data:unknown }
+  | { result:"harness_status_reading";data:unknown }
+  | { result:"model_catalogue_reading";data:unknown }
+  | { result:"chat_default_reading";document:unknown }
+  | { result:"chat_default_held";document:unknown }
+  | { result:"chat_default_discarded";document:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
@@ -402,6 +436,6 @@ export type ActionDispatch =
 
 export interface KnowledgeAddress { kind: "wiki" | "source" | "project-map"; value: string }
 export type KnowledgeRequest = {action:"resolve";query:string} | { action: "search"; query: string } | { action: "history" } | { action: "read" | "relations" | "explain" | "use"; address: KnowledgeAddress };
-export interface KnowledgeReading { resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
+export interface KnowledgeReading { document?: unknown; resource: string; provider: string; revision?: string; authority: string; content?: string; evidence: string[]; why_selected: string }
 export interface KnowledgeHit { address: KnowledgeAddress; resource: string; label: string; kind: string; snippet: string; provider: string; authority: string }
-export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string}[]; edges: {from: string; to: string; relation: string}[]; truncated: boolean; warnings: string[] }
+export interface KnowledgeRelations { nodes: {resource: string; label: string; kind: string; address?: KnowledgeAddress}[]; edges: {from: string; to: string; relation: string;reference?:string;authored_relation?:import('../knowledge/wikiDocument').WikiEvidence;origin?:string|{provider?:string;revision?:string;authority?:string}}[]; truncated: boolean; warnings: string[] }

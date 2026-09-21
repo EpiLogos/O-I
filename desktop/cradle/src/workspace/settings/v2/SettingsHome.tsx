@@ -32,6 +32,7 @@ import {Loading} from "../../../shared/Loading";
 import {SettingControl} from "../../../configuration/SettingControl";
 import {PlanDrawer} from "../../../configuration/PlanDrawer";
 import {ProfilesView} from "../../../configuration/ProfilesView";
+import {ChatHarnessPanel} from "../../../configuration/ChatHarnessPanel";
 import {NativeAxesDisplay, formatValue} from "./axisDisplay";
 import {GroundChooser} from "../../GroundChooser";
 import type {CompositionReading} from "../types";
@@ -58,9 +59,9 @@ interface SettingEntry {
   setting: SettingSpec;
 }
 
-type Panel = {kind: "all"} | {kind: "owner"; ownerRef: string} | {kind: "ground"} | {kind: "profiles"};
+type Panel = {kind: "all"} | {kind: "owner"; ownerRef: string} | {kind: "ground"} | {kind: "profiles"} | {kind: "chat"};
 
-export function SettingsHome({census}: {census?: CompositionReading}) {
+export function SettingsHome({census,target}: {census?: CompositionReading;target?: {owner:string;topic:string;settingRef?:string}}) {
   const [source, setSource] = useState<ConfigPlaneSource | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [mounts, setMounts] = useState<ContributionMount[] | null>(null);
@@ -69,6 +70,12 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
   const [scopeChoices, setScopeChoices] = useState<Record<string, ScopeChoice>>({});
   const [panel, setPanel] = useState<Panel>({kind: "all"});
   const [query, setQuery] = useState("");
+  useEffect(()=>{
+    if(!target)return;
+    setPanel({kind:"owner",ownerRef:target.owner});
+    // Filter actual owner disclosures. No setting or credential is fabricated.
+    setQuery(`@owner:${target.owner}${target.settingRef?` ${target.settingRef}`:target.topic==="credentials"?" @secret":""}`);
+  },[target]);
   const [drawer, setDrawer] = useState<ChangeRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);
@@ -252,6 +259,9 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
             {state !== "available" && <span className={`settings-toc-state is-${state}`}>{availabilityWord(state)}</span>}
           </button>;
         })}
+        <button type="button" aria-pressed={panel.kind === "chat"} onClick={() => setPanel({kind: "chat"})}>
+          <span>Chat &amp; harnesses</span>
+        </button>
         <button type="button" aria-pressed={panel.kind === "ground"} onClick={() => setPanel({kind: "ground"})}>
           <span>Ground & suite</span>
         </button>
@@ -282,7 +292,9 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
 
         {panel.kind === "profiles"
           ? <ProfilesView/>
-          : panel.kind === "ground"
+          : panel.kind === "chat"
+            ? <ChatHarnessPanel/>
+            : panel.kind === "ground"
             ? <div className="settings-groundpanel">
                 <GroundChooser/>
                 <SuitePins census={census}/>
@@ -342,7 +354,7 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
     {source.kind === "fixture" && <FixtureConsole onMutate={() => void refresh(source)}/>}
     <DevView mounts={mounts}/>
 
-    {pendingRequests.length > 0 && !drawerOpen && panel.kind !== "profiles" && (
+    {pendingRequests.length > 0 && !drawerOpen && panel.kind !== "profiles" && panel.kind !== "chat" && (
       <div className="settings-tray" role="region" aria-label="Pending changes" data-settings-tray>
         <span>
           <strong>{pendingRequests.length}</strong> change{pendingRequests.length === 1 ? "" : "s"} waiting

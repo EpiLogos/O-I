@@ -1,0 +1,116 @@
+{
+  "schema": "oi.legacy-collections/v1",
+  "exported_at": "2026-09-21T00:31:41.231Z",
+  "source": "Bimba — P · Position: the live coordinate lattice of the Epi-Logos graph (the Bimba Atlas navigation ground)",
+  "provenance": {
+    "schema": "oi.collection-provenance/v1",
+    "register": "project",
+    "root": "Work/O-I",
+    "paths": [
+      "Work/O-I/desktop/cradle/expressions-app/collections/bimba"
+    ],
+    "ground": "live Bimba graph: Neo4j 5.26 Community at bolt://100.92.62.101:7687 (HTTP http://100.92.62.101:7474, auth disabled) on the oi-omarchy docker host, served through Work/epi/bimba-portable (stateless MCP 2026-07-28); 2141 :Bimba nodes at capture",
+    "exported_at": "2026-09-21T00:31:41.231Z",
+    "generator": {
+      "name": "collections/bimba/tools/bimba-snapshot.mjs — read-only Cypher over the Neo4j HTTP transactional endpoint; no graph writes; bimba-portable read conventions (bimba:read only)",
+      "revision": "bimba-snapshot-2026-09-21"
+    },
+    "slice_rule": "every :Bimba node whose coordinate contains neither '-' nor '.' — the complete top-level coordinate lattice: six QL families C/P/L/S/T/M (Category, Position, Lens, Subsystem, Stack, Thought), each with its root, prime, positions 0-5 and position primes, plus the # ground row, the CF/CFP/CP/CPF/CT/CS composite roots, the CF_* forms, the Family_* descriptors and the four Weave_* crossings; deep branch coordinates (e.g. M2-5-9) are outside the slice. This manifest carries the group: P · Position",
+    "exclusions": "embedding vector properties (embedding, c_5_embedding) excluded as model-derived and regenerable; embedding metadata (model, dimensions, task type, generated_at) retained",
+    "member_count": 14,
+    "lattice_member_count": 112,
+    "manifest_count": 7,
+    "graph_node_count": 2141,
+    "captured_at": "2026-09-21T00:31:41.231Z",
+    "graph_content_sha256": "12177a8ab7e444d40b9ca980a8376ff85b9494bd3651796b7695d5d1e1190c51",
+    "graph_content_hash_basis": "sha256 over the canonical JSON (sorted keys, no whitespace) of the ordered lattice slice [{coordinate, uuid, labels, properties}] with vector properties excluded — recomputable from the live graph and from the committed member documents, so drift is checkable with --verify",
+    "regeneration": "node collections/bimba/tools/bimba-snapshot.mjs (capture) or --verify (drift check) under collections/bimba/tools, env BIMBA_HTTP",
+    "atlas_disposition": "the travelling-jigsaw Atlas surface is already carried by its committed corpus journey (roz-mytheme-travelling-jigsaw-atlas, return-of-zero mytheme family); the Bimba Atlas navigation ground itself is what this collection binds, as exact-source lattice snapshots"
+  },
+  "featured": [
+    {
+      "id": "P",
+      "name": "P — P Position Family",
+      "file": "coordinates/p/P.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P-prime",
+      "name": "P' — P' Night Inversion",
+      "file": "coordinates/p/P-prime.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P0",
+      "name": "P0 — Ground",
+      "file": "coordinates/p/P0.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P0-prime",
+      "name": "P0' — Ground'",
+      "file": "coordinates/p/P0-prime.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P1",
+      "name": "P1 — Definition",
+      "file": "coordinates/p/P1.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P1-prime",
+      "name": "P1' — Definition'",
+      "file": "coordinates/p/P1-prime.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P2",
+      "name": "P2 — Operation",
+      "file": "coordinates/p/P2.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P2-prime",
+      "name": "P2' — Operation'",
+      "file": "coordinates/p/P2-prime.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P3",
+      "name": "P3 — Pattern",
+      "file": "coordinates/p/P3.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P3-prime",
+      "name": "P3' — Pattern'",
+      "file": "coordinates/p/P3-prime.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P4",
+      "name": "P4 — Context",
+      "file": "coordinates/p/P4.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P4-prime",
+      "name": "P4' — Context'",
+      "file": "coordinates/p/P4-prime.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P5",
+      "name": "P5 — Integration",
+      "file": "coordinates/p/P5.journey.json",
+      "group": "P · Position"
+    },
+    {
+      "id": "P5-prime",
+      "name": "P5' — Integration'",
+      "file": "coordinates/p/P5-prime.journey.json",
+      "group": "P · Position"
+    }
+  ]
+}

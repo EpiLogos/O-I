@@ -3,6 +3,8 @@
 **Standing:** owner-directed UX companion to `docs/EXPRESSION-WORLD-SUBSTRATE-WAYFINDER.md`, 15 September 2026.  
 **Purpose:** specify the ordinary human/Agent experience of the paradigm-neutral substrate before Epi/Ta-Onta specialises it.
 
+**20 September constructive-practice extension:** [Wiki/constellation decisions](../positions/WIKI-CONSTELLATION-PRACTICE.md), [human/agent UX spine](WIKI-CONSTELLATION-UX.md) and [joined Wayfinder](../../.wayfinder/maps/wiki-constellation-development.md) make the creation-and-return loop explicit. The source field is usable without QL; editable constellations, real 3D Expression making and native QL-relation/artifact Return add creative organisation. This extends the front/verso identity below, not a second Wiki or renderer.
+
 ## 1. The Expression is where the person is
 
 At rest the Expression is the world currently being encountered.
@@ -127,3 +129,17 @@ When the Epi paradigm is installed, the same front/verso/portal world becomes th
 **Source-safe:** editing presentation does not silently edit source.
 
 **Portable:** live and fallback forms carry the same identity/provenance without claiming that capture is live state.
+
+## 9. From connected writing to constructive constellations and back
+
+The Wiki's ordinary Markdown links, backlinks, tags and exact passages are first-class material for Expression work. The reader is not just a verso label beside an impressive image: its links and selected passages co-refer to the graph, the current construction and the agent's structured operations.
+
+The person can select material and build a constellation, or choose a QL frame and bring material into it. A frame is not proof that the source has that organisation. Contextual roles, evidence and provisional interpretation remain inspectable while construction is fluid. A source can be reused in several constellations; membership is not a permanent classification of the document.
+
+Technè is the deep operating mode of the same Expression system. Selectable glyphs, text, images, 3D layout, lines and particle relations, writing overlays, physical material and real Scenes are the intended making tools. M0′ makes the connected source field available and can initiate a constellation; M1′ deepens construction; M2′–M5′ investigate, compose, situate and articulate it. Switching lenses preserves the same native work.
+
+The QL-shaped agent staging space is the shared editable construction, not another corpus or hidden chat model. The actual agent receives exact permitted sources, question/frame and current working revision. Human edits change that basis. Stale proposals cannot overwrite them; reversible acts can proceed within granted scope using the same public operations as human acts.
+
+A deliberate typed relation tool can author a native QL relationship. Ordinary proximity or particle motion cannot. Saved constellations/relations, Expressions and new artifacts return through existing owners to Wiki/Library discovery. The Return preserves whole/member structure, derivation and partial-save truth. Palace composes actual Expressions, constellations and Scenes rather than a second Scene ontology.
+
+Kernel resource retention and existing workspace continuity keep this encounter warm across source/graph/Expression movement and restart. The first acceptance loop is actual linked writing → constructive constellation → Expression/Scenes/Palace → native relationship/artifact Return → Wiki rediscovery → source-change reconciliation. [WCT01–WCT18](../../.wayfinder/maps/wiki-constellation-development.md#7-verification-cases) and the existing campaign source module make its failure branches explicit.

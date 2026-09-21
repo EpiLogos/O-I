@@ -1,4 +1,5 @@
 import {PreparedContextView} from "../../context/PreparedContextView";
+import {WikiProjectionSection} from "../../context/WikiProjection";
 import {useMemo,useState,type ReactNode} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
 import {Glyph} from "../../workspace/Glyph";
@@ -41,6 +42,7 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
 }) {
   return <div className="agent-context agent-plane oi-sidecar oi-scroll" data-plane="Context">
     <PreparedContextView project={accompanying?.project??subject.project} session={accompanying?.ref} onOpenSubject={onOpenSubject}/>
+    <WikiProjectionSection/>
     <details className="oi-disclosure"><summary>Current source</summary><SubjectContext key={subject.ref ?? "none"} subject={subject} history={history} historyAvailable={historyAvailable} onOpenSubject={onOpenSubject}/></details>
     {session
       ? <SessionContext key={session.state.key} session={session}/>
@@ -49,9 +51,8 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
       <summary>Session bounds &amp; return</summary>
       <dl className="oi-kv">
         <dt>Working ground</dt><dd>{accompanying.project}</dd>
-        <dt>Source changes</dt><dd>Human acceptance</dd>
-        <dt>Permission authority</dt><dd>Native provider consent</dd>
       </dl>
+      <p className="oi-note">Standing policy, not a receipt for this subject or this operation: source changes require human acceptance, and permission authority follows native provider consent.</p>
     </details>}
   </div>;
 }
@@ -62,7 +63,9 @@ export function ContextPlane({subject,history,historyAvailable,accompanying,sess
 function SubjectContext({subject,history,historyAvailable,onOpenSubject}:{subject:AgentSubject;history?:ReactNode;historyAvailable:boolean;onOpenSubject?:(subject:AgentSubject)=>void}) {
   const [historyOpen,setHistoryOpen]=useState(false);
   const glyph = KIND_GLYPH[subject.kind ?? ""] ?? "file";
-  const owner = KIND_OWNER[subject.kind ?? ""] ?? "Central";
+  // Only an owner the kind actually maps to; an unknown kind is not silently
+  // attributed to Central (F06).
+  const owner = KIND_OWNER[subject.kind ?? ""];
   return <div className="agent-subject-context" data-subject-ref={subject.ref}>
     <p className="agent-eyebrow oi-eyebrow">Current subject · Follows selection</p>
     {subject.ref ? <>
@@ -75,8 +78,8 @@ function SubjectContext({subject,history,historyAvailable,onOpenSubject}:{subjec
         <dt>Project</dt><dd>{subject.project ?? "Not attached to a project"}</dd>
         <dt>Source ref</dt><dd className="oi-ref">{subject.ref}</dd>
         <dt>Revision</dt><dd>{subject.revision ? subject.revision.slice(0, 10) : "Unknown"}</dd>
-        <dt>State</dt><dd>{subject.dirty ? "Unsaved changes" : subject.revision ? "Saved" : "Unknown"}</dd>
-        <dt>Owner</dt><dd>{owner}</dd>
+        <dt>State</dt><dd>{subject.dirty === undefined ? "Unknown" : subject.dirty ? "Unsaved changes" : "Saved"}</dd>
+        <dt>Owner</dt><dd>{owner ?? "Unknown"}</dd>
       </dl>
       {historyAvailable
         ? <details className="agent-section oi-disclosure" onToggle={event=>setHistoryOpen((event.currentTarget as HTMLDetailsElement).open)}><summary>History</summary>{historyOpen&&history}</details>
@@ -120,6 +123,14 @@ function SessionContext({session}:{session:EncounterSessionHandle}) {
       {!sent.length&&!carriedPackets.length&&!task&&!state.reading?.prepared_context_receipts?.length&&<p className="oi-note" data-state="nothing-carried">No recorded context delivery on this page.</p>}
       <p className="oi-eyebrow">NOW records this session names</p>
       <NowRecords nowRefs={nowRefsOf(state)} taskBasisWithoutNow={taskBasisWithoutNow(state)}/>
+    </details>
+    <details className="agent-section oi-disclosure" data-context="pinned">
+      <summary>Pinned</summary>
+      {/* Capability-derived from the bound conversation's disclosed actions, not
+          a universal product law about pinning. */}
+      {actions.allowed("pin")
+        ? <p className="oi-note" data-fact="pinned-context-available">This conversation discloses a pin capability.</p>
+        : <p className="oi-note" data-fact="pinned-context-absent">This conversation does not offer pinning context to the session.</p>}
     </details>
     <details className="agent-section oi-disclosure" data-context="operative">
       <summary>Effective context</summary>
