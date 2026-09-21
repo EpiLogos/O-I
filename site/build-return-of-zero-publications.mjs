@@ -120,7 +120,7 @@ const memberIds = new Set(members.map((m) => m.id));
 if (memberIds.size !== members.length) throw new Error('Duplicate member ids across manifests; the edition would collide on output files.');
 const expectedMembers = envelope.manifests.reduce((total, manifest) => total + manifest.members, 0);
 if (members.length !== expectedMembers) throw new Error(`Expected ${expectedMembers} envelope members, found ${members.length}.`);
-if (members.length !== 9 && !envelope.candidate) throw new Error(`Expected the nine published members, found ${members.length}.`);
+if (members.length !== 92 && !envelope.candidate) throw new Error(`Expected the 92 published members (full committed corpus, published 2026-09-21 per owner stipulation), found ${members.length}.`);
 
 // ---------------------------------------------------------------------------
 // 3. Reading bodies: the pinned section-room prose; the essay member carries
@@ -302,7 +302,7 @@ const collectionBinding = {
     title: envelope.title,
     text: envelope.candidate
       ? `The Return-of-Zero public edition candidate: ${members.length} committed native members, each readable at full disclosed length with its derived Expression. Grounded in the sha-verified essay sources at ${sourceCommit} and the pinned Point-Cloud-Demo production corpus; the owner remains the recognition authority, and nothing is published until the owner approves on O:I #417.`
-      : `The deliberately published Return-of-Zero collection: the sovereign reading path and its eight section rooms, each with its published Expression. Grounded in the sha-verified essay sources at ${sourceCommit}; the owner remains the recognition authority for anything beyond these surfaces.`,
+      : `The deliberately published Return-of-Zero collection: the full committed corpus — 92 native members across the corpus, essay, rooms and legacy manifests — each readable at full disclosed length with its derived Expression. Grounded in the sha-verified essay sources at ${sourceCommit} and the pinned Point-Cloud-Demo production corpus; the owner remains the recognition authority for anything beyond these surfaces.`,
     refs: worldEntries.map((entry) => entry.ref),
   },
   fallback: { title: envelope.title },
@@ -356,7 +356,7 @@ const receipt = {
   standing: 'produced-from-pinned-native-sources',
   owner_authority: envelope.candidate
     ? 'Owner commission 2026-09-20/21 (O:I #417): assemble the full committed Return-of-Zero corpus as a publication-tuple candidate; the producer runs as a local dry-run only and nothing is published or deployed until the owner approves on #417.'
-    : 'Owner commission on 2026-09-20: publish the delivered Return-of-Zero collection through the site receiver; publisher identity is the envelope-declared frank-sovereign ownership.',
+    : 'Owner stipulation 2026-09-21 (recorded on the O:I #65/#417 thread): the full committed Return-of-Zero corpus is deliberately published — no per-family approval gates; the publisher identity is the envelope-declared frank-sovereign ownership and the owner remains the recognition authority for anything beyond these surfaces.',
   deterministic: { published_at: publishedAt, source_commit: sourceCommit },
   reconciliation,
   corpus: corpusReceipt,
