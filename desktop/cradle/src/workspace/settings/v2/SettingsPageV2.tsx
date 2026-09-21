@@ -1,3 +1,5 @@
+import {AgentSetupReturn} from "../../../agency/AgentSetupReturn";
+import {AGENT_SETUP_EVENT,agentSetupSnapshot} from "../../../agency/agentSetup";
 /**
  * The settings page (docs/cradle/06-SYSTEM-SETTINGS.md, redesigned): one
  * canvas, three surfaces, in order of what a person comes here for.
@@ -43,6 +45,8 @@ export function SettingsPageV2() {
   const kernel = useKernel();
   const {transport} = kernel;
   const [view,setView] = useState<SettingsView>("settings");
+  const [agentTarget,setAgentTarget]=useState(agentSetupSnapshot()?.destination);
+  useEffect(()=>{const target=()=>{setAgentTarget(agentSetupSnapshot()?.destination);setView("settings");};window.addEventListener(AGENT_SETUP_EVENT,target);return()=>window.removeEventListener(AGENT_SETUP_EVENT,target);},[]);
   const [reading,setReading] = useState<CompositionReading>();
   const [pending,setPending] = useState(false);
   const [error,setError] = useState<string>();
@@ -106,12 +110,13 @@ export function SettingsPageV2() {
   return <section className="system-panel" aria-label="Settings and system" aria-busy={pending}>
     <div className="settings-workspace-toolbar">
     <button type="button" className="settings-return" onClick={() => window.dispatchEvent(new Event("oi:close-settings"))}><Glyph name="back" size={14}/><span>Back to work</span></button>
+    <AgentSetupReturn/>
     <nav className="settings-rail" aria-label="Settings surfaces">
       {RAIL.map(item=><button key={item.id} aria-pressed={view===item.id} title={item.hint} onClick={()=>setView(item.id)}>{item.label}</button>)}
     </nav>
     </div>
     <div className="settings-page-head"><h2>{head.label}</h2></div>
-    {view==="settings"&&<SettingsHome census={reading}/>}
+    {view==="settings"&&<SettingsHome census={reading} target={agentTarget}/>}
     {view==="system"&&<SystemHome
       reading={reading}
       nativeMounts={nativeMounts}

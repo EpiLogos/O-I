@@ -61,7 +61,7 @@ interface SettingEntry {
 
 type Panel = {kind: "all"} | {kind: "owner"; ownerRef: string} | {kind: "ground"} | {kind: "profiles"} | {kind: "chat"};
 
-export function SettingsHome({census}: {census?: CompositionReading}) {
+export function SettingsHome({census,target}: {census?: CompositionReading;target?: {owner:string;topic:string;settingRef?:string}}) {
   const [source, setSource] = useState<ConfigPlaneSource | null>(null);
   const [sourceError, setSourceError] = useState<string | null>(null);
   const [mounts, setMounts] = useState<ContributionMount[] | null>(null);
@@ -70,6 +70,12 @@ export function SettingsHome({census}: {census?: CompositionReading}) {
   const [scopeChoices, setScopeChoices] = useState<Record<string, ScopeChoice>>({});
   const [panel, setPanel] = useState<Panel>({kind: "all"});
   const [query, setQuery] = useState("");
+  useEffect(()=>{
+    if(!target)return;
+    setPanel({kind:"owner",ownerRef:target.owner});
+    // Filter actual owner disclosures. No setting or credential is fabricated.
+    setQuery(`@owner:${target.owner}${target.settingRef?` ${target.settingRef}`:target.topic==="credentials"?" @secret":""}`);
+  },[target]);
   const [drawer, setDrawer] = useState<ChangeRequest[] | null>(null);
   const [error, setError] = useState<string | null>(null);
   const [refreshing, setRefreshing] = useState(false);

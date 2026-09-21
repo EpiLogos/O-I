@@ -1,0 +1,96 @@
+name: Agent session native
+on:
+  push:
+    branches: [agent/native-agent-session-20260920]
+  pull_request:
+    paths: ['desktop/cradle/src/agency/**', 'desktop/cradle/src/encounter/**', 'desktop/cradle/src/agent/**', 'desktop/cradle/kernel/**', 'desktop/cradle/tests/agent-native-*', '.github/workflows/agent-session-native.yml']
+permissions:
+  contents: read
+jobs:
+  native-consumers:
+    runs-on: ubuntu-latest
+    timeout-minutes: 25
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - uses: dtolnay/rust-toolchain@stable
+      - name: Install formatter and lint
+        working-directory: desktop/cradle/kernel
+        run: rustup component add rustfmt clippy
+      - name: Retain exact source
+        shell: bash
+        run: |
+          mkdir -p desktop/cradle/tests/agent-native-results
+          git rev-parse HEAD > desktop/cradle/tests/agent-native-results/source-revision.txt
+          git diff > desktop/cradle/tests/agent-native-results/uncommitted.patch
+          git archive --format=tar.gz HEAD desktop/cradle/src/agency desktop/cradle/src/encounter desktop/cradle/tests docs/experience/SESSION-GROUNDING.md > desktop/cradle/tests/agent-native-results/selected-source.tar.gz
+      - name: Locked desktop dependencies
+        working-directory: desktop/cradle
+        run: npm ci
+      - name: Production controller regressions
+        id: controller
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle
+        run: node --experimental-strip-types --test tests/agent-native-model.test.mjs tests/agent-native-creation.test.mjs tests/agent-native-delivery.test.mjs tests/agent-native-readiness.test.mjs 2>&1 | tee tests/agent-native-results/controllers.log
+      - name: Local acceptance packet safety (no real models)
+        id: packet
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle
+        run: |
+          python3 tests/agent-native-live.test.py 2>&1 | tee tests/agent-native-results/packet.log
+          python3 tests/agent-native-local.test.py 2>&1 | tee tests/agent-native-results/creation-packet.log
+          python3 tests/agent-native-live.py --help
+          python3 tests/agent-native-local.py --help
+      - name: Browser runtime
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium
+      - name: Actual composer and native creation controls in Chromium
+        id: browser
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle
+        run: |
+          node tests/agent-native-browser.mjs 2>&1 | tee tests/agent-native-results/model-browser.log
+          node tests/agent-native-creation-browser.mjs 2>&1 | tee tests/agent-native-results/creation-browser.log
+      - name: Full desktop production build
+        id: build
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle
+        run: npm run build 2>&1 | tee tests/agent-native-results/build.log
+      - name: Focused production kernel gates
+        id: kernel
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle/kernel
+        run: cargo test --locked --test agent_native_gate --test agent_definition_gate 2>&1 | tee ../tests/agent-native-results/kernel.log
+      - name: Full kernel regressions
+        id: allkernel
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle/kernel
+        run: cargo test --locked --all-targets --no-fail-fast 2>&1 | tee ../tests/agent-native-results/kernel-all.log
+      - name: Strict kernel lint
+        id: lint
+        continue-on-error: true
+        shell: bash
+        working-directory: desktop/cradle/kernel
+        run: cargo clippy --all-targets --locked -- -D warnings 2>&1 | tee ../tests/agent-native-results/kernel-clippy.log
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: agent-creation-source-and-evidence
+          path: desktop/cradle/tests/agent-native-results/
+          retention-days: 7
+      - name: Preserve failed or unexecuted gates
+        if: always()
+        env:
+          OUTCOMES: ${{ steps.controller.outcome }},${{ steps.packet.outcome }},${{ steps.browser.outcome }},${{ steps.build.outcome }},${{ steps.kernel.outcome }},${{ steps.allkernel.outcome }},${{ steps.lint.outcome }}
+        run: test "$OUTCOMES" = 'success,success,success,success,success,success,success'

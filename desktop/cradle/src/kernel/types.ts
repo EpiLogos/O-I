@@ -209,6 +209,7 @@ export type KernelOp =
   | { op: "file_read"; location: CentralLocation }
   | { op: "file_bytes"; location: CentralLocation }
   | { op: "agency_read"; project: string }
+  | { op: "agent_definition"; project: string | null; request: import("../agency/nativeAgent").AgentRequest }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
   /** Provision one fresh chat conversation (new-chat first Send): the kernel
@@ -299,6 +300,7 @@ export type KernelOpResult =
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
   | { result:"encounter_provisioned";data:unknown }
+  | { result: "agent_definition_reading"; data: unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }

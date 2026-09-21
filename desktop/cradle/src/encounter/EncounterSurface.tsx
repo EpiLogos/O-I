@@ -24,6 +24,6 @@ export function EncounterSurface({binding,onView,presentation="tab",onExpression
   taskBasisWithoutNow={taskBasisWithoutNow(state)}
   resume={state.resume} onReconnect={provider=>void actions.reconnect(provider)}
   a2a={state.a2a} onA2aSeed={actions.seedA2a} onA2aSend={(seed,fields)=>void actions.sendA2a(seed,fields)}
-  addressed={<AddressedComposer disabled={state.status?.state==="Disconnected"} dispatch={state.dispatch} history={state.deliveries} service={state.service} agentSession={binding.ref??undefined} task={state.task??undefined} group={state.group} onGroupSend={(sender,recipients,packet)=>void actions.sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void actions.sendAddressed(turn,fields)}/>}
+  addressed={<AddressedComposer onReconcile={()=>void actions.reconcileAddressed()} disabled={state.status?.state==="Disconnected"} dispatch={state.dispatch} history={state.deliveries} service={state.service} agentSession={binding.ref??undefined} task={state.task??undefined} group={state.group} onGroupSend={(sender,recipients,packet)=>void actions.sendGroup(sender,recipients,packet)} onSend={(turn,fields)=>void actions.sendAddressed(turn,fields)}/>}
  />{state.draftFailed&&!concealed&&<button className="encounter-recover oi-action" onClick={()=>void actions.recover()}>Apply my typing to the current shared draft</button>}{state.reconnected&&!concealed&&<p className="encounter-reconnected" role="status">Reconnected to the recorded native session <code>{state.reconnected}</code> — nothing was replaced or silently created.</p>}</>;
 }
