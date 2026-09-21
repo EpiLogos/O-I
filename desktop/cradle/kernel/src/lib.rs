@@ -323,6 +323,22 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
+    /// The Agent Wiki operational projection behind one source
+    /// (`aikit --json wiki projection read --file <path>`): the current body,
+    /// its exact SHA-256 revision and the attributed feedback ledger. AIKit
+    /// owns the source grammar and eligibility; the desktop only discloses
+    /// the reading and never edits the file itself.
+    WikiProjectionRead { root: ::std::path::PathBuf, path: String },
+    /// The composed projection selection (`aikit --json context current` →
+    /// the continuity tuning): which sources the active composition named,
+    /// and which composition selected them. Read-only disclosure of the
+    /// composition's own declaration.
+    WikiProjectionSources,
+    /// A scoped, revision-checked correction through the owner's own tool
+    /// (`aikit --json wiki projection update …` with the replacement body on
+    /// stdin). The expected revision, evidence, actor and reason are the
+    /// caller's attribution; a stale basis is refused by AIKit, not by here.
+    WikiProjectionUpdate { root: ::std::path::PathBuf, path: String, expected_revision: String, evidence: String, actor: String, reason: String, body: String },
     /// The installed harnesses' real status (`aikit --json client status`
     /// through the suite route): which harnesses are detected on this
     /// machine, which carry AIKit, their config dirs and gaps. Pull read,
@@ -513,6 +529,9 @@ pub enum KernelOpResult {
     FactoryAttemptTaskListReading {data:serde_json::Value},
     FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
+    WikiProjectionReading {data:serde_json::Value},
+    WikiProjectionStored {data:serde_json::Value},
+    WikiProjectionSourcesReading {data:serde_json::Value},
     /// The harness status rows, verbatim from the owner's `client status`.
     HarnessStatusReading {data:serde_json::Value},
     /// The resolved model catalogue, verbatim from the owner.
@@ -751,6 +770,27 @@ impl Kernel {
                 args.extend(["status".into(),"--json".into()]);
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"workcell status read failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WorkcellStatusReading{data}})
+            }
+            KernelOp::WikiProjectionRead {root,path} => {
+                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
+                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"-C".into(),root.as_os_str().to_string_lossy().into_owned().into(),"wiki".into(),"projection".into(),"read".into(),"--file".into(),path.into()];
+                let data=material::invoke(&aikit,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection read failed".into()))?;
+                if data.get("state").and_then(serde_json::Value::as_str).is_none()||data.get("projection").is_none(){return Err("AIKit returned an incompatible wiki projection reading".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionReading{data}})
+            }
+            KernelOp::WikiProjectionUpdate {root,path,expected_revision,evidence,actor,reason,body} => {
+                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
+                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"-C".into(),root.as_os_str().to_string_lossy().into_owned().into(),"wiki".into(),"projection".into(),"update".into(),"--file".into(),path.into(),"--expected-revision".into(),expected_revision.into(),"--evidence".into(),evidence.into(),"--actor".into(),actor.into(),"--reason".into(),reason.into()];
+                let data=material::invoke(&aikit,&args,Some(body.into_bytes())).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection update failed".into()))?;
+                if data.get("projection").is_none(){return Err("AIKit returned an incompatible wiki projection receipt".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionStored{data}})
+            }
+            KernelOp::WikiProjectionSources => {
+                let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
+                let args:Vec<std::ffi::OsString>=vec!["--json".into(),"context".into(),"current".into()];
+                let data=material::invoke(&aikit,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection sources read failed".into()))?;
+                if data.get("continuity").is_none(){return Err("AIKit returned a context reading without continuity".into());}
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionSourcesReading{data}})
             }
             KernelOp::HarnessStatus => {
                 // Machine-level read: no project disclosure is consulted —
