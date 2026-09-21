@@ -259,7 +259,16 @@ function transportRef(response) {
 }
 
 /**
- * Source-faithful A2A HTTP+JSON v1 exchange. Runtime auth is passed only as request headers;
+ * Source-faithful A2A HTTP+JSON v1 exchange.
+ *
+ * OWNERSHIP: the A2A v1 protocol contracts are owned by ai-kit
+ * (`crates/aikit-core/src/a2a.rs` since 2026-09-21 — ai-kit owns the
+ * interagent relations this protocol projects). This module is the
+ * desktop floor's JavaScript MIRROR of those contracts for the
+ * HTTP+JSON external-peer binding; keep it in sync when the owner
+ * moves. Transport bindings: HTTP+JSON here; session-space spool
+ * delivery in ai-kit (encounter agency preflight enforces authority at
+ * both ends). Runtime auth is passed only as request headers;
  * credentials never enter the hosted binding contract or returned SharedField difference.
  */
 export async function performA2aExchange({
