@@ -820,11 +820,31 @@ impl adoption::Runtime for AdoptionRuntime {
                     composition_read_bytes(&oi_cli::desktop_install::removed_receipt_path(&root))?
                         .ok_or("Removal receipt is absent")?;
                 let reading: Value = serde_json::from_slice(&bytes).map_err(|e| e.to_string())?;
-                if reading["residuals"]
-                    .as_array()
-                    .is_some_and(|r| !r.is_empty())
+                // Receipts written before the disclosures split kept purely
+                // informational notes (already-absent entries, authorized
+                // replaced-foreign notes, shared unowned parents) inside
+                // `residuals`; their deletions either aborted the whole
+                // operation or happened. For those the filesystem check
+                // below is the truth. New receipts carry disclosures
+                // separately, so residuals there mean real remaining
+                // owned artifacts.
+                let legacy_informational_receipt = reading.get("disclosures").is_none();
+                if !legacy_informational_receipt
+                    && reading["residuals"]
+                        .as_array()
+                        .is_some_and(|r| !r.is_empty())
                 {
                     return Err("Desktop removal has residuals".into());
+                }
+                for resource in reading["removed"].as_array().map(Vec::as_slice).unwrap_or(&[]) {
+                    let Some(path) = resource["path"].as_str() else { continue };
+                    if (!legacy_informational_receipt || resource["outcome"] == "removed")
+                        && std::path::Path::new(path).exists()
+                    {
+                        return Err(format!(
+                            "Desktop removal left an owned artifact behind: {path}"
+                        ));
+                    }
                 }
                 Ok(reading)
             }
