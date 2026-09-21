@@ -9,6 +9,7 @@ import {LOCATION_DRAG_TYPE,SURFACE_DRAG_TYPE} from "../../files/drag";
 import {AgentIdentity,useAgentIdentity,type AgentIdentityReading} from "./AgentIdentity";
 import {ChatTranscript} from "./ChatTranscript";
 import {ChatComposer} from "./ChatComposer";
+import {chatProvisionTarget} from "./firstSend";
 import {appendBlock,contextBlockForLocation,contextBlockForOsFile,contextBlockForSurface,type ContextBlock} from "./attach";
 import {CHAT_PREVIEW_EVENT} from "./previewGate";
 import "./chat.css";
@@ -26,12 +27,15 @@ import "./chat.css";
  *
  * The panel shell is independent of a loaded conversation: with nothing bound
  * this is a genuine new-conversation state — identity, a restrained welcome,
- * contextual starting suggestions and the FULL composer. The draft is held
- * locally and survives mode changes; the first Send routes through the
- * existing native start/read pair (choose a conversation, draft applied, then
- * sent) and is never lost if the choice is refused. Nothing is invented: a
- * new agent session has no desktop operation, so "new chat" clears the
- * binding and rests on this same honest state.
+ * contextual starting suggestions and the FULL composer, usable by default
+ * (owner commission 2026-09-20): no chooser, no gating. The first Send asks
+ * the kernel to provision a fresh conversation (`onProvision` → the
+ * `encounter_provision` op: SessionSpace, project context, agent session,
+ * agency binding, provider open — the owner's own CLI sequence, one op) and
+ * the draft is applied and sent the moment the provisioned session is live;
+ * it is never lost if provisioning is refused. Nothing is invented: "new
+ * chat" clears the binding and rests on this same honest fresh state, and
+ * old conversations are chosen from the sidebar or the history menu only.
  *
  * The session is the SAME shared observer the panel face reads
  * (encounter/session.ts): switching faces never remounts it, and every
@@ -56,7 +60,7 @@ const suggestionsOf=(project?:string,subject?:{title:string;location?:CentralLoc
   return out.slice(0,3);
 };
 
-export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,identity:identityOverride,fixture,variant}:{
+export function AgentChat({session,accompanying,project,agentName,situating,sessionTitle,choosing,subject,resolveSurface,onMessage,onNewChat,onChoose,onProvision,identity:identityOverride,fixture,variant}:{
   session?:EncounterSessionHandle;
   accompanying?:{ref:string;project:string;space:string};
   project?:string;
@@ -70,9 +74,15 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   onMessage?:(message:string)=>void;
   /** New chat: release the binding and rest on the fresh new-conversation state. */
   onNewChat?:()=>void;
-  /** The existing start/read choose pair — the history menu and the first
-   * Send (with no conversation yet) both route through it. */
+  /** The existing start/read choose pair — the history menu routes through
+   * it (the sidebar and the head's history menu are the ONLY ways an old
+   * conversation is selected). */
   onChoose?:(row:EncounterRow)=>Promise<void>;
+  /** First Send with no conversation: provision a fresh conversation in this
+   * project (kernel `encounter_provision`) and bind it — the composition root
+   * sets its binding so the shared observer mounts and the parked draft is
+   * applied and sent. Undefined in fixtures: fresh Send there is inert. */
+  onProvision?:(project:string)=>Promise<void>;
   /** Developer preview override: a fixed identity, no profile read. */
   identity?:AgentIdentityReading;
   /** Developer preview: attachment paths stay local in fixtures, so they are
@@ -98,19 +108,19 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   const localRef=useRef(localDraft);localRef.current=localDraft;
   const setLocal=(text:string)=>{setLocalDraft(text);if(!fixture)writeDraft(text);};
 
-  // --- first Send with no conversation: the existing start/read pair --------
-  /** Set when Send was pressed with nothing bound; the choice below completes it. */
+  // --- first Send with no conversation: provision, then send ---------------
+  /** Set when Send was pressed with nothing bound; the provisioned binding
+   * below completes it. The draft waits for the bind and is never lost. */
   const pendingSend=useRef(false);
   const flushed=useRef<string>();
-  const [picking,setPicking]=useState(false);
+  const [provisioning,setProvisioning]=useState(false);
   const [composerFocusToken,setComposerFocusToken]=useState(0);
   const state=session?.state;const actions=session?.actions;
   const action=(name:string)=>state?.reading?.actions?.find(entry=>entry.ref===`aikit.encounter.${name}`);
   const allowed=(name:string)=>action(name)?.enabled===true;
-  const chooseRow=async(row:EncounterRow)=>{try{await onChoose?.(row);}finally{setPicking(false);}};
-  /** The chosen conversation's observer is live: apply the parked draft, then
-   * finish the Send that opened the picker. The draft waits for the bind; a
-   * conversation that already holds a draft is never clobbered. */
+  /** The conversation's observer is live (fresh or chosen): apply the parked
+   * draft, then finish the Send that opened this state. A conversation that
+   * already holds a draft is never clobbered. */
   useEffect(()=>{
     if(!pendingSend.current||!session||!state||!actions)return;
     if(!state.reading||state.pending||state.busy)return;
@@ -125,9 +135,17 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
     pendingSend.current=false;void actions.send();
   // eslint-disable-next-line react-hooks/exhaustive-deps
   },[session,state,actions]);
+  const chooseRow=async(row:EncounterRow)=>{try{await onChoose?.(row);}catch(error){onMessage?.(String(error));}};
+  /** The project a fresh chat provisions into: the face's project, else
+   * Central (firstSend.ts carries the placement law). */
+  const provisionProject=chatProvisionTarget(project);
   const send=()=>{
     if(session&&actions){void actions.send();return;}
-    pendingSend.current=true;setPicking(true);
+    if(!onProvision){onMessage?.("Provisioning a new conversation is not available in this view.");return;}
+    pendingSend.current=true;setProvisioning(true);
+    onProvision(provisionProject)
+      .catch(error=>{pendingSend.current=false;onMessage?.(String(error));})
+      .finally(()=>setProvisioning(false));
   };
   /** Edit a sent message: its text (with its attachments) returns to the
    * composer — the recording stays; the new turn is the person's to send. */
@@ -163,36 +181,37 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   const [historyOpen,setHistoryOpen]=useState(false);
   const historyRef=useRef<HTMLDivElement>(null);
   useEffect(()=>{
-    if(!historyOpen&&!picking)return;
-    const outside=(event:MouseEvent)=>{if(!historyRef.current?.contains(event.target as Node)){setHistoryOpen(false);setPicking(false);}};
-    const escape=(event:KeyboardEvent)=>{if(event.key==="Escape"){setHistoryOpen(false);setPicking(false);}};
+    if(!historyOpen)return;
+    const outside=(event:MouseEvent)=>{if(!historyRef.current?.contains(event.target as Node))setHistoryOpen(false);};
+    const escape=(event:KeyboardEvent)=>{if(event.key==="Escape")setHistoryOpen(false);};
     document.addEventListener("mousedown",outside);document.addEventListener("keydown",escape);
     return()=>{document.removeEventListener("mousedown",outside);document.removeEventListener("keydown",escape);};
-  },[historyOpen,picking]);
+  },[historyOpen]);
 
   const status=state?.status;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
   const agentLabel=status?.provider?.label??identity.name;
   const bound=!!(session&&state&&actions);
   const suggestions=suggestionsOf(project,subject);
-  // The picker lives in the composer's own connect strip (near the Send the
-  // person just pressed); the history menu is the head's separate control.
+  // The history menu is the head's own control; the sidebar is the other way
+  // to select an existing conversation. A fresh chat has no chooser: first
+  // Send provisions.
   const menuOpen=historyOpen;
   return <section className="agent-chat" aria-label="Agent chat" data-variant={variant??"plane"} data-fixture={fixture?"true":undefined} data-dropping={dropping?"true":undefined} data-attaching={attaching?"true":undefined} data-owner-state={status?.state} onDragEnter={onDragEnter} onDragOver={onDragOver} onDragLeave={onDragLeave} onDrop={onDrop}>
     {centre&&<header className="chat-head">
       <AgentIdentity identity={identity} situating={situating}/>
       <div className="chat-head-tools">
-        {onNewChat&&(bound||accompanying)&&<button className="oi-tool chat-new" aria-label="New chat" title="New chat — clear the binding and start a fresh draft" onClick={()=>{setPicking(false);setHistoryOpen(false);onNewChat();}}><Glyph name="plus" size={14}/></button>}
+        {onNewChat&&(bound||accompanying)&&<button className="oi-tool chat-new" aria-label="New chat" title="New chat — clear the binding and start a fresh draft" onClick={()=>{setHistoryOpen(false);onNewChat();}}><Glyph name="plus" size={14}/></button>}
         <div className="chat-history" ref={historyRef}>
-          <button className="oi-tool chat-history-open" aria-label="History" aria-haspopup="true" aria-expanded={menuOpen} title="History — the project's attached conversations" disabled={!onChoose} onClick={()=>{setHistoryOpen(value=>!value);setPicking(false);}}><Glyph name="history" size={14}/></button>
+          <button className="oi-tool chat-history-open" aria-label="History" aria-haspopup="true" aria-expanded={menuOpen} title="History — the project's attached conversations" disabled={!onChoose} onClick={()=>setHistoryOpen(value=>!value)}><Glyph name="history" size={14}/></button>
           {menuOpen&&<div className="chat-history-menu oi-menu" role="group" aria-label="Conversations">
             {project
               ?<div className="chat-history-rows oi-scroll"><EncounterList project={project} variant="panel" activeRef={accompanying?.ref} onOpen={chooseRow}/></div>
               :<p className="chat-history-note oi-note">Select a project in the sidebar to list its conversations.</p>}
-            {onNewChat&&accompanying&&<button className="oi-menu-item" onClick={()=>{setHistoryOpen(false);setPicking(false);onNewChat();}}>New chat</button>}
+            {onNewChat&&accompanying&&<button className="oi-menu-item" onClick={()=>{setHistoryOpen(false);onNewChat();}}>New chat</button>}
             {import.meta.env.DEV&&<>
               <div className="chat-history-rule" aria-hidden="true"/>
-              <button className="oi-menu-item chat-preview-entry" onClick={()=>{setHistoryOpen(false);setPicking(false);window.dispatchEvent(new CustomEvent(CHAT_PREVIEW_EVENT,{detail:{open:true}}));}}>Preview chat UI<span className="oi-eyebrow"> developer</span></button>
+              <button className="oi-menu-item chat-preview-entry" onClick={()=>{setHistoryOpen(false);window.dispatchEvent(new CustomEvent(CHAT_PREVIEW_EVENT,{detail:{open:true}}));}}>Preview chat UI<span className="oi-eyebrow"> developer</span></button>
             </>}
           </div>}
         </div>
@@ -217,20 +236,19 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
       </>
       :<div className="chat-fresh" data-state="new-conversation">
         <div className="chat-welcome">
-          <p className="chat-welcome-title">{choosing?"Opening the conversation…":"New conversation"}</p>
+          <p className="chat-welcome-title">{choosing?"Opening the conversation…":provisioning?"Opening a new conversation…":"New conversation"}</p>
           <p className="chat-welcome-line oi-note">{choosing?"The conversation binds through the owner's own start and read."
-            :project?`Write below — your first message asks which conversation under ${project} carries it, and the draft is kept until it is accepted.`
-            :"Write below — once a project is selected in the sidebar, your first message asks which conversation carries it."}</p>
+            :`Write below — your first message opens a new conversation in ${provisionProject}, ready to send. Older conversations wait in the sidebar.`}</p>
         </div>
-        {!choosing&&suggestions.length>0&&<div className="chat-suggestions" aria-label="Starting suggestions">
+        {!choosing&&!provisioning&&suggestions.length>0&&<div className="chat-suggestions" aria-label="Starting suggestions">
           {suggestions.map(suggestion=><button key={suggestion} className="chat-suggestion" onClick={()=>{setLocal(suggestion);setComposerFocusToken(token=>token+1);}}>{suggestion}</button>)}
         </div>}
-        <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing} error={undefined} editable={!choosing}
-          promptAllowed={!choosing} cancelAllowed={false}
+        <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={undefined} editable={!choosing&&!provisioning}
+          promptAllowed={!choosing&&!provisioning} cancelAllowed={false}
           onDraft={setLocal} onSend={send} onCancel={()=>{}}
           onPermission={()=>{}} permissionAllowed={false}
           connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined}}
-          tools={{pickFiles:attachFiles}} drafting picking={picking} onPick={()=>{setPicking(value=>!value);setHistoryOpen(false);}} listProject={project} onChooseRow={chooseRow}
+          tools={{pickFiles:attachFiles}} drafting provisionProject={provisionProject}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>
       </div>}
     {dropping&&<div className="chat-drop-veil" aria-hidden="true"><Glyph name="attach" size={20}/><span>Drop to attach to the message</span></div>}
