@@ -85,10 +85,12 @@ function lensControls(lens: LensDef, c: ConstructionFacets | null): string {
   switch (lens.id) {
     case 'project':
       return material('Find, read and gather connected sources; establish an inquiry and enter or create a constellation.') +
+        control('native-construct', 'edit', 'Gather sources & construct', 'Open your connected world — read sources, select passages and author a constellation that opens in this field.') +
         control('native-library', 'library', 'Library — My World / O:I Web', 'Connected sources across your world.') +
-        control('native-work', 'save', c ? 'Open the native construction' : 'Enter or create a construction', c ? 'Continue the open native work.' : 'Begin a native constellation in place.');
+        control('native-work', 'save', c ? 'Open the native construction' : 'Native composition', c ? 'Continue the open native work.' : 'Commit, save and reopen native work in place.');
     case 'canvas':
       return material(c ? `${plural(c.members, 'member')} · ${plural(c.relations, 'typed relation')} in this construction.` : 'No construction is open — the constellation composes real members, never an empty whole.') +
+        (c ? '' : control('native-construct', 'edit', 'Gather sources & construct', 'Author a constellation from connected sources in the Wiki, then compose it in this field.')) +
         control('native-work', 'formation', 'Native composition', 'Members, contextual roles and typed relations in the real Expression medium.') +
         nativeOp('commit', 'save', 'Commit the constellation', 'Persist members and typed relations to the native Expression through the owner.');
     case 'timeline':

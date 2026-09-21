@@ -421,6 +421,7 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'native-work':nativeWorkspace?.toggle();break;
  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
+ case 'native-construct':hostRequest({request:'summon',detail:{kind:'construct',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'lens':lensStudio.select(el.dataset.lens as LensId);break;
  case 'lens-close':lensStudio.closeStudio();break;
  case 'lens-op':if(el.dataset.op==='commit'){await nativeWorkspace?.commit();lensStudio.refresh();}break;
@@ -731,7 +732,20 @@ function setHostMode(mode:'expressions'|'techne'){
  lensStudio.setMode(mode);
  renderAll();
 }
-window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown}|null;
+// Open an existing native Expression the host asked for at runtime — a
+// constellation just constructed in the Wiki, a Library subject, a returned
+// composition. It opens in place through the native workspace (kernel inspect,
+// no remount, the field/camera preserved by the open path itself); if the
+// kernel channel has not been announced yet it opens on that announce, exactly
+// as the boot ?expression= deep link does. Refs only — the kernel document is
+// the store, and a bad ref is refused by the owner, never guessed.
+function openHostExpression(ref:string){
+ if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
+ const open=()=>void nativeWorkspace?.open(ref);
+ if(kernelExpressionsAvailable())open();
+ else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});
+}
+window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   document.documentElement.style.setProperty('--shell-cutout-w',Math.max(0,d.width)+'px');
   document.documentElement.style.setProperty('--shell-cutout-h',Math.max(24,d.height)+'px');
@@ -740,6 +754,7 @@ window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){setHostMode(d.mode);announceHostState();return;}
  if(d&&d.v===1&&d.kind==='host-command'){
   if(d.command==='interact'||d.command==='select')activateRail(d.command);
+  else if(d.command==='open-expression'&&typeof d.ref==='string')openHostExpression(d.ref);
   else console.warn('[oi] refused host command: '+String(d.command));
   return;
  }

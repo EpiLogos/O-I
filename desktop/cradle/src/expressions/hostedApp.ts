@@ -206,6 +206,12 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
 //   host → frame  `{v:1, kind:"host-command", command:"interact"|"select"}`
 //     — the Technē HUD's direct-mode controls drive the application's own
 //       rail tools; the application refuses unknown commands by name.
+//   host → frame  `{v:1, kind:"host-command", command:"open-expression", ref}`
+//     — open an existing native Expression in place (a constellation just
+//       constructed in the Wiki, a Library subject, a returned composition).
+//       The frame opens it through its own native workspace (kernel inspect),
+//       no remount, buffering until its kernel channel is announced. Refs
+//       only; the kernel document stays the store.
 //   frame → host  `{v:1, kind:"oi-app-state", state:{...}}`
 //     — the application's position announcement: current expression, scene
 //       (index/count/name/save state), selection names and the honest
@@ -268,4 +274,14 @@ export function trackHostedAppState(frame: HTMLIFrameElement | null, onState: (s
  * grammar the Technē HUD's direct-mode controls ride. */
 export function postMessageToFrame(frame: HTMLIFrameElement | null, message: {v: number; kind: string} & Record<string, unknown>) {
   frame?.contentWindow?.postMessage(message, "*");
+}
+
+/** Ask the hosted application to open an existing native Expression in place —
+ * the host-command grammar's open-expression. The frame opens it through its
+ * own native workspace (kernel inspect); it never remounts the frame and never
+ * carries the document itself. Refs only, and a non-Expression ref is ignored
+ * here rather than posted for the frame to refuse. */
+export function postOpenExpression(frame: HTMLIFrameElement | null, expressionRef: string): void {
+  if (!frame || typeof expressionRef !== "string" || !expressionRef.startsWith("expression:")) return;
+  frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "host-command", command: "open-expression", ref: expressionRef}, "*");
 }

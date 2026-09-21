@@ -41,9 +41,11 @@ import {
   trackShellCutout,
   trackHostedAppState,
   postHostMode,
+  postOpenExpression,
   type HostedAppMode,
   type HostedAppState,
 } from "./hostedApp";
+import {EXPRESSION_COMPOSE_EVENT} from "../expression/summon";
 import "./point-cloud-host.css";
 
 export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: {mode?: HostedAppMode; deepLink?: string; onHostedState?: (state: HostedAppState) => void}) {
@@ -121,6 +123,25 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: 
   useEffect(() => {
     const node = frame.current;
     return node ? postHostMode(node, mode) : undefined;
+  }, [mode, state]);
+
+  // The Technē cut's summon answer: a constellation constructed in the Wiki
+  // (or any summoned Expression) opens IN this same living field, not a second
+  // renderer. `summonExpression(ref)` fires oi:expression-compose; while the
+  // Technē centre stands, the host relays it to its frame as an open-expression
+  // command, which the app opens through its own native workspace (kernel
+  // inspect, no remount). Only the Technē cut binds this — the Expressions cut
+  // keeps its own selection path. Refs only; the kernel document is the store.
+  useEffect(() => {
+    const node = frame.current;
+    if (mode !== "techne" || !node || state !== "ready") return;
+    const onCompose = (event: Event) => {
+      const ref = (event as CustomEvent<{expressionRef?: unknown}>).detail?.expressionRef;
+      if (typeof ref === "string" && ref.startsWith("expression:")) postOpenExpression(node, ref);
+    };
+    window.addEventListener(EXPRESSION_COMPOSE_EVENT, onCompose);
+    return () => window.removeEventListener(EXPRESSION_COMPOSE_EVENT, onCompose);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, [mode, state]);
 
   // The deep cut's requests ride back through the host: a workspace-mode
