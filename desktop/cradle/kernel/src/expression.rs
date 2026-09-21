@@ -106,6 +106,9 @@ pub struct Scene {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Relation {
+    /// Owner supplied by the native relation reading, never inferred from geometry.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub native_owner: Option<String>,
     pub binding_ref: String,
     pub relation: ReadingRef,
     pub from_entity_ref: String,
@@ -134,6 +137,9 @@ pub struct Representation {
 pub struct Selection {
     pub scene_ref: String,
     pub entity_ref: Option<String>,
+    /// Exact presentation occurrence of a native relation; exclusive with entity_ref.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub relation_ref: Option<String>,
 }
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(rename_all = "snake_case")]
@@ -233,6 +239,10 @@ pub enum Change {
     Focus {
         scene_ref: String,
         entity_ref: Option<String>,
+    },
+    RelationFocus {
+        scene_ref: String,
+        binding_ref: String,
     },
     ParameterSet {
         entity_ref: String,
@@ -340,6 +350,15 @@ pub enum Request {
         expression_ref: String,
         expected_revision: u64,
     },
+    SaveAs {
+        expression_ref: String,
+        expected_revision: u64,
+        parent: files::Location,
+        name: String,
+        operation_ref: String,
+        actor: String,
+        actor_kind: String,
+    },
     Save {
         expression_ref: String,
         expected_revision: u64,
@@ -431,11 +450,12 @@ pub struct Application {
 
 pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
-        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","invoke",
+        "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
-        "parameters":{"glyph":{"type":"string","max_length":128},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
+        "composition_budget":{"scenes":64,"entities":LIMIT,"scene_members":LIMIT,"render_formations":10,"render_pins":8},
+        "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
         "scene_body":{"carriers":["engine_composition","text_source","glyph_form","image_media","file_thing","knowledge_whole","html_surface","agent_surface","expression_ref"],
             "presentations":["live","inline","preview","degraded"],
@@ -498,11 +518,32 @@ pub(crate) fn bounds(key: &str) -> Option<(f64, f64)> {
         "x" | "y" | "z" => Some((-1600., 1600.)),
         "scale" => Some((0.05, 4.)),
         "share" => Some((0., 1000.)),
+        "width" | "height" => Some((1., 1600.)),
+        "rotation" => Some((-std::f64::consts::TAU, std::f64::consts::TAU)),
+        "frequency" => Some((1., 20_000.)),
+        "force_strength" | "force_spin" => Some((-20., 20.)),
+        "force_radius" => Some((1., 1600.)),
         _ => None,
     }
 }
 pub(crate) fn parameter(key: &str, p: &Parameter) -> Result<(), String> {
-    if key == "glyph" {
+    if matches!(key, "shape" | "kind" | "yantra" | "force_mode" | "ascii" | "image") {
+        if p.automation.is_some() { return Err("Text/material carrier automation is unsupported".into()); }
+        let value = p.value.as_str().ok_or("Material carrier must be text")?;
+        let valid = match key {
+            "shape" => matches!(value, "glyph" | "ring" | "disc" | "square" | "triangle" | "yantra" | "cymatic"),
+            "kind" => matches!(value, "formation" | "pin"),
+            "yantra" => matches!(value, "muladhara" | "svadhisthana" | "manipura" | "anahata" | "vishuddha" | "ajna" | "sahasrara"),
+            "force_mode" => matches!(value, "none" | "attract" | "repel" | "vortex"),
+            "ascii" => value.len() <= 32_768 && !value.chars().any(|c| c.is_control() && c != '\n' && c != '\r' && c != '\t'),
+            "image" => value.is_empty() || (value.len() <= 384 * 1024 &&
+                ["data:image/png;base64,", "data:image/jpeg;base64,", "data:image/webp;base64,"].iter()
+                    .any(|prefix| value.strip_prefix(prefix).is_some_and(|bytes|
+                        !bytes.is_empty() && bytes.len() % 4 == 0 && bytes.bytes().all(|b| b.is_ascii_alphanumeric() || b"+/=".contains(&b))))),
+            _ => false,
+        };
+        if !valid { return Err(format!("Invalid or unsupported {key} material")); }
+    } else if key == "glyph" {
         if !p
             .value
             .as_str()
@@ -565,7 +606,7 @@ impl Document {
             }
             let unique: BTreeSet<_> = s.entity_refs.iter().collect();
             if unique.len() != s.entity_refs.len()
-                || s.entity_refs.len() > 10
+                || s.entity_refs.len() > LIMIT
                 || s.entity_refs.iter().any(|r| !self.entities.contains_key(r))
             {
                 return Err("Scene contains duplicate, missing or too many entities".into());
@@ -632,6 +673,7 @@ impl Document {
                 &format!("{}:relation:", self.expression_ref),
             )?;
             reading(&r.relation)?;
+            if let Some(owner) = &r.native_owner { text(owner)?; }
             readings(&r.provenance)?;
             if key != &r.binding_ref
                 || !self.entities.contains_key(&r.from_entity_ref)
@@ -652,6 +694,16 @@ impl Document {
             .is_some_and(|r| !scene.entity_refs.contains(r))
         {
             return Err("Selected entity is outside selected scene".into());
+        }
+        if let Some(binding_ref) = &self.selection.relation_ref {
+            if self.selection.entity_ref.is_some() {
+                return Err("Select one entity or relation occurrence, not both".into());
+            }
+            let relation = self.relations.get(binding_ref).ok_or("Selected relation is absent")?;
+            if !scene.entity_refs.contains(&relation.from_entity_ref)
+                || !scene.entity_refs.contains(&relation.to_entity_ref) {
+                return Err("Selected relation endpoints are outside selected scene".into());
+            }
         }
         let mut representation_refs = BTreeSet::new();
         for r in &self.representations {
@@ -793,6 +845,9 @@ impl Document {
                 if self.selection.entity_ref.as_ref() == Some(&entity_ref) {
                     self.selection.entity_ref = None;
                 }
+                if self.selection.relation_ref.as_ref().is_some_and(|r| !self.relations.contains_key(r)) {
+                    self.selection.relation_ref = None;
+                }
             }
             Change::SubjectBind {
                 entity_ref,
@@ -806,6 +861,12 @@ impl Document {
                 if self.relations.remove(&binding_ref).is_none() {
                     return Err("Relation is absent".into());
                 }
+                if self.selection.relation_ref.as_ref() == Some(&binding_ref) {
+                    self.selection.relation_ref = None;
+                }
+            }
+            Change::RelationFocus { scene_ref, binding_ref } => {
+                self.selection = Selection { scene_ref, entity_ref: None, relation_ref: Some(binding_ref) };
             }
             Change::Focus {
                 scene_ref,
@@ -814,6 +875,7 @@ impl Document {
                 self.selection = Selection {
                     scene_ref,
                     entity_ref,
+                    relation_ref: None,
                 }
             }
             Change::ParameterSet {
@@ -932,6 +994,17 @@ impl Application {
     }
     pub fn selected_subject(&self, expression_ref: &str) -> Option<crate::refs::SemanticRef> {
         let d = self.documents.get(expression_ref)?;
+        if let Some(relation) = d.selection.relation_ref.as_ref().and_then(|r| d.relations.get(r)) {
+            return Some(crate::refs::SemanticRef {
+                ref_id: relation.relation.r#ref.clone(),
+                kind: "relation".into(),
+                native_owner: relation.native_owner.clone().unwrap_or_else(|| "unknown".into()),
+                provenance: crate::refs::RefProvenance {
+                    source: relation.binding_ref.clone(),
+                    revision: Some(relation.relation.revision.clone()),
+                },
+            });
+        }
         let entity = d
             .selection
             .entity_ref
@@ -998,6 +1071,7 @@ impl Application {
                     selection: Selection {
                         scene_ref: format!("{expression_ref}:scene:main"),
                         entity_ref: None,
+                        relation_ref: None,
                     },
                     provenance: vec![],
                     representations: vec![],
@@ -1120,6 +1194,7 @@ impl Application {
                     .collect();
                 d.selection.scene_ref = map(&d.selection.scene_ref);
                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
+                d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
                 d.representations.clear();
                 d.refinements.clear();
                 return self.open(d, actor);
@@ -1348,6 +1423,25 @@ impl Application {
                 }
                 json!({"state":"exported","audience":"local_private","document":self.document(&expression_ref)?,"dynamic_checkpoint":false})
             }
+            Request::SaveAs { expression_ref, expected_revision, parent, name, operation_ref, actor, actor_kind } => {
+                text(&actor)?;
+                text(&operation_ref)?;
+                if !["human", "agent"].contains(&actor_kind.as_str()) { return Err("actor_kind must be human or agent".into()); }
+                if let Some(conflict) = self.conflict(&expression_ref, expected_revision)? { return Ok((conflict, None)); }
+                let document = self.document(&expression_ref)?.clone();
+                let content = serde_json::to_string_pretty(&document).map_err(|e| e.to_string())?;
+                match client.run("central.files.create", json!({"parent":parent,"name":name,"content":content,
+                    "expected_absent":true,"operation_ref":operation_ref,"actor":actor,"actor_kind":actor_kind})) {
+                    Ok(data) if data["schema"]=="central.file-mutation/v1" && matches!(data["outcome"].as_str(), Some("created"|"unchanged")) => {
+                        match serde_json::from_value::<files::Location>(data["location"].clone()) {
+                            Ok(location) => self.accept_saved(client, &document, location, "central.files.create", data),
+                            Err(error) => json!({"state":"saved_readback_failed","persisted":true,"owner_operation":"central.files.create","data":data,"error":error.to_string()}),
+                        }
+                    },
+                    Ok(data) => json!({"state":"save_refused","owner_operation":"central.files.create","data":data}),
+                    Err(error) => json!({"state":"save_refused","owner_operation":"central.files.create","failure":error}),
+                }
+            }
             Request::Save {
                 expression_ref,
                 expected_revision,
@@ -1388,10 +1482,8 @@ impl Application {
                             && matches!(data["outcome"].as_str(), Some("written" | "unchanged"))
                             && data["revision"].as_str().is_some_and(|r| !r.is_empty())
                         {
-                            self.saved.insert(expression_ref.clone(), expected_revision);
-                            let file = json!({"location":location,"revision":data["revision"]});
-                            self.file_bindings.insert(expression_ref, file.clone());
-                            json!({"state":"saved","owner_operation":"central.files.write","data":data,"expression_revision":expected_revision,"file":file})
+                            let document = self.document(&expression_ref)?.clone();
+                            self.accept_saved(client, &document, location, "central.files.write", data)
                         } else {
                             json!({"state":"save_refused","owner_operation":"central.files.write","data":data})
                         }
@@ -1623,6 +1715,27 @@ impl Application {
             }
         };
         Ok((result, changed))
+    }
+    /// A native save receipt is not readback. Keep acknowledged effects legible
+    /// on a lost read; never replay the write or mark a different revision saved.
+    fn accept_saved(&mut self, client: &CentralClient, document: &Document, location: files::Location, operation: &str, data: Value) -> Value {
+        let file = json!({"location":location,"revision":data["revision"]});
+        let proof = (|| -> Result<(),String> {
+            let current = files::read(client, &location)?;
+            if data["revision"] != current.revision { return Err("Native source changed before readback".into()); }
+            let read: Document = serde_json::from_str(&current.content).map_err(|e| e.to_string())?;
+            read.validate()?;
+            if &read != document { return Err("Native readback differs from the saved Expression".into()); }
+            Ok(())
+        })();
+        match proof {
+            Ok(()) => {
+                self.saved.insert(document.expression_ref.clone(),document.revision);
+                self.file_bindings.insert(document.expression_ref.clone(),file.clone());
+                json!({"state":"saved","persisted":true,"readback_verified":true,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file})
+            },
+            Err(error) => json!({"state":"saved_readback_failed","persisted":true,"readback_verified":false,"owner_operation":operation,"data":data,"expression_revision":document.revision,"file":file,"error":error}),
+        }
     }
     fn open(&mut self, d: Document, actor: String) -> Result<(Value, Option<Changed>), String> {
         text(&actor)?;

@@ -50,6 +50,7 @@ pub mod graph;
 pub mod ground;
 pub mod history;
 pub mod knowledge;
+pub mod construction;
 pub mod shared_field;
 pub mod setup;
 pub mod chat_defaults;
@@ -850,16 +851,8 @@ impl Kernel {
             }
             KernelOp::Expression { request } => {
                 let focus_ref = match &request {
-                    expression::Request::Edit {
-                        expression_ref,
-                        changes,
-                        ..
-                    } if changes
-                        .iter()
-                        .any(|c| matches!(c, expression::Change::Focus { .. })) =>
-                    {
-                        Some(expression_ref.clone())
-                    }
+                    expression::Request::Edit { expression_ref, changes, .. }
+                        if changes.iter().any(|c| matches!(c, expression::Change::Focus { .. } | expression::Change::RelationFocus { .. })) => Some(expression_ref.clone()),
                     _ => None,
                 };
                 let (data, changed) = self.expressions.apply(&self.client, request)?;
@@ -871,6 +864,12 @@ impl Kernel {
                         actor: change.actor,
                         activity_ref: change.activity_ref,
                     }));
+                }
+                if data["persisted"]==true && data["data"]["changed"]==true {
+                    if let Some(path)=data["file"]["location"]["path"].as_str().or_else(||data["data"]["location"]["path"].as_str()) {
+                        self.reads.invalidate(&format!("dir:{}",files::parent_path(path)));
+                        receipts.push(self.log.record(KernelEvent::FileChanged{path:path.into(),summary:"Saved an Expression through its native file owner.".into()}));
+                    }
                 }
                 if data["state"] == "ready" {
                     if let Some(expression_ref) = focus_ref.as_deref() {
@@ -1872,10 +1871,18 @@ impl Kernel {
                 let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);
                 self.reads.invalidate_prefix("knowledge:");
                 self.reads.invalidate_prefix("graph:");
-                Ok(KernelOpOutcome {
-                    receipts: Vec::new(),
-                    result: KernelOpResult::ActionDispatched { dispatch },
-                })
+                let mut receipts=Vec::new();
+                if invocation.action==construction::APPLY {
+                    if let action::ActionDispatch::Invoked{data,..}=&dispatch {
+                        if data["persisted"]==true && data["state"]=="saved" {
+                            if let Some(path)=data["native_file"]["location"]["path"].as_str().or_else(||invocation.input.as_ref().and_then(|i|i["location"]["path"].as_str())) {
+                                self.reads.invalidate(&format!("dir:{}",files::parent_path(path)));
+                                receipts.push(self.log.record(KernelEvent::FileChanged{path:path.into(),summary:"The native Wiki owner saved a constructive whole.".into()}));
+                            }
+                        }
+                    }
+                }
+                Ok(KernelOpOutcome { receipts, result: KernelOpResult::ActionDispatched { dispatch } })
             }
             KernelOp::FlowChangedSince { project, thought } => {
                 // The changed-since compose resolves its owner cwd exactly as

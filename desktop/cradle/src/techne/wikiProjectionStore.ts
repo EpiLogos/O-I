@@ -56,6 +56,7 @@ export interface WikiProjectionSelection {
   expressionRef: string | null;
   sceneRef: string | null;
   entityRef: string | null;
+  relationRef?: string | null;
   subjectRef: string | null;
 }
 
@@ -64,6 +65,7 @@ export interface WikiSelectionRequest {
   registerKey: string;
   sceneRef: string;
   entityRef: string | null;
+  relationRef?: string | null;
   subjectRef: string | null;
   title?: string;
   origin: "wiki-map" | "graph-navigator" | "external";
@@ -76,14 +78,28 @@ interface WikiProjectionState {
   selection: WikiProjectionSelection;
   request: WikiSelectionRequest | null;
   revision: number;
+  /** Presentation only, keyed by the stable surface binding; never source content. */
+  entries: Record<string, "home" | "field">;
 }
 
 const REGISTER_KEY_STORAGE = "oi-cradle.techne.m0-register.v1";
+const ENTRY_STORAGE = "oi-cradle.techne.m0-entry.v1";
+function retainedEntries(): Record<string, "home" | "field"> {
+  try {
+    const value: unknown = JSON.parse(window.localStorage.getItem(ENTRY_STORAGE) ?? "{}");
+    if (!value || typeof value !== "object" || Array.isArray(value)) return {};
+    return Object.fromEntries(Object.entries(value).filter(([, entry]) => entry === "home" || entry === "field"));
+  } catch { return {}; }
+}
+function retainedRegister(): string | null {
+  try { return window.localStorage.getItem(REGISTER_KEY_STORAGE); } catch { return null; }
+}
 const text = (cause: unknown) => cause instanceof Error ? cause.message : String(cause);
 
 let state: WikiProjectionState = {
   registers: [],
-  registerKey: (typeof window !== "undefined" ? window.localStorage.getItem(REGISTER_KEY_STORAGE) : null) ?? null,
+  registerKey: retainedRegister(),
+  entries: retainedEntries(),
   standings: {},
   selection: {registerKey: null, expressionRef: null, sceneRef: null, entityRef: null, subjectRef: null},
   request: null,
@@ -113,8 +129,19 @@ function selectionOf(registerKey: string, standing: RegisterStanding): WikiProje
     expressionRef: document.expression_ref,
     sceneRef: document.selection.scene_ref,
     entityRef: entityRef ?? null,
-    subjectRef: entity?.subject?.subject_ref ?? null,
+    relationRef: document.selection.relation_ref ?? null,
+    subjectRef: document.selection.relation_ref ? document.relations[document.selection.relation_ref]?.relation.ref ?? null : entity?.subject?.subject_ref ?? null,
   };
+}
+
+/** Explicit Home is not the same operation as restoring a working position.
+ * This belongs to the existing projection working model and stores only the
+ * viewer's entry choice, not another Expression or source cache. */
+export function setWikiEntry(surfaceId: string, entry: "home" | "field") {
+  if (!surfaceId.trim()) throw new Error("A Technē entry needs its surface binding");
+  if (state.entries[surfaceId] === entry) return;
+  mutate(current => ({entries: {...current.entries, [surfaceId]: entry}}));
+  try { window.localStorage.setItem(ENTRY_STORAGE, JSON.stringify(state.entries)); } catch { /* ref-only UI convenience */ }
 }
 
 // ---- registers -------------------------------------------------------------
@@ -243,8 +270,8 @@ const rereadGenerations = new Map<string, number>();
 /** A kernel `file_changed` receipt whose path is a register's wiki basis
  * invalidates that register's cached reading (the seam the 13-step walk
  * named): the store re-reads the local whole and re-projects, and the
- * centre's open flow stands the new generation — the projection identity is
- * content-addressed over the reading, so a changed wiki is a new generation;
+ * centre's open flow checks the source basis against the same stable identity;
+ * a changed wiki is drift, not permission to remint or overwrite composition;
  * the kernel never replaces the standing draft. The stale-while-revalidate
  * law is the files broker's own: the standing stays visible to every
  * aperture while the fresh read flies. Returns the register keys

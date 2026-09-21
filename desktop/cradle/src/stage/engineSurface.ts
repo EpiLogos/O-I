@@ -44,6 +44,10 @@ import { stageCentre, stageScale } from "@epilogos/oi-design-system/expressions-
 import type { EngineCommand, EngineFrame } from "@epilogos/oi-design-system/expressions-engine/shell/engine.mjs";
 import { stageRecipe, stageSequence, type StageSequence } from "./recipes";
 
+export type ExpressionHit =
+  | {kind:"entity";entity_ref:string;distance:number}
+  | {kind:"relation";binding_ref:string;from_entity_ref:string;to_entity_ref:string;relation:{ref:string;revision:string};distance:number};
+
 const WORLD_SCALE = 400; // the instrument's stage unit (nativeParameters.ts)
 
 /** The only K8-facing capability of a stage surface. It deliberately has no
@@ -241,6 +245,7 @@ export class EngineSurface {
     // law. Only a different LIVE presentation refuses.
     if (this.live && this.active && this.active.id !== id) throw new Error(`The engine surface already presents "${this.active.id}"; release it before presenting "${id}".`);
     this.cancelPlayback();
+    this.adapter.setExpressionBindings?.([]);
     this.live = true;
     this.renderedId = null;
     this.markDormant(false);
@@ -255,6 +260,8 @@ export class EngineSurface {
     this.live = true;
     this.markDormant(false);
     this.selectedIds = selectedIds;
+    const correspondence = (config as {oiExpressionBindings?: {relations?: unknown[]}})?.oiExpressionBindings;
+    this.adapter.setExpressionBindings?.(correspondence?.relations ?? []);
     if (appearance !== "authored") this.activateHostMaterial(id, config as NativeConfig, sceneRef, appearance);
     else this.activate(id, this.sceneFrom(config as NativeConfig, sceneRef));
     this.wake();
@@ -292,6 +299,16 @@ export class EngineSurface {
 
   /** The live presentation's current selection, as data (bounded inspection).
    * Empty when no live presentation stands. */
+  /** Hit-test the live engine's evaluated poses/connection geometry, not a
+   * DOM list or a second layout. Inputs are client coordinates. */
+  hitTest(id: string, clientX: number, clientY: number): ExpressionHit | null {
+    this.require(id);
+    if (!this.live) return null;
+    const rect=this.canvas.getBoundingClientRect();
+    if(clientX<rect.left||clientY<rect.top||clientX>rect.right||clientY>rect.bottom)return null;
+    return this.adapter.hitTestExpression?.(clientX-rect.left,clientY-rect.top) as ExpressionHit | null ?? null;
+  }
+
   selectionSnapshot(): string[] {
     return [...this.selectedIds];
   }

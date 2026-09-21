@@ -12,10 +12,8 @@
  */
 import {useEffect, useRef} from "react";
 import type {TechneLensBodyProps} from "../lensMount";
-import {instrumentStanding} from "../techneReading";
 import {useWikiProjectionState} from "../wikiProjectionStore";
 import {WikiExpressionBody} from "../WikiExpressionBody";
-import {StatePanel} from "./LensBody";
 import {ensureSession, bridgeReading} from "./reading";
 
 /** The M0′ Studio body: the wiki projection's standing — the store is the
@@ -41,23 +39,11 @@ function ProjectStudioPanel() {
   );
 }
 
+/** Ground navigation and the Epii entrance are available before a subject or
+ * optional QL reading. The instrument disclosure still governs operations
+ * which need those facets; it must not gate the owner's entrance itself. */
 export function ProjectLensBody(props: TechneLensBodyProps) {
   const {binding, subject, disclosure, studio} = props;
-  const office = "M0′";
-  const label = "Project · Wiki · Graph";
-  if (disclosure.standing === "no-subject") {
-    return <StatePanel state="no-subject" label={label} office={office}/>;
-  }
-  if (disclosure.standing === "reading") {
-    return <StatePanel state="loading" label={label} office={office} subject={subject}/>;
-  }
-  if (disclosure.standing === "unavailable") {
-    return <StatePanel state="unavailable" label={label} office={office} reason={disclosure.reason}/>;
-  }
-  const standing = instrumentStanding(disclosure, "project");
-  if (!standing.available) {
-    return <StatePanel state="lens-unavailable" label={label} office={office} reason={standing.reason} degraded={standing.degraded}/>;
-  }
   return <ProjectMount studio={studio} binding={binding} subject={subject} disclosure={disclosure}/>;
 }
 

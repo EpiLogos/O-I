@@ -92,6 +92,7 @@ export interface StagePresentation {
   setForceMotion(force: boolean): void;
   capture(width?: number, height?: number): HTMLCanvasElement;
   telemetry(): unknown;
+  hitTest(clientX:number,clientY:number): import("./engineSurface").ExpressionHit|null;
   release(): void;
 }
 
@@ -215,6 +216,7 @@ export function ExpressionStageProvider({ children }: { children: ReactNode }) {
       setForceMotion(force) { requireCurrent(); surface.setForceMotion(force); },
       capture(width, height) { requireCurrent(); return surface.capture(width, height); },
       telemetry() { requireCurrent(); return surface.telemetry(); },
+      hitTest(x,y) {requireCurrent();return surface.hitTest(request.id,x,y);},
       release() {
         if (!current()) return;
         presentations.current.delete(request.id);

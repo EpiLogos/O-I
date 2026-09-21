@@ -14,9 +14,8 @@
  * Laws kept:
  *   - resolveActionRoute (the ported law) gates everything: an undisclosed
  *     action or a foreign subject comes back unrouted, unchanged;
- *   - the kernel's refusals travel verbatim (a revision conflict is
- *     re-read and retried ONCE — the same discipline as the M0 focus edit —
- *     and a standing refusal is never guessed around);
+ *   - the kernel's refusals travel verbatim; a revision conflict refreshes
+ *     the shared mirror but NEVER retries a constructive edit;
  *   - the reading served to the instruments is the wiki-grounded payload
  *     (wikiReadingProvider), contract-checked at the seam;
  *   - nothing here owns domain state: the document belongs to the kernel,
@@ -96,33 +95,29 @@ export async function submitSceneComposition(
   if (!standing) {
     return {ok: false, reason: `the Expression ${input.expression_ref} is not open in this window — enter its Web (M0′) first so the kernel holds the generation, then compose`};
   }
-  const attempt = async (expectedRevision: number, tryCount: number): Promise<{ok: true; scene_ref: string; expression_ref: string; revision: number} | {ok: false; reason: string}> => {
-    const reply = await run(transport, {op: "expression", request: {
-      operation: "edit",
-      expression_ref: input.expression_ref,
-      expected_revision: expectedRevision,
-      actor: JOURNEY_ACTOR,
-      changes: [input.change],
-    }});
-    const data = reply.outcome?.result === "expression" ? reply.outcome.data as ExpressionResult : undefined;
-    if (!reply.error && data?.document) {
-      adopt(input.expression_ref, data.document);
-      return {ok: true, scene_ref: input.change.scene_ref, expression_ref: input.expression_ref, revision: data.document.revision};
-    }
-    // A stale expected revision — a concurrent editor or an in-flight ask:
-    // read the standing generation back and retry ONCE (the kernel never
-    // replaces an open draft implicitly, and neither do we).
-    if (tryCount === 0 && data?.state === "revision_conflict") {
-      const inspect = await run(transport, {op: "expression", request: {operation: "inspect", expression_ref: input.expression_ref}});
-      const standingDocument = inspect.outcome?.result === "expression" ? (inspect.outcome.data as ExpressionResult).document : undefined;
-      if (standingDocument) {
-        adopt(input.expression_ref, standingDocument);
-        return attempt(standingDocument.revision, 1);
-      }
-    }
-    return {ok: false, reason: reply.error ?? data?.state ?? "the kernel did not return the edited document"};
-  };
-  return attempt(standing.revision, 0);
+  // An Agent/human proposal is based on what it actually inspected. A late
+  // result must not silently acquire the latest revision as fresh authority.
+  const basis = Number(input.revision);
+  if (!input.revision || !Number.isSafeInteger(basis) || basis < 1 || basis !== standing.revision) {
+    return {ok:false,reason:`construction basis is stale or absent (proposed ${input.revision ?? "none"}, current ${standing.revision}); inspect and explicitly reconcile before editing`};
+  }
+  const reply = await run(transport, {op:"expression",request:{operation:"edit",
+    expression_ref:input.expression_ref, expected_revision:basis,actor:JOURNEY_ACTOR,changes:[input.change]}});
+  const data=reply.outcome?.result === "expression" ? reply.outcome.data as ExpressionResult : undefined;
+  if (!reply.error && data?.document && data.document.expression_ref === input.expression_ref &&
+      data.document.scenes.some(scene=>scene.scene_ref===input.change.scene_ref) && data.document.revision>basis) {
+    adopt(input.expression_ref,data.document);
+    return {ok:true,scene_ref:input.change.scene_ref,expression_ref:input.expression_ref,revision:data.document.revision};
+  }
+  if(data?.state === "revision_conflict") {
+    // Refresh the shared mirror, but NEVER retry the mutating operation. The
+    // caller retains its proposal and can reconcile it with the new inquiry.
+    const fresh=await run(transport,{op:"expression",request:{operation:"inspect",expression_ref:input.expression_ref}});
+    const document=fresh.outcome?.result === "expression" ? (fresh.outcome.data as ExpressionResult).document : undefined;
+    if(document?.expression_ref===input.expression_ref)adopt(input.expression_ref,document);
+    return {ok:false,reason:"revision_conflict: the construction changed during composition; inspect and explicitly reconcile the proposal"};
+  }
+  return {ok:false,reason:reply.error ?? data?.state ?? "the kernel did not confirm the composed scene"};
 }
 
 /** The receipt the kernel's applied edit earns: routed, with the applied

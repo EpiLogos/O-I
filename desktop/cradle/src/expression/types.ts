@@ -21,11 +21,11 @@ export interface SceneTrigger {trigger_ref:string;occasion:TriggerOccasion;targe
 /** ES3 profile adoption with explicit, legible overrides. */
 export interface ProfileAdoption {profile_ref:string;revision:number;overridden_parameters?:Record<string,Parameter>}
 export interface Scene {scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}
-export interface Relation {binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
+export interface Relation {native_owner?:string;binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
 export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"projection";representation:ReadingRef;provenance:ReadingRef[]}
 export interface RefinementDecision {state:"accepted"|"rejected";actor:string;reason:string;decided_at_revision:number;corrections:Change[]}
 export interface Refinement {proposal_ref:string;basis_revision:number;proposed_by:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[];decision:RefinementDecision|null}
-export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
+export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
 export type Change =
  | {change:"scene_create";scene_ref:string;title:string}
  | {change:"scene_reorder";scene_refs:string[]}
@@ -34,6 +34,7 @@ export type Change =
  | {change:"entity_remove"|"subject_unbind";entity_ref:string}
  | {change:"subject_bind";entity_ref:string;binding:SubjectBinding}
  | {change:"focus";scene_ref:string;entity_ref:string|null}
+ | {change:"relation_focus";scene_ref:string;binding_ref:string}
  | {change:"parameter_set";entity_ref:string;parameter:string;value:string|number}
  | {change:"parameter_automate";entity_ref:string;parameter:string;automation:Automation}
  | {change:"parameter_manual";entity_ref:string;parameter:string}
@@ -59,6 +60,7 @@ export type ExpressionRequest =
  | {operation:"propose";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[]}
  | {operation:"review";expression_ref:string;expected_revision:number;proposal_ref:string;actor:string;decision:"accepted"|"rejected";reason:string;corrections:Change[]}
  | {operation:"export";expression_ref:string;expected_revision:number}
+ | {operation:"save_as";expression_ref:string;expected_revision:number;parent:CentralLocation;name:string;operation_ref:string;actor:string;actor_kind:"human"|"agent"}
  | {operation:"save";expression_ref:string;expected_revision:number;location:CentralLocation;expected_file_revision:string;actor:string;actor_kind:"human"|"agent"}
  | {operation:"invoke";expression_ref:string;expected_revision:number;entity_ref:string;action_ref:string;input:unknown;project:string|null}
  /* Substrate requests (#352): ES3 profiles/editions/index, ES3A asset index. */

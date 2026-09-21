@@ -5,6 +5,10 @@
     {
       "path": "oi/retained.mjs",
       "standing": "O:I-authored retained-field extension of shell/production.mjs; not upstream, never rewritten by this script"
+    },
+    {
+      "path": "oi/expressionBindings.mjs",
+      "standing": "O:I-authored native occurrence/connection drawing and hit testing on the existing field; not upstream"
     }
   ],
   "vendored_at": "2026-09-15T15:23:59Z",

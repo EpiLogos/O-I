@@ -667,3 +667,26 @@ fn unknown_operations_and_fields_fail_closed() {
         "unknown fields are refused, never silently accepted"
     );
 }
+
+#[test]
+fn subject_handoff_never_chooses_an_arbitrary_repeated_occurrence() {
+    let mut k=Kernel::discover();
+    bind_and_focus(&mut k);
+    k.apply(KernelOp::Expression { request: serde_json::from_value(json!({
+        "operation":"edit","expression_ref":"expression:lesson","expected_revision":2,"actor":"human:test",
+        "changes":[{"change":"entity_add","scene_ref":"expression:lesson:scene:main","entity_ref":"expression:lesson:entity:b","title":"Second occurrence"},
+        {"change":"subject_bind","entity_ref":"expression:lesson:entity:b","binding":{"subject_ref":SUBJECT,"native_owner":"ai-kit","presentation_role":"thing","sources":[],"readings":[],"actions":[]}}]
+    })).unwrap() }).unwrap();
+    let selected=world(&mut k,json!({"operation":"selection_set","origin":"graph","subject_ref":SUBJECT,
+        "kind":"wiki-node","native_owner":"ai-kit","expression_ref":"expression:lesson"}));
+    assert_eq!(selected["expression"]["state"],"ambiguous_occurrence");
+    assert_eq!(selected["expression"]["occurrences"].as_array().unwrap().len(),2);
+    k.apply(KernelOp::Expression { request: serde_json::from_value(json!({
+        "operation":"edit","expression_ref":"expression:lesson","expected_revision":3,"actor":"human:test",
+        "changes":[{"change":"focus","scene_ref":"expression:lesson:scene:main","entity_ref":"expression:lesson:entity:b"}]
+    })).unwrap() }).unwrap();
+    let selected=world(&mut k,json!({"operation":"selection_set","origin":"graph","subject_ref":SUBJECT,
+        "kind":"wiki-node","native_owner":"ai-kit","expression_ref":"expression:lesson"}));
+    assert_eq!(selected["expression"]["state"],"focused");
+    assert_eq!(selected["expression"]["entity_ref"],"expression:lesson:entity:b");
+}

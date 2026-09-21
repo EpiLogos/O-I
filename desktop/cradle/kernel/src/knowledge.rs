@@ -66,6 +66,22 @@ pub fn run(cwd: &Path, args: &[&str]) -> Result<Value, CallError> {
     run_with_executable(cwd, args, &executable)
 }
 
+/// Structured input goes on stdin, never shell-expanded argv or a temp source file.
+pub fn run_input(cwd: &Path, args: &[&str], input: &Value) -> Result<Value, CallError> {
+    use std::io::Write;
+    use std::process::Stdio;
+    let bytes=serde_json::to_vec(input).map_err(|e|CallError::Malformed{detail:e.to_string()})?;
+    if bytes.len()>16*1024*1024{return Err(CallError::Malformed{detail:"Native Action exceeds its 16 MiB input budget".into()});}
+    let executable=std::env::var_os("OI_BIN").unwrap_or_else(||"oi".into());
+    let mut child=Command::new(executable).args(["aikit","--json","-C"]).arg(cwd).args(args)
+        .stdin(Stdio::piped()).stdout(Stdio::piped()).stderr(Stdio::piped()).spawn()
+        .map_err(|e|CallError::Unavailable{detail:e.to_string()})?;
+    let write=child.stdin.take().ok_or_else(||CallError::Malformed{detail:"Native Action stdin is absent".into()})?
+        .write_all(&bytes);
+    if let Err(e)=write{let _=child.kill();let _=child.wait();return Err(CallError::Malformed{detail:e.to_string()});}
+    decode_envelope(&child.wait_with_output().map_err(|e|CallError::Malformed{detail:e.to_string()})?)
+}
+
 fn run_with_executable(cwd: &Path, args: &[&str], executable: &OsStr) -> Result<Value, CallError> {
     let output = Command::new(executable)
         .arg("aikit")
