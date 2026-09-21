@@ -147,3 +147,26 @@ Native/API checks, controlled UI, real provider/material and human experience re
 Return the precise changed owner files and refs, source-to-operation/control ledger, current decisions or explicit amendments, tests actually executed, measured performance, complete joined walk, remaining owner gaps and a clear next native action. A reader should not have to inspect a schema to discover a change in product direction.
 
 Planning publication does not run, install or validate the app. This map is ready to guide implementation against the incoming mains; source/schema naming reconciliation must not reopen the settled product decisions above.
+
+
+## 9. Adaptive projection continuation of WC-W4/W5/W6 and WC-T3
+
+Read UX section 6 and AP01–AP08 before implementation. The core objective is feedback changing the next act, not a new memory registry. Existing WC01–WC15 and WCT01–WCT18 remain required.
+
+**Native slice:** AIKit #366, based on `579a1cdaf202b3b0de74a2ce25ec240fe857a91b`, supplies ordinary Agent Wiki Markdown read/update, revision/evidence retention, selected live hook reading and actual Claude hook context transport. Source files are `crates/aikit-cli/src/wiki_projection.rs`, existing Wiki/continuity/CLI registrations and `hook.rs`. Its CLI regression must exercise source update and plain harness stdout, not merely the JSON diagnostic envelope. Read the PR's exact latest test receipt; this map does not assert a pass.
+
+**Receiving sequence:** preserve #418's reader/index/Return and #420's constructive field. Agent/bootstrap owner binds actual user, guardian, current root/workcell and project; declares eligible projection sources and the real tool in the selected composition. Shared shell owner joins chat correction and existing Context/Run/Agents receipts. Wiki owner exposes the source/evidence links and optional constellation view. Document skill owners consume the same current vision/projection route. Central retains separately reviewed governance source changes; Actuation retains Agency/permission and session identity; AIKit retains effective composition and harness delivery. No new writer of a shared file is introduced by this plan.
+
+The source tool's submitted actor is attribution, not verified human identity. The first native slice requires explicit source selection and does not yet supply every session-expiry, desktop or live-harness adapter. Implement those at the existing owners; do not declare them permanently out of scope or close the complete loop from a fixture pass. Central root-only activity is not absent merely because no child Project is bound.
+
+| Case | Required observation and negative |
+|---|---|
+| WCT19 | A person corrects actual agent behaviour once; exact Wiki source changes; the next act receives its revision and independently shows the desired change. Disconnect delivery: source save succeeds but joined acceptance fails. |
+| WCT20 | Two writers using one basis cannot both win; conflict retains the human draft and evidence. Inference is not self-accepted; governance bytes do not change with projection edits. |
+| WCT21 | Root-only Central, sibling ProjectCentrals, primary world and a second workcell retain scope and identities. No fallback to another root when current source is absent. |
+| WCT22 | Resume, compaction and fresh session reload the current selected reading; unsupported events/harnesses report absent delivery, never a fabricated loaded receipt. |
+| WCT23 | Source denied/deleted, projection cleared/suspended, budget exclusion and session expiry prevent future stale delivery. Exact source history remains attributable. |
+| WCT24 | Plain Markdown correction and document skills work with QL absent; optional QL organisation preserves source authority, common evidence lineage and deliberate relation authorship. |
+| WCT25 | Existing chat/Context/Run/Agents controls show saved/selected/emitted/acknowledged/use separately. No extra participant modal; independent actual-harness and human review retained. |
+
+**Return:** exact native source/build refs, selected configuration, tool/skill discovery, source and next-act receipt, negative controls, privacy/scope outcomes and actual provider/human verdict. User machines and local installation are not mutated by this remote development. Reconcile the incoming integrated branch before joining consumer files.
