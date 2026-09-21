@@ -7,22 +7,22 @@ use oi_cradle_kernel::{
     flow::CentralClient,
 };
 use serde_json::{json, Value};
+use std::sync::atomic::{AtomicU32, Ordering};
 use std::{
     fs,
     os::unix::fs::PermissionsExt,
     path::PathBuf,
     time::{SystemTime, UNIX_EPOCH},
 };
+static RIG_SEQ: AtomicU32 = AtomicU32::new(0);
 struct Rig {
     root: PathBuf,
     executable: PathBuf,
 }
 impl Rig {
     fn new() -> Self {
-        let stamp = SystemTime::now()
-            .duration_since(UNIX_EPOCH)
-            .unwrap()
-            .as_nanos();
+        let stamp=SystemTime::now().duration_since(UNIX_EPOCH).unwrap().as_nanos()
+            + 0x1000000 * RIG_SEQ.fetch_add(1, Ordering::Relaxed) as u128;
         let root = std::env::temp_dir().join(format!(
             "oi-agent-definition-{}-{stamp}",
             std::process::id()
