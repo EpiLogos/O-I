@@ -24,7 +24,7 @@ if mode=='ambiguous':
  record['executable']+='-other';print(json.dumps(record))
 `);chmodSync(cargo,0o700);
  const output=join(root,'environment');writeFileSync(output,'');
- const result=spawnSync('python3',[helper],{cwd:root,encoding:'utf8',env:{...process.env,PATH:`${bin}:${process.env.PATH}`,TEST_TARGET:target,TEST_MODE:mode,GITHUB_ENV:output}});
+ const result=spawnSync('python3',[helper,'--receipt',join(root,'receipt.json')],{cwd:root,encoding:'utf8',env:{...process.env,PATH:`${bin}:${process.env.PATH}`,TEST_TARGET:target,TEST_MODE:mode,GITHUB_ENV:output}});
  return {root,target,result,output};
 }
 

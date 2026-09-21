@@ -55,7 +55,13 @@ export function KnowledgeSurface({binding,onOpen}: {binding:SurfaceBinding;onOpe
     withPassage(travel.construction?.draft??emptyDraft(),passage);
     setConstructionIncoming(passage);setConstructionOpen(true);
   };
-  const saveCheckpoint=useCallback((value:ConstructionCheckpoint)=>setTravel(t=>({...t,construction:value})),[]);
+  const saveCheckpoint=useCallback((value:ConstructionCheckpoint)=>{
+    const next={...latestTravel.current,construction:value};
+    // An operation intent is a recovery boundary, not an ordinary debounced
+    // camera preference. Persist it before allowing a native write to begin.
+    if(value.pending||value.artifactSave)localStorage.setItem(`oi-cradle.knowledge-travel.v1:${binding.id}`,JSON.stringify(next));
+    latestTravel.current=next;setTravel(next);
+  },[binding.id]);
   const [detailNode,setDetailNode]=useState<GraphNode>();
   const [reading,setReading]=useState<KnowledgeReading>();
   const [hosted,setHosted]=useState<SharedFieldReading>();

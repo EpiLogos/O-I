@@ -67,15 +67,26 @@ export function decodeRegister(file: NativeFileReading, source_ref: string): Wik
 /** Central discloses the register and its real location. Paths below are only
  * navigation operands derived from that disclosure, never minted source refs. */
 export async function readRegister(transport: KernelTransportStatus, project?: string): Promise<WikiRegister> {
+  // A Wiki may be opened directly, before the shell has visited Central.
+  // Root disclosure establishes the native Project boundary; project_browse
+  // must not rely on unrelated navigation having happened earlier in the UI.
+  const world = await kernelOp(transport, {op: 'world_browse', fresh: true});
+  if (world.error || world.outcome?.result !== 'world_read') throw new Error(world.error ?? 'Central could not disclose the root world.');
+  let navigator = world.outcome.snapshot.navigator;
+  if (!navigator?.root) throw new Error(navigator?.error ?? 'Central did not return its root mapping.');
+  let projectPath = '';
+  if (project) {
+    if (!navigator.root.work.projects.some(item => item.name === project)) throw new Error('The selected Project is outside the disclosed Central world.');
+    const response = await kernelOp(transport, {op: 'project_browse', project, fresh: true});
+    if (response.error || response.outcome?.result !== 'world_read') throw new Error(response.error ?? 'Central could not disclose the selected Project.');
+    navigator = response.outcome.snapshot.navigator;
+    if (navigator?.project?.project.name !== project || !navigator.project.project.path) throw new Error(navigator?.error ?? 'The selected Project has no native directory disclosure.');
+    projectPath = navigator.project.project.path;
+  }
   const wiki = await invoke<Record<string, unknown>>(transport, project, project ? 'projectcentral.wiki.read' : 'central.wiki.read', project ?? 'control:root', project ? {project} : {project: null});
   const source = wiki.source;
   if (wiki.schema !== 'central.wiki-reading/v1' || !object(source) || !ref(source.path) || !ref(source.ref) || !ref(source.revision)) throw new Error('Central did not disclose a current Wiki register.');
   if (source.path.startsWith('/') || source.path.split('/').some(part => !part || part === '.' || part === '..')) throw new Error('The Wiki register location is outside the selected ground.');
-  const response = await kernelOp(transport, project ? {op: 'project_browse', project, fresh: true} : {op: 'world_browse', fresh: true});
-  if (response.error || response.outcome?.result !== 'world_read') throw new Error(response.error ?? 'Central could not disclose the selected world.');
-  const navigator = response.outcome.snapshot.navigator;
-  const projectPath = project ? navigator?.project?.project.path : '';
-  if (project && !projectPath) throw new Error('The selected Project has no native directory disclosure.');
   const relative = [projectPath, source.path].filter(Boolean).join('/');
   const slash = relative.lastIndexOf('/'), parent = relative.slice(0, slash), name = relative.slice(slash + 1);
   const directory = await listFiles(transport, parent, true);

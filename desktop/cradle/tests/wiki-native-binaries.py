@@ -4,6 +4,7 @@ Do not infer target directories from checkout paths: Cargo configuration and
 workspace membership can change those independently. The emitted paths belong
 to this exact build, not another cached or installed binary.
 """
+import argparse
 import json
 import os
 from pathlib import Path
@@ -18,6 +19,9 @@ TARGETS = (
 
 
 def main():
+    parser = argparse.ArgumentParser()
+    parser.add_argument("--receipt", default="/tmp/wiki-native-binaries.json")
+    args = parser.parse_args()
     resolved = {}
     for name, manifest, binary in TARGETS:
         command = ["cargo", "build", "--locked", "--manifest-path", manifest,
@@ -39,7 +43,7 @@ def main():
     if destination:
         with open(destination, "a", encoding="utf-8") as stream:
             stream.writelines(f"{name}={path}\n" for name, path in resolved.items())
-    Path("/tmp/wiki-native-binaries.json").write_text(json.dumps(resolved, indent=2) + "\n")
+    Path(args.receipt).write_text(json.dumps(resolved, indent=2) + "\n")
 
 
 if __name__ == "__main__":

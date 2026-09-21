@@ -24,7 +24,7 @@ const sourceMaterial=[['a','Alpha',sourceText],['b','Beta','# Beta\n\n[[Alpha]]\
 const materialPath=resolve(project,'source-material.json');writeFileSync(materialPath,JSON.stringify(sourceMaterial));
 for(const item of sourceMaterial)writeFileSync(item.binding.locator.value,item.body);
 const before=readFileSync(materialPath,'utf8'),wikiPath=resolve(project,'ProjectCentral/agents/wiki/wiki.json');
-let bridge,server,browser,page,bridgeUrl;const logs=[],errors=[],writes=[];
+let bridge,server,browser,page,bridgeUrl;const logs=[],errors=[],writes=[],responses=[];
 async function startBridge(){
  bridge=spawn(binaries.WIKI_KERNEL_BIN,['127.0.0.1:0'],{cwd:project,env,stdio:['ignore','pipe','pipe']});
  bridge.stderr.on('data',data=>logs.push(data.toString()));
@@ -41,6 +41,7 @@ try{
  const url=`http://127.0.0.1:${server.httpServer.address().port}/tests/wiki-constructive.html?bridge=${encodeURIComponent(bridgeUrl)}`;
  browser=await chromium.launch({headless:true});page=await browser.newPage({viewport:{width:1360,height:960},reducedMotion:'reduce'});page.setDefaultTimeout(20000);
  page.on('pageerror',error=>errors.push(String(error)));
+ page.on('response',response=>{if(response.request().method()==='POST'&&response.url().endsWith('/op'))void response.json().then(result=>{if(result.error||result.ok===false)responses.push(result);},()=>{});});
  page.on('request',request=>{if(request.method()==='POST'&&request.url().endsWith('/op')){const body=request.postDataJSON();if(body.op==='invoke_action'||body.op==='expression')writes.push(body);}});
  await page.goto(url);await page.locator('.wiki-prose h1').waitFor();
  await choosePassage('.wiki-prose strong');
@@ -110,5 +111,5 @@ try{
  check(errors.length===0,`No uncaught UI errors (${errors.join('; ')})`);
  receipt.passed=true;receipt.expression_ref=expressionRef;receipt.frame_ref=wholeRef;receipt.operations=writes.length;
  console.log(JSON.stringify(receipt));
-}catch(error){receipt.failure={message:String(error),errors,lastWrites:writes.slice(-4)};if(page)await page.screenshot({path:resolve(out,'failure.png')}).catch(()=>{});throw error;}
+}catch(error){receipt.failure={message:String(error),errors,responses,lastWrites:writes.slice(-4),authoring:page?await page.locator('.wiki-construction').innerText().catch(()=>null):null};console.error(JSON.stringify(receipt.failure));if(page)await page.screenshot({path:resolve(out,'failure.png')}).catch(()=>{});throw error;}
 finally{writeFileSync(resolve(out,'receipt.json'),JSON.stringify(receipt,null,2)+'\n');writeFileSync(resolve(out,'kernel.log'),logs.join(''));if(browser)await browser.close();if(server)await server.close();bridge?.kill('SIGTERM');}

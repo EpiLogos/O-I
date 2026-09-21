@@ -11,7 +11,8 @@ import {listFiles} from '../files/client';
 import {CONSTRUCTION, authoringForms, newRef, readRegister, saveConstruction,
   type AuthoringForm, type ConstructionRequest, type NativeConstruction, type SavedConstruction, type WikiRegister} from './construction';
 import {emptyDraft, fromNative, withForm, withPassage, withoutMember, draftRequest, type ConstructionDraft} from './constructionDraft';
-import {projectConstruction, saveCompositionFile, attachCompositionReturn, reopenComposition, type ArtifactReturn} from './constructionProjection';
+import {projectConstruction, attachCompositionReturn, reopenComposition, type ArtifactReturn} from './constructionProjection';
+import {prepareArtifactSave, performArtifactSave, inspectArtifactSave, restorePendingArtifactDocument, type ArtifactSaveIntent} from './artifactRecovery';
 import './wikiConstruction.css';
 
 import {memberAnchor, type ConstructionCheckpoint} from './constructionCheckpoint';
@@ -31,12 +32,13 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   const [saved, setSaved] = useState<SavedConstruction>(), [dirty, setDirty] = useState(checkpoint ? !checkpoint.saved : false);
   const [document, setDocument] = useState<ExpressionDocument>(), [artifact, setArtifact] = useState<ArtifactReturn>();
   const [artifactLocation,setArtifactLocation]=useState(checkpoint?.artifact);
+  const [artifactSave,setArtifactSave]=useState<ArtifactSaveIntent|undefined>(checkpoint?.artifactSave);
   const [folder, setFolder] = useState(''), [filename, setFilename] = useState('');
   const [showDiscard, setShowDiscard] = useState(false);
   const presentation = useRef<StagePresentation | null>(null), host = useRef<HTMLDivElement>(null);
   const current = useRef(draft); current.current = draft;
   const wantedFrame = useRef<string>();
-  const operation = useRef(''), alive = useRef(true), initialized = useRef(false), incomingKey = useRef<WikiPassage>();
+  const alive = useRef(true), initialized = useRef(false), incomingKey = useRef<WikiPassage>();
   const checkpointRef = useRef(onCheckpoint); checkpointRef.current = onCheckpoint;
 
   const update = (value: ConstructionDraft) => {setDraft(value); setDirty(true); setError(''); setNotice('');};
@@ -44,9 +46,10 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   useEffect(() => {alive.current = true; return () => {alive.current = false; closePresentation();};}, []);
   useEffect(() => {if (!open) closePresentation();}, [open]);
   useEffect(() => {
-    checkpointRef.current({draft, pending, saved: !dirty,
-      artifact: artifact ? {location: artifact.file.location, revision: artifact.file.revision, expression_ref: artifact.document.expression_ref} : artifactLocation});
-  }, [draft, pending, dirty, artifact, artifactLocation]);
+    try {checkpointRef.current({draft, pending, saved: !dirty, artifactSave,
+      artifact: artifact ? {location: artifact.file.location, revision: artifact.file.revision, expression_ref: artifact.document.expression_ref} : artifactLocation});}
+    catch(error){setError(`Recovery could not be saved on this device: ${message(error)}`);}
+  }, [draft, pending, dirty, artifact, artifactLocation, artifactSave]);
   const read = async () => {
     const result = await readRegister(kernel.transport, binding.project);
     if (alive.current) {
@@ -83,8 +86,9 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     setError(''); setBusy('Saving constellation…');
     let request: ConstructionRequest;
     try {request = pending ?? draftRequest(draft);} catch (error) {setError(message(error)); setBusy(''); return;}
-    setPending(request);
     try {
+      checkpointRef.current({draft,pending:request,saved:!dirty,artifactSave,artifact:artifactLocation});
+      setPending(request);
       const value = await saveConstruction(kernel.transport, binding.project, register, request, draft.members.flatMap(member => member.passage ? [member.passage] : []), kernel.apply);
       if (!alive.current) return;
       acceptSaved(value);
@@ -111,11 +115,11 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
   const openFrame = (reference: string) => {
     const found = register?.frames.find(frame => frame.ref === reference);
     if (!found) return;
-    if (dirty || pending) {setError('Save or explicitly discard this draft before opening another constellation.'); return;}
+    if (dirty || pending || artifactSave) {setError('Resolve or explicitly discard the pending work before opening another constellation.'); return;}
     try {closePresentation(); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setSaved(undefined); setDraft(fromNative(found, register!.relations)); setDirty(false); setError('');} catch (error) {setError(message(error));}
   };
   useEffect(() => {if (requestedFrame && register && wantedFrame.current !== requestedFrame) {wantedFrame.current = requestedFrame; openFrame(requestedFrame);}}, [requestedFrame, register]);
-  const createNew = () => {closePresentation(); setDraft(emptyDraft(register?.spaces[0]?.ref)); setPending(undefined); setSaved(undefined); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setDirty(false); setShowDiscard(false); setNotice(''); setError('');};
+  const createNew = () => {if(artifactSave){setError('Inspect the pending artifact save before starting another inquiry.');return;}closePresentation(); setDraft(emptyDraft(register?.spaces[0]?.ref)); setPending(undefined); setSaved(undefined); setDocument(undefined); setArtifact(undefined); setArtifactLocation(undefined); setDirty(false); setShowDiscard(false); setNotice(''); setError('');};
   const live = async () => {
     if (!draft.basis || dirty || pending) return;
     setBusy('Opening live composition…'); setError('');
@@ -135,17 +139,41 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     finally {if (alive.current) setBusy('');}
   };
   const saveArtifact = async () => {
-    if (!document || !draft.basis || dirty || pending) return;
+    if ((!document && !artifactSave) || !draft.basis || dirty || pending) return;
     setBusy('Saving Expression artifact…'); setError('');
     try {
-      if (!operation.current) operation.current = newRef('operation:expression');
-      const directory = await listFiles(kernel.transport, folder, true);
-      const held = artifact?.file ?? artifactLocation;
-      const value = await saveCompositionFile(kernel.transport, document, held ? {location: held.location, revision: held.revision} : {parent: directory.location, name: filename || 'constellation.expression.json', operation_ref: operation.current}, kernel.apply);
-      setArtifact(value); setDocument(value.document); operation.current = '';
+      let intent = artifactSave;
+      if (!intent) {
+        const held = artifact?.file ?? artifactLocation;
+        const destination = held ? {location: held.location, revision: held.revision}
+          : {parent: (await listFiles(kernel.transport, folder, true)).location, name: filename || 'constellation.expression.json', operation_ref: newRef('operation:expression')};
+        intent = await prepareArtifactSave(kernel.transport, document!.expression_ref, destination);
+        // Retain the exact intended document and operation before the native act.
+        checkpointRef.current({draft, pending, saved: !dirty, artifactSave: intent, artifact: artifactLocation});
+        setArtifactSave(intent);
+      }
+      const value = await performArtifactSave(kernel.transport, intent, kernel.apply);
+      setArtifact(value); setDocument(value.document); setArtifactSave(undefined);
       setNotice('The Expression file is saved. Return it to this constellation with the separate action below.');
     } catch (error) {setError(message(error));}
     finally {setBusy('');}
+  };
+  const inspectFileSave = async () => {
+    if (!artifactSave) return;
+    setBusy('Inspecting saved artifact…'); setError('');
+    try {
+      const result = await inspectArtifactSave(kernel.transport, artifactSave);
+      if (result.state === 'saved') {
+        setArtifact(result.artifact);setDocument(result.artifact.document);setArtifactSave(undefined);
+        setNotice('The exact composition file was recovered. No save was replayed; it is ready for Return.');
+      } else setNotice(result.detail);
+    } catch (error) {setError(message(error));}
+    finally {setBusy('');}
+  };
+  const restoreFileComposition = async () => {
+    if(!artifactSave)return;setBusy('Restoring retained composition…');setError('');
+    try{const current=await restorePendingArtifactDocument(kernel.transport,artifactSave,kernel.apply);setDocument(current);setNotice('The exact retained composition is open. The file-save operation has not been replayed.');}
+    catch(error){setError(message(error));}finally{setBusy('');}
   };
   const returnArtifact = async () => {
     if (!artifact || !draft.basis || !register || dirty || pending) return;
@@ -163,7 +191,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     <header><h2>{draft.basis ? 'Work on constellation' : 'New constellation'}</h2><button className="oi-tool" aria-label="Close constellation authoring" onClick={onClose}>×</button></header>
     <p className="wiki-construction-intro">Gather passages, give them roles, and make connections. The original writing stays where it is.</p>
     {busy && <p role="status">{busy}</p>}{error && <p role="alert">{error}</p>}{notice && <p role="status">{notice}</p>}
-    <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button><button className="oi-action" disabled={!!busy || !!pending} onClick={()=>dirty ? setShowDiscard(true) : createNew()}>New inquiry</button></div>
+    <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy} onClick={()=>void inspect()}>Inspect saved state</button><button className="oi-action" disabled={!!busy || !!pending || !!artifactSave} onClick={()=>dirty ? setShowDiscard(true) : createNew()}>New inquiry</button></div>
     {showDiscard && <div role="group" aria-label="Discard construction draft"><p>Discard this unsaved proposal? Its source documents are not changed.</p><button className="oi-action" onClick={createNew}>Discard draft and start new</button><button className="oi-action" onClick={()=>setShowDiscard(false)}>Keep working</button></div>}
     {!!register?.frames.length && <label>Saved constellation<select aria-label="Open saved constellation" value={draft.basis?.ref ?? ''} disabled={!!busy || !!pending} onChange={event=>openFrame(event.target.value)}><option value="">Choose a saved inquiry…</option>{register.frames.map(frame=><option key={frame.ref} value={frame.ref}>{frame[CONSTRUCTION].title} · r{frame.revision}</option>)}</select></label>}
     <fieldset disabled={!!busy || !!pending}>
@@ -183,6 +211,7 @@ export function WikiConstructionPanel({binding, open, incoming, checkpoint, onCh
     <div className="wiki-construction-toolbar"><button className="oi-action" disabled={!!busy || !!pending || !register || !dirty} onClick={()=>void save()}>Save constellation</button><button className="oi-action" disabled={!!busy || !!pending || dirty || !draft.basis || !draft.members.length} onClick={()=>void live()}>Open live composition</button></div>
     {pending&&<p className="wiki-construction-hint">This proposal is retained with its operation identity. Inspect the native result before retrying or editing.</p>}
     {saved?.continuity_warnings?.map((warning,index)=><p role="status" key={index}>{warning}</p>)}
+    {artifactSave&&<section aria-label="Pending Expression save"><p>The exact file-save operation is retained, including its intended composition.</p><button className="oi-action" disabled={!!busy} onClick={()=>void inspectFileSave()}>Inspect pending Expression file</button><button className="oi-action" disabled={!!busy||dirty||!!pending} onClick={()=>void saveArtifact()}>Retry exact file save</button><button className="oi-action" disabled={!!busy} onClick={()=>void restoreFileComposition()}>Restore retained composition</button></section>}
     <div ref={host} className="wiki-construction-stage" hidden={!document} onPointerUp={event=>{
       const hit=presentation.current?.hitTest(event.clientX,event.clientY);if(!hit||!document)return;
       if(hit.kind==='entity'){

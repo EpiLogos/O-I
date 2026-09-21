@@ -1,3 +1,4 @@
+import type {ArtifactSaveIntent} from './artifactRecovery';
 import type {CentralLocation} from '../kernel/types';
 import {CONSTRUCTION, PARTICIPATION, RELATION, object, validReference as ref, validRevision as revision, validNativeFrame,
   type ConstructionRequest} from './construction';
@@ -9,6 +10,7 @@ export interface ConstructionCheckpoint {
   pending?: ConstructionRequest;
   artifact?: {location: CentralLocation; revision: string; expression_ref: string};
   saved?: boolean;
+  artifactSave?: ArtifactSaveIntent;
 }
 const bounded = (value: unknown, max: number): value is string => typeof value === 'string' && value.length <= max;
 const records = (value: unknown): value is Record<string, unknown>[] => Array.isArray(value) && value.length <= 256 && value.every(object);
@@ -40,6 +42,13 @@ export function restoreConstructionCheckpoint(value: unknown): ConstructionCheck
   for (const edge of d.original_relations) if (!object(edge) || !ref(edge.ref) || !revision(edge.revision) || !object(edge[RELATION]) || !ref(edge[RELATION].from_participation_ref) || !ref(edge[RELATION].to_participation_ref)) return fail();
   if (value.pending !== undefined && (!object(value.pending) || value.pending.schema !== 'aikit.constellation-action/v1' || value.pending.frame_ref !== d.frame_ref || !ref(value.pending.operation_ref) || !ref(value.pending.actor_ref) || !Number.isSafeInteger(value.pending.expected_revision) || Number(value.pending.expected_revision) < 0 || !records(value.pending.changes))) return fail();
   if (value.artifact !== undefined && (!object(value.artifact) || !location(value.artifact.location) || !ref(value.artifact.revision) || !ref(value.artifact.expression_ref))) return fail();
+  if (value.artifactSave !== undefined) {
+    const intent = value.artifactSave;
+    if (!object(intent) || intent.schema !== 'oi.wiki-artifact-save/v1' || !object(intent.document) || intent.document.schema !== 'oi.expression/v1' || !ref(intent.document.expression_ref) || !revision(intent.document.revision) || !Array.isArray(intent.document.scenes) || !object(intent.document.entities) || !object(intent.document.relations) || !object(intent.destination)) return fail();
+    const dest = intent.destination;
+    if ('location' in dest) {if (!location(dest.location) || !ref(dest.revision)) return fail();}
+    else if (!location(dest.parent) || !bounded(dest.name,255) || !dest.name || /[\\/\0]/.test(dest.name) || ['.','..'].includes(dest.name) || !ref(dest.operation_ref)) return fail();
+  }
   return value as unknown as ConstructionCheckpoint;
 }
 

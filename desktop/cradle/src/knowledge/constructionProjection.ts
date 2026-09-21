@@ -45,6 +45,15 @@ export async function expressionOperation(transport: KernelTransportStatus, requ
   if (value.state === 'revision_conflict') throw new Error('The composition changed. Reopen its current revision before saving.');
   return value;
 }
+/** Compare JSON documents structurally, independently of property order. */
+export function sameComposition(a: unknown, b: unknown): boolean {
+  const canonical = (value: unknown): string => {
+    if (Array.isArray(value)) return `[${value.map(canonical).join(',')}]`;
+    if (value && typeof value === 'object') return `{${Object.entries(value).sort(([a],[b])=>a.localeCompare(b)).map(([key,item])=>`${JSON.stringify(key)}:${canonical(item)}`).join(',')}}`;
+    return JSON.stringify(value);
+  };
+  return canonical(a) === canonical(b);
+}
 export interface ArtifactReturn {file: NativeFileReading; document: ExpressionDocument; returned?: SavedConstruction}
 
 /** Save the actual current working composition, not a copied scene or metadata
@@ -55,10 +64,11 @@ export async function saveCompositionFile(transport: KernelTransportStatus, docu
   const result = await expressionOperation(transport, 'location' in destination
     ? {operation: 'save', expression_ref: document.expression_ref, expected_revision: current.document.revision, location: destination.location, expected_file_revision: destination.revision, actor: ACTOR, actor_kind: 'human'}
     : {operation: 'save_as', expression_ref: document.expression_ref, expected_revision: current.document.revision, parent: destination.parent, name: destination.name, operation_ref: destination.operation_ref, actor: ACTOR, actor_kind: 'human'}, apply);
-  if (!result.file || !result.document) throw new Error('The owner did not confirm an artifact file. Inspect the destination before retrying first save.');
+  if (result.state !== 'saved' || result.persisted !== true || !result.file) throw new Error('The owner did not confirm an artifact file. Inspect the destination before retrying first save.');
   const file = await readFile(transport, result.file.location);
   if (file.revision !== result.file.revision) throw new Error('The saved artifact changed before readback. Its save is not replayed automatically.');
-  return {file, document: result.document};
+  if (!sameComposition(JSON.parse(file.content), current.document)) throw new Error('The saved file does not match the intended composition. Inspect it before Return.');
+  return {file, document: current.document};
 }
 export async function attachCompositionReturn(transport: KernelTransportStatus, project: string | undefined, register: WikiRegister, frame: NativeConstruction, artifact: ArtifactReturn, apply?: ApplyKernel): Promise<SavedConstruction> {
   const source_ref = artifact.file.source?.ref ?? artifact.file.location.ref;
