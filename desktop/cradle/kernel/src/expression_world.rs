@@ -1075,7 +1075,7 @@ impl Kernel {
                     expression::Request::Restore {
                         expression_ref,
                         expected_revision,
-                        document: checkpoint.document.clone(),
+                        document: Box::new(checkpoint.document.clone()),
                         actor,
                     },
                 )?;

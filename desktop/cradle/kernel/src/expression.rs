@@ -314,7 +314,10 @@ pub enum Request {
         actor: String,
     },
     Open {
-        document: Document,
+        // Boxed: an inline Document makes this the largest `Request` variant
+        // (and so the largest `KernelOp::Expression` payload). Indirection
+        // keeps the command enum compact without changing the wire shape.
+        document: Box<Document>,
         actor: String,
     },
     OpenFile {
@@ -430,7 +433,9 @@ pub enum Request {
     Restore {
         expression_ref: String,
         expected_revision: u64,
-        document: Document,
+        // Boxed for the same reason as `Open` above: keep the inline Document
+        // out of the command enum's stack footprint.
+        document: Box<Document>,
         actor: String,
     },
 }
@@ -1132,7 +1137,7 @@ impl Application {
                 };
                 return self.open(d, actor);
             }
-            Request::Open { document, actor } => return self.open(document, actor),
+            Request::Open { document, actor } => return self.open(*document, actor),
             Request::OpenFile { location, actor } => {
                 let file = files::read(client, &location)?;
                 let d: Document = serde_json::from_str(&file.content)
@@ -1744,7 +1749,7 @@ impl Application {
                 if document.revision > expected_revision {
                     return Err("Restore document is not behind the current draft".into());
                 }
-                let mut d = document;
+                let mut d = *document;
                 d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
                 while d.revision <= expected_revision {
                     // Stay strictly ahead of the draft the checkpoint returns over.
