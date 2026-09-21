@@ -14,7 +14,8 @@ impl Rig {
   let root=std::env::temp_dir().join(format!("oi-agent-native-gate-{}-{stamp}",std::process::id()));
   fs::create_dir(&root).unwrap();
   let executable=root.join("controlled-owner");
-  fs::write(&executable,r#"#!/usr/bin/env python3
+  let staged=root.join("controlled-owner-staged");
+  fs::write(&staged,r#"#!/usr/bin/env python3
 import json, pathlib, sys
 root=pathlib.Path(__file__).parent
 args=sys.argv[1:]
@@ -27,7 +28,8 @@ elif 'encounter' in args:
 else:
  print('unexpected native operation',file=sys.stderr);sys.exit(2)
 "#).unwrap();
-  fs::set_permissions(&executable,fs::Permissions::from_mode(0o700)).unwrap();
+  fs::set_permissions(&staged,fs::Permissions::from_mode(0o700)).unwrap();
+  fs::rename(&staged,&executable).unwrap();
   Self{root,executable}
  }
  fn call(&self,request:EncounterRequest)->Result<Value,String>{Client::with(self.executable.clone(),None).encounter(&self.root,"project/allowed",&request)}

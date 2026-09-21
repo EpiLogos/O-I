@@ -29,7 +29,8 @@ impl Rig {
         ));
         fs::create_dir(&root).unwrap();
         let executable = root.join("owner");
-        fs::write(&executable, r#"#!/usr/bin/env python3
+        let staged = root.join("owner-staged");
+        fs::write(&staged, r#"#!/usr/bin/env python3
 import json,pathlib,sys
 root=pathlib.Path(__file__).parent
 args=sys.argv[1:]
@@ -51,7 +52,8 @@ else:
  if (root/'override.json').exists(): value.update(json.loads((root/'override.json').read_text()))
  print(json.dumps(value))
 "#).unwrap();
-        fs::set_permissions(&executable, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::set_permissions(&staged, fs::Permissions::from_mode(0o700)).unwrap();
+        fs::rename(&staged, &executable).unwrap();
         Self { root, executable }
     }
     fn call(&self, request: Request) -> Result<Value, String> {
