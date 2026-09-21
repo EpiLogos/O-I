@@ -27,45 +27,38 @@ jobs:
       - uses: Swatinem/rust-cache@v2.9.2
         with:
           workspaces: desktop/cradle/kernel
-      - name: Apply and test only reviewed source changes
-        run: |
-          set -euo pipefail
-          test "$(git ls-remote origin refs/heads/agent/wiki-constellation-loop-20260920 | cut -f1)" = "$GITHUB_SHA"
-          python3 scripts/wiki-finish-source.py
-          rustfmt --edition 2021 desktop/cradle/kernel/tests/wiki_expression_save.rs
-          cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml --test wiki_expression_save
-          cd desktop/cradle
-          npm ci
-          npx tsc --noEmit
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/wiki-expression-outcome.test.mjs tests/wiki-artifact-recovery.test.mjs
-      - name: Commit the exact tested repair to this branch only
+      - name: Reconcile reviewed main changes and finish the view controls
         run: |
           set -euo pipefail
           test "$(git ls-remote origin refs/heads/agent/wiki-constellation-loop-20260920 | cut -f1)" = "$GITHUB_SHA"
           git config user.name 'github-actions[bot]'
           git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
-          git add desktop/cradle/kernel/src/expression.rs desktop/cradle/kernel/tests/wiki_expression_save.rs desktop/cradle/src/knowledge/constructionProjection.ts desktop/cradle/tests/wiki-constructive-browser.mjs .github/workflows/wiki-constellation.yml
-          git commit -m 'fix(wiki): preserve destination scope and owner refusal in Expression first save'
-          git push origin HEAD:refs/heads/agent/wiki-constellation-loop-20260920
-      - name: Attempt ordinary main reconciliation without choosing conflict sides
+          python3 scripts/wiki-finish-source.py
+          cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml
+          cargo clippy --locked --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings
+          cd desktop/cradle
+          npm ci
+          npx tsc --noEmit
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/wiki-*.test.mjs
+      - name: Commit the tested source and reviewed main merge to this branch only
         run: |
           set -euo pipefail
-          git fetch origin bba4b4f7167f0019cc2d45761b24e86c0eb6a88e
-          git merge --no-ff --no-commit bba4b4f7167f0019cc2d45761b24e86c0eb6a88e
-          git commit -m 'merge: retain current main agency and Wiki projection changes in Wiki delivery'
+          test "$(git ls-remote origin refs/heads/agent/wiki-constellation-loop-20260920 | cut -f1)" = "$GITHUB_SHA"
+          git add desktop/cradle/kernel/src/lib.rs desktop/cradle/src/knowledge/KnowledgeSurface.tsx desktop/cradle/src/knowledge/GraphCanvas.tsx desktop/cradle/src/knowledge/GraphFilters.tsx desktop/cradle/src/knowledge/WikiConstructionPanel.tsx desktop/cradle/tests/wiki-constructive-page.tsx desktop/cradle/tests/wiki-constructive-browser.mjs desktop/cradle/tests/wiki-reader-browser.mjs
+          git commit -m 'feat(wiki): join native authoring with current main and complete graph view controls'
           git push origin HEAD:refs/heads/agent/wiki-constellation-loop-20260920
-      - name: Retain source and any unresolved conflict for review
+      - name: Retain exact source changes and any unresolved conflict for review
         if: always()
         run: |
           mkdir -p /tmp/wiki-source-review
           git rev-parse HEAD > /tmp/wiki-source-review/head
           git status --short > /tmp/wiki-source-review/status
-          git diff > /tmp/wiki-source-review/worktree.diff
+          git diff HEAD > /tmp/wiki-source-review/worktree.diff
           git ls-files -u > /tmp/wiki-source-review/unmerged
           python3 - <<'PY'
           import pathlib, subprocess, tarfile
-          paths = subprocess.check_output(['git','diff','--name-only','--diff-filter=U']).decode().splitlines()
-          with tarfile.open('/tmp/wiki-source-review/conflicts.tar.gz','w:gz') as archive:
+          paths = subprocess.check_output(['git','diff','--name-only','HEAD']).decode().splitlines()
+          with tarfile.open('/tmp/wiki-source-review/changed-source.tar.gz','w:gz') as archive:
               for name in paths:
                   path=pathlib.Path(name)
                   if path.is_file(): archive.add(path,arcname=name)
