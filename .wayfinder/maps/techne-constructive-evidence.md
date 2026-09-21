@@ -25,7 +25,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery | N: actual first file save and independent separate-process reopen passed. File-execution removal fails and keeps its pending intent. The full constellation/Journey/Palace/artifact → Wiki/graph/search/Library Return loop is not closed by this file proof. |
 | §§20–22,39; C10 | Existing kernel retained models; imported recovery and native working checkpoint; native selection queue | U/N: latest focus survives in-flight work; invalidated old-work gestures do not cross inquiry; no-op commit is idempotent; restart preserves edited-since-save. Whole mode/lens/portal/restart/source-change walk remains open. |
 | §§23–24; C11 | Existing Projection/WorldPresentation/SharedField owners | No new public dataset. Current eligible/private endpoints, read-only refusal and explicit derivative cases remain unproven by this continuation. |
-| §§7–10,13,23,27–33; C12 | Real Library, navigator, verso and source portals | Current native ref/scene/selection must reach the account, not a stale global subject. Exact current-app route and return require investigation and browser evidence. |
+| §§7–10,13,23,27–33; C12 | Real Library, navigator, verso and source portals; `versoAccount`/`resolveVersoSubject`, `TechneSummonSurface`, `PointCloudHost`, app `nativeWorkspace.nativeSubject` | U/B (partial): the verso summon now carries the EXACT open native work (Expression ref + current revision + Scene + entity-or-relation occurrence) and it takes precedence over the kernel global focus; the carried pointer is sanitised to refs and validated through the owner (revision drift disclosed, not trusted). `verso-account-binding.test.mjs` proves the precedence/sanitisation (U, gated); the current-app browser proof asserts the exact ref+revision carriage (B). Library scene rows, source portal open/return and the full navigator/gallery route remain to be closed with browser evidence. |
 | §§26–33,40–42 | Existing tests and Technē workflow | C1–C12 and all retained walks remain whole-commission obligations. No all-green, installed, provider or human acceptance claim. |
 
 ## 21 September executing receipt
@@ -70,6 +70,68 @@ Run `35647836891` → job `106493357316` → artifact `10660663066` records **19
 The current `PointCloudHost`/imported app actually opens the Epii face without a selected Wiki; mounts the real renderer; preserves native navigation; creates a native file from the UI; retains distinct saved/working text, pacing and whole-expression properties; avoids remount/camera reset on save; avoids an unnecessary no-op revision; sends a verso envelope (not full portal acceptance); reopens after a separate kernel restart with the same identity; refuses disconnected save without mistaking browser backup for Return; keeps controls inside a narrow viewport; draws/hit-tests two distinct native relations; keeps renderer, paused clock and camera on relation selection; and reports no uncaught app errors.
 
 The retained `epii-home.png` and `native-saved.png` were visually inspected. The screenshots still show native composition controls over the ordinary Scene Studio, **not a completed M0′–M5′ Lens Studio**. This green current-app proof closes neither that implementation gap nor the whole map. It supersedes the local browser restriction only for the specific scenario and head executed by GitHub's permitted runner.
+
+## 21 September — local continuation: reconcile #471, CI repair, exact account binding
+
+Local agent continuation from delivery head `d70a831a`. No owner machine,
+paid model, live SharedField or private corpus was accessed or mutated. All
+work on the one integration branch; no force-push, reset or unrelated merge.
+
+**Reconciled current main.** `origin/main` is `91a109b6` (#471, unchanged
+since last observed). Merged it into the branch (merge `cd82170e`, parents
+`d70a831a 91a109b6`): a clean merge; `kernel/src/lib.rs` auto-merged, keeping
+both the branch's `expression_scene` module and #471's `A2aExchange` /
+`encounter_join` / `material_read` typed kernel seam. #471's overlap with this
+lane was the single `lib.rs` file plus `techne/material.ts` (which #471 leaves
+to this lane); no other overlap. The full joined head passed **Technē
+constructive field**, **OI Verify**, **Native Expression backcheck**, **Wiki
+constellation integration**, **Search material rendering**, **Canvas editor and
+context**, **Desktop shell recovery** and **Adoption lifecycle** in CI.
+
+**Repaired the four workflows that were red at `d70a831a`.** Fix commit
+`62924e30`:
+- Kernel `clippy -D warnings` tripped `large_enum_variant`: the branch's
+  `expression_scene` additions grew `KernelOp::Expression` to 488 bytes.
+  Boxed the `Document` in `expression::Request::Open`/`Restore` (behaviour-
+  preserving; full kernel suite green locally). This one change cleared the
+  kernel-lint gate that **O:I desktop**, **Wiki constellation integration**
+  and **Agent session native** (strict kernel lint) all share — all three
+  passed the lint on the joined head.
+- **Native Expression backcheck** GPU test could not resolve `three` after the
+  branch made `production.ts` import `ExpressionConnectionLayer`. Gave its
+  esbuild a `nodePaths` fallback to the app's `node_modules`, resolving `three`
+  exactly as the app does. Verified locally: `native-expression-gpu.mjs`
+  `pass:true` (Chromium 153, real GPU effect, disconnected-consumer negative
+  still zero). CI: **Native Expression backcheck** green.
+
+**Exact account/portal binding (gap 4).** See the C12 row. `feat` commit
+`3bfc131a`. resolveVersoSubject now takes a first-priority carried native
+subject; nativeWorkspace exposes `nativeSubject()`; the summon carries it
+across the iframe seam (app → PointCloudHost → TechneSummonSurface);
+readVersoAccount discloses owner-current-revision drift. New
+`verso-account-binding.test.mjs` (4 U checks, gated); the current-app browser
+proof asserts the carried ref+revision.
+
+**Pre-existing, unrelated flake named for its owner (not waived, not weakened).**
+The **Agent session native** workflow's kernel gates flake under
+`--no-fail-fast --all-targets` parallel execution: two different pre-existing
+tests failed across two runs — `a_changed_file_write_discloses_one_file_changed_receipt`
+(lib.rs, from main `32450cff`) and `discovery_without_the_native_version_is_not_an_attached_session`
+(agent_definition_gate.rs, from main `bba4b4f7`). Both pass deterministically
+locally (3× + the full `--all-targets` suite) and in every sibling CI workflow
+on the *same* commit; a different test failing each run is a parallel test-
+isolation flake (shared HOME/discovery ground across parallel kernel test
+binaries), not a regression from this branch, #471, or the reconciliation. It
+does not gate the Technē feature's own workflow. Carried to the kernel/CI
+owner's door rather than blind-patched from this lane.
+
+**Remaining, unchanged in scope:** the actual-current-app six-instrument M0′–M5′
+Lens Studio (§§14–19, C7), the source→construction working field and both
+creation routes (§§34–35, C1–C4), full instrument effects and whole Return
+through Wiki/graph/search/Library (§§16–19,25,38, C9), the rest of the
+Library/navigator/portal route and its browser evidence (§§7–10,27–33), the
+canonical Agent co-work (§§1,25,37, C8) and eligible shared-world behaviour
+(§§23–24, C11). This continuation did not reduce that scope.
 
 ## Historical evidence retained
 
