@@ -4,32 +4,68 @@ on:
     branches: ['agent/wiki-constellation-loop-20260920']
     paths: ['.github/workflows/wiki-source-reconcile.yml']
 permissions:
-  contents: read
+  contents: write
+concurrency:
+  group: wiki-source-reconcile
+  cancel-in-progress: false
 jobs:
   source:
+    if: github.repository == 'EpiLogos/O-I' && github.ref == 'refs/heads/agent/wiki-constellation-loop-20260920'
     runs-on: ubuntu-latest
     timeout-minutes: 10
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          persist-credentials: false
-      - name: Retain the exact published integration inputs
+          ref: ${{ github.sha }}
+      - name: Apply only the locally rehearsed main and Technè joins
         env:
-          WIKI_HEAD: ${{ github.sha }}
+          EXPECTED_HEAD: ${{ github.sha }}
         run: |
           set -euo pipefail
-          mkdir -p /tmp/wiki-source
-          git cat-file -e 178e135025c726cb4fa0b26eef93a5ed2affb741^{commit}
-          git cat-file -e da78da7a98b17e5f0f82f50d44c538650ebc88fc^{commit}
-          git branch wiki-source "$WIKI_HEAD"
-          git branch published-main 178e135025c726cb4fa0b26eef93a5ed2affb741
-          git branch techne-source da78da7a98b17e5f0f82f50d44c538650ebc88fc
-          git bundle create /tmp/wiki-source/oi.bundle wiki-source published-main techne-source
-          git rev-parse wiki-source published-main techne-source > /tmp/wiki-source/revisions.txt
-          sha256sum /tmp/wiki-source/oi.bundle > /tmp/wiki-source/SHA256SUMS
-      - uses: actions/upload-artifact@v4
-        with:
-          name: wiki-source-${{ github.run_id }}
-          path: /tmp/wiki-source/
-          retention-days: 7
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          python3 - <<'PY'
+          from pathlib import Path
+          import subprocess,re
+          def git(*args,check=True):
+              return subprocess.run(['git',*args],check=check,text=True,capture_output=True)
+          def conflicts(path):
+              p=Path(path);s=p.read_text()
+              s=re.sub(r'^<<<<<<<[^\n]*\n.*?^=======\n(.*?)^>>>>>>>[^\n]*\n',r'\1',s,flags=re.M|re.S)
+              assert not re.search(r'^(<<<<<<<|=======|>>>>>>>)',s,re.M)
+              p.write_text(s)
+          def modules():
+              p=Path('desktop/cradle/kernel/src/lib.rs');seen=set();lines=[]
+              for line in p.read_text().splitlines(True):
+                  if line.startswith('pub mod '):
+                      if line in seen:continue
+                      seen.add(line)
+                  lines.append(line)
+              p.write_text(''.join(lines))
+          git('merge','--no-ff','--no-commit','178e135025c726cb4fa0b26eef93a5ed2affb741',check=False)
+          paths=git('diff','--name-only','--diff-filter=U').stdout.splitlines()
+          assert set(paths)=={'desktop/cradle/kernel/src/lib.rs','desktop/cradle/src/knowledge/expressionProjection.ts'},paths
+          for path in paths:conflicts(path)
+          modules()
+          p=Path('desktop/cradle/src/knowledge/expressionProjection.ts')
+          p.write_text(p.read_text().replace('size=count===1?.85:Math.min(.5,Math.sin(Math.PI/count)*.5)','size=count===1?.85:Math.max(.05,Math.min(.5,Math.sin(Math.PI/count)*.5))'))
+          git('add',*paths)
+          git('commit','-m','merge: reconcile Wiki with published main while preserving F07/F08 and native shell')
+          git('merge','--no-ff','--no-commit','da78da7a98b17e5f0f82f50d44c538650ebc88fc',check=False)
+          paths=git('diff','--name-only','--diff-filter=U').stdout.splitlines()
+          assert paths==['desktop/cradle/kernel/src/lib.rs'],paths
+          conflicts(paths[0]);modules()
+          p=Path(paths[0]);s=p.read_text()
+          needle='                let dispatch = action::invoke(&self.client, &cwd, project.as_deref(), &invocation);\n'
+          assert s.count(needle)==1
+          s=s.replace(needle,needle+'                self.reads.invalidate_prefix("knowledge:");\n                self.reads.invalidate_prefix("graph:");\n')
+          p.write_text(s);git('add',paths[0])
+          # Exact hashes from the independently rehearsed three-way joins.
+          assert git('hash-object',paths[0]).stdout.strip()=='27c3b9319b46cd52e2fa36b526b7d35be292c60a'
+          assert git('hash-object','desktop/cradle/src/knowledge/expressionProjection.ts').stdout.strip()=='ab5cb0d96836463c09b0073ab244488da0f3d8b3'
+          git('commit','-m','merge: join native constructive actions without dropping Wiki invalidation')
+          PY
+          test "$(git ls-remote origin refs/heads/agent/wiki-constellation-loop-20260920 | cut -f1)" = "$EXPECTED_HEAD"
+          git push origin HEAD:refs/heads/agent/wiki-constellation-loop-20260920
+          git log -3 --format='%H %s'
