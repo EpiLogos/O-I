@@ -1,0 +1,47 @@
+name: Wiki fixture source repair
+on:
+  push:
+    branches: ['agent/wiki-constellation-loop-20260920']
+    paths: ['.github/workflows/wiki-fixture-repair.yml']
+permissions:
+  contents: write
+jobs:
+  repair:
+    if: github.repository == 'EpiLogos/O-I' && github.ref == 'refs/heads/agent/wiki-constellation-loop-20260920'
+    runs-on: ubuntu-latest
+    timeout-minutes: 5
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.sha }}
+      - name: Apply exact fixture and subprocess-error repairs
+        run: |
+          python3 - <<'PY'
+          from pathlib import Path
+          import hashlib
+          def repair(path, expected, old, new):
+              p=Path(path); before=p.read_bytes()
+              digest=hashlib.sha1(b'blob '+str(len(before)).encode()+b'\0'+before).hexdigest()
+              assert digest==expected, (path,digest)
+              text=before.decode(); assert text.count(old)==1,(path,'replacement is not unique')
+              p.write_text(text.replace(old,new))
+          repair('desktop/cradle/kernel/tests/expression_world.rs', '8560d561bfa4325da9f7db70ee003483ab17b91a',
+                 '    GraphReading {\n        formations: Vec::new(),',
+                 '    GraphReading {\n        shape_catalog: None,\n        formations: Vec::new(),')
+          repair('desktop/cradle/tests/wiki-constructive-browser.mjs', 'e2756d7447ade1754b50ed676405e0452bf4d583',
+                 "bridge.on('exit',code=>{clearTimeout(timer);no(new Error(`Kernel exited ${code}: ${logs.slice(-5)}`));});",
+                 "bridge.on('error',error=>{clearTimeout(timer);no(new Error(`Kernel could not start: ${error.message}`));});bridge.on('exit',code=>{clearTimeout(timer);no(new Error(`Kernel exited ${code}: ${logs.slice(-5)}`));});")
+          PY
+      - name: Publish only this branch and remove the one-time repair job
+        env:
+          EXPECTED_HEAD: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+          test "$(git ls-remote origin refs/heads/agent/wiki-constellation-loop-20260920 | cut -f1)" = "$EXPECTED_HEAD"
+          git config user.name 'github-actions[bot]'
+          git config user.email '41898282+github-actions[bot]@users.noreply.github.com'
+          git add desktop/cradle/kernel/tests/expression_world.rs desktop/cradle/tests/wiki-constructive-browser.mjs
+          git rm .github/workflows/wiki-fixture-repair.yml
+          git commit -m 'fix(wiki): complete graph test fixture and surface kernel startup failures'
+          git push origin HEAD:refs/heads/agent/wiki-constellation-loop-20260920
+          git rev-parse HEAD

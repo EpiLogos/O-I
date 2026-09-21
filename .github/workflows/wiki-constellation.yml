@@ -70,19 +70,16 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: '22.16.0'
-      - name: Build and test the pinned native Wiki and construction owner
+      - name: Build exact native executables and retain Cargo's actual artifact paths
+        run: python3 desktop/cradle/tests/wiki-native-binaries.py
+      - name: Test the pinned native Wiki and construction owner
         run: |
-          cargo build --quiet --locked --manifest-path .wiki-native-owner/Cargo.toml -p aikit-cli --bin aikit
           cargo test --quiet --locked --manifest-path .wiki-native-owner/Cargo.toml -p aikit-adapters --lib wiki_graph
           cargo test --quiet --locked --manifest-path .wiki-native-owner/Cargo.toml -p aikit-cli --test wiki_construct_source_return --test wiki_construct_commands --test wiki_document_end_to_end
           cd desktop/cradle
-          python3 tests/wiki-native-fixture.py --aikit ../../.wiki-native-owner/target/debug/aikit
-      - name: Build real Central first-save, O:I routing and the actual kernel bridge
-        run: |
-          cargo build --quiet --locked --manifest-path .wiki-central-owner/ctrl/Cargo.toml --bin ctrl
-          cargo test --quiet --locked --manifest-path .wiki-central-owner/ctrl/Cargo.toml --test file_creation
-          cargo build --quiet --locked --manifest-path cli/Cargo.toml --bin oi
-          cargo build --quiet --locked --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
+          python3 tests/wiki-native-fixture.py --aikit "$OI_AIKIT_BIN"
+      - name: Prove real Central first-save
+        run: cargo test --quiet --locked --manifest-path .wiki-central-owner/ctrl/Cargo.toml --test file_creation
       - name: Build the complete Cradle application
         working-directory: desktop/cradle
         run: |
@@ -103,11 +100,6 @@ jobs:
         run: node tests/wiki-reader-browser.mjs
       - name: Prove passage to constellation to real Expression file and native Return
         working-directory: desktop/cradle
-        env:
-          OI_BIN: ../../cli/target/debug/oi
-          OI_AIKIT_BIN: ../../.wiki-native-owner/target/debug/aikit
-          OI_CENTRAL_CTRL_BIN: ../../.wiki-central-owner/ctrl/target/debug/ctrl
-          WIKI_KERNEL_BIN: kernel/target/debug/walk-bridge
         run: node tests/wiki-constructive-browser.mjs
       - name: Retain exact tested source and performed browser results
         if: always()
@@ -117,6 +109,7 @@ jobs:
           git -C .wiki-native-owner rev-parse HEAD > /tmp/wiki-evidence/native-revision.txt
           git -C .wiki-central-owner rev-parse HEAD > /tmp/wiki-evidence/central-revision.txt
           git archive --format=tar.gz HEAD > /tmp/wiki-evidence/source.tar.gz
+          cp /tmp/wiki-native-binaries.json /tmp/wiki-evidence/ 2>/dev/null || true
           cp -r desktop/cradle/tests/artifacts/wiki /tmp/wiki-evidence/browser 2>/dev/null || true
           cp -r desktop/cradle/tests/artifacts/wiki-constructive /tmp/wiki-evidence/constructive 2>/dev/null || true
           cp desktop/cradle/tests/fixtures/wiki-native.json /tmp/wiki-evidence/native-readings.json
