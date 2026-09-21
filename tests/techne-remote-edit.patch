@@ -1,0 +1,259 @@
+sha256 ccdc8d21d2ba070137a26dcfd69ddbfa23c1b4eeb0b2c787439feb3045e7fca6
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts
+index d23dc01..0717659 100644
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/kernelComposition.ts
+@@ -6,3 +6,3 @@ import {clone, validateJourney, type Journey, type Scene} from './model.js';
+ import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
+-import {mapSceneOccurrences, mergeScenePage, validateSceneData} from './sceneCorrespondence.js';
++import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
+ 
+@@ -17,3 +17,3 @@ export type CompositionChange =
+   | {change:'entity_add';scene_ref:string;entity_ref:string;title:string}
+-  | {change:'scene_material_set';scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:Scene}}
++  | {change:'scene_material_set';scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}}
+   | {change:'focus';scene_ref:string;entity_ref:string|null};
+@@ -26,3 +26,3 @@ export interface CompositionEdit {
+ }
+-const same = (a:unknown,b:unknown):boolean => JSON.stringify(a) === JSON.stringify(b);
++const same = sameSceneData;
+ 
+@@ -62,3 +62,3 @@ export function prepareCompositionEdit(
+   }
+-  for(const scene of edited.scenes)for(const entity of scene.entities){if(!entityRefs.has(entity.id))entityRefs.set(entity.id,localRef(doc.expression_ref,'entity',entity.id));}
++  for(const scene of [...edited.scenes,...Object.values(edited.savedScenes??{})])for(const entity of scene.entities){if(!entityRefs.has(entity.id))entityRefs.set(entity.id,localRef(doc.expression_ref,'entity',entity.id));}
+   const sceneRefs=new Map(edited.scenes.map(scene=>[scene.id,
+@@ -81,3 +81,5 @@ export function prepareCompositionEdit(
+     else if (baseline && scene.name!==baseline.name) changes.push({change:'scene_rename',scene_ref:sceneRef,title:scene.name});
+-    for (const entity of scene.entities) {
++    const saved=edited.savedScenes?.[scene.id];
++    const participating=[...scene.entities,...(saved?.entities??[])];
++    for (const entity of participating) {
+       if (!entityRefs.has(entity.id)) entityRefs.set(entity.id,localRef(doc.expression_ref,'entity',entity.id));
+@@ -91,3 +93,3 @@ export function prepareCompositionEdit(
+     const members=[...(before?.entity_refs??[])];
+-    for (const entity of scene.entities) {
++    for (const entity of participating) {
+       const ref=entityRefs.get(entity.id)!;
+@@ -98,3 +100,3 @@ export function prepareCompositionEdit(
+     if (!before || !same(members,before.entity_refs)) changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:members});
+-    if (baseline && same(scene,baseline)) continue;
++    if (baseline && same(scene,baseline) && same(saved??null,view.journey.savedScenes?.[scene.id]??null)) continue;
+     const addressed=mapSceneOccurrences(scene,sceneRef,entityRefs);
+@@ -104,3 +106,10 @@ export function prepareCompositionEdit(
+     validateSceneData(material);
+-    changes.push({change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:material}});
++    let savedMaterial:Scene|null=null;
++    if(saved){
++      const addressedSaved=mapSceneOccurrences(saved,sceneRef,entityRefs);
++      const beforeSaved=before?(before.presentation?before.presentation.saved:nativeSceneMaterial(doc,before)):undefined;
++      savedMaterial=beforeSaved&&binding?mergeScenePage(beforeSaved,addressedSaved,new Set(binding.loaded_refs)):addressedSaved;
++      validateSceneData(savedMaterial);
++    }
++    changes.push({change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:material,saved:savedMaterial}});
+   }
+@@ -157,3 +166,3 @@ export function rebaseCompositionView(view:KernelConversion,submitted:Journey,do
+     identity.scenes[view.bindings[scene.id]?.scene_ref??localRef(document.expression_ref,'scene',scene.id)]=scene.id;
+-    for(const entity of scene.entities)identity.entities[knownEntities.get(entity.id)??localRef(document.expression_ref,'entity',entity.id)]=entity.id;
++    for(const entity of [...scene.entities,...(submitted.savedScenes?.[scene.id]?.entities??[])])identity.entities[knownEntities.get(entity.id)??localRef(document.expression_ref,'entity',entity.id)]=entity.id;
+   }
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts
+index bddd3e2..fd47114 100644
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/kernelDocumentBridge.ts
+@@ -16,3 +16,3 @@ export interface KernelSubject {subject_ref:string;native_owner:string;[key:stri
+ export interface KernelEntity {entity_ref:string;title:string;subject?:KernelSubject|null;parameters:Record<string,KernelParameter>;[key:string]:unknown}
+-export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene}|null;scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string;[key:string]:unknown}|null;triggers?:unknown[];[key:string]:unknown}
++export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}|null;scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string;[key:string]:unknown}|null;triggers?:unknown[];[key:string]:unknown}
+ export interface KernelRelation {binding_ref:string;relation:{ref:string;revision:string;[key:string]:unknown};from_entity_ref:string;to_entity_ref:string;[key:string]:unknown}
+@@ -90,8 +90,9 @@ export function nativeSceneMaterial(doc:KernelExpressionDocument,s:KernelScene):
+ }
+-function pagesFor(refs:string[],entities:Map<string,Entity>):string[][]{
++function pagesFor(refs:string[],entities:Map<string,Entity>,saved:Map<string,Entity>=new Map()):string[][]{
+  const pages:string[][]=[[]];let formations=0,pins=0;
+  for(const ref of refs){
+-  const pin=entities.get(ref)!.kind==='pin';
+-  if(pin?pins>=MAX_PINS:formations>=MAX_FORMATIONS){pages.push([]);formations=0;pins=0;}
+-  pages[pages.length-1].push(ref);if(pin)pins++;else formations++;
++  const kinds=[entities.get(ref)?.kind,saved.get(ref)?.kind];
++  const pin=Number(kinds.includes('pin')),formation=Number(kinds.includes('formation'));
++  if(pins+pin>MAX_PINS||formations+formation>MAX_FORMATIONS){pages.push([]);formations=0;pins=0;}
++  pages[pages.length-1].push(ref);pins+=pin;formations+=formation;
+  }
+@@ -99,6 +100,7 @@ function pagesFor(refs:string[],entities:Map<string,Entity>):string[][]{
+ }
+-function focusWindow(refs:string[],relation:KernelRelation,entities:Map<string,Entity>):string[]{
++function focusWindow(refs:string[],relation:KernelRelation,entities:Map<string,Entity>,saved:Map<string,Entity>=new Map()):string[]{
+  const selected=[...new Set([relation.from_entity_ref,relation.to_entity_ref])];
+- let pins=selected.filter(ref=>entities.get(ref)!.kind==='pin').length,formations=selected.length-pins;
+- for(const ref of refs){if(selected.includes(ref))continue;const pin=entities.get(ref)!.kind==='pin';if(pin?pins>=MAX_PINS:formations>=MAX_FORMATIONS)continue;selected.push(ref);if(pin)pins++;else formations++;}
++ const cost=(ref:string)=>[entities.get(ref)?.kind,saved.get(ref)?.kind];
++ let pins=selected.filter(ref=>cost(ref).includes('pin')).length,formations=selected.filter(ref=>cost(ref).includes('formation')).length;
++ for(const ref of refs){if(selected.includes(ref))continue;const pin=Number(cost(ref).includes('pin')),formation=Number(cost(ref).includes('formation'));if(pins+pin>MAX_PINS||formations+formation>MAX_FORMATIONS)continue;selected.push(ref);pins+=pin;formations+=formation;}
+  return selected;
+@@ -119,3 +121,3 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
+  }
+- const sceneRefs=new Set<string>();
++ const sceneRefs=new Set<string>(),savedScenes:Record<string,Scene>={};
+  const scenes:Scene[]=doc.scenes.map(s=>{
+@@ -125,4 +127,7 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
+   const materialEntities=new Map(material.entities.map(e=>[e.id,e]));
+-  const visibleRefs=material.entities.map(e=>e.id);
+-  const pages=pagesFor(visibleRefs,materialEntities);
++  const saved=s.presentation?s.presentation.saved:material;
++  if(saved)assertMaterialOccurrences(saved,s.scene_ref,s.entity_refs);
++  const savedEntities=new Map((saved?.entities??[]).map(e=>[e.id,e]));
++  const visibleRefs=[...new Set([...material.entities,...(saved?.entities??[])].map(e=>e.id))];
++  const pages=pagesFor(visibleRefs,materialEntities,savedEntities);
+   const preferred=doc.selection?.scene_ref===s.scene_ref?doc.selection.entity_ref:null;
+@@ -134,6 +139,7 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
+   const focused=explicit===undefined?relations.find(r=>r.binding_ref===focusRef && materialEntities.has(r.from_entity_ref) && materialEntities.has(r.to_entity_ref)):undefined;
+-  const loaded=focused?focusWindow(visibleRefs,focused,materialEntities):pages[page];
++  const loaded=focused?focusWindow(visibleRefs,focused,materialEntities,savedEntities):pages[page];
+   const occurrenceIds=new Map([...converted].map(([ref,e])=>[ref,e.id]));
+   const scene=mapSceneOccurrences(material,idFor(s.scene_ref,'scene',ids,options.identity?.scenes?.[s.scene_ref]),occurrenceIds,new Set(loaded));
+-  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:clone(s.body),triggers:clone(s.triggers??[])};
++  if(saved)savedScenes[scene.id]=mapSceneOccurrences(saved,scene.id,occurrenceIds,new Set(loaded));
++  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.filter(ref=>materialEntities.has(ref)).map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:clone(s.body),triggers:clone(s.triggers??[])};
+   if(loaded.length<s.entity_refs.length)notes.push(`${s.scene_ref}: ${loaded.length}/${s.entity_refs.length} members loaded; ${pages.length} disclosure pages preserve the whole`);
+@@ -142,3 +148,3 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
+  if(doc.presentation && doc.presentation.schema!=='oi.journey-properties/v1')throw new Error('Unsupported native Expression presentation');
+- const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids,options.identity?.expression),name:doc.title.slice(0,160),description:doc.presentation?.description??'',loop:doc.presentation?.loop??true,scenes,updatedAt:new Date().toISOString(),...(doc.presentation?.shared?{shared:clone(doc.presentation.shared)}:{})};
++ const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids,options.identity?.expression),name:doc.title.slice(0,160),description:doc.presentation?.description??'',loop:doc.presentation?.loop??true,scenes,savedScenes,updatedAt:new Date().toISOString(),...(doc.presentation?.shared?{shared:clone(doc.presentation.shared)}:{})};
+  if(journey.shared)journey.shared.toolbelt=journey.shared.toolbelt.map(entry=>entry.entityId?{...entry,entityId:converted.get(entry.entityId)?.id??entry.entityId}:entry);
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts
+index d466daf..36f229a 100644
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/kernelExpressions.ts
+@@ -23,3 +23,3 @@ import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelPara
+ const VERSION=1;
+-type Pending={resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
++type Pending={kind:string;resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
+ const pending=new Map<number,Pending>();
+@@ -36,3 +36,3 @@ function onMessage(ev:MessageEvent){
+   const entry=pending.get(d.req);
+-  if(!entry)return;
++  if(!entry||d.kind!==`${entry.kind}-result`)return;
+   pending.delete(d.req);clearTimeout(entry.timer);
+@@ -71,3 +71,3 @@ function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promis
+   },timeoutMs);
+-  pending.set(req,{resolve,reject,timer});
++  pending.set(req,{kind,resolve,reject,timer});
+   post({kind,req,...body});
+@@ -210 +210,10 @@ export function openKernelExpressionIntoView(doc:unknown):{journey:ReturnType<ty
+ }
++
++/** The actual composition path submits its captured CAS operation, not the
++ * legacy scalar-only diff. These are bounded channel calls, not a kernel API. */
++export async function nativeExpressionRequest(request:Record<string,unknown>):Promise<unknown>{
++ return call('kernel-expression',{request});
++}
++export async function nativeFileRequest(request:Record<string,unknown>):Promise<unknown>{
++ return call('expression-file',{request});
++}
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts
+index fa72773..f82403c 100644
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/recovery.ts
+@@ -11,3 +11,15 @@ export function validateSession(value:unknown,j:Journey):SessionState|undefined{
+ let database:Promise<IDBDatabase>|undefined;
+-function db(){return database??=new Promise((resolve,reject)=>{const request=indexedDB.open('oi.expression-recovery',1);request.onupgradeneeded=()=>request.result.createObjectStore('drafts',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);request.onblocked=()=>reject(new Error('Recovery storage is blocked by another tab.'));});}
++function db(){return database??=new Promise<IDBDatabase>((resolve,reject)=>{
++ let failed=false;
++ const request=indexedDB.open('oi.expression-recovery',2);
++ request.onupgradeneeded=()=>{
++  if(!request.result.objectStoreNames.contains('drafts'))request.result.createObjectStore('drafts',{keyPath:'id'});
++  // Same recovery owner, keyed direct reads; listing browser drafts must not
++  // deserialize every native baseline/operation checkpoint.
++  if(!request.result.objectStoreNames.contains('nativeWorking'))request.result.createObjectStore('nativeWorking',{keyPath:'id'});
++ };
++ request.onsuccess=()=>{if(failed){request.result.close();return;}request.result.onversionchange=()=>{request.result.close();database=undefined;};resolve(request.result);};
++ request.onerror=()=>{failed=true;reject(request.error);};
++ request.onblocked=()=>{failed=true;reject(new Error('Recovery storage is blocked by another tab. Close or reload its older application before retrying.'));};
++}).catch(error=>{database=undefined;throw error;});}
+ export async function writeDraft(j:Journey){const value=validateJourney(j),database=await db();return new Promise<void>((resolve,reject)=>{const tx=database.transaction('drafts','readwrite');tx.objectStore('drafts').put(value);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Draft backup was interrupted.'));});}
+@@ -16 +28,24 @@ export async function readDrafts(){const database=await db();return new Promise<
+ export async function removeDraft(id:string){const database=await db();return new Promise<void>((resolve,reject)=>{const tx=database.transaction('drafts','readwrite');tx.objectStore('drafts').delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
++
++/** A native-working checkpoint shares the existing draft recovery database.
++ * It is not part of the exportable Journey, Library or publication payload.
++ * Canonical documents remain in the native kernel/files; this retains only
++ * the last acknowledged basis and an interrupted operation for this draft. */
++export async function writeWorkingCheckpoint(id:string,value:unknown,scope="expressions"):Promise<void>{
++ if(!['expressions','techne'].includes(scope))throw new Error('Unknown working aperture');
++ if(!id||id.length>160)throw new Error('Invalid working draft identity');
++ const database=await db();
++ return new Promise((resolve,reject)=>{
++  const tx=database.transaction('nativeWorking','readwrite');
++  tx.objectStore('nativeWorking').put({id:'native-work:'+scope+':'+id,schema:'oi.native-working-checkpoint/v1',value});
++  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Native working checkpoint was interrupted'));
++ });
++}
++export async function readWorkingCheckpoint(id:string,scope="expressions"):Promise<unknown>{
++ const database=await db();
++ return new Promise((resolve,reject)=>{
++  const request=database.transaction('nativeWorking').objectStore('nativeWorking').get('native-work:'+scope+':'+id);
++  request.onsuccess=()=>{const row=request.result;resolve(row?.schema==='oi.native-working-checkpoint/v1'?row.value:undefined);};
++  request.onerror=()=>reject(request.error);
++ });
++}
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/sceneCorrespondence.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/sceneCorrespondence.ts
+index fd4e243..e5072f0 100644
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/sceneCorrespondence.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/sceneCorrespondence.ts
+@@ -131 +131,13 @@ export function assertMaterialOccurrences(material: Scene, sceneRef: string, mem
+ }
++
++/** Wire equality is independent of object insertion order (serde_json may
++ * canonicalise keys). Arrays retain order; omitted optional fields compare
++ * as they will actually cross JSON, so an acknowledgement is not a new edit. */
++export function sameSceneData(a:unknown,b:unknown):boolean {
++ const canonical=(value:unknown):string=>{
++  if(Array.isArray(value))return '['+value.map(item=>canonical(item??null)).join(',')+']';
++  if(value&&typeof value==='object')return '{'+Object.entries(value).filter(([,item])=>item!==undefined).sort(([a],[b])=>a<b?-1:a>b?1:0).map(([key,item])=>JSON.stringify(key)+':'+canonical(item)).join(',')+'}';
++  return JSON.stringify(value)??'null';
++ };
++ return canonical(a)===canonical(b);
++}
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/workspace.css b/desktop/cradle/expressions-app/field-studies-journeys/src/workspace.css
+index 3d36d00..3ceef83 100644
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/workspace.css
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/workspace.css
+@@ -443 +443,8 @@ body.presentation #physis-panel,body.library-open #physis-panel{display:none}
+    cut is perfectly reversible and the HUD returns exactly as it was. */
++
++/* Native file controls are an optional floating working panel over the same
++   field, not an alternative Library or a second source/scene application. */
++.native-work{position:fixed;z-index:82;top:74px;right:24px;width:410px;max-width:calc(100vw - 96px);max-height:calc(100vh - 172px);overflow:auto;padding:20px;background:var(--paper);border:1px solid var(--line);border-radius:12px;color:var(--ink);box-sizing:border-box}
++.native-work[hidden]{display:none}.native-work header{display:flex;align-items:flex-start;justify-content:space-between;gap:14px}.native-work h2{font:22px var(--serif);margin:5px 0 14px}.native-work h3{font-size:12px;margin:16px 0 8px}.native-work p{font-size:11px;line-height:1.6;overflow-wrap:anywhere;margin:8px 0}.native-work .native-basis,.native-work .native-file,.native-work .native-note{color:var(--muted)}
++.native-work fieldset{border:0;border-top:1px solid var(--line);margin:18px 0 0;padding:14px 0 0;min-width:0}.native-work legend{font-size:12px;padding-right:10px}.native-work label{display:flex;flex-direction:column;gap:6px;font-size:11px;margin:10px 0}.native-work input,.native-work select{min-width:0;max-width:100%;font:12px var(--sans);padding:8px;border:1px solid var(--line);background:var(--paper);color:var(--ink);border-radius:4px}.native-actions{display:flex;flex-wrap:wrap;gap:8px;margin:12px 0}.native-work button{min-height:32px;padding:6px 10px;font-size:11px;border:1px solid var(--line);border-radius:5px}.native-work button:disabled{opacity:.45}.native-work button[hidden]{display:none}.native-work .native-disclosure{border-top:1px solid var(--line);margin-top:16px}.native-work button:focus-visible,.native-work input:focus-visible,.native-work select:focus-visible{outline:2px solid var(--ink);outline-offset:3px}
++@media(max-width:600px){.native-work{top:62px;right:10px;width:calc(100vw - 78px);max-width:calc(100vw - 78px);padding:14px;max-height:calc(100vh - 150px)}}
+diff --git a/desktop/cradle/src/expressions/PointCloudHost.tsx b/desktop/cradle/src/expressions/PointCloudHost.tsx
+index 3c6d101..9005173 100644
+--- a/desktop/cradle/src/expressions/PointCloudHost.tsx
++++ b/desktop/cradle/src/expressions/PointCloudHost.tsx
+@@ -61,3 +61,3 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}:
+   // free to ignore it.
+-  const [bootQuery] = useState(() => (deepLink ? `?expression=${encodeURIComponent(deepLink)}` : ""));
++  const [bootQuery] = useState(() => (`?mode=${mode}${deepLink ? `&expression=${encodeURIComponent(deepLink)}` : ""}`));
+ 
+diff --git a/desktop/cradle/src/expressions/hostedApp.ts b/desktop/cradle/src/expressions/hostedApp.ts
+index b00213c..c8694ab 100644
+--- a/desktop/cradle/src/expressions/hostedApp.ts
++++ b/desktop/cradle/src/expressions/hostedApp.ts
+@@ -1 +1,2 @@
++import {hostedCompositionFile} from "./hostedComposition";
+ import {relayNativeChannel} from "./nativeChannel";
+@@ -133,3 +134,3 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
+       const operation = request && typeof request === "object" ? request.operation : undefined;
+-      if (operation !== "list" && operation !== "inspect" && operation !== "create" && operation !== "edit") {
++      if (operation !== "list" && operation !== "inspect" && operation !== "create" && operation !== "edit" && operation !== "open") {
+         refuse(kind, req, `unsupported kernel-expression operation: ${String(operation)}`);
+@@ -151,2 +152,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
+     }
++    if (kind === "expression-file") {
++      try { reply(`${kind}-result`, req, {ok: true, data: await hostedCompositionFile(transport, event.data.request)}); }
++      catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
++      return;
++    }
+     if (kind === "central-read") {
