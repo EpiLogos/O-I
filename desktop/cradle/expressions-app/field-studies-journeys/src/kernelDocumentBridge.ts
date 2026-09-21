@@ -14,7 +14,7 @@ import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel.js';
 export interface KernelParameter {value:string|number;automation?:{min:number;max:number;rate_hz:number;waveform:string}|null}
 export interface KernelSubject {subject_ref:string;native_owner:string;[key:string]:unknown}
 export interface KernelEntity {entity_ref:string;title:string;subject?:KernelSubject|null;parameters:Record<string,KernelParameter>;[key:string]:unknown}
-export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene}|null;scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string;[key:string]:unknown}|null;triggers?:unknown[];[key:string]:unknown}
+export interface KernelScene {presentation?:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}|null;scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string;[key:string]:unknown}|null;triggers?:unknown[];[key:string]:unknown}
 export interface KernelRelation {binding_ref:string;relation:{ref:string;revision:string;[key:string]:unknown};from_entity_ref:string;to_entity_ref:string;[key:string]:unknown}
 export interface KernelExpressionDocument {presentation?:{schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared']}|null;schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,KernelRelation>;selection?:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[];[key:string]:unknown}
 export interface OccurrenceBinding {expression_ref:string;scene_ref:string;entity_ref:string;view_entity_id:string;subject:KernelSubject|null}
@@ -88,19 +88,21 @@ export function nativeSceneMaterial(doc:KernelExpressionDocument,s:KernelScene):
  if(material.entities.some(e=>e.position.z!==0))material.view.mode='3d';
  return material;
 }
-function pagesFor(refs:string[],entities:Map<string,Entity>):string[][]{
+function pagesFor(refs:string[],entities:Map<string,Entity>,saved:Map<string,Entity>=new Map()):string[][]{
  const pages:string[][]=[[]];let formations=0,pins=0;
  for(const ref of refs){
-  const pin=entities.get(ref)!.kind==='pin';
-  if(pin?pins>=MAX_PINS:formations>=MAX_FORMATIONS){pages.push([]);formations=0;pins=0;}
-  pages[pages.length-1].push(ref);if(pin)pins++;else formations++;
+  const kinds=[entities.get(ref)?.kind,saved.get(ref)?.kind];
+  const pin=Number(kinds.includes('pin')),formation=Number(kinds.includes('formation'));
+  if(pins+pin>MAX_PINS||formations+formation>MAX_FORMATIONS){pages.push([]);formations=0;pins=0;}
+  pages[pages.length-1].push(ref);pins+=pin;formations+=formation;
  }
  return pages;
 }
-function focusWindow(refs:string[],relation:KernelRelation,entities:Map<string,Entity>):string[]{
+function focusWindow(refs:string[],relation:KernelRelation,entities:Map<string,Entity>,saved:Map<string,Entity>=new Map()):string[]{
  const selected=[...new Set([relation.from_entity_ref,relation.to_entity_ref])];
- let pins=selected.filter(ref=>entities.get(ref)!.kind==='pin').length,formations=selected.length-pins;
- for(const ref of refs){if(selected.includes(ref))continue;const pin=entities.get(ref)!.kind==='pin';if(pin?pins>=MAX_PINS:formations>=MAX_FORMATIONS)continue;selected.push(ref);if(pin)pins++;else formations++;}
+ const cost=(ref:string)=>[entities.get(ref)?.kind,saved.get(ref)?.kind];
+ let pins=selected.filter(ref=>cost(ref).includes('pin')).length,formations=selected.filter(ref=>cost(ref).includes('formation')).length;
+ for(const ref of refs){if(selected.includes(ref))continue;const pin=Number(cost(ref).includes('pin')),formation=Number(cost(ref).includes('formation'));if(pins+pin>MAX_PINS||formations+formation>MAX_FORMATIONS)continue;selected.push(ref);pins+=pin;formations+=formation;}
  return selected;
 }
 export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):KernelConversion{
@@ -117,14 +119,17 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
  for(const [ref,r] of Object.entries(doc.relations??{})){
   if(!r||r.binding_ref!==ref||!r.relation||typeof r.relation.ref!=='string'||typeof r.relation.revision!=='string'||!converted.has(r.from_entity_ref)||!converted.has(r.to_entity_ref))throw new Error(`Native relation ${ref} has absent or ambiguous endpoints`);
  }
- const sceneRefs=new Set<string>();
+ const sceneRefs=new Set<string>(),savedScenes:Record<string,Scene>={};
  const scenes:Scene[]=doc.scenes.map(s=>{
   if(!s||typeof s.scene_ref!=='string'||sceneRefs.has(s.scene_ref)||typeof s.title!=='string'||!Array.isArray(s.entity_refs)||new Set(s.entity_refs).size!==s.entity_refs.length||s.entity_refs.some(ref=>!converted.has(ref)))throw new Error('Native scene has duplicate identities or unresolved members; no placeholders were invented');
   sceneRefs.add(s.scene_ref);
   const material=nativeSceneMaterial(doc,s);
   const materialEntities=new Map(material.entities.map(e=>[e.id,e]));
-  const visibleRefs=material.entities.map(e=>e.id);
-  const pages=pagesFor(visibleRefs,materialEntities);
+  const saved=s.presentation?s.presentation.saved:material;
+  if(saved)assertMaterialOccurrences(saved,s.scene_ref,s.entity_refs);
+  const savedEntities=new Map((saved?.entities??[]).map(e=>[e.id,e]));
+  const visibleRefs=[...new Set([...material.entities,...(saved?.entities??[])].map(e=>e.id))];
+  const pages=pagesFor(visibleRefs,materialEntities,savedEntities);
   const preferred=doc.selection?.scene_ref===s.scene_ref?doc.selection.entity_ref:null;
   const explicit=options.pages?.[s.scene_ref];
   let page=explicit??(preferred?Math.max(0,pages.findIndex(refs=>refs.includes(preferred))):0);
@@ -132,15 +137,16 @@ export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):Kern
   const relations=Object.values(doc.relations??{}).filter(r=>s.entity_refs.includes(r.from_entity_ref)&&s.entity_refs.includes(r.to_entity_ref));
   const focusRef=options.focusRelation===undefined?(doc.selection?.scene_ref===s.scene_ref?doc.selection.relation_ref:null):options.focusRelation;
   const focused=explicit===undefined?relations.find(r=>r.binding_ref===focusRef && materialEntities.has(r.from_entity_ref) && materialEntities.has(r.to_entity_ref)):undefined;
-  const loaded=focused?focusWindow(visibleRefs,focused,materialEntities):pages[page];
+  const loaded=focused?focusWindow(visibleRefs,focused,materialEntities,savedEntities):pages[page];
   const occurrenceIds=new Map([...converted].map(([ref,e])=>[ref,e.id]));
   const scene=mapSceneOccurrences(material,idFor(s.scene_ref,'scene',ids,options.identity?.scenes?.[s.scene_ref]),occurrenceIds,new Set(loaded));
-  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:clone(s.body),triggers:clone(s.triggers??[])};
+  if(saved)savedScenes[scene.id]=mapSceneOccurrences(saved,scene.id,occurrenceIds,new Set(loaded));
+  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,hidden_refs:s.entity_refs.filter(ref=>!materialEntities.has(ref)),focused_relation:focused?.binding_ref??null,occurrences:loaded.filter(ref=>materialEntities.has(ref)).map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:clone(s.body),triggers:clone(s.triggers??[])};
   if(loaded.length<s.entity_refs.length)notes.push(`${s.scene_ref}: ${loaded.length}/${s.entity_refs.length} members loaded; ${pages.length} disclosure pages preserve the whole`);
   return scene;
  });
  if(doc.presentation && doc.presentation.schema!=='oi.journey-properties/v1')throw new Error('Unsupported native Expression presentation');
- const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids,options.identity?.expression),name:doc.title.slice(0,160),description:doc.presentation?.description??'',loop:doc.presentation?.loop??true,scenes,updatedAt:new Date().toISOString(),...(doc.presentation?.shared?{shared:clone(doc.presentation.shared)}:{})};
+ const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids,options.identity?.expression),name:doc.title.slice(0,160),description:doc.presentation?.description??'',loop:doc.presentation?.loop??true,scenes,savedScenes,updatedAt:new Date().toISOString(),...(doc.presentation?.shared?{shared:clone(doc.presentation.shared)}:{})};
  if(journey.shared)journey.shared.toolbelt=journey.shared.toolbelt.map(entry=>entry.entityId?{...entry,entityId:converted.get(entry.entityId)?.id??entry.entityId}:entry);
  return{journey:validateJourney(journey),document:doc,notes,bindings,entity_ids:Object.fromEntries([...converted].map(([ref,e])=>[ref,e.id])),startSceneId:scenes.find(s=>bindings[s.id].scene_ref===doc.selection?.scene_ref)?.id??scenes[0].id};
 }

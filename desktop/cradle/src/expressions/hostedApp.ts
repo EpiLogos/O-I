@@ -1,3 +1,4 @@
+import {hostedCompositionFile} from "./hostedComposition";
 import {relayNativeChannel} from "./nativeChannel";
 /**
  * Shared hosting for the Expressions application — the vendored app at
@@ -131,7 +132,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
     if (kind === "kernel-expression") {
       const request = event.data.request as {operation?: unknown} | undefined;
       const operation = request && typeof request === "object" ? request.operation : undefined;
-      if (operation !== "list" && operation !== "inspect" && operation !== "create" && operation !== "edit") {
+      if (operation !== "list" && operation !== "inspect" && operation !== "create" && operation !== "edit" && operation !== "open") {
         refuse(kind, req, `unsupported kernel-expression operation: ${String(operation)}`);
         return;
       }
@@ -147,6 +148,11 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
       } catch (cause) {
         refuse(kind, req, cause instanceof Error ? cause.message : String(cause));
       }
+      return;
+    }
+    if (kind === "expression-file") {
+      try { reply(`${kind}-result`, req, {ok: true, data: await hostedCompositionFile(transport, event.data.request)}); }
+      catch (cause) { refuse(kind, req, cause instanceof Error ? cause.message : String(cause)); }
       return;
     }
     if (kind === "central-read") {

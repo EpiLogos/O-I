@@ -59,7 +59,7 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: 
   // this track exists to prevent. A mount-time capture is a boot-time hint
   // only; the application applies it after its own boot recovery and is
   // free to ignore it.
-  const [bootQuery] = useState(() => (deepLink ? `?expression=${encodeURIComponent(deepLink)}` : ""));
+  const [bootQuery] = useState(() => (`?mode=${mode}${deepLink ? `&expression=${encodeURIComponent(deepLink)}` : ""}`));
 
   useEffect(() => {
     let alive = true;

@@ -4,7 +4,7 @@
  */
 import {clone, validateJourney, type Journey, type Scene} from './model.js';
 import {kernelDocumentToJourney,nativeSceneMaterial, type KernelConversion, type KernelExpressionDocument} from './kernelDocumentBridge.js';
-import {mapSceneOccurrences, mergeScenePage, validateSceneData} from './sceneCorrespondence.js';
+import {mapSceneOccurrences, mergeScenePage, validateSceneData, sameSceneData} from './sceneCorrespondence.js';
 
 export type CompositionChange =
   | {change:'rename';title:string}
@@ -15,7 +15,7 @@ export type CompositionChange =
   | {change:'scene_reorder';scene_refs:string[]}
   | {change:'scene_compose';scene_ref:string;entity_refs:string[]}
   | {change:'entity_add';scene_ref:string;entity_ref:string;title:string}
-  | {change:'scene_material_set';scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:Scene}}
+  | {change:'scene_material_set';scene_ref:string;presentation:{schema:'oi.journey-scene/v1';scene:Scene;saved?:Scene|null}}
   | {change:'focus';scene_ref:string;entity_ref:string|null};
 export interface CompositionProperties {
   schema:'oi.journey-properties/v1';description:string;loop:boolean;shared?:Journey['shared'];
@@ -24,7 +24,7 @@ export interface CompositionEdit {
   operation:'edit';expression_ref:string;expected_revision:number;actor:string;
   changes:CompositionChange[];
 }
-const same = (a:unknown,b:unknown):boolean => JSON.stringify(a) === JSON.stringify(b);
+const same = sameSceneData;
 
 export function compositionProperties(journey:Journey):CompositionProperties {
   return {schema:'oi.journey-properties/v1',description:journey.description,loop:journey.loop,
@@ -60,7 +60,7 @@ export function prepareCompositionEdit(
     if (previous && previous!==occurrence.entity_ref) throw new Error('Ambiguous native occurrence; no edit submitted');
     entityRefs.set(occurrence.view_entity_id,occurrence.entity_ref);
   }
-  for(const scene of edited.scenes)for(const entity of scene.entities){if(!entityRefs.has(entity.id))entityRefs.set(entity.id,localRef(doc.expression_ref,'entity',entity.id));}
+  for(const scene of [...edited.scenes,...Object.values(edited.savedScenes??{})])for(const entity of scene.entities){if(!entityRefs.has(entity.id))entityRefs.set(entity.id,localRef(doc.expression_ref,'entity',entity.id));}
   const sceneRefs=new Map(edited.scenes.map(scene=>[scene.id,
     view.bindings[scene.id]?.scene_ref ?? localRef(doc.expression_ref,'scene',scene.id)]));
   const oldScenes=new Map(doc.scenes.map(scene=>[scene.scene_ref,scene]));
@@ -79,7 +79,9 @@ export function prepareCompositionEdit(
     const baseline=view.journey.scenes.find(value=>value.id===scene.id);
     if (!before) changes.push({change:'scene_create',scene_ref:sceneRef,title:scene.name});
     else if (baseline && scene.name!==baseline.name) changes.push({change:'scene_rename',scene_ref:sceneRef,title:scene.name});
-    for (const entity of scene.entities) {
+    const saved=edited.savedScenes?.[scene.id];
+    const participating=[...scene.entities,...(saved?.entities??[])];
+    for (const entity of participating) {
       if (!entityRefs.has(entity.id)) entityRefs.set(entity.id,localRef(doc.expression_ref,'entity',entity.id));
       const ref=entityRefs.get(entity.id)!;
       if (!view.entity_ids[ref] && doc.entities[ref]) throw new Error('A new view object collides with an existing native identity');
@@ -89,20 +91,27 @@ export function prepareCompositionEdit(
       }
     }
     const members=[...(before?.entity_refs??[])];
-    for (const entity of scene.entities) {
+    for (const entity of participating) {
       const ref=entityRefs.get(entity.id)!;
       if (!members.includes(ref)) members.push(ref);
     }
     // Existing memberships are not a renderer diff. Explicit constellation
     // membership/retraction operations address those through the Wiki owner.
     if (!before || !same(members,before.entity_refs)) changes.push({change:'scene_compose',scene_ref:sceneRef,entity_refs:members});
-    if (baseline && same(scene,baseline)) continue;
+    if (baseline && same(scene,baseline) && same(saved??null,view.journey.savedScenes?.[scene.id]??null)) continue;
     const addressed=mapSceneOccurrences(scene,sceneRef,entityRefs);
     const material=before && binding
       ? mergeScenePage(nativeSceneMaterial(doc,before),addressed,new Set(binding.loaded_refs))
       : addressed;
     validateSceneData(material);
-    changes.push({change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:material}});
+    let savedMaterial:Scene|null=null;
+    if(saved){
+      const addressedSaved=mapSceneOccurrences(saved,sceneRef,entityRefs);
+      const beforeSaved=before?(before.presentation?before.presentation.saved:nativeSceneMaterial(doc,before)):undefined;
+      savedMaterial=beforeSaved&&binding?mergeScenePage(beforeSaved,addressedSaved,new Set(binding.loaded_refs)):addressedSaved;
+      validateSceneData(savedMaterial);
+    }
+    changes.push({change:'scene_material_set',scene_ref:sceneRef,presentation:{schema:'oi.journey-scene/v1',scene:material,saved:savedMaterial}});
   }
   const newRefs=[...sceneRefs.values()];
   for (const original of doc.scenes) if (!newRefs.includes(original.scene_ref)) {
@@ -155,7 +164,7 @@ export function rebaseCompositionView(view:KernelConversion,submitted:Journey,do
   const knownEntities=new Map(Object.entries(view.entity_ids).map(([ref,id])=>[id,ref]));
   for(const scene of submitted.scenes){
     identity.scenes[view.bindings[scene.id]?.scene_ref??localRef(document.expression_ref,'scene',scene.id)]=scene.id;
-    for(const entity of scene.entities)identity.entities[knownEntities.get(entity.id)??localRef(document.expression_ref,'entity',entity.id)]=entity.id;
+    for(const entity of [...scene.entities,...(submitted.savedScenes?.[scene.id]?.entities??[])])identity.entities[knownEntities.get(entity.id)??localRef(document.expression_ref,'entity',entity.id)]=entity.id;
   }
   const probe=kernelDocumentToJourney(document,{identity});
   const pages:Record<string,number>={};

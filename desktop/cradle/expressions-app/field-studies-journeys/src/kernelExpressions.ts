@@ -21,7 +21,7 @@ import {validateJourney} from './model.js';
 import {kernelDocumentToJourney,KernelExpressionDocument,KernelEntity,KernelParameter} from './kernelDocumentBridge.js';
 
 const VERSION=1;
-type Pending={resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
+type Pending={kind:string;resolve:(value:any)=>void;reject:(cause:Error)=>void;timer:number};
 const pending=new Map<number,Pending>();
 let seq=0,ready=false,installed=false;
 
@@ -34,7 +34,7 @@ function onMessage(ev:MessageEvent){
  if(d.kind==='oi-kernel-channel'){ready=true;return;}
  if(typeof d.kind==='string'&&d.kind.endsWith('-result')&&typeof d.req==='number'){
   const entry=pending.get(d.req);
-  if(!entry)return;
+  if(!entry||d.kind!==`${entry.kind}-result`)return;
   pending.delete(d.req);clearTimeout(entry.timer);
   if(d.ok===true)entry.resolve(d.data);
   else entry.reject(new Error(typeof d.error==='string'&&d.error?d.error:'the kernel host channel refused the request'));
@@ -69,7 +69,7 @@ function call<T>(kind:string,body:Record<string,unknown>,timeoutMs=20000):Promis
    pending.delete(req);
    reject(new Error(`the kernel host channel did not answer the ${kind} request`));
   },timeoutMs);
-  pending.set(req,{resolve,reject,timer});
+  pending.set(req,{kind,resolve,reject,timer});
   post({kind,req,...body});
  });
 }
@@ -207,4 +207,13 @@ export async function saveKernelExpression(doc:unknown):Promise<{ok:boolean;erro
 export function openKernelExpressionIntoView(doc:unknown):{journey:ReturnType<typeof validateJourney>;notes:string[];startSceneId:string|null}{
  const conversion=kernelDocumentToJourney(doc);
  return {journey:validateJourney(conversion.journey),notes:conversion.notes,startSceneId:conversion.startSceneId};
+}
+
+/** The actual composition path submits its captured CAS operation, not the
+ * legacy scalar-only diff. These are bounded channel calls, not a kernel API. */
+export async function nativeExpressionRequest(request:Record<string,unknown>):Promise<unknown>{
+ return call('kernel-expression',{request});
+}
+export async function nativeFileRequest(request:Record<string,unknown>):Promise<unknown>{
+ return call('expression-file',{request});
 }

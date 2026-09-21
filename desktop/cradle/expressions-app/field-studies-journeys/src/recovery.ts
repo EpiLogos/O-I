@@ -9,8 +9,43 @@ export function validateSession(value:unknown,j:Journey):SessionState|undefined{
  try{return {...s,transport:s.transport?validateTransport(s.transport):undefined};}catch{return {...s,transport:undefined};}
 }
 let database:Promise<IDBDatabase>|undefined;
-function db(){return database??=new Promise((resolve,reject)=>{const request=indexedDB.open('oi.expression-recovery',1);request.onupgradeneeded=()=>request.result.createObjectStore('drafts',{keyPath:'id'});request.onsuccess=()=>resolve(request.result);request.onerror=()=>reject(request.error);request.onblocked=()=>reject(new Error('Recovery storage is blocked by another tab.'));});}
+function db(){return database??=new Promise<IDBDatabase>((resolve,reject)=>{
+ let failed=false;
+ const request=indexedDB.open('oi.expression-recovery',2);
+ request.onupgradeneeded=()=>{
+  if(!request.result.objectStoreNames.contains('drafts'))request.result.createObjectStore('drafts',{keyPath:'id'});
+  // Same recovery owner, keyed direct reads; listing browser drafts must not
+  // deserialize every native baseline/operation checkpoint.
+  if(!request.result.objectStoreNames.contains('nativeWorking'))request.result.createObjectStore('nativeWorking',{keyPath:'id'});
+ };
+ request.onsuccess=()=>{if(failed){request.result.close();return;}request.result.onversionchange=()=>{request.result.close();database=undefined;};resolve(request.result);};
+ request.onerror=()=>{failed=true;reject(request.error);};
+ request.onblocked=()=>{failed=true;reject(new Error('Recovery storage is blocked by another tab. Close or reload its older application before retrying.'));};
+}).catch(error=>{database=undefined;throw error;});}
 export async function writeDraft(j:Journey){const value=validateJourney(j),database=await db();return new Promise<void>((resolve,reject)=>{const tx=database.transaction('drafts','readwrite');tx.objectStore('drafts').put(value);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Draft backup was interrupted.'));});}
 export async function readDraft(id:string){const database=await db();return new Promise<Journey|undefined>((resolve,reject)=>{const request=database.transaction('drafts').objectStore('drafts').get(id);request.onsuccess=()=>{try{resolve(request.result?validateJourney(request.result):undefined);}catch(e){reject(e);}};request.onerror=()=>reject(request.error);});}
 export async function readDrafts(){const database=await db();return new Promise<Journey[]>((resolve,reject)=>{const request=database.transaction('drafts').objectStore('drafts').getAll();request.onsuccess=()=>resolve(request.result.flatMap(v=>{try{return [validateJourney(v)];}catch{return [];}}));request.onerror=()=>reject(request.error);});}
 export async function removeDraft(id:string){const database=await db();return new Promise<void>((resolve,reject)=>{const tx=database.transaction('drafts','readwrite');tx.objectStore('drafts').delete(id);tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);});}
+
+/** A native-working checkpoint shares the existing draft recovery database.
+ * It is not part of the exportable Journey, Library or publication payload.
+ * Canonical documents remain in the native kernel/files; this retains only
+ * the last acknowledged basis and an interrupted operation for this draft. */
+export async function writeWorkingCheckpoint(id:string,value:unknown,scope="expressions"):Promise<void>{
+ if(!['expressions','techne'].includes(scope))throw new Error('Unknown working aperture');
+ if(!id||id.length>160)throw new Error('Invalid working draft identity');
+ const database=await db();
+ return new Promise((resolve,reject)=>{
+  const tx=database.transaction('nativeWorking','readwrite');
+  tx.objectStore('nativeWorking').put({id:'native-work:'+scope+':'+id,schema:'oi.native-working-checkpoint/v1',value});
+  tx.oncomplete=()=>resolve();tx.onerror=()=>reject(tx.error);tx.onabort=()=>reject(tx.error??new Error('Native working checkpoint was interrupted'));
+ });
+}
+export async function readWorkingCheckpoint(id:string,scope="expressions"):Promise<unknown>{
+ const database=await db();
+ return new Promise((resolve,reject)=>{
+  const request=database.transaction('nativeWorking').objectStore('nativeWorking').get('native-work:'+scope+':'+id);
+  request.onsuccess=()=>{const row=request.result;resolve(row?.schema==='oi.native-working-checkpoint/v1'?row.value:undefined);};
+  request.onerror=()=>reject(request.error);
+ });
+}
