@@ -57,8 +57,8 @@ jobs:
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           npm --prefix desktop/cradle/expressions-app run build
           npm --prefix desktop/cradle/expressions-app test
-          (cd desktop/cradle/expressions-app && node --test field-studies-journeys/tests/kernel-document-bridge.test.mjs field-studies-journeys/tests/native-composition.test.mjs)
-          tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist
+          (cd desktop/cradle/expressions-app && node --test field-studies-journeys/tests/kernel-document-bridge.test.mjs field-studies-journeys/tests/native-composition.test.mjs field-studies-journeys/tests/native-selection-queue.test.mjs)
+          tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist field-studies-journeys/build
       - name: Build the actual integrated cradle
         run: npm --prefix desktop/cradle run build
       - name: Exercise native occurrence bindings and stale proposal refusal
@@ -196,6 +196,14 @@ jobs:
           mkdir -p desktop/cradle/tests/artifacts/techne-native-application
           git rev-parse HEAD > desktop/cradle/tests/artifacts/techne-native-application/O-I.revision
           find "$RUNNER_TEMP/native-owners" -name '*.revision' -exec cp {} desktop/cradle/tests/artifacts/techne-native-application/ \;
+      - name: Native composition continuity and serialized selection against actual storage
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+        run: node tests/techne-native-composition.mjs
       - name: Actual current app native save, separate kernel restart and disconnected save negative
         working-directory: desktop/cradle
         env:
@@ -210,6 +218,8 @@ jobs:
         if: always()
         with:
           name: techne-current-app-${{ github.sha }}
-          path: desktop/cradle/tests/artifacts/techne-native-application
+          path: |
+            desktop/cradle/tests/artifacts/techne-native-application
+            desktop/cradle/tests/artifacts/techne-native-composition
           retention-days: 7
           if-no-files-found: error
