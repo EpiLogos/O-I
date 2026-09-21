@@ -9,6 +9,7 @@ import {modules} from './nara-personal-modules.mjs';
 import {source,consent} from './nara-personal-fixtures.mjs';
 const executable=process.env.QL_NARA_TEST_BIN;if(!executable)throw Error('Set QL_NARA_TEST_BIN to the source-pinned native ql executable');
 const root=await mkdtemp(join(tmpdir(),'nara-consumer-native-')),{mod:m,dispose}=await modules();
+let outcome='in-progress';
 const checks=[],requests=[];const check=(v,label)=>{assert.ok(v,label);checks.push(label);console.log('PASS '+label);};
 async function call(request){requests.push(structuredClone(request));return await new Promise((done,reject)=>{
  const child=spawn(resolve(executable),['nara','--request-file','-','--json'],{env:{...process.env,QL_NARA_HOME:join(root,'private')},stdio:['pipe','pipe','pipe']});
@@ -29,7 +30,18 @@ try{
  r=await c.apply(m.interpretOracle(original.packet_ref,source,''));check(JSON.stringify(r.domain.oracle.records[0].original)===JSON.stringify(original)&&r.domain.oracle.records[0].interpretations.length===1,'interpretation does not rewrite the original oracle');
  r=await c.apply(m.nextPractice(r,source,true));const phase=r.domain.transformation.phase_history.phases[0].phase_ref;
  r=await c.apply({kind:'practice_hold',phase_ref:phase,feedback_ref:source.location.ref});check(r.domain.transformation.phase_history.phases[0].safety==='consent-required','explicit practice hold is native consent state, not inferred physiology');
- r=await c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:source.location.ref});r=await c.apply({kind:'practice_close',phase_ref:phase,feedback_refs:[source.location.ref]});check(r.domain.transformation.phase_history.phases[0].closed_at_unix_ms!==null,'practice resume and completion retained by native history');
+ // A hold, a later safety review and a closing reflection are distinct
+ // authored acts. Keep the original duplicate-source failure as a regression;
+ // do not weaken the native rule or silently remint the person's source.
+ const held=structuredClone(r);
+ await assert.rejects(c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:source.location.ref}),/duplicate transformation feedback reference/);
+ check(JSON.stringify((await call({operation:'read',target:r.target,consent})).record)===JSON.stringify(held),'duplicate practice feedback refuses without changing native history');
+ const reviewRef='central:path:/test:Control/user/practice-safety-review.md';
+ const reflectionRef='central:path:/test:Control/user/practice-closing-reflection.md';
+ r=await c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:reviewRef});
+ r=await c.apply({kind:'practice_close',phase_ref:phase,feedback_refs:[reflectionRef]});
+ const finished=r.domain.transformation.phase_history.phases[0];
+ check(finished.closed_at_unix_ms!==null&&JSON.stringify(finished.feedback_refs)===JSON.stringify([source.location.ref,reviewRef,reflectionRef]),'practice resume and completion retain distinct authored feedback in native history');
  r=await c.apply(m.contextSource('phenomenological','M4.4.4',source,''));check(r.domain.context.branches.find(b=>b.branch==='phenomenological').readings.length===1,'context reading uses the real native branch and source');
  r=await c.apply({kind:'journal_link',source:m.protectedSource(source)});check(r.journal_refs[0].ref_id===source.location.ref,'native journal link references Central rather than copying its body');
  r=await c.apply({kind:'integration_return',returned:{return_ref:'return:controlled',office:'integration-lab',input_refs:[source.location.ref],source_refs:[source.location.ref],method_ref:null,output_ref:m.protectedSource(source),evidence_refs:[],human_response_ref:null,retention_policy_ref:'policy:controlled-private',standing:'reported'}});check(r.domain.integration.offices.find(o=>o.office==='integration-lab').returns.length===1,'integration Return has the native office, retention and protected source');
@@ -39,6 +51,7 @@ try{
  const stale=await call({operation:'apply',request_id:'stale:controlled',target:r.target,expected_revision:1,consent,mutation:{kind:'centre_feedback',ordinal:0,feedback_ref:source.location.ref}});check(stale.ok===false,'native stale revision refuses without overwriting');
  const after=(await call({operation:'read',target:r.target,consent})).record;check(after.revision===r.revision,'refused stale operation leaves actual native state unchanged');
  check(requests.every(q=>!JSON.stringify(q).includes(source.content)),'source content never entered the native derived working record');
-}finally{
- const out=new URL('./artifacts/nara-personal/',import.meta.url);await mkdir(out,{recursive:true});await writeFile(new URL('native-receipt.json',out),JSON.stringify({standing:'real-native-binary-controlled-temporary-world-not-personal-install',native_revision:process.env.QL_NARA_TEST_REVISION??null,checks},null,2));await dispose();await rm(root,{recursive:true,force:true});
+ outcome='passed';
+}catch(error){outcome='failed';throw error;}finally{
+ const out=new URL('./artifacts/nara-personal/',import.meta.url);await mkdir(out,{recursive:true});await writeFile(new URL('native-receipt.json',out),JSON.stringify({outcome,standing:'real-native-binary-controlled-temporary-world-not-personal-install',native_revision:process.env.QL_NARA_TEST_REVISION??null,checks},null,2));await dispose();await rm(root,{recursive:true,force:true});
 }
