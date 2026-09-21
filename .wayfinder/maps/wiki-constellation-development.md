@@ -222,3 +222,126 @@ The preceding native/browser baseline is stronger than the original preparation 
 **Local receiving action:** fetch #418's actual latest head and the actual native dependencies; preserve dirty/unpublished work and the three-checkout Mac boundary; reconcile newer main and companion owner changes without force. Independently review the complete diff and all save/Return authority and recovery branches. Build exact owner binaries from their actual source, run focused tests, the complete kernel suite and strict lint, both native browser journeys and the supplementary controlled recovery walk. Review the real local UI and retain the exact source/build/test/manual evidence. Fix genuine integration defects and merge the scoped native dependencies and #418 only after their normal gates pass. Do not re-apply #357 if its content is already included through #359 or a landed successor. Do not use this Wiki merge to close unfinished six-instrument, Palace, agent or hosted obligations in #420.
 
 GitHub publication is now performed, not left to the local agent as an unapplied sandbox patch. Full acceptance of the new integrated recovery revision still depends on the current executable checks and local review. No owner machine was changed by this remote publication.
+
+## 12. Integration, review and merge — executed (2026-09-21)
+
+The §11 publication continuation asked a local agent to fetch the published
+Wiki work, reconcile it, independently review it, build the real binaries,
+run the joined gates, review the local UI, repair genuine defects and merge
+the scoped dependencies and #418 once their gates pass. That is done. This
+section is the executed record; it does not erase §10 or §11.
+
+### Dependency cut (exact heads and where they landed)
+
+| Dependency | Head consumed by #418 | Disposition |
+|---|---|---|
+| ai-kit #359 (native linked Markdown, exact relations, constructive constellations, attributable Return) | `c4b185deb723e8eaef7d910567675bf73441a694` | merged to ai-kit main as `6c700cee` (required "Real integration suite" green) |
+| ai-kit #357 (native linked Markdown + graph) | `71bd634e02a9be6d0959cf9f38b9b9c2a50fe355` | **not re-applied** — its head is an ancestor of #359; closed as incorporated |
+| Central #205 (native first save, no-overwrite admission, durable readback) | `a35f6a9455108691cd32dd6d906a608dd07a62a2` | merged to Central main as `4a5834b7` (required "verify" green) |
+
+#418 pins the exact reviewed dependency heads (`c4b185de`, `a35f6a94`); the
+merged mains carry the equivalent features. The Central merge additionally
+carries the small, test-only integration repairs described below; the first-save
+feature source (`ctrl/src/file_creation.rs`, `file_mutation.rs`) is byte-identical
+to the pinned head.
+| QL-MEF #234 (linked Wiki / constellations / Return contracts) | — | already merged before this work (`1dd310226a`) |
+| O-I #420 (Technè constructive field) | `4f49096c20…` | **left open** — only partly consumed through ancestry; its six-instrument, Palace, live-agent and hosted/human obligations are **not** closed by this Wiki merge |
+
+Current main (`948075ac`, #465/#467/#468) was reconciled into the branch; the
+canvas-edit correction (#468) removes the form-based `wikiCorrection` module,
+which this feature does not reference.
+
+### Genuine integration defects found and repaired
+
+1. **Colour-token law (cradle gate red).** Three new knowledge files carried
+   raw colour where the design system admits only `var(--oi-*)`:
+   `GraphViewDetails.tsx` (the new-emphasis-group default swatch `#a8873f`,
+   the scarce gold) → `EMPHASIS_DEFAULT_COLOUR` in `graphEmphasis.ts` (an
+   authored constant in a `.ts` logic module, which the checker's own rule
+   exempts; the default value is unchanged); `filters.css` →
+   `var(--oi-shadow-menu)`; `wikiConstruction.css` → `var(--oi-shadow-drawer)`.
+2. **Currentness test asserted a superseded contract (wider-suite red).**
+   `techne-m0-currentness` asserted content-addressed identity ("a changed
+   basis is a new generation"). This feature's ratified contract (Technè M0′,
+   owner direction 2026-09-19; SPEC currentness law "Unchanged members retain
+   identities"; `wikiExpression.ts` "stable identity and revision are
+   separate"; `wikiProjectionStore.ts` "a changed wiki is drift, not
+   permission to remint or overwrite composition") makes the Expression
+   identity **stable per register** so a person's open Stage composition is
+   never silently reminted; drift is carried on the revision. The code was
+   correct; the test was the un-updated artifact. The assertion now checks
+   stable identity while **keeping every currentness assertion** (invalidate →
+   re-read → re-project: revision `rev-2`, third member, receipt dedup,
+   foreign-path ignored). No currentness guarantee is weakened.
+3. **Two macOS test-portability gaps on #418 (owned, non-weakening).**
+   `wiki-native-binaries.test.mjs` and `wiki-constructive-browser.mjs` compared
+   against node's raw `mkdtemp` path while the native owner canonicalises the
+   world root; on a symlinked temp root (macOS `/var/folders` → `/private/var`)
+   the constellation register/space refs mismatched and the walk's save was
+   refused. Both now `realpathSync` the temp root once — a no-op on Linux CI.
+4. **Central #205 dependency repairs (test-only, to land the owner).** Adding
+   the `central.files.create` core Action left three registry-enumeration gates
+   stale: the `foundation` id list, the `host_surface` core count, and the
+   `CLI-REFERENCE` completeness doc — all now list the new Action. Its own
+   first-save test also derived each ground from the clock nonce plus pid, so
+   two parallel threads on a coarse clock (macOS) shared a ground; a per-process
+   atomic sequence now isolates them. The first-save feature source is unchanged.
+   One pre-existing, unrelated Central flake (`connectors/harness` stub-serve
+   timing; passes on main and on re-run) is **flagged to the owner, not fixed
+   here** — it is outside this feature's scope.
+
+### Independent review — no confirmed defects
+
+Five independent adversarial reviewers read the actual code (not just the
+diff) across the whole feature and its owners: (A) one native parser feeds
+reader/graph/backlinks, exact source/revision/UTF-8-span/quotation identity,
+distinct quotes in one span, safe literal HTML; (B) Add-to-constellation is
+separate from Add-to-Context and does not disclose to an agent, repeated-source
+roles stay distinct, edit/retract/reconnect, revision-checked save separate
+from readback, stale-source refusal; (C) warm readings + independent provider
+delivery + targeted invalidation with no "no-cache"/ten-subject regression,
+filters never rewrite membership or reveal private context, human pose survives
+reprojection, the real Stage (not a replacement viewer); (D) save and Return
+separate, checkpoint-before-dispatch fails closed, lost responses keep the
+operation identity, receipt must agree with an independent file read,
+changed/redirected/malformed refuse before Return, read-only recovery never
+replaces a live composition, no injected Project operand and no weakened
+Central guard; (#359) single-parser consolidation, only declared edges,
+attributable Return, trust preserved, no panics on hostile input. All criteria
+hold. Minor non-defect notes only (a discarded pre-flight guard; a coarse-but-
+safe kernel cache clear; a downstream span bounds-check reminder already
+satisfied by the consumer's revalidate-and-compare path).
+
+### Executed gates (real binaries and revisions)
+
+Native binaries built from source and recorded: `oi` and `walk-bridge` from
+the O-I integration tree at the merged head; `aikit` from ai-kit `c4b185de`;
+`ctrl` from Central `a35f6a94`.
+
+- Local: `tsc --noEmit` clean; `wiki-*.test.mjs` 70/70; `knowledge-expression`
+  29/29; `techne-m0-currentness` 5/5; full wider suite 373/373; design-system
+  colour law 0 raw hits; kernel `cargo test` all green + `clippy -D warnings`
+  clean (incl. `wiki_expression_save.rs` first-save regression); Central
+  `file_creation` 5/5; ai-kit `wiki_graph` 3/3 and `wiki_construct_*` /
+  `wiki_document_end_to_end` 8/8 at `c4b185de`.
+- Controlled browser walks: `wiki-recovery-browser` (21 recovery checks,
+  Chromium); `wiki-reader-browser` 40 checks in Chromium **and** WebKit.
+- **Full native journey** `wiki-constructive-browser` — real CLI/files/kernel/
+  Stage/composer — passed all 17 checks in **Chromium and WebKit** locally
+  (passage → two contextual participations of one source → typed relation →
+  live Stage/glyph edit → native first save with independent readback → Return
+  → kernel restart and reopen → frame-first open roles → stale-source refusal).
+- CI on the reconciled+repaired head: every O-I check green (`cradle`,
+  `wider-suite`, `wiki` — which itself runs the constructive walk in both
+  engines — `canvas`, `browser`, `kernel`, `shell`, all Native-owner jobs).
+
+### Merged
+
+- ai-kit #359 → main `6c700cee`; #357 closed as incorporated.
+- Central #205 → main `4a5834b7`.
+- O-I #418 → main (this PR; the squash SHA is recorded in the PR on merge).
+
+Still open by design: O-I #420 and the wider six-instrument, Palace, live-Agent
+and hosted/human obligations; installed-suite acceptance; live-model and human
+use. This merge lands the Wiki/constellation practice as native/browser-proven
+software, not those.
