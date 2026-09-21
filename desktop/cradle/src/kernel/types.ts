@@ -211,6 +211,9 @@ export type KernelOp =
   | { op: "agency_read"; project: string }
   | {op:"file_operation";location:CentralLocation;request:import("../files/client").FileRequest}
   | {op:"encounter";project:string;request:import("../encounter/client").EncounterRequest}
+  /** Provision one fresh chat conversation (new-chat first Send): the kernel
+   * replays the owner's own SessionSpace CLI sequence and opens the result. */
+  | {op:"encounter_provision";project:string}
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
@@ -223,6 +226,19 @@ export type KernelOp =
   | {op:"wiki_projection_read";root:string;path:string}
   | {op:"wiki_projection_sources"}
   | {op:"wiki_projection_update";root:string;path:string;expected_revision:string;evidence:string;actor:string;reason:string;body:string}
+  /** The installed harnesses' real status (`aikit --json client status`,
+   * kernel `agency.rs`): detected/installed/config-dir per harness. Pull
+   * read, machine-level. */
+  | {op:"harness_status"}
+  /** The resolved model catalogue (`aikit model-catalogue show --json`):
+   * the owner's entries verbatim. Pull read, machine-level. */
+  | {op:"model_catalogue"}
+  /** The desktop-held default provider for NEW chats (kernel
+   * `chat_defaults.rs`, `oi:cradle:chat.default-provider`): a desired-entry
+   * shaped document when held, null when the owner's rows decide. */
+  | {op:"chat_default_read"}
+  | {op:"chat_default_hold";provider:string}
+  | {op:"chat_default_discard"}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest }
@@ -285,6 +301,7 @@ export type KernelOpResult =
   | { result: "config_receipts"; document: unknown }
   | {result:"file_operation";data:unknown}
   | { result:"encounter_reading";data:unknown }
+  | { result:"encounter_provisioned";data:unknown }
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
@@ -296,6 +313,11 @@ export type KernelOpResult =
   | { result:"wiki_projection_reading";data:unknown }
   | { result:"wiki_projection_stored";data:unknown }
   | { result:"wiki_projection_sources_reading";data:unknown }
+  | { result:"harness_status_reading";data:unknown }
+  | { result:"model_catalogue_reading";data:unknown }
+  | { result:"chat_default_reading";document:unknown }
+  | { result:"chat_default_held";document:unknown }
+  | { result:"chat_default_discarded";document:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }

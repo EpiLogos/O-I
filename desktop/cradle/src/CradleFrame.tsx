@@ -6,7 +6,7 @@ import {DRAFT_KEY} from "./flow/DraftSurface";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
 import {FileHistory} from "./files/FileHistory";
-import {encounter} from "./encounter/client";
+import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
@@ -1337,7 +1337,15 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       subject={{title:subjectTitle,location:subjectBinding?.location}}
       onMessage={message=>setWindowError(message)}
       onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
-      onChoose={row=>factoryChoose(row)}/>;
+      onChoose={row=>factoryChoose(row)}
+      onProvision={async provisionProject=>{
+        // New-chat first Send: the kernel provisions the conversation (the
+        // owner's own SessionSpace sequence, one op) and this binds it — the
+        // parked draft is applied and sent by the chat face once the shared
+        // observer is live. No chooser.
+        const provisioned=await encounterProvision(kernel.transport,provisionProject);
+        setState(s=>({...s,accompanying:{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space}}));
+      }}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface
   // reads as selected — `subjectBinding` above is already that binding.
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;

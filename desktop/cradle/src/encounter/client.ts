@@ -40,6 +40,19 @@ export async function encounter<T>(transport:KernelTransportStatus,project:strin
   if(result.error || result.outcome?.result!=="encounter_reading")throw new Error(result.error??"AIKit did not return an encounter reading");
   return result.outcome.data as T;
 }
+/** One freshly provisioned chat conversation (new-chat first Send): the minted
+ * refs, the owner's own project spelling and the default provider the kernel
+ * opened. The transcript, draft and every later action stay the ordinary
+ * encounter actions — provision creates the plumbing once, nothing else. */
+export interface EncounterProvisioning {project:string;space:string;agent_session:string;provider:string}
+/** Ask the kernel to provision a new conversation for a project (create the
+ * SessionSpace, bind the project context, attach a fresh agent session,
+ * configure its agency binding and open the provider) and return the refs. */
+export async function encounterProvision(transport:KernelTransportStatus,project:string):Promise<EncounterProvisioning> {
+  const result=await kernelOp(transport,{op:"encounter_provision",project});
+  if(result.error || result.outcome?.result!=="encounter_provisioned")throw new Error(result.error??"AIKit did not provision a chat conversation");
+  return result.outcome.data as EncounterProvisioning;
+}
 /** The session's task record (`aikit.encounter-task/v1`), read through the
  * owner's `encounter-task-read`. `null` is honest absence — no task is bound
  * to this session. Refusals surface the owner's own words. */

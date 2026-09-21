@@ -2,7 +2,6 @@ import {useEffect,useLayoutEffect,useMemo,useRef,useState,type ClipboardEvent} f
 import type {EncounterReading,EncounterStatus,PermissionDecision} from "../../encounter/client";
 import {parseContextItems,removeContextItem,type ContextItem} from "../../context/contextItems";
 import {Glyph} from "../../workspace/Glyph";
-import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {useVoiceDictation} from "./voice";
 
 /**
@@ -13,10 +12,13 @@ import {useVoiceDictation} from "./voice";
  * WHAT to quote; nothing is uploaded and nothing is sent until Send.
  *
  * The composer is anchored to the panel, never to a loaded conversation: with
- * no session it edits the person's parked draft (`drafting`), its Send asks
- * which conversation carries the message, and a disconnected or absent
- * provider reads as a quiet local explanation with the real connect/select
- * action — never as a missing composer.
+ * no session it edits the person's parked draft (`drafting`) and its Send
+ * opens a fresh conversation (the kernel provisions it), so the chat is
+ * usable by default; a disconnected or absent provider reads as a quiet
+ * local explanation with the real connect/select action — never as a missing
+ * composer. Whatever is typed reaches the harness verbatim — a leading
+ * `/model` or any other slash-command is the harness's own surface, never
+ * intercepted here.
  */
 export interface ComposerTools {
   /** Quote the active centre subject (a file surface) into the draft. */
@@ -34,7 +36,7 @@ export interface ComposerConnection {
   openReason?: string;
 }
 
-export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,onPermission,permissionAllowed,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,picking,onPick,listProject,onChooseRow}:{
+export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,onPermission,permissionAllowed,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject}:{
   reading?:EncounterReading;draft:string;pending:boolean;busy:boolean;error?:string;
   editable:boolean;promptAllowed:boolean;promptReason?:string;cancelAllowed:boolean;
   onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;
@@ -43,12 +45,12 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   draftFailed:boolean;onRecover:()=>void;paged:boolean;onLatest:()=>void;
   /** Bump to move focus to the message field (a suggestion or an edit filled it). */
   focusToken?:number;
-  /** Drafting before any conversation exists: Send routes through the chooser. */
+  /** Drafting before any conversation exists: Send opens a fresh conversation
+   * (the kernel provisions it); nothing is gated on a chooser. */
   drafting?:boolean;
-  /** The chooser is open (first Send with nothing bound). */
-  picking?:boolean;onPick?:()=>void;listProject?:string;
-  onChooseRow?:(row:EncounterRow)=>Promise<void>;
-}) {
+  /** The project a fresh conversation will provision into — disclosure only. */
+  provisionProject?:string;
+  }) {
   const input=useRef<HTMLTextAreaElement>(null);
   const picker=useRef<HTMLInputElement>(null);
   const [providerOpen,setProviderOpen]=useState(false);
@@ -77,7 +79,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     document.addEventListener("mousedown",outside);document.addEventListener("keydown",escape);
     return()=>{document.removeEventListener("mousedown",outside);document.removeEventListener("keydown",escape);};
   },[providerOpen]);
-  return <div className="chat-composer" data-connection={drafting?"drafting":connected?running?"running":"connected":"disconnected"} data-picking={picking?"true":undefined}>
+  return <div className="chat-composer" data-connection={drafting?"drafting":connected?running?"running":"connected":"disconnected"}>
     {(error||status?.error)&&reading&&<p className="chat-composer-error oi-refusal" role="alert">{error||status?.error}</p>}
     {status?.error&&status.native_session_id&&<p className="oi-note" role="status">The owner still holds this session&apos;s seat ({status.native_session_id}); recovery is the owner&apos;s service restart.</p>}
     {draftFailed&&<button className="oi-action" onClick={onRecover}>Apply my typing to the current shared draft</button>}
@@ -87,11 +89,9 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       <div className="chat-consent-choices">{request.choices.map(choice=><button key={choice.option_id} className="oi-action" disabled={pending||!permissionAllowed} onClick={()=>onPermission(request.native_request_id,{outcome:"selected",option_id:choice.option_id})}>{choice.label}</button>)}<button className="oi-action" disabled={pending||!permissionAllowed} onClick={()=>onPermission(request.native_request_id,{outcome:"cancelled"})}>Cancel request</button></div>
     </section>)}
     {drafting
-      ?<div className="chat-connect" data-fact="drafting">
-        <span className="chat-connect-label"><Glyph name="link" size={11}/> {picking?"Choose a conversation":"No conversation bound yet"}</span>
-        {onPick&&<button className="chat-provider oi-chip" disabled={busy} onClick={onPick}>{picking?"Close":"Choose"}</button>}
-        {picking&&listProject&&onChooseRow&&<div className="chat-history-rows oi-scroll"><EncounterList project={listProject} variant="panel" onOpen={onChooseRow}/></div>}
-        {!listProject&&picking&&<span className="oi-note">Select a project in the sidebar to list its conversations.</span>}
+      ?<div className="chat-connect" data-fact="new-chat">
+        <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>
+        {provisionProject&&<span className="oi-note">First send opens it in {provisionProject}.</span>}
       </div>
       :!connected&&<div className="chat-connect" data-fact="disconnected">
       <span className="chat-connect-label"><Glyph name="link" size={11}/> Connect with</span>
@@ -120,10 +120,10 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
           {!connection.providers.filter(provider=>provider.id!==current.id).length&&!connection.resume&&<span className="oi-menu-item" data-static="true">{current.label} is the configured provider.</span>}
         </div>}
       </div>}
-      <span className="chat-composer-status" role="status">{voice.listening?"Listening…":pending?"Updating…":busy?"Saving…":drafting?"Send asks which conversation carries it":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:<span className="chat-drop-hint">Drop a file or a tab to attach</span>}</span>
+      <span className="chat-composer-status" role="status">{voice.listening?"Listening…":pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:<span className="chat-drop-hint">Drop a file or a tab to attach</span>}</span>
       {running
         ?<button className="chat-stop" disabled={pending||!cancelAllowed} aria-label="Stop" title="Stop the provider turn" onClick={onCancel}><Glyph name="stop" size={12}/><span>Stop</span></button>
-        :<button className="chat-send" disabled={!canSend} aria-label="Send" title={drafting?"Send — choose the conversation, draft kept":promptReason??"Send (Enter)"} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
+        :<button className="chat-send" disabled={!canSend} aria-label="Send" title={drafting?"Send — opens a new conversation":promptReason??"Send (Enter)"} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
     </div>
   </div>;
 }
