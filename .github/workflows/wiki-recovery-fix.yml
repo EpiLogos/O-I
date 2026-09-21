@@ -24,13 +24,19 @@ jobs:
           import json, hashlib
           blob=lambda s: hashlib.sha1(b'blob '+str(len(s.encode())).encode()+b'\0'+s.encode()).hexdigest()
           prepared=[]
-          for item in json.loads(Path('scripts/wiki-recovery-edits.json').read_text()):
+          # Repair the one JSON transport escape, never the target's checked
+          # source. Both before/after blob assertions remain unchanged.
+          payload=Path('scripts/wiki-recovery-edits.json').read_text()
+          payload=payload.replace(chr(92)+'0',chr(92)*2+'0')
+          for item in json.loads(payload):
               p=Path(item['path'])
               assert str(p).startswith(('desktop/cradle/src/knowledge/','desktop/cradle/tests/')) and '..' not in p.parts and not p.is_symlink()
               old=p.read_text();assert blob(old)==item['before'],(p,blob(old))
               new=old
               for a,b,text in reversed(item['edits']):
                   assert 0<=a<=b<=len(old)
+                  if p.name=='constructionCheckpoint.ts':
+                      text=text.replace('/['+chr(92)+'/'+chr(92)+'0]/','/['+chr(92)*2+'/'+chr(92)+'0]/')
                   new=new[:a]+text+new[b:]
               assert blob(new)==item['after'],(p,blob(new))
               prepared.append((p,new))
