@@ -35,6 +35,7 @@ pub mod configuration;
 pub mod encounter;
 pub mod events;
 pub mod expression;
+pub mod expression_scene;
 pub mod native_expression;
 pub mod expression_asset;
 pub mod expression_carrier;
