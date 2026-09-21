@@ -1,36 +1,34 @@
-import {useCallback,useEffect,useMemo,useState} from "react";
+import {useCallback,useEffect,useState} from "react";
 import {kernelOp} from "../kernel/bridge";
 import {useKernel} from "../kernel/KernelProvider";
-import {applyCorrection} from "./wikiCorrection.mjs";
+import {listFiles} from "../files/client";
+import type {CentralLocation} from "../kernel/types";
 
 /** The Agent Wiki operational projection, in the Context plane.
  *
- * The correction loop's desktop face: which projection sources the active
- * composition selected, the current reading with its exact revision, the
- * attributed feedback ledger behind it, and a scoped correction composer
- * whose "Use this correction" writes through AIKit's own revision-checked
- * tool (`wiki_projection_update` kernel op → `aikit wiki projection
- * update`). The desktop never edits the source file itself; a stale basis
- * is refused by AIKit, and a saved update is disclosed as saved — delivery
- * happens at the next supported harness act and is not observable here.
+ * Guidance is a source like any other: this section only reads and discloses
+ * — the composed selection (from AIKit's own continuity tuning), the current
+ * reading with its exact revision, and the honest delivery statement.
+ * Correcting it is not a form here: "Correct the reading" opens the source in
+ * the existing editor surface (the same Central listing → open flow every
+ * source uses), where the person edits plain Markdown and saves through the
+ * normal revision-checked path. An agent corrects it through the same
+ * source's native tool; the next session or changed reading reaches the next
+ * act by delivery, not by this surface claiming it.
  *
- * An explicit correction applies without a second approval ceremony; the
- * composed text stays editable before it is applied, and Undo is itself a
- * forward revision-checked change (AIKit's ledger keeps both). */
+ * A saved file is not a delivered reading: saved, delivered and observed use
+ * remain different facts, and this surface only ever claims the first. */
 
-interface ProjectionFeedback {
-  at?:string; actor?:string; evidence?:string; reason?:string; basis?:string;
-}
 interface ProjectionReading {
   state:string;
-  projection?:{body:string;revision:string;source:string;feedback:ProjectionFeedback[]};
-  source_kind?:string;
+  projection?:{body:string;revision:string;source:string};
 }
 interface SourcesReading {
   continuity?:{tunings?:Record<string,{composition?:string;values?:{sources?:string[]}}>} & Record<string,unknown>;
 }
 
-const ROOT_SOURCE = "Control/agents/wiki/projections/collaboration.md";
+const SOURCE_DIR = "Control/agents/wiki/projections";
+const SOURCE_NAME = "collaboration.md";
 
 export function WikiProjectionSection() {
   const {transport} = useKernel();
@@ -39,16 +37,13 @@ export function WikiProjectionSection() {
   const [composition,setComposition] = useState<string>();
   const [reading,setReading] = useState<ProjectionReading>();
   const [error,setError] = useState<string>();
-  const [correction,setCorrection] = useState("");
-  const [busy,setBusy] = useState(false);
-  const [savedRevision,setSavedRevision] = useState<string>();
-  const [undoBody,setUndoBody] = useState<string>();
-  const [note,setNote] = useState<string>();
+  const [opening,setOpening] = useState(false);
+  const [openError,setOpenError] = useState<string>();
 
   const refresh = useCallback(async() => {
     if (!root) return;
-    const response = await kernelOp(transport,{op:"wiki_projection_read",root,path:ROOT_SOURCE});
-    if (response.error || (response.outcome?.result !== "wiki_projection_reading" && response.outcome?.result !== "wiki_projection_stored")) {
+    const response = await kernelOp(transport,{op:"wiki_projection_read",root,path:`${SOURCE_DIR}/${SOURCE_NAME}`});
+    if (response.error || response.outcome?.result !== "wiki_projection_reading") {
       setError(response.error ?? "The projection reading is unavailable.");
       return;
     }
@@ -83,63 +78,22 @@ export function WikiProjectionSection() {
 
   useEffect(() => { void refresh(); },[refresh]);
 
+  /** Open the projection source in the existing editor surface: Central lists
+   * the directory, the entry's own location opens the file. No second write
+   * path, no form — the correction is an ordinary edit of the source. */
+  const openInTheEditor = async() => {
+    if (!root) return;
+    setOpening(true); setOpenError(undefined);
+    try {
+      const directory = await listFiles(transport, `${root}/${SOURCE_DIR}`);
+      const entry = directory.entries.find(candidate => candidate.name === SOURCE_NAME && candidate.kind === "file");
+      if (!entry) { setOpenError(`Central lists no ${SOURCE_NAME} under ${SOURCE_DIR}.`); return; }
+      window.dispatchEvent(new CustomEvent("oi:epi-open-source", {detail: {location: entry.location as CentralLocation}}));
+    } catch (cause) { setOpenError(String(cause)); }
+    finally { setOpening(false); }
+  };
+
   const revision = reading?.projection?.revision;
-  const proposed = useMemo(() => reading?.projection && correction.trim()
-    ? applyCorrection(reading.projection.body, correction)
-    : undefined,[reading,correction]);
-
-  const useThisCorrection = async() => {
-    if (!reading?.projection || !correction.trim()) return;
-    setBusy(true); setNote(undefined); setSavedRevision(undefined);
-    try {
-      const response = await kernelOp(transport,{
-        op:"wiki_projection_update",
-        root: root!,
-        path: ROOT_SOURCE,
-        expected_revision: reading.projection.revision,
-        evidence: "desktop:context-plane-correction",
-        actor: "central:user",
-        reason: correction.trim(),
-        body: applyCorrection(reading.projection.body, correction),
-      });
-      if (response.error || response.outcome?.result !== "wiki_projection_stored") {
-        setNote(response.error ?? "The correction was refused.");
-      } else {
-        const data = response.outcome.data as ProjectionReading;
-        setUndoBody(reading.projection.body);
-        setSavedRevision(data.projection?.revision);
-        setCorrection("");
-        setReading(data);
-      }
-    } finally { setBusy(false); }
-  };
-
-  const undo = async() => {
-    if (!undoBody || !reading?.projection) return;
-    setBusy(true); setNote(undefined);
-    try {
-      const response = await kernelOp(transport,{
-        op:"wiki_projection_update",
-        root: root!,
-        path: ROOT_SOURCE,
-        expected_revision: reading.projection.revision,
-        evidence: "desktop:context-plane-correction",
-        actor: "central:user",
-        reason: "undo the previous correction",
-        body: undoBody,
-      });
-      if (response.error || response.outcome?.result !== "wiki_projection_stored") {
-        setNote(response.error ?? "The undo was refused.");
-      } else {
-        const data = response.outcome.data as ProjectionReading;
-        setSavedRevision(data.projection?.revision);
-        setUndoBody(undefined);
-        setReading(data);
-      }
-    } finally { setBusy(false); }
-  };
-
-  const feedback = reading?.projection?.feedback ?? [];
 
   return <details className="agent-section oi-disclosure" data-context="operative-guidance">
     <summary>Effective guidance · Wiki projection{revision ? ` · rev ${revision.slice(0,8)}` : ""}</summary>
@@ -147,40 +101,21 @@ export function WikiProjectionSection() {
     {!error && <>
       <p className="oi-note">
         Selected by {composition ?? "the active composition"} · {sources?.length ?? 0} source(s).
-        Saved, delivered and observed use are different facts: this surface shows what is saved;
-        the next supported harness act receives it.
+        Delivered at session start and when the reading changes; saved, delivered and observed
+        use are different facts, and this surface only shows what is saved.
       </p>
-      {savedRevision && <p className="oi-note" data-state="saved">Saved revision {savedRevision.slice(0,8)} — reaches the next supported act; the model's earlier context is not rewritten.</p>}
-      {note && <p className="oi-note" role="alert">{note}</p>}
       {reading?.projection && <>
         <details className="oi-disclosure"><summary>Current reading</summary><pre>{reading.projection.body}</pre></details>
-        <details className="oi-disclosure" open={!!correction}>
-          <summary>Correct the reading</summary>
-          <textarea
-            value={correction}
-            onChange={event => setCorrection(event.target.value)}
-            rows={3}
-            aria-label="Correction"
-            placeholder="Tell the agent what to change about how it works here. An explicit correction applies without a second approval; it stays scoped to this reading."
-          />
-          {proposed && <details open><summary>The change that would be saved</summary><pre>{proposed}</pre></details>}
-          <button className="oi-action" disabled={busy || !proposed} onClick={() => void useThisCorrection()}>
-            {busy ? "Applying…" : "Use this correction"}
-          </button>
-          {undoBody && <button className="oi-action" disabled={busy} onClick={() => void undo()}>Undo (as a new revision)</button>}
-        </details>
-        <details className="oi-disclosure">
-          <summary>Feedback behind this reading · {feedback.length}</summary>
-          {feedback.length === 0
-            ? <p className="oi-note">No recorded correction against this source yet.</p>
-            : <ul>{feedback.map((entry,index) => <li key={index} className="oi-note">
-                {entry.at ?? "earlier"} · {entry.reason ?? "(no reason recorded)"} · actor {entry.actor ?? "unattributed"} · evidence {entry.evidence ?? "unattributed"}
-              </li>)}</ul>}
-          {feedback.length > 0 && <p className="oi-note">
-            Recurring corrections are evidence for a reviewed governance change, not automatic law —
-            propose it through the normal source-return path.
-          </p>}
-        </details>
+        <button className="oi-action" disabled={opening} onClick={() => void openInTheEditor()}>
+          {opening ? "Opening…" : "Correct the reading in the editor"}
+        </button>
+        {openError && <p className="oi-note" role="alert">{openError}</p>}
+        <p className="oi-note">
+          A correction is an ordinary edit of this source: change the Markdown here and save it
+          the way any source is saved. Tell the agent in conversation and it edits the same
+          source through its own tool. Recurring corrections are evidence for a reviewed
+          governance change, proposed through the normal return path — never automatic law.
+        </p>
       </>}
     </>}
   </details>;
