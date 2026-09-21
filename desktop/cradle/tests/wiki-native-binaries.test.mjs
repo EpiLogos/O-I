@@ -1,6 +1,6 @@
 import test from 'node:test';
 import assert from 'node:assert/strict';
-import {mkdtempSync,writeFileSync,readFileSync,mkdirSync,chmodSync,rmSync} from 'node:fs';
+import {mkdtempSync,writeFileSync,readFileSync,mkdirSync,chmodSync,rmSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {join,resolve,dirname} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -25,7 +25,10 @@ if mode=='ambiguous':
 `);chmodSync(cargo,0o700);
  const output=join(root,'environment');writeFileSync(output,'');
  const result=spawnSync('python3',[helper,'--receipt',join(root,'receipt.json')],{cwd:root,encoding:'utf8',env:{...process.env,PATH:`${bin}:${process.env.PATH}`,TEST_TARGET:target,TEST_MODE:mode,GITHUB_ENV:output}});
- return {root,target,result,output};
+ // The helper emits the canonical artifact path (Path(...).resolve()); compare against
+ // the same canonical target so a symlinked temp root (e.g. macOS /var -> /private/var)
+ // does not read as a path mismatch. On a runner without symlinked temp this is a no-op.
+ return {root,target:realpathSync(target),result,output};
 }
 
 test('native walk uses exact compiler artifact paths even with a different target directory',()=>{
