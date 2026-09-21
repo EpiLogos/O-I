@@ -15,9 +15,20 @@
       "issue": "https://github.com/EpiLogos/O-I/issues/65",
       "consumer_issues": [366, 335, 375],
       "policy": "Preserve every WC decision and reason, the complete UX activities and existing original story/CAW/QL obligations. Exact native Action IDs and current implementation standing are resolved at the incoming mainline cut, not fabricated by this planning module."
+    },
+    "adaptive65": {
+      "source_ref": "docs/experience/WIKI-CONSTELLATION-UX.md#6-adaptive-wikiuseragent-interaction",
+      "issue": "https://github.com/EpiLogos/O-I/issues/65",
+      "consumer_issues": [
+        375,
+        414,
+        418,
+        420
+      ],
+      "policy": "Extend existing stories and WC01–WC15; source coverage is not runtime, installed or human acceptance."
     }
   },
-  "required_obligation_ids": ["wc65:WC01", "wc65:WC02", "wc65:WC03", "wc65:WC04", "wc65:WC05", "wc65:WC06", "wc65:WC07", "wc65:WC08", "wc65:WC09", "wc65:WC10", "wc65:WC11", "wc65:WC12", "wc65:WC13", "wc65:WC14", "wc65:WC15"],
+  "required_obligation_ids": ["wc65:WC01", "wc65:WC02", "wc65:WC03", "wc65:WC04", "wc65:WC05", "wc65:WC06", "wc65:WC07", "wc65:WC08", "wc65:WC09", "wc65:WC10", "wc65:WC11", "wc65:WC12", "wc65:WC13", "wc65:WC14", "wc65:WC15", "adaptive65:AP01", "adaptive65:AP02", "adaptive65:AP03", "adaptive65:AP04", "adaptive65:AP05", "adaptive65:AP06", "adaptive65:AP07", "adaptive65:AP08"],
   "obligations": [
     {
       "id": "wc65:WC01", "source": "wc65", "native_locator": "Product WC01; specification section 2; UX activity A",
@@ -123,6 +134,218 @@
       "story_ids": ["KN01", "KN04", "GV03", "UI06"], "required_evidence": ["D", "C"],
       "required_branches": ["Preserve explicit decisions, source standing, native owners, work packages and required evidence across the incoming mainline reconciliation.", "Exact API symbols follow the native cut without reopening settled product meaning or replacing earlier story/CAW/QL obligations."],
       "test_refs": ["source mapping and link checks", "WCT18"]
+    },
+    {
+      "id": "adaptive65:AP01",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP01",
+      "requirement": "Ordinary source links, bkmr/ripgrep retrieval and authored QL constellations remain distinct from governance, interpretation and feedback authority.",
+      "story_ids": [
+        "KN02",
+        "KN04",
+        "KN08",
+        "AG03"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P"
+      ],
+      "required_branches": [
+        "Search hits and geometry cannot acquire governance or semantic assertion authority."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT24"
+      ]
+    },
+    {
+      "id": "adaptive65:AP02",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP02",
+      "requirement": "Authorised operational correction changes agent-maintained Wiki source without silently mutating human governance or accepting agent inference.",
+      "story_ids": [
+        "GV01",
+        "GV03",
+        "GV04",
+        "AG09",
+        "WR04"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Exact basis and evidence survive; stale/concurrent edits and claimed-actor authority are checked separately."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT20"
+      ]
+    },
+    {
+      "id": "adaptive65:AP03",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP03",
+      "requirement": "Guidance carries purpose, applicability, exceptions and useful alternatives, without bypassing native privacy or authority.",
+      "story_ids": [
+        "GV01",
+        "GV04",
+        "WR03",
+        "PX05"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Useful reinterpretation does not weaken consent, disclosure or completion-evidence requirements."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT23"
+      ]
+    },
+    {
+      "id": "adaptive65:AP04",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP04",
+      "requirement": "User/guardian, root meta-project Central, current workcell, primary world and child ProjectCentral retain distinct identity and scope.",
+      "story_ids": [
+        "AG01",
+        "AG06",
+        "KN05",
+        "MC02"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M"
+      ],
+      "required_branches": [
+        "Root-only use, sibling projects and two workcells have no silent primary-machine fallback or identity remint."
+      ],
+      "test_refs": [
+        "WCT21"
+      ]
+    },
+    {
+      "id": "adaptive65:AP05",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP05",
+      "requirement": "A correction reaches the next actual act through the native source tool, selected composition and supported harness transport.",
+      "story_ids": [
+        "AG03",
+        "AG06",
+        "AG09",
+        "WR03",
+        "WR04",
+        "KN08"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Stored, selected, emitted, acknowledged and observed-use remain distinct; disconnected transport fails."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT22",
+        "WCT25"
+      ]
+    },
+    {
+      "id": "adaptive65:AP06",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP06",
+      "requirement": "Chat/selection and existing Context/Run/Agents surfaces expose a small correction operation and inspectable effective guidance.",
+      "story_ids": [
+        "UI06",
+        "AG03",
+        "AG09",
+        "KN04",
+        "WR04"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "No participant modal or compulsory QL; human and agent operate one revisioned source with clear/suspend/undo."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT24",
+        "WCT25"
+      ]
+    },
+    {
+      "id": "adaptive65:AP07",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP07",
+      "requirement": "Accumulated scoped feedback supports a separately accepted governance revision and re-evaluation of dependent interpretations.",
+      "story_ids": [
+        "GV03",
+        "GV04",
+        "KN04",
+        "KN05",
+        "PX05"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "H"
+      ],
+      "required_branches": [
+        "Contradictions and common lineage remain visible; repetition never auto-ratifies governance; expiry revokes future delivery."
+      ],
+      "test_refs": [
+        "WCT20",
+        "WCT23"
+      ]
+    },
+    {
+      "id": "adaptive65:AP08",
+      "source": "adaptive65",
+      "native_locator": "Wiki UX section 6 AP08",
+      "requirement": "The joined loop proves changed use and survives denial, stale basis, budgets, unsupported transport, compaction and restart.",
+      "story_ids": [
+        "AG06",
+        "KN05",
+        "WR04",
+        "UI06"
+      ],
+      "required_evidence": [
+        "D",
+        "C",
+        "P",
+        "M",
+        "H"
+      ],
+      "required_branches": [
+        "Independent disconnected-consumer negative distinguishes saved files from a working collaboration."
+      ],
+      "test_refs": [
+        "WCT19",
+        "WCT20",
+        "WCT21",
+        "WCT22",
+        "WCT23",
+        "WCT24",
+        "WCT25"
+      ]
     }
   ],
   "delegated_ql_stories": ["UX01", "UX04", "UX05", "UX06", "UX08", "UX09", "UX11", "UX12"],
