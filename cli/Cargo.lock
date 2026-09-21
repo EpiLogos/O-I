@@ -14,7 +14,7 @@ dependencies = [
 [[package]]
 name = "aikit-core"
 version = "0.1.0"
-source = "git+https://github.com/EpiLogos/ai-kit?rev=e53801d#e53801d86cf4b3eec3d1b3c28528f779180efa3a"
+source = "git+https://github.com/EpiLogos/ai-kit?rev=ace1496a277d69047e4cead073f4f1bd67932f31#ace1496a277d69047e4cead073f4f1bd67932f31"
 dependencies = [
  "blake3",
  "jiff",

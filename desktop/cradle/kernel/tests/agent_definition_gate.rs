@@ -57,17 +57,30 @@ else:
         Self { root, executable }
     }
     fn call(&self, request: Request) -> Result<Value, String> {
-        agent_definition::execute(
-            &CentralClient::with(
-                self.executable.clone(),
-                Some(self.root.clone()),
-                "MUST-NOT-FALLBACK".into(),
-            ),
-            &Client::with(self.executable.clone(), None),
-            None,
-            &self.root,
-            &request,
-        )
+        // Some runner filesystems still hold the just-renamed owner script
+        // open for write at first exec (ETXTBSY). The race is the machine's,
+        // not the gate's: a bounded retry keeps it from measuring the runner
+        // instead of the behaviour under test.
+        let mut attempts = 0;
+        loop {
+            match agent_definition::execute(
+                &CentralClient::with(
+                    self.executable.clone(),
+                    Some(self.root.clone()),
+                    "MUST-NOT-FALLBACK".into(),
+                ),
+                &Client::with(self.executable.clone(), None),
+                None,
+                &self.root,
+                &request,
+            ) {
+                Err(text) if text.contains("Text file busy") && attempts < 5 => {
+                    attempts += 1;
+                    std::thread::sleep(std::time::Duration::from_millis(100));
+                }
+                other => return other,
+            }
+        }
     }
     fn calls(&self) -> Vec<Value> {
         fs::read_to_string(self.root.join("calls"))

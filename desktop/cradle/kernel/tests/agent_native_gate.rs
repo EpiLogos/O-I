@@ -32,7 +32,17 @@ else:
   fs::rename(&staged,&executable).unwrap();
   Self{root,executable}
  }
- fn call(&self,request:EncounterRequest)->Result<Value,String>{Client::with(self.executable.clone(),None).encounter(&self.root,"project/allowed",&request)}
+ fn call(&self,request:EncounterRequest)->Result<Value,String>{
+  // Same bounded ETXTBSY retry as the definition gate's rig: the race is the
+  // runner filesystem's, not the gate's.
+  let mut attempts=0;
+  loop {
+   match Client::with(self.executable.clone(),None).encounter(&self.root,"project/allowed",&request) {
+    Err(text) if text.contains("Text file busy") && attempts<5 => {attempts+=1;std::thread::sleep(std::time::Duration::from_millis(100));}
+    other=>return other,
+   }
+  }
+ }
  fn requests(&self)->Vec<Value>{fs::read_to_string(self.root.join("requests.jsonl")).unwrap_or_default().lines().map(|line|serde_json::from_str(line).unwrap()).collect()}
 }
 impl Drop for Rig {fn drop(&mut self){let _=fs::remove_dir_all(&self.root);}}

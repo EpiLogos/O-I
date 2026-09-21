@@ -132,7 +132,6 @@ jobs:
           name: collection-consumer-evidence-${{ github.sha }}
           path: desktop/cradle/tests/artifacts/collection-source/
           if-no-files-found: warn
-          if-no-files-found: warn
 
   native-shell:
     runs-on: macos-15
