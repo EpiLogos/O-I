@@ -3,7 +3,7 @@
  */
 import assert from 'node:assert/strict';
 import {execFileSync,spawn} from 'node:child_process';
-import {readFileSync,writeFileSync,mkdirSync,mkdtempSync} from 'node:fs';
+import {readFileSync,writeFileSync,mkdirSync,mkdtempSync,realpathSync} from 'node:fs';
 import {tmpdir} from 'node:os';
 import {dirname,resolve} from 'node:path';
 import {fileURLToPath} from 'node:url';
@@ -13,7 +13,10 @@ import {chromium,webkit} from 'playwright';
 const engineName=process.env.WIKI_BROWSER==='webkit'?'webkit':'chromium';
 const root=resolve(dirname(fileURLToPath(import.meta.url)),'..'),out=resolve(root,'tests/artifacts/wiki-constructive',engineName);mkdirSync(out,{recursive:true});
 const binaries=Object.fromEntries(['OI_BIN','OI_AIKIT_BIN','OI_CENTRAL_CTRL_BIN','WIKI_KERNEL_BIN'].map(key=>{assert.ok(process.env[key],`${key} must name the actual built executable`);return [key,resolve(process.env[key])];}));
-const ground=mkdtempSync(resolve(tmpdir(),'wiki-constructive-')),project=resolve(ground,'Work/Notes');mkdirSync(project,{recursive:true});
+// Canonicalise the ground so a symlinked temp root (macOS /var -> /private/var)
+// matches the native owner's own path canonicalisation; a no-op where temp is not
+// symlinked (Linux CI). Without it the constellation register/space refs mismatch.
+const ground=realpathSync(mkdtempSync(resolve(tmpdir(),'wiki-constructive-'))),project=resolve(ground,'Work/Notes');mkdirSync(project,{recursive:true});
 const env={PATH:process.env.PATH??'/usr/bin:/bin',HOME:resolve(ground,'isolated-home'),AIKIT_HOME:resolve(ground,'isolated-aikit'),...binaries,OI_CENTRAL_ROOT:ground,OI_CENTRAL_PROJECT_QUERY:'Notes'};
 mkdirSync(env.HOME,{recursive:true});
 const receipt={scope:'N+B: real CLI, files, dev kernel and production UI on a controlled temporary ground; no installed, live-model or human acceptance',checks:[],native:[],passed:false};
