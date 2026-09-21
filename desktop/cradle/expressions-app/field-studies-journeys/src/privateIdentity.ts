@@ -43,7 +43,13 @@ export function privateIdentityEngine(engine:FieldEngineAdapter,options:PrivateI
     get(target,property){
       if(property==='render')return (frame:EngineFrame)=>{lastPublic=frame;if(privateScene){if(!options.canPresent()){end();return;}target.render({...frame,scene:privateScene,authoringRevision:-revision,camera:{...defaultCamera(),mode:'3d'},params:privateScene.field.params,selectedIds:[],pointer:{active:false,world:{x:0,y:0,z:0}},scaffold:'off'});}else target.render(frame);};
       if(property==='needsRender')return ()=>!!privateScene||target.needsRender?.()===true;
-      if(property==='telemetry'||property==='inspect'||property==='stations')return (...args:unknown[])=>privateScene?(property==='telemetry'?null:property==='stations'?[]:{private:true,standing:'private-presentation; native source not disclosed'}):typeof Reflect.get(target,property)==='function'?Reflect.get(target,property).apply(target,args):undefined;
+      if(property==='telemetry'||property==='inspect'||property==='stations')return (...args:unknown[])=>{
+        if(privateScene)return property==='telemetry'?null:property==='stations'?[]:{private:true,standing:'private-presentation; native source not disclosed'};
+        // Read optional capabilities once: a getter may change or disappear.
+        // Preserve the native receiver without asserting a method exists.
+        const method:unknown=Reflect.get(target,property);
+        return typeof method==='function'?Reflect.apply(method,target,args):undefined;
+      };
       if(['capture','withCleanFrame','transportState','restoreTransport','checkpointRetainedField','restoreRetainedField','command','setNativeDomain'].includes(String(property))){const value=Reflect.get(target,property);if(typeof value!=='function')return value;return (...args:unknown[])=>privateScene?unavailable():value.apply(target,args);}
       if(property==='dispose')return ()=>{privateScene=null;lastPublic=null;disposed=true;target.dispose();};
       const value=Reflect.get(target,property);return typeof value==='function'?value.bind(target):value;
