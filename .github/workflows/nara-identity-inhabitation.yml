@@ -35,7 +35,7 @@ jobs:
           set -o pipefail
           mkdir -p tests/artifacts/nara-personal
           git rev-parse HEAD > tests/artifacts/nara-personal/source-revision.txt
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-personal-contracts.test.mjs tests/nara-personal-telemetry.test.mjs tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs tests/nara-local-acceptance.test.mjs 2>&1 | tee tests/artifacts/nara-personal/contracts.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-personal-contracts.test.mjs tests/nara-personal-telemetry.test.mjs tests/nara-personal-identity.test.mjs tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs tests/nara-local-acceptance.test.mjs 2>&1 | tee tests/artifacts/nara-personal/contracts.log
       - name: Compile complete Cradle
         if: ${{ !cancelled() }}
         run: npm --prefix desktop/cradle run build
@@ -73,7 +73,7 @@ jobs:
       - uses: actions/checkout@v4
         with:
           repository: EpiLogos/QL-MEF
-          ref: f84fb896c295fb75d365e558f60e8e4f50fd366d
+          ref: deb332d42fa7e9925414b0b70eab18bf1ba3439a
           path: .native/QL-MEF
           persist-credentials: false
       - uses: dtolnay/rust-toolchain@stable
@@ -85,22 +85,28 @@ jobs:
       - uses: actions/setup-node@v4
         with: {node-version: 22}
       - run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Record exact native join sources
+        run: |
+          mkdir -p desktop/cradle/tests/artifacts/nara-personal
+          git rev-parse HEAD > desktop/cradle/tests/artifacts/nara-personal/oi-revision.txt
+          git -C .native/QL-MEF rev-parse HEAD > desktop/cradle/tests/artifacts/nara-personal/ql-revision.txt
       - name: Native transport tests, no private payload in argv or diagnostic events
-        run: cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets
+        run: |
+          set -o pipefail
+          cargo test --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets 2>&1 | tee desktop/cradle/tests/artifacts/nara-personal/kernel.log
       - name: Build actual pinned native personal producer
         run: cargo build --manifest-path .native/QL-MEF/Cargo.toml --locked -p ql-cli --bin ql
       - name: Production consumer against real QL CLI in a temporary private World
         working-directory: desktop/cradle
         env:
           QL_NARA_TEST_BIN: ${{ github.workspace }}/.native/QL-MEF/target/debug/ql
-          QL_NARA_TEST_REVISION: f84fb896c295fb75d365e558f60e8e4f50fd366d
+          QL_NARA_TEST_REVISION: deb332d42fa7e9925414b0b70eab18bf1ba3439a
         run: |
           set -o pipefail
-          mkdir -p tests/artifacts/nara-personal
           node tests/nara-personal-native.mjs 2>&1 | tee tests/artifacts/nara-personal/native.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
           name: nara-identity-native-${{ github.sha }}
           path: desktop/cradle/tests/artifacts/nara-personal
-          if-no-files-found: warn
+          if-no-files-found: error
