@@ -174,3 +174,53 @@ pub fn remove_entity(presentation: &mut Presentation, reference: &str) {
         bindings.retain(|binding| binding["carriers"].as_array().is_some_and(|carriers| !carriers.is_empty()));
     }
 }
+
+/// Expression-wide properties of the existing Journey authoring model. Scenes
+/// stay in Document.scenes; this contains no duplicate Scene or subject store.
+#[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
+#[serde(deny_unknown_fields)]
+pub struct Composition {
+    pub schema: String,
+    pub description: String,
+    #[serde(rename = "loop")]
+    pub loop_playback: bool,
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub shared: Option<Value>,
+}
+
+impl Composition {
+    pub fn validate(&self) -> Result<(), String> {
+        if self.schema != "oi.journey-properties/v1" || self.description.len() > 20_000 {
+            return Err("Unsupported or unbounded Expression presentation".into());
+        }
+        if let Some(shared) = &self.shared {
+            data(shared, 0)?;
+            let fields = object(shared, "Shared authoring properties")?;
+            if fields.keys().any(|key| !["toolbelt", "values", "pointer"].contains(&key.as_str())) {
+                return Err("Unknown shared authoring property".into());
+            }
+            for key in ["values", "pointer"] {
+                let values = object(&shared[key], key)?;
+                if values.len() > 1024 || values.values().any(|value| !value.is_string() && !value.is_boolean() && !value.is_number()) {
+                    return Err("Shared values must be bounded scalar authoring properties".into());
+                }
+            }
+            if !shared["toolbelt"].as_array().is_some_and(|values| values.len() <= 2048) {
+                return Err("Shared toolbelt requires a bounded entry list".into());
+            }
+        }
+        Ok(())
+    }
+
+    pub fn fork(&mut self, old: &str, new: &str) {
+        if let Some(entries) = self.shared.as_mut().and_then(|value| value.get_mut("toolbelt")).and_then(Value::as_array_mut) {
+            for entry in entries {
+                if let Some(reference) = entry["entityId"].as_str() {
+                    if let Some(suffix) = reference.strip_prefix(&format!("{old}:")) {
+                        entry["entityId"] = Value::String(format!("{new}:{suffix}"));
+                    }
+                }
+            }
+        }
+    }
+}

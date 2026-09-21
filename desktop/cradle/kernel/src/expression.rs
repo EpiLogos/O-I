@@ -183,6 +183,8 @@ pub struct Refinement {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Document {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<crate::expression_scene::Composition>,
     pub schema: String,
     pub expression_ref: String,
     pub revision: u64,
@@ -207,6 +209,8 @@ pub struct Document {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "change", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Change {
+    Rename { title: String },
+    CompositionSet { presentation: crate::expression_scene::Composition },
     SceneCreate {
         scene_ref: String,
         title: String,
@@ -459,8 +463,9 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["scene_material_set","scene_material_clear","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
+        "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
         "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
         "composition_budget":{"scenes":64,"entities":LIMIT,"scene_members":LIMIT,"render_formations":10,"render_pins":8},
         "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
@@ -597,6 +602,7 @@ impl Document {
         id(&self.expression_ref, "expression:")?;
         text(&self.title)?;
         readings(&self.provenance)?;
+        if let Some(presentation) = &self.presentation { presentation.validate()?; }
         if self.scenes.is_empty()
             || self.scenes.len() > 64
             || self.entities.len() > LIMIT
@@ -783,6 +789,8 @@ impl Document {
     }
     fn change(&mut self, c: Change) -> Result<(), String> {
         match c {
+            Change::Rename { title } => { text(&title)?; self.title = title; }
+            Change::CompositionSet { presentation } => { presentation.validate()?; self.presentation = Some(presentation); }
             Change::SceneCreate { scene_ref, title } => {
                 if self.scenes.iter().any(|s| s.scene_ref == scene_ref) {
                     return Err("Scene already exists".into());
@@ -1095,6 +1103,7 @@ impl Application {
                 actor,
             } => {
                 let d = Document {
+                    presentation: None,
                     schema: SCHEMA.into(),
                     expression_ref: expression_ref.clone(),
                     revision: 1,
@@ -1239,6 +1248,7 @@ impl Application {
                         crate::expression_scene::fork(presentation, &expression_ref, &new_expression_ref);
                     }
                 }
+                if let Some(presentation) = &mut d.presentation { presentation.fork(&expression_ref, &new_expression_ref); }
                 d.selection.scene_ref = map(&d.selection.scene_ref);
                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));

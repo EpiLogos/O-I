@@ -1389,6 +1389,7 @@ mod tests {
             .insert("wiki:b".into(), [-499., 400., 30.]);
         layout_b.glyphs.insert("wiki:a".into(), "◐".into());
         let doc = crate::expression::Document {
+            presentation: None,
             schema: expression::SCHEMA.into(),
             expression_ref: expression_ref.into(),
             revision: 1,
@@ -1448,6 +1449,7 @@ mod tests {
     #[test]
     fn presentation_changes_carry_exact_subject_refs_and_focus_the_locus() {
         let doc = crate::expression::Document {
+            presentation: None,
             schema: expression::SCHEMA.into(),
             expression_ref: "expression:test".into(),
             revision: 1,

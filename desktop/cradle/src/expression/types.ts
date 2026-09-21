@@ -20,13 +20,20 @@ export type TriggerOccasion = "scene_enter"|"scene_leave"|"activate"|"select"|"s
 export interface SceneTrigger {trigger_ref:string;occasion:TriggerOccasion;target:TriggerTarget}
 /** ES3 profile adoption with explicit, legible overrides. */
 export interface ProfileAdoption {profile_ref:string;revision:number;overridden_parameters?:Record<string,Parameter>}
-export interface Scene {scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}
+export interface ScenePresentation {schema:"oi.journey-scene/v1";scene:Record<string,unknown>}
+export interface CompositionPresentation {schema:"oi.journey-properties/v1";description:string;loop:boolean;shared?:Record<string,unknown>}
+export interface Scene {presentation?:ScenePresentation|null;scene_ref:string;revision:number;title:string;entity_refs:string[];body?:SceneBody|null;triggers?:SceneTrigger[]}
 export interface Relation {native_owner?:string;binding_ref:string;relation:ReadingRef;from_entity_ref:string;to_entity_ref:string;provenance:ReadingRef[]}
 export interface Representation {kind:"live"|"image"|"video"|"html"|"embed"|"projection";representation:ReadingRef;provenance:ReadingRef[]}
 export interface RefinementDecision {state:"accepted"|"rejected";actor:string;reason:string;decided_at_revision:number;corrections:Change[]}
 export interface Refinement {proposal_ref:string;basis_revision:number;proposed_by:string;activity_ref:string|null;continues_proposal_ref:string|null;summary:string;changes:Change[];method_refs:ReadingRef[];evidence_refs:ReadingRef[];decision:RefinementDecision|null}
-export interface ExpressionDocument {schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
+export interface ExpressionDocument {presentation?:CompositionPresentation|null;schema:"oi.expression/v1";expression_ref:string;revision:number;title:string;scenes:Scene[];entities:Record<string,Entity>;relations:Record<string,Relation>;selection:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};provenance:ReadingRef[];representations:Representation[];refinements:Refinement[];collections?:string[];profiles?:ProfileAdoption[]}
 export type Change =
+ | {change:"rename";title:string}
+ | {change:"composition_set";presentation:CompositionPresentation}
+ | {change:"scene_rename";scene_ref:string;title:string}
+ | {change:"scene_remove"|"scene_material_clear";scene_ref:string}
+ | {change:"scene_material_set";scene_ref:string;presentation:ScenePresentation}
  | {change:"scene_create";scene_ref:string;title:string}
  | {change:"scene_reorder";scene_refs:string[]}
  | {change:"scene_compose";scene_ref:string;entity_refs:string[]}

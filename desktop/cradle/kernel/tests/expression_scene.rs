@@ -77,3 +77,18 @@ fn material()->Value {json!({"schema":"oi.journey-scene/v1","scene":{
     edit(&mut app,4,json!([{"change":"entity_remove","entity_ref":"expression:craft:entity:one"}])).unwrap();
     let d=inspect(&mut app);assert_eq!(d["scenes"][0]["presentation"]["scene"]["entities"],json!([]));
 }
+
+#[test] fn expression_properties_and_title_survive_native_reopen_and_reject_unknown_authority() {
+    let mut app=setup();
+    let properties=json!({"schema":"oi.journey-properties/v1","description":"Authored interpretation, not independent corroboration","loop":false,
+        "shared":{"toolbelt":[],"values":{"field.params.speed":0.2},"pointer":{}}});
+    edit(&mut app,2,json!([{"change":"rename","title":"Revised investigation"},{"change":"composition_set","presentation":properties}])).unwrap();
+    let original=inspect(&mut app);assert_eq!(original["title"],"Revised investigation");assert_eq!(original["presentation"],properties);
+    let mut restart=Application::default();
+    assert_eq!(apply(&mut restart,json!({"operation":"open","document":original,"actor":"human:reopen"})).unwrap()["document"],original);
+    let mut unsafe_properties=properties.clone();unsafe_properties["shared"]["authority"]=json!("write-anywhere");
+    assert!(edit(&mut app,3,json!([{"change":"composition_set","presentation":unsafe_properties}])).is_err());
+    assert_eq!(inspect(&mut app),original);
+    let stale=edit(&mut app,2,json!([{"change":"rename","title":"Late Agent response"}])).unwrap();
+    assert_eq!(stale["state"],"revision_conflict");assert_eq!(inspect(&mut app),original);
+}
