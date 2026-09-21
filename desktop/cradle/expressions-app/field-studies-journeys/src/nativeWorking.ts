@@ -11,7 +11,28 @@ export type SaveDestination={parent_path:string;name:string}|{location:NativeFil
 export type PendingNative =
  | {kind:'create';expression_ref:string;submitted:WorkingSnapshot}
  | {kind:'edit';request:CompositionEdit;submitted:WorkingSnapshot}
- | {kind:'file';intent:unknown};
+ | {kind:'file';intent:unknown}
+ | {kind:'selection';request:SelectionEdit};
+export interface NativeSelection {scene_ref:string;entity_ref?:string|null;binding_ref?:string}
+export interface SelectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:[Record<string,unknown>]}
+function selectionEdit(view:KernelConversion,selection:NativeSelection):SelectionEdit {
+ const document=view.document,scene=document.scenes.find(s=>s.scene_ref===selection.scene_ref);
+ if(!scene)throw new Error('Selection belongs to an absent native Scene');
+ const relation=selection.binding_ref?document.relations?.[selection.binding_ref]:undefined;
+ if(selection.binding_ref&&(!relation||!scene.entity_refs.includes(relation.from_entity_ref)||!scene.entity_refs.includes(relation.to_entity_ref)))throw new Error('Relation occurrence is not in this native Scene');
+ if(selection.entity_ref&&(!scene.entity_refs.includes(selection.entity_ref)||selection.binding_ref))throw new Error('Select one exact entity or relation occurrence');
+ const change=relation?{change:'relation_focus',scene_ref:scene.scene_ref,binding_ref:relation.binding_ref}
+  :{change:'focus',scene_ref:scene.scene_ref,entity_ref:selection.entity_ref??null};
+ return {operation:'edit',expression_ref:document.expression_ref,expected_revision:document.revision,actor:'human:expressions-app',changes:[change]};
+}
+function selectionMatches(view:KernelConversion,request:SelectionEdit,document:KernelExpressionDocument):boolean {
+ const expected=clone(view.document),change=request.changes[0];
+ expected.selection={scene_ref:String(change.scene_ref),entity_ref:change.change==='focus'?(change.entity_ref as string|null):null,
+  ...(change.change==='relation_focus'?{relation_ref:String(change.binding_ref)}:{})};
+ if(document.revision!==expected.revision&&document.revision!==expected.revision+1)return false;
+ expected.revision=document.revision;
+ return same(expected,document);
+}
 export interface NativeWorkingRecord {
  schema:'oi.native-working/v1';draft_id:string;view?:KernelConversion;file?:NativeFile;pending?:PendingNative;
 }
@@ -68,7 +89,7 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
  }
  if(value.pending){
   const pending=value.pending;
-  if(!['create','edit','file'].includes(pending.kind))throw new Error('Unknown pending native operation');
+  if(!['create','edit','file','selection'].includes(pending.kind))throw new Error('Unknown pending native operation');
   if(pending.kind==='create'||pending.kind==='edit'){
    validateJourney(pending.submitted.journey);
    if(pending.submitted.journey.id!==journey.id)throw new Error('Pending proposal belongs to another draft');
@@ -76,6 +97,10 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
   if(pending.kind==='create'&&(!/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(pending.expression_ref)||value.view))throw new Error('Invalid pending creation identity');
   if(pending.kind==='edit'&&(!value.view||pending.request.operation!=='edit'||pending.request.expression_ref!==value.view.document.expression_ref||pending.request.expected_revision!==value.view.document.revision
    ||!same(pending.request,prepareCompositionEdit(value.view,pending.submitted.journey,{sceneId:pending.submitted.sceneId,entityId:pending.submitted.entityId,actor:pending.request.actor}))))throw new Error('The recovered edit does not match its captured basis');
+  if(pending.kind==='selection'){
+   const change=pending.request?.changes?.[0];
+   if(!value.view||!change||!same(pending.request,selectionEdit(value.view,{scene_ref:String(change.scene_ref),entity_ref:change.entity_ref as string|null,binding_ref:change.binding_ref as string|undefined})))throw new Error('Recovered selection does not match its native basis');
+  }
   if(pending.kind==='file'&&!value.view)throw new Error('A file-save checkpoint requires a native basis');
  }
  return value;
@@ -132,6 +157,24 @@ export class NativeWorking {
    return document;
   }finally{this.inFlight=false;}
  }
+ /** Selection edits only the native focus and acknowledged revision. It never
+  * commits the human's unsaved material, discloses it to an Agent, or remounts
+  * the current physical field. */
+ async select(selection:NativeSelection):Promise<void>{
+  const epoch=this.begin();
+  try{
+   let record=this.record?clone(this.record):undefined;
+   if(!record?.view)throw new Error('This representation has no native working basis');
+   if(record.pending)throw new Error('Inspect the interrupted native operation before changing its focus');
+   const request=selectionEdit(record.view,selection),change=request.changes[0],selected=record.view.document.selection;
+   if(selected&&selected.scene_ref===change.scene_ref&&((change.change==='relation_focus'&&selected.relation_ref===change.binding_ref)||(change.change==='focus'&&!selected.relation_ref&&selected.entity_ref===change.entity_ref)))return;
+   record={...record,pending:{kind:'selection',request}};
+   await this.persist(record,epoch);
+   const document=readDocument(await this.ports.expression({...request}),request.expression_ref);
+   if(!selectionMatches(record.view!,request,document))throw new Error('Native selection reply changed more than its captured focus; preserve and reconcile');
+   await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,document),pending:undefined},epoch);
+  }finally{this.inFlight=false;}
+ }
  async saveFile(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<NativeFile>{
   const document=await this.commit(snapshot),epoch=this.begin();
   try{
@@ -169,6 +212,14 @@ export class NativeWorking {
    }
    const reference=pending.kind==='create'?pending.expression_ref:pending.request.expression_ref;
    const doc=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
+   if(pending.kind==='selection'){
+    if(same(doc,record.view!.document)){
+     await this.persist({...record,pending:undefined},epoch);return 'The native selection did not change. No write was replayed.';
+    }
+    if(!selectionMatches(record.view!,pending.request,doc))throw new Error('revision_conflict: the native selection basis changed; inspect and reconcile');
+    await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,doc),pending:undefined},epoch);
+    return 'Recovered the exact native selection without replaying it or replacing newer local work.';
+   }
    if(pending.kind==='create'){
     const view=firstView(doc,pending.submitted);
     await this.persist({...record,view,pending:undefined},epoch);

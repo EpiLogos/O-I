@@ -8,6 +8,8 @@ import {NativeWorking,type NativeFile,type WorkingSnapshot} from './nativeWorkin
 import {kernelExpressionsAvailable,listKernelExpressions,readKernelExpression,nativeExpressionRequest,nativeFileRequest} from './kernelExpressions.js';
 import {readWorkingCheckpoint,writeWorkingCheckpoint,writeDraft} from './recovery.js';
 import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
+import {nativeConnections} from './nativeCorrespondence.js';
+import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import {prepareCompositionEdit} from './kernelComposition.js';
 
 export interface NativeWorkspaceHost {
@@ -16,6 +18,7 @@ export interface NativeWorkspaceHost {
  load:(view:KernelConversion,preservePosition?:boolean)=>void;
  toast:(message:string,duration?:number)=>void;
  summon:(kind:'library'|'verso'|'search')=>void;
+ correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
 }
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const scope=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
@@ -35,6 +38,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
  const status=(text:string)=>{notice=text;panel.querySelector('.native-status')!.textContent=text;};
  const update=()=>{
   const state=work.state,doc=state?.view?.document;
+  host.correspondence(nativeConnections(state?.view),doc?.selection?.relation_ref??null);
   panel.querySelector('.native-basis')!.textContent=doc?`${doc.title} · revision ${doc.revision} · ${doc.expression_ref}`:'This authoring draft does not yet have a native identity. Its first commit creates one.';
   panel.querySelector('.native-file')!.textContent=state?.file?`Saved at ${state.file.location.path} · ${state.file.revision}`:'No verified native file is attached to this working draft.';
   const pending=state?.pending;
@@ -118,8 +122,18 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   open:(reference:string)=>run(()=>openReference(reference)),
   openFile:(path:string)=>run(()=>loadFile(path)),
   refresh:update,
+  select:(sceneId:string,entityId:string|null,bindingRef?:string)=>run(async()=>{
+   const state=work.state,view=state?.view,binding=view?.bindings[sceneId];
+   if(!view||!binding)throw new Error('This field does not have a native occurrence basis');
+   const occurrence=binding.occurrences.find(o=>o.view_entity_id===entityId);
+   if(entityId&&!occurrence)throw new Error('The selected representation is not a bound native occurrence');
+   await work.select({scene_ref:binding.scene_ref,entity_ref:occurrence?.entity_ref??null,binding_ref:bindingRef});
+   const relation=binding.relations.find(r=>r.binding_ref===bindingRef);
+   status(relation?`Relation ${relation.relation.ref} · ${relation.relation.revision} · ${relation.from_entity_ref} → ${relation.to_entity_ref}`
+    :occurrence?`Selected ${occurrence.subject?.subject_ref??occurrence.entity_ref} · occurrence ${occurrence.entity_ref}`:'Native selection cleared.');
+  }),
   async changed(journey:Journey){
-   const generation=++restoreGeneration;work.detach();
+   const generation=++restoreGeneration;work.detach();host.correspondence({},null);
    try{const record=await readWorkingCheckpoint(journey.id,scope);if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
    catch(error){if(generation===restoreGeneration){status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
