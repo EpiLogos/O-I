@@ -1,0 +1,124 @@
+sha256 7bc5859b3529ee0c1c2541d69aec591750b951398dc96305dc892ac717f24add
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorking.ts
+@@ -12,5 +12,26 @@
+  | {kind:'create';expression_ref:string;submitted:WorkingSnapshot}
+  | {kind:'edit';request:CompositionEdit;submitted:WorkingSnapshot}
+- | {kind:'file';intent:unknown};
++ | {kind:'file';intent:unknown}
++ | {kind:'selection';request:SelectionEdit};
++export interface NativeSelection {scene_ref:string;entity_ref?:string|null;binding_ref?:string}
++export interface SelectionEdit {operation:'edit';expression_ref:string;expected_revision:number;actor:string;changes:[Record<string,unknown>]}
++function selectionEdit(view:KernelConversion,selection:NativeSelection):SelectionEdit {
++ const document=view.document,scene=document.scenes.find(s=>s.scene_ref===selection.scene_ref);
++ if(!scene)throw new Error('Selection belongs to an absent native Scene');
++ const relation=selection.binding_ref?document.relations?.[selection.binding_ref]:undefined;
++ if(selection.binding_ref&&(!relation||!scene.entity_refs.includes(relation.from_entity_ref)||!scene.entity_refs.includes(relation.to_entity_ref)))throw new Error('Relation occurrence is not in this native Scene');
++ if(selection.entity_ref&&(!scene.entity_refs.includes(selection.entity_ref)||selection.binding_ref))throw new Error('Select one exact entity or relation occurrence');
++ const change=relation?{change:'relation_focus',scene_ref:scene.scene_ref,binding_ref:relation.binding_ref}
++  :{change:'focus',scene_ref:scene.scene_ref,entity_ref:selection.entity_ref??null};
++ return {operation:'edit',expression_ref:document.expression_ref,expected_revision:document.revision,actor:'human:expressions-app',changes:[change]};
++}
++function selectionMatches(view:KernelConversion,request:SelectionEdit,document:KernelExpressionDocument):boolean {
++ const expected=clone(view.document),change=request.changes[0];
++ expected.selection={scene_ref:String(change.scene_ref),entity_ref:change.change==='focus'?(change.entity_ref as string|null):null,
++  ...(change.change==='relation_focus'?{relation_ref:String(change.binding_ref)}:{})};
++ if(document.revision!==expected.revision&&document.revision!==expected.revision+1)return false;
++ expected.revision=document.revision;
++ return same(expected,document);
++}
+ export interface NativeWorkingRecord {
+  schema:'oi.native-working/v1';draft_id:string;view?:KernelConversion;file?:NativeFile;pending?:PendingNative;
+@@ -69,5 +90,5 @@
+  if(value.pending){
+   const pending=value.pending;
+-  if(!['create','edit','file'].includes(pending.kind))throw new Error('Unknown pending native operation');
++  if(!['create','edit','file','selection'].includes(pending.kind))throw new Error('Unknown pending native operation');
+   if(pending.kind==='create'||pending.kind==='edit'){
+    validateJourney(pending.submitted.journey);
+@@ -77,4 +98,8 @@
+   if(pending.kind==='edit'&&(!value.view||pending.request.operation!=='edit'||pending.request.expression_ref!==value.view.document.expression_ref||pending.request.expected_revision!==value.view.document.revision
+    ||!same(pending.request,prepareCompositionEdit(value.view,pending.submitted.journey,{sceneId:pending.submitted.sceneId,entityId:pending.submitted.entityId,actor:pending.request.actor}))))throw new Error('The recovered edit does not match its captured basis');
++  if(pending.kind==='selection'){
++   const change=pending.request?.changes?.[0];
++   if(!value.view||!change||!same(pending.request,selectionEdit(value.view,{scene_ref:String(change.scene_ref),entity_ref:change.entity_ref as string|null,binding_ref:change.binding_ref as string|undefined})))throw new Error('Recovered selection does not match its native basis');
++  }
+   if(pending.kind==='file'&&!value.view)throw new Error('A file-save checkpoint requires a native basis');
+  }
+@@ -133,4 +158,22 @@
+   }finally{this.inFlight=false;}
+  }
++ /** Selection edits only the native focus and acknowledged revision. It never
++  * commits the human's unsaved material, discloses it to an Agent, or remounts
++  * the current physical field. */
++ async select(selection:NativeSelection):Promise<void>{
++  const epoch=this.begin();
++  try{
++   let record=this.record?clone(this.record):undefined;
++   if(!record?.view)throw new Error('This representation has no native working basis');
++   if(record.pending)throw new Error('Inspect the interrupted native operation before changing its focus');
++   const request=selectionEdit(record.view,selection),change=request.changes[0],selected=record.view.document.selection;
++   if(selected&&selected.scene_ref===change.scene_ref&&((change.change==='relation_focus'&&selected.relation_ref===change.binding_ref)||(change.change==='focus'&&!selected.relation_ref&&selected.entity_ref===change.entity_ref)))return;
++   record={...record,pending:{kind:'selection',request}};
++   await this.persist(record,epoch);
++   const document=readDocument(await this.ports.expression({...request}),request.expression_ref);
++   if(!selectionMatches(record.view!,request,document))throw new Error('Native selection reply changed more than its captured focus; preserve and reconcile');
++   await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,document),pending:undefined},epoch);
++  }finally{this.inFlight=false;}
++ }
+  async saveFile(snapshot:WorkingSnapshot,destination:SaveDestination):Promise<NativeFile>{
+   const document=await this.commit(snapshot),epoch=this.begin();
+@@ -170,4 +213,12 @@
+    const reference=pending.kind==='create'?pending.expression_ref:pending.request.expression_ref;
+    const doc=readDocument(await this.ports.expression({operation:'inspect',expression_ref:reference}),reference);
++   if(pending.kind==='selection'){
++    if(same(doc,record.view!.document)){
++     await this.persist({...record,pending:undefined},epoch);return 'The native selection did not change. No write was replayed.';
++    }
++    if(!selectionMatches(record.view!,pending.request,doc))throw new Error('revision_conflict: the native selection basis changed; inspect and reconcile');
++    await this.persist({...record,view:rebaseCompositionView(record.view!,record.view!.journey,doc),pending:undefined},epoch);
++    return 'Recovered the exact native selection without replaying it or replacing newer local work.';
++   }
+    if(pending.kind==='create'){
+     const view=firstView(doc,pending.submitted);
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/nativeWorkspace.ts
+@@ -9,4 +9,6 @@
+ import {readWorkingCheckpoint,writeWorkingCheckpoint,writeDraft} from './recovery.js';
+ import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocument} from './kernelDocumentBridge.js';
++import {nativeConnections} from './nativeCorrespondence.js';
++import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
+ import {prepareCompositionEdit} from './kernelComposition.js';
+ 
+@@ -17,4 +19,5 @@
+  toast:(message:string,duration?:number)=>void;
+  summon:(kind:'library'|'verso'|'search')=>void;
++ correspondence:(rows:Record<string,ConnectionBinding[]>,selection:string|null)=>void;
+ }
+ export function installNativeWorkspace(host:NativeWorkspaceHost){
+@@ -36,4 +39,5 @@
+  const update=()=>{
+   const state=work.state,doc=state?.view?.document;
++  host.correspondence(nativeConnections(state?.view),doc?.selection?.relation_ref??null);
+   panel.querySelector('.native-basis')!.textContent=doc?`${doc.title} · revision ${doc.revision} · ${doc.expression_ref}`:'This authoring draft does not yet have a native identity. Its first commit creates one.';
+   panel.querySelector('.native-file')!.textContent=state?.file?`Saved at ${state.file.location.path} · ${state.file.revision}`:'No verified native file is attached to this working draft.';
+@@ -119,6 +123,16 @@
+   openFile:(path:string)=>run(()=>loadFile(path)),
+   refresh:update,
++  select:(sceneId:string,entityId:string|null,bindingRef?:string)=>run(async()=>{
++   const state=work.state,view=state?.view,binding=view?.bindings[sceneId];
++   if(!view||!binding)throw new Error('This field does not have a native occurrence basis');
++   const occurrence=binding.occurrences.find(o=>o.view_entity_id===entityId);
++   if(entityId&&!occurrence)throw new Error('The selected representation is not a bound native occurrence');
++   await work.select({scene_ref:binding.scene_ref,entity_ref:occurrence?.entity_ref??null,binding_ref:bindingRef});
++   const relation=binding.relations.find(r=>r.binding_ref===bindingRef);
++   status(relation?`Relation ${relation.relation.ref} · ${relation.relation.revision} · ${relation.from_entity_ref} → ${relation.to_entity_ref}`
++    :occurrence?`Selected ${occurrence.subject?.subject_ref??occurrence.entity_ref} · occurrence ${occurrence.entity_ref}`:'Native selection cleared.');
++  }),
+   async changed(journey:Journey){
+-   const generation=++restoreGeneration;work.detach();
++   const generation=++restoreGeneration;work.detach();host.correspondence({},null);
+    try{const record=await readWorkingCheckpoint(journey.id,scope);if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
+    catch(error){if(generation===restoreGeneration){status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
