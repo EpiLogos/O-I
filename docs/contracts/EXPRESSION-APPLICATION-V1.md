@@ -131,7 +131,11 @@ On macOS/Linux the desktop serves a mode-0600 Unix socket. Both faces share the
 same kernel mutex and ordered events. By default the socket lives in the app data
 directory (`~/Library/Application Support/org.epilogos.oi.cradle/expression.sock`
 on macOS, `$XDG_DATA_HOME/org.epilogos.oi.cradle/expression.sock` on Linux, falling
-back to `~/.local/share`). `OI_EXPRESSION_SOCKET` selects an explicit endpoint for
+back to `~/.local/share`). When that derived path would overflow the OS
+unix-socket address limit, both faces share a deterministic hashed endpoint
+under the platform temporary directory (`oi-cradle-<hash>/expression.sock`);
+the hash covers the real per-identity directory, so distinct grounds never
+share a socket. `OI_EXPRESSION_SOCKET` selects an explicit endpoint for
 isolated runs. Windows native Agent transport is unavailable in this increment.
 There is no network listener, generic kernel dispatch, code execution or stored
 credential in this endpoint.
