@@ -34,6 +34,8 @@ use crate::flow::{CentralClient, OwnerCallError};
 use crate::flow_cognition;
 use crate::knowledge;
 
+mod nara;
+
 pub const ACTION_DISPATCH_SCHEMA: &str = "oi.cradle.action-dispatch/v1";
 
 /// The native owners this adapter routes disclosed spellings to.
@@ -130,6 +132,9 @@ pub fn invoke(
     }
     if invocation.target_ref.trim().is_empty() {
         return ActionDispatch::MalformedRef { detail: "target ref is empty".into() };
+    }
+    if action == "ql.nara.personal" {
+        return nara::invoke(cwd, invocation);
     }
     if action.starts_with("central.") || action.starts_with("projectcentral.") {
         return invoke_central(client, action, default_project, invocation);

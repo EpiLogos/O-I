@@ -169,3 +169,117 @@ In the actual installed Mac app, separately record source/build/install/running 
 For continuity, leave/reopen the presentation with an unsent draft and pending delivery; recover that original delivery, reconnect the same session, and confirm no new Nara/AgentSession, replay or stale proposal application. Exercise two separate personal attachments without shared dialogue. For Epii, request real source-bound inquiry, reject without mutation, then accept only an explicitly reviewed supported focus proposal; a changed source/context must refuse the stale result.
 
 These physical/audio and human-experience episodes remain required and are **not yet automated by the local CLI packet**. The CLI's saved-WAV round trip and browser synthetic device are separate evidence. Full native-microphone automation, complete personal/M4 paths, setup/catalogue joins, realtime transport and broader proposal handlers remain open implementation/proving obligations of the existing owners, not reasons to promote fixtures to completion.
+
+## 10. Personal inhabitation and identity onboarding — 21 September 2026
+
+This continuation of the same #336/#201 lane consumes the active native
+`ql.nara-personal-operations/v1` implementation rather than duplicating it.
+The native writer retains QL `nara_personal/**`; the receiving changes are in
+`src/nara/personal/`, a bounded private `ql.nara.personal` transport, and the
+existing Expressions host's explicitly partitioned presentation hooks.
+Parent speech/delegation work remains PR #442. Shared-field/physics ownership
+and generic session composition do not move into the personal UI.
+
+### Existing human ground first
+
+The entry offers ordinary writing in the actual Central `Control/user`
+field and selection from existing files. It does not first require a QL
+record, biography schema, birth time, chart, model or microphone. Saving new
+human prose uses Central's exclusive-create operation and exact readback;
+existing notes are not overwritten or silently renamed. Unsaved writing is
+held in private application memory, not localStorage. The native access
+policy remains operative; saving a file is not consenting to disclose it.
+
+The current Day and original Day/Flow forms remain reachable independently
+of optional identity completion. The current Day uses the existing
+`DayDieFace` and native mapped field operations, not a newly authored Day.
+Flow/Journal uses the original self-contained HTML and its existing Central
+file routes. Explicit response return previews an attributed **H** entry
+bound to the actual actor, AgentSession and delivery, then performs a
+revision-checked native write and exact readback. It preserves F entries,
+Journal, notes, packet, media and the enclosing HTML. Same-delivery return is
+idempotent. Rejection and stale write leave the person's source unchanged.
+No automatic transcript export, source publication or inferred human prose
+is added.
+
+### Personal native operations, not six chat labels
+
+After explicit private-record access, the person continues an existing
+source-qualified native occasion. A new occasion can consume an actual
+current M4 focused-instrument reception with a selected elemental source;
+no initial personal state or identity assessment is invented. A missing
+native reception remains missing, not a demo record.
+
+All six branches use the native operation contract: optional six-layer
+identity source links/unprovided states; seven receiving-centre feedback;
+original entropy-backed oracle and separately attributed interpretation;
+practice start/hold/reviewed resume/close; branch-exact contextual readings;
+and source-linked integration Returns. Each consequential change is staged
+for review. Apply checks the selected source's revision, uses native record
+CAS and validates the exact operation receipt. A lost acknowledgement
+retains the original request identity for the native idempotent recovery
+route, not a fresh cast. This UI does not supply a new security principal:
+local human consent is declared and verified by the current native contract,
+not an ambient grant to an untrusted model or remote caller.
+
+### Identity rendering on the existing Expressions body
+
+The renderer uses the actual native chakral yantra/cymatic factories in the
+hosted `field-studies-journeys` application. It does not mount another
+particle engine, persist another scene or map receiving centres onto physical
+resonator stations. It sends only a basis fingerprint, native orientation and
+chosen form into an explicitly selected trusted app frame. Reload/disposal
+revokes that transient port and does not replay private state.
+
+The fingerprint is explicitly **`sha256-identity-source-basis/v1`**, a stable
+visual individuation of the selected six-layer source revisions. It is not
+a new Nara/person/account identifier, a decoded native `identity_hash_ref`,
+a natal-chart calculation or a psychological result. Native hash/form refs
+and the current `q_composed` retain their different meanings. Empty identity
+evidence is not silently hashed into a supposedly completed identity.
+
+The temporary pattern uses the same production canvas and native forms.
+Hash variation affects fine form rotation; the native quaternion supplies
+whole-body orientation. It does not guess amplitude, centre health or
+station frequency. The ordinary DocumentStore, source graph and library are
+unchanged. Normal capture/checkpoint/diagnostic exposure is unavailable while
+this private presentation is active. Return restores the authored Expression,
+not a promised GPU/resonator rewind. Recording and an active native material
+lease refuse this temporary presentation instead of stealing another writer's
+binding. Continuous overlay onto an active M4 material lease remains a
+separate shared-owner join; this bounded preview does not claim that join.
+
+### Executable proof and local packet
+
+`nara-identity-inhabitation.yml` runs the existing speech/authority/privacy
+suite alongside `tests/nara-personal-contracts.test.mjs`, complete Cradle and
+Expressions builds, the original Nara browser replay, a new production
+personal-UI/native-WebGL browser replay, and a production-consumer join to the
+pinned real QL executable in an isolated temporary private World. No live
+person, model or microphone is supplied by these tests. Original failed
+checks remain in their actual run; test counts belong to exact commits.
+
+```bash
+cd desktop/cradle
+npm ci --no-audit --no-fund
+npm ci --prefix expressions-app --no-audit --no-fund
+node --test tests/nara-personal-contracts.test.mjs
+npm run build
+npm --prefix expressions-app run build
+npx playwright install chromium
+node tests/nara-personal-browser.mjs
+# A built QL native dependency, never the person's installed private root:
+QL_NARA_TEST_BIN=/absolute/path/to/pinned/ql node tests/nara-personal-native.mjs
+```
+
+The existing speech local packet in §9 is retained. After locally authorised
+integration, separately walk existing-source onboarding, a deliberate
+identity link and refusal on changed source, actual original Day/Flow editing,
+reviewed attributed response return, private pattern/ordinary Expression
+return, native session continuity and physical microphone/audio episodes.
+Keep private output local and distinguish installed/running revisions,
+actual acoustic behaviour and the human's judgement from controlled evidence.
+Neither this slice nor native API availability closes the complete personal,
+realtime speech or corpus programme. The two near-term outcomes remain
+installable/self-inhabiting technology and complete admitted public corpus;
+private personal records are not publication inputs.

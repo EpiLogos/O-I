@@ -11,6 +11,7 @@
  * owner's own file reads. The build law is one line (see the app's README):
  * `cd desktop/cradle/expressions-app && npm install && npm run build`.
  */
+import {relayPrivateIdentity} from "../nara/personal/identityHosts";
 import {kernelOp} from "../kernel/bridge";
 import {listFiles, readFile} from "../files/client";
 import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
@@ -111,6 +112,7 @@ const isEnvelope = (data: unknown): data is ChannelEnvelope =>
 /** Relay the kernel host channel into one hosted frame. Returns the
  * teardown, exactly like trackShellCutout. */
 export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTransportStatus): () => void {
+  const disposePrivateIdentity = relayPrivateIdentity(frame);
   let live = true;
   const announce = () => {
     if (live) frame.contentWindow?.postMessage({v: KERNEL_CHANNEL_VERSION, kind: "oi-kernel-channel", channel: "kernel-expression"}, "*");
@@ -175,6 +177,7 @@ export function relayKernelChannel(frame: HTMLIFrameElement, transport: KernelTr
   frame.addEventListener("load", announce);
   announce();
   return () => {
+    disposePrivateIdentity();
     live = false;
     window.removeEventListener("message", handler);
     frame.removeEventListener("load", announce);

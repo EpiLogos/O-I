@@ -16,6 +16,7 @@ import {NaraRuntime,type NaraRuntimeSnapshot} from "./runtime";
 import {NaraPresentation,selectedContext} from "./presentation";
 import {readNativeSession,validateAttachment} from "./nativeDialogue";
 import {requireObject} from "./support";
+import {PersonalWorkbench} from "./personal/PersonalWorkbench";
 import "./nara.css";
 
 interface HeldEncounter {channel:{current:KernelTransportStatus};abort:{current:AbortController|null};runtime:NaraRuntime;presentation:NaraPresentation;source_ref:string;source_revision:string}
@@ -131,6 +132,7 @@ export function NaraSurface({binding}:{binding:SurfaceBinding}){
   return <section className="nara-surface" data-nara-phase={view.phase} data-private="true" aria-label="Personal Nara encounter">
     <header className="nara-head"><h3>Nara</h3><span role="status">{LABEL[view.phase]}</span></header>
     {error&&<p role="alert" className="oi-refusal">{error}</p>}
+    <details><summary>Your personal field and writing</summary><PersonalWorkbench binding={binding} runtime={entry?.runtime}/></details>
     {view.notice&&<p role="status" className="oi-note">{view.notice}</p>}
     {!entry||view.phase==="ended"?<form onSubmit={event=>{event.preventDefault();void load();}} className="nara-composer">
       <label>Saved native Nara attachment<input className="oi-input" aria-label="Nara attachment source" value={source} onChange={event=>setSource(event.target.value)} placeholder="Central source reference"/></label>
