@@ -62,6 +62,12 @@ export function mapSceneOccurrences(
 export function mergeScenePage(whole: Scene, edited: Scene, loaded: ReadonlySet<string>): Scene {
   const result = clone(edited);
   const hidden = whole.entities.filter(entity => !loaded.has(entity.id));
+  // Removing an optional whole-level carrier while only one page is loaded
+  // must not discard the unseen occurrences' controls or native parameters.
+  // Preserve the authored proposal but require whole-context reconciliation.
+  if (hidden.length && ((whole.semanticField && !result.semanticField) || (whole.native && !result.native))) {
+    throw new Error('A hidden member page still uses this carrier; retain it or reconcile the whole before removing it');
+  }
   const selected = new Map(result.entities.map(entity => [entity.id, entity]));
   const retained = new Map(hidden.map(entity => [entity.id, entity]));
   // Keep the authored visible order and preserve every unloaded occurrence.

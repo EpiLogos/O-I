@@ -73,7 +73,7 @@ export function validateWorkingRecord(raw:unknown,journey:Journey):NativeWorking
    validateJourney(pending.submitted.journey);
    if(pending.submitted.journey.id!==journey.id)throw new Error('Pending proposal belongs to another draft');
   }
-  if(pending.kind==='create'&&(!/^expression:[a-zA-Z0-9_.:-]+$/.test(pending.expression_ref)||value.view))throw new Error('Invalid pending creation identity');
+  if(pending.kind==='create'&&(!/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(pending.expression_ref)||value.view))throw new Error('Invalid pending creation identity');
   if(pending.kind==='edit'&&(!value.view||pending.request.operation!=='edit'||pending.request.expression_ref!==value.view.document.expression_ref||pending.request.expected_revision!==value.view.document.revision
    ||!same(pending.request,prepareCompositionEdit(value.view,pending.submitted.journey,{sceneId:pending.submitted.sceneId,entityId:pending.submitted.entityId,actor:pending.request.actor}))))throw new Error('The recovered edit does not match its captured basis');
   if(pending.kind==='file'&&!value.view)throw new Error('A file-save checkpoint requires a native basis');
@@ -113,7 +113,7 @@ export class NativeWorking {
    if(record.pending)throw new Error('Inspect the interrupted native operation before saving again');
    if(!record.view){
     const expression_ref=this.ports.mint();
-    if(!/^expression:[a-zA-Z0-9_.:-]+$/.test(expression_ref))throw new Error('Native creation needs a stable safe Expression identity');
+    if(!/^expression:[a-zA-Z0-9_.-]{1,128}$/.test(expression_ref))throw new Error('Native creation needs a stable safe Expression identity');
     record={...record,pending:{kind:'create',expression_ref,submitted}};
     await this.persist(record,epoch); // storage failure means no native effect
     const document=readDocument(await this.ports.expression({operation:'create',expression_ref,title:submitted.journey.name,actor:'human:expressions-app'}),expression_ref);

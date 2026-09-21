@@ -20,7 +20,7 @@ export interface NativeWorkspaceHost {
 export function installNativeWorkspace(host:NativeWorkspaceHost){
  const scope=new URLSearchParams(location.search).get('mode')==='techne'?'techne':'expressions';
  const work=new NativeWorking({expression:nativeExpressionRequest,file:nativeFileRequest,
-  checkpoint:(id,value)=>writeWorkingCheckpoint(id,value,scope),mint:()=>`expression:authored:${crypto.randomUUID()}`});
+  checkpoint:(id,value)=>writeWorkingCheckpoint(id,value,scope),mint:()=>`expression:authored-${crypto.randomUUID()}`});
  const panel=document.createElement('aside');panel.id='native-work';panel.className='native-work hud-panel chrome';panel.hidden=true;panel.setAttribute('aria-label','Native composition');
  panel.innerHTML=`<header><div><span class="panel-kicker">NATIVE COMPOSITION</span><h2>Keep the whole work</h2></div><button type="button" data-native="close" aria-label="Close native composition">×</button></header>
  <p class="native-status" role="status" aria-live="polite"></p><p class="native-basis"></p>

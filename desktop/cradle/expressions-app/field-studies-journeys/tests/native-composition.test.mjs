@@ -5,7 +5,7 @@ import {initialiseSceneSaves,saveScene,nextSceneFrom,sceneSaveState} from '../bu
 import {kernelDocumentToJourney} from '../build/kernelDocumentBridge.js';
 import {prepareCompositionEdit,rebaseCompositionView} from '../build/kernelComposition.js';
 import {NativeWorking,validateWorkingRecord} from '../build/nativeWorking.js';
-import {sameSceneData} from '../build/sceneCorrespondence.js';
+import {sameSceneData,mergeScenePage} from '../build/sceneCorrespondence.js';
 
 // Controlled owner-port responses for converter/state-machine unit tests.
 // Actual Rust storage and browser tests are separate; this reducer is NOT a
@@ -118,4 +118,19 @@ test('forged recovered operations are refused before any native action',async()=
  const p=ports(),work=new NativeWorking(p.options),j=authored();await work.commit(snapshot(j));const record=work.state;
  record.pending={kind:'edit',request:{operation:'edit',expression_ref:record.view.document.expression_ref,expected_revision:2,actor:'agent:forged',changes:[{change:'scene_remove',scene_ref:'foreign'}]},submitted:snapshot(j)};
  assert.throws(()=>validateWorkingRecord(record,j),/captured basis/);
+});
+
+test('dropping a whole-level carrier from one page cannot delete hidden occurrence data',()=>{
+ const j=authored(),whole=j.scenes[0];whole.entities.push(entity('hidden member','B'));
+ whole.semanticField={bindings:[{id:'source-role',carriers:[{kind:'entity',id:whole.entities[1].id}]}]};
+ const partial=clone(whole);partial.entities=partial.entities.slice(0,1);delete partial.semanticField;
+ const before=clone(whole);
+ assert.throws(()=>mergeScenePage(whole,partial,new Set([whole.entities[0].id])),/hidden member page/);
+ assert.deepEqual(whole,before,'refusal does not rewrite the whole or discard the edited proposal');
+});
+
+test('native creation uses the kernel ID grammar before checkpointing or dispatch',async()=>{
+ const p=ports();p.options.mint=()=> 'expression:authored:invalid';const work=new NativeWorking(p.options);
+ await assert.rejects(()=>work.commit(snapshot(authored())),/stable safe Expression identity/);
+ assert.equal(p.effects.length,0);assert.equal(p.checkpoints.length,0);
 });
