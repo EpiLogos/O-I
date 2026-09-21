@@ -35,6 +35,18 @@ jobs:
           ref: 36bbf93b7896550f11186f6240b8f018208ab3b2
           path: .native-proving/Actuation
           persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: 48568e54df6b06f0f57118593e42ebf7cab71768
+          path: .native-proving/Central
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/O-I
+          ref: fe93a3907c8c18170db096e19d467ada74adebb0
+          path: .native-proving/O-I-main
+          persist-credentials: false
       - uses: actions/setup-node@v4
         with:
           node-version: 22
@@ -47,10 +59,11 @@ jobs:
           git rev-parse HEAD > /tmp/nara-native-proving/oi-head.txt
           git archive HEAD desktop/cradle/src desktop/cradle/kernel desktop/cradle/tests desktop/cradle/walk desktop/cradle/package.json desktop/cradle/package-lock.json desktop/cradle/tsconfig.json desktop/cradle/vite.config.ts docs .wayfinder packages/oi-design-system .github/workflows | gzip > /tmp/nara-native-proving/oi-source.tar.gz
           tar -czf /tmp/nara-native-proving/node-dependencies.tar.gz desktop/cradle/node_modules
-          for owner in QL-MEF ai-kit Actuation; do
+          for owner in QL-MEF ai-kit Actuation Central; do
             git -C .native-proving/$owner rev-parse HEAD > /tmp/nara-native-proving/$owner-head.txt
             git -C .native-proving/$owner archive HEAD | gzip > /tmp/nara-native-proving/$owner-source.tar.gz
           done
+          git -C .native-proving/O-I-main archive HEAD desktop/cradle packages/oi-design-system docs .wayfinder .github/workflows | gzip > /tmp/nara-native-proving/integrated-source.tar.gz
           sha256sum /tmp/nara-native-proving/*.tar.gz > /tmp/nara-native-proving/SHA256SUMS
       - name: Current production speech contracts
         working-directory: desktop/cradle
