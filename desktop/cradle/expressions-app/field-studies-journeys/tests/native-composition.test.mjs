@@ -4,6 +4,7 @@ import {blankJourney,entity,clone,validateJourney} from '../build/model.js';
 import {initialiseSceneSaves,saveScene,nextSceneFrom,sceneSaveState} from '../build/sceneWorkflow.js';
 import {kernelDocumentToJourney} from '../build/kernelDocumentBridge.js';
 import {prepareCompositionEdit,rebaseCompositionView} from '../build/kernelComposition.js';
+import {nativeConnections} from '../build/nativeCorrespondence.js';
 import {NativeWorking,validateWorkingRecord} from '../build/nativeWorking.js';
 import {sameSceneData,mergeScenePage} from '../build/sceneCorrespondence.js';
 
@@ -28,6 +29,7 @@ function ownerEdit(document,request){
   case 'scene_remove':d.scenes=d.scenes.filter(s=>s.scene_ref!==c.scene_ref);break;
   case 'scene_reorder':d.scenes=c.scene_refs.map(scene);break;
   case 'focus':d.selection={scene_ref:c.scene_ref,entity_ref:c.entity_ref};break;
+  case 'relation_focus':d.selection={scene_ref:c.scene_ref,entity_ref:null,relation_ref:c.binding_ref};break;
   default:assert.fail('Unexpected native operation '+c.change);
  }}
  if(request.changes.length)d.revision++;
@@ -133,4 +135,38 @@ test('native creation uses the kernel ID grammar before checkpointing or dispatc
  const p=ports();p.options.mint=()=> 'expression:authored:invalid';const work=new NativeWorking(p.options);
  await assert.rejects(()=>work.commit(snapshot(authored())),/stable safe Expression identity/);
  assert.equal(p.effects.length,0);assert.equal(p.checkpoints.length,0);
+});
+
+function related(){
+ const d=empty('expression:links','Related passages');
+ for(const id of ['a','b','repeat']){const ref=d.expression_ref+':entity:'+id;d.entities[ref]={entity_ref:ref,title:id,revision:1,subject:{subject_ref:'same-source',native_owner:'ai-kit',presentation_role:'thing',sources:[],readings:[],actions:[]},parameters:{glyph:{value:id}}};d.scenes[0].entity_refs.push(ref);}
+ for(const id of ['one','two']){const ref=d.expression_ref+':relation:'+id;d.relations[ref]={binding_ref:ref,native_owner:'ai-kit',relation:{ref:'wiki:relation:'+id,revision:'r1',availability:'available'},from_entity_ref:d.scenes[0].entity_refs[0],to_entity_ref:d.scenes[0].entity_refs[1],provenance:[]};}
+ return d;
+}
+test('current-app correspondence retains repeated source occurrences and parallel native relations',()=>{
+ const view=kernelDocumentToJourney(related()),rows=nativeConnections(view)[view.journey.scenes[0].id];
+ assert.equal(rows.length,2);assert.notEqual(rows[0].relation.ref,rows[1].relation.ref);
+ assert.equal(rows[0].native_to_entity_ref,'expression:links:entity:b');
+ assert.notEqual(rows[0].to_entity_ref,'expression:links:entity:repeat');
+ assert.deepEqual(nativeConnections(undefined),{},'disconnected owner/view has no invented relation representation');
+ const missing=clone(view);missing.bindings[view.journey.scenes[0].id].occurrences=missing.bindings[view.journey.scenes[0].id].occurrences.filter(o=>o.entity_ref!=='expression:links:entity:b');
+ assert.equal(nativeConnections(missing)[view.journey.scenes[0].id].length,0,'missing occurrence does not bind the repeated source');
+});
+test('native focus is exact and does not commit an edited material draft',async()=>{
+ const p=ports();p.doc=related();const work=new NativeWorking(p.options),view=await work.adopt(p.doc);
+ const edited=clone(view.journey);edited.scenes[0].duration=70;
+ await work.select({scene_ref:p.doc.scenes[0].scene_ref,binding_ref:'expression:links:relation:two'});
+ assert.equal(p.doc.selection.relation_ref,'expression:links:relation:two');
+ assert.equal(p.doc.scenes[0].presentation,undefined,'selection does not author or commit material');
+ assert.equal(edited.scenes[0].duration,70);assert.equal(p.effects.at(-1).changes[0].change,'relation_focus');
+ assert.equal(work.state.view.document.revision,2);assert.equal(work.state.pending,undefined);
+ await assert.rejects(()=>work.select({scene_ref:p.doc.scenes[0].scene_ref,binding_ref:'wiki:relation:two'}),/Relation occurrence/);
+ await work.commit(snapshot(edited));assert.equal(p.doc.scenes[0].presentation.scene.duration,70);
+});
+test('a lost selection reply recovers its exact native focus without replay or replacing drafts',async()=>{
+ const p=ports();p.doc=related();const work=new NativeWorking(p.options),view=await work.adopt(p.doc),call=p.options.expression;
+ p.options.expression=async request=>{const result=await call(request);if(request.operation==='edit')throw new Error('lost selection reply');return result;};
+ await assert.rejects(()=>work.select({scene_ref:p.doc.scenes[0].scene_ref,entity_ref:'expression:links:entity:repeat'}),/lost/);
+ const record=JSON.parse(JSON.stringify(work.state)),restored=new NativeWorking(p.options);restored.restore(record,view.journey);
+ await restored.inspectPending();assert.equal(p.effects.filter(r=>r.operation==='edit').length,1);assert.equal(restored.state.view.document.selection.entity_ref,'expression:links:entity:repeat');
 });

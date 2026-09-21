@@ -83,11 +83,41 @@ try{
  // then demand file existence. It must fail, not fall back to browser storage.
  await frame.getByRole('button',{name:'Close native composition',exact:true}).click();await frame.evaluate(()=>window.__FIELD_STUDIES__.openEditor('scene'));await frame.locator('[data-action="studio-section"][data-value="text"]').click();await edit('text.body','A newer working change');await openPanel();
  await page.route('**/op',route=>{const value=route.request().postDataJSON();if(value?.op==='expression'&&['save','save_as'].includes(value.request?.operation))return route.abort('failed');return route.continue();});
- const prior=readFileSync(file,'utf8');await frame.getByRole('button',{name:'Save native file',exact:true}).click();await frame.locator('[data-native="inspect"]').waitFor({state:'visible'});await frame.waitForFunction(()=>!document.querySelector('[data-native="inspect"]').disabled);
+ const prior=readFileSync(file,'utf8');await frame.getByRole('button',{name:'Save native file',exact:true}).click();await frame.locator('#native-work [data-native="inspect"]').waitFor({state:'visible'});await frame.waitForFunction(()=>!document.querySelector('#native-work [data-native="inspect"]').disabled);
  check(readFileSync(file,'utf8')===prior,'Removing native save leaves native storage unchanged; browser backup is not mistaken for successful Return');
  await page.unroute('**/op');
  await page.setViewportSize({width:430,height:850});await page.screenshot({path:resolve(out,'narrow-pending.png')});
  check(await frame.evaluate(()=>{const r=document.querySelector('#native-work').getBoundingClientRect();return r.left>=0&&r.right<=innerWidth+1;}),'Native working controls stay within the narrow viewport');
+ // Additional source-labelled native fixture for the CURRENT imported canvas.
+ // Native mutation/readback is real; no Markdown provenance is invented.
+ await page.setViewportSize({width:1440,height:1000});
+ const relatedRef='expression:relation-walk',relatedScene=relatedRef+':scene:main';
+ await op({op:'expression',request:{operation:'create',expression_ref:relatedRef,title:'Exact relation occurrences',actor:'human:fixture'}});
+ const changes=[];
+ for(const [id,x]of [['a',-220],['b',220],['repeat',400]]){
+  const entityRef=relatedRef+':entity:'+id;
+  changes.push({change:'entity_add',scene_ref:relatedScene,entity_ref:entityRef,title:id},
+   {change:'parameter_set',entity_ref:entityRef,parameter:'x',value:x},
+   {change:'parameter_set',entity_ref:entityRef,parameter:'share',value:0},
+   {change:'subject_bind',entity_ref:entityRef,binding:{subject_ref:'source:fixture:repeated',native_owner:'ai-kit',presentation_role:'thing',sources:[],readings:[],actions:[]}});
+ }
+ for(const id of ['one','two'])changes.push({change:'relation_bind',binding:{binding_ref:relatedRef+':relation:'+id,native_owner:'ai-kit',relation:{ref:'wiki:fixture:relation:'+id,revision:'r1',availability:'available'},from_entity_ref:relatedRef+':entity:a',to_entity_ref:relatedRef+':entity:b',provenance:[]}});
+ await op({op:'expression',request:{operation:'edit',expression_ref:relatedRef,expected_revision:1,actor:'human:fixture',changes}});
+ await frame.evaluate(async ref=>{await window.__FIELD_STUDIES__.openNative(ref);window.__FIELD_STUDIES__.pause();},relatedRef);
+ await frame.getByRole('button',{name:'Close native composition',exact:true}).click();
+ await frame.locator('[data-action="tool-select"]').first().click();
+ await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeConnections()?.rendered?.length===2);
+ const paths=await frame.evaluate(()=>window.__FIELD_STUDIES__.nativeConnections());
+ check(paths.paths.length===2,'The current imported renderer draws both distinct native relation occurrences');
+ const currentCanvas=await frame.locator('canvas').first().elementHandle(),priorPosition=await frame.evaluate(()=>window.__FIELD_STUDIES__.getState());
+ const picked=paths.paths.find(p=>p.binding_ref.endsWith(':two')).points[12];
+ const frameBox=await page.locator('.pcd-host-frame').boundingBox();await page.mouse.click(frameBox.x+picked.x,frameBox.y+picked.y);
+ await frame.waitForFunction(()=>window.__FIELD_STUDIES__.nativeWorking()?.pending===undefined&&window.__FIELD_STUDIES__.nativeWorking()?.revision===3);
+ const focused=await op({op:'expression',request:{operation:'inspect',expression_ref:relatedRef}});
+ check(focused.data.document.selection.relation_ref===relatedRef+':relation:two','A pointer hit in the current field selects the exact native relation, not a parallel edge or repeated source');
+ check(await currentCanvas.evaluate(el=>el.isConnected),'Relation selection keeps the same physical renderer');
+ check(await frame.evaluate(before=>{const now=window.__FIELD_STUDIES__.getState();return now.simTime===before.simTime&&JSON.stringify(now.camera)===JSON.stringify(before.camera);},priorPosition),'Relation selection does not reset the paused clock or camera');
+ await page.screenshot({path:resolve(out,'native-relations.png')});
  check(errors.length===0,`No uncaught application errors (${errors.join('; ')})`);
  receipt.passed=true;receipt.expression_ref=ref;receipt.nativeOperations=requests.filter(v=>v.op==='expression').length;
 }catch(error){receipt.failure=String(error);receipt.errors=errors;receipt.lastRequests=requests.slice(-8);if(frame)receipt.ui=await frame.locator('#native-work').innerText().catch(()=>null);if(page)await page.screenshot({path:resolve(out,'failure.png')}).catch(()=>{});console.error(JSON.stringify(receipt));throw error;}
