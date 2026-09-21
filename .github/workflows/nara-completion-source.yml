@@ -1,0 +1,40 @@
+name: Nara completion source replay
+on:
+  push:
+    branches: ['agent/nara-personal-completion-20260921']
+    paths: ['.github/workflows/nara-completion-source.yml']
+permissions:
+  contents: read
+jobs:
+  source:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with: {persist-credentials: false}
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: 0807b827b63732a38c58660a36ca7e5988e09164
+          path: .native/ql
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with: {node-version: 22}
+      - run: npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+      - name: Retain exact repository source only, never personal state
+        run: |
+          set -euo pipefail
+          mkdir -p /tmp/nara-completion-source
+          git rev-parse HEAD > /tmp/nara-completion-source/oi-head.txt
+          git -C .native/ql rev-parse HEAD > /tmp/nara-completion-source/ql-head.txt
+          git archive HEAD desktop/cradle/src desktop/cradle/kernel desktop/cradle/tests desktop/cradle/documents desktop/cradle/expressions-app desktop/cradle/index.html desktop/cradle/package.json desktop/cradle/package-lock.json desktop/cradle/tsconfig.json desktop/cradle/vite.config.ts docs .wayfinder packages/oi-design-system .github/workflows | gzip > /tmp/nara-completion-source/oi.tar.gz
+          git -C .native/ql archive HEAD | gzip > /tmp/nara-completion-source/ql.tar.gz
+          tar -czf /tmp/nara-completion-source/expressions-deps.tar.gz desktop/cradle/expressions-app/node_modules
+          cd /tmp/nara-completion-source
+          sha256sum *.tar.gz > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        with:
+          name: nara-completion-source-${{ github.sha }}
+          path: /tmp/nara-completion-source
+          retention-days: 3
+          if-no-files-found: error
