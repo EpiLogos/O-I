@@ -1,0 +1,31 @@
+sha256 e7eb747b88ab1c97bd302d708cab551423327211ffb58f13e3c6dcfb92db0ca0
+diff --git a/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts b/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts
+--- a/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts
++++ b/desktop/cradle/expressions-app/field-studies-journeys/src/app.ts
+@@ -57,7 +57,8 @@
+ const sceneNames=new Map<string,string>();
+ let monitoredLane='';let monitorMode:MonitorMode='cycle';let monitorDocked=false;let assignmentTarget='',assignmentGroup='';let beltPickerOpen=false;const pendingBelt=new Set<string>();let contextKind:''|'objects'|'text'|'pointer'='';
+-let sequenceOpen=true;let studioSection="physics";
++const startsInTechne=new URLSearchParams(location.search).get('mode')==='techne';
++let sequenceOpen=!startsInTechne;let studioSection="physics";
+ let customFontEdit=false;
+-let beltOpen=innerWidth>1000,studioOpen=false;
++let beltOpen=!startsInTechne&&innerWidth>1000,studioOpen=false;
+ let studioDocked=false,studioSizeMemo:{width:string;height:string}|null=null;let beltWasOpen=false;
+ // The instrument opens on the O:I mark — the light/dark theme expression
+@@ -418,5 +419,5 @@
+  case 'native-work':nativeWorkspace?.toggle();break;
+  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
+- case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home)loadJourney(clone(home));else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
++ case 'deep-home':{const home=starters.find(p=>p.expression.id==='source-twelve-faces')?.expression;if(home){sequenceOpen=false;beltOpen=false;guidesVisible=false;loadJourney(clone(home));}else toast('The authored Epii entrance is unavailable in this build. Your work was retained.',6000);break;}
+  case 'deep-lived':hostRequest({request:'workspace-mode',mode:'expressions'});break;
+  case 'capture-options':inspectorOpen=false;contextKind='';beltPickerOpen=false;timelineOpen=false;modesOpen=false;readCapture();openKeep();break;case 'about':closeDialogs();openAbout();break;
+diff --git a/desktop/cradle/tests/techne-native-application.mjs b/desktop/cradle/tests/techne-native-application.mjs
+--- a/desktop/cradle/tests/techne-native-application.mjs
++++ b/desktop/cradle/tests/techne-native-application.mjs
+@@ -42,4 +42,5 @@
+  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.getDocument().id==='source-twelve-faces'),'The actual Technē mode opens the approved Epii face without a preselected Wiki subject');
+  check(await frame.locator('canvas').count()>0,'The current imported renderer is mounted through the native material host');
++ check(await frame.locator('#live-workspace').isHidden()&&await frame.locator('#toolbelt-panel').isHidden(),'The Technē entrance does not replace native navigation with duplicate formation and physics panels');
+  await page.screenshot({path:resolve(out,'epii-home.png')});
+  // The existing browser authoring library supplies new work; it is not a
