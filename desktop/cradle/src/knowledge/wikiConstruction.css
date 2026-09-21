@@ -1,6 +1,6 @@
 /* This is a working drawer beside the person's writing, not a second Stage,
    shell or permanent dashboard. All colours follow the current host tokens. */
-.wiki-construction {position:absolute;inset:0 0 2.5rem auto;width:min(31rem,100%);z-index:12;overflow:auto;background:var(--oi-canvas-ground);color:var(--oi-foreground);border-left:1px solid var(--oi-relation);padding:1.1rem;box-shadow:-8px 0 30px #0001;}
+.wiki-construction {position:absolute;inset:0 0 2.5rem auto;width:min(31rem,100%);z-index:12;overflow:auto;background:var(--oi-canvas-ground);color:var(--oi-foreground);border-left:1px solid var(--oi-relation);padding:1.1rem;box-shadow:var(--oi-shadow-drawer);}
 .wiki-construction[hidden]{display:none;}
 .wiki-construction header{display:flex;align-items:center;justify-content:space-between;gap:1rem;}
 .wiki-construction h2{font-size:1.05rem;margin:0;}.wiki-construction h3{font-size:.9rem;margin:1rem 0 .5rem;}

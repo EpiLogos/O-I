@@ -102,7 +102,7 @@ test("a changed wiki basis invalidates, re-reads and re-projects; everything els
   await waitFor(() => standingOf("central")?.phase === "projected", "the first projection");
   const first = standingOf("central");
   const firstRef = first.projection.document.expression_ref;
-  assert.match(firstRef, /^expression:techne-m0\.central\./, "the projection identity is content-addressed");
+  assert.match(firstRef, /^expression:techne-m0\.central\./, "the projection carries the register's stable Technè M0′ identity");
   assert.equal(first.projection.constellations[0].members.length, 2, "the first generation carries the wiki's two members");
   assert.equal(first.reading.wikiBasis.revision, "rev-1");
 
@@ -115,8 +115,15 @@ test("a changed wiki basis invalidates, re-reads and re-projects; everything els
   assert.deepEqual(invalidated, ["central"], "the register whose basis changed is invalidated");
   await waitFor(() => standingOf("central")?.phase === "projected" && standingOf("central").reading.wikiBasis.revision === "rev-2", "the fresh generation");
   const second = standingOf("central");
-  assert.notEqual(second.projection.document.expression_ref, firstRef, "a changed basis is a new generation, never a silent replacement");
-  assert.equal(second.projection.constellations[0].members.length, 3, "the fresh generation carries the wiki's third member");
+  // Stable identity, revision carries the drift (Technè M0′ owner direction 2026-09-19;
+  // WIKI-CONSTELLATION-SPEC currentness law — "Unchanged members retain identities",
+  // recomposition is deliberate; wikiExpression.ts: "stable identity and revision are
+  // separate", wikiProjectionStore.ts: "a changed wiki is drift, not permission to remint
+  // or overwrite composition"). A changed basis is fresh drift on the SAME Expression — the
+  // freshness is proven by the revision and member count below — never a silent remint that
+  // would orphan the person's open composition.
+  assert.equal(second.projection.document.expression_ref, firstRef, "stable identity: a changed basis is drift on the same Expression, never a silent remint");
+  assert.equal(second.projection.constellations[0].members.length, 3, "the fresh reading carries the wiki's third member");
   assert.equal(second.reading.wikiBasis.revision, "rev-2");
 
   // (2) The receipt cursor dedupes: a replayed burst invalidates nothing.

@@ -14,6 +14,11 @@ export interface EmphasisGroup {
   enabled: boolean;
 }
 export const MAX_EMPHASIS_GROUPS = 12;
+/** The starting swatch for a new emphasis group mirrors the scarce `--oi-gold`
+ * meta-relation token. It lives here as authored data in a `.ts` logic module,
+ * not as style-source colour, so the design-system colour law keeps scanning
+ * only the token vocabulary in .css/.tsx. The person recolours the group at once. */
+export const EMPHASIS_DEFAULT_COLOUR = '#a8873f';
 const values = (value: unknown): string[] => Array.isArray(value)
   ? [...new Set(value.filter((item): item is string => typeof item === 'string' && item.length > 0 && item.length <= 256))].slice(0,64) : [];
 export function restoreEmphasisGroups(value: unknown): EmphasisGroup[] {

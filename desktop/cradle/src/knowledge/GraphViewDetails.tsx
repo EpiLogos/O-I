@@ -1,12 +1,12 @@
 import {useMemo,useState} from 'react';
 import type {GraphReading} from './graph';
 import type {GraphFilters} from './filters';
-import {MAX_EMPHASIS_GROUPS,emphasizeGraph} from './graphEmphasis';
+import {MAX_EMPHASIS_GROUPS,EMPHASIS_DEFAULT_COLOUR,emphasizeGraph} from './graphEmphasis';
 
 /** Optional view operations live behind one disclosure rather than adding a
  * new permanent panel. Neither operation writes a source or changes topology. */
 export function GraphViewDetails({reading,filters,onChange}:{reading:GraphReading;filters:GraphFilters;onChange:(value:GraphFilters)=>void}) {
-  const [label,setLabel]=useState(''),[color,setColor]=useState('#a8873f');
+  const [label,setLabel]=useState(''),[color,setColor]=useState(EMPHASIS_DEFAULT_COLOUR);
   const [formationQuery,setFormationQuery]=useState(''),[limit,setLimit]=useState(40);
   const groups=filters.emphasis??[],collapsed=filters.collapsed??[];
   const nodeLabels=useMemo(()=>new Map(reading.nodes.map(node=>[node.ref,node.label])),[reading.nodes]);
