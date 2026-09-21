@@ -215,6 +215,9 @@ export type KernelOp =
   /** Provision one fresh chat conversation (new-chat first Send): the kernel
    * replays the owner's own SessionSpace CLI sequence and opens the result. */
   | {op:"encounter_provision";project:string}
+  | { op: "encounter_join"; session: string; request_ref: string; reply?: { answer: "grant" } | { answer: "refuse"; reason: string } | null }
+  | { op: "material_read"; target: { receipt: string; state_root: string; endpoint?: string | null; expected_world_ref?: string | null } }
+  | { op: "a2a_exchange"; request: Record<string, unknown> }
   | {op:"encounter_task_read";project:string;agent_session:string}
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
@@ -306,6 +309,9 @@ export type KernelOpResult =
   | { result:"receiving_reading";data:unknown }
   | { result:"now_reading";data:unknown }
   | { result:"encounter_task_reading";data:unknown }
+  | { result:"encounter_joined";reading:unknown }
+  | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
+  | { result:"a2a_exchange";data:unknown }
   | { result:"factory_development_reading";data:unknown }
   | { result:"factory_attempt_reading";data:unknown }
   | { result:"factory_attempt_task_list_reading";data:unknown }
