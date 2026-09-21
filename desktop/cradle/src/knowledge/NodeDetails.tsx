@@ -1,6 +1,8 @@
 import {useEffect,useRef,useState,type PointerEvent,type KeyboardEvent} from "react";
 import type {KnowledgeAddress,KnowledgeReading,KernelTransportStatus} from "../kernel/types";
 import type {GraphNode,GraphEdge} from "./graph";
+import {WikiReader} from "./WikiReader";
+import type {ComponentProps} from "react";
 import {OwnerActions} from "./OwnerActions";
 import {graphAddress,isHostedNode} from "./graph";
 import type {SharedFieldReading} from "./shared-field";
@@ -10,7 +12,8 @@ export type OpenKnowledge=(address:KnowledgeAddress,title:string,project?:string
 
 /** Render only owner fields we can recognise, keeping the complete body one
  * disclosure away. Unknown bodies remain exact text, never summarised by a model. */
-export function ReadingBody({reading}:{reading:KnowledgeReading}) {
+export function ReadingBody({reading,...options}:ComponentProps<typeof WikiReader>) {
+  if(reading.document)return <WikiReader reading={reading} {...options}/>;
   let document:Record<string,unknown>|undefined;
   try{const parsed=JSON.parse(reading.content??"");if(parsed&&typeof parsed==="object"&&!Array.isArray(parsed))document=parsed;}catch{/* An ordinary text body needs no schema inference. */}
   if(!document)return <div className="knowledge-prose">{reading.content??"The owner returned no content body."}</div>;
@@ -38,7 +41,7 @@ export function HostedReadingBody({reading}:{reading:SharedFieldReading}) {
     <details className="knowledge-raw oi-disclosure"><summary>Neighbourhood, contributions ({contributions.length}) and the full hosted reading</summary><pre>{JSON.stringify({entry,projections,relations,contributions,neighbourhood},null,2)}</pre></details>
   </div>;
 }
-export function NodeDetails({node,reading,hosted,error,project,onClose,onPromote,onOpen,native,rect,extent,onGeometry,storageError,disclosures,related,onRelated,transport,onActionDispatched}:{disclosures:GraphNode[];related:{edge:GraphEdge;node?:GraphNode}[];onRelated:(node:GraphNode)=>void;node:GraphNode;reading?:KnowledgeReading;hosted?:SharedFieldReading;error?:string;project?:string;onClose:()=>void;onPromote:()=>void;onOpen:OpenKnowledge;native:boolean;rect:DetailRect;extent:Extent;onGeometry:(rect:DetailRect)=>void;storageError?:string;transport:KernelTransportStatus;onActionDispatched:()=>void}) {
+export function NodeDetails({node,reading,hosted,error,project,onClose,onPromote,onOpen,native,rect,extent,onGeometry,storageError,disclosures,related,onRelated,transport,onActionDispatched,readingProps}:{readingProps?:Omit<ComponentProps<typeof WikiReader>,"reading">;disclosures:GraphNode[];related:{edge:GraphEdge;node?:GraphNode}[];onRelated:(node:GraphNode)=>void;node:GraphNode;reading?:KnowledgeReading;hosted?:SharedFieldReading;error?:string;project?:string;onClose:()=>void;onPromote:()=>void;onOpen:OpenKnowledge;native:boolean;rect:DetailRect;extent:Extent;onGeometry:(rect:DetailRect)=>void;storageError?:string;transport:KernelTransportStatus;onActionDispatched:()=>void}) {
   const close=useRef<HTMLButtonElement>(null);
   const gesture=useRef<{kind:"move"|ResizeHandle;x:number;y:number;rect:DetailRect}>();
   const [pending,setPending]=useState(false),[failure,setFailure]=useState<string>();
@@ -58,7 +61,7 @@ export function NodeDetails({node,reading,hosted,error,project,onClose,onPromote
     <article className="knowledge-detail-body oi-sidecar" aria-busy={!reading&&!hosted&&!error}>
       <h1>{node.label}</h1>
       <p className="knowledge-owner">{node.native_owner} · {node.kind.replaceAll("-"," ")}</p>
-      {error?<p role="alert">{error}</p>:hosted?<HostedReadingBody reading={hosted}/>:reading?<ReadingBody reading={reading}/>:<p role="status">{isHosted?"Reading the hosted field…":"Reading content…"}</p>}
+      {error?<p role="alert">{error}</p>:hosted?<HostedReadingBody reading={hosted}/>:reading?<ReadingBody reading={reading} {...readingProps}/>:<p role="status">{isHosted?"Reading the hosted field…":"Reading content…"}</p>}
       {failure&&<p role="alert">{failure}</p>}{storageError&&<p role="status">{storageError}</p>}
       <details className="knowledge-provenance oi-disclosure" open={isHosted}><summary>Provenance & identity</summary><dl className="oi-kv"><dt>Reference</dt><dd>{node.ref}</dd><dt>Source</dt><dd>{node.provenance.source}</dd>{isHosted?<>{hostedTarget&&<><dt>Hosted at</dt><dd data-hosted-target={hostedTarget}>{hostedTarget}</dd></>}{node.provenance.revision&&<><dt>Projection revision</dt><dd data-projection-revision={node.provenance.revision}>{node.provenance.revision}</dd></>}{node.provenance.detail?.[1]&&<><dt>Entry revision</dt><dd data-entry-revision={node.provenance.detail[1]}>{node.provenance.detail[1]}</dd></>}</>:node.provenance.revision&&<><dt>Revision</dt><dd>{node.provenance.revision}</dd></>}</dl>{!isHosted&&node.provenance.detail?.map((text,i)=><p key={i}>{text}</p>)}</details>
       <details className="knowledge-related oi-disclosure"><summary>Related subjects · {relatedSubjects.size}</summary><ul>{[...relatedSubjects].map(([ref,{node:other,relations}])=><li key={ref}>{other?<button className="oi-action" onClick={()=>onRelated(other)}>{other.label}</button>:<span>{ref} · not in this reading</span>}<small>{relations.join(" · ")}</small></li>)}</ul>{!relatedSubjects.size&&<p>No relations disclosed for this subject.</p>}</details>

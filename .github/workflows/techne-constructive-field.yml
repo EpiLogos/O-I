@@ -1,0 +1,153 @@
+name: Technē constructive field
+
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/**'
+      - 'packages/**'
+      - '.wayfinder/maps/techne-constructive-evidence.md'
+      - '.github/workflows/techne-constructive-field.yml'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: techne-constructive-${{ github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-runtime:
+    runs-on: ubuntu-latest
+    timeout-minutes: 30
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+          cache: npm
+          cache-dependency-path: desktop/cradle/package-lock.json
+      - name: Record the tested source and current native owners
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/techne-evidence/sources"
+          git rev-parse HEAD > "$RUNNER_TEMP/techne-evidence/O-I.revision"
+          git archive --format=tar HEAD | gzip > "$RUNNER_TEMP/techne-evidence/sources/O-I.tar.gz"
+          for repo in QL-MEF ai-kit Central Actuation; do
+            git clone --depth=1 --branch main "https://github.com/EpiLogos/$repo.git" "$RUNNER_TEMP/techne-$repo"
+            git -C "$RUNNER_TEMP/techne-$repo" rev-parse HEAD > "$RUNNER_TEMP/techne-evidence/$repo.revision"
+            git -C "$RUNNER_TEMP/techne-$repo" archive --format=tar HEAD | gzip > "$RUNNER_TEMP/techne-evidence/sources/$repo.tar.gz"
+          done
+      - name: Install the locked application graph
+        run: npm ci --prefix desktop/cradle --no-audit --no-fund
+      - name: Retain reproducible offline application dependencies
+        if: github.event.action == 'opened' || github.event_name == 'workflow_dispatch'
+        shell: bash
+        run: |
+          tar -czf "$RUNNER_TEMP/techne-evidence/cradle-node-modules.tar.gz" -C desktop/cradle node_modules
+      - name: Install and build the actual imported Expressions application
+        run: |
+          npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
+          npm --prefix desktop/cradle/expressions-app run build
+          npm --prefix desktop/cradle/expressions-app test
+          tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist
+      - name: Build the actual integrated cradle
+        run: npm --prefix desktop/cradle run build
+      - name: Exercise native occurrence bindings and stale proposal refusal
+        working-directory: desktop/cradle
+        run: |
+          node tests/expression-engine.mjs
+          node tests/knowledge-expression.mjs
+          node tests/techne-field-bindings.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs
+      - name: Prove entrance and actual relation drawing with disconnected-binding negatives
+        working-directory: desktop/cradle
+        env:
+          TECHNE_EVIDENCE_DIR: ${{ runner.temp }}/techne-evidence/browser
+        run: |
+          npx playwright install --with-deps chromium
+          node tests/techne-entry-browser.mjs
+          node tests/techne-field-browser.mjs
+      - name: Retain exact sources, dependency graph and execution receipts
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: techne-source-runtime-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-evidence
+          retention-days: 7
+          if-no-files-found: error
+
+  native-owner:
+    name: Native owner / ${{ matrix.owner }}
+    runs-on: ubuntu-latest
+    timeout-minutes: 45
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          - owner: O-I
+            repository: EpiLogos/O-I
+            ref: ''
+            commands: |
+              cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets
+              cargo build --locked --manifest-path desktop/cradle/kernel/Cargo.toml --bin walk-bridge
+              cargo build --locked --manifest-path cli/Cargo.toml --bin oi
+              cp desktop/cradle/kernel/target/debug/walk-bridge cli/target/debug/oi "$RUNNER_TEMP/techne-native/"
+          - owner: Central
+            repository: EpiLogos/Central
+            ref: 12ee31313e710378845baae190efc1a4b3e7ebdb
+            commands: |
+              cargo build --locked --manifest-path ctrl/Cargo.toml --bin ctrl
+              cp target/debug/ctrl "$RUNNER_TEMP/techne-native/"
+          - owner: ai-kit
+            repository: EpiLogos/ai-kit
+            ref: 37994265f5727af50ec6446687ed629dde047412
+            commands: |
+              cargo build --locked -p aikit-cli --bins
+              cp target/debug/aikit "$RUNNER_TEMP/techne-native/"
+          - owner: QL-MEF
+            repository: EpiLogos/QL-MEF
+            ref: 5970757e25532c7329f07f4819273155c4f3f135
+            commands: |
+              cargo build --locked -p ql-cli
+              cp target/debug/ql "$RUNNER_TEMP/techne-native/"
+          - owner: Actuation
+            repository: EpiLogos/Actuation
+            ref: 47f4fa3c184850e254ef5089696bf5fbbad907ec
+            commands: |
+              cargo build --locked -p actuation-cli
+              cp target/debug/actuation "$RUNNER_TEMP/techne-native/"
+    env:
+      CARGO_BUILD_JOBS: 2
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          repository: ${{ matrix.repository }}
+          ref: ${{ matrix.ref || github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@1.98.0
+      - uses: Swatinem/rust-cache@v2
+        with:
+          key: techne-${{ matrix.owner }}
+          workspaces: |
+            .
+            cli
+            desktop/cradle/kernel
+      - name: Build exact native source, with no owner data or live services
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/techne-native"
+          git rev-parse HEAD > "$RUNNER_TEMP/techne-native/${{ matrix.owner }}.revision"
+          ${{ matrix.commands }}
+          sha256sum "$RUNNER_TEMP/techne-native/"* > "$RUNNER_TEMP/techne-native/SHA256SUMS"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: techne-native-${{ matrix.owner }}-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-native
+          retention-days: 7
+          if-no-files-found: error

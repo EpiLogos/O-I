@@ -88,6 +88,8 @@ The agent reports what each native owner actually saved, with exact revisions an
 
 The person can hide an overlay, retract a relation, revise a constellation or fork an alternative without confusing those acts. Re-entry can inspect what was originally read and what later changed.
 
+**Interrupted save or Return:** the original file-save operation and the subsequent Return are retained separately. A refused first save names the owner's reason and does not offer Return as if a file exists. An acknowledged write whose readback failed asks the person to inspect its destination, not to create another artifact. Once the file is verified, an interrupted Return exposes **Retry exact Return**. That control keeps the original operation identity and validates the recorded file revision without opening or replacing another live composition. Failed checkpoint storage prevents dispatch. Inspection of an existing native Return is read-only and verifies that the exact attachment still exists; a historical receipt or idempotent reply cannot conceal a later replacement. This is the concrete partial-success behaviour required by WC09/WC10/WC14, not a new approval ceremony.
+
 ### G. Leave, resume and encounter changed sources
 
 **Existing stories:** KN05, KN08, KN09; UI02, UI07; AG06; QL UX11. **Decisions:** WC05, WC12, WC14.

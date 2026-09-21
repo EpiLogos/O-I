@@ -8,8 +8,8 @@
  *      the kernel edit runner receives the scene_create change with the
  *      standing revision, the edited document is adopted, and the receipt
  *      names the applied effect;
- *   3. a revision conflict re-reads the standing generation and retries
- *      once (the M0 focus-edit discipline);
+ *   3. a revision conflict re-reads the standing generation, retains the
+ *      proposal and refuses automatic application onto a different basis;
  *   4. no standing document → the honest refusal, nothing submitted;
  *   5. an undisclosed action → back unrouted, unchanged (the ported law).
  *
@@ -129,7 +129,7 @@ test("a real compose routes and the kernel adapter executes it: scene_create app
   assert.ok(adopted.scenes.some(scene => scene.scene_ref === proposal.input.change.scene_ref));
 });
 
-test("a revision conflict re-reads the standing generation and retries once", async () => {
+test("a revision conflict refreshes the mirror but does not retry a constructive edit", async () => {
   const document = standingDocument(7);
   const payload = wikiReadingPayload({register: REGISTER, subject: SUBJECT, reading: readyReading(), document});
   const proposal = composeSceneProposal({reading: payload, selection: groundSelection(payload), title: "Conflict Scene"});
@@ -151,10 +151,10 @@ test("a revision conflict re-reads the standing generation and retries once", as
       adopt: () => {},
     },
   );
-  assert.equal(outcome.ok, true, `executor refused: ${outcome.ok ? "" : outcome.reason}`);
-  assert.equal(outcome.revision, 9);
-  assert.equal(calls.length, 3, `edit, inspect, retry — got ${calls.length}`);
-  assert.equal(calls[2].request.expected_revision, 9);
+  assert.equal(outcome.ok, false);
+  assert.match(outcome.reason,/revision_conflict/);
+  assert.equal(calls.length, 2, "edit and inspect only; no silent rebase");
+  assert.equal(calls.filter(call=>call.request.operation==="edit").length,1);
 });
 
 test("no standing document: the honest refusal, nothing submitted", async () => {
@@ -182,3 +182,10 @@ test("an undisclosed action comes back unrouted, unchanged (the ported law)", ()
   assert.equal(resolution.routed, false);
   assert.ok(resolution.reason, "the unrouted receipt names its reason");
 });
+
+ test("captured source/construction basis is checked before submitting", async()=>{
+  let calls=0;
+  const input={expression_ref:standingDocument().expression_ref,revision:"6",change:{change:"scene_create",scene_ref:"expression:test:scene:new",title:"New"}};
+  const outcome=await submitSceneComposition({kind:"bridge",url:"http://127.0.0.1:1"},input,{readStanding:()=>standingDocument(7),runner:async()=>{calls++;throw new Error("must not submit");}});
+  assert.equal(outcome.ok,false);assert.match(outcome.reason,/stale/);assert.equal(calls,0);
+ });

@@ -1,0 +1,17 @@
+/* This is a working drawer beside the person's writing, not a second Stage,
+   shell or permanent dashboard. All colours follow the current host tokens. */
+.wiki-construction {position:absolute;inset:0 0 2.5rem auto;width:min(31rem,100%);z-index:12;overflow:auto;background:var(--oi-canvas-ground);color:var(--oi-foreground);border-left:1px solid var(--oi-relation);padding:1.1rem;box-shadow:var(--oi-shadow-drawer);}
+.wiki-construction[hidden]{display:none;}
+.wiki-construction header{display:flex;align-items:center;justify-content:space-between;gap:1rem;}
+.wiki-construction h2{font-size:1.05rem;margin:0;}.wiki-construction h3{font-size:.9rem;margin:1rem 0 .5rem;}
+.wiki-construction h3 span,.wiki-construction-hint,.wiki-construction-intro{color:var(--oi-muted);font-size:.8rem;line-height:1.55;}
+.wiki-construction label{display:flex;flex-direction:column;gap:.3rem;font-size:.8rem;margin:.7rem 0;min-width:0;}
+.wiki-construction input,.wiki-construction select,.wiki-construction textarea{font:inherit;color:inherit;background:var(--oi-canvas-ground);border:1px solid var(--oi-relation);border-radius:.25rem;padding:.45rem;width:100%;box-sizing:border-box;min-width:0;}
+.wiki-construction fieldset{border:0;padding:0;margin:0;min-width:0;}.wiki-construction fieldset:disabled{opacity:.7;}
+.wiki-construction-toolbar,.wiki-construction-row{display:flex;flex-wrap:wrap;gap:.5rem;align-items:center;}.wiki-construction-row label{flex:1;}
+.wiki-construction-members,.wiki-construction-relations{padding-left:1.2rem;}.wiki-construction-members li,.wiki-construction-relations li{position:relative;padding:.25rem .5rem .5rem 0;border-bottom:1px solid var(--oi-relation);font-size:.8rem;}
+.wiki-construction blockquote{margin:.5rem 0;line-height:1.65;max-height:9rem;overflow:auto;white-space:pre-wrap;}
+.wiki-construction-stage{height:16rem;min-height:12rem;margin:1rem 0;position:relative;border:1px solid var(--oi-relation);border-radius:.5rem;}
+.wiki-construction [role=alert]{font-size:.83rem;line-height:1.5;border-left:2px solid currentColor;padding-left:.6rem;}
+.wiki-construction button:focus-visible,.wiki-construction input:focus-visible,.wiki-construction select:focus-visible,.wiki-construction textarea:focus-visible{outline:2px solid var(--oi-focus);outline-offset:2px;}
+@media (max-width:600px){.wiki-construction{width:100%;}.wiki-construction-stage{height:13rem;}}

@@ -540,3 +540,71 @@ fn unavailable_bindings_and_wrong_targets_cannot_invoke() {
         .validate()
         .is_err());
 }
+
+#[test]
+fn semantic_scene_keeps_more_than_the_ten_formation_render_budget() {
+    let mut app=Application::default(); create(&mut app);
+    let changes=Value::Array((0..18).map(|i| json!({"change":"entity_add","scene_ref":"expression:test:scene:main","entity_ref":format!("expression:test:entity:m{i}"),"title":format!("Member {i}")})).collect());
+    let data=edit(&mut app,1,changes);
+    assert_eq!(data["document"]["scenes"][0]["entity_refs"].as_array().unwrap().len(),18);
+    let mut fresh=Application::default();
+    let reopened=apply(&mut fresh,json!({"operation":"open","document":data["document"],"actor":"human:reopen"}));
+    assert_eq!(reopened["document"],data["document"]);
+    let mut invalid:Document=serde_json::from_value(data["document"].clone()).unwrap();
+    let duplicate=invalid.scenes[0].entity_refs[0].clone();
+    invalid.scenes[0].entity_refs.push(duplicate);
+    assert!(invalid.validate().is_err(),"duplicate membership is still rejected");
+}
+
+#[test]
+fn native_material_parameters_roundtrip_without_relaxing_source_safety() {
+    let mut app=Application::default();create(&mut app);edit(&mut app,1,json!([entity()]));
+    let changes=Value::Array([
+        ("shape",json!("triangle")),("kind",json!("formation")),("ascii",json!("A\n B")),
+        ("z",json!(80)),("width",json!(180)),("height",json!(240)),("rotation",json!(0.4)),
+        ("force_mode",json!("vortex")),("force_strength",json!(0.5)),("force_radius",json!(120))
+    ].into_iter().map(|(parameter,value)|json!({"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":parameter,"value":value})).collect());
+    let data=edit(&mut app,2,changes);
+    assert_eq!(data["document"]["entities"]["expression:test:entity:a"]["parameters"]["ascii"]["value"],"A\n B");
+    let before=data["document"].clone();
+    for (parameter,value) in [("image",json!("https://private.example/secret.png")),("image",json!("data:image/svg+xml;base64,PHN2Zz4=")),("ascii",json!("bad\u{0}text")),("shape",json!("script"))] {
+        let bad=request(json!({"operation":"edit","expression_ref":"expression:test","expected_revision":3,"actor":"agent:test","changes":[{"change":"parameter_set","entity_ref":"expression:test:entity:a","parameter":parameter,"value":value}]}));
+        assert!(app.apply(&CentralClient::discover(),bad).is_err());
+        assert_eq!(apply(&mut app,json!({"operation":"inspect","expression_ref":"expression:test"}))["document"],before);
+    }
+}
+
+#[test]
+fn relation_focus_preserves_exact_native_record_and_occurrence() {
+    let mut app = Application::default();
+    create(&mut app);
+    let relation = |id: &str, native: &str| json!({"change":"relation_bind","binding":{
+        "binding_ref":format!("expression:test:relation:{id}"),"native_owner":"ai-kit",
+        "relation":{"ref":native,"revision":"r8","availability":"available"},
+        "from_entity_ref":"expression:test:entity:a","to_entity_ref":"expression:test:entity:b","provenance":[]}});
+    edit(&mut app, 1, json!([entity(),
+        {"change":"entity_add","scene_ref":"expression:test:scene:main","entity_ref":"expression:test:entity:b","title":"B"},
+        relation("one","wiki:edge:one"),relation("two","wiki:edge:two"),
+        {"change":"scene_create","scene_ref":"expression:test:scene:empty","title":"Empty"},
+        {"change":"relation_focus","scene_ref":"expression:test:scene:main","binding_ref":"expression:test:relation:two"}]));
+    let selected = app.selected_subject("expression:test").unwrap();
+    assert_eq!(selected.ref_id,"wiki:edge:two");
+    assert_eq!(selected.native_owner,"ai-kit");
+    assert_eq!(selected.provenance.source,"expression:test:relation:two");
+    assert_eq!(selected.provenance.revision,Some("r8".into()));
+    let before = apply(&mut app,json!({"operation":"inspect","expression_ref":"expression:test"}));
+    assert_eq!(before["document"]["relations"].as_object().unwrap().len(),2);
+    assert_eq!(before["document"]["selection"]["entity_ref"],Value::Null);
+    for (scene,binding) in [("main","missing"),("empty","two")] {
+        let invalid=request(json!({"operation":"edit","expression_ref":"expression:test","expected_revision":2,"actor":"human:test",
+            "changes":[{"change":"relation_focus","scene_ref":format!("expression:test:scene:{scene}"),"binding_ref":format!("expression:test:relation:{binding}")}]}));
+        assert!(app.apply(&CentralClient::discover(),invalid).is_err());
+        assert_eq!(apply(&mut app,json!({"operation":"inspect","expression_ref":"expression:test"})),before);
+    }
+    let fork=apply(&mut app,json!({"operation":"fork","expression_ref":"expression:test","expected_revision":2,"new_expression_ref":"expression:fork","actor":"human:test"}));
+    assert_eq!(fork["document"]["selection"]["relation_ref"],"expression:fork:relation:two");
+    assert_eq!(fork["document"]["relations"]["expression:fork:relation:two"]["relation"]["ref"],"wiki:edge:two");
+    let removed=edit(&mut app,2,json!([{"change":"relation_remove","binding_ref":"expression:test:relation:two"}]));
+    assert!(removed["document"]["selection"]["relation_ref"].is_null());
+    assert!(removed["document"]["relations"]["expression:test:relation:one"].is_object());
+}

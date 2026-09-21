@@ -1,0 +1,146 @@
+name: Wiki constellation integration
+on:
+  pull_request:
+    paths:
+      - 'desktop/cradle/src/knowledge/**'
+      - 'desktop/cradle/src/techne/**'
+      - 'desktop/cradle/src/kernel/types.ts'
+      - 'desktop/cradle/kernel/**'
+      - 'desktop/cradle/tests/wiki-*'
+      - 'desktop/cradle/tests/fixtures/wiki-native.json'
+      - '.github/workflows/wiki-constellation.yml'
+permissions:
+  contents: read
+concurrency:
+  group: wiki-constellation-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+jobs:
+  kernel:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: desktop/cradle/kernel
+      - name: Prove native graph, source currency and retained resources
+        run: |
+          if ! cargo test --locked --manifest-path desktop/cradle/kernel/Cargo.toml > /tmp/wiki-kernel-tests.log 2>&1; then tail -n 160 /tmp/wiki-kernel-tests.log; exit 1; fi
+          tail -n 30 /tmp/wiki-kernel-tests.log
+      - name: Lint the complete kernel consumer
+        if: always()
+        run: |
+          if ! cargo clippy --locked --manifest-path desktop/cradle/kernel/Cargo.toml --all-targets -- -D warnings > /tmp/wiki-kernel-clippy.log 2>&1; then cat /tmp/wiki-kernel-clippy.log; exit 1; fi
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiki-kernel-${{ github.run_id }}
+          path: /tmp/wiki-kernel-*.log
+          retention-days: 7
+  wiki:
+    runs-on: ubuntu-latest
+    timeout-minutes: 35
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/ai-kit
+          ref: c4b185deb723e8eaef7d910567675bf73441a694
+          path: .wiki-native-owner
+          persist-credentials: false
+      - uses: actions/checkout@v4
+        with:
+          repository: EpiLogos/Central
+          ref: a35f6a9455108691cd32dd6d906a608dd07a62a2
+          path: .wiki-central-owner
+          persist-credentials: false
+      - uses: dtolnay/rust-toolchain@stable
+      - uses: Swatinem/rust-cache@v2.9.2
+        with:
+          workspaces: |
+            .wiki-native-owner
+            .wiki-central-owner/ctrl
+            desktop/cradle/kernel
+            cli
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22.16.0'
+      - name: Build exact native executables and retain Cargo's actual artifact paths
+        run: python3 desktop/cradle/tests/wiki-native-binaries.py
+      - name: Test the pinned native Wiki and construction owner
+        run: |
+          cargo test --quiet --locked --manifest-path .wiki-native-owner/Cargo.toml -p aikit-adapters --lib wiki_graph
+          cargo test --quiet --locked --manifest-path .wiki-native-owner/Cargo.toml -p aikit-cli --test wiki_construct_source_return --test wiki_construct_commands --test wiki_document_end_to_end
+          cd desktop/cradle
+          python3 tests/wiki-native-fixture.py --aikit "$OI_AIKIT_BIN"
+      - name: Prove real Central first-save
+        run: cargo test --quiet --locked --manifest-path .wiki-central-owner/ctrl/Cargo.toml --test file_creation
+      - name: Build the complete Cradle application
+        working-directory: desktop/cradle
+        run: |
+          npm ci
+          npm run build
+      - name: Prove native link parity, filtering, progressive reads and Expression identity
+        working-directory: desktop/cradle
+        run: |
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/wiki-*.test.mjs
+          node tests/knowledge-expression.mjs
+      - name: Install browser engines
+        working-directory: desktop/cradle
+        run: npx playwright install --with-deps chromium webkit
+      - name: Exercise the production Wiki reader in Chromium and WebKit
+        working-directory: desktop/cradle
+        env:
+          WIKI_WEBKIT: '1'
+        run: node tests/wiki-reader-browser.mjs
+      - name: Exercise controlled save and Return recovery controls
+        working-directory: desktop/cradle
+        run: node tests/wiki-recovery-browser.mjs
+      - name: Prove passage to constellation to real Expression file and native Return in Chromium
+        working-directory: desktop/cradle
+        run: node tests/wiki-constructive-browser.mjs
+      - name: Prove the same native constructive journey in WebKit
+        working-directory: desktop/cradle
+        env:
+          WIKI_BROWSER: webkit
+        run: node tests/wiki-constructive-browser.mjs
+      - name: Retain exact tested source and performed browser results
+        if: always()
+        run: |
+          mkdir -p /tmp/wiki-evidence
+          git rev-parse HEAD > /tmp/wiki-evidence/source-revision.txt
+          git -C .wiki-native-owner rev-parse HEAD > /tmp/wiki-evidence/native-revision.txt
+          git -C .wiki-central-owner rev-parse HEAD > /tmp/wiki-evidence/central-revision.txt
+          git archive --format=tar.gz HEAD > /tmp/wiki-evidence/source.tar.gz
+          cp /tmp/wiki-native-binaries.json /tmp/wiki-evidence/ 2>/dev/null || true
+          python3 - <<'PY'
+          import json, pathlib, subprocess, tarfile
+          receipt = pathlib.Path('/tmp/wiki-native-binaries.json')
+          if receipt.exists():
+              with tarfile.open('/tmp/wiki-evidence/native-executables.tar.gz', 'w:gz') as archive:
+                  for name, path in json.loads(receipt.read_text()).items():
+                      executable = pathlib.Path(path)
+                      if executable.is_file():
+                          copy = pathlib.Path('/tmp/wiki-evidence') / name
+                          copy.write_bytes(executable.read_bytes())
+                          subprocess.run(['strip', '--strip-debug', str(copy)], check=True)
+                          archive.add(copy, arcname=name)
+                          copy.unlink()
+          PY
+          if [ -d desktop/cradle/node_modules ]; then tar -czf /tmp/wiki-evidence/cradle-runtime.tar.gz desktop/cradle/node_modules; fi
+          cp -r desktop/cradle/tests/artifacts/wiki /tmp/wiki-evidence/browser 2>/dev/null || true
+          cp -r desktop/cradle/tests/artifacts/wiki-constructive /tmp/wiki-evidence/constructive 2>/dev/null || true
+          cp -r desktop/cradle/tests/artifacts/wiki-recovery /tmp/wiki-evidence/recovery 2>/dev/null || true
+          cp desktop/cradle/tests/fixtures/wiki-native.json /tmp/wiki-evidence/native-readings.json
+          cd /tmp/wiki-evidence && sha256sum *.tar.gz native-readings.json > SHA256SUMS
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: wiki-exact-cut-${{ github.run_id }}
+          path: /tmp/wiki-evidence/
+          retention-days: 7

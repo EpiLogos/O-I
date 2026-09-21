@@ -1,120 +1,160 @@
-/** The kernel document bridge: opens a kernel-held oi.expression/v1 document
- * into the app's own engine path. The kernel document IS the store — this
- * conversion only ever produces a working view for the engine, never a saved
- * second copy; saves go back through the kernel's own edit op
- * (kernelExpressions.saveKernelExpression).
+/** Native Expression -> bounded working view of the SAME document.
  *
- * The mapping is honest by law: where an oi.expression/v1 document's
- * scenes/entities map onto the journey model, they map; where they do NOT
- * (subject bindings, automations, relations, scene bodies, triggers,
- * representations, refinements, profiles), the conversion converts what maps
- * and names the remainder as conversion notes on the imported document.
- * Nothing is silently dropped. */
-import {Journey,Scene,Entity,Vec3,blankScene,entity,clone} from './model.js';
+ * Native identities and the complete document stay above the engine's ten
+ * formation/eight pin budget. A page is disclosure, not another Scene or a
+ * new Expression. Source bindings, relations, bodies and unsupported fields
+ * remain inspectable through `bindings` and `document`; neither is inferred
+ * from glyph text or layout. This adapter performs no I/O or publication.
+ */
+import {Journey,Scene,Entity,blankScene,entity,clone,validateJourney} from './model.js';
 import {WORLD_SCALE} from './nativeParameters.js';
+import {MAX_FORMATIONS,MAX_PINS} from '../../src/engine/fieldModel.js';
 
-/** The narrow slice of oi.expression/v1 this bridge reads. Kept local so the
- * app bundle never couples to cradle internals; unknown fields are simply
- * never invented here. */
 export interface KernelParameter {value:string|number;automation?:{min:number;max:number;rate_hz:number;waveform:string}|null}
-export interface KernelEntity {entity_ref:string;title:string;subject?:{subject_ref:string;native_owner:string}|null;parameters:Record<string,KernelParameter>}
-export interface KernelScene {scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string}|null;triggers?:unknown[]}
-export interface KernelExpressionDocument {schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,unknown>;selection?:{scene_ref:string;entity_ref:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[]}
-export interface KernelConversion {journey:Journey;notes:string[];startSceneId:string|null}
+export interface KernelSubject {subject_ref:string;native_owner:string;[key:string]:unknown}
+export interface KernelEntity {entity_ref:string;title:string;subject?:KernelSubject|null;parameters:Record<string,KernelParameter>;[key:string]:unknown}
+export interface KernelScene {scene_ref:string;title:string;entity_refs:string[];body?:{carrier?:string;[key:string]:unknown}|null;triggers?:unknown[];[key:string]:unknown}
+export interface KernelRelation {binding_ref:string;relation:{ref:string;revision:string;[key:string]:unknown};from_entity_ref:string;to_entity_ref:string;[key:string]:unknown}
+export interface KernelExpressionDocument {schema:string;expression_ref:string;revision:number;title:string;scenes:KernelScene[];entities:Record<string,KernelEntity>;relations?:Record<string,KernelRelation>;selection?:{scene_ref:string;entity_ref:string|null;relation_ref?:string|null};representations?:unknown[];refinements?:unknown[];collections?:string[];profiles?:unknown[];[key:string]:unknown}
+export interface OccurrenceBinding {expression_ref:string;scene_ref:string;entity_ref:string;view_entity_id:string;subject:KernelSubject|null}
+export interface SceneBinding {scene_ref:string;member_refs:string[];loaded_refs:string[];page:number;page_count:number;focused_relation:string|null;occurrences:OccurrenceBinding[];relations:KernelRelation[];body:KernelScene['body'];triggers:unknown[]}
+export interface KernelConversion {journey:Journey;notes:string[];startSceneId:string|null;document:KernelExpressionDocument;bindings:Record<string,SceneBinding>}
+export interface ViewOptions {pages?:Record<string,number>;focusRelation?:string|null}
+export type ViewChange={change:'parameter_set';entity_ref:string;parameter:string;value:string|number};
 
-/** The kernel's parameter vocabulary (kernel/src/expression.rs `bounds`):
- * x/y/z/scale/share numeric, glyph text. Anything else is named, not mapped. */
-const MAPPED_NUMERIC=['x','y','z','scale','share'] as const;
-const MAPPED_KEYS=new Set<string>([...MAPPED_NUMERIC,'glyph']);
-
-/** Kernel positions are native engine world units (the cradle's own
- * engineProjection writes them straight into native entity x/y/z). The app's
- * authoring stage units are world units over WORLD_SCALE — the same
- * reversible conversion nativeBridge uses. */
-const toStage=(v:number)=>Math.max(-100,Math.min(100,v/WORLD_SCALE));
-
-/** Journey ids must satisfy the app's safe-id law (model.validateJourney):
- * [A-Za-z0-9_.:-]{1,160}. Kernel refs satisfy the charset but can exceed the
- * length budget, so long refs are folded deterministically and named. */
-const safeAppId=(raw:string,taken:Set<string>,notes:string[]):string=>{
+const MAPPED_KEYS=new Set(['x','y','z','scale','share','glyph','shape','kind','width','height','rotation','ascii','image','yantra','frequency','force_mode','force_strength','force_spin','force_radius']);
+const text=(p:KernelParameter|undefined,fallback='')=>typeof p?.value==='string'?p.value:fallback;
+const number=(p:KernelParameter|undefined,fallback:number)=>typeof p?.value==='number'&&Number.isFinite(p.value)?p.value:fallback;
+const same=(a:unknown,b:unknown)=>JSON.stringify(a)===JSON.stringify(b);
+function safe(value:unknown,depth=0):void{
+ if(depth>40)throw new Error('Native document exceeds the nesting budget');
+ if(typeof value==='number'&&!Number.isFinite(value))throw new Error('Non-finite native value');
+ if(value&&typeof value==='object')for(const [key,v] of Object.entries(value)){
+  if(['__proto__','prototype','constructor'].includes(key))throw new Error('Unsafe native document key');
+  safe(v,depth+1);
+ }
+}
+/** View IDs are reversible through explicit bindings, never native IDs.
+ * The hash is only a compact label. Any collision is refused, not merged. */
+function idFor(raw:string,kind:string,ids:Map<string,string>):string{
+ const key=kind+'\0'+raw;
  let id=raw;
- if(!/^[a-zA-Z0-9_.:-]{1,160}$/.test(id)){
-  const folded=id.replace(/[^a-zA-Z0-9_.:-]/g,'_').slice(0,160);
-  notes.push(`ref ${raw} exceeds the journey id budget — opened as ${folded}`);
-  id=folded;
+ if(!/^[a-zA-Z0-9_.:-]{1,150}$/.test(id)){
+  let a=2166136261,b=0x9e3779b9;
+  for(const ch of key){const code=ch.codePointAt(0)!;a=Math.imul(a^code,16777619);b=Math.imul(b^code,2246822519);}
+  id=`native-${kind}-${(a>>>0).toString(16)}-${(b>>>0).toString(16)}`;
  }
- let out=id,attempt=1;
- while(taken.has(out)){const suffix=`~${++attempt}`;out=id.slice(0,Math.max(1,160-suffix.length))+suffix;}
- taken.add(out);
+ if(ids.has(id)&&ids.get(id)!==key){
+  const candidate=`${kind}:${id}`;
+  if(candidate.length>160||(ids.has(candidate)&&ids.get(candidate)!==key))throw new Error('Native view ID collision; no identity was merged');
+  id=candidate;
+ }
+ ids.set(id,key);return id;
+}
+function convertEntity(input:KernelEntity,id:string,notes:string[]):Entity{
+ const p=input.parameters??{},glyph=text(p.glyph,'O');
+ const out=entity(input.title.slice(0,160),glyph.slice(0,120),{x:number(p.x,0)/WORLD_SCALE,y:number(p.y,0)/WORLD_SCALE,z:number(p.z,0)/WORLD_SCALE});
+ out.id=id;
+ out.kind=text(p.kind,'formation') as Entity['kind'];
+ const shape=text(p.shape,'glyph');out.shape=(shape==='glyph'?'text':shape) as Entity['shape'];
+ out.scale=number(p.scale,1);out.share=number(p.share,1);
+ out.size={x:number(p.width,out.size.x*WORLD_SCALE)/WORLD_SCALE,y:number(p.height,out.size.y*WORLD_SCALE)/WORLD_SCALE};
+ out.rotation=number(p.rotation,0)*180/Math.PI;
+ out.force={kind:text(p.force_mode,'none') as Entity['force']['kind'],strength:number(p.force_strength,0),spin:number(p.force_spin,0),radius:number(p.force_radius,180)/WORLD_SCALE};
+ if(p.yantra)out.yantraId=text(p.yantra);
+ if(p.frequency)out.templateFrequency=number(p.frequency,220);
+ if(text(p.image))out.source={kind:'image',image:{dataUrl:text(p.image),mode:'luminance',threshold:.5,invert:false,scale:1}};
+ else if(text(p.ascii)||glyph.length>120)out.source={kind:'ascii',ascii:{text:text(p.ascii,glyph)}};
+ out.sequence.steps=[{id:idFor(input.entity_ref,'held-state',new Map()),text:out.text,shape:out.shape,hold:3,transition:1,position:null,source:clone(out.source),yantraId:out.yantraId,templateFrequency:out.templateFrequency}];
+ for(const [key,parameter] of Object.entries(p)){
+  if(!MAPPED_KEYS.has(key))notes.push(`${input.entity_ref}: ${key} retained natively; no material control is bound here`);
+  if(parameter.automation)notes.push(`${input.entity_ref}: ${key} automation retained; this view does not replace its native clock`);
+ }
  return out;
-};
-
-const numeric=(p:KernelParameter|undefined):number|undefined=>p&&typeof p.value==='number'&&Number.isFinite(p.value)?p.value:undefined;
-const glyphOf=(p:KernelParameter|undefined):string|undefined=>p&&typeof p.value==='string'?p.value:undefined;
-
-/** Open one kernel-held oi.expression/v1 document as a working journey view.
- * Throws when the document is not an oi.expression/v1 document at all — a
- * conversion is never guessed from an unrelated payload. */
-export function kernelDocumentToJourney(raw:unknown):KernelConversion{
- const doc=raw as KernelExpressionDocument;
- if(!doc||typeof doc!=='object'||doc.schema!=='oi.expression/v1'||typeof doc.expression_ref!=='string'||!Array.isArray(doc.scenes))throw new Error('The kernel document is not an oi.expression/v1 expression; nothing was converted.');
- const notes:string[]=[];
- const taken=new Set<string>();
- const journey=blankJourneyOf(doc);
- const sceneId=new Map<string,string>();
- const converted=new Map<string,Entity>();
- for(const [ref,e] of Object.entries(doc.entities??{})){
-  const id=safeAppId(ref,taken,notes);
-  const glyph=glyphOf(e.parameters?.glyph);
-  const position:Vec3={x:toStage(numeric(e.parameters?.x)??0),y:toStage(numeric(e.parameters?.y)??0),z:toStage(numeric(e.parameters?.z)??0)};
-  const out=entity(e.title||ref,glyph??'O',position);
-  out.id=id;
-  const scale=numeric(e.parameters?.scale);
-  if(scale!==undefined)out.scale=scale;
-  const share=numeric(e.parameters?.share);
-  if(share!==undefined)out.share=share;
-  converted.set(ref,out);
-  if(e.subject)notes.push(`entity ${ref} carries a native subject binding (${e.subject.subject_ref} · ${e.subject.native_owner}) — the journey model has no binding equivalent; opened as a plain formation`);
-  for(const [key,p] of Object.entries(e.parameters??{})){
-   if(MAPPED_KEYS.has(key))continue;
-   notes.push(`entity ${ref} parameter ${key} (${typeof p.value}) has no journey parameter equivalent — not carried`);
-  }
-  for(const key of MAPPED_NUMERIC){
-   const p=e.parameters?.[key];
-   if(p?.automation)notes.push(`entity ${ref} parameter ${key} is automated (${p.automation.waveform} ${p.automation.min}–${p.automation.max} @ ${p.automation.rate_hz}Hz) — automation is not carried; the base value stands`);
-  }
+}
+function pagesFor(refs:string[],entities:Record<string,KernelEntity>):string[][]{
+ const pages:string[][]=[[]];let formations=0,pins=0;
+ for(const ref of refs){
+  const pin=text(entities[ref].parameters?.kind,'formation')==='pin';
+  if(pin?pins>=MAX_PINS:formations>=MAX_FORMATIONS){pages.push([]);formations=0;pins=0;}
+  pages[pages.length-1].push(ref);if(pin)pins++;else formations++;
  }
- journey.scenes=doc.scenes.map(s=>{
-  const scene:Scene=blankScene(s.title||s.scene_ref);
-  scene.id=safeAppId(s.scene_ref,taken,notes);
-  sceneId.set(s.scene_ref,scene.id);
-  scene.entities=s.entity_refs.map(ref=>{
-   const mapped=converted.get(ref);
-   if(mapped)return clone(mapped);
-   // The scene names an entity the document does not define: keep the
-   // composition legible with a placeholder and say so.
-   const id=safeAppId(ref,taken,notes);
-   notes.push(`scene ${s.scene_ref} references entity ${ref}, which the document does not define — opened as a placeholder formation`);
-   const placeholder=entity(ref,'O');
-   placeholder.id=id;
-   return placeholder;
-  });
-  if(s.body)notes.push(`scene ${s.scene_ref} carries a scene body${s.body.carrier?` (carrier ${s.body.carrier})`:''} — not carried`);
-  if(s.triggers?.length)notes.push(`scene ${s.scene_ref} carries ${s.triggers.length} declarative trigger(s) — not carried`);
+ return pages;
+}
+function focusWindow(refs:string[],relation:KernelRelation,entities:Record<string,KernelEntity>):string[]{
+ const selected=[...new Set([relation.from_entity_ref,relation.to_entity_ref])];
+ let pins=selected.filter(ref=>text(entities[ref].parameters?.kind)==='pin').length,formations=selected.length-pins;
+ for(const ref of refs){if(selected.includes(ref))continue;const pin=text(entities[ref].parameters?.kind)==='pin';if(pin?pins>=MAX_PINS:formations>=MAX_FORMATIONS)continue;selected.push(ref);if(pin)pins++;else formations++;}
+ return selected;
+}
+export function kernelDocumentToJourney(raw:unknown,options:ViewOptions={}):KernelConversion{
+ safe(raw);
+ const doc=clone(raw) as KernelExpressionDocument;
+ if(!doc||doc.schema!=='oi.expression/v1'||typeof doc.expression_ref!=='string'||!Number.isSafeInteger(doc.revision)||doc.revision<1||typeof doc.title!=='string'||!doc.entities||Array.isArray(doc.entities)||!Array.isArray(doc.scenes)||!doc.scenes.length||doc.scenes.length>64)throw new Error('The kernel document is not a bounded oi.expression/v1 expression');
+ if(Object.keys(doc.entities).length>256||Object.keys(doc.relations??{}).length>256)throw new Error('Native Expression exceeds its binding budget');
+ const notes:string[]=[],ids=new Map<string,string>(),converted=new Map<string,Entity>();
+ const bindings:Record<string,SceneBinding>={};
+ for(const [ref,input] of Object.entries(doc.entities)){
+  if(!input||input.entity_ref!==ref||typeof input.title!=='string')throw new Error('Native entity identity disagrees with its binding');
+  converted.set(ref,convertEntity(input,idFor(ref,'entity',ids),notes));
+ }
+ for(const [ref,r] of Object.entries(doc.relations??{})){
+  if(!r||r.binding_ref!==ref||!r.relation||typeof r.relation.ref!=='string'||typeof r.relation.revision!=='string'||!converted.has(r.from_entity_ref)||!converted.has(r.to_entity_ref))throw new Error(`Native relation ${ref} has absent or ambiguous endpoints`);
+ }
+ const sceneRefs=new Set<string>();
+ const scenes:Scene[]=doc.scenes.map(s=>{
+  if(!s||typeof s.scene_ref!=='string'||sceneRefs.has(s.scene_ref)||typeof s.title!=='string'||!Array.isArray(s.entity_refs)||new Set(s.entity_refs).size!==s.entity_refs.length||s.entity_refs.some(ref=>!converted.has(ref)))throw new Error('Native scene has duplicate identities or unresolved members; no placeholders were invented');
+  sceneRefs.add(s.scene_ref);
+  const pages=pagesFor(s.entity_refs,doc.entities);
+  const preferred=doc.selection?.scene_ref===s.scene_ref?doc.selection.entity_ref:null;
+  const explicit=options.pages?.[s.scene_ref];
+  let page=explicit??(preferred?Math.max(0,pages.findIndex(refs=>refs.includes(preferred))):0);
+  if(!Number.isInteger(page)||page<0||page>=pages.length)throw new Error(`Invalid disclosure page for ${s.scene_ref}`);
+  const relations=Object.values(doc.relations??{}).filter(r=>s.entity_refs.includes(r.from_entity_ref)&&s.entity_refs.includes(r.to_entity_ref));
+  const focusRef=options.focusRelation===undefined?(doc.selection?.scene_ref===s.scene_ref?doc.selection.relation_ref:null):options.focusRelation;
+  const focused=explicit===undefined?relations.find(r=>r.binding_ref===focusRef):undefined;
+  const loaded=focused?focusWindow(s.entity_refs,focused,doc.entities):pages[page];
+  const scene=blankScene(s.title.slice(0,160));scene.id=idFor(s.scene_ref,'scene',ids);
+  scene.entities=loaded.map(ref=>clone(converted.get(ref)!));
+  if(scene.entities.some(e=>e.position.z!==0))scene.view.mode='3d';
+  bindings[scene.id]={scene_ref:s.scene_ref,member_refs:[...s.entity_refs],loaded_refs:[...loaded],page,page_count:pages.length,focused_relation:focused?.binding_ref??null,occurrences:loaded.map(ref=>({expression_ref:doc.expression_ref,scene_ref:s.scene_ref,entity_ref:ref,view_entity_id:converted.get(ref)!.id,subject:clone(doc.entities[ref].subject??null)})),relations:clone(relations),body:clone(s.body),triggers:clone(s.triggers??[])};
+  if(loaded.length<s.entity_refs.length)notes.push(`${s.scene_ref}: ${loaded.length}/${s.entity_refs.length} members loaded; ${pages.length} disclosure pages preserve the whole`);
   return scene;
  });
- const relationCount=Object.keys(doc.relations??{}).length;
- if(relationCount)notes.push(`${relationCount} typed relation(s) not carried — the journey model has no relation vocabulary`);
- if(doc.representations?.length)notes.push(`${doc.representations.length} representation binding(s) not carried`);
- if(doc.refinements?.length)notes.push(`${doc.refinements.length} refinement proposal(s) not carried (kernel history keeps them)`);
- if(doc.profiles?.length)notes.push(`${doc.profiles.length} profile adoption(s) not carried`);
- if(doc.collections?.length)notes.push(`collection membership (${doc.collections.join(', ')}) not carried`);
- const selectionScene=doc.selection?.scene_ref;
- const startSceneId=selectionScene?sceneId.get(selectionScene)??null:null;
- journey.description=`Kernel expression ${doc.expression_ref} · revision ${doc.revision}, opened through the kernel host channel.`+(notes.length?` Conversion notes: ${notes.join(' ')}`:'');
- if(journey.description.length>4800)journey.description=journey.description.slice(0,4800)+' … (conversion notes truncated)';
- return {journey,notes,startSceneId};
+ const journey:Journey={schema:'oi.journey',version:1,id:idFor(doc.expression_ref,'expression',ids),name:doc.title.slice(0,160),description:`Native Expression ${doc.expression_ref.slice(0,1000)} · revision ${doc.revision}. This is a bounded working presentation, not a copy of its native sources.`,loop:true,scenes,updatedAt:new Date().toISOString()};
+ return{journey:validateJourney(journey),document:doc,notes,bindings,startSceneId:scenes.find(s=>bindings[s.id].scene_ref===doc.selection?.scene_ref)?.id??scenes[0].id};
 }
-function blankJourneyOf(doc:KernelExpressionDocument):Journey{
- return {schema:'oi.journey',version:1,id:doc.expression_ref,name:doc.title||doc.expression_ref,description:'',loop:true,scenes:[],updatedAt:new Date().toISOString()};
+/** Only changed, loaded material returns. Hidden members and native relations,
+ * bodies, metadata and source bindings are never treated as deleted. Human or
+ * Agent construction operations use their own native Actions, not this diff. */
+export function kernelViewToChanges(view:KernelConversion,edited:Journey):ViewChange[]{
+ validateJourney(edited);
+ if(edited.id!==view.journey.id||edited.scenes.length!==view.journey.scenes.length)throw new Error('The working view no longer addresses this native Expression');
+ const changes:ViewChange[]=[],values=new Map<string,string|number>();
+ for(const scene of edited.scenes){
+  const baseline=view.journey.scenes.find(s=>s.id===scene.id),binding=view.bindings[scene.id];
+  if(!baseline||!binding||!same(scene.entities.map(e=>e.id),baseline.entities.map(e=>e.id)))throw new Error('Use native membership/Scene operations to change the construction; hide is not delete');
+  for(const e of scene.entities){
+   const before=baseline.entities.find(candidate=>candidate.id===e.id)!;
+   const occurrence=binding.occurrences.find(o=>o.view_entity_id===e.id)!;
+   const scalar=(parameter:string,old:string|number,next:string|number)=>{
+    if(same(old,next))return;
+    if(view.document.entities[occurrence.entity_ref].parameters[parameter]?.automation)throw new Error(`Release or edit native automation before changing ${parameter}`);
+    const key=occurrence.entity_ref+'\0'+parameter;
+    if(values.has(key)&&!same(values.get(key),next))throw new Error('Different occurrences proposed conflicting edits to one native entity');
+    if(!values.has(key)){values.set(key,next);changes.push({change:'parameter_set',entity_ref:occurrence.entity_ref,parameter,value:next});}
+   };
+   for(const axis of ['x','y','z'] as const)scalar(axis,before.position[axis]*WORLD_SCALE,e.position[axis]*WORLD_SCALE);
+   scalar('scale',before.scale??1,e.scale??1);scalar('share',before.share,e.share);
+   scalar('width',before.size.x*WORLD_SCALE,e.size.x*WORLD_SCALE);scalar('height',before.size.y*WORLD_SCALE,e.size.y*WORLD_SCALE);
+   scalar('rotation',before.rotation*Math.PI/180,e.rotation*Math.PI/180);
+   scalar('glyph',before.text,e.text);scalar('shape',before.shape==='text'?'glyph':before.shape,e.shape==='text'?'glyph':e.shape);scalar('kind',before.kind,e.kind);
+   scalar('force_mode',before.force.kind,e.force.kind);scalar('force_strength',before.force.strength,e.force.strength);scalar('force_spin',before.force.spin,e.force.spin);scalar('force_radius',before.force.radius*WORLD_SCALE,e.force.radius*WORLD_SCALE);
+   if(!same(e.source,before.source)){
+    scalar('image',before.source?.kind==='image'?before.source.image.dataUrl??'':'',e.source?.kind==='image'?e.source.image.dataUrl??'':'');
+    scalar('ascii',before.source?.kind==='ascii'?before.source.ascii.text:'',e.source?.kind==='ascii'?e.source.ascii.text:'');
+   }
+  }
+ }
+ return changes;
 }

@@ -61,6 +61,7 @@ fn bind_and_focus(kernel: &mut Kernel) {
 
 fn graph_node() -> GraphNode {
     GraphNode {
+        metadata: Default::default(),
         ref_id: SUBJECT.into(),
         kind: "wiki-node".into(),
         label: "Lesson".into(),
@@ -78,6 +79,9 @@ fn graph_node() -> GraphNode {
 /// with one declared owner edge (no other edges exist to mint).
 fn graph_reading() -> GraphReading {
     GraphReading {
+        shape_catalog: None,
+        formations: Vec::new(),
+        truncated: false,
         schema: oi_cradle_kernel::graph::GRAPH_READING_SCHEMA.into(),
         inputs: oi_cradle_kernel::graph::GraphInputs {
             central_wiki: oi_cradle_kernel::graph::GraphInput::Available {
@@ -95,6 +99,7 @@ fn graph_reading() -> GraphReading {
         },
         nodes: vec![graph_node()],
         edges: vec![GraphEdge {
+            metadata: Default::default(),
             relation: "space-node".into(),
             from_ref: "wiki:space:root".into(),
             to_ref: SUBJECT.into(),
@@ -662,4 +667,27 @@ fn unknown_operations_and_fields_fail_closed() {
         bogus.is_err(),
         "unknown fields are refused, never silently accepted"
     );
+}
+
+#[test]
+fn subject_handoff_never_chooses_an_arbitrary_repeated_occurrence() {
+    let mut k=Kernel::discover();
+    bind_and_focus(&mut k);
+    k.apply(KernelOp::Expression { request: serde_json::from_value(json!({
+        "operation":"edit","expression_ref":"expression:lesson","expected_revision":2,"actor":"human:test",
+        "changes":[{"change":"entity_add","scene_ref":"expression:lesson:scene:main","entity_ref":"expression:lesson:entity:b","title":"Second occurrence"},
+        {"change":"subject_bind","entity_ref":"expression:lesson:entity:b","binding":{"subject_ref":SUBJECT,"native_owner":"ai-kit","presentation_role":"thing","sources":[],"readings":[],"actions":[]}}]
+    })).unwrap() }).unwrap();
+    let selected=world(&mut k,json!({"operation":"selection_set","origin":"graph","subject_ref":SUBJECT,
+        "kind":"wiki-node","native_owner":"ai-kit","expression_ref":"expression:lesson"}));
+    assert_eq!(selected["expression"]["state"],"ambiguous_occurrence");
+    assert_eq!(selected["expression"]["occurrences"].as_array().unwrap().len(),2);
+    k.apply(KernelOp::Expression { request: serde_json::from_value(json!({
+        "operation":"edit","expression_ref":"expression:lesson","expected_revision":3,"actor":"human:test",
+        "changes":[{"change":"focus","scene_ref":"expression:lesson:scene:main","entity_ref":"expression:lesson:entity:b"}]
+    })).unwrap() }).unwrap();
+    let selected=world(&mut k,json!({"operation":"selection_set","origin":"graph","subject_ref":SUBJECT,
+        "kind":"wiki-node","native_owner":"ai-kit","expression_ref":"expression:lesson"}));
+    assert_eq!(selected["expression"]["state"],"focused");
+    assert_eq!(selected["expression"]["entity_ref"],"expression:lesson:entity:b");
 }

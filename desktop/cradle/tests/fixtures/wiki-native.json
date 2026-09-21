@@ -1,0 +1,1388 @@
+{
+  "source:a": {
+    "authority": "observed",
+    "content": "---\ntitle: Alpha\naliases: [Opening]\ntags: [notes, research]\n---\n# Alpha\n\n🌱 [[Beta#Part|the next note]] and [again](b.md#^claim).\n\n**Bold** and *emphasis*, `[[not a link]]`.\n\n- [x] Ready\n- [ ] Later\n\n| Claim | Basis |\n| --- | --- |\n| One | Source |\n\n> A quotation.\n\n<script>window.__injected = true</script>\n\n![image](https://example.invalid/image.png)\n\n[[Missing]] [[Same]]\n",
+    "document": {
+      "incoming": [
+        {
+          "address": {
+            "kind": "source",
+            "value": "source:b"
+          },
+          "evidence": {
+            "anchor": {
+              "end_byte": 45,
+              "start_byte": 36
+            },
+            "channel": "body",
+            "display": "Alpha",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "Alpha",
+            "raw_token": "[[Alpha]]",
+            "relation": "references",
+            "resolution": {
+              "state": "resolved",
+              "target_ref": "source:a"
+            },
+            "source_ref": "source:b",
+            "source_revision": "r1"
+          },
+          "from": "source:b",
+          "label": "Beta",
+          "origin": {
+            "authority": "observed",
+            "lens": "semantic-wiki",
+            "provider": "provider/semantic-wiki/sqlite",
+            "revision": "2635478987435743874"
+          },
+          "reference": "wiki:edge:authored:9523186039d56538",
+          "relation": "references"
+        }
+      ],
+      "occurrences": [
+        {
+          "end_byte": 105,
+          "evidence": {
+            "anchor": {
+              "end_byte": 105,
+              "start_byte": 78
+            },
+            "channel": "body",
+            "display": "the next note",
+            "fragment": "Part",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "Beta",
+            "raw_token": "[[Beta#Part|the next note]]",
+            "relation": "references",
+            "resolution": {
+              "state": "resolved",
+              "target_ref": "source:b"
+            },
+            "source_ref": "source:a",
+            "source_revision": "r1"
+          },
+          "reference": "wiki:edge:authored:26867a19c061d740",
+          "start_byte": 78,
+          "state": "resolved",
+          "target": {
+            "kind": "source",
+            "value": "source:b"
+          }
+        },
+        {
+          "end_byte": 130,
+          "evidence": {
+            "anchor": {
+              "end_byte": 130,
+              "start_byte": 110
+            },
+            "channel": "body",
+            "display": "again",
+            "fragment": "^claim",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "b.md",
+            "raw_token": "[again](b.md#^claim)",
+            "relation": "references",
+            "resolution": {
+              "state": "resolved",
+              "target_ref": "source:b"
+            },
+            "source_ref": "source:a",
+            "source_revision": "r1"
+          },
+          "reference": "wiki:edge:authored:bc8e728c9085a885",
+          "start_byte": 110,
+          "state": "resolved",
+          "target": {
+            "kind": "source",
+            "value": "source:b"
+          }
+        },
+        {
+          "end_byte": 354,
+          "evidence": null,
+          "reference": null,
+          "start_byte": 311,
+          "state": "external",
+          "target": null
+        },
+        {
+          "end_byte": 367,
+          "evidence": {
+            "anchor": {
+              "end_byte": 367,
+              "start_byte": 356
+            },
+            "channel": "body",
+            "display": "Missing",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "Missing",
+            "raw_token": "[[Missing]]",
+            "relation": "references",
+            "resolution": {
+              "state": "unresolved"
+            },
+            "source_ref": "source:a",
+            "source_revision": "r1"
+          },
+          "reference": null,
+          "start_byte": 356,
+          "state": "unresolved",
+          "target": null
+        },
+        {
+          "end_byte": 376,
+          "evidence": {
+            "anchor": {
+              "end_byte": 376,
+              "start_byte": 368
+            },
+            "channel": "body",
+            "display": "Same",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "Same",
+            "raw_token": "[[Same]]",
+            "relation": "references",
+            "resolution": {
+              "candidate_refs": [
+                "source:c",
+                "source:d"
+              ],
+              "state": "ambiguous"
+            },
+            "source_ref": "source:a",
+            "source_revision": "r1"
+          },
+          "reference": null,
+          "start_byte": 368,
+          "state": "ambiguous",
+          "target": null
+        }
+      ],
+      "relations_available": true,
+      "relations_truncated": false,
+      "schema": "aikit.markdown-reading/v1",
+      "selectors": [
+        {
+          "end_byte": 72,
+          "id": "wiki-heading-64",
+          "keys": [
+            "Alpha",
+            "alpha"
+          ],
+          "kind": "heading",
+          "start_byte": 64
+        }
+      ],
+      "source_ref": "source:a",
+      "source_revision": "r1",
+      "syntax": {
+        "blocks": [
+          {
+            "attributes": {
+              "id": "wiki-heading-64",
+              "level": 1
+            },
+            "children": [
+              {
+                "end_byte": 71,
+                "kind": "text",
+                "start_byte": 66,
+                "text": "Alpha"
+              }
+            ],
+            "end_byte": 72,
+            "kind": "heading",
+            "start_byte": 64
+          },
+          {
+            "children": [
+              {
+                "end_byte": 78,
+                "kind": "text",
+                "start_byte": 73,
+                "text": "🌱 "
+              },
+              {
+                "attributes": {
+                  "destination": "Beta#Part",
+                  "syntax": "wiki",
+                  "title": ""
+                },
+                "children": [
+                  {
+                    "end_byte": 103,
+                    "kind": "text",
+                    "start_byte": 90,
+                    "text": "the next note"
+                  }
+                ],
+                "end_byte": 105,
+                "kind": "link",
+                "start_byte": 78
+              },
+              {
+                "end_byte": 110,
+                "kind": "text",
+                "start_byte": 105,
+                "text": " and "
+              },
+              {
+                "attributes": {
+                  "destination": "b.md#^claim",
+                  "syntax": "markdown",
+                  "title": ""
+                },
+                "children": [
+                  {
+                    "end_byte": 116,
+                    "kind": "text",
+                    "start_byte": 111,
+                    "text": "again"
+                  }
+                ],
+                "end_byte": 130,
+                "kind": "link",
+                "start_byte": 110
+              },
+              {
+                "end_byte": 131,
+                "kind": "text",
+                "start_byte": 130,
+                "text": "."
+              }
+            ],
+            "end_byte": 132,
+            "kind": "paragraph",
+            "start_byte": 73
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "end_byte": 139,
+                    "kind": "text",
+                    "start_byte": 135,
+                    "text": "Bold"
+                  }
+                ],
+                "end_byte": 141,
+                "kind": "strong",
+                "start_byte": 133
+              },
+              {
+                "end_byte": 146,
+                "kind": "text",
+                "start_byte": 141,
+                "text": " and "
+              },
+              {
+                "children": [
+                  {
+                    "end_byte": 155,
+                    "kind": "text",
+                    "start_byte": 147,
+                    "text": "emphasis"
+                  }
+                ],
+                "end_byte": 156,
+                "kind": "emphasis",
+                "start_byte": 146
+              },
+              {
+                "end_byte": 158,
+                "kind": "text",
+                "start_byte": 156,
+                "text": ", "
+              },
+              {
+                "end_byte": 174,
+                "kind": "code",
+                "start_byte": 158,
+                "text": "[[not a link]]"
+              },
+              {
+                "end_byte": 175,
+                "kind": "text",
+                "start_byte": 174,
+                "text": "."
+              }
+            ],
+            "end_byte": 176,
+            "kind": "paragraph",
+            "start_byte": 133
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "checked": true
+                    },
+                    "end_byte": 182,
+                    "kind": "task",
+                    "start_byte": 179
+                  },
+                  {
+                    "end_byte": 188,
+                    "kind": "text",
+                    "start_byte": 183,
+                    "text": "Ready"
+                  }
+                ],
+                "end_byte": 189,
+                "kind": "item",
+                "start_byte": 177
+              },
+              {
+                "children": [
+                  {
+                    "attributes": {
+                      "checked": false
+                    },
+                    "end_byte": 194,
+                    "kind": "task",
+                    "start_byte": 191
+                  },
+                  {
+                    "end_byte": 200,
+                    "kind": "text",
+                    "start_byte": 195,
+                    "text": "Later"
+                  }
+                ],
+                "end_byte": 202,
+                "kind": "item",
+                "start_byte": 189
+              }
+            ],
+            "end_byte": 202,
+            "kind": "list",
+            "start_byte": 177
+          },
+          {
+            "attributes": {
+              "alignments": [
+                "none",
+                "none"
+              ]
+            },
+            "children": [
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "end_byte": 209,
+                        "kind": "text",
+                        "start_byte": 204,
+                        "text": "Claim"
+                      }
+                    ],
+                    "end_byte": 210,
+                    "kind": "table-cell",
+                    "start_byte": 203
+                  },
+                  {
+                    "children": [
+                      {
+                        "end_byte": 217,
+                        "kind": "text",
+                        "start_byte": 212,
+                        "text": "Basis"
+                      }
+                    ],
+                    "end_byte": 218,
+                    "kind": "table-cell",
+                    "start_byte": 211
+                  }
+                ],
+                "end_byte": 220,
+                "kind": "table-head",
+                "start_byte": 202
+              },
+              {
+                "children": [
+                  {
+                    "children": [
+                      {
+                        "end_byte": 239,
+                        "kind": "text",
+                        "start_byte": 236,
+                        "text": "One"
+                      }
+                    ],
+                    "end_byte": 240,
+                    "kind": "table-cell",
+                    "start_byte": 235
+                  },
+                  {
+                    "children": [
+                      {
+                        "end_byte": 248,
+                        "kind": "text",
+                        "start_byte": 242,
+                        "text": "Source"
+                      }
+                    ],
+                    "end_byte": 249,
+                    "kind": "table-cell",
+                    "start_byte": 241
+                  }
+                ],
+                "end_byte": 251,
+                "kind": "table-row",
+                "start_byte": 234
+              }
+            ],
+            "end_byte": 251,
+            "kind": "table",
+            "start_byte": 202
+          },
+          {
+            "children": [
+              {
+                "children": [
+                  {
+                    "end_byte": 266,
+                    "kind": "text",
+                    "start_byte": 254,
+                    "text": "A quotation."
+                  }
+                ],
+                "end_byte": 267,
+                "kind": "paragraph",
+                "start_byte": 254
+              }
+            ],
+            "end_byte": 267,
+            "kind": "blockquote",
+            "start_byte": 252
+          },
+          {
+            "children": [
+              {
+                "end_byte": 310,
+                "kind": "raw-html",
+                "start_byte": 268,
+                "text": "<script>window.__injected = true</script>\n"
+              }
+            ],
+            "end_byte": 310,
+            "kind": "raw-html",
+            "start_byte": 268
+          },
+          {
+            "children": [
+              {
+                "attributes": {
+                  "destination": "https://example.invalid/image.png",
+                  "title": ""
+                },
+                "children": [
+                  {
+                    "end_byte": 318,
+                    "kind": "text",
+                    "start_byte": 313,
+                    "text": "image"
+                  }
+                ],
+                "end_byte": 354,
+                "kind": "image",
+                "start_byte": 311
+              }
+            ],
+            "end_byte": 355,
+            "kind": "paragraph",
+            "start_byte": 311
+          },
+          {
+            "children": [
+              {
+                "attributes": {
+                  "destination": "Missing",
+                  "syntax": "wiki",
+                  "title": ""
+                },
+                "children": [
+                  {
+                    "end_byte": 365,
+                    "kind": "text",
+                    "start_byte": 358,
+                    "text": "Missing"
+                  }
+                ],
+                "end_byte": 367,
+                "kind": "link",
+                "start_byte": 356
+              },
+              {
+                "end_byte": 368,
+                "kind": "text",
+                "start_byte": 367,
+                "text": " "
+              },
+              {
+                "attributes": {
+                  "destination": "Same",
+                  "syntax": "wiki",
+                  "title": ""
+                },
+                "children": [
+                  {
+                    "end_byte": 374,
+                    "kind": "text",
+                    "start_byte": 370,
+                    "text": "Same"
+                  }
+                ],
+                "end_byte": 376,
+                "kind": "link",
+                "start_byte": 368
+              }
+            ],
+            "end_byte": 377,
+            "kind": "paragraph",
+            "start_byte": 356
+          }
+        ],
+        "byte_length": 377,
+        "headings": [
+          {
+            "attributes": {
+              "id": "wiki-heading-64",
+              "level": 1
+            },
+            "children": [
+              {
+                "end_byte": 71,
+                "kind": "text",
+                "start_byte": 66,
+                "text": "Alpha"
+              }
+            ],
+            "end_byte": 72,
+            "kind": "heading",
+            "start_byte": 64
+          }
+        ],
+        "links": [
+          {
+            "destination": "Beta#Part",
+            "display": "the next note",
+            "end_byte": 105,
+            "external": false,
+            "kind": "wiki",
+            "raw_token": "[[Beta#Part|the next note]]",
+            "start_byte": 78
+          },
+          {
+            "destination": "b.md#^claim",
+            "display": "again",
+            "end_byte": 130,
+            "external": false,
+            "kind": "markdown",
+            "raw_token": "[again](b.md#^claim)",
+            "start_byte": 110
+          },
+          {
+            "destination": "https://example.invalid/image.png",
+            "display": "image",
+            "end_byte": 354,
+            "external": true,
+            "kind": "image",
+            "raw_token": "![image](https://example.invalid/image.png)",
+            "start_byte": 311
+          },
+          {
+            "destination": "Missing",
+            "display": "Missing",
+            "end_byte": 367,
+            "external": false,
+            "kind": "wiki",
+            "raw_token": "[[Missing]]",
+            "start_byte": 356
+          },
+          {
+            "destination": "Same",
+            "display": "Same",
+            "end_byte": 376,
+            "external": false,
+            "kind": "wiki",
+            "raw_token": "[[Same]]",
+            "start_byte": 368
+          }
+        ],
+        "properties": {
+          "aliases": [
+            "Opening"
+          ],
+          "tags": [
+            "notes",
+            "research"
+          ],
+          "title": "Alpha"
+        },
+        "tags": [
+          "notes",
+          "research"
+        ],
+        "version": "aikit.markdown-document/v1",
+        "warnings": []
+      }
+    },
+    "evidence": [
+      "source:a"
+    ],
+    "lens": "source-pool",
+    "provider": "provider/source-pool/native",
+    "resource": "source:a",
+    "revision": "r1",
+    "why_selected": "selected from the eligible project SourcePool"
+  },
+  "source:b": {
+    "authority": "observed",
+    "content": "# Part\n\nAn exact paragraph. ^claim\n\n[[Alpha]]\n",
+    "document": {
+      "incoming": [
+        {
+          "address": {
+            "kind": "source",
+            "value": "source:a"
+          },
+          "evidence": {
+            "anchor": {
+              "end_byte": 105,
+              "start_byte": 78
+            },
+            "channel": "body",
+            "display": "the next note",
+            "fragment": "Part",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "Beta",
+            "raw_token": "[[Beta#Part|the next note]]",
+            "relation": "references",
+            "resolution": {
+              "state": "resolved",
+              "target_ref": "source:b"
+            },
+            "source_ref": "source:a",
+            "source_revision": "r1"
+          },
+          "from": "source:a",
+          "label": "Alpha",
+          "origin": {
+            "authority": "observed",
+            "lens": "semantic-wiki",
+            "provider": "provider/semantic-wiki/sqlite",
+            "revision": "15885589897389867907"
+          },
+          "reference": "wiki:edge:authored:26867a19c061d740",
+          "relation": "references"
+        },
+        {
+          "address": {
+            "kind": "source",
+            "value": "source:a"
+          },
+          "evidence": {
+            "anchor": {
+              "end_byte": 130,
+              "start_byte": 110
+            },
+            "channel": "body",
+            "display": "again",
+            "fragment": "^claim",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "b.md",
+            "raw_token": "[again](b.md#^claim)",
+            "relation": "references",
+            "resolution": {
+              "state": "resolved",
+              "target_ref": "source:b"
+            },
+            "source_ref": "source:a",
+            "source_revision": "r1"
+          },
+          "from": "source:a",
+          "label": "Alpha",
+          "origin": {
+            "authority": "observed",
+            "lens": "semantic-wiki",
+            "provider": "provider/semantic-wiki/sqlite",
+            "revision": "18179077214876010338"
+          },
+          "reference": "wiki:edge:authored:bc8e728c9085a885",
+          "relation": "references"
+        }
+      ],
+      "occurrences": [
+        {
+          "end_byte": 45,
+          "evidence": {
+            "anchor": {
+              "end_byte": 45,
+              "start_byte": 36
+            },
+            "channel": "body",
+            "display": "Alpha",
+            "profile": "aikit.authored-relation/v1",
+            "raw_target": "Alpha",
+            "raw_token": "[[Alpha]]",
+            "relation": "references",
+            "resolution": {
+              "state": "resolved",
+              "target_ref": "source:a"
+            },
+            "source_ref": "source:b",
+            "source_revision": "r1"
+          },
+          "reference": "wiki:edge:authored:9523186039d56538",
+          "start_byte": 36,
+          "state": "resolved",
+          "target": {
+            "kind": "source",
+            "value": "source:a"
+          }
+        }
+      ],
+      "relations_available": true,
+      "relations_truncated": false,
+      "schema": "aikit.markdown-reading/v1",
+      "selectors": [
+        {
+          "end_byte": 7,
+          "id": "wiki-heading-0",
+          "keys": [
+            "Part",
+            "part"
+          ],
+          "kind": "heading",
+          "start_byte": 0
+        },
+        {
+          "end_byte": 35,
+          "id": "wiki-block-claim",
+          "keys": [
+            "^claim"
+          ],
+          "kind": "block",
+          "start_byte": 8
+        }
+      ],
+      "source_ref": "source:b",
+      "source_revision": "r1",
+      "syntax": {
+        "blocks": [
+          {
+            "attributes": {
+              "id": "wiki-heading-0",
+              "level": 1
+            },
+            "children": [
+              {
+                "end_byte": 6,
+                "kind": "text",
+                "start_byte": 2,
+                "text": "Part"
+              }
+            ],
+            "end_byte": 7,
+            "kind": "heading",
+            "start_byte": 0
+          },
+          {
+            "attributes": {
+              "block_id": "claim",
+              "id": "wiki-block-claim"
+            },
+            "children": [
+              {
+                "end_byte": 34,
+                "kind": "text",
+                "start_byte": 8,
+                "text": "An exact paragraph. ^claim"
+              }
+            ],
+            "end_byte": 35,
+            "kind": "paragraph",
+            "start_byte": 8
+          },
+          {
+            "children": [
+              {
+                "attributes": {
+                  "destination": "Alpha",
+                  "syntax": "wiki",
+                  "title": ""
+                },
+                "children": [
+                  {
+                    "end_byte": 43,
+                    "kind": "text",
+                    "start_byte": 38,
+                    "text": "Alpha"
+                  }
+                ],
+                "end_byte": 45,
+                "kind": "link",
+                "start_byte": 36
+              }
+            ],
+            "end_byte": 46,
+            "kind": "paragraph",
+            "start_byte": 36
+          }
+        ],
+        "byte_length": 46,
+        "headings": [
+          {
+            "attributes": {
+              "id": "wiki-heading-0",
+              "level": 1
+            },
+            "children": [
+              {
+                "end_byte": 6,
+                "kind": "text",
+                "start_byte": 2,
+                "text": "Part"
+              }
+            ],
+            "end_byte": 7,
+            "kind": "heading",
+            "start_byte": 0
+          }
+        ],
+        "links": [
+          {
+            "destination": "Alpha",
+            "display": "Alpha",
+            "end_byte": 45,
+            "external": false,
+            "kind": "wiki",
+            "raw_token": "[[Alpha]]",
+            "start_byte": 36
+          }
+        ],
+        "properties": {},
+        "tags": [],
+        "version": "aikit.markdown-document/v1",
+        "warnings": []
+      }
+    },
+    "evidence": [
+      "source:b"
+    ],
+    "lens": "source-pool",
+    "provider": "provider/source-pool/native",
+    "resource": "source:b",
+    "revision": "r1",
+    "why_selected": "selected from the eligible project SourcePool"
+  },
+  "source:c": {
+    "authority": "observed",
+    "content": "One interpretation.",
+    "document": {
+      "incoming": [],
+      "occurrences": [],
+      "relations_available": true,
+      "relations_truncated": false,
+      "schema": "aikit.markdown-reading/v1",
+      "selectors": [],
+      "source_ref": "source:c",
+      "source_revision": "r1",
+      "syntax": {
+        "blocks": [
+          {
+            "children": [
+              {
+                "end_byte": 19,
+                "kind": "text",
+                "start_byte": 0,
+                "text": "One interpretation."
+              }
+            ],
+            "end_byte": 19,
+            "kind": "paragraph",
+            "start_byte": 0
+          }
+        ],
+        "byte_length": 19,
+        "headings": [],
+        "links": [],
+        "properties": {},
+        "tags": [],
+        "version": "aikit.markdown-document/v1",
+        "warnings": []
+      }
+    },
+    "evidence": [
+      "source:c"
+    ],
+    "lens": "source-pool",
+    "provider": "provider/source-pool/native",
+    "resource": "source:c",
+    "revision": "r1",
+    "why_selected": "selected from the eligible project SourcePool"
+  },
+  "source:d": {
+    "authority": "observed",
+    "content": "Another interpretation.",
+    "document": {
+      "incoming": [],
+      "occurrences": [],
+      "relations_available": true,
+      "relations_truncated": false,
+      "schema": "aikit.markdown-reading/v1",
+      "selectors": [],
+      "source_ref": "source:d",
+      "source_revision": "r1",
+      "syntax": {
+        "blocks": [
+          {
+            "children": [
+              {
+                "end_byte": 23,
+                "kind": "text",
+                "start_byte": 0,
+                "text": "Another interpretation."
+              }
+            ],
+            "end_byte": 23,
+            "kind": "paragraph",
+            "start_byte": 0
+          }
+        ],
+        "byte_length": 23,
+        "headings": [],
+        "links": [],
+        "properties": {},
+        "tags": [],
+        "version": "aikit.markdown-document/v1",
+        "warnings": []
+      }
+    },
+    "evidence": [
+      "source:d"
+    ],
+    "lens": "source-pool",
+    "provider": "provider/source-pool/native",
+    "resource": "source:d",
+    "revision": "r1",
+    "why_selected": "selected from the eligible project SourcePool"
+  },
+  "graph": {
+    "absences": [
+      "ProjectMap code search unavailable: provider absent",
+      "ProjectMap CodeIndex unavailable: no canonical Project identity"
+    ],
+    "basis": "admitted native knowledge horizon; metadata only",
+    "edges": [
+      {
+        "authored_relation": {
+          "anchor": {
+            "end_byte": 105,
+            "start_byte": 78
+          },
+          "channel": "body",
+          "display": "the next note",
+          "fragment": "Part",
+          "profile": "aikit.authored-relation/v1",
+          "raw_target": "Beta",
+          "raw_token": "[[Beta#Part|the next note]]",
+          "relation": "references",
+          "resolution": {
+            "state": "resolved",
+            "target_ref": "source:b"
+          },
+          "source_ref": "source:a",
+          "source_revision": "r1"
+        },
+        "from": "source:a",
+        "origin": {
+          "authority": "authored",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki",
+          "revision": "15885589897389867907"
+        },
+        "reference": "wiki:edge:authored:26867a19c061d740",
+        "relation": "references",
+        "to": "source:b"
+      },
+      {
+        "authored_relation": {
+          "anchor": {
+            "end_byte": 45,
+            "start_byte": 36
+          },
+          "channel": "body",
+          "display": "Alpha",
+          "profile": "aikit.authored-relation/v1",
+          "raw_target": "Alpha",
+          "raw_token": "[[Alpha]]",
+          "relation": "references",
+          "resolution": {
+            "state": "resolved",
+            "target_ref": "source:a"
+          },
+          "source_ref": "source:b",
+          "source_revision": "r1"
+        },
+        "from": "source:b",
+        "origin": {
+          "authority": "authored",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki",
+          "revision": "2635478987435743874"
+        },
+        "reference": "wiki:edge:authored:9523186039d56538",
+        "relation": "references",
+        "to": "source:a"
+      },
+      {
+        "authored_relation": {
+          "anchor": {
+            "end_byte": 130,
+            "start_byte": 110
+          },
+          "channel": "body",
+          "display": "again",
+          "fragment": "^claim",
+          "profile": "aikit.authored-relation/v1",
+          "raw_target": "b.md",
+          "raw_token": "[again](b.md#^claim)",
+          "relation": "references",
+          "resolution": {
+            "state": "resolved",
+            "target_ref": "source:b"
+          },
+          "source_ref": "source:a",
+          "source_revision": "r1"
+        },
+        "from": "source:a",
+        "origin": {
+          "authority": "authored",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki",
+          "revision": "18179077214876010338"
+        },
+        "reference": "wiki:edge:authored:bc8e728c9085a885",
+        "relation": "references",
+        "to": "source:b"
+      }
+    ],
+    "formations": [],
+    "limits": {
+      "edges": 16384,
+      "nodes": 4096
+    },
+    "nodes": [
+      {
+        "address": {
+          "kind": "project-map",
+          "value": "action/capability/explain"
+        },
+        "aliases": [],
+        "authority": "authored",
+        "kind": "action",
+        "label": "Explain capability",
+        "provider": "provider/project-map/federation",
+        "resource": "action/capability/explain",
+        "revision": null,
+        "tags": []
+      },
+      {
+        "address": {
+          "kind": "project-map",
+          "value": "action/capability/toggle"
+        },
+        "aliases": [],
+        "authority": "authored",
+        "kind": "action",
+        "label": "Toggle capability",
+        "provider": "provider/project-map/federation",
+        "resource": "action/capability/toggle",
+        "revision": null,
+        "tags": []
+      },
+      {
+        "address": {
+          "kind": "project-map",
+          "value": "action/project/open"
+        },
+        "aliases": [],
+        "authority": "authored",
+        "kind": "action",
+        "label": "Open project",
+        "provider": "provider/project-map/federation",
+        "resource": "action/project/open",
+        "revision": null,
+        "tags": []
+      },
+      {
+        "address": {
+          "kind": "project-map",
+          "value": "host/localhost"
+        },
+        "aliases": [],
+        "authority": "derived",
+        "kind": "host",
+        "label": "localhost",
+        "provider": "provider/project-map/federation",
+        "resource": "host/localhost",
+        "revision": null,
+        "tags": []
+      },
+      {
+        "address": {
+          "kind": "source",
+          "value": "source:a"
+        },
+        "aliases": [
+          "Opening"
+        ],
+        "authority": "observed",
+        "kind": "knowledge-source",
+        "label": "Alpha",
+        "provider": "provider/source-pool/native",
+        "resource": "source:a",
+        "revision": "r1",
+        "tags": [
+          "notes",
+          "research"
+        ]
+      },
+      {
+        "address": {
+          "kind": "source",
+          "value": "source:b"
+        },
+        "aliases": [],
+        "authority": "observed",
+        "kind": "knowledge-source",
+        "label": "Beta",
+        "provider": "provider/source-pool/native",
+        "resource": "source:b",
+        "revision": "r1",
+        "tags": [
+          "notes"
+        ]
+      },
+      {
+        "address": {
+          "kind": "source",
+          "value": "source:c"
+        },
+        "aliases": [],
+        "authority": "observed",
+        "kind": "knowledge-source",
+        "label": "Same",
+        "provider": "provider/source-pool/native",
+        "resource": "source:c",
+        "revision": "r1",
+        "tags": [
+          "notes"
+        ]
+      },
+      {
+        "address": {
+          "kind": "source",
+          "value": "source:d"
+        },
+        "aliases": [],
+        "authority": "observed",
+        "kind": "knowledge-source",
+        "label": "Same",
+        "provider": "provider/source-pool/native",
+        "resource": "source:d",
+        "revision": "r1",
+        "tags": [
+          "notes"
+        ]
+      }
+    ],
+    "schema": "aikit.knowledge-graph/v1",
+    "truncated": false
+  },
+  "relations": {
+    "edges": [
+      {
+        "authored_relation": {
+          "anchor": {
+            "end_byte": 45,
+            "start_byte": 36
+          },
+          "channel": "body",
+          "display": "Alpha",
+          "profile": "aikit.authored-relation/v1",
+          "raw_target": "Alpha",
+          "raw_token": "[[Alpha]]",
+          "relation": "references",
+          "resolution": {
+            "state": "resolved",
+            "target_ref": "source:a"
+          },
+          "source_ref": "source:b",
+          "source_revision": "r1"
+        },
+        "direction": "incoming",
+        "from": "source:b",
+        "origin": {
+          "authority": "observed",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki/sqlite",
+          "revision": "2635478987435743874"
+        },
+        "reference": "wiki:edge:authored:9523186039d56538",
+        "relation": "references",
+        "to": "source:a"
+      },
+      {
+        "direction": "incoming",
+        "from": "wiki:edge:authored:26867a19c061d740",
+        "origin": {
+          "authority": "authored",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki/sqlite"
+        },
+        "relation": "source",
+        "to": "source:a"
+      },
+      {
+        "direction": "incoming",
+        "from": "wiki:edge:authored:bc8e728c9085a885",
+        "origin": {
+          "authority": "authored",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki/sqlite"
+        },
+        "relation": "source",
+        "to": "source:a"
+      },
+      {
+        "direction": "incoming",
+        "from": "wiki:edge:authored:26867a19c061d740",
+        "origin": {
+          "authority": "authored",
+          "lens": "project-map",
+          "provider": "provider/semantic-wiki/native"
+        },
+        "relation": "source",
+        "to": "source:a"
+      },
+      {
+        "direction": "incoming",
+        "from": "wiki:edge:authored:bc8e728c9085a885",
+        "origin": {
+          "authority": "authored",
+          "lens": "project-map",
+          "provider": "provider/semantic-wiki/native"
+        },
+        "relation": "source",
+        "to": "source:a"
+      },
+      {
+        "authored_relation": {
+          "anchor": {
+            "end_byte": 105,
+            "start_byte": 78
+          },
+          "channel": "body",
+          "display": "the next note",
+          "fragment": "Part",
+          "profile": "aikit.authored-relation/v1",
+          "raw_target": "Beta",
+          "raw_token": "[[Beta#Part|the next note]]",
+          "relation": "references",
+          "resolution": {
+            "state": "resolved",
+            "target_ref": "source:b"
+          },
+          "source_ref": "source:a",
+          "source_revision": "r1"
+        },
+        "direction": "outgoing",
+        "from": "source:a",
+        "origin": {
+          "authority": "observed",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki/native",
+          "revision": "15885589897389867907"
+        },
+        "reference": "wiki:edge:authored:26867a19c061d740",
+        "relation": "references",
+        "to": "source:b"
+      },
+      {
+        "authored_relation": {
+          "anchor": {
+            "end_byte": 130,
+            "start_byte": 110
+          },
+          "channel": "body",
+          "display": "again",
+          "fragment": "^claim",
+          "profile": "aikit.authored-relation/v1",
+          "raw_target": "b.md",
+          "raw_token": "[again](b.md#^claim)",
+          "relation": "references",
+          "resolution": {
+            "state": "resolved",
+            "target_ref": "source:b"
+          },
+          "source_ref": "source:a",
+          "source_revision": "r1"
+        },
+        "direction": "outgoing",
+        "from": "source:a",
+        "origin": {
+          "authority": "observed",
+          "lens": "semantic-wiki",
+          "provider": "provider/semantic-wiki/native",
+          "revision": "18179077214876010338"
+        },
+        "reference": "wiki:edge:authored:bc8e728c9085a885",
+        "relation": "references",
+        "to": "source:b"
+      }
+    ],
+    "nodes": [
+      {
+        "kind": "knowledge-source",
+        "label": "source:a",
+        "resource": "source:a"
+      },
+      {
+        "kind": "knowledge-source",
+        "label": "source:b",
+        "resource": "source:b"
+      },
+      {
+        "kind": "knowledge-node",
+        "label": "wiki:edge:authored:26867a19c061d740",
+        "resource": "wiki:edge:authored:26867a19c061d740"
+      },
+      {
+        "kind": "knowledge-node",
+        "label": "wiki:edge:authored:bc8e728c9085a885",
+        "resource": "wiki:edge:authored:bc8e728c9085a885"
+      }
+    ],
+    "query": {
+      "depth": 2,
+      "filters": [],
+      "focus": "source:a",
+      "max_edges": 192,
+      "max_nodes": 96
+    },
+    "truncated": false,
+    "warnings": []
+  },
+  "receipt": {
+    "producer": "aikit 0.1.0 (4e21a30b4ff6)",
+    "evidence": "real native CLI on controlled isolated sources; not installed-app/human acceptance"
+  }
+}

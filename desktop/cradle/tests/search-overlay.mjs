@@ -20,6 +20,7 @@ try {
     const browser = await engine.launch({headless:true});
     receipt.browsers.push({name,version:browser.version()});
     const page = await browser.newPage({viewport:{width:1280,height:820}});
+    page.setDefaultTimeout(10000);
     const calls = [];
     const errors = [];
     page.on('pageerror', error => errors.push(String(error)));
@@ -29,6 +30,7 @@ try {
       if (op.op !== 'knowledge') return route.fulfill({json:{ok:true,outcome:{result:'state',snapshot:{focus:{},surfaces:{},buffers:{}},receipts:[]}}});
       calls.push(op);
       const {action,query} = op.request;
+      if(query==='progressive' && action==='resolve') await new Promise(resolve=>setTimeout(resolve,1500));
       if(query==='slow') await new Promise(resolve=>setTimeout(resolve,1200));
       if(query==='refused') return route.fulfill({json:{ok:false,error:'resolve.unclosed_quote: quoted Resolve subject is not closed'}});
       const length = query==='many' ? 50 : query==='empty' ? 0 : 2;
@@ -64,6 +66,10 @@ try {
       await writing.evaluate(el=>{el.focus();el.setSelectionRange(4,14,'forward');});
       await open();
       await fill('@# (@0 "authored meaning")');
+      // Result readiness no longer carries a fixed 180 ms delay. Wait for the
+      // panel's own animation, not an arbitrary network/debounce delay, before
+      // asserting its resting material. The compositor assertion stays intact.
+      await overlay.evaluate(el => Promise.all(el.getAnimations().map(animation => animation.finished)));
       await page.screenshot({path:resolve(out,`${name}-glass.png`)});
       const material = await overlay.evaluate(el=>{const css=getComputedStyle(el);return {filter:css.backdropFilter||css.webkitBackdropFilter,background:css.backgroundColor,opacity:css.opacity,backdrop:getComputedStyle(el,'::backdrop').backdropFilter};});
       check(material.filter.includes('28px') && material.background.startsWith('rgba(') && material.opacity==='1' && (!material.backdrop || material.backdrop==='none'),`${name}: blur belongs to the translucent panel, not the workspace or text`);
@@ -84,6 +90,14 @@ try {
       await overlay.waitFor({state:'detached'});
       const opened = await page.evaluate(()=>window.__SEARCH_TEST__.opened);
       check(opened.length===1 && opened[0].address.value==='wiki/fixture-1' && opened[0].project==='Work/My Project',`${name}: Enter opens once with the original ref and project`);
+      await open();
+      await input.fill('progressive');
+      await overlay.getByText('Result 0 · progressive', {exact:true}).waitFor();
+      check(await overlay.locator('ul').getAttribute('aria-busy')==='true', `${name}: fast results arrive before supplementary resolution`);
+      check(await overlay.locator('#knowledge-search-0').isEnabled(), `${name}: arrived result stays actionable while another provider is loading`);
+      await input.press('Enter');
+      await overlay.waitFor({state:'detached'});
+      check((await page.evaluate(()=>window.__SEARCH_TEST__.opened)).length===2, `${name}: Enter can open the first response without the slow provider`);
       await open();
       await input.fill('slow');
       await page.waitForTimeout(240);
@@ -133,6 +147,7 @@ try {
       }
       check(errors.length===0,`${name}: no uncaught browser errors (${errors.join('; ')})`);
     } catch(error) {
+      console.error(error);
       receipt.failure={browser:name,error:String(error),lastCalls:calls.slice(-6),browserErrors:errors,input:await input.inputValue().catch(()=>null),active:await input.getAttribute('aria-activedescendant').catch(()=>null),status:await overlay.locator('.search-context').innerText().catch(()=>null)};
       console.error(JSON.stringify(receipt.failure));
       await page.screenshot({path:resolve(out,`${name}-failure.png`)}).catch(()=>{});

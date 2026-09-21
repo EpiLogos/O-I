@@ -3,31 +3,16 @@ import { useKernel } from "../kernel/KernelProvider";
 import type { KnowledgeAddress, KnowledgeHit, KnowledgeRequest } from "../kernel/types";
 import { knowledge } from "./client";
 import { OwnerActions } from "./OwnerActions";
-import { graphAddress, type GraphNode } from "./graph";
+import { graphAddress } from "./graph";
 import { searchLeaderLabel } from "./leader";
 import "./knowledge.css";
 import "@epilogos/oi-design-system/search.css";
 import "./search.css";
 import {Glyph} from "../workspace/Glyph";
 
-type ResolutionRow = {
-  reference: string;
-  kind: GraphNode["kind"];
-  label: string;
-  owner: string;
-  provenance: string[];
-  actions: string[];
-};
-type ResolutionResult={hits?:KnowledgeHit[];rows?:ResolutionRow[];absences?:string[]};
-export function normalizeResolution(value:unknown):{hits:KnowledgeHit[];rows:ResolutionRow[];absences:string[]}{
-  if(!value||typeof value!=="object")throw new Error("Native resolution returned no object");
-  const result=value as ResolutionResult;
-  const hits=result.hits??[],rows=result.rows??[],absences=result.absences??[];
-  if(!Array.isArray(hits)||!Array.isArray(rows)||!Array.isArray(absences))throw new Error("Native resolution returned invalid result arrays");
-  if(hits.some(hit=>!hit||typeof hit.resource!=="string"||typeof hit.label!=="string"||!hit.address||typeof hit.address.value!=="string"))throw new Error("Native resolution returned an invalid hit");
-  if(rows.some(row=>!row||typeof row.reference!=="string"||typeof row.label!=="string"||!Array.isArray(row.actions)||!Array.isArray(row.provenance)))throw new Error("Native resolution returned an invalid legacy row");
-  return {hits,rows,absences};
-}
+import {progressiveSearch, searchKeys, preserveSearchSelection, type ResolutionRow} from "./searchProgress";
+export {normalizeResolution} from "./searchProgress";
+
 type Props = {
   leader: boolean;
   onLeaderChange: (shift: boolean) => void;
@@ -49,6 +34,8 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
   const [hits, setHits] = useState<KnowledgeHit[]>([]);
   const [rows, setRows] = useState<ResolutionRow[]>([]);
   const [selected, setSelected] = useState(0);
+  const selectedKey = useRef<string>();
+  const [pendingProviders, setPendingProviders] = useState<string[]>([]);
   const [absences, setAbsences] = useState<string[]>([]);
   const [resolutionAbsences, setResolutionAbsences] = useState<string[]>([]);
   const [error, setError] = useState<string>();
@@ -92,28 +79,32 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     setAbsences([]);
     setResolutionAbsences([]);
     setSelected(0);
+    selectedKey.current = undefined;
+    setPendingProviders([]);
     setBusy(!composing);
     if (composing) return;
-    // O:I never parses, trims, tokenises or rewrites this input. Both native
-    // operations receive the same literal string, including incomplete syntax.
-    const timer = setTimeout(() => {
-      void Promise.allSettled([
-        knowledge<{ hits: KnowledgeHit[]; absences: string[] }>(transport, project, { action: "search", query }),
-        knowledge<ResolutionResult>(transport, project, { action: "resolve", query }),
-      ]).then(([search, resolution]) => {
+    // Preserve the literal native query; publish each owner's response as it
+    // arrives rather than holding usable results behind the slowest provider.
+    const controller = new AbortController();
+    progressiveSearch(
+      () => knowledge(transport, project, {action: "search", query}, {signal: controller.signal}),
+      () => knowledge(transport, project, {action: "resolve", query}, {signal: controller.signal}),
+      snapshot => {
         if (epoch.current !== request) return;
-        if (search.status === "fulfilled") {
-          setHits(search.value.hits);
-          setAbsences(search.value.absences);
-        } else setError(message(search.reason));
-        if (resolution.status === "fulfilled") {
-          try { const native=normalizeResolution(resolution.value);setHits(current=>[...current,...native.hits]);setRows(native.rows);setResolutionAbsences(native.absences); }
-          catch(failure){setResolutionAbsences([message(failure)]);}
-        } else setResolutionAbsences([message(resolution.reason)]);
-        setBusy(false);
-      });
-    }, 180);
-    return () => { clearTimeout(timer); ++epoch.current; };
+        const index = preserveSearchSelection(selectedKey.current, snapshot.hits, snapshot.rows);
+        setHits(snapshot.hits);
+        setRows(snapshot.rows);
+        setSelected(index);
+        selectedKey.current = searchKeys(snapshot.hits, snapshot.rows)[index];
+        setAbsences(snapshot.absences);
+        setResolutionAbsences(snapshot.resolutionAbsences);
+        setError(snapshot.error);
+        setPendingProviders(snapshot.pending);
+        setBusy(snapshot.pending.length > 0);
+      },
+      controller.signal,
+    );
+    return () => { controller.abort(); ++epoch.current; };
   }, [query, composing, project, transport, generation]);
 
   // Invalidate synchronously, not only when the next effect runs. A pending
@@ -125,6 +116,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     setRows([]);
     setDetail(undefined);
     setSelected(0);
+    selectedKey.current = undefined;
     setQuery(value);
   };
   const showDetail = async (request: KnowledgeRequest) => {
@@ -141,7 +133,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     }
   };
   const openAddress = async (address: KnowledgeAddress, title: string) => {
-    if (busy || composition.current || opening.current) return;
+    if (composition.current || opening.current || !count) return;
     opening.current = true;
     setIsOpening(true);
     setError(undefined);
@@ -160,16 +152,20 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
     return openAddress(address, row.label);
   };
   const accept = () => {
-    if (busy || composition.current || opening.current) return;
+    if (composition.current || opening.current || !count) return;
     const hit = hits[selected];
     const row = rows[selected - hits.length];
     if (hit) void openAddress(hit.address, hit.label);
     else if (row) void openRow(row);
   };
+  const selectResult = (index: number) => {
+    selectedKey.current = searchKeys(hits, rows)[index];
+    setSelected(index);
+  };
   const navigate = (delta: number) => {
-    if (busy || !count) return;
+    if (composition.current || !count) return;
     const next = (selected + delta + count) % count;
-    setSelected(next);
+    selectResult(next);
     dialog.current?.querySelector(`[data-search-index="${next}"]`)?.scrollIntoView({ block: "nearest" });
   };
 
@@ -192,7 +188,7 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       <span className="search-symbol" aria-hidden="true"><Glyph name="search" size={16}/></span>
       <input spellCheck={false} autoComplete="off" autoCorrect="off" autoCapitalize="off" autoFocus
         aria-label="Search or resolve" type="search" disabled={isOpening}
-        aria-controls="knowledge-search-results" aria-activedescendant={count && !busy ? `knowledge-search-${selected}` : undefined}
+        aria-controls="knowledge-search-results" aria-activedescendant={count && !composing ? `knowledge-search-${selected}` : undefined}
         value={query} onChange={event => changeQuery(event.target.value)}
         onCompositionStart={() => { composition.current = true; ++epoch.current; setComposing(true); }}
         onCompositionEnd={event => { composition.current = false; ++epoch.current; setBusy(true); setQuery(event.currentTarget.value); setComposing(false); }}
@@ -201,21 +197,21 @@ export function SearchOverlay({ project, onClose, onOpen, leader, onLeaderChange
       <button type="button" className="search-dismiss" aria-label="Close search" onClick={onClose}><kbd>esc</kbd></button>
     </form>
     <div className="search-scroll">
-      <header className="search-context"><span title={project ?? "Central"}>{project ?? "Central"}</span><span role="status" aria-live="polite">{isOpening ? "Opening…" : composing ? "Composing…" : busy ? "Searching…" : `${count} ${count === 1 ? "result" : "results"}`}</span></header>
+      <header className="search-context"><span title={project ?? "Central"}>{project ?? "Central"}</span><span role="status" aria-live="polite">{isOpening ? "Opening…" : composing ? "Composing…" : busy ? `${count ? `${count} results · ` : ""}${pendingProviders.length} ${pendingProviders.length === 1 ? "source" : "sources"} loading…` : `${count} ${count === 1 ? "result" : "results"}`}</span></header>
       {shortcutError && <p role="alert">{shortcutError}</p>}
       {error && <p role="alert">{error}</p>}
-      <fieldset className="search-results-frame" disabled={busy || isOpening || composing}>
+      <fieldset className="search-results-frame" disabled={isOpening || composing}>
         <div id="knowledge-search-results">
-          <ul aria-label="Search results" aria-busy={busy}>{hits.map((hit, index) => <li key={hit.resource} data-search-index={index} data-selected={selected === index}>
+          <ul aria-label="Search results" aria-busy={busy}>{hits.map((hit, index) => <li key={searchKeys([hit], [])[0]} data-search-index={index} data-selected={selected === index}>
             <button className="search-result" id={`knowledge-search-${index}`} aria-current={selected === index ? "true" : undefined}
-              onFocus={() => setSelected(index)} onPointerMove={() => setSelected(index)} onClick={() => void openAddress(hit.address, hit.label)}>
+              onFocus={() => selectResult(index)} onPointerMove={() => selectResult(index)} onClick={() => void openAddress(hit.address, hit.label)}>
               <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{hit.label}</strong><small>{hit.kind} · {hit.snippet}</small></span>
             </button>
             <button className="search-row-more" aria-label={`Explain ${hit.label}`} onClick={() => void showDetail({ action: "explain", address: hit.address })}>Explain</button>
           </li>)}</ul>
           {rows.length > 0 && <section aria-label="Owner resolution results"><header>Resources &amp; actions</header><div role="list">{rows.map((row, index) => <div role="listitem" className="search-resolution-row" key={`${row.reference}:${index}`} data-search-index={hits.length + index} data-selected={selected === hits.length + index}>
             <button className="search-result" id={`knowledge-search-${hits.length + index}`} aria-current={selected === hits.length + index ? "true" : undefined}
-              onFocus={() => setSelected(hits.length + index)} onPointerMove={() => setSelected(hits.length + index)} onClick={() => void openRow(row)}>
+              onFocus={() => selectResult(hits.length + index)} onPointerMove={() => selectResult(hits.length + index)} onClick={() => void openRow(row)}>
               <span className="search-result-kind" aria-hidden="true">↗</span><span className="search-result-copy"><strong>{row.label}</strong><small>{row.kind} · {row.owner}</small></span>
             </button>
             <details className="search-row-detail"><summary aria-label={`Actions and provenance for ${row.label}`}>Details</summary>

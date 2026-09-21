@@ -1,0 +1,70 @@
+name: Technē source reconciliation
+on:
+  push:
+    branches: ['codex/techne-constructive-field-20260920']
+    paths: ['.github/workflows/techne-source-recovery.yml']
+permissions:
+  contents: read
+jobs:
+  sources:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          fetch-depth: 100
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - name: Preserve exact public source trees and revision ancestry
+        shell: bash
+        run: |
+          set -euo pipefail
+          mkdir -p "$RUNNER_TEMP/techne-reconciliation/native"
+          out="$RUNNER_TEMP/techne-reconciliation"
+          git fetch --depth=100 origin fe93a3907c8c18170db096e19d467ada74adebb0 b72d763ce026efebe3fac67655749ac0909ea130
+          git archive HEAD | gzip > "$out/O-I-branch.tar.gz"
+          git archive fe93a3907c8c18170db096e19d467ada74adebb0 | gzip > "$out/O-I-main.tar.gz"
+          git archive b72d763ce026efebe3fac67655749ac0909ea130 | gzip > "$out/O-I-base.tar.gz"
+          git rev-parse HEAD > "$out/native/O-I-branch.revision"
+          echo fe93a3907c8c18170db096e19d467ada74adebb0 > "$out/native/O-I-main.revision"
+          echo b72d763ce026efebe3fac67655749ac0909ea130 > "$out/native/O-I-base.revision"
+          for name in QL-MEF ai-kit Central Actuation; do
+            git clone --depth=1 --branch main "https://github.com/EpiLogos/$name.git" "$RUNNER_TEMP/native-$name"
+            git -C "$RUNNER_TEMP/native-$name" rev-parse HEAD > "$out/native/$name.revision"
+            git -C "$RUNNER_TEMP/native-$name" archive HEAD | gzip > "$out/native/$name.tar.gz"
+          done
+          git -C "$RUNNER_TEMP/native-ai-kit" fetch --depth=1 origin codex/techne-native-construction-20260920 37994265f5727af50ec6446687ed629dde047412
+          git -C "$RUNNER_TEMP/native-ai-kit" archive FETCH_HEAD | gzip > "$out/native/ai-kit-construction.tar.gz"
+          git -C "$RUNNER_TEMP/native-ai-kit" archive 37994265f5727af50ec6446687ed629dde047412 | gzip > "$out/native/ai-kit-base.tar.gz"
+          git fetch --depth=1 origin refs/heads/agent/wiki-constellation-loop-20260920
+          git rev-parse FETCH_HEAD > "$out/native/wiki-consumer.revision"
+          git archive FETCH_HEAD | gzip > "$out/wiki-consumer.tar.gz"
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          tar -czf "$out/native/cradle-dependencies.tar.gz" -C desktop/cradle node_modules
+      - uses: actions/upload-artifact@v4
+        with:
+          name: techne-branch-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-reconciliation/O-I-branch.tar.gz
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: techne-main-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-reconciliation/O-I-main.tar.gz
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: techne-base-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-reconciliation/O-I-base.tar.gz
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: techne-wiki-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-reconciliation/wiki-consumer.tar.gz
+          retention-days: 7
+      - uses: actions/upload-artifact@v4
+        with:
+          name: techne-native-sources-${{ github.sha }}
+          path: ${{ runner.temp }}/techne-reconciliation/native
+          retention-days: 7
+          if-no-files-found: error

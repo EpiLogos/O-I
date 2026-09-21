@@ -134,6 +134,9 @@ pub fn invoke(
     if action.starts_with("central.") || action.starts_with("projectcentral.") {
         return invoke_central(client, action, default_project, invocation);
     }
+    if action == crate::construction::APPLY {
+        return crate::construction::invoke(client, cwd, default_project, invocation);
+    }
     if action == AIKIT_ACTION_OPEN {
         return invoke_aikit_open(cwd, &invocation.target_ref);
     }
