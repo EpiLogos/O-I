@@ -222,6 +222,70 @@ pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
 }
 
 #[cfg(test)]
+mod a2a_tests {
+    use super::*;
+    #[cfg(unix)]
+    use std::os::unix::fs::PermissionsExt;
+
+    #[test]
+    fn a2a_exchange_composes_operator_send_authority_and_verifies_the_contract() {
+        let dir = std::env::temp_dir().join(format!("oi-a2a-runner-{}", std::process::id()));
+        std::fs::create_dir_all(&dir).unwrap();
+        let stdin_file = dir.join("stdin.txt");
+        let fake = dir.join("fake-node.sh");
+        let runner = dir.join("shared-field").join("a2a-runner.mjs");
+        std::fs::create_dir_all(runner.parent().unwrap()).unwrap();
+        std::fs::write(&runner, "export {}").unwrap();
+        let script = format!(
+            "#!/bin/sh\nfor a in \"$@\"; do printf '%s\\n' \"$a\" >> \"{args}\"; done\ncat > \"{stdin}\"\necho '{{\"schema\":\"oi.a2a-difference/v1\",\"exchange_ref\":\"a2a-exchange:m1\",\"transport_result\":{{\"kind\":\"message\",\"ref\":\"t1\"}}}}'\n",
+            args = dir.join("argv.txt").display(),
+            stdin = stdin_file.display()
+        );
+        std::fs::write(&fake, script).unwrap();
+        #[cfg(unix)]
+        {
+            use std::os::unix::fs::PermissionsExt;
+            std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        }
+
+        let prior_node = std::env::var_os("OI_NODE");
+        let prior_runner = std::env::var_os("OI_A2A_RUNNER");
+        std::env::set_var("OI_NODE", &fake);
+        std::env::set_var("OI_A2A_RUNNER", &runner);
+
+        let request = serde_json::json!({
+            "binding": {"binding_ref": "a2a-binding:desktop:peer"},
+            "presence": {"availability": "online"},
+            "initiator_participant_ref": "participant:desktop-operator",
+            "message": {"message_id": "a2a-m1", "text": "hello"},
+        });
+        let reading = a2a_exchange(&request).expect("the exchange dispatches");
+        assert_eq!(reading["schema"], "oi.a2a-difference/v1");
+        assert_eq!(reading["transport_result"]["ref"], "t1");
+        let argv = std::fs::read_to_string(dir.join("argv.txt")).unwrap();
+        assert_eq!(argv.trim(), runner.to_string_lossy().to_string(), "the runner path is the sole argument");
+        let sent: serde_json::Value = serde_json::from_str(&std::fs::read_to_string(&stdin_file).unwrap()).unwrap();
+        assert_eq!(sent["authority"]["allowed"], serde_json::json!(true));
+        assert_eq!(sent["authority"]["grant_ref"], serde_json::json!("exchange-grant:operator-send:a2a-m1"));
+        assert_eq!(sent["message"]["message_id"], serde_json::json!("a2a-m1"), "the message travels verbatim");
+
+        // A reply that is not a difference document is refused, never carried.
+        std::fs::write(&fake, "#!/bin/sh\ncat > /dev/null\necho '{\"unexpected\":true}'\n").unwrap();
+        std::fs::set_permissions(&fake, std::fs::Permissions::from_mode(0o755)).unwrap();
+        assert!(a2a_exchange(&request).is_err(), "a non-contract reply is refused");
+
+        match prior_node {
+            Some(value) => std::env::set_var("OI_NODE", value),
+            None => std::env::remove_var("OI_NODE"),
+        }
+        match prior_runner {
+            Some(value) => std::env::set_var("OI_A2A_RUNNER", value),
+            None => std::env::remove_var("OI_A2A_RUNNER"),
+        }
+    }
+}
+
+#[cfg(test)]
 mod tests {
     use super::*;
     use std::os::unix::process::ExitStatusExt;
