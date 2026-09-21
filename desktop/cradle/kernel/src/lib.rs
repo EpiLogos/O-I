@@ -323,7 +323,6 @@ pub enum KernelOp {
     /// Workcell's own placement/status reading (`workcell status --json`),
     /// beside the Factory reads — placement is Workcell's, never the desktop's.
     WorkcellStatusRead,
-<<<<<<< HEAD
     /// The Agent Wiki operational projection behind one source
     /// (`aikit --json wiki projection read --file <path>`): the current body,
     /// its exact SHA-256 revision and the attributed feedback ledger. AIKit
@@ -340,7 +339,6 @@ pub enum KernelOp {
     /// stdin). The expected revision, evidence, actor and reason are the
     /// caller's attribution; a stale basis is refused by AIKit, not by here.
     WikiProjectionUpdate { root: ::std::path::PathBuf, path: String, expected_revision: String, evidence: String, actor: String, reason: String, body: String },
-=======
     /// The installed harnesses' real status (`aikit --json client status`
     /// through the suite route): which harnesses are detected on this
     /// machine, which carry AIKit, their config dirs and gaps. Pull read,
@@ -364,7 +362,6 @@ pub enum KernelOp {
     /// Withdraw the held default — an explicit operation; the discard
     /// document carries the observed `removed` fact.
     ChatDefaultDiscard,
->>>>>>> origin/main
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -532,11 +529,9 @@ pub enum KernelOpResult {
     FactoryAttemptTaskListReading {data:serde_json::Value},
     FactoryAttemptTaskReading {data:serde_json::Value},
     WorkcellStatusReading {data:serde_json::Value},
-<<<<<<< HEAD
     WikiProjectionReading {data:serde_json::Value},
     WikiProjectionStored {data:serde_json::Value},
     WikiProjectionSourcesReading {data:serde_json::Value},
-=======
     /// The harness status rows, verbatim from the owner's `client status`.
     HarnessStatusReading {data:serde_json::Value},
     /// The resolved model catalogue, verbatim from the owner.
@@ -546,7 +541,6 @@ pub enum KernelOpResult {
     ChatDefaultReading {document:Option<serde_json::Value>},
     ChatDefaultHeld {document:serde_json::Value},
     ChatDefaultDiscarded {document:serde_json::Value},
->>>>>>> origin/main
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
     ConfigRegistryReading { reading: configuration::RegistryReading },
@@ -777,7 +771,6 @@ impl Kernel {
                 let data=material::invoke(&executable,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"workcell status read failed".into()))?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WorkcellStatusReading{data}})
             }
-<<<<<<< HEAD
             KernelOp::WikiProjectionRead {root,path} => {
                 let aikit=std::env::var_os("OI_AIKIT_BIN").map(std::path::PathBuf::from).unwrap_or_else(||std::path::PathBuf::from("aikit"));
                 let args:Vec<std::ffi::OsString>=vec!["--json".into(),"-C".into(),root.as_os_str().to_string_lossy().into_owned().into(),"wiki".into(),"projection".into(),"read".into(),"--file".into(),path.into()];
@@ -798,7 +791,7 @@ impl Kernel {
                 let data=material::invoke(&aikit,&args,None).map_err(|e|serde_json::to_string(&e).unwrap_or_else(|_|"wiki projection sources read failed".into()))?;
                 if data.get("continuity").is_none(){return Err("AIKit returned a context reading without continuity".into());}
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::WikiProjectionSourcesReading{data}})
-=======
+            }
             KernelOp::HarnessStatus => {
                 // Machine-level read: no project disclosure is consulted —
                 // the harnesses are the machine's own facts.
@@ -820,7 +813,6 @@ impl Kernel {
             KernelOp::ChatDefaultDiscard => {
                 let document=chat_defaults::discard()?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultDiscarded{document}})
->>>>>>> origin/main
             }
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.
