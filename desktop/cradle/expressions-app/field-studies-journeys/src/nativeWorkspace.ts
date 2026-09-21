@@ -11,6 +11,7 @@ import {kernelDocumentToJourney,type KernelConversion,type KernelExpressionDocum
 import {nativeConnections} from './nativeCorrespondence.js';
 import type {ConnectionBinding} from '../../../../../packages/oi-design-system/expressions-engine/oi/expressionBindings.mjs';
 import {prepareCompositionEdit} from './kernelComposition.js';
+import {NativeSelectionQueue} from './nativeSelectionQueue.js';
 
 export interface NativeWorkspaceHost {
  snapshot:()=>WorkingSnapshot;
@@ -51,11 +52,27 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   (panel.querySelector('[data-native="next"]') as HTMLButtonElement).disabled=busy||!binding||binding.page>=binding.page_count-1;
   field('folder').disabled=busy||!!state?.file;field('name').disabled=busy||!!state?.file;
  };
- const run=async(task:()=>Promise<void>)=>{
-  if(busy)return;busy=true;update();status('Reading or saving through the native owner…');
-  try{await task();}catch(error){status(error instanceof Error?error.message:String(error));host.toast(notice,7000);}
-  finally{busy=false;update();}
+ const run=async(task:()=>Promise<void>):Promise<boolean>=>{
+  if(busy)return false;busy=true;update();status('Reading or saving through the native owner…');
+  try{await task();return true;}catch(error){status(error instanceof Error?error.message:String(error));host.toast(notice,7000);return false;}
+  finally{busy=false;update();selections.resume();}
  };
+ type FocusIntent={generation:number;nativeRef:string;sceneId:string;entityId:string|null;bindingRef?:string};
+ const selections=new NativeSelectionQueue<FocusIntent>({
+  available:()=>!busy&&!work.busy,
+  current:intent=>intent.generation===restoreGeneration&&work.state?.view?.document.expression_ref===intent.nativeRef,
+  apply:intent=>run(async()=>{
+   const view=work.state?.view,binding=view?.bindings[intent.sceneId];
+   if(!view||!binding)throw new Error('This field does not have a native occurrence basis');
+   const occurrence=binding.occurrences.find(o=>o.view_entity_id===intent.entityId);
+   if(intent.entityId&&!occurrence)throw new Error('The selected representation is not a bound native occurrence');
+   await work.select({scene_ref:binding.scene_ref,entity_ref:occurrence?.entity_ref??null,binding_ref:intent.bindingRef});
+   if(intent.generation!==restoreGeneration)return;
+   const relation=binding.relations.find(r=>r.binding_ref===intent.bindingRef);
+   status(relation?`Relation ${relation.relation.ref} · ${relation.relation.revision} · ${relation.from_entity_ref} → ${relation.to_entity_ref}`
+    :occurrence?`Selected ${occurrence.subject?.subject_ref??occurrence.entity_ref} · occurrence ${occurrence.entity_ref}`:'Native selection cleared.');
+  }),
+ });
  const refresh=async()=>{
   if(!kernelExpressionsAvailable())throw new Error('Native operations are unavailable until the desktop host announces its channel. Your browser draft remains available.');
   const selected=field('expression').value,entries=await listKernelExpressions();
@@ -68,7 +85,7 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   await writeDraft(old.journey); // do not discard the old authored work on navigation
   const view=await work.adopt(raw,file);
   if(host.version()!==version){if(previous)work.restore(previous,old.journey);else work.detach();throw new Error('Newer local work was retained instead of being replaced by the returning open request.');}
-  restoreGeneration++;
+  restoreGeneration++;selections.cancel();
   host.load(view);status(`Opened ${raw.title} on its exact native revision. ${view.notes.join(' ')}`);update();
  };
  const openReference=async(reference:string)=>{
@@ -122,18 +139,13 @@ export function installNativeWorkspace(host:NativeWorkspaceHost){
   open:(reference:string)=>run(()=>openReference(reference)),
   openFile:(path:string)=>run(()=>loadFile(path)),
   refresh:update,
-  select:(sceneId:string,entityId:string|null,bindingRef?:string)=>run(async()=>{
-   const state=work.state,view=state?.view,binding=view?.bindings[sceneId];
-   if(!view||!binding)throw new Error('This field does not have a native occurrence basis');
-   const occurrence=binding.occurrences.find(o=>o.view_entity_id===entityId);
-   if(entityId&&!occurrence)throw new Error('The selected representation is not a bound native occurrence');
-   await work.select({scene_ref:binding.scene_ref,entity_ref:occurrence?.entity_ref??null,binding_ref:bindingRef});
-   const relation=binding.relations.find(r=>r.binding_ref===bindingRef);
-   status(relation?`Relation ${relation.relation.ref} · ${relation.relation.revision} · ${relation.from_entity_ref} → ${relation.to_entity_ref}`
-    :occurrence?`Selected ${occurrence.subject?.subject_ref??occurrence.entity_ref} · occurrence ${occurrence.entity_ref}`:'Native selection cleared.');
-  }),
+  select:(sceneId:string,entityId:string|null,bindingRef?:string)=>{
+   const nativeRef=work.state?.view?.document.expression_ref;
+   if(!nativeRef)return Promise.resolve('invalidated' as const);
+   return selections.submit({generation:restoreGeneration,nativeRef,sceneId,entityId,bindingRef});
+  },
   async changed(journey:Journey){
-   const generation=++restoreGeneration;work.detach();host.correspondence({},null);
+   const generation=++restoreGeneration;selections.cancel();work.detach();host.correspondence({},null);
    try{const record=await readWorkingCheckpoint(journey.id,scope);if(generation!==restoreGeneration||host.snapshot().journey.id!==journey.id)return;if(record)work.restore(record,journey);update();}
    catch(error){if(generation===restoreGeneration){status(`Native recovery was not adopted: ${error instanceof Error?error.message:String(error)}`);update();}}
   },
