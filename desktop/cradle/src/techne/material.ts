@@ -129,8 +129,17 @@ export function recordMaterialRevision(sceneId: string, id: string, revision: st
 /** The Technè surface that receives "Add to instrument" from the navigator. */
 export function setActiveMaterialScene(sceneId: string | null) { if (state.active !== sceneId) commit({...state, active: sceneId}, false); }
 export function releaseActiveMaterialScene(sceneId: string) { if (state.active === sceneId) commit({...state, active: null}, false); }
+/** Material-first is never a blocker: gathering works whether or not a
+ * Technè surface has mounted a depth yet. The scene persists (per-viewer
+ * localStorage) and renders the moment a depth mounts with its id. */
+export function ensureActiveMaterialScene(): string {
+  if (state.active) return state.active;
+  const sceneId = `scene-${Date.now().toString(36)}-${Math.random().toString(36).slice(2, 8)}`;
+  commit({...state, scenes: {...state.scenes, [sceneId]: {...EMPTY}}, active: sceneId});
+  return sceneId;
+}
 export function addToActiveMaterialScene(ref: MaterialRef, name: string): {sceneId: string; id: string; added: boolean} | null {
-  const sceneId = state.active;
+  const sceneId = ensureActiveMaterialScene();
   if (!sceneId) return null;
   return {sceneId, ...addMaterial(sceneId, ref, name)};
 }

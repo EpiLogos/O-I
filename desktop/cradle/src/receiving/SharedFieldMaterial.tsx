@@ -1,7 +1,8 @@
 import {useEffect,useState} from "react";
 import {createProjection,withdrawProjection} from "../../../../shared-field/index.mjs";
-import {createA2aBinding,createA2aPresence,performA2aExchange} from "../../../../shared-field/a2a.mjs";
+import {createA2aBinding,createA2aPresence} from "../../../../shared-field/a2a.mjs";
 import {useKernel} from "../kernel/KernelProvider";
+import {kernelOp} from "../kernel/bridge";
 import {hostedPublicationArgs,sharedField,type SharedFieldHostedResult,type SharedFieldStatus} from "../knowledge/shared-field";
 import "./receiving.css";
 /** Shared Field material for the OPEN document (Wave 7). Publication is the
@@ -173,13 +174,15 @@ export function SharedFieldMaterial({sourceRef}:{sourceRef:string}) {
     provenance:[{kind:"desktop-operator-observation",ref:"observation:desktop-peer",source_system:"oi.cradle"}],
    });
    const messageId=`a2a-desktop-${Date.now().toString(36)}`;
-   const difference=await performA2aExchange({
+   // The exchange crosses the kernel seam like every other owner act; the
+   // person's send is the recorded exchange-authority decision.
+   const routed=await kernelOp(transport,{op:"a2a_exchange",request:{
     binding,presence,
     initiator_participant_ref:"participant:desktop-operator",
     message:{message_id:messageId,text:a2aText,purpose:"desktop-a2a-exchange"},
-    authorize_exchange:async(demand:{operation_id:string})=>({allowed:true,grant_ref:`exchange-grant:desktop:${demand.operation_id}`}),
-    fetch_impl:(input:RequestInfo|URL,init?:RequestInit)=>fetch(input,init),
-   }) as unknown as Record<string,unknown>&{exchange_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}}};
+   }});
+   if(routed.error||routed.outcome?.result!=="a2a_exchange")throw new Error(routed.error??"The A2A exchange could not be routed through the kernel.");
+   const difference=routed.outcome.data as unknown as Record<string,unknown>&{exchange_ref:string;transport_result:{kind:string;ref:string};transport_provenance?:{agent_card?:{name?:string;version?:string}}};
    setA2aDifference(difference);setError(undefined);
   }catch(err){setError(String(err));}
   finally{setA2aBusy(false);}

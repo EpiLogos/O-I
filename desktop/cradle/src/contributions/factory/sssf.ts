@@ -76,12 +76,6 @@ export interface SssfSessionDetail {
   agents: SssfAgentSession[]
 }
 
-export interface SssfEventsPage {
-  events: SssfEvent[]
-  cursor: number
-  has_more: boolean
-}
-
 export interface SssfBinding {
   projectRef: string
   runRef: string
@@ -91,42 +85,6 @@ export interface SssfBinding {
   harnessRef: string
   agentSessionRefs?: Record<string, string>
   nativeTrajectoryRef?: string
-}
-
-export interface SssfApi {
-  session(adwId: string): Promise<SssfSessionDetail>
-  events(adwId: string, after: number, limit: number): Promise<SssfEventsPage>
-}
-
-export class SssfHttpClient implements SssfApi {
-  constructor(private readonly baseUrl = '') {}
-
-  async session(adwId: string): Promise<SssfSessionDetail> {
-    return this.get(`/api/sessions/${encodeURIComponent(adwId)}`)
-  }
-
-  async events(adwId: string, after: number, limit: number): Promise<SssfEventsPage> {
-    return this.get(`/api/sessions/${encodeURIComponent(adwId)}/events?after=${after}&limit=${limit}`)
-  }
-
-  private async get<T>(path: string): Promise<T> {
-    const response = await fetch(`${this.baseUrl}${path}`)
-    if (!response.ok) throw new Error(`SSSF ${response.status}: ${path}`)
-    return response.json() as Promise<T>
-  }
-}
-
-/** Source-faithful rowid cursor drain: each page depends on the previous cursor. */
-export async function drainSssfEvents(api: SssfApi, adwId: string, after = 0, limit = 1000): Promise<SssfEventsPage> {
-  const all: SssfEvent[] = []
-  let cursor = after
-  let page: SssfEventsPage
-  do {
-    page = await api.events(adwId, cursor, limit)
-    cursor = Math.max(cursor, page.cursor)
-    all.push(...page.events)
-  } while (page.has_more)
-  return { events: all, cursor, has_more: false }
 }
 
 function mapStatus(value: SssfSessionStatus | SssfPhaseStatus | null): Status {

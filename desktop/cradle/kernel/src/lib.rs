@@ -241,6 +241,15 @@ pub enum KernelOp {
     SharedField {
         request: serde_json::Value,
     },
+    /// One A2A HTTP+JSON v1 exchange through the owner floor
+    /// (`shared-field/a2a-runner.mjs` spawning `shared-field/a2a.mjs`). The
+    /// request carries the binding, presence, initiator and message; the
+    /// kernel composes the operator-send authority (the person's send IS the
+    /// exchange-authority act) and the network I/O happens in this spawned
+    /// process — the renderer never touches `fetch` and never mints a grant.
+    A2aExchange {
+        request: serde_json::Value,
+    },
     /// Compose the W3-A AIKit session-lifecycle read with the W3-B
     /// Actuation request-correlation read for ONE permission request
     /// identity (`oi.cradle.encounter/v1`). Adapter only — the identities
@@ -625,6 +634,10 @@ pub enum KernelOpResult {
     /// The SharedField client's own reading (`oi.shared-field.*/v1`), or
     /// the explicit unavailable state — verbatim either way.
     SharedFieldReading {
+        data: serde_json::Value,
+    },
+    /// The owner floor's `oi.a2a-difference/v1` document, carried verbatim.
+    A2aExchangeDifference {
         data: serde_json::Value,
     },
     /// The typed encounter join (`encounter.rs`): both owner views, the
@@ -1839,6 +1852,13 @@ impl Kernel {
                 Ok(KernelOpOutcome {
                     receipts: Vec::new(),
                     result: KernelOpResult::GraphReading { reading },
+                })
+            }
+            KernelOp::A2aExchange { request } => {
+                let data = shared_field::a2a_exchange(&request)?;
+                Ok(KernelOpOutcome {
+                    receipts: Vec::new(),
+                    result: KernelOpResult::A2aExchangeDifference { data },
                 })
             }
             KernelOp::SharedField { request } => {
