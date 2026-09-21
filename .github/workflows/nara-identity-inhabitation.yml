@@ -35,7 +35,7 @@ jobs:
           set -o pipefail
           mkdir -p tests/artifacts/nara-personal
           git rev-parse HEAD > tests/artifacts/nara-personal/source-revision.txt
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-personal-contracts.test.mjs tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs tests/nara-local-acceptance.test.mjs | tee tests/artifacts/nara-personal/contracts.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/nara-personal-contracts.test.mjs tests/nara-personal-telemetry.test.mjs tests/nara-speech-conformance.mjs tests/dictation-conformance.mjs tests/nara-runtime.test.mjs tests/nara-audio-contract.test.mjs tests/nara-local-acceptance.test.mjs 2>&1 | tee tests/artifacts/nara-personal/contracts.log
       - name: Compile complete Cradle
         if: ${{ !cancelled() }}
         run: npm --prefix desktop/cradle run build
@@ -46,13 +46,18 @@ jobs:
         if: ${{ !cancelled() }}
         working-directory: desktop/cradle
         run: npx playwright install --with-deps chromium
-      - name: Original speech and new personal UI on the existing native renderer
+      - name: Original speech browser
         if: ${{ !cancelled() }}
         working-directory: desktop/cradle
         run: |
           set -o pipefail
-          node --experimental-strip-types --import ./tests/ts-register.mjs tests/nara-native-browser.mjs | tee tests/artifacts/nara-personal/original-browser.log
-          node tests/nara-personal-browser.mjs | tee tests/artifacts/nara-personal/personal-browser.log
+          node --experimental-strip-types --import ./tests/ts-register.mjs tests/nara-native-browser.mjs 2>&1 | tee tests/artifacts/nara-personal/original-browser.log
+      - name: Personal UI on the existing native renderer
+        if: ${{ !cancelled() }}
+        working-directory: desktop/cradle
+        run: |
+          set -o pipefail
+          node tests/nara-personal-browser.mjs 2>&1 | tee tests/artifacts/nara-personal/personal-browser.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
@@ -92,7 +97,7 @@ jobs:
         run: |
           set -o pipefail
           mkdir -p tests/artifacts/nara-personal
-          node tests/nara-personal-native.mjs | tee tests/artifacts/nara-personal/native.log
+          node tests/nara-personal-native.mjs 2>&1 | tee tests/artifacts/nara-personal/native.log
       - uses: actions/upload-artifact@v4
         if: always()
         with:
