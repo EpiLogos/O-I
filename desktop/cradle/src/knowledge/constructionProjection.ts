@@ -1,10 +1,11 @@
 import {requireExpressionOutcome} from './expressionOutcome';
+import {requireSavedExpression} from './expressionSaveReceipt';
 import {kernelOp} from '../kernel/bridge';
 import type {CentralLocation, KernelTransportStatus, NativeFileReading} from '../kernel/types';
 import type {ExpressionDocument, ExpressionRequest, ExpressionResult, ReadingRef} from '../expression/types';
 import {knowledge} from './client';
 import {projectProvidedLocalWhole, type LocalMember, type LocalWhole, type ProjectionOutcome} from './expressionProjection';
-import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editConstruction, saveConstruction, type ApplyKernel, type NativeConstruction, type NativeRelation, type WikiRegister, type SavedConstruction} from './construction';
+import {ACTOR, CONSTRUCTION, PARTICIPATION, RELATION, editConstruction, saveConstruction, type ApplyKernel, type ConstructionRequest, type NativeConstruction, type NativeRelation, type WikiRegister, type SavedConstruction} from './construction';
 import {readFile} from '../files/client';
 
 /** Projection uses native participation identities as occurrences and keeps
@@ -65,17 +66,64 @@ export async function saveCompositionFile(transport: KernelTransportStatus, docu
   const result = await expressionOperation(transport, 'location' in destination
     ? {operation: 'save', expression_ref: document.expression_ref, expected_revision: current.document.revision, location: destination.location, expected_file_revision: destination.revision, actor: ACTOR, actor_kind: 'human'}
     : {operation: 'save_as', expression_ref: document.expression_ref, expected_revision: current.document.revision, parent: destination.parent, name: destination.name, operation_ref: destination.operation_ref, actor: ACTOR, actor_kind: 'human'}, apply);
-  if (result.state !== 'saved' || result.persisted !== true || !result.file) throw new Error('The owner did not confirm an artifact file. Inspect the destination before retrying first save.');
+  requireSavedExpression(result);
   const file = await readFile(transport, result.file.location);
   if (file.revision !== result.file.revision) throw new Error('The saved artifact changed before readback. Its save is not replayed automatically.');
   if (!sameComposition(JSON.parse(file.content), current.document)) throw new Error('The saved file does not match the intended composition. Inspect it before Return.');
   return {file, document: current.document};
 }
-export async function attachCompositionReturn(transport: KernelTransportStatus, project: string | undefined, register: WikiRegister, frame: NativeConstruction, artifact: ArtifactReturn, apply?: ApplyKernel): Promise<SavedConstruction> {
+/** Prepare the exact Return separately so the containing surface can retain
+ * its native operation identity before dispatch, just as it does for a save. */
+function compositionReturnChange(frame: NativeConstruction, artifact: ArtifactReturn): Record<string, unknown> {
   const source_ref = artifact.file.source?.ref ?? artifact.file.location.ref;
-  const request = editConstruction(frame, [{change: 'composition_attach', composition: {reference: artifact.document.expression_ref, revision: String(artifact.document.revision), kind: 'expression',
-    source: {source_ref, source_revision: artifact.file.revision, 'oi.expression-file/v1': {location: artifact.file.location}}, derivation_refs: frame.constellations[0].members.map(member => member.ref)}}]);
-  return saveConstruction(transport, project, register, request, [], apply, [{source_ref, revision: artifact.file.revision, location: artifact.file.location}]);
+  return {change: 'composition_attach', composition: {
+    reference: artifact.document.expression_ref, revision: String(artifact.document.revision), kind: 'expression',
+    source: {source_ref, source_revision: artifact.file.revision, 'oi.expression-file/v1': {location: artifact.file.location}},
+    derivation_refs: [...new Set(frame.constellations[0].members.map(member => member.ref))],
+  }};
+}
+export function compositionReturnRequest(frame: NativeConstruction, artifact: ArtifactReturn): ConstructionRequest {
+  return editConstruction(frame, [compositionReturnChange(frame, artifact)]);
+}
+
+/** Recorded presence is an independent native reading, not a synthetic Action
+ * receipt. Use it to show that the exact artifact is already attached. */
+export function compositionAttached(frame: NativeConstruction | undefined, artifact: ArtifactReturn | undefined): boolean {
+  if (!frame || !artifact) return false;
+  const source_ref = artifact.file.source?.ref ?? artifact.file.location.ref;
+  return Boolean(frame[CONSTRUCTION].compositions?.some(item => item.reference === artifact.document.expression_ref
+    && item.revision === String(artifact.document.revision) && item.kind === 'expression'
+    && item.source.source_ref === source_ref && item.source.source_revision === artifact.file.revision
+    && sameComposition(item.source['oi.expression-file/v1'], {location: artifact.file.location})));
+}
+
+/** Recovery requires the native operation record AND the intended attachment
+ * still being present. A later replacement/retraction is not recovered as an
+ * unchanged Return merely because its historical operation id still exists. */
+export function compositionReturnRecorded(frame: NativeConstruction, request: ConstructionRequest): boolean {
+  if (request.frame_ref !== frame.ref || request.changes.length !== 1 || request.changes[0].change !== 'composition_attach') return false;
+  const recorded = frame[CONSTRUCTION].applied?.[request.operation_ref];
+  return Boolean(recorded && recorded.actor_ref === request.actor_ref
+    && recorded.basis_revision === request.expected_revision
+    && recorded.result_revision === request.expected_revision + 1
+    && frame.revision >= recorded.result_revision
+    && typeof recorded.request_digest === 'string' && /^[a-f0-9]{64}$/.test(recorded.request_digest)
+    && frame[CONSTRUCTION].compositions?.some(item => sameComposition(item, request.changes[0].composition)));
+}
+
+export async function attachCompositionReturn(transport: KernelTransportStatus, project: string | undefined, register: WikiRegister, frame: NativeConstruction, artifact: ArtifactReturn, apply?: ApplyKernel, retained?: ConstructionRequest): Promise<SavedConstruction> {
+  const request = retained ?? compositionReturnRequest(frame, artifact);
+  // A restored checkpoint can name an operation only for this exact attachment;
+  // it cannot smuggle other edits through an apparently harmless Return button.
+  if (request.schema !== 'aikit.constellation-action/v1' || request.frame_ref !== frame.ref
+    || request.expected_revision !== frame.revision || request.actor_ref !== ACTOR
+    || !sameComposition(request.changes, [compositionReturnChange(frame, artifact)])) throw new Error('The retained Return no longer matches this exact constellation and artifact. Inspect it before continuing.');
+  const source_ref = artifact.file.source?.ref ?? artifact.file.location.ref;
+  const result = await saveConstruction(transport, project, register, request, [], apply, [{source_ref, revision: artifact.file.revision, location: artifact.file.location}]);
+  // Idempotent native replay may return a later whole. The historical operation
+  // alone cannot prove its attachment is still present after another edit.
+  if (!result.reading.frame[CONSTRUCTION].compositions?.some(item => sameComposition(item, request.changes[0].composition))) throw new Error('The native Return was acknowledged, but its current attachment differs from the retained request. Inspect the current constellation; the artifact remains saved.');
+  return result;
 }
 
 /** Reopen the actual native file after a process restart. A retained reference

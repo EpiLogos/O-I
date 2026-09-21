@@ -16,7 +16,7 @@ export interface NativeRelation {ref: string; revision: number; from_ref: string
 export interface NativeConstruction {
   ref: string; revision: number;
   constellations: {anchor_ref: string; members: NativeMember[]; returns?: unknown[]}[];
-  [CONSTRUCTION]: {title: string; inquiry: {question: string; purpose?: string}; frame?: NativeFrame | null; compositions?: {reference: string; revision: string; kind: string; source: Record<string, unknown>}[]};
+  [CONSTRUCTION]: {title: string; inquiry: {question: string; purpose?: string}; frame?: NativeFrame | null; compositions?: {reference: string; revision: string; kind: string; source: Record<string, unknown>}[]; applied?: Record<string, {actor_ref: string; request_digest: string; basis_revision: number; result_revision: number}>};
   read_only?: boolean; shared_projection_ref?: string;
 }
 export interface WikiRegister {file: NativeFileReading; source_ref: string; spaces: {ref: string; label: string}[]; frames: NativeConstruction[]; relations: NativeRelation[]}

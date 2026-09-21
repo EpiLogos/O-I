@@ -16,7 +16,9 @@ export class ExpressionOperationFailure extends Error {
     const recovery = result.persisted === true
       ? ' The owner reports a saved effect. Inspect its native file before any retry.'
       : state.includes('conflict') ? ' Inspect the current revision; the pending intent has not been rebased.' : '';
-    super(`${operation}: ${detail ?? state.replaceAll('_', ' ')}.${recovery}`);
+    // Expose the explicit owner operation, never the entire source-bearing result.
+    const owner = typeof result.owner_operation === 'string' && result.owner_operation ? ` (${result.owner_operation})` : '';
+    super(`${operation}${owner}: ${detail ?? state.replaceAll('_', ' ')}.${recovery}`);
     this.name = 'ExpressionOperationFailure';
     this.operation = operation;
     this.result = result;

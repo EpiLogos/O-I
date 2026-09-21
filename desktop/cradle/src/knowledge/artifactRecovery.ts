@@ -1,5 +1,6 @@
 import type {CentralLocation, KernelTransportStatus} from '../kernel/types';
 import type {ExpressionDocument} from '../expression/types';
+import {requireSavedExpression} from './expressionSaveReceipt';
 import {listFiles, readFile} from '../files/client';
 import {ACTOR, type ApplyKernel} from './construction';
 import {expressionOperation, sameComposition, type ArtifactReturn} from './constructionProjection';
@@ -37,6 +38,7 @@ export async function inspectArtifactSave(transport: KernelTransportStatus, inte
     location = entry.location;
   }
   const file = await readFile(transport, location);
+  if (!sameComposition(file.location, location) || typeof file.revision !== 'string' || !file.revision) throw new Error('The pending artifact reading was redirected or has no native revision. Keep the exact save pending.');
   let document: unknown;
   try {document = JSON.parse(file.content);} catch {return {state: 'conflict', detail: 'The destination contains another kind of file. Nothing has been overwritten.'};}
   if (!sameComposition(document, intent.document)) return {state: 'conflict', detail: 'The destination does not match the retained composition. Keep the pending operation and inspect the other file.'};
@@ -52,9 +54,10 @@ export async function performArtifactSave(transport: KernelTransportStatus, inte
       location: destination.location, expected_file_revision: destination.revision, actor: ACTOR, actor_kind: 'human'}
     : {operation: 'save_as', expression_ref: document.expression_ref, expected_revision: document.revision,
       parent: destination.parent, name: destination.name, operation_ref: destination.operation_ref, actor: ACTOR, actor_kind: 'human'}, apply);
-  if (result.state !== 'saved' || result.persisted !== true || !result.file) throw new Error('The save has no complete native readback. Its exact operation is retained; inspect the destination before retrying.');
+  requireSavedExpression(result);
   const inspected = await inspectArtifactSave(transport, intent);
   if (inspected.state !== 'saved') throw new Error(inspected.detail);
+  if (!sameComposition(inspected.artifact.file.location, result.file.location) || inspected.artifact.file.revision !== result.file.revision) throw new Error('The native save receipt and independent file reading disagree. The exact operation is retained; inspect the destination before Return.');
   return inspected.artifact;
 }
 
@@ -64,4 +67,19 @@ export async function restorePendingArtifactDocument(transport: KernelTransportS
   const result = await expressionOperation(transport, {operation:'open',document:intent.document,actor:ACTOR}, apply);
   if(!result.document||!sameComposition(result.document,intent.document))throw new Error('The owner could not restore the exact retained composition. Keep the pending save and inspect the live document.');
   return result.document;
+}
+
+/** Read the exact file recorded by a completed save after a UI/kernel restart.
+ * This is file verification only: it does not mount or overwrite a live draft. */
+export async function readSavedArtifact(transport: KernelTransportStatus, held: {location: CentralLocation; revision: string; expression_ref: string}): Promise<ArtifactReturn> {
+  const file = await readFile(transport, held.location);
+  if (!sameComposition(file.location, held.location)) throw new Error('The saved artifact reading was redirected. Return remains pending at its original location.');
+  if (file.revision !== held.revision) throw new Error('The saved Expression file has changed. Its previous Return will not be replayed against different bytes.');
+  let document: Partial<ExpressionDocument>;
+  try {document = JSON.parse(file.content);} catch {throw new Error('The saved artifact is no longer an Expression document.');}
+  if (!document || document.schema !== 'oi.expression/v1' || document.expression_ref !== held.expression_ref
+    || !Number.isSafeInteger(document.revision) || Number(document.revision) < 1
+    || !Array.isArray(document.scenes) || !document.entities || typeof document.entities !== 'object' || Array.isArray(document.entities)
+    || !document.relations || typeof document.relations !== 'object' || Array.isArray(document.relations)) throw new Error('The saved file no longer names the recorded Expression.');
+  return {file, document: document as ExpressionDocument};
 }
