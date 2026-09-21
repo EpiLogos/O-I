@@ -34,10 +34,10 @@ fn request(invocation: &ActionInvocation) -> Result<Vec<u8>, &'static str> {
     let operation = value["operation"]
         .as_str()
         .ok_or("A native personal operation is required")?;
-    if !["capabilities", "list", "read", "create", "apply"].contains(&operation) {
+    if !["capabilities", "list", "read", "identity_material", "create", "apply"].contains(&operation) {
         return Err("Unsupported native personal operation");
     }
-    if ["read", "apply"].contains(&operation) {
+    if ["read", "identity_material", "apply"].contains(&operation) {
         if value["target"]["record_ref"].as_str() != Some(invocation.target_ref.as_str()) {
             return Err("Native request target does not match the selected personal record");
         }

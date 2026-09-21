@@ -11,6 +11,7 @@ import {chromium} from 'playwright';
 import {source,parent,nativeOwner,capabilities} from './nara-personal-fixtures.mjs';
 const root=fileURLToPath(new URL('../',import.meta.url)),artifacts=new URL('./artifacts/nara-personal/',import.meta.url);
 const app=await readFile(new URL('../expressions-app/public/field-studies.html',import.meta.url),'utf8');
+let outcome='in-progress';
 const owner=nativeOwner(),files=new Map([[source.location.ref,structuredClone(source)]]),requests=[],checks=[],errors=[];
 const snapshot={focus:{},surfaces:{},buffers:{},navigator:{root:{work:{projects:[]}}}};
 const bridge=httpServer(async(req,res)=>{
@@ -49,9 +50,13 @@ try{
  await page.getByLabel('Open private personal records').check();await page.getByRole('button',{name:'Open my personal field',exact:true}).click();await page.getByLabel('Personal occasion').selectOption(owner.current.target.record_ref);await page.getByRole('button',{name:'Continue this occasion',exact:true}).click();await page.getByLabel('Identity layer').waitFor();check(await page.getByLabel('Identity layer').locator('option').count()===6,'all six source-backed optional identity layers are reachable');
  await page.getByLabel('Identity layer').selectOption('natal-chart');await page.getByRole('button',{name:'Review this source for the layer',exact:true}).click();const before=owner.current.revision;await page.getByRole('button',{name:'Reject without mutation',exact:true}).click();check(owner.current.revision===before,'rejecting a reviewed identity link has no native mutation');
  await page.getByRole('button',{name:'Review this source for the layer',exact:true}).click();await page.getByRole('button',{name:'Apply this reviewed change',exact:true}).click();await page.waitForFunction(()=>!document.querySelector('[aria-label="Review personal change"]'));check(owner.current.domain.identity.slots[1].protected_value_ref.ref_id.includes('my-own-words.md'),'accepted identity link addresses the exact saved source without copying its prose');
- await page.getByRole('button',{name:'Centres',exact:true}).click();check(await page.getByLabel('Centre',{exact:true}).locator('option').count()===7,'seven independent receiving centres are not replaced by cymatic stations');
+ await page.getByRole('button',{name:'Centres',exact:true}).click();await page.getByRole('heading',{name:'Seven receiving centres',exact:true}).waitFor();check(await page.getByLabel('Centre',{exact:true}).locator('option').count()===7,'seven independent receiving centres are not replaced by cymatic stations');
  for(const name of ['Oracle','Practice','Perspectives','Returns']){await page.getByRole('button',{name,exact:true}).click();check(await page.locator('.nara-personal fieldset').isVisible(),name+' uses the existing native personal instrument view');}
  await page.getByRole('button',{name:'Identity',exact:true}).click();await page.getByText('Private identity rendering',{exact:true}).click();
+ await page.getByRole('button',{name:'Review native identity basis',exact:true}).click();await page.getByRole('button',{name:'Accept this native identity basis',exact:true}).waitFor();
+ check(await page.getByRole('button',{name:'Show private identity pattern',exact:true}).isDisabled(),'unaccepted native identity cannot be shown');
+ await page.getByRole('button',{name:'Leave identity unaccepted',exact:true}).click();const unchanged=owner.current.revision;check(owner.current.domain.identity.identity_hash_ref===null,'identity review rejection leaves native hash unaccepted');
+ await page.getByRole('button',{name:'Review native identity basis',exact:true}).click();await page.getByRole('button',{name:'Accept this native identity basis',exact:true}).click();await page.getByText('2 of 6 layers supplied. This basis is accepted.',{exact:true}).waitFor();check(owner.current.revision===unchanged+1,'identity acceptance is one real addressed native operation in the controlled owner');
  await page.waitForFunction(()=>document.querySelector('[aria-label="Identity rendering window"]')?.options.length===2);
  const frame=page.frame({url:/identity-app/});assert.ok(frame);await frame.waitForFunction(()=>window.__FIELD_STUDIES__?.capabilities?.kind==='production');
  const ordinary=await frame.evaluate(()=>JSON.stringify(window.__FIELD_STUDIES__.getDocument()));
@@ -61,12 +66,13 @@ try{
  await frame.waitForFunction(()=>window.__FIELD_STUDIES__.telemetry()===null);check(await frame.evaluate(()=>JSON.stringify(window.__FIELD_STUDIES__.getDocument()))===ordinary,'private identity does not mutate DocumentStore or create a library scene');
  check(await frame.evaluate(()=>{try{window.__FIELD_STUDIES__.capture(320,240);return false;}catch{return true;}}),'ordinary native capture cannot export the private identity');
  check(await frame.evaluate(()=>window.__FIELD_STUDIES__.inspect().private===true),'generic engine diagnostics do not expose private shape parameters');
- check(!(await frame.evaluate(()=>JSON.stringify(localStorage))).includes('sha256-identity-source-basis'),'private identity fingerprint is absent from browser scene persistence');
+ check(!(await frame.evaluate(()=>JSON.stringify(localStorage))).includes('sha256-native-identity-basis'),'private identity fingerprint is absent from browser scene persistence');
  await mkdir(artifacts,{recursive:true});await frame.locator('#stage').screenshot({path:fileURLToPath(new URL('controlled-private-native.png',artifacts))});
  await frame.getByRole('button',{name:'Return to my Expression',exact:true}).click();await frame.waitForFunction(()=>!document.body.hasAttribute('data-private-identity'));check(await frame.evaluate(()=>JSON.stringify(window.__FIELD_STUDIES__.getDocument()))===ordinary,'return restores the same authored Expression, not a claimed GPU rewind');
  check(!(await page.evaluate(()=>JSON.stringify(localStorage))).includes('These are my exact words'),'human personal prose is absent from browser persistence');
  check(errors.length===0,'no production UI or native-renderer browser errors');
-}finally{
+ outcome='passed';
+}catch(error){outcome='failed';throw error;}finally{
  await mkdir(artifacts,{recursive:true});if(page)await page.screenshot({path:fileURLToPath(new URL('controlled-personal-ui.png',artifacts)),fullPage:true}).catch(()=>{});
- await writeFile(new URL('browser-receipt.json',artifacts),JSON.stringify({standing:'controlled-personal-owner-real-browser-native-WebGL-not-live-person-or-model',checks,errors},null,2));await browser?.close();await server.close();bridge.closeAllConnections();await new Promise(resolve=>bridge.close(resolve));
+ await writeFile(new URL('browser-receipt.json',artifacts),JSON.stringify({outcome,standing:'controlled-personal-owner-real-browser-native-WebGL-not-live-person-or-model',checks,errors},null,2));await browser?.close();await server.close();bridge.closeAllConnections();await new Promise(resolve=>bridge.close(resolve));
 }

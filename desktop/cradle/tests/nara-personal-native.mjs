@@ -30,24 +30,34 @@ try{
  r=await c.apply(m.interpretOracle(original.packet_ref,source,''));check(JSON.stringify(r.domain.oracle.records[0].original)===JSON.stringify(original)&&r.domain.oracle.records[0].interpretations.length===1,'interpretation does not rewrite the original oracle');
  r=await c.apply(m.nextPractice(r,source,true));const phase=r.domain.transformation.phase_history.phases[0].phase_ref;
  r=await c.apply({kind:'practice_hold',phase_ref:phase,feedback_ref:source.location.ref});check(r.domain.transformation.phase_history.phases[0].safety==='consent-required','explicit practice hold is native consent state, not inferred physiology');
- // A hold, a later safety review and a closing reflection are distinct
- // authored acts. Keep the original duplicate-source failure as a regression;
- // do not weaken the native rule or silently remint the person's source.
  const held=structuredClone(r);
- await assert.rejects(c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:source.location.ref}),/duplicate transformation feedback reference/);
- check(JSON.stringify((await call({operation:'read',target:r.target,consent})).record)===JSON.stringify(held),'duplicate practice feedback refuses without changing native history');
+ r=await c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:source.location.ref});
+ for(let i=0;i<2;i++){r=await c.apply({kind:'practice_hold',phase_ref:phase,feedback_ref:source.location.ref});r=await c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:source.location.ref});}
  const reviewRef='central:path:/test:Control/user/practice-safety-review.md';
  const reflectionRef='central:path:/test:Control/user/practice-closing-reflection.md';
+ r=await c.apply({kind:'practice_hold',phase_ref:phase,feedback_ref:source.location.ref});
  r=await c.apply({kind:'practice_resume',phase_ref:phase,safety_review_ref:reviewRef});
- r=await c.apply({kind:'practice_close',phase_ref:phase,feedback_refs:[reflectionRef]});
+ r=await c.apply({kind:'practice_close',phase_ref:phase,feedback_refs:[source.location.ref,reflectionRef]});
  const finished=r.domain.transformation.phase_history.phases[0];
- check(finished.closed_at_unix_ms!==null&&JSON.stringify(finished.feedback_refs)===JSON.stringify([source.location.ref,reviewRef,reflectionRef]),'practice resume and completion retain distinct authored feedback in native history');
+ check(finished.closed_at_unix_ms!==null&&JSON.stringify(finished.feedback_refs)===JSON.stringify([source.location.ref,reviewRef,reflectionRef]),'same source and distinct sources remain unique links across actual repeated practice acts');
+ check(r.receipts.length===held.receipts.length+8,'each authorised practice transition has its own native receipt');
  r=await c.apply(m.contextSource('phenomenological','M4.4.4',source,''));check(r.domain.context.branches.find(b=>b.branch==='phenomenological').readings.length===1,'context reading uses the real native branch and source');
  r=await c.apply({kind:'journal_link',source:m.protectedSource(source)});check(r.journal_refs[0].ref_id===source.location.ref,'native journal link references Central rather than copying its body');
  r=await c.apply({kind:'integration_return',returned:{return_ref:'return:controlled',office:'integration-lab',input_refs:[source.location.ref],source_refs:[source.location.ref],method_ref:null,output_ref:m.protectedSource(source),evidence_refs:[],human_response_ref:null,retention_policy_ref:'policy:controlled-private',standing:'reported'}});check(r.domain.integration.offices.find(o=>o.office==='integration-lab').returns.length===1,'integration Return has the native office, retention and protected source');
  const reopened=new m.PersonalController(call,consent);await reopened.read(r.target);check(JSON.stringify(reopened.snapshot.record)===JSON.stringify(r),'native private state survives independent consumer reconstruction');
  const mode=(await stat(join(root,'private'))).mode&0o777;check(mode===0o700,'actual native storage is owner-only');
- const pattern=await m.identityPattern(r,'cymatic');check(m.identityScene(pattern).entities.length===7,'native returned identity basis enters existing chakral form factory');
+ const query=()=>call({operation:'identity_material',target:r.target,consent,expected_revision:r.revision});
+ let material=m.readIdentityMaterial(m.readEnvelope(await query()).material,r);
+ check(material.sealed===false,'native identity preview performs no acceptance');
+ await assert.rejects(m.identityPattern(r,'cymatic',material),/accept/);
+ r=await c.apply({kind:'identity_seal',expected_value:material.value});
+ material=m.readIdentityMaterial(m.readEnvelope(await query()).material,r);
+ const pattern=await m.identityPattern(r,'cymatic',material);
+ check(pattern.fingerprint.value===material.value&&m.identityScene(pattern).entities.length===7,'accepted native identity material enters the existing seven-centre chakral renderer unchanged');
+ await m.verifyIdentitySources(r,async location=>({...source,location}));
+ await assert.rejects(m.verifyIdentitySources(r,async location=>({...source,location,revision:'external:new'})),/changed/);
+ check(true,'external source drift refuses presentation without copying source text');
+
  const stale=await call({operation:'apply',request_id:'stale:controlled',target:r.target,expected_revision:1,consent,mutation:{kind:'centre_feedback',ordinal:0,feedback_ref:source.location.ref}});check(stale.ok===false,'native stale revision refuses without overwriting');
  const after=(await call({operation:'read',target:r.target,consent})).record;check(after.revision===r.revision,'refused stale operation leaves actual native state unchanged');
  check(requests.every(q=>!JSON.stringify(q).includes(source.content)),'source content never entered the native derived working record');

@@ -8,7 +8,7 @@ import type {FieldEngineAdapter,EngineFrame} from './engine';
 import {IDENTITY_CHANNEL,rotateIdentityPoint,validateIdentityPattern,type PrivateIdentityPattern} from '../../../src/nara/identityPresentation';
 
 export function identityScene(raw:unknown):Scene{
-  const pattern=validateIdentityPattern(raw),scene=blankScene('Private identity source pattern');
+  const pattern=validateIdentityPattern(raw),scene=blankScene('Private accepted identity');
   // This is the app's native chakral form factory, including its existing
   // cymatic glyph templates. Historical shape frequencies are not receiving-
   // centre measurements or a mapping onto the resonator's physical stations.
@@ -34,14 +34,25 @@ export interface PrivateIdentityOptions {canPresent:()=>boolean;requestFrame:()=
 /** No physical clock or retained native lease is replaced. The owner must
  * release/hold any competing material binding before choosing this view. */
 export function privateIdentityEngine(engine:FieldEngineAdapter,options:PrivateIdentityOptions){
-  let privateScene:Scene|null=null,lastPublic:EngineFrame|null=null,revision=0,disposed=false;
+  let privateScene:Scene|null=null,lastPublic:EngineFrame|null=null,revision=0,disposed=false,paintedPrivate=false;
   const unavailable=()=>{throw new Error('Private identity is not available to capture, export, checkpoints or generic diagnostics');};
   const publicFrame=()=>{if(lastPublic)engine.render({...lastPublic,delta:0});};
-  function end(){if(!privateScene)return;privateScene=null;++revision;try{publicFrame();}finally{options.onState?.(false);options.requestFrame();}}
+  function end(){
+    if(!privateScene)return;
+    if(paintedPrivate){
+      // Replacing targets alone leaves private particles in the public image
+      // during their transition. Restore public targets, reseed through the
+      // existing owner, and redraw BEFORE re-enabling capture or diagnostics.
+      if(!lastPublic||typeof engine.command!=='function')throw new Error('Native particle clearing is unavailable; private capture protection remains active');
+      publicFrame();engine.command({type:'reset-field'});publicFrame();
+    }
+    paintedPrivate=false;privateScene=null;++revision;
+    options.onState?.(false);options.requestFrame();
+  }
   function begin(pattern:PrivateIdentityPattern){if(disposed||!options.canPresent())throw new Error('Finish recording and release any active native-field binding before showing this private pattern');privateScene=identityScene(pattern);++revision;options.onState?.(true);options.requestFrame();}
   const adapter=new Proxy(engine,{
     get(target,property){
-      if(property==='render')return (frame:EngineFrame)=>{lastPublic=frame;if(privateScene){if(!options.canPresent()){end();return;}target.render({...frame,scene:privateScene,authoringRevision:-revision,camera:{...defaultCamera(),mode:'3d'},params:privateScene.field.params,selectedIds:[],pointer:{active:false,world:{x:0,y:0,z:0}},scaffold:'off'});}else target.render(frame);};
+      if(property==='render')return (frame:EngineFrame)=>{lastPublic=frame;if(privateScene){if(!options.canPresent()){end();return;}target.render({...frame,scene:privateScene,authoringRevision:-revision,camera:{...defaultCamera(),mode:'3d'},params:privateScene.field.params,selectedIds:[],pointer:{active:false,world:{x:0,y:0,z:0}},scaffold:'off'});paintedPrivate=true;}else target.render(frame);};
       if(property==='needsRender')return ()=>!!privateScene||target.needsRender?.()===true;
       if(property==='telemetry'||property==='inspect'||property==='stations')return (...args:unknown[])=>{
         if(privateScene)return property==='telemetry'?null:property==='stations'?[]:{private:true,standing:'private-presentation; native source not disclosed'};
@@ -60,7 +71,7 @@ export function privateIdentityEngine(engine:FieldEngineAdapter,options:PrivateI
 export function installPrivateIdentity(engine:FieldEngineAdapter,options:PrivateIdentityOptions):FieldEngineAdapter{
   const epoch=crypto.randomUUID(),root=document.getElementById('app'),toolbar=document.createElement('aside');
   toolbar.className='private-identity-notice';toolbar.hidden=true;toolbar.setAttribute('aria-label','Private identity presentation');
-  toolbar.innerHTML='<span>Private identity source pattern · not a diagnosis · not saved</span><button type="button">Return to my Expression</button>';
+  toolbar.innerHTML='<span>Accepted native identity · private · not saved</span><button type="button">Return to my Expression</button>';
   const style=document.createElement('style');style.textContent='.private-identity-notice{position:fixed;z-index:1000;bottom:20px;left:50%;transform:translateX(-50%);max-width:90vw;padding:12px;display:flex;gap:12px;align-items:center;background:var(--paper);color:var(--ink);border:1px solid currentColor;font:13px/1.4 system-ui}.private-identity-notice[hidden]{display:none}.private-identity-notice button{font:inherit;background:transparent;color:inherit;border:1px solid currentColor;padding:6px;cursor:pointer}body[data-private-identity] #app>.chrome,body[data-private-identity] #text-layers,body[data-private-identity] #guides,body[data-private-identity] #transition-canvas{visibility:hidden!important}';
   document.head.append(style);document.body.append(toolbar);
   let priorInert=false,lastOrigin:string|null=null;
@@ -84,5 +95,5 @@ export function installPrivateIdentity(engine:FieldEngineAdapter,options:Private
   // no private content travels in this feature-detection message.
   if(window.parent!==window)window.parent.postMessage({schema:IDENTITY_CHANNEL,epoch,operation:'ready'},'*');
   const dispose=port.engine.dispose.bind(port.engine);
-  return new Proxy(port.engine,{get(target,property){if(property==='dispose')return ()=>{end();window.removeEventListener('message',receive,true);window.removeEventListener('keydown',key,true);toolbar.remove();style.remove();dispose();};return Reflect.get(target,property);}});
+  return new Proxy(port.engine,{get(target,property){if(property==='dispose')return ()=>{try{end();}finally{window.removeEventListener('message',receive,true);window.removeEventListener('keydown',key,true);toolbar.remove();style.remove();dispose();}};return Reflect.get(target,property);}});
 }

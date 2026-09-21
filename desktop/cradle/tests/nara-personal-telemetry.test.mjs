@@ -1,3 +1,4 @@
+import {acceptedPattern,identityMaterialFixture} from './nara-personal-fixtures.mjs';
 /** Production adapter forwarding/privacy regressions; not hardware evidence. */
 import test, {after} from 'node:test';
 import assert from 'node:assert/strict';
@@ -29,7 +30,7 @@ for(const method of ['telemetry','inspect','stations']) {
     const owner={render(){},dispose(){}};
     Object.defineProperty(owner,method,{get(){++reads;throw new Error('private native method must not be read');}});
     const port=m.privateIdentityEngine(owner,{canPresent:()=>true,requestFrame(){}});
-    port.begin(await m.identityPattern(record(),'cymatic'));
+    port.begin(await acceptedPattern(m,record(),'cymatic'));
     const expected=method==='telemetry'?null:method==='stations'?[]:{private:true,standing:'private-presentation; native source not disclosed'};
     assert.deepEqual(port.engine[method](),expected);assert.equal(reads,0);
     port.end();

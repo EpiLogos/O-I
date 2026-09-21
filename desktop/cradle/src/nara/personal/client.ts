@@ -26,6 +26,7 @@ export type PersonalRequest =
   |{operation:'capabilities'}
   |{operation:'list';consent:PersonalConsent}
   |{operation:'read';target:PersonalTarget;consent:PersonalConsent}
+  |{operation:'identity_material';target:PersonalTarget;consent:PersonalConsent;expected_revision:number}
   |{operation:'create';request_id:string;consent:PersonalConsent;seed:Record<string,unknown>}
   |{operation:'apply';request_id:string;consent:PersonalConsent;target:PersonalTarget;expected_revision:number;mutation:Record<string,unknown>};
 export type PersonalCall=(request:PersonalRequest)=>Promise<unknown>;
