@@ -1,0 +1,56 @@
+name: Nara checked desktop publication
+on:
+  push:
+    branches: ['agent/nara-personal-completion-20260921']
+    paths: ['.github/workflows/nara-desktop-intake.yml', '.github/nara-completion/**']
+permissions:
+  contents: write
+concurrency:
+  group: nara-desktop-publication
+  cancel-in-progress: false
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 10
+    steps:
+      - uses: actions/checkout@v4
+        with: {fetch-depth: 0}
+      - name: Check exact patch and narrow source basis
+        run: |
+          set -euo pipefail
+          test "$GITHUB_REF" = refs/heads/agent/nara-personal-completion-20260921
+          mkdir -p /tmp/nara-publication
+          cp .github/nara-completion/code.b64 /tmp/nara-publication/
+          python3 - <<'PY'
+          import base64,gzip,hashlib,pathlib,subprocess
+          encoded=pathlib.Path('.github/nara-completion/code.b64').read_text().strip()
+          print('transfer SHA256',hashlib.sha256(encoded.encode()).hexdigest(),flush=True)
+          assert hashlib.sha256(encoded.encode()).hexdigest()=='ebf10a6f99701c8edc65aeff0783271e9911a66848f3c7306d60b16c1588954b','transfer changed; no source was applied'
+          patch=gzip.decompress(base64.b64decode(encoded,validate=True))
+          assert hashlib.sha256(patch).hexdigest()=='77cb4628b4dedcb7608bc09aee6bc1afef4d24ebfb210fd284f4ac8f0dc97929'
+          dest='/tmp/nara-publication/desktop.patch';pathlib.Path(dest).write_bytes(patch)
+          files=[line.split('\t',2)[2] for line in subprocess.check_output(['git','apply','--numstat',dest],text=True).splitlines()]
+          allowed=['desktop/cradle/expressions-app/field-studies-journeys/src/privateIdentity.ts','desktop/cradle/kernel/src/action/nara.rs','desktop/cradle/src/nara/identityPresentation.ts','desktop/cradle/src/nara/personal/IdentityMaterialPanel.tsx','desktop/cradle/src/nara/personal/PersonalWorkbench.tsx','desktop/cradle/src/nara/personal/client.ts','desktop/cradle/src/nara/personal/identityMaterial.ts','desktop/cradle/tests/nara-personal-browser.mjs','desktop/cradle/tests/nara-personal-contracts.test.mjs','desktop/cradle/tests/nara-personal-fixtures.mjs','desktop/cradle/tests/nara-personal-identity.test.mjs','desktop/cradle/tests/nara-personal-modules.mjs','desktop/cradle/tests/nara-personal-native.mjs','desktop/cradle/tests/nara-personal-telemetry.test.mjs']
+          assert sorted(files)==sorted(allowed),'unexpected write surface'
+          subprocess.run(['git','diff','--exit-code','787bd80f96ce5b624cc048ab1a5c10fe92de3489','HEAD','--',*allowed],check=True)
+          subprocess.run(['git','apply','--check','--index','--unidiff-zero',dest],check=True)
+          subprocess.run(['git','apply','--index','--unidiff-zero',dest],check=True)
+          PY
+      - name: Commit only this preserved implementation, without merging or forcing
+        run: |
+          set -euo pipefail
+          git rm -r .github/nara-completion
+          git diff --cached --stat
+          git config user.name Epii
+          git config user.email noreply@openai.com
+          git commit -m 'feat(nara): connect reviewed native identity to existing private Expressions and preserve Central source currentness'
+          test "$(git ls-remote origin refs/heads/agent/nara-personal-completion-20260921 | cut -f1)" = "$GITHUB_SHA"
+          git push origin HEAD:refs/heads/agent/nara-personal-completion-20260921
+          git rev-parse HEAD > /tmp/nara-publication/implemented-head.txt
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: nara-desktop-publication-${{ github.sha }}
+          path: /tmp/nara-publication
+          retention-days: 3
+          if-no-files-found: error
