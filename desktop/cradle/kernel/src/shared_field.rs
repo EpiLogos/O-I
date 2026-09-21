@@ -140,6 +140,87 @@ pub fn reading(request: &Value) -> Result<Value, String> {
     }
 }
 
+/// The owner A2A runner beside the floor (`shared-field/a2a-runner.mjs`):
+/// the same repository-relative doorway discipline as `client_executable` —
+/// `OI_A2A_RUNNER` overrides, else `OI_REPO_ROOT`, else this crate's
+/// manifest directory climbed to the O:I repository root.
+fn a2a_runner_path() -> PathBuf {
+    if let Some(explicit) = std::env::var_os("OI_A2A_RUNNER") {
+        return PathBuf::from(explicit);
+    }
+    let repo = std::env::var_os("OI_REPO_ROOT")
+        .map(PathBuf::from)
+        .unwrap_or_else(|| {
+            PathBuf::from(env!("CARGO_MANIFEST_DIR"))
+                .join("..")
+                .join("..")
+                .join("..")
+        });
+    repo.join("shared-field").join("a2a-runner.mjs")
+}
+
+/// One A2A HTTP+JSON v1 exchange through the owner floor. The request
+/// (binding, presence, initiator, message) travels verbatim; the kernel
+/// composes the operator-send authority — the person's send is the
+/// exchange-authority act, so the grant is recorded as operator-asserted,
+/// never minted by the renderer or invented here. Node runs the floor; the
+/// renderer sees only the returned `oi.a2a-difference/v1` document.
+pub fn a2a_exchange(request: &Value) -> Result<Value, String> {
+    use std::io::Write;
+    use std::process::{Command, Stdio};
+
+    let runner = a2a_runner_path();
+    if !runner.is_file() {
+        return Err(format!(
+            "the A2A owner floor is not present at {} — the desktop bundle carries the renderer contracts only; run against the repository checkout or set OI_A2A_RUNNER",
+            runner.display()
+        ));
+    }
+    let node = std::env::var_os("OI_NODE")
+        .map(std::path::PathBuf::from)
+        .unwrap_or_else(|| std::path::PathBuf::from("node"));
+
+    let mut composed = request.clone();
+    let operation_id = composed
+        .get("message")
+        .and_then(|m| m.get("exchange_operation_id").or_else(|| m.get("message_id")))
+        .and_then(|v| v.as_str())
+        .unwrap_or("a2a-exchange")
+        .to_string();
+    composed["authority"] = serde_json::json!({
+        "allowed": true,
+        "grant_ref": format!("exchange-grant:operator-send:{operation_id}"),
+        "operation_id": operation_id,
+        "basis": "operator send — the desktop's own exchange-authority decision",
+    });
+
+    let mut child = Command::new(&node)
+        .arg(&runner)
+        .stdin(Stdio::piped())
+        .stdout(Stdio::piped())
+        .stderr(Stdio::piped())
+        .spawn()
+        .map_err(|e| format!("the A2A runner could not be launched via node ({}): {e}", node.display()))?;
+    {
+        let stdin = child.stdin.as_mut().ok_or_else(|| "the A2A runner accepted no request".to_string())?;
+        stdin
+            .write_all(composed.to_string().as_bytes())
+            .map_err(|e| format!("the A2A runner refused the request bytes: {e}"))?;
+    }
+    let output = child
+        .wait_with_output()
+        .map_err(|e| format!("the A2A runner did not complete: {e}"))?;
+    let parsed: Value = serde_json::from_slice(&output.stdout)
+        .map_err(|e| format!("the A2A runner's reply was not JSON: {e}"))?;
+    if let Some(message) = parsed.get("a2aError").and_then(|v| v.as_str()) {
+        return Err(format!("the A2A floor refused the exchange: {message}"));
+    }
+    if parsed.get("schema").and_then(|v| v.as_str()) != Some("oi.a2a-difference/v1") {
+        return Err("the A2A runner returned something that is not an oi.a2a-difference/v1 document".to_string());
+    }
+    Ok(parsed)
+}
+
 #[cfg(test)]
 mod tests {
     use super::*;

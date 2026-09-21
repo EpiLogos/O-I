@@ -1,10 +1,11 @@
 import {ExpressionLayout} from "./shared/Expression";
 import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
-import {fileOperation,type FileMutation} from "./files/client";
+import {fileOperation,listFiles,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
 import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
+import {addToActiveMaterialScene} from "./techne/material";
 import {FileHistory} from "./files/FileHistory";
 import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
@@ -881,6 +882,27 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const open=(event:Event)=>{const location=(event as CustomEvent<{location?:CentralLocation}>).detail?.location;if(location)void openFileRef.current(location).catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));};
     window.addEventListener("oi:techne-open-file",open);
     return()=>window.removeEventListener("oi:techne-open-file",open);
+  },[]);
+  // "Open in instrument" hands the material to Technè's active scene — the
+  // gathering path material-first work depends on. The add never blocks: a
+  // scene is ensured, the material joins it, and the file itself opens in
+  // the centre through the frame's own opener (the documented ⌘⏎ route).
+  useEffect(()=>{
+    const add=async(event:Event)=>{
+      const location=(event as CustomEvent<{location?:CentralLocation}>).detail?.location;
+      if(!location)return;
+      try{
+        const slash=location.path.lastIndexOf("/"),parent=slash<0?".":location.path.slice(0,slash),name=location.path.slice(slash+1);
+        const directory=await listFiles(kernel.transport,parent);
+        const entry=directory.entries.find(candidate=>candidate.name===name&&candidate.kind==="file");
+        if(!entry){setWindowError(`Central lists no "${name}" — the material ref is not a readable file`);return;}
+        if(!entry.retrieval_allowed){setWindowError(`Central's retrieval policy does not allow reading ${name}`);return;}
+        const added=addToActiveMaterialScene({kind:"file",location:entry.location},entry.name);
+        if(added)window.dispatchEvent(new CustomEvent("oi:techne-open-file",{detail:{location:entry.location}}));
+      }catch(reason){setWindowError(String(reason instanceof Error?reason.message:reason));}
+    };
+    window.addEventListener("oi:techne-add-material",add);
+    return()=>window.removeEventListener("oi:techne-add-material",add);
   },[]);
 
   const openFresh=(groupId?:string)=>{
