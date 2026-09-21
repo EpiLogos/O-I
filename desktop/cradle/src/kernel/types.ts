@@ -226,7 +226,6 @@ export type KernelOp =
   | {op:"workcell_status_read"}
   | {op:"wiki_projection_read";root:string;path:string}
   | {op:"wiki_projection_sources"}
-  | {op:"wiki_projection_update";root:string;path:string;expected_revision:string;evidence:string;actor:string;reason:string;body:string}
   /** The installed harnesses' real status (`aikit --json client status`,
    * kernel `agency.rs`): detected/installed/config-dir per harness. Pull
    * read, machine-level. */
@@ -313,7 +312,6 @@ export type KernelOpResult =
   | { result:"factory_attempt_task_reading";data:unknown }
   | { result:"workcell_status_reading";data:unknown }
   | { result:"wiki_projection_reading";data:unknown }
-  | { result:"wiki_projection_stored";data:unknown }
   | { result:"wiki_projection_sources_reading";data:unknown }
   | { result:"harness_status_reading";data:unknown }
   | { result:"model_catalogue_reading";data:unknown }
