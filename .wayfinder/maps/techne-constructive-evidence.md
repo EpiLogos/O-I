@@ -20,7 +20,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | §§0–3,9,11–14; C12 | `PointCloudHost` → imported `field-studies-journeys/src/app.ts`; native rail/workspace; retained mode slots | B: current mounted route, Epii no-subject entrance, native file save/restart and relation selection passed 19 checks at 07e32d3. Earlier isolated tests alone did not certify this route. Six working lens controls and correct home/Library/portal experience still require joined proof. |
 | §§4–7,34–35; C1–C4 | Merged Wiki reader, `WikiConstructionPanel`, `constructionDraft`/`constructionProjection`; AIKit native constructor; kernel `construction.rs`/`construction_source.rs` | Native ownership and prior Wiki evidence retained. Full current-app exact passage → working constellation staging, variants/nesting and both creation walks remain unclosed here. No second parser/store. |
 | §§5–6,15,36; C5–C6 | `kernelDocumentBridge`, `sceneCorrespondence`, `kernelComposition`, `nativeCorrespondence`, existing engine bindings and native Scene material | U: existing bridge/composition tests passed. N: complete saved/working material, repeated-entity Scene-local placement and material-binding removal negative passed. B: two distinct native relations drawn/hit-tested in the actual app without remount/clock/camera reset. Broader media/carrier/3D/QL forms still need joined coverage. |
-| §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B (first cut): the compact M0′–M5′ chooser and floating Lens Studio now stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens presents operative controls carrying the app's own actions — Library/gather (M0′), native composition (M1′), relation/timeline (M2′), scene sequence (M3′) — not reading statistics; M4′/M5′ name honest facet states and the unsurfaced native owner seam, inventing no control (§§18–19,21). `techne-lens-studio-browser.mjs` proves the chooser, per-lens controls-or-honest-facet, M1′ opening the real composition surface, lens continuity (§28) and the lived-cut absence, in a real browser with no host/binaries; gated in the Technē workflow. NOT yet closed: richer inline per-lens controls beyond routing, and wiring M4′ places / M5′ palace to their native owners. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
+| §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + `nativeWorkspace.ts` (construction/commit) + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B: the compact M0′–M5′ chooser and floating Lens Studio stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens DISCLOSES its material from the open kernel Expression via `nativeWorkspace.construction()` — M1′ real member/relation counts, M2′ its relations, M3′ its actual Scenes — never hardcoded stats (§36); M3′ persists through the NATIVE commit (kernel scene_create/edit, expected-revision, no retry), not a browser save (§§17,29); M4′/M5′ derive their honest facet + eligible material from the real construction and name the unsurfaced native place/palace owner seam (§§18–21). `techne-lens-studio-browser.mjs` proves native-op wiring, a §29/§41 browser-save negative, derived facets, a11y focus/keyboard roving and lived-cut absence (standalone, no host); `techne-native-application.mjs` proves the Studio discloses the EXACT open construction and its Scenes, carries the native commit, and keeps the same construction across a lens change (subject-carrying continuity, §28) over a REAL committed construction. Both gated in the Technē workflow (green). Remaining depth: a native place (M4′)/Palace (M5′) owner operation to surface, and richer inline per-instrument editing. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
 | §§1,25,37; C8 | Native Action boundaries, Ta-Onta/Actuation/AIKit; `NativeWorking` and `NativeSelectionQueue` | U: queue scope, supersession, refusal and no retry. N: actual native focus serialization and stale construction refusal. Full canonical Agent co-work/source basis/disclosure/late-return proof remains open. |
 | §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery | N: actual first file save and independent separate-process reopen passed. File-execution removal fails and keeps its pending intent. The full constellation/Journey/Palace/artifact → Wiki/graph/search/Library Return loop is not closed by this file proof. |
 | §§20–22,39; C10 | Existing kernel retained models; imported recovery and native working checkpoint; native selection queue | U/N: latest focus survives in-flight work; invalidated old-work gestures do not cross inquiry; no-op commit is idempotent; restart preserves edited-since-save. Whole mode/lens/portal/restart/source-change walk remains open. |
@@ -125,15 +125,23 @@ binaries), not a regression from this branch, #471, or the reconciliation. It
 does not gate the Technē feature's own workflow. Carried to the kernel/CI
 owner's door rather than blind-patched from this lane.
 
-**Lens Studio first cut (gap 1, §§2,13–19,28) — landed and browser-proven.** The
-compact M0′–M5′ chooser and floating Lens Studio now stand in the live imported
-app (`src/lensStudio.ts` + app.ts), one renderer, on the same construction the
-native workspace holds; each lens presents operative controls (M0′–M3′) or an
-honest facet state (M4′–M5′), and lenses switch without resetting the field.
-Proof `tests/techne-lens-studio-browser.mjs` (whole built app, real browser, no
-host/binaries), gated in the Technē workflow. Depth still open: richer inline
-per-lens controls beyond routing to the app's surfaces, and M4′ places / M5′
-palace wired to their native owners.
+**Lens Studio (gap 1, §§2,13–21,28,36) — landed, deepened after adversarial
+review, and proven over a real construction.** The compact M0′–M5′ chooser and
+floating Lens Studio stand in the live imported app (`src/lensStudio.ts` +
+`nativeWorkspace.ts` + app.ts), one renderer, on the same construction the native
+workspace holds. An independent T3 review found the first cut routed but was
+disclosure-blind and misrouted M3′ to the browser scene store; the deepening
+makes each lens DISCLOSE its material from the open kernel Expression
+(`construction()`), commit M3′ Scenes through the NATIVE owner (not a browser
+save), and derive M4′/M5′ honest facets + eligible material from the real
+construction. Proof: `tests/techne-lens-studio-browser.mjs` (native-op wiring,
+§29/§41 browser-save negative, derived facets, a11y focus/keyboard, lived-cut
+absence — standalone, no binaries) and `tests/techne-native-application.mjs` (the
+Studio discloses the exact committed construction + its Scenes, carries the native
+commit, subject-carrying continuity across a lens change — over a real native
+construction), both gated green in the Technē workflow. Depth still open: a native
+place (M4′)/Palace (M5′) owner operation to surface, and richer inline
+per-instrument editing.
 
 **Remaining, unchanged in scope:** the deeper per-instrument operations behind the
 M0′–M5′ Lens Studio (§§14–19, C7), the source→construction working field and both

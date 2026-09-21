@@ -142,7 +142,10 @@ export function resolveVersoSubject(
   carried?: CarriedNativeSubject,
 ): VersoSubject | null {
   const native = sanitiseCarriedSubject(carried);
-  if (native) return native;
+  // The carried native work stands in the host's project unless it names its
+  // own — so a verso over native work in a project reads at that project's
+  // scope, not silently at Central root.
+  if (native) return {...native, project: native.project ?? hostSubject?.project};
   if (focusSubject?.ref) {
     const selection = getWikiProjectionState().selection;
     return {
