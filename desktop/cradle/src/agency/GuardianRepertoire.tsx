@@ -35,7 +35,7 @@ export function GuardianRepertoire({ project }: { project?: string }) {
       Skill bodies stay with their native product owners; composition and projection stay with AIKit. A Guardian is the stewardship and accumulation locus, never an exclusive tool owner or a six-copies manual.
     </p>
     {!bound && <p className="oi-refusal" data-agency-guardians-unresolved>
-      No GuardianSource is registered — the six existing Guardians are not recognisable in the current `agency_read` reading (it carries no field marking a session as a Guardian). Recognition of the six durable Agent/Agency identities lands with O:I #220; nothing here mints a replacement.
+      No GuardianSource is registered — the six existing Guardians are not recognisable in the current `agency_read` reading (it carries no field marking a session as a Guardian). Recognition of the six durable Agent/Agency identities lands with O:I issue 220; nothing here mints a replacement.
     </p>}
     {bound && !guardians && !error && <Loading label="Reading Guardian repertoires…" scope="surface"/>}
     {error && <p className="oi-refusal" role="alert">{error}</p>}
@@ -53,7 +53,7 @@ export function GuardianRepertoire({ project }: { project?: string }) {
 function UnresolvedGuardian({ product }: { product: GuardianProduct }) {
   return <div className="agency-guardian-body">
     <div className="oi-ref-row"><strong>{product}</strong><span className="oi-state">Unknown</span></div>
-    <p className="oi-note">Guardian identity not resolved — no owner reading discloses it yet (O:I #220).</p>
+    <p className="oi-note">Guardian identity not resolved — no owner reading discloses it yet (O:I issue 220).</p>
   </div>;
 }
 

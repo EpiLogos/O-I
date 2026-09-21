@@ -28,7 +28,7 @@ const server = createServer((request, response) => {
   response.end(bootstrapHtml(path, url.searchParams.get('tampered') === '1'));
 });
 await new Promise(resolve => server.listen(0, '127.0.0.1', resolve));
-const browser = await chromium.launch({headless: true});
+const browser = await chromium.launch({headless: true, ...(process.env.CHROMIUM_PATH ? {executablePath: process.env.CHROMIUM_PATH} : {})});
 const cases = [
   {label: 'persisted dark overrides light system', saved: '{"theme":"dark"}', system: 'light', dark: true},
   {label: 'persisted light overrides dark system', saved: '{"theme":"light"}', system: 'dark', dark: false},

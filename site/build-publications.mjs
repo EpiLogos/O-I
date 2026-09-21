@@ -1,7 +1,7 @@
 /** Build-side receiver for already deliberately published native outputs.
  * Raw owner readings, export files, journey demos and omission reports are NOT
  * browser inputs. No crawling, source rewriting or publication decision here. */
-import { readFile, writeFile, mkdir, rm, rename } from 'node:fs/promises';
+import { readFile, writeFile, mkdir, rm, rename, realpath } from 'node:fs/promises';
 import { resolve, join } from 'node:path';
 import { fileURLToPath } from 'node:url';
 import { createHash } from 'node:crypto';
@@ -15,24 +15,33 @@ import { renderWorldEdition, worldEditionManifest } from '../shared-field/world-
 import { publicAssetUrl } from './src/library/publication-model.mjs';
 
 const digest = value => createHash('sha256').update(value).digest('hex');
-const copy = value => JSON.parse(JSON.stringify(value));
 const failure = () => new Error('A native publication failed public admission. No replacement or fixture publication was supplied.');
 const same = (a,b) => JSON.stringify(a) === JSON.stringify(b);
 const permittedTextProps = new Set(['title','text','refs']);
+const sensitiveKey = key => /^(?:token(?!s$)|apikey|accesskey|accesstoken|refreshtoken|authorization|cookie|password|credential|secret|private|internal(?:evidence|context)|machinefacts|dialogue|omissions|readings|actions|context)/i.test(key.replace(/[^a-z0-9]/gi,''));
+// Encoded native refs are still private refs. Decode conservatively before
+// inspection, not only when a browser follows the eventual link.
+function decodedText(value) {
+ let decoded=value;
+ for(let i=0;i<3;i++) { try { const next=decodeURIComponent(decoded); if(next===decoded)break; decoded=next; } catch { break; } }
+ return decoded.normalize('NFKC');
+}
 function assertPublic(value, key = '', depth = 0) {
  if (depth > 80) throw failure();
  if (typeof value === 'string') {
+  value=decodedText(value);
+  if (/(?:Control[\/\\](?:user|relations|machines)(?:[\/\\]|$)|(?:^|[\s\"'<>()[\]=])(?:nara|personal|agent-session|dialogue)[:/]|-----BEGIN (?:[A-Z ]*PRIVATE KEY)|(?:[?&#]|\b)(?:access_token|refresh_token|api_?key|token|X-Amz-Credential|X-Amz-Signature)=)/i.test(value)) throw failure();
   if (isProtectedRef(value) || /(?:file:\/\/|(?:^|\s)(?:\/Users\/|\/home\/|~\/)|\b(?:localhost|127\.0\.0\.1|0\.0\.0\.0)(?::\d+)?\b)/i.test(value)) throw failure();
   for (const link of value.matchAll(/\[[^\]]*\]\(([^)]*)\)/g)) if (!publicAssetUrl(link[1]) && !/^\/explore\.html\?ref=[^\s]+$/.test(link[1])) throw failure();
   if (['href','url','locator'].includes(key) && !publicAssetUrl(value) && !/^\/explore\.html\?ref=[^\s]+$/.test(value)) throw failure();
   if (key === 'availability' && !['available','unavailable','stale'].includes(value)) throw failure();
  } else if (Array.isArray(value)) value.forEach(v => assertPublic(v,key,depth+1));
  else if (value && typeof value === 'object') for (const [k,v] of Object.entries(value)) {
-  if (['token','api_key','credential','private','omissions','readings','actions','context'].includes(k)) throw failure();
+  if (sensitiveKey(k)) throw failure();
   assertPublic(v,k,depth+1);
  }
 }
-function admittedProjection(raw) {
+function admittedProjection(raw, deniedRefs) {
  const projection = validateProjection(raw);
  const presentation = worldPresentationFromProjection(projection);
  for (const region of presentation.regions) for (const b of region.bindings || []) {
@@ -49,33 +58,50 @@ function admittedProjection(raw) {
   }
  }
  assertPublic(projection);
+ // Do not surgically edit a native edition to conceal a denied member. The
+ // producer must return a newly selected publication with coherent revisions.
+ const checkRefs=value=>{
+  if(typeof value==='string') { if([...deniedRefs].some(ref=>decodedText(value).includes(ref))) throw failure(); }
+  else if(Array.isArray(value)) value.forEach(checkRefs);
+  else if(value&&typeof value==='object') Object.values(value).forEach(checkRefs);
+ };
+ checkRefs(projection);
  return {projection,presentation};
 }
 function inputParts(value) {
  if (value?.schema === 'oi.explore-browser-seed/v1') return {projections:value.presentation_projections || [],entries:value.entries || [],relations:value.relations || [],fields:value.fields || [],entry_fields:value.entry_fields || {},relation_fields:value.relation_fields || {}};
- if (value?.schema === 'oi.world-publication/v1') return {projections:[value.projection],entries:value.entries || [],relations:value.relations || [],fields:[value.field],entry_fields:Object.fromEntries((value.entries || []).map(e=>[e.ref,value.field_ref || value.field?.field_ref])),relation_fields:{}};
- if (value?.schema === 'oi.expression-publication/v1') return {projections:[value.projection],entries:[value.entry],relations:[],fields:[value.field],entry_fields:{[value.entry?.ref]:value.field_ref},relation_fields:{}};
+ if (value?.schema === 'oi.world-publication/v1') return {projections:[value.projection],entries:value.entries || [],relations:value.relations || [],fields:[value.field],scope_field:value.field_ref || value.field?.field_ref,entry_fields:Object.fromEntries((value.entries || []).map(e=>[e.ref,value.field_ref || value.field?.field_ref])),relation_fields:{}};
+ if (value?.schema === 'oi.expression-publication/v1') return {projections:[value.projection],entries:[value.entry],relations:[],fields:[value.field],scope_field:value.field_ref || value.field?.field_ref,entry_fields:{[value.entry?.ref]:value.field_ref},relation_fields:{}};
  throw failure();
 }
 /** Pure compilation: only output-bound public data survives into any artefact. */
 export function compilePublications(inputs = []) {
  const records = new Map(), entryCandidates = [], relationCandidates = [], fieldMap = new Map(), entryFields = {}, relationFields = {};
- for (const value of inputs) {
-  const part = inputParts(value);
-  for (const f of part.fields) if (f?.field_ref) {
-   if (fieldMap.has(f.field_ref) && !same(fieldMap.get(f.field_ref),f)) throw failure();
-   fieldMap.set(f.field_ref, f);
+ const parts=inputs.map(inputParts), withheldProjections=new Set(), deniedRefs=new Set();
+ const mergeMembership=(target, source)=>{
+  for(const [ref,field] of Object.entries(source || {})) {
+   if(target[ref]!==undefined && target[ref]!==field) throw failure();
+   target[ref]=field;
   }
-  for (const raw of part.projections) {
-   // A private/withdrawn item is discarded without copying titles, errors,
-   // source refs, metadata, omission details or previews.
-   if (raw?.state !== 'published' || raw?.audience?.visibility !== 'public') continue;
-   const item = admittedProjection(raw), key = item.projection.projection_ref;
-   if (records.has(key) && !same(records.get(key).projection,item.projection)) throw failure();
-   records.set(key,item);
+ };
+ // Resolve all visibility and membership restrictions BEFORE admission and
+ // before any searchable, readable, downloadable or preview bytes are made.
+ for(const part of parts) {
+  for(const f of part.fields) if(f?.field_ref) {
+   if(fieldMap.has(f.field_ref)&&!same(fieldMap.get(f.field_ref),f)) throw failure();
+   fieldMap.set(f.field_ref,f);
   }
+  mergeMembership(entryFields,part.entry_fields); mergeMembership(relationFields,part.relation_fields);
   entryCandidates.push(...part.entries); relationCandidates.push(...part.relations);
-  Object.assign(entryFields,part.entry_fields); Object.assign(relationFields,part.relation_fields);
+  for(const p of part.projections) if(p?.state!=='published'||p?.audience?.visibility!=='public') withheldProjections.add(p?.projection_ref);
+ }
+ const fieldDenied=ref=>Boolean(ref)&&fieldMap.get(ref)?.visibility!=='public';
+ for(const entry of entryCandidates) if(entry && (fieldDenied(entryFields[entry.ref]) || (entry.visibility&&entry.visibility!=='public') || (entry.meta?.visibility&&entry.meta.visibility!=='public'))) deniedRefs.add(entry.ref);
+ for(const part of parts) for(const raw of part.projections) {
+  if(withheldProjections.has(raw?.projection_ref)||fieldDenied(part.scope_field)||deniedRefs.has(raw?.subject?.ref)) continue;
+  const item=admittedProjection(raw,deniedRefs),key=item.projection.projection_ref;
+  if(records.has(key)&&!same(records.get(key).projection,item.projection)) throw failure();
+  records.set(key,item);
  }
  const bound = new Map();
  for (const record of records.values()) {
@@ -127,11 +153,15 @@ export function compilePublications(inputs = []) {
  });
  return {seed,editions};
 }
-export async function buildPublications() {
- const root=fileURLToPath(new URL('.',import.meta.url));
+export async function buildPublications(options = {}) {
+ const root=options.root || fileURLToPath(new URL('.',import.meta.url));
+ // A failed selection cannot leave a previously staged edition deployable.
+ // Only generated site outputs are invalidated; source and inputs are untouched.
+ await rm(resolve(root,'.public-edition'),{recursive:true,force:true});
+ await rm(resolve(root,'dist'),{recursive:true,force:true});
  let paths=[];
- if (process.env.OI_LIBRARY_PUBLICATIONS) {
-  paths=JSON.parse(process.env.OI_LIBRARY_PUBLICATIONS);
+ if (options.paths || process.env.OI_LIBRARY_PUBLICATIONS) {
+  paths=options.paths || JSON.parse(process.env.OI_LIBRARY_PUBLICATIONS);
   if (!Array.isArray(paths)||!paths.length||paths.some(p=>typeof p!=='string')) throw failure();
  } else paths=[resolve(root,'public/data/explore-public.json')];
  // The Vite public directory is copied verbatim. Refuse a raw non-empty seed
@@ -139,7 +169,12 @@ export async function buildPublications() {
  // admitted projection is emitted into browser assets.
  const publicSeed=JSON.parse(await readFile(resolve(root,'public/data/explore-public.json'),'utf8'));
  if ((publicSeed.entries||[]).length || (publicSeed.presentation_projections||[]).length || (publicSeed.presentations||[]).length || (publicSeed.relations||[]).length) throw failure();
- for(const path of paths) if(resolve(root,path).startsWith(resolve(root,'public')+'/') && resolve(root,path)!==resolve(root,'public/data/explore-public.json')) throw failure();
+ const publicRoot=await realpath(resolve(root,'public'));
+ const emptySeed=await realpath(resolve(root,'public/data/explore-public.json'));
+ for(const path of paths) {
+  const actual=await realpath(resolve(root,path));
+  if(actual.startsWith(publicRoot+'/')&&actual!==emptySeed) throw failure();
+ }
  const inputs=await Promise.all(paths.map(path=>readFile(resolve(root,path),'utf8').then(JSON.parse)));
  const built=compilePublications(inputs);
  const destination=resolve(root,'public/data/library'),staging=resolve(root,'.publication-staging');

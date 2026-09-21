@@ -18,7 +18,7 @@
 .shell-agent-toggle svg { transform: scaleX(-1); }
 @media (max-width: 639px) {
   .desktop-centre .pane.split { display: contents; }
-  .desktop-centre .pane.group:not(.focused), .desktop-centre .split-resizer { display: none !important; }
+  .desktop-centre .pane.group:not(.focused):not([data-maximized="true"]), .desktop-centre .split-resizer { display: none !important; }
 }
 @media (pointer: coarse) { .shell-topbar { height: 44px; } .shell-topbar button { width: 40px; height: 40px; } }
 .desktop-shell button, .desktop-shell select, .desktop-shell input { font: inherit; color: var(--oi-accent-ink); background: transparent; border: 0; }
@@ -412,8 +412,8 @@
     visible and clickable in every mode, exactly as in Factory. */
  .desktop-shell .shell-topbar{position:relative;z-index:calc(var(--oi-z-drawer) + 1);pointer-events:none}
  .desktop-shell .shell-topbar button,.desktop-shell .shell-topbar select{pointer-events:auto}
- .desktop-shell [data-window-corner="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
- .desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:32px}
+ .desktop-shell .desktop-centre [data-window-corner-left="true"] > .tab-strip{padding-left:max(4px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
+
 }
 .desktop-shell{background:linear-gradient(to right,var(--oi-sidebar-ground) 0,var(--oi-sidebar-ground) var(--desktop-left-width),var(--oi-shell-ground) var(--desktop-left-width),var(--oi-shell-ground) calc(100% - var(--desktop-right-width)),var(--oi-agent-ground) calc(100% - var(--desktop-right-width)))}
 .desktop-centre .tab-strip{transition:height var(--oi-motion-ui) var(--oi-motion-ease-out),min-height var(--oi-motion-ui) var(--oi-motion-ease-out),opacity var(--oi-motion-ui) var(--oi-motion-ease-out)}
@@ -431,7 +431,7 @@
 .desktop-centre .surface-host{padding-left:3px;padding-right:3px;padding-bottom:0}
 .central-heading{gap:12px;align-items:center}.central-heading>svg{align-self:center}.central-heading>div{min-width:0}
 .shell-topbar{padding-right:3px}.shell-agent-toggle{margin-left:5px}
-@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:-24px;position:relative;z-index:1}.desktop-shell:has(.desktop-side.right.depth-collapsed,.desktop-side.right.depth-strip) .desktop-centre .tab-strip{padding-right:38px}}
+@media(min-width:760px) and (pointer:fine){.desktop-shell .desktop-centre:has(.tab-strip){margin-top:-24px}.desktop-shell .desktop-centre:has(.mode-stage){margin-top:-24px;position:relative;z-index:1}}
 /* The window controls and region toggles occupy actual open corners, not an
    inset tab cell. Both corners are cut — left follows the window-control
    reserve (traffic lights when native, the navigator toggle otherwise),
@@ -439,12 +439,12 @@
    space whether or not the 3 dots are rendered. Masks and tab reservations
    follow the live sidebar widths. */
 @media(min-width:760px) and (pointer:fine){
- .desktop-shell [data-window-corner="true"]{
-  --window-cutout:max(0px,calc(var(--shell-window-reserve) - var(--desktop-left-width)));
+ .desktop-shell .desktop-centre :is([data-window-corner="true"], [data-window-corner-left="true"]){
+  --window-cutout:0px;
   /* Owner ruling 2026-09-19: 4.5px more clearance both ways at the right
      corner — the cut reaches further left AND further down, so the agent
      toggle sits in open corner space. */
-  --window-cutout-right:max(0px,calc(52.5px - var(--desktop-right-width,0px)));
+  --window-cutout-right:0px;
   --window-corner-depth:calc(var(--oi-shell-tabbar) + 4.5px);
   /* Owner refinement 2026-09-20: the lights' corner (left) sits about 4px
      shallower at the bottom than the agent-toggle corner (right, the
@@ -455,7 +455,9 @@
   --window-corner-depth-left:calc(var(--oi-shell-tabbar) + 1px);
   clip-path:polygon(var(--window-cutout) 0,calc(100% - var(--window-cutout-right)) 0,100% var(--window-corner-depth),100% 100%,0 100%,0 var(--window-corner-depth-left),var(--window-cutout) var(--window-corner-depth-left));
  }
- .desktop-shell [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
+ .desktop-shell .desktop-centre [data-window-corner-left="true"]{--window-cutout:max(0px,calc(var(--shell-window-reserve) - var(--desktop-left-width)))}
+ .desktop-shell .desktop-centre [data-window-corner="true"]{--window-cutout-right:max(0px,calc(52.5px - var(--desktop-right-width,0px)))}
+ .desktop-shell .desktop-centre [data-window-corner="true"] > .tab-strip{padding-right:max(4px,var(--window-cutout-right))}
 }
 
 /* Navigator content scrolls above a structural bottom row; no sticky overlay. */
@@ -569,8 +571,12 @@ html, body, #root, .desktop-shell { overflow: clip; }
 }
 /* Sidebar dividers harmonised with the glass: light grey in dark mode
    (never black), a soft grey in light mode. */
-:root { --oi-side-divider: color-mix(in srgb, var(--oi-ink) 18%, transparent); }
-.oi-desktop[data-theme="dark"] { --oi-side-divider: color-mix(in srgb, var(--oi-foreground) 22%, transparent); }
+:root {
+  --oi-side-divider: color-mix(in srgb, var(--oi-ink) 18%, transparent);
+}
+.oi-desktop[data-theme="dark"] {
+  --oi-side-divider: color-mix(in srgb, var(--oi-foreground) 22%, transparent);
+}
 .desktop-shell .desktop-side :is(.workspace-name, .central-heading, .world-system, .world-navigator) { border-color: var(--oi-side-divider); }
 .desktop-regions {
   background: transparent;
@@ -621,7 +627,7 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .desktop-shell:has(.desktop-side.left.depth-collapsed, .desktop-side.left.depth-strip) .desktop-centre .pane.group { border-left-color: transparent; }
 .desktop-shell:has(.desktop-side.right.depth-collapsed, .desktop-side.right.depth-strip) .desktop-centre .pane.group { border-right-color: transparent; }
 /* The corner cutout piece: very subtle rounding where it meets the glass. */
-.desktop-shell [data-window-corner="true"] { border-top-left-radius: 8px; }
+.desktop-shell [data-window-corner-left="true"] { border-top-left-radius: 8px; }
 
 .desktop-side.left.depth-panel, .desktop-side.left.depth-full {
   background: transparent;

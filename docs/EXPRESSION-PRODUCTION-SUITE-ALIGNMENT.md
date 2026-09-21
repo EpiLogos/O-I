@@ -135,3 +135,20 @@ The programme is aligned when:
 - O:I desktop runs the already-integrated Expression engine and consumes generated artifacts;
 - generic speech/audio model bodies are native to AIKit/Actuation before Nara-specific desktop acceptance;
 - source authority and returned evidence remain with their native owners.
+
+## 8. Current embedded native backcheck receipt
+
+O:I #419 carries the W5 connection repair for the actual imported application,
+without reopening accepted K8–K10 numerical ownership. The complete affected
+producer/consumer map, stable native host contract, source and lifecycle limits,
+executed-check pointers and executable local packet are maintained in the
+existing [Expression Production Suite Wayfinder](../.wayfinder/maps/expression-production-suite.md#w5--lane-f--embedded-native-backcheck-20-september-2026).
+
+M1/M2/M3 source outputs, native target/PCM time and GPU presentation are distinct
+readings of one event. Native follow, a presentation-scale override, deliberate
+hold and unavailable producer state are explicit. A source-form text/angle
+reading is not an arbitrary glyph mesh or physical pose; the unprovided join
+remains named. The implementation does not certify live sky, actual speakers,
+measured materials, installed Mac behaviour, Nara voice or full corpus
+publication. Those are retained owner/acceptance obligations, not substitutes
+for finishing the production connection.

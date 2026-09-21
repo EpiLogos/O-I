@@ -1,0 +1,1481 @@
+{
+ "schema": "oi.journey",
+ "version": 1,
+ "id": "roz-matheme-computation",
+ "name": "Matheme — Computation",
+ "description": "Five computation mathemes: softmax and argmax, preference gauge and reference policy, J-space, energy-based inference, and the six operational-parity tests. Source revision dbf3b17; census T25.",
+ "loop": true,
+ "scenes": [
+  {
+   "id": "comp-softmax-argmax",
+   "name": "softmax and argmax",
+   "character": "softmax and argmax",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "sa2-main",
+     "name": "the distribution",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 2.6,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "z=(0,ln2,ln4)",
+     "share": 3,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 2.2,
+      "steps": [
+       {
+        "id": "sa2-main-rw0",
+        "text": "z=(0,ln2,ln4)",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "sa2-main-rw1",
+        "text": "p=(1/7,2/7,4/7)",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "sa2-main-rw2",
+        "text": "+10: unchanged",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "sa2-main-rw3",
+        "text": "T=2: flatten",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "sa2-main-rw4",
+        "text": "T→0: one-hot",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "sa2-main-rw5",
+        "text": "T→∞: uniform",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "sa2-three",
+     "name": "three different outputs",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 1.14,
+      "y": 0.12600000000000003
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "distribution · max · draw",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "sa2-three-s0",
+        "text": "distribution · max · draw",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "sa2-field",
+     "name": "what travels with the cut",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.74,
+      "z": 0
+     },
+     "size": {
+      "x": 0.96,
+      "y": 0.11340000000000003
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "keep z, T, candidates, rule",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "sa2-field-s0",
+        "text": "keep z, T, candidates, rule",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "comp-softmax-argmax-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-softmax-argmax · DERIVED",
+     "title": "Softmax and Argmax",
+     "italic": "A retained distribution and an actual cut are different outputs.",
+     "body": "p_i = exp(z_i/T)/Σexp(z_j/T): positive, summing to one; a common shift c leaves every probability unchanged — the invariance used for stability. z=(0,ln2,ln4) gives (1/7, 2/7, 4/7); T=2 flattens. T→0⁺: mass 1/k on the maxima — one-hot only when unique, else (1/2,1/2,0) against argmax's first-index rule; T→∞: uniform. Distribution, selection and draw are three different outputs; keep the field the cut travels with.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "comp-preference-gauge",
+   "name": "preference gauge and reference policy",
+   "character": "preference gauge and reference policy",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "pg-main",
+     "name": "the gauge",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 2.6,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "σ(ln3) = 3/4",
+     "share": 3,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 2.3,
+      "steps": [
+       {
+        "id": "pg-main-rw0",
+        "text": "σ(ln3) = 3/4",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "pg-main-rw1",
+        "text": "shift −20: 3/4",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "pg-main-rw2",
+        "text": "swap: 1/4",
+        "shape": "text",
+        "hold": 2,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "pg-main-rw3",
+        "text": "×2: 9/10",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "pg-main-rw4",
+        "text": "new ref: 1/2",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "pg-dpo",
+     "name": "the DPO cancellation",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 1.2,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "β·log Z cancels — DPO",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "pg-dpo-s0",
+        "text": "β·log Z cancels — DPO",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "pg-occ",
+     "name": "the zero is already occupied",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.74,
+      "z": 0
+     },
+     "size": {
+      "x": 1.08,
+      "y": 0.11340000000000003
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "shift inert · reference acts",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "pg-occ-s0",
+        "text": "shift inert · reference acts",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "comp-preference-gauge-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-preference-gauge · DERIVED",
+     "title": "Preference Gauge and Reference Policy",
+     "italic": "Differences can be fully legible while a shared numerical origin remains unidentified.",
+     "body": "P(i≻j) = σ(r_i−r_j). Shifts r+c leave every comparison unchanged — the origin is unidentifiable from differences. (0,ln3): 3/4; shifted −20, still 3/4; scaled ×2, 9/10 — scale is not the invariance. DPO: β·log Z cancels between completions, leaving the log-ratio difference; changing the reference policy changes the comparison itself — 3/4 becomes 1/2. The neutral zero is already occupied; exposing that occupation can be part of the decision object.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "comp-j-space",
+   "name": "J-space",
+   "character": "J-space",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "js-a1",
+     "name": "inspect — permitted",
+     "kind": "formation",
+     "position": {
+      "x": -1.2,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.62,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "inspect ✓",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 0,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "js-a1-s0",
+        "text": "inspect ✓",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "js-a2",
+     "name": "edit — permitted",
+     "kind": "formation",
+     "position": {
+      "x": -0.15,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.45,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "edit ✓",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 1,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "js-a2-s0",
+        "text": "edit ✓",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "js-a3",
+     "name": "publish — withheld",
+     "kind": "formation",
+     "position": {
+      "x": 0.92,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 0.62,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "publish ✕",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 2,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "js-a3-s0",
+        "text": "publish ✕",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "js-main",
+     "name": "the perturbation",
+     "kind": "formation",
+     "position": {
+      "x": 0.05,
+      "y": -0.14,
+      "z": 0
+     },
+     "size": {
+      "x": 2.7359999999999998,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "publish ✕",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 2.5,
+      "steps": [
+       {
+        "id": "js-main-rw0",
+        "text": "publish ✕",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "js-main-rw1",
+        "text": "policy change",
+        "shape": "text",
+        "hold": 2.8,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "js-main-rw2",
+        "text": "publish ✓ — open",
+        "shape": "text",
+        "hold": 2.6,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "js-spec",
+     "name": "the declared dependencies",
+     "kind": "formation",
+     "position": {
+      "x": 0.05,
+      "y": -0.66,
+      "z": 0
+     },
+     "size": {
+      "x": 0.66,
+      "y": 0.16
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "J = J(B, ℓ, φ, s)",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "js-spec-s0",
+        "text": "J = J(B, ℓ, φ, s)",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "js-fail",
+     "name": "the precise failure",
+     "kind": "formation",
+     "position": {
+      "x": 0.05,
+      "y": -1.02,
+      "z": 0
+     },
+     "size": {
+      "x": 0.96,
+      "y": 0.12
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "circumscription, no circumstance",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "js-fail-s0",
+        "text": "circumscription, no circumstance",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "comp-j-space-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-j-space · OFFERED",
+     "title": "J-Space: A Bounded Judgment Field",
+     "italic": "Permission is an operative condition, not decorative metadata.",
+     "body": "J = J(B, ℓ, φ, s): a bounded judgment field — reference, lens, representation, state; a distance must name both representation and metric. The perturbation: a policy change opens publish while weights and embeddings stay identical — the reachable set changed, not the embedding. Recording prior state, action, authority, consequence keeps the path comparable under another lens. Its named failure: circumscription without circumstance.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "comp-ebm-resonance",
+   "name": "energy-based inference",
+   "character": "energy-based inference",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "eb-main",
+     "name": "inference on a fixed landscape",
+     "kind": "formation",
+     "position": {
+      "x": 0.36650000000000005,
+      "y": 0.42,
+      "z": 0
+     },
+     "size": {
+      "x": 2.907,
+      "y": 0.17
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "θ=2: min at 2",
+     "share": 3,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": true,
+      "clock": "seconds",
+      "order": "loop",
+      "easing": "smoothstep",
+      "hold": 2.3,
+      "steps": [
+       {
+        "id": "eb-main-rw0",
+        "text": "θ=2: min at 2",
+        "shape": "text",
+        "hold": 2.2,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "eb-main-rw1",
+        "text": "{0,1}: min at 1",
+        "shape": "text",
+        "hold": 2.4,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "eb-main-rw2",
+        "text": "learn θ: 2→3",
+        "shape": "text",
+        "hold": 2.2,
+        "transition": 1.1,
+        "position": null
+       },
+       {
+        "id": "eb-main-rw3",
+        "text": "(m,θ,E)→(m′,θ′,E′)",
+        "shape": "text",
+        "hold": 2.8,
+        "transition": 1.1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "eb-dom",
+     "name": "the domain belongs in the specification",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.28,
+      "z": 0
+     },
+     "size": {
+      "x": 1.2299999999999998,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "domain is constitutive",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "eb-dom-s0",
+        "text": "domain is constitutive",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "eb-test",
+     "name": "make resonance discriminate",
+     "kind": "formation",
+     "position": {
+      "x": 0.5,
+      "y": -0.74,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.18
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "what changes?",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "eb-test-s0",
+        "text": "what changes?",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "comp-ebm-resonance-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-ebm-resonance · OFFERED",
+     "title": "Energy-Based Inference and Revisable Encounter",
+     "italic": "Movement inside a field is distinct from revision of the field’s conditions.",
+     "body": "E_θ(m,y), inference argmin over a declared domain: (y−θ)² at θ=2 minimises at 2, at 1 on {0,1} — the domain is constitutive. Learning differs: a gradient step moves θ from 2 to 3, changing what inference selects. The proposed encounter is the second-order move (m,θ,E) → (m′,θ′,E′) — revising what counts as an answer, accountable to authority, not an automatic update. Technical energy is a scalar; shared vocabulary is not physical or lived resonance.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  },
+  {
+   "id": "comp-operational-parity",
+   "name": "operational parity",
+   "character": "operational parity",
+   "duration": 12,
+   "transition": 1.5,
+   "view": {
+    "mode": "2d",
+    "yaw": 0,
+    "pitch": 0,
+    "zoom": 1,
+    "panX": 0,
+    "panY": 0
+   },
+   "field": {
+    "background": "#101216",
+    "palette": [
+     "#e8e4d8",
+     "#9fb4c8"
+    ],
+    "material": "ink",
+    "params": {
+     "count": 62000,
+     "size": 2.8,
+     "opacity": 0.92,
+     "contrast": 0.93,
+     "speed": 0.6,
+     "turbulence": 0.14,
+     "dispersion": 0.07,
+     "jitter": 0.5,
+     "frequency": 220,
+     "dominance": 0,
+     "excitation": 0.6
+    }
+   },
+   "engine": {
+    "inkMode": "whiteOnBlack",
+    "backgroundMode": "solid"
+   },
+   "entities": [
+    {
+     "id": "op-0",
+     "name": "vector E1",
+     "kind": "formation",
+     "position": {
+      "x": 1.26,
+      "y": 0.6489999999999999,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "E1 seam",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 0,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-0-s0",
+        "text": "E1 seam",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-1",
+     "name": "vector E2",
+     "kind": "formation",
+     "position": {
+      "x": 0.75,
+      "y": 0.38,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "E2 gauge",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 1,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-1-s0",
+        "text": "E2 gauge",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-2",
+     "name": "vector E3",
+     "kind": "formation",
+     "position": {
+      "x": 0.75,
+      "y": 0.04,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "E3 lens",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 2,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-2-s0",
+        "text": "E3 lens",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-3",
+     "name": "vector E4",
+     "kind": "formation",
+     "position": {
+      "x": 0.75,
+      "y": -0.3,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "E4 continuity",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 3,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-3-s0",
+        "text": "E4 continuity",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-4",
+     "name": "vector E5",
+     "kind": "formation",
+     "position": {
+      "x": 0.75,
+      "y": -0.64,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.2
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "E5 recursion",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 4,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-4-s0",
+        "text": "E5 recursion",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-5",
+     "name": "vector E6",
+     "kind": "formation",
+     "position": {
+      "x": 1.208,
+      "y": -0.98,
+      "z": 0
+     },
+     "size": {
+      "x": 0.8999999999999999,
+      "y": 0.17
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "E6 return",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": 5,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-5-s0",
+        "text": "E6 return",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-w",
+     "name": "the worked separation",
+     "kind": "formation",
+     "position": {
+      "x": -0.2519999999999998,
+      "y": 0.86,
+      "z": 0
+     },
+     "size": {
+      "x": 1.14,
+      "y": 0.14
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "shift inert · reference acts",
+     "share": 1,
+     "tint": "#e8e4d8",
+     "tintWeight": 0,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-w-s0",
+        "text": "shift inert · reference acts",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    },
+    {
+     "id": "op-f",
+     "name": "failure specified first",
+     "kind": "formation",
+     "position": {
+      "x": -0.5588000000000004,
+      "y": -1.06,
+      "z": 0
+     },
+     "size": {
+      "x": 1.5,
+      "y": 0.11900000000000001
+     },
+     "rotation": 0,
+     "shape": "text",
+     "text": "failure specified first",
+     "share": 1,
+     "tint": "#9fb4c8",
+     "tintWeight": 1,
+     "locked": false,
+     "force": {
+      "kind": "attract",
+      "strength": 0,
+      "radius": 0.45,
+      "spin": 0
+     },
+     "station": null,
+     "sequence": {
+      "enabled": false,
+      "clock": "seconds",
+      "steps": [
+       {
+        "id": "op-f-s0",
+        "text": "failure specified first",
+        "shape": "text",
+        "hold": 3,
+        "transition": 1,
+        "position": null
+       }
+      ]
+     }
+    }
+   ],
+   "text": [
+    {
+     "id": "comp-operational-parity-t1",
+     "visible": true,
+     "kicker": "MATHENE · matheme-operational-parity · OFFERED",
+     "title": "Operational Parity: Six Discriminating Tests",
+     "italic": "A distinction earns promotion when varying it changes a declared operation under an adequate comparison.",
+     "body": "A distinction earns promotion when varying it changes a declared operation, nulls included. E1 seam, E2 gauge, E3 lens, E4 topological continuity, E5 QL recursion, E6 deferential return. The separation: shifting every score must change nothing; changing the reference can — confusing them hides a faulty experiment. Failure specified first: E1 cannot correct, E3 style only, E5 silent promotion, E6 disclaimer. Not an intelligence ladder; no phenomenal subjectivity is established by measurement.",
+     "x": 0.03,
+     "y": 0.585,
+     "width": 560,
+     "size": 20,
+     "align": "left"
+    }
+   ],
+   "composition": {
+    "layout": "free",
+    "plane": "XY",
+    "focus": "parallel",
+    "focusDuration": 4,
+    "carryTint": true,
+    "carryStation": false,
+    "frequencyDriver": "manual"
+   },
+   "morph": {
+    "thetaRate": 0.08,
+    "phiRate": 0.13,
+    "thetaOffset": 0,
+    "phiOffset": 0,
+    "law": "theta",
+    "depth": 1,
+    "dwell": 0.3
+   },
+   "automation": []
+  }
+ ],
+ "updatedAt": "2026-09-17T01:39:51.682Z"
+}

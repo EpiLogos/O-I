@@ -1,0 +1,1363 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-myth-hypostasis-archons-norea-sophia",
+  "name": "The Hypostasis of the Archons — Sophia, Veil, Rulers, Adam, Norea, Eleleth, and the Root Above",
+  "description": "The tractate's whole disclosure: the blind ruler's claim, Adam and Eve and the rulers' pursuit, Norea's refusal, Eleleth's rescue and retrospective cosmology, Zoe and Sabaoth, and the promised ending still to come.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-hyp-0-ruler",
+      "name": "The arrogant ruler mistakes a local realm for the entirety",
+      "character": "The chief ruler — blind, arrogant — declares himself sole god; a voice from incorruptibility names his error: he has mistaken absence from his field for absence from reality.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e430",
+          "name": "Samael / Yaldabaoth — the blind chief ruler",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.13,
+            "z": 0
+          },
+          "size": {
+            "x": 0.433,
+            "y": 0.433
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.6,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st473",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e431",
+          "name": "\"you are mistaken, Samael\" — the voice from incorruptibility",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☮",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st474",
+                "text": "☮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e432",
+          "name": "his field's edge — no visible superior inside it",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.27,
+            "z": 0
+          },
+          "size": {
+            "x": 0.798,
+            "y": 0.798
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.4,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st475",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · Nag Hammadi Codex II,4; Layton translation; Robinson's dating (before AD 350, attributed)",
+          "title": "The arrogant ruler mistakes a local realm for the entirety",
+          "italic": "The claim demonstrates the source-side operation: local power reads absence from its field as absence from reality, and claims total authority.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The tractate is a Gnostic exposition of the origin, nature and power of the rulers, its surviving Coptic text in Nag Hammadi Codex II. It begins from the rulers' claim: their chief is blind, powerful, ignorant, arrogant, and declares himself sole god. A voice from incorruptibility answers and names the error: he does not see the greater reality whose absence from his field he has mistaken for non-existence. The rebuke names him Samael; the cosmological",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "revelation gives Yaldabaoth and Sakla. Robinson's account places a Greek composition before AD 350 with Jewish or Jewish-Christian connections — a scholarly attribution; the heavens, abyss, garden and ark belong to narrated space. The developed telling follows the tractate's own disclosure: ruler and human formation first, Norea's crisis, then Eleleth's retrospective account of origins — the late revelation changing the reader's understanding of the earlier coercion.\n\nOccurrences: the sole-god declaration and the voice's rebuke (#1); the three names (#1, #3); the field's edge as the claim's condition (#1, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-hyp-1-adam",
+      "name": "A formed human exceeds the makers",
+      "character": "The rulers form Adam after an image they perceived; breath fails until spirit descends; the spiritual woman awakens Adam, escapes as a tree; the violated shadow stays in the narrative.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e433",
+          "name": "Adam — formed after a perceived image; life exceeding their authority",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.27,
+            "y": 0.099
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Adam",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st476",
+                "text": "Adam",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e434",
+          "name": "spirit descending from the Adamantine Land",
+          "kind": "formation",
+          "position": {
+            "x": 0.3,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☮",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st477",
+                "text": "☮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e435",
+          "name": "the spiritual woman — awakening Adam; escaping pursuit as a tree",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.2,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☾",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st478",
+                "text": "☾",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e436",
+          "name": "the shadow — violated; materially necessary to Norea's later denial",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st479",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e437",
+          "name": "the garden's prohibition; sleep becoming ignorance; expulsion and toil",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⛔",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st480",
+                "text": "⛔",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · the Genesis retelling in the consulted Layton telling",
+          "title": "A formed human exceeds the makers",
+          "italic": "The scene demonstrates the distinction between forming, naming and governing within a field, and originating the life that exceeds the jurisdiction claimed over it.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The tractate retells Genesis through its own exegesis. The rulers participate in forming Adam after an image they have perceived; the human becomes living through a power they do not finally own — breath fails until spirit descends from the Adamantine Land. Animals receive names; the garden brings prohibition; sleep becomes ignorance. The spiritual woman awakens Adam and escapes pursuit as a tree, leaving a shadow that the rulers sexually violate; the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "instructing principle enters and leaves the serpent; eating exposes spiritual nakedness; fig leaves, blame, curses, expulsion and imposed toil follow. Formation and pursuit belong together: inability to originate the life they seek is followed by attempt to possess its manifestation. The distinction between the woman and the shadow is materially necessary to Norea's later denial of their claimed genealogy — the violated figure is not made to disappear from the narrative.\n\nOccurrences: the formed Adam and the descending spirit (#1); the tree-escape (#1); the violated shadow (#1, grounding #2); the garden, sleep and expulsion (#1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-hyp-2-norea",
+      "name": "Norea refuses the ancestry of possession",
+      "character": "The rulers claim her through Eve; she refuses the genealogy and names her origin above; their coercion is answered by her cry.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e438",
+          "name": "Norea — daughter of Eve; refusing the imposed descent",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.08,
+            "z": 0
+          },
+          "size": {
+            "x": 0.376,
+            "y": 0.13
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Norea",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st481",
+                "text": "Norea",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e439",
+          "name": "the rulers' claim — authority through Eve; coercion attempted",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.25,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☸☸",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st482",
+                "text": "☸☸",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e440",
+          "name": "her cry to the higher divine reality",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☮",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st483",
+                "text": "☮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e441",
+          "name": "the ark refused, breathed aflame — her relation to the flood set against Noah's",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.14,
+            "z": 0
+          },
+          "size": {
+            "x": 0.209,
+            "y": 0.178
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st484",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · the flood and the refusal (q004's scope in the source house)",
+          "title": "Norea refuses the ancestry of possession",
+          "italic": "Her refusal demonstrates the contest at the level of origin: the rulers' claim to rule is contested not by stronger force but by recovered genealogy.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Cain farms; Abel keeps sheep; rejected and accepted offerings lead to fratricide, accusing blood and sevenfold vengeance. Seth follows; Eve bears Norea. A ruler warns Noah of the flood; the ark rests on Mount Sir; Noah excludes Norea, whose breath burns the ark, and he rebuilds. When the rulers later claim authority over her through Eve, Norea refuses the genealogy they impose: she is not their descendant and comes from the world above. Their claim to rule is contested at the level of origin. They attempt coercion; Norea cries to the higher divine reality for rescue.",
+          "x": 0.04,
+          "y": 0.55,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 620
+        },
+        {
+          "id": "occ",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Occurrences: the excluded Norea and the burnt ark (#2); the imposed genealogy and its refusal (#2); the cry (#2, answered at #3).",
+          "x": 0.765,
+          "y": 0.55,
+          "width": 300,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-hyp-3-eleleth",
+      "name": "Eleleth: rescue and the rulers' own origin",
+      "character": "The luminary rescues and teaches: Pistis Sophia's initiative, the veil, shadow, matter; the deficient ruler's second totalising claim; seven offspring and layered heavens; Zoe's rebuke; Sabaoth's change of allegiance.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e442",
+          "name": "Eleleth — golden appearance, snowy clothing; rescue and disclosure",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.52,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Eleleth",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st485",
+                "text": "Eleleth",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e443",
+          "name": "Pistis Sophia — desiring to create without her consort; the veil between worlds",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.16,
+            "z": 0
+          },
+          "size": {
+            "x": 0.156,
+            "y": 0.156
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☾",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st486",
+                "text": "☾",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e444",
+          "name": "shadow → matter → the lion-faced ruler — the second horizon-mistake",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.318,
+            "y": 0.318
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st487",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e445",
+          "name": "seven offspring and the layered heavens; Sabaoth in the seventh below the veil",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.26,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "7",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st488",
+                "text": "7",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e446",
+          "name": "Zoe's rebuke; Yaldabaoth bound in Tartaros; Sabaoth's throne and Zoe teaching at his right",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Z",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st489",
+                "text": "Z",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the retrospective cosmology through Eleleth's revelation (q005's scope)",
+          "title": "Eleleth: rescue and the rulers' own origin",
+          "italic": "The revelation demonstrates the decisive operation: authority limited by recovered provenance — Norea receives an account of where the rulers came from, after they presumed to say where she came from.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Eleleth, one of the great luminaries, descends: he rescues Norea from the rulers' immediate claim and teaches her about her root and their own origin. Pistis Sophia desired to create without her consort; a veil lies between the world above and the lower realms; shadow comes into being beneath the veil and becomes matter; a deficient, arrogant lion-like ruler emerges and, opening his eyes on apparently limitless matter, repeats the totalising claim. Sophia introduces light into matter, exposing the mistake without making the lower realm unreal. The ruler generates",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "seven offspring; rule distributes through layered heavens and chaotic realms, Sabaoth placed in the seventh heaven beneath the veil. Zoe, daughter of Pistis Sophia, rebukes the arrogant ruler; her breath becomes a fiery angel binding Yaldabaoth in Tartaros. Sabaoth sees the higher power, rejects his father and matter, praises Sophia and Zoe, and is elevated in the seventh heaven — recognition within structure, not only escape from it. The two rebellions keep distinct offices: Sabaoth changes allegiance inside the genealogy; Norea denies the genealogy contains her root.\n\nOccurrences: Eleleth's descent, appearance and teaching (#2–#3); the veil, shadow and matter (#3, compared at #4); the seven offspring and layered heavens (#3); Zoe's rebuke and Sabaoth's repentance (#3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-hyp-5-return",
+      "name": "The root disclosed; the ending still to come",
+      "character": "The true Man promised after three generations; the closing hymn before Father, Son and Holy Spirit. False sovereignty corrected by provenance.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e447",
+          "name": "the root above — Norea's origin exceeding the rulers' universe",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.115,
+            "y": 0.156
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "↑",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st490",
+                "text": "↑",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e448",
+          "name": "the promised disclosure after three generations — the immediate rescue is not the completion",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.22,
+            "y": 0.22
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "3",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st491",
+                "text": "3",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e449",
+          "name": "the closing hymn — the collective voice before Father, Son and Holy Spirit",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.115,
+            "y": 0.115
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "♪",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st492",
+                "text": "♪",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e450",
+          "name": "A20 retrieval route — image and claimed authority through coercion, refusal and revelation (human-amplified: no for the technical reading)",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.32,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A20",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st493",
+                "text": "A20",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4–#5→0 · the ending's bounded synopsis (Robinson); the Native 020 seam now owned; the human-amplified ledger",
+          "title": "The root disclosed; the ending still to come",
+          "italic": "The story's rulers are most dangerous not because they are unreal but because real local power is mistaken for self-grounding total authority — a system synthesis, human-amplified: no until ratified.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Eleleth's revelation promises disclosure after three generations: the true Man will bring saving disclosure, spiritual beings freed, the authorities' world losing dominion; the closing hymn gives the ending a collective voice before Father, Son and Holy Spirit. Norea's immediate rescue is not narrated as the completion of the cosmic history. The whole's deepest source-side movement is false sovereignty corrected by provenance: the rulers' local world is not imaginary — they possess real efficacy inside it — but their mistake is inferring from local efficacy and visibility",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "that their order is self-grounding and exhaustive. The layered-cosmos seam now has an intact owner. Four system candidates stay human-amplified: no — the chief ruler's Hybris figuration; the veil/Māyā comparison with its different metaphysical valences; the archon/technical-evaluator image; and the Norea comparisons with Number Six and Daphne, whose historical, gendered and religious specificity must remain primary. The Neumann comparison stays a proposal, not a renaming of Norea as hero; the Valentinian whole remains distinct — Horos and Achamoth are not inserted here.\n\nDeclared cross-story: distinct from the Valentinian Sophia–Horos–Achamoth whole; no transmission asserted across the shared Sophia name. ↳ Occurrences: the refusal and the disclosure (#2–#3, #5→0); the promised ending (#4, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

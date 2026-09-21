@@ -12,6 +12,7 @@ pub fn cli_main() -> ExitCode {
                 println!("                                an owner's configuration contribution through the dispatcher, like `system --json`");
                 println!("  oi desktop --help             install/remove/status lifecycle plus M′ application operations");
                 println!("  oi aikit session-space ...    AIKit SessionSpace/encounter verbs, folded into the main aikit binary (`oi aikit-session-space` still routes to it)");
+                println!("  oi setup                      recognise, choose, review, install, verify and configure through native owners");
                 println!("  oi ground status|bind          inspect or explicitly change the default ground binding");
                 println!("  oi mode list|set <frame>|clear [--json]");
                 println!("                                state which install mode (#268) you are adopting; the Context Frames organise the six modes");
@@ -38,6 +39,8 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi recognition list [--json]  disclose accumulated local/embedded recognition adapters");
                 println!("  oi recognition register PACKAGE.json");
                 println!("                                verify and register an oi.world-recognition/v1 package contribution");
+                println!("  oi recognition verify CONTRIBUTION_REF");
+                println!("                                run a registered recognition contribution's own verify operation and print its receipt");
                 println!("  oi recognition unregister CONTRIBUTION_REF");
                 println!("                                remove a locally registered recognition contribution");
                 println!();
@@ -54,6 +57,12 @@ pub fn cli_main() -> ExitCode {
                 eprintln!("oi: {message}");
                 ExitCode::from(2)
             }
+        };
+    }
+    if command == Some("setup") {
+        return match command_setup(args.get(1..).unwrap_or_default()) {
+            Ok(code) => ExitCode::from(code.clamp(0, 255) as u8),
+            Err(message) => { eprintln!("oi: setup: {message}"); ExitCode::from(2) }
         };
     }
     if command == Some("ground") {

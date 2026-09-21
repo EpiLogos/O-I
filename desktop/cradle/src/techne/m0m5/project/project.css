@@ -39,7 +39,7 @@
 }
 
 .project-section {
-  border: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border: 1px solid var(--oi-rule, var(--oi-hairline-soft));
   border-radius: var(--oi-techne-panel-radius, 8px);
   padding: var(--oi-space-3, 10px);
   background: var(--oi-techne-wash, transparent);
@@ -88,7 +88,7 @@
 }
 
 .project-member:hover {
-  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+  background: var(--oi-techne-wash);
 }
 
 .project-member.is-picked {
@@ -115,7 +115,7 @@
 }
 
 .project-open {
-  border: 1px solid var(--oi-rule, #ccc);
+  border: 1px solid var(--oi-rule);
   background: var(--oi-techne-hud-solid, var(--oi-surface));
   color: var(--oi-foreground);
   border-radius: var(--oi-techne-tool-radius, 6px);
@@ -125,7 +125,7 @@
 }
 
 .project-open:hover {
-  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+  background: var(--oi-techne-wash);
 }
 
 .project-foot {
@@ -137,7 +137,7 @@
 
 .project-return {
   align-self: flex-start;
-  border: 1px solid var(--oi-rule, #ccc);
+  border: 1px solid var(--oi-rule);
   background: var(--oi-techne-hud-solid, var(--oi-surface));
   color: var(--oi-foreground);
   border-radius: var(--oi-techne-tool-radius, 6px);
@@ -147,7 +147,7 @@
 }
 
 .project-return:hover {
-  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+  background: var(--oi-techne-wash);
 }
 
 .project-receipt {
@@ -185,7 +185,7 @@
 .project-segment {
   display: inline-flex;
   gap: 2px;
-  border: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border: 1px solid var(--oi-rule, var(--oi-hairline-soft));
   border-radius: var(--oi-techne-tool-radius, 6px);
   padding: 2px;
 }
@@ -202,7 +202,7 @@
 }
 
 .project-mode.is-active {
-  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+  background: var(--oi-techne-wash);
   color: var(--oi-foreground);
 }
 
@@ -234,7 +234,7 @@
 
 .project-tree.is-nested {
   margin-left: var(--oi-space-4, 16px);
-  border-left: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border-left: 1px solid var(--oi-rule, var(--oi-hairline-soft));
   padding-left: var(--oi-space-2, 6px);
 }
 
@@ -252,7 +252,7 @@
 }
 
 .project-row.is-focus {
-  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+  background: var(--oi-techne-wash);
 }
 
 .project-row-main {
@@ -272,7 +272,7 @@
 }
 
 .project-row-main:hover {
-  background: var(--oi-techne-wash, rgba(0, 0, 0, 0.04));
+  background: var(--oi-techne-wash);
 }
 
 .project-row-main:focus-visible {
@@ -292,7 +292,7 @@
 }
 
 .project-relation-chip {
-  border: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border: 1px solid var(--oi-rule, var(--oi-hairline-soft));
   background: transparent;
   color: var(--oi-muted);
   font-size: 9px;
@@ -316,7 +316,7 @@
   text-transform: uppercase;
   letter-spacing: 0.04em;
   color: var(--oi-muted);
-  border: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border: 1px solid var(--oi-rule, var(--oi-hairline-soft));
   border-radius: 3px;
   padding: 0 3px;
   margin-left: var(--oi-space-2, 6px);
@@ -363,7 +363,7 @@
   width: 100%;
   aspect-ratio: 1 / 1;
   max-height: 340px;
-  border: 1px solid var(--oi-rule, var(--oi-hairline-soft, #ddd));
+  border: 1px solid var(--oi-rule, var(--oi-hairline-soft));
   border-radius: var(--oi-techne-panel-radius, 8px);
   background: var(--oi-techne-wash, transparent);
 }
@@ -433,7 +433,7 @@
 .project-inspect .project-centre {
   visibility: visible;
   align-self: flex-start;
-  border: 1px solid var(--oi-rule, #ccc);
+  border: 1px solid var(--oi-rule);
   border-radius: var(--oi-techne-tool-radius, 6px);
   margin-top: var(--oi-space-1, 4px);
   padding: 3px 8px;

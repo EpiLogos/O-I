@@ -1,0 +1,1363 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-the-prisoner",
+  "name": "The Prisoner — Number Six, the changing Two, and the question of One",
+  "description": "The whole series movement: the resignation that becomes an address, the administered world, the last interrogation, the masked assembly and escape, the asymmetric count, and return without inheriting the hidden throne.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-pri-0-arrival",
+      "name": "The resignation that becomes an address",
+      "character": "An agent resigns; before the decision can carry into another life he wakes in a copy of his own room, in the Village.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2e2e2e",
+          "#6b6b6b",
+          "#b0413e",
+          "#e3ddd0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e334",
+          "name": "the Village — picturesque, enclosed, no freedom to leave",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.46,
+            "z": 0
+          },
+          "size": {
+            "x": 0.992,
+            "y": 0.73
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st371",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e335",
+          "name": "Number Six — the assigned designation",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.217,
+            "y": 0.246
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "6",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st372",
+                "text": "6",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e336",
+          "name": "Rover — the guardian that intercepts escape",
+          "kind": "formation",
+          "position": {
+            "x": 0.6,
+            "y": 0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st373",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e337",
+          "name": "the helicopter brought back by remote control (Arrival)",
+          "kind": "formation",
+          "position": {
+            "x": -0.6,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "🚁",
+          "share": 1,
+          "tint": "#b0413e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st374",
+                "text": "🚁",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · \"Arrival\" (paraphrased); the title exchange at q001",
+          "title": "The resignation that becomes an address",
+          "italic": "The opening act demonstrates assignment: the inquiry into who may order the field is redirected into an order within that field — \"You are Number Six.\"",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "An intelligence agent resigns; before he can carry that decision into another life he is abducted, waking in surroundings resembling his own room — now belonging to the Village. The administration wants the reason for his resignation: it knows much, and seeks cooperation in completing the account. Its visible chief is Number Two; his own designation is Number Six. \"Arrival\" gives the arrangement material actors: technicians watching, Rover",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "intercepting escape, the colleague Cobb apparently dead, Number Nine's escape arrangement ending in a remotely controlled helicopter, and another man already installed as Number Two. The title exchange compresses the situation — \"Who is Number One?\" / \"You are Number Six.\" / \"I am not a number; I am a free man!\" — and Two's laughter follows. There is no comma after \"are\": the reply assigns the questioner's number; it does not conceal an identity.\n\nOccurrences: the resignation and abduction (#0); Rover and the helicopter (#0); Cobb and Number Nine (#0); the title exchange (#0, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pri-1-world",
+      "name": "A whole world for obtaining one answer",
+      "character": "Staged allies, escapes that return, an election for Number Two — resistance carried inside administered procedures.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2e2e2e",
+          "#6b6b6b",
+          "#b0413e",
+          "#e3ddd0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e338",
+          "name": "the campaign — publicity ready before the candidate speaks",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.27,
+            "y": 0.27
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#b0413e",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st375",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e339",
+          "name": "Number Fifty-Eight — incomprehensible, then English, then authority",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "58",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st376",
+                "text": "58",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e340",
+          "name": "the Green Dome — the office won without the power to end captivity",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.39,
+            "z": 0
+          },
+          "size": {
+            "x": 0.68,
+            "y": 0.51
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st377",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e341",
+          "name": "the seventeen-episode field — neighbours, experiments, chess pawns, a Western town",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "17",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st378",
+                "text": "17",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · \"Free for All\" (paraphrased); the ITVX listing order as declared extent",
+          "title": "A whole world for obtaining one answer",
+          "italic": "The Village embodies the counterfeit gathering: a population assembled for voting and ceremony while the routes by which answers can matter stay controlled (C25).",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The Village can stage the circumstances in which Six seeks to act: an apparent ally part of an interrogation, an escape route returning its user, an invitation bringing resistance inside an administered procedure. \"Free for All\" gives participation electoral form: Six accepts the contest for Number Two after the prospect of meeting Number One is held out; publicity bearing his face is already printed, and a reporter supplies acceptable answers when he declines. He promises",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "the inhabitants freedom, undergoes drugging, wins the vote — and at the Green Dome his attempt to use the office meets violence. Fifty-Eight, previously speaking a language he cannot understand, now addresses him in English and takes authority as the incoming Number Two. The election carries Six into the office without giving his command power to end captivity. The intervening episodes retain their places as a declared extent — premises located, not invented into one argument.\n\nOccurrences: the staged campaign and publicity (#1); the drugged election and its violent ending (#1); Fifty-Eight's reversal (#1); the episode-table extent (#1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pri-2-finale",
+      "name": "Degree Absolute; the masks; the escape",
+      "character": "Once Upon a Time reverses the interrogation; Fall Out unmasking One — an ape mask, then his own face — before the rocket, the rescue of Two and Forty-Eight, and the door that opens automatically.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#1a1a1c",
+        "palette": [
+          "#e3ddd0",
+          "#1a1a1c",
+          "#b0413e",
+          "#6b6b6b"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e342",
+          "name": "the embryo room — a week of regression; Two dies as the period ends",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.21,
+            "z": 0
+          },
+          "size": {
+            "x": 0.261,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st379",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e343",
+          "name": "the masked assembly — revolt acclaimed, then judged",
+          "kind": "formation",
+          "position": {
+            "x": 0.42,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.7,
+            "y": 0.5
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st380",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e344",
+          "name": " beneath the ape mask — a face identical to his own",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.24,
+            "z": 0
+          },
+          "size": {
+            "x": 0.306,
+            "y": 0.306
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1.4,
+          "tint": "#b0413e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st381",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e345",
+          "name": "the rocket countdown; Two and Forty-Eight freed; the Butler beside him",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.26
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⑃",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st382",
+                "text": "⑃",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e346",
+          "name": "the London door opening automatically — recalling the Village",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.4
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st383",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · \"Once Upon a Time\" and \"Fall Out\" (paraphrased); Barr's episode studies; BFI's qualification",
+          "title": "Degree Absolute; the masks; the escape",
+          "italic": "The finale turns the sovereign position inward without cancelling the material apparatus: removal from one setting does not establish that the desire to monopolise the deciding position has ended.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "In \"Once Upon a Time\" the Two of \"The Chimes of Big Ben\" returns and commits to Degree Absolute: a week of isolation in the embryo room, working through regression, nursery language, counting and enacted stages of life. The struggle reverses; Six gains the upper hand and Two dies as the period ends; the Supervisor arrives and Six demands to see Number One. \"Fall Out\" brings Six before a masked assembly and its President: his resistance acclaimed as qualifying him for freedom and possibly leadership; Two resuscitated; Two and the younger Number Forty-Eight appear",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "as forms of revolt to be judged while Six is ceremonially distinguished. Invited to speak, his first-person address is drowned out. Beneath One's outer mask is an ape mask; beneath that, a face identical to his own. Six starts a rocket countdown, frees Two and Forty-Eight, and escapes with them and the Butler. The escapees travel toward London; Forty-Eight goes his own way; Two enters Parliament; the Butler accompanies Six home — where the door opens automatically, recalling the Village. BFI qualifies any claim that London supplies an unequivocal final exterior.\n\nOccurrences: the embryo room week (#2); the masks and the own face (#2); the countdown and rescue (#2); the automatic door and closing drive (#2, returned at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pri-3-count",
+      "name": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+      "character": "The office gains continuity across replacement; the captive is denied authority over how his designation counts. 2→6 is the political counterfeit of the internally derived count.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2e2e2e",
+          "#6b6b6b",
+          "#b0413e",
+          "#e3ddd0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e347",
+          "name": "Number Two — an office through changes of bearer",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.41,
+            "z": 0
+          },
+          "size": {
+            "x": 0.156,
+            "y": 0.178
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "2",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st384",
+                "text": "2",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e348",
+          "name": "Number Six — a person held within an assigned position",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.27,
+            "z": 0
+          },
+          "size": {
+            "x": 0.184,
+            "y": 0.209
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "6",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st385",
+                "text": "6",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e349",
+          "name": "Number One — the withheld source of command",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": 0.15,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.34
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "1",
+          "share": 1,
+          "tint": "#b0413e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st386",
+                "text": "1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e350",
+          "name": "2+2²=6=4+2 — the count including the relation that generates it; the Village's speech-act keeps the power of assignment",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.5,
+            "z": 0
+          },
+          "size": {
+            "x": 0.6,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "4+2",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st387",
+                "text": "4+2",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · the political-count carrier; A02 copula; A13; C25; the Syn matheme comparison",
+          "title": "The asymmetric count: Two replaces, Six is assigned, One stays withheld",
+          "italic": "The scene requires all three numbered offices — and the mytheme is the appointed political counterfeit of the count: the office retains the power of assignment and gives the captive its result.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The same abstraction operates differently at the two ends. Number Two identifies an office through changes of bearer: access, command and institutional memory pass to the next administrator. Number Six identifies a person whom that office seeks to hold within an assigned position; the office gains continuity across replacement while the captive is denied authority over how his designation counts. The scene requires all three offices — One names the withheld source of command, Two exercises delegated authority, Six receives an answer that classifies him. A02 defines the difference",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "between identifying this participant and making a predicate exhaustive of him; A03 qualifies the demand to close the relation in one final determination — the institution's concealed information is not itself the Immutable Gap. The opening's movement from Two to Six compares with the native Syn matheme, whose 2+2²=6=4+2 retains two poles and their four ordered pairings, the count including the relation that generates it: in the Village's speech-act the office keeps the power of assignment and gives the captive its result. McGoohan and Markstein are not credited with QL notation.\n\nOccurrences: the replaceable Twos across the season (#0–#2, #3); the assigned Six (#0, #3); the withheld One (#2, #3); the title exchange (#0, #3).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-pri-5-return",
+      "name": "Return without inheriting the hidden throne",
+      "character": "Q27's political return: a counter-position must be able to return the field, rather than merely take possession of the office it opposed.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "blackOnWhite",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#f6f1e6",
+        "palette": [
+          "#2e2e2e",
+          "#6b6b6b",
+          "#b0413e",
+          "#e3ddd0"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e351",
+          "name": "the open road from the Village — escape with others, divergence after",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⇗",
+          "share": 1,
+          "tint": "#e3ddd0",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st388",
+                "text": "⇗",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e352",
+          "name": "the counting operation — who selected the number, who answers for the selection",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.136,
+            "y": 0.136
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⚖",
+          "share": 1,
+          "tint": "#b0413e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st389",
+                "text": "⚖",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e353",
+          "name": "M40/M46/M48 — the hidden evaluator; the contestable count; the answerable federation",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.36,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "M40",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st390",
+                "text": "M40",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e354",
+          "name": "A32 — the reply must be able to revise image, measure and institution",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "A32",
+          "share": 1,
+          "tint": "#6b6b6b",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st391",
+                "text": "A32",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · Q27 political return; A30/C42; C57; A32; M02, M20, M24, M26, M40, M46, M48",
+          "title": "Return without inheriting the hidden throne",
+          "italic": "The whole demonstrates the exact consequence: release must reach the office of measure as well as its current occupant — a larger shared account gains no exemption from the question asked of the smaller one.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Six leaves the Village with others; the last movement retains the Butler, Forty-Eight and the former Two alongside him, then follows their divergence. The familiar face beneath One's masks and the automatic door in London alter the sense of arrival without making every act of escape fictitious. Q27's political return grounds the consequence: a counter-position must be able to return the field rather than take possession of the office it opposed. A30/C42 define a shared world where actions change others' conditions with grounds remaining distinct — the Village as counter-image of shared conditions administered without reciprocity. C57 extends the",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "question to persistent artifacts, permissions and inherited accounts; A32 demands the reply be able to revise the image, its measure and the institution holding it. The whole returns-to M02 through subject and assigned predicate, M20 through a cut whose apparatus and authority stay visible, M40 through the hidden evaluator — repeating the subject's score reproduces Two's deflection — M46 with governed participants able to contest the counting operation, and M48 through a federation answerable to sources and consequence. Rover, the embryo room, Fifty-Eight and the rocket receive no symbolic equation to a native determination (human-amplified: no).\n\nOccurrences: the divergence of the escapees (#2, #5→0); the automatic door (#2, #5→0); the contested count (#0, #3, #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

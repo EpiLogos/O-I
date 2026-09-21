@@ -1,0 +1,16 @@
+import type { PublicModel, PublicSubject } from './publication-model.mjs';
+
+/** Public wording is bounded by this edition's native read model. Neither the
+ * suite recovery matrix nor a successful build is promoted to installed proof. */
+export function PublicationStanding({model,subject}:{model:PublicModel;subject?:PublicSubject}) {
+ const forms=subject?model.expressions(subject.resource.ref):[];
+ const hasText=subject?.readings.some(b=>b.portable_renderer!=='oi.presentation/reference-card/v1'&&Boolean(b.props.text||b.fallback.text));
+ const hasMetadata=Boolean(subject?.readings.length);
+ return <details className="publication-standing"><summary>What this edition enables — and what remains open</summary>
+ <h3>Available here</h3><p>{subject?(hasText?'This subject supplies published reading text.':hasMetadata?'This subject supplies reference metadata, not the complete source document.':'This subject has no disclosed text in this edition.'):`The native publisher supplies ${model.search().length} subjects across ${model.collections().length} collections in this edition. These counts describe what was received; they do not certify complete corpus coverage.`} Declared relationships and revisioned source downloads belong to those same subjects. The edition is fixed, not a live service.</p>
+ <h3>Required conditions</h3><p>Reading and exploring public material need no installation, developer checkout, local daemon, paid model key or Agent session. The Library needs JavaScript and access to this host; a saved standalone reading remains ordinary HTML. {!subject?'Interactive Expressions, where published, additionally need a working WebGL2 browser. Any rendering failure remains separate from the source reading.':forms.length?'An interactive Expression is offered for this subject. It additionally needs a working WebGL2 browser; opening it tests that renderer, and any failure is shown beside the reading.':'No interactive Expression has been supplied for this subject here.'}</p>
+ <h3>Known limits</h3><p>The graph view exposes published relations, not an undisclosed private neighbourhood. This browser adapter currently admits at most ten formations in one Expression Scene; larger scenes are explicitly unavailable, never truncated. No public Technè instrument or publisher Action is invented when its native browser contract is absent. A missing exact revision stays unavailable rather than opening a different one.</p>
+ <h3>Not established by this page</h3><p>Published content does not verify a person's installed suite, model/provider connection, microphone, audio route or native Mac interaction. Those require explicit checks on the chosen installation. Rendering a publication also does not establish its author's approval of every interpretation or the completeness of the wider essay, product or Bimba corpus.</p>
+ <h3>Onward development</h3><p>Further native publication can disclose complete reading bodies and richer Expressions, while permitted Technè and source portals deepen the same subjects without making another Wiki. Native setup and self-inhabiting agent work remain a separate, equally necessary outcome: meaningful continuity, living articulation, potency, transformation, situated existence and relation are not replaced by a public showcase.</p>
+ </details>;
+}

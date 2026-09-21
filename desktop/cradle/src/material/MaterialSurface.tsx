@@ -1,3 +1,4 @@
+import {readDraft} from "../workspace/drafts";
 import {useCallback,useEffect,useMemo,useRef,useState} from "react";
 import {Loading} from "../shared/Loading";
 import {useKernel} from "../kernel/KernelProvider";
@@ -5,7 +6,7 @@ import type {CentralLocation, KernelTransportStatus} from "../kernel/types";
 import type {SurfaceBinding} from "../surface/types";
 import {acquireFileReading,acquireFileBytes} from "../files/resources";
 import {FileSurface} from "../files/FileSurface";
-import type {MaterialFormat} from "./detect";
+import {materialCapabilities,type MaterialFormat} from "./detect";
 import {renderMarkdown} from "./markdown";
 import "./material.css";
 import pageContextScript from "../context/page-context.js?raw";
@@ -83,6 +84,8 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // over the person's own newer toggle after that.
   const [savedView] = useState(() => parseMaterialViewPrefs(localStorage.getItem(viewKey)));
   const [view, setView] = useState<MaterialView>(savedView.view ?? "rendered");
+  const [sourceVisited,setSourceVisited]=useState(view!=="rendered");
+  useEffect(()=>{if(view!=="rendered")setSourceVisited(true);},[view]);
   const { containerRef, suspended, observed } = useSuspensionDisclosure(view);
   // First-presentation latch: the acquisition below waits for it. The
   // viewport observation is asynchronous by one frame, so a surface cannot
@@ -109,6 +112,16 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   useEffect(() => { try { localStorage.setItem(viewKey, encodeMaterialViewPrefs({view, zoom})); } catch { /* Optional presentation state; never source authority. */ } }, [viewKey,view,zoom]);
   const [textContent, setTextContent] = useState<string>();
   const [textRevision, setTextRevision] = useState<string>();
+  const [draftContent,setDraftContent]=useState<string>();
+  const [draftBase,setDraftBase]=useState<string>();
+  useEffect(()=>{let timer:ReturnType<typeof setTimeout>|undefined;
+    const read=()=>{const draft=binding.ref?readDraft(binding.ref):undefined;setDraftContent(draft?.content);setDraftBase(draft?.base_revision);};
+    const change=(event:Event)=>{if((event as CustomEvent).detail?.ref!==binding.ref)return;clearTimeout(timer);timer=setTimeout(read,150);};read();
+    const acquired=(event:Event)=>{const detail=(event as CustomEvent).detail;if(detail?.ref!==binding.ref||typeof detail.reading?.content!=="string"||typeof detail.reading?.revision!=="string")return;setTextContent(detail.reading.content);setTextRevision(detail.reading.revision);read();};
+    window.addEventListener("oi:file-draft-changed",change);window.addEventListener("oi:file-reading-changed",acquired);return()=>{clearTimeout(timer);window.removeEventListener("oi:file-draft-changed",change);window.removeEventListener("oi:file-reading-changed",acquired);};
+  },[binding.ref]);
+  const previewSource=draftContent!==undefined&&draftBase===textRevision?draftContent:textContent;
+  const unsavedPreview=previewSource!==textContent;
   const [disposition, setDisposition] = useState<Disposition>();
   const [imageDataUrl, setImageDataUrl] = useState<string>();
   const [pdfFailedGeneration, setPdfFailedGeneration] = useState(-1);
@@ -123,8 +136,8 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // identity never flaps.
   const renderedBaseUrl = useMemo(() => (location ? materialUrl(transport, location) : undefined), [transport, location]);
   const bridgeBaseHref = useMemo(() => (location ? materialUrl(transport, location, "") ?? "" : ""), [transport, location]);
-  const bridgeHtmlDocument = useMemo(() => (format === "html" && textContent !== undefined ? injectBase(textContent, bridgeBaseHref) : ""), [format, textContent, bridgeBaseHref]);
-  const markdownHtmlDocument = useMemo(() => (format === "markdown" && textContent !== undefined ? markdownDocument(textContent, relative => location ? materialUrl(transport, location, relative) ?? "" : "") : ""), [format, textContent, transport, location]);
+  const bridgeHtmlDocument = useMemo(() => (format === "html" && previewSource !== undefined ? injectBase(previewSource, bridgeBaseHref) : ""), [format, previewSource, bridgeBaseHref]);
+  const markdownHtmlDocument = useMemo(() => (format === "markdown" && previewSource !== undefined ? markdownDocument(previewSource, relative => location ? materialUrl(transport, location, relative) ?? "" : "") : ""), [format, previewSource, transport, location]);
 
   useEffect(() => {
     let live = true;
@@ -167,9 +180,9 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
     return () => { live = false; };
   }, [transport, location, format, generation, beginLoad, observeLoad, everPresented]);
 
-  const showToggle = format === "html" || format === "markdown";
+  const showToggle = materialCapabilities(format).split;
   const zoomable = ["html","markdown","image"].includes(format);
-  const tools = view === "rendered" ? <div className="material-tools">
+  const tools = view !== "source" ? <div className="material-tools">
     {zoomable && <select aria-label="Preview zoom" value={zoom} onChange={e=>setZoom(Number(e.target.value))}>{MATERIAL_ZOOM_STEPS.map(value=><option key={value} value={value}>{Math.round(value*100)}%</option>)}</select>}
     <button type="button" aria-label="Reload preview" title="Reload from the file owner" disabled={busy} onClick={()=>setGeneration(value=>value+1)}><Glyph name="refresh" size={12}/></button>
   </div> : null;
@@ -199,13 +212,12 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
   // return once stood above the hooks: the first Source toggle crashed the
   // subtree on the hook mismatch and the error boundary remounted it
   // straight back into the rendered view — the toggle could never stick.)
-  if (view === "source") {
-    return <FileSurface binding={binding} forceSource leadingTools={<MaterialToggle view={view} onChange={setView}/>}/>;
-  }
-
-  return <EditorFrame className="material-surface" label={`Material ${binding.title}`}
+  return <div className="material-composition" data-view={view}>
+    {(sourceVisited||view!=="rendered")&&<div className="material-source-pane" hidden={view==="rendered"}><FileSurface binding={binding} forceSource leadingTools={<MaterialToggle view={view} onChange={setView}/>}/></div>}
+    <div className="material-preview-pane" hidden={view==="source"}>
+  <EditorFrame className="material-surface" label={`Material ${binding.title}`}
     toolbar={null} presentationTools={<>{showToggle&&<MaterialToggle view={view} onChange={setView}/>} {tools}</>}
-    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
+    footer={<><span className="editor-path" title={`Central / ${location.path}`}>Central / {location.path}</span><span>{FORMAT_LABEL[format]}{unsavedPreview?" · unsaved preview":""}</span>{zoomable&&<span>{Math.round(zoom*100)}%</span>}<EditorButton disabled={busy} onClick={()=>setGeneration(value=>value+1)}>Reload</EditorButton></>}
   >
     <div ref={containerRef} className="material-rendered-content" data-suspended={suspended || undefined} aria-busy={!showing && !loadError}>
     {loadError && <p role="alert" className="source-note">{loadError} <button type="button" onClick={()=>setGeneration(value=>value+1)}>Retry</button></p>}
@@ -218,13 +230,13 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
       // The source below is never a function of suspension: conceal keeps
       // this exact node and its stable revision-bound document; only
       // `key={generation}` — a committed replacement — ever remounts it.
-      transport.kind === "tauri"
+      transport.kind === "tauri" && !unsavedPreview
         ? <iframe ref={htmlFrame} onLoad={()=>markFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} src={baseUrl} />
         : <iframe ref={htmlFrame} onLoad={()=>markFrameLoaded(generation)} data-page-context data-file-revision={textRevision} data-generation={generation} className="material-frame" title={binding.title} sandbox="allow-scripts allow-forms allow-downloads" referrerPolicy="no-referrer" key={generation} srcDoc={bridgeHtmlDocument} />
     )}</div></div>}
     {!loadError&&showing&&personalPage&&textRevision&&!pageExpressionInvalidated&&<PageExpression page={personalPage} fileRevision={textRevision} pageRef={binding.ref??binding.id} onHostedState={receiveHostedState}/>}
     {!loadError && showing && format === "markdown" && <div className="material-viewport" data-preview-zoom={zoom}><div className="material-scaled" style={{width:`${100/zoom}%`,height:`${100/zoom}%`,transform:`scale(${zoom})`}}>
-      <iframe data-page-context key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={markdownHtmlDocument} />
+      <iframe data-page-context data-file-revision={textRevision} data-working-copy={unsavedPreview} key={generation} className="material-frame" title={binding.title} sandbox="allow-scripts" srcDoc={markdownHtmlDocument} />
     </div></div>}
     {!loadError && showing && format === "image" && (
       <div className="material-image-frame">
@@ -254,7 +266,7 @@ export function MaterialSurface({ binding, format }: { binding: SurfaceBinding; 
       </div>
     )}
     </div>
-  </EditorFrame>;
+  </EditorFrame></div></div>;
 }
 
 // Finding 17 (chrome grammar): one 35px row per material surface, matching
@@ -268,9 +280,10 @@ const FORMAT_LABEL: Record<MaterialFormat, string> = {
 // used to draw sat 35px below the tab strip's own olive underline as a
 // second, unrelated selection grammar. Reusing role=tab/aria-selected, the
 // pill body now carries the selection instead.
-function MaterialToggle({ view, onChange }: { view: "rendered" | "source"; onChange: (view: "rendered" | "source") => void }) {
-  return <div className="material-toggle" role="tablist" aria-label="Rendered or source view">
+function MaterialToggle({ view, onChange }: { view: MaterialView; onChange: (view: MaterialView) => void }) {
+  return <div className="material-toggle" role="tablist" aria-label="Document presentation">
     <button type="button" role="tab" aria-selected={view === "rendered"} onClick={() => onChange("rendered")}>Rendered</button>
+    <button type="button" role="tab" aria-selected={view === "split"} onClick={() => onChange("split")}>Split</button>
     <button type="button" role="tab" aria-selected={view === "source"} onClick={() => onChange("source")}>Source</button>
   </div>;
 }
@@ -323,6 +336,7 @@ body{margin:0;padding:16px 20px;font:${prose}/1.8 ${sans};color:${ink};backgroun
 h1,h2{margin:1.2em 0 .4em;line-height:1.3;font-size:${heading};font-weight:600;}
 h3,h4,h5,h6{margin:1.2em 0 .4em;line-height:1.3;font-size:${body};font-weight:600;}
 p{margin:.6em 0;}
+table{border-collapse:collapse;width:100%;}th,td{border:1px solid ${wash};padding:6px 8px;text-align:left;}blockquote{border-left:2px solid ${accent};margin:1em 0;padding-left:1em;}
 pre{background:${wash};padding:10px 12px;border-radius:4px;overflow:auto;}
 code{font-family:${mono};background:${wash};padding:.1em .3em;border-radius:3px;}
 pre code{background:none;padding:0;}

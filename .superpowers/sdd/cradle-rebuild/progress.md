@@ -1295,3 +1295,24 @@ projection-preservation assertions and sampler/camera containment pass;
 TypeScript and production build pass. Exact commands, visual evidence and
 limits are in `desktop/cradle/walk/artifacts/UI-COMPONENTS-CONTINUATION-2026-09-15.md`.
 Parent integration owns final mainline convergence and #65 retains human acceptance.
+
+
+### 2026-09-20 — Canvas editor/context implementation continuation
+
+Base O:I a222c8b; branch agent/canvas-editor-context-20260920. Scope and original-unit mappings: .wayfinder/maps/canvas-editor-context.md. Existing ContextTray is the mount, ContextPlane is the receiving surface. No CradleFrame, workspace store, shared tokens or Agent chat rewrite.
+
+| Recovered gap | Returned implementation | Standing |
+|---|---|---|
+| Text-only commands and limited format controls | shared icon/keyboard commands, exact Markdown edits, language/wrap/fold/navigation and source/rendered/split | code; 19 deterministic contracts pass |
+| Global picker mode and distribution modal | normal selection action, explicit component picker, compact prepared rows, view-only retained cues | code; interactive CI pending |
+| Quote-only attachment identity | native AIKit prepared snapshots, UTF-16 ranges, real parser/AST/renderer, CAS and session/project isolation | AIKit 5b896d7; 12 native regressions and CLI check pass |
+| Context omitted or stale at send | same conversation send revalidates native digest and exact source/observation, explicit captured-snapshot review, native legacy-call refusal | native deterministic proof; joined browser CI pending |
+
+Full TypeScript and Vite production build pass in the source sandbox; nine existing material-lifecycle tests also pass (28 total JS contracts). Browser navigation in this container is blocked by environment policy; no bypass was attempted and a blank/error capture is not UX evidence. GitHub-hosted controlled browser proof is the next receiving check. Owner machines, installed providers and H acceptance remain untouched. Root-Central/no-Project dispatch, installed Tauri browser/window/Flow-Day export and real provider/Return acceptance are not claimed closed by this increment.
+
+
+### 2026-09-20 — Canvas continuation: executed native and browser proof
+
+Tested O:I `b78a5684d3149774fcff188652b19dd571b11c9e`, reconciled with main `112bdd0`; native AIKit `0ff20e936a3baaa4fe39f655891985a94bd07535`. PRs O:I #441 / AIKit #363. This supersedes the earlier browser-pending row: 31 JS contracts, 35 controlled production-component checks, 12 native SQLite/Vak/CAS/dispatch regressions, types and production build pass. Current kernel: 95 passed / 51 existing environment-gated ignores. Existing experience-source/compiler checks and all eight ordinary AIKit PR jobs pass. Exact receipt: `desktop/cradle/walk/artifacts/CANVAS-EDITOR-CONTEXT-2026-09-20.md`; run 35525292013.
+
+Existing Context panel is primary, no ordinary selection modal. Scope-switch races and stale reads are refused; rich Flow entries/notes/Journal recovered without importing the donor's old context path. Native producer precedes consumer. Installed provider/Return, physical browser/window/Day and human acceptance remain open; no owner machine or main branch changed.

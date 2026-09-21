@@ -1,145 +1,51 @@
-/**
- * A small, dependency-free Markdown → HTML converter for the FND-04
- * Markdown rendered view. Not CommonMark-complete: headings, paragraphs,
- * fenced code, unordered/ordered lists, emphasis, links and images.
- * Everything else is escaped, never interpreted as raw HTML — the
- * rendered view has no ambient trust beyond what this converter
- * recognises. Images and relative links are resolved through
- * `resolveAsset` (the material route), never left as bare relative
- * paths the iframe's opaque origin could not otherwise reach.
- */
-export interface MarkdownOptions {
-  /** Resolve a relative asset/link path to a fetchable material URL. */
-  resolveAsset: (path: string) => string;
-}
-
-function escapeHtml(text: string): string {
-  return text
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/"/g, "&quot;");
-}
-
-function isAbsoluteUrl(target: string): boolean {
-  return /^[a-z][a-z0-9+.-]*:/i.test(target) || target.startsWith("//");
-}
-
-// A resolved material URL is arbitrary owner-controlled text (a temp/user
-// directory name, say) and can contain "_" or "*" -- the exact characters
-// the emphasis passes below key on. Splicing an already-built <img>/<a>
-// tag into the working text before those passes run would let a URL's own
-// underscores be misread as emphasis markers, corrupting the tag -- and,
-// for src/href, corrupting the resolved material reference itself (this
-// broke real image loading before code/img/link output was protected: a
-// temp path containing a single "_" paired across two JSON fields of the
-// same encoded location was enough to wrap most of the URL in `<em>`).
-// So every already-rendered fragment (code spans, images, links) is pulled
-// out behind a numeric placeholder first and spliced back in only after
-// emphasis processing is done, mirroring how CommonMark implementations
-// protect inline code and raw HTML from further inline parsing.
-function renderInline(raw: string, resolveAsset: (path: string) => string): string {
-  const escaped = escapeHtml(raw);
-  const protectedSpans: string[] = [];
-  const protect = (html: string): string => {
-    protectedSpans.push(html);
-    return " " + (protectedSpans.length - 1) + " ";
-  };
-  let text = escaped.replace(/`([^`]+)`/g, (_match, code: string) => protect("<code>" + code + "</code>"));
-  text = text.replace(/!\[([^\]]*)\]\(([^)\s]+)\)/g, (_match, alt: string, src: string) => {
-    const resolved = isAbsoluteUrl(src) ? src : resolveAsset(src);
-    return protect(`<img alt="${alt}" src="${resolved}">`);
-  });
-  text = text.replace(/\[([^\]]*)\]\(([^)\s]+)\)/g, (_match, label: string, href: string) => {
-    const resolved = isAbsoluteUrl(href) ? href : resolveAsset(href);
-    return protect(`<a href="${resolved}" rel="noreferrer noopener">${label}</a>`);
-  });
-  text = text.replace(/\*\*([^*]+)\*\*|__([^_]+)__/g, (_match, a?: string, b?: string) => `<strong>${a ?? b}</strong>`);
-  text = text.replace(/\*([^*]+)\*|_([^_]+)_/g, (_match, a?: string, b?: string) => `<em>${a ?? b}</em>`);
-  text = text.replace(/ (\d+) /g, (_match, index: string) => protectedSpans[Number(index)]);
-  return text;
-}
-
-export function renderMarkdown(source: string, options: MarkdownOptions): string {
-  const lines = source.replace(/\r\n/g, "\n").split("\n");
-  const blocks: string[] = [];
-  let paragraph: string[] = [];
-  let list: { ordered: boolean; items: string[] } | null = null;
-
-  const flushParagraph = () => {
-    if (paragraph.length) {
-      blocks.push(`<p>${renderInline(paragraph.join(" "), options.resolveAsset)}</p>`);
-      paragraph = [];
-    }
-  };
-  const flushList = () => {
-    if (list) {
-      const tag = list.ordered ? "ol" : "ul";
-      const items = list.items.map(item => `<li>${renderInline(item, options.resolveAsset)}</li>`).join("");
-      blocks.push(`<${tag}>${items}</${tag}>`);
-      list = null;
-    }
-  };
-
-  let index = 0;
-  while (index < lines.length) {
-    const line = lines[index];
-    const heading = /^(#{1,6})\s+(.*)$/.exec(line);
-    const fence = /^```/.exec(line);
-    const unordered = /^[-*+]\s+(.*)$/.exec(line);
-    const ordered = /^\d+\.\s+(.*)$/.exec(line);
-
-    if (fence) {
-      flushParagraph();
-      flushList();
-      const codeLines: string[] = [];
-      index++;
-      while (index < lines.length && !/^```/.test(lines[index])) {
-        codeLines.push(lines[index]);
-        index++;
-      }
-      index++; // skip the closing fence (or end of input)
-      blocks.push(`<pre><code>${escapeHtml(codeLines.join("\n"))}</code></pre>`);
-      continue;
-    }
-    if (heading) {
-      flushParagraph();
-      flushList();
-      const level = heading[1].length;
-      blocks.push(`<h${level}>${renderInline(heading[2], options.resolveAsset)}</h${level}>`);
-      index++;
-      continue;
-    }
-    if (unordered) {
-      flushParagraph();
-      if (!list || list.ordered) {
-        flushList();
-        list = { ordered: false, items: [] };
-      }
-      list.items.push(unordered[1]);
-      index++;
-      continue;
-    }
-    if (ordered) {
-      flushParagraph();
-      if (!list || !list.ordered) {
-        flushList();
-        list = { ordered: true, items: [] };
-      }
-      list.items.push(ordered[1]);
-      index++;
-      continue;
-    }
-    if (line.trim() === "") {
-      flushParagraph();
-      flushList();
-      index++;
-      continue;
-    }
-    paragraph.push(line.trim());
-    index++;
+import {parser,GFM} from "@lezer/markdown";
+import type {SyntaxNode} from "@lezer/common";
+/** GFM preview over the same parser family as CodeMirror. Raw HTML is escaped;
+ * rendering never rewrites the Markdown source. Literal runs carry exact UTF-16
+ * source offsets; non-contiguous formatted selection stays a page observation. */
+export interface MarkdownOptions {resolveAsset:(path:string)=>string}
+const markdownParser=parser.configure(GFM);
+function escape(text:string){return text.replace(/&/g,"&amp;").replace(/</g,"&lt;").replace(/>/g,"&gt;").replace(/"/g,"&quot;");}
+export function renderMarkdown(source:string,options:MarkdownOptions):string{
+ const span=(from:number,to:number)=>to<=from?"":`<span data-source-start="${from}" data-source-end="${to}">${escape(source.slice(from,to))}</span>`;
+ const children=(node:SyntaxNode)=>{const list:SyntaxNode[]=[];for(let c=node.firstChild;c;c=c.nextSibling)list.push(c);return list;};
+ const raw=(node:SyntaxNode)=>source.slice(node.from,node.to);
+ const url=(target:string)=>{const t=target.replace(/^<|>$/g,"").trim();if(/^(?:https?:|mailto:|#)/i.test(t))return escape(t);if(/^[a-z][a-z0-9+.-]*:/i.test(t)||t.startsWith('//')||/[\u0000-\u001f]/.test(t))return "";const result=options.resolveAsset(t);return /^(?:javascript|vbscript|data):/i.test(result.trim())?"":escape(result);};
+ const inline=(node:SyntaxNode,from=node.from,to=node.to):string=>{
+  let out="",cursor=from;
+  for(const child of children(node)){if(child.to<=from||child.from>=to)continue;out+=span(cursor,child.from);out+=render(child);cursor=child.to;}
+  return out+span(cursor,to);
+ };
+ const body=(node:SyntaxNode)=>children(node).map(render).join("");
+ const render=(node:SyntaxNode):string=>{
+  const name=node.name,cs=children(node);
+  if(name==="Document")return body(node);
+  if(name==="Paragraph")return `<p>${inline(node)}</p>`;
+  if(/^ATXHeading[1-6]$/.test(name)){const level=name.slice(-1),mark=cs.find(c=>c.name==="HeaderMark");let start=mark?.to??node.from;while(source[start]===" ")start++;const last=cs[cs.length-1];const end=last?.name==="HeaderMark"&&last!==mark?last.from:node.to;return `<h${level}>${inline(node,start,end)}</h${level}>`;}
+  if(/^SetextHeading/.test(name)){const mark=cs.find(c=>c.name==="HeaderMark");return `<h${name.slice(-1)}>${inline(node,node.from,mark?.from??node.to)}</h${name.slice(-1)}>`;}
+  if(["StrongEmphasis","Emphasis","Strikethrough","InlineCode"].includes(name)){const tag=name==="StrongEmphasis"?"strong":name==="Emphasis"?"em":name==="Strikethrough"?"del":"code";const start=cs[0]?.to??node.from,end=cs[cs.length-1]?.from??node.to;return `<${tag}>${inline(node,start,end)}</${tag}>`;}
+  if(name==="Link"||name==="Image"){
+   const target=cs.find(c=>c.name==="URL");const closing=cs.find(c=>c.name==="LinkMark"&&raw(c)==="]");
+   if(!target||!closing)return span(node.from,node.to);
+   const start=cs[0]?.to??node.from;const href=url(raw(target));
+   if(name==="Image")return href?`<img alt="${escape(source.slice(start,closing.from))}" src="${href}" loading="lazy" referrerpolicy="no-referrer">`:span(node.from,node.to);
+   return href?`<a href="${href}" rel="noreferrer noopener">${inline(node,start,closing.from)}</a>`:inline(node,start,closing.from);
   }
-  flushParagraph();
-  flushList();
-  return blocks.join("\n");
+  if(name==="Autolink"){const target=raw(node).replace(/^<|>$/g,"");const href=url(target);return href?`<a href="${href}" rel="noreferrer noopener">${escape(target)}</a>`:span(node.from,node.to);}
+  if(name==="Blockquote")return `<blockquote>${body(node)}</blockquote>`;
+  if(name==="BulletList")return `<ul>${body(node)}</ul>`;
+  if(name==="OrderedList"){const start=/^\d+/.exec(raw(node))?.[0]??"1";return `<ol start="${start}">${body(node)}</ol>`;}
+  if(name==="ListItem")return `<li>${body(node)}</li>`;
+  if(name==="Task"){const marker=cs.find(c=>c.name==="TaskMarker");return `<p><input type="checkbox" disabled aria-label="Task status"${marker&&/x/i.test(raw(marker))?" checked":""}> ${inline(node,marker?.to??node.from)}</p>`;}
+  if(name==="FencedCode"||name==="CodeBlock"){const code=cs.filter(c=>c.name==="CodeText");return `<pre><code>${code.length?span(code[0].from,code[code.length-1].to):""}</code></pre>`;}
+  if(name==="Table")return `<table>${body(node)}</table>`;
+  if(name==="TableHeader")return `<thead><tr>${cs.filter(c=>c.name==="TableCell").map(c=>`<th>${inline(c)}</th>`).join("")}</tr></thead>`;
+  if(name==="TableRow")return `<tr>${cs.filter(c=>c.name==="TableCell").map(c=>`<td>${inline(c)}</td>`).join("")}</tr>`;
+  if(name==="HorizontalRule")return "<hr>";
+  if(name==="HardBreak")return "<br>";
+  if(["EmphasisMark","CodeMark","QuoteMark","ListMark","HeaderMark","LinkMark","TaskMarker","TableDelimiter","CodeInfo"].includes(name))return "";
+  // HTML, declarations, unknown dialect extensions remain literal text.
+  return span(node.from,node.to);
+ };
+ return render(markdownParser.parse(source).topNode);
 }

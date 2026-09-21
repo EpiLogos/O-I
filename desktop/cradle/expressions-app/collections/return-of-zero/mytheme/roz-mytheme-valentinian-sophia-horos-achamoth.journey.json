@@ -1,0 +1,1667 @@
+{
+  "schema": "oi.journey",
+  "version": 1,
+  "id": "roz-mytheme-valentinian-sophia-horos-achamoth",
+  "name": "Valentinian Sophia, Horos, Achamoth and Soter",
+  "description": "The reported whole in sequence: the Ogdoad's conjunctions, Sophia's solitary reach and Horos's restoring limit, the collective Soter, Achamoth's two formations, the Demiurge who does not know his mother, and the bridal return with what remains outside.",
+  "loop": true,
+  "scenes": [
+    {
+      "id": "m-val-0-ogdoad",
+      "name": "The fullness in conjunction",
+      "character": "Bythus and Sige; Nous and Aletheia; Logos and Zoe; Anthropos and Ecclesia — thirty Aeons in fifteen syzygies, with a shared longing none of them fully knows.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e578",
+          "name": "the Ogdoad — the four primary conjunctions",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.31,
+            "z": 0
+          },
+          "size": {
+            "x": 0.783,
+            "y": 0.575
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st624",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e579",
+          "name": "the Decad and Duodecad — two branches of further generation",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "10·12",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st625",
+                "text": "10·12",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e580",
+          "name": "Sophia — youngest of the Duodecad, joined to Theletos",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.52,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Sophia",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st626",
+                "text": "Sophia",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e581",
+          "name": "Nous alone comprehends the Father; the rest long and are restrained",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.2,
+            "y": 0.2
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⊙",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st627",
+                "text": "⊙",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#0 · Irenaeus, Against Heresies I.1.1–I.2.1 (Roberts–Rambaut; hostile testimony, named as such)",
+          "title": "The fullness in conjunction",
+          "italic": "The opening demonstrates a world articulated through conjunction: generation gives the fullness order and plurality without distributing the Father's knowledge equally.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "At the beginning stands Bythus, the Depth, with Ennoea/Charis/Sige. After immeasurable stillness he deposits the intended emanation in Sige; she conceives Nous — the Mind capable of comprehending the Father — together with Aletheia. These four constitute the first Tetrad; Nous and Aletheia produce Logos and Zoe; Logos and Zoe produce Anthropos and Ecclesia — the primary Ogdoad. Further generation proceeds through two branches, a Decad from Logos and Zoe and a Duodecad from Anthropos and Ecclesia:",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "thirty Aeons in fifteen conjunctions, their names attached to their positions, some repeated across levels without identity. Nous alone comprehends the Father; he wishes to communicate the greatness, but Sige restrains him by the Father's will. The desire to behold the producer of its seed precedes Sophia's crisis: the youngest of the Duodecad presses that desire beyond the measure sustained by her conjunction. Irenaeus's accusations and rebuttals remain identifiable voices within the transmission.\n\nOccurrences: the fifteen syzygies (#0); the repeated names kept distinct (#0, #2); the shared longing (#0, breaking out at #1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-val-1-horos",
+      "name": "Sophia reaches; Horos restores",
+      "character": "She strains into the Father's depth and nears dissolution; Horos supports and restrains; purified, she returns to conjunction — while her enthymesis, carrying its passion, is excluded.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e582",
+          "name": "Sophia's solitary reach — apart from Theletos, nearing dissolution in the Father's sweetness",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.307,
+            "y": 0.099
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Sophia",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st628",
+                "text": "Sophia",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e583",
+          "name": "Horos / Stauros — the same power establishing and dividing",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.23,
+            "z": 0
+          },
+          "size": {
+            "x": 0.506,
+            "y": 0.398
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1.5,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st629",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e584",
+          "name": "the enthymesis — the intention excluded with its passion; later called Achamoth",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.32,
+            "y": 0.32
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st630",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e585",
+          "name": "the amorphous-birth variant — a second articulation, not silently merged",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.34,
+            "y": 0.28
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.45,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st631",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#1 · I.2.2–I.2.4 and I.3.5",
+          "title": "Sophia reaches; Horos restores",
+          "italic": "The limit demonstrates its double function: it protects a differentiated fullness, and the life placed outside persists — restoration and expulsion are two consequences of one separating act.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Sophia seeks to comprehend the Father apart from Theletos. The passion is a reaching towards what exceeds her capacity: she strains into his depth and comes close to dissolution in his sweetness. Horos supports and restrains; through that encounter she returns to herself, recognises the Father's incomprehensibility and relinquishes the intention — her survival depends on a limit that can sustain what it bounds. Irenaeus immediately reports a variant: Sophia attempts the impossible without her consort and brings forth an amorphous substance, grieving and fearing — the two",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "articulations remain distinguishable. The Father produces Horos through Monogenes, without a consort and in his own image; named also Stauros, Lytrotes, Carpistes, Horothetes, Metagoges, he separates Sophia's enthymesis from Sophia herself. Purified, she remains within the Pleroma and returns to her conjunction; her enthymesis, carrying its passion, is excluded — later called Achamoth, and the naming must not send the restored upper Sophia into exile a second time. At I.3.5 Stauros names the sustaining function and Horos the separating: the same power establishes and divides.\n\nOccurrences: the solitary reach and near-dissolution (#1, #5→0's founding comparison); Horos's two functions (#1); the excluded enthymesis (#1, becoming #3's Achamoth); the variant kept distinct (#1).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-val-2-soter",
+      "name": "Teaching, thanksgiving, and the common fruit",
+      "character": "Christ teaches the conjunctions and the Father's incomprehensibility; the Aeons rest, give thanks, and each contributes what is most beautiful — together producing the Soter.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e586",
+          "name": "the earlier Christ — produced by Monogenes and Aletheia; teacher of the Aeons",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.12,
+            "z": 0
+          },
+          "size": {
+            "x": 0.221,
+            "y": 0.27
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 0.6,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st632",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e587",
+          "name": "the Holy Spirit — bringing thanksgiving and rest",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.135,
+            "y": 0.135
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "☮",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st633",
+                "text": "☮",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e588",
+          "name": "the contributions — each Aeon's most beautiful, composing one common fruit",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": 0.25,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "⁂",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st634",
+                "text": "⁂",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e589",
+          "name": "the Soter — Jesus, Saviour, called also Christ, Logos and Everything because he comes from all",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.4,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Soter",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st635",
+                "text": "Soter",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#2 · I.2.5–I.2.6; I.3.1's qualifying distinction",
+          "title": "Teaching, thanksgiving, and the common fruit",
+          "italic": "The sequence demonstrates the fullness's answer: what Sophia attempted through solitary extension becomes something the fullness learns together — and produces together.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "The Pleroma responds to Sophia's crisis with a new conjunction: by the Father's providence Monogenes produces Christ and the Holy Spirit so the Aeons will not suffer a similar passion. Christ teaches the nature of their conjunctions and the Father's incomprehensibility: what Sophia tried to overcome through solitary extension becomes something the fullness learns together. The Holy Spirit brings the Aeons to thanksgiving and rest; their forms become equal in the account's language; they cease private",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "striving and share joy. From that common state each contributes what is most beautiful and excellent in itself; the Father approves, Christ and the Spirit concur, and the contributions compose Jesus, the Saviour — also called Christ, Logos and Everything because he comes from all — with angels produced alongside. The earlier Christ and the collective Soter stay distinct even where the name is shared: the first teaches and will give Achamoth initial form; the Soter, the common fruit, will complete another formation.\n\nOccurrences: the teaching and rest (#2); the contributed beauty composing the Soter (#2, #5→0's bridal return); the two named Christs distinguished (#2, #3–#4).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-val-3-achamoth",
+      "name": "Achamoth receives form twice",
+      "character": "Formed according to substance, then according to intelligence; tears, smile and grief become substrates; conversion generates the psychic; the angels' likeness the spiritual seed.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e590",
+          "name": "Achamoth in darkness and vacuity — formless, like an untimely birth",
+          "kind": "formation",
+          "position": {
+            "x": -0.45,
+            "y": -0.17,
+            "z": 0
+          },
+          "size": {
+            "x": 0.246,
+            "y": 0.246
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st636",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e591",
+          "name": "the first formation — according to substance; the odour of immortality left behind",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.36
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st637",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e592",
+          "name": "the affects becoming cosmos — tears→liquid, smile→lucid, grief/perplexity→corporeal; the second account: fear→psychic, grief→wicked spirits",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.15,
+            "z": 0
+          },
+          "size": {
+            "x": 0.5,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "≈⚰",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st638",
+                "text": "≈⚰",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e593",
+          "name": "the second formation — the Soter strengthening her; passions separated into substrates; spiritual seed conceived in the angels' likeness",
+          "kind": "formation",
+          "position": {
+            "x": 0.5,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Soter",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st639",
+                "text": "Soter",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e594",
+          "name": "Horos stops her crossing back — her cry of Iao",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.42,
+            "z": 0
+          },
+          "size": {
+            "x": 0.3,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st640",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#3 · I.4.1–I.4.5; the translation's tension retained, neither wording rewritten",
+          "title": "Achamoth receives form twice",
+          "italic": "The double formation demonstrates the passage from exclusion to the conditions of a world: sorrow does not exhaust her condition, because the memory of light can still make her smile.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Outside the Pleroma the expelled enthymesis exists in darkness and vacuity, without form, like an untimely birth: this is Achamoth, the lower Sophia. The earlier Christ extends beyond Stauros and gives her form according to substance, then withdraws his power, leaving an odour of immortality. Achamoth seeks the departing light; Horos stops her attempt to cross back; her cry of Iao enters as that name's explanation. Desire persists; grief follows her failure; fear the prospect that life will leave her; perplexity accompanies both — and she turns towards the one who gave her life. The selected translation contains a tension between substantial formation and later intelligence; both wordings are retained. Her affects acquire cosmic consequence: in the",
+          "x": 0.04,
+          "y": 0.42,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "first account tears give liquid substance, the remembered light's smile gives the lucid, grief and perplexity yield corporeal existence; her conversion generates the psychic order including the Demiurge. Irenaeus's sweat proposal for the non-salty waters is his own satire, kept as a change of speaker. Achamoth petitions the withdrawn Christ; he sends the Paraclete — the collective Soter — with his angels. She veils herself before their splendour, receives strength, and meets his coming: he forms her according to intelligence and heals her passions, separating and consolidating them into substrates — passion supplying material substance, conversion psychic. Freed, she looks upon the Soter's angels and conceives spiritual offspring in their likeness.\n\nOccurrences: the two formations (#3); the two affect-to-cosmos accounts (#3, #4's second table); the spiritual seed (#3, returning at #5→0); the retained translation tension (#3).",
+          "x": 0.545,
+          "y": 0.42,
+          "width": 570,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-val-4-demiurge",
+      "name": "A maker who does not know his mother",
+      "character": "Achamoth forms the psychic Demiurge; through her, hidden, he makes the images of higher realities, seven heavens and the elements; his declaration \"no other God\" expresses his ignorance of what exceeds him.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e595",
+          "name": "Achamoth — moving him without making herself known",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.26,
+            "z": 0
+          },
+          "size": {
+            "x": 0.178,
+            "y": 0.178
+          },
+          "rotation": 0,
+          "shape": "disc",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.7,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st641",
+                "text": "",
+                "shape": "disc",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e596",
+          "name": "the Demiurge — ordering the substances, ruling the Hebdomas",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": 0.3,
+            "z": 0
+          },
+          "size": {
+            "x": 0.62,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "Demiurge",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st642",
+                "text": "Demiurge",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e597",
+          "name": "the seven heavens; Achamoth's Ogdoad dwelling above him, below the Pleroma",
+          "kind": "formation",
+          "position": {
+            "x": 0.45,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "7·8",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st643",
+                "text": "7·8",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e598",
+          "name": "the second affect table — earth: stupor, water: fear, air: grief, fire inherent in the three",
+          "kind": "formation",
+          "position": {
+            "x": -0.5,
+            "y": -0.38,
+            "z": 0
+          },
+          "size": {
+            "x": 0.44,
+            "y": 0.36
+          },
+          "rotation": 0,
+          "shape": "square",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st644",
+                "text": "",
+                "shape": "square",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e599",
+          "name": "the human — earth, psychic breath, skins; the spiritual seed placed within the Demiurge unknowingly",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": 0.02,
+            "z": 0
+          },
+          "size": {
+            "x": 0.16,
+            "y": 0.16
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "◉",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st645",
+                "text": "◉",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#4 · I.5.1–I.5.6; I.6's reported distinctions under Irenaeus's polemic; I.7.2's \"some\"",
+          "title": "A maker who does not know his mother",
+          "italic": "The Demiurge demonstrates effective but derivative agency: his ordering power is real within its world while he cannot give an account of its source — and disclosure later changes his self-understanding without abolishing his work.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Achamoth now stands related to three kinds: material from passion, psychic from conversion, spiritual offspring in the angels' likeness. Under the Soter's instruction she forms the psychic Demiurge; through him she begins to make the images of higher realities — she bears an image of the invisible Father, he of Nous, the angelic order of the Aeons — her agency hidden from the maker she produces. The Demiurge separates and orders the substances, making corporeal things from incorporeal and fashioning seven heavens; he becomes their ruler, the Hebdomas. Achamoth's dwelling lies above him, below the Pleroma — an intermediate Ogdoad distinct from the primary eight. He imagines he has made everything",
+          "x": 0.04,
+          "y": 0.47,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "through his own agency; his declaration that there is no other God expresses his ignorance of what exceeds him. A second account differentiates the passions: fear into psychic beings, grief into wicked spirits and the Cosmocrator; earth from stupor, water from fear's movement, air from grief, fire inherent in the three as ignorance in the passions. The Demiurge forms an earthly human, breathes the psychic principle, clothes it with skins; Achamoth secretly places spiritual seed within him, to pass into the human soul and grow. The three kinds receive different destinies; Irenaeus's licentiousness allegations remain his polemic; the \"some\" of I.7.2 keep their fourfold Christology as a marked variant.\n\nOccurrences: the hidden maternal agency (#4, returned at #5→0's education); the seven heavens and intermediate Ogdoad (#4); the two affect accounts (#3, #4); the seed placed unknowingly (#4, maturing at #5→0).",
+          "x": 0.6,
+          "y": 0.47,
+          "width": 505,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    },
+    {
+      "id": "m-val-5-return",
+      "name": "Bridal return and what remains outside",
+      "character": "Achamoth enters the Pleroma as bride; the spiritual become brides of the angels; the Demiurge restored to the intermediate place; fire consumes matter and itself. The founding comparison stays Offered.",
+      "duration": 12,
+      "transition": 1.5,
+      "view": {
+        "mode": "2d",
+        "yaw": 0,
+        "pitch": 0,
+        "zoom": 1,
+        "panX": 0,
+        "panY": 0
+      },
+      "engine": {
+        "inkMode": "whiteOnBlack",
+        "backgroundMode": "solid",
+        "autoFitSizes": false
+      },
+      "field": {
+        "background": "#191631",
+        "palette": [
+          "#efe9d6",
+          "#232135",
+          "#5a4a8a",
+          "#c9a227"
+        ],
+        "material": "round",
+        "params": {}
+      },
+      "entities": [
+        {
+          "id": "e600",
+          "name": "the bridal chamber — Achamoth joined to the Soter; the spiritual to the angels",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.576,
+            "y": 0.444
+          },
+          "rotation": 0,
+          "shape": "ring",
+          "text": "",
+          "share": 1,
+          "tint": "#c9a227",
+          "tintWeight": 0.55,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st646",
+                "text": "",
+                "shape": "ring",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e601",
+          "name": "the Demiurge's reward — the intermediate dwelling; righteous psychic souls resting, not entering",
+          "kind": "formation",
+          "position": {
+            "x": 0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.3
+          },
+          "rotation": 0,
+          "shape": "triangle",
+          "text": "",
+          "share": 1,
+          "tint": "#5a4a8a",
+          "tintWeight": 0.5,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st647",
+                "text": "",
+                "shape": "triangle",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e602",
+          "name": "fire consuming matter and finally itself",
+          "kind": "formation",
+          "position": {
+            "x": -0.55,
+            "y": -0.35,
+            "z": 0
+          },
+          "size": {
+            "x": 0.24,
+            "y": 0.24
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "🔥",
+          "share": 1,
+          "tint": "#8c3b2e",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st648",
+                "text": "🔥",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        },
+        {
+          "id": "e603",
+          "name": "the founding comparison — Offered; human-amplified: no: Sophia's reach, Horos's limit, the common fruit beside 0/1→4+2",
+          "kind": "formation",
+          "position": {
+            "x": 0,
+            "y": -0.45,
+            "z": 0
+          },
+          "size": {
+            "x": 0.4,
+            "y": 0.14
+          },
+          "rotation": 0,
+          "shape": "text",
+          "text": "0/1",
+          "share": 1,
+          "tint": "#efe9d6",
+          "tintWeight": 1,
+          "locked": false,
+          "force": {
+            "kind": "none",
+            "strength": 0,
+            "radius": 0.45,
+            "spin": 0
+          },
+          "station": null,
+          "sequence": {
+            "enabled": false,
+            "clock": "seconds",
+            "steps": [
+              {
+                "id": "st649",
+                "text": "0/1",
+                "shape": "text",
+                "hold": 3,
+                "transition": 1,
+                "position": null
+              }
+            ]
+          }
+        }
+      ],
+      "text": [
+        {
+          "id": "title",
+          "visible": true,
+          "kicker": "#5→0 · I.7.1, I.7.5; the variants of I.11–I.12, I.15, I.17, I.21; A13 and A19 as Offered returns",
+          "title": "Bridal return and what remains outside",
+          "italic": "The ending changes how the boundary is understood: Horos's exclusion did not make the lower passion inert — beyond the limit Achamoth received form, generated seed and mediated a cosmos; the restoration does not carry every product to one destination.",
+          "body": "",
+          "x": 0.04,
+          "y": 0.05,
+          "width": 560,
+          "size": 30,
+          "align": "left"
+        },
+        {
+          "id": "body1",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "Consummation waits upon the formation of the spiritual seed. When it has reached perfection, Achamoth leaves her intermediate dwelling and enters the Pleroma, joining the Soter as bride to bridegroom; the spiritual people become brides of the angels accompanying the Soter — the generation occasioned by her sight of those angels reaching its union. Other beings receive other destinations: the Demiurge into the intermediate dwelling; righteous psychic souls resting there, not entering; fire, hidden until its moment, consuming matter and finally itself. The reported school reads the movements back through Scripture — lost sheep, lost coin, bridal language — while Irenaeus",
+          "x": 0.04,
+          "y": 0.42,
+          "width": 620,
+          "size": 14,
+          "align": "left",
+          "w": 520
+        },
+        {
+          "id": "body2",
+          "visible": true,
+          "kicker": "",
+          "title": "",
+          "italic": "",
+          "body": "contests the handling (the royal-mosaic image is his own refutation). Variants keep the telling situated — two Horoi, Secundus's tetrads, the Marcosian arithmetic — none added as episodes of the main story. The founding comparison remains Offered: Sophia's solitary reach as a claim acting without its partner; Horos's separation as recovered distinction; the Aeons' contribution as a throwing-together enabling another formation; the native 0/1→4+2 comparison asks whether the formed four can disclose the two implicated conditions. A13 keeps separation from being made every act a fall; A19 receives the Demiurge's education from hidden dependence through disclosure to a resituated office.\n\nDeclared cross-story: distinct from the Hypostasis of the Archons whole — no historical identity across the shared Sophia name. ↳ Occurrences: the bridal union and the differentiated destinations (#5→0); the Demiurge's learning (#4, #5→0); the retained variants (#5→0).",
+          "x": 0.545,
+          "y": 0.42,
+          "width": 570,
+          "size": 14,
+          "align": "left"
+        }
+      ],
+      "composition": {
+        "layout": "free",
+        "plane": "XY",
+        "focus": "parallel",
+        "focusDuration": 4,
+        "carryTint": true,
+        "carryStation": false,
+        "frequencyDriver": "manual"
+      },
+      "morph": {
+        "thetaRate": 0.06,
+        "phiRate": 0.1,
+        "thetaOffset": 0,
+        "phiOffset": 0,
+        "law": "theta",
+        "depth": 1,
+        "dwell": 0.3
+      },
+      "automation": []
+    }
+  ],
+  "updatedAt": "2026-09-17T00:00:00.000Z"
+}

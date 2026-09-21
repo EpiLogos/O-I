@@ -592,7 +592,7 @@ function WikiSubjectPanel({document, workspaceSubjectRef, onOpenKnowledge, onOpe
       </section>
       <section className="wx-subject-section" aria-label="Shared staging">
         <span className="oi-eyebrow">Shared staging</span>
-        <p className="oi-note" data-unavailable="shared-field">Audience-filtered SharedField staging is not admitted in this cut (#366 EX3A6) — the local projection is the whole of what stands here.</p>
+        <p className="oi-note" data-unavailable="shared-field">Audience-filtered SharedField staging is not admitted in this cut (issue 366 EX3A6) — the local projection is the whole of what stands here.</p>
       </section>
     </div>
     <footer className="wx-subject-tools">
