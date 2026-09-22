@@ -1,8 +1,8 @@
 /* The Technē HUD (2026-09-22): the six M0′–M5′ instruments made available
  * over the Expressions app's Technē field. The field (iframe) is the one
  * renderer beneath; the HUD is a dismissible overlay of the deep 4:2
- * apertures. Theme tokens with conservative fallbacks so it reads in both
- * light and dark without owning the design system. */
+ * apertures. Design-system tokens only — no raw colour (the cradle
+ * appearance policy: raw hex/rgba/hsl = 0). */
 
 .techne-centre {
   position: relative;
@@ -17,9 +17,9 @@
   display: flex;
   flex-direction: column;
   min-height: 0;
-  background: var(--surface-1, var(--panel, rgba(18, 18, 22, 0.94)));
-  color: var(--text-1, var(--text, #e8e8ea));
-  z-index: 6;
+  background: var(--oi-surface);
+  color: var(--oi-ink);
+  z-index: var(--oi-z-stage-overlay);
 }
 
 .techne-hud--collapsed {
@@ -27,7 +27,6 @@
   top: 8px;
   right: 8px;
   background: transparent;
-  z-index: 6;
 }
 
 .techne-hud-reveal {
@@ -35,9 +34,9 @@
   align-items: center;
   gap: 6px;
   padding: 6px 10px;
-  border: 1px solid var(--border-1, rgba(255, 255, 255, 0.16));
+  border: 1px solid var(--oi-control-edge);
   border-radius: 8px;
-  background: var(--surface-2, rgba(30, 30, 36, 0.92));
+  background: var(--oi-surface);
   color: inherit;
   font: inherit;
   font-size: 12px;
@@ -49,7 +48,7 @@
   align-items: center;
   gap: 4px;
   padding: 6px 8px;
-  border-bottom: 1px solid var(--border-1, rgba(255, 255, 255, 0.12));
+  border-bottom: 1px solid var(--oi-rule);
   overflow-x: auto;
   flex: 0 0 auto;
 }
@@ -70,21 +69,21 @@
   opacity: 0.72;
 }
 
-.techne-hud-lens:hover { opacity: 1; background: var(--surface-2, rgba(255, 255, 255, 0.06)); }
+.techne-hud-lens:hover { opacity: 1; background: var(--oi-accent-soft); }
 .techne-hud-lens[data-current="true"] {
   opacity: 1;
-  border-color: var(--accent, #7aa2f7);
-  background: var(--surface-2, rgba(122, 162, 247, 0.14));
+  border-color: var(--oi-accent);
+  background: var(--oi-accent-soft);
 }
 .techne-hud-lens[data-available="false"] { opacity: 0.5; }
 .techne-hud-lens[data-available="false"][data-current="true"] { opacity: 0.85; }
-.techne-hud-lens-off { color: var(--warn, #e0af68); font-weight: 700; }
+.techne-hud-lens-off { color: var(--oi-muted-2); font-weight: 700; }
 
 .techne-hud-collapse {
   margin-left: auto;
   min-width: 28px;
   height: 28px;
-  border: 1px solid var(--border-1, rgba(255, 255, 255, 0.16));
+  border: 1px solid var(--oi-control-edge);
   border-radius: 8px;
   background: transparent;
   color: inherit;
@@ -96,7 +95,7 @@
   gap: 8px;
   padding: 4px 10px;
   font-size: 11px;
-  opacity: 0.8;
+  color: var(--oi-muted);
   flex: 0 0 auto;
 }
 
@@ -112,9 +111,9 @@
   flex: 0 0 auto;
   max-height: 40%;
   overflow: auto;
-  border-top: 1px solid var(--border-1, rgba(255, 255, 255, 0.12));
+  border-top: 1px solid var(--oi-rule);
   padding: 8px 10px;
   font-size: 12px;
 }
 
-.techne-hud-empty { opacity: 0.7; font-size: 12px; padding: 12px; }
+.techne-hud-empty { color: var(--oi-muted); font-size: 12px; padding: 12px; }
