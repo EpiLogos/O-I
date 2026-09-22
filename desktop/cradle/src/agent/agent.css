@@ -125,6 +125,10 @@
 .agent-inspect-material .oi-kv{margin:0 0 10px}
 .agent-inspect-material :is(.oi-note,.oi-empty){line-height:1.55;padding-left:0;padding-right:0}
 .agent-layer .agent-inspect-material pre.agent-inspect-payload{max-height:none}
+/* The reader registry's readable body (planes/inspectReaders.tsx): prose with
+   whitespace kept — never a pre in the primary view (ruling 2, spec L5). */
+.agent-inspect-read{white-space:pre-wrap;overflow-wrap:anywhere;line-height:1.55;font-size:var(--oi-shell-type-ui);max-height:320px;overflow-y:auto;scrollbar-width:none}
+.agent-inspect-read::-webkit-scrollbar,.agent-inspect-read *::-webkit-scrollbar{display:none;width:0;height:0}
 .agent-inspect-material .encounter-session-facts{display:grid;grid-template-columns:minmax(0,1fr) minmax(0,1.2fr);gap:8px 12px;margin:0 0 10px}
 .agent-inspect-material .encounter-session-facts dt{color:var(--oi-muted-2)}
 .agent-inspect-material .encounter-session-facts dd{margin:0;overflow-wrap:anywhere}

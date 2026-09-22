@@ -205,13 +205,13 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // --- Inspect: the hand-off seam, still an action, never a tab ---------------
   await tool.getByRole("button",{name:/^Inspect/}).click();
   await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect");
-  check((await panel.locator('[data-inspect-kind="trajectory-block"] pre').innerText()).includes("fixture-tool-1"),"A trajectory row's Inspect hands that block to the Inspect plane");
+  check((await panel.locator('[data-inspect-kind="trajectory-block"] .agent-inspect-read').innerText()).includes("fixture-tool-1"),"A trajectory row's Inspect hands that block to the Inspect plane, read as its own readable text");
   await plane("Chat");
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));
   await page.waitForFunction(()=>document.querySelector(".agent-layer")?.getAttribute("data-plane")==="Inspect");
   const handed=panel.locator('[data-inspect-ref="walk:centre-thing"]');
   await handed.waitFor({timeout:10000});
-  check((await handed.locator("pre").innerText()).includes("from the centre"),"An oi:panel-inspect event from the centre is received and shown verbatim");
+  check((await handed.innerText()).includes("from the centre"),"An oi:panel-inspect event from the centre is received and shown as readable rows");
   check(await panel.locator(".agent-inspect-rows li").count()===2,"Handed things are kept as a list, newest first");
   await plane("Chat");
   await page.evaluate(()=>window.dispatchEvent(new CustomEvent("oi:panel-inspect",{detail:{kind:"walk-centre-thing",ref:"walk:centre-thing",title:"Walk hand-off",payload:{handed:"from the centre"},source:"agent-panel walk"}})));

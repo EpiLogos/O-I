@@ -5,6 +5,7 @@ import {DeliveryRegistrations,NowRecords,OwnerActions,RawDisclosure,SessionFacts
 import {deliveriesOf,nowRefsOf,taskBasisWithoutNow,type EncounterSessionHandle} from "../../encounter/session";
 import type {AgentSubject} from "../AgentLayer";
 import {panelInspectKey,type PanelInspectDetail} from "./panelInspect";
+import {inspectReaderOf,UnknownMaterial} from "./inspectReaders";
 
 export type InspectView="selected"|"subject"|"session"|"delivered";
 /** Which thing Inspect is showing. Held by the panel, not by this plane, so a
@@ -70,22 +71,22 @@ export function InspectPlane({full,selection,onSelection,handed,onDismiss,subjec
 
 function HandedMaterial({item}:{item:PanelInspectDetail}) {
  // Owner ruling 2 (DESKTOP-LANGUAGE.md, 2026-09-22): no raw JSON where a
- // person reads. Text handed as text stays readable prose; a structured
- // payload's raw record sits behind a collapsed disclosure — the same
- // <details>-grade pattern the session's Raw disclosure uses — so the
- // primary view stays the readable identity facts above it.
- const text=typeof item.payload==="string"?item.payload:undefined;
- const raw=item.payload!==undefined&&typeof item.payload!=="string"?JSON.stringify(item.payload,null,1):undefined;
+ // person reads — and the reader registry (planes/inspectReaders.tsx, dossier
+ // §3.5): known payload kinds render as real readable components; unknown
+ // kinds degrade to readable text. The verbatim record always sits behind a
+ // collapsed disclosure — the same <details>-grade pattern the session's Raw
+ // disclosure uses — so the primary view stays the readable facts above it.
+ const reader=inspectReaderOf(item.kind);
+ const raw=item.payload!==undefined?JSON.stringify(item.payload,null,1):undefined;
  return <article className="agent-inspect-handed" data-inspect-kind={item.kind} data-inspect-ref={item.ref}>
   <header className="oi-panel-head"><h3 className="oi-panel-head-title">{item.title}</h3></header>
   <dl className="oi-kv">
-   <dt>Kind</dt><dd>{item.kind}</dd>
+   <dt>Kind</dt><dd>{reader?.label??item.kind}</dd>
    <dt>Ref</dt><dd className="oi-ref">{item.ref}</dd>
    {item.source&&<><dt>Handed by</dt><dd>{item.source}</dd></>}
   </dl>
-  {text!==undefined?<pre className="agent-inspect-payload">{text}</pre>
-   :raw!==undefined?<details className="oi-disclosure"><summary>Raw record</summary><pre className="agent-inspect-payload">{raw}</pre></details>
-   :<p className="oi-note">This selection carried no material of its own.</p>}
+  {reader?reader.read(item):item.payload!==undefined?<UnknownMaterial payload={item.payload}/>:<p className="oi-note">This selection carried no material of its own.</p>}
+  {raw!==undefined&&<details className="oi-disclosure"><summary>Raw record</summary><pre className="agent-inspect-payload">{raw}</pre></details>}
  </article>;
 }
 
