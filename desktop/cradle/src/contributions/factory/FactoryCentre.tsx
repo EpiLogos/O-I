@@ -78,7 +78,7 @@ export function FactoryCentre({chat,project,accompanying,onOpenTask,onMessage}:F
           <span className="factory-chat-context-project"><span className="factory-chat-context-mark" aria-hidden="true"/>{accompanying ? accompanying.project || "Central" : project || "Central"}</span>
           {runLink
             ? <button className="oi-action" onClick={openRunFromTask}>Run · {runLink.view?.run.label}</button>
-            : <span className="factory-chat-context-direct">{accompanying?"Direct conversation — no Run carries this work":"New conversation"}</span>}
+            : <span className="factory-chat-context-direct">{accompanying?"Conversation":"New conversation"}</span>}
         </header>
         <div className="factory-chat-host">{chat}</div>
       </section>
