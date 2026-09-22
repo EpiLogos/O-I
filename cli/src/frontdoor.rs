@@ -28,6 +28,8 @@ pub fn cli_main() -> ExitCode {
                 println!("  oi dev test [PRODUCT]          test current local source through native product test contract");
                 println!("  oi dev install [PRODUCT]       install/register native commands only from clean exact current-main source");
                 println!("  oi dev acceptance [--json]     prove the local software world is the current clean mainline world before physical provider tests");
+                println!("  oi dev project [--machine NAME] [--target REF] [--apply] [--no-fetch] [--run] [--json]");
+                println!("                                resolve the suite's checkout roots and delegate to `aikit worktree project`; observe-only by default, --run executes it (locally, or over ssh for a remote machine)");
                 println!("  oi dev gate PRODUCT [--candidate SHA]  build an isolated current-main/candidate artifact; test owner + Cradle consumer; record exact evidence");
                 println!("  oi prove factory --factory PATH --factory-source PATH --request PATH --workflow-mutation PATH --state PATH --output PATH [--workcell-baseline PATH] [--workcell-source PATH --workcell-usage PATH] [--actuation-source PATH --actuation-usage PATH --actuation-usage-replay PATH]");
                 println!("                                exercise Factory's accepted Commission path and retain evidence grades without claiming provider/material execution");
@@ -140,6 +142,14 @@ pub fn cli_main() -> ExitCode {
         };
     }
     if command == Some("dev")
+        && args.get(1).and_then(|value| value.to_str()) == Some("project")
+    {
+        return match dev_project_main() {
+            Some(code) => code,
+            None => ExitCode::from(2),
+        };
+    }
+    if command == Some("dev")
         && args.get(1).and_then(|value| value.to_str()) == Some("install")
     {
         return match command_descriptor_current_dev_install(args.get(2..).unwrap_or_default()) {
@@ -166,6 +176,9 @@ pub fn cli_main() -> ExitCode {
         return code;
     }
     if let Some(code) = dev_world_main() {
+        return code;
+    }
+    if let Some(code) = dev_project_main() {
         return code;
     }
     if let Some(code) = omarchy_host_main() {
