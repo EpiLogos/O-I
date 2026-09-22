@@ -76,8 +76,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await flowsList.waitFor({timeout:20000});
   check(await flowsList.locator("[data-flows-absent]").count()===1,"An absent flows directory renders honest absence rather than inventing a register");
   await page.keyboard.press("Meta+t");
-  await page.getByRole("button",{name:"Write",exact:true}).waitFor({timeout:20000});
-  await page.getByRole("button",{name:"Write",exact:true}).click();
+  // The fresh tab's writing choice is labelled "Start writing" (same word as
+  // the rest page's entry; it opens the same mint-nothing draft).
+  await page.getByRole("button",{name:"Start writing",exact:true}).waitFor({timeout:20000});
+  await page.getByRole("button",{name:"Start writing",exact:true}).click();
   await page.locator(".draft-surface .cm-content").waitFor({timeout:20000});
   check(p.flowFiles().length===0,"The fresh tab's Write mints nothing — no flow file exists");
   check(p.gitClean(),"The fresh tab's Write adds nothing to the ground");
@@ -167,11 +169,16 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // 14 — ordinary sources are not reclassified: a project file opens as the
   // ordinary source editor, with no Flow identity of any kind.
+  // The project mode strip is hover-revealed (owner law, 2026-09-18): hover
+  // the row, then choose its files mode.
+  await nav.getByRole("button",{name:"Editor",exact:true}).hover();
   await nav.getByRole("button",{name:"Editor: files",exact:true}).click();
   await nav.locator(`[data-file-path="Work/Editor/${p.sources[0].binding.path}"]`).click();
   await page.waitForFunction(ref => document.querySelector('.source-editor .cm-content')?.getAttribute('data-source-ref') === ref, p.sources[0].binding.ref, { timeout: 15000 });
   check(true,"An ordinary source opens at its own ref in the ordinary source editor");
-  check(await page.locator(".pane.focused .flow-surface").count()===0,"The focused ordinary source carries no Flow surface and no Flow identity");
+  // Warm-tree retention keeps off-tab surfaces mounted-concealed inside the
+  // pane, so identity is asserted on the PRESENTED surface, not the DOM.
+  check(await page.locator('.pane.focused .surface-retained:not([hidden])[data-surface-kind="flow"]').count()===0,"The focused ordinary source carries no Flow surface and no Flow identity");
 
   // 15 — structured co-reference: the persisted binding, the kernel focus and
   // the owner read all name the same document path-ref without any screen
