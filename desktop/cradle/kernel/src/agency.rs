@@ -659,6 +659,24 @@ mod tests {
     }
 
     #[test]
+    fn mode_body_never_falls_back_to_generic_provider() {
+        let rows=&[
+            serde_json::json!({"id":"pi","label":"Pi"}),
+            serde_json::json!({"id":"prime","label":"Prime","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/110"}),
+            serde_json::json!({"id":"prime-alt","label":"Prime Alt","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/111"}),
+        ];
+        let (provider,row,rule)=preferred_body_provider_choice(rows,None,EPI_PRIME_QL_BODY_REF).unwrap();
+        assert_eq!(provider,"prime");
+        assert_eq!(row["body_revision"],serde_json::json!("actuation/110"));
+        assert_eq!(rule,"mode-body");
+        let (provider,_,rule)=preferred_body_provider_choice(rows,Some("prime-alt"),EPI_PRIME_QL_BODY_REF).unwrap();
+        assert_eq!(provider,"prime-alt");
+        assert_eq!(rule,"owner-choice-within-mode-body");
+        assert!(preferred_body_provider_choice(&rows[..1],Some("pi"),EPI_PRIME_QL_BODY_REF).is_none(),
+            "generic Pi cannot be relabelled as Prime–QL");
+    }
+
+    #[test]
     fn provider_default_prefers_owner_choice_then_pi_then_first_row() {
         let row=|id:&str|serde_json::json!({"id":id,"label":id});
         let rows=&[row("claude-code"),row("pi")];
