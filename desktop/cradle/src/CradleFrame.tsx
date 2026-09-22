@@ -16,6 +16,8 @@ import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {modeDefaultAgentBody} from "./workspace/agentBody";
+import {bindScopeWriter,publishScope,publishFocusedProject,scopeFromWorkspace,scopeProject} from "./workspace/scope";
+import {bindLensWriter,publishLens} from "./workspace/lens";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {requestTechneFieldOpen,resetTechneFieldOpen} from "./expressions/fieldOpen";
 import {techneFieldOpenRequest} from "./surface/techneSummonRecord";
@@ -283,7 +285,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     if (project) {
       if (kernel.snapshot.navigator?.project?.project.name !== project) void kernel.apply({ op: "project_browse", project });
     } else if (kernel.snapshot.navigator?.project) void kernel.apply({ op: "world_browse" });
-  }, [workspace.current.id, workspace.current.layout.mode]);
+  }, [workspace.current.id, workspace.current.layout.mode, workspace.current.project]);
 
 
   // -------------------------------------------------------------------------
@@ -403,17 +405,14 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // moves with the frame's active surface — and only when it actually
   // moves (the kernel emits nothing for a re-focus of the same ref).
   const activeId = activeBindingId(state);
-  const revealedSurface = useRef<string | null>(null);
+  // Scope changes only when the person changes it (10-SIDEBARS §3.6 rule 1):
+  // focusing a tab from another project no longer moves the scope. The tab's
+  // project is published instead, so the scope menu can offer "Switch to …".
   useEffect(() => {
     const binding=activeId ? state.surfaces[activeId] : undefined;
     const project=binding?.project ?? (binding?.ref ? kernel.snapshot.buffers[binding.ref]?.project : undefined);
-    const key=activeId && project ? `${workspace.current.id}:${activeId}:${project}` : null;
-    if (!key) {revealedSurface.current=null;return;}
-    if (revealedSurface.current===key || !project) return;
-    revealedSurface.current=key;
-    workspace.browse(project);
-    if(kernel.snapshot.navigator?.project?.project.name!==project) void kernel.apply({op:"project_browse",project});
-  },[activeId,activeId ? state.surfaces[activeId]?.project : undefined,workspace.current.id,kernel.snapshot.buffers]);
+    publishFocusedProject(project && project!==workspace.current.project ? project : undefined);
+  },[activeId,activeId ? state.surfaces[activeId]?.project : undefined,workspace.current.id,workspace.current.project,kernel.snapshot.buffers]);
   useEffect(() => {
     if (!activeId) return;
     if (lastFocusedSurface.current === activeId) return;
@@ -1558,19 +1557,28 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // the mode centre; leaving is the explicit act that clears it. The footer
   // state follows the world context, so the two can never disagree.
   const epiWorldActive=()=>workspaceRef.current.current.context?.world==="epi-logos";
+  // The Epi-Logos LENS (ruling D2, A5): it re-roots the file trees on the
+  // corpus and opens no surface; mode and scope stay where they are.
   const enterEpiWorld=()=>{
     workspaceRef.current.setContext(context=>({...context,world:"epi-logos"}));
     setState(s=>({...s,epiLogos:true}));
-    void openModeSurface("epi-logos").catch(report);
   };
   const leaveEpiWorld=()=>{
     workspaceRef.current.setContext(context=>({...context,world:undefined}));
     setState(s=>({...s,epiLogos:undefined}));
   };
+  // The one scope and the lens (scope.ts, lens.ts): the workspace is their
+  // only writer; every surface reads what the frame publishes here.
+  useEffect(()=>bindScopeWriter(scope=>{if(scope.kind==="all")workspaceRef.current.browseAll();else workspaceRef.current.browse(scopeProject(scope));}),[]);
+  useEffect(()=>{publishScope(scopeFromWorkspace(workspace.current.project,workspace.current.allProjects));},[workspace.current.id,workspace.current.project,workspace.current.allProjects]);
+  useEffect(()=>bindLensWriter(on=>{on?enterEpiWorld():leaveEpiWorld();}),[]);
+  useEffect(()=>{publishLens(workspace.current.context?.world==="epi-logos");},[workspace.current.id,workspace.current.context?.world]);
   const factoryPanelHost:FactoryPanelHost={onOpenFullRun:()=>{setState(s=>{const plane=s.panelPlanes?.factory==="run"?s:{...s,panelPlanes:{...s.panelPlanes,factory:"run"}};return s.rightDepth==="full"?plane:{...plane,rightDepth:"full"};});},
     onExpandPanel:()=>setState(s=>s.rightDepth==="full"?s:{...s,rightDepth:"full"}),
     onOpenPlane:plane=>setState(s=>s.panelPlanes?.factory===plane?s:{...s,panelPlanes:{...s.panelPlanes,factory:plane}}),
-    onOpenEncounterRow:(row:EncounterRow)=>void openEncounter(row).catch(report)};
+    // Factory conversations open in the centre Tasks view (10-SIDEBARS §3.5,
+    // §6.1.2) — never into the side tab group.
+    onOpenEncounterRow:(row:EncounterRow)=>void factoryChoose(row)};
   // The centre canvas's own pane openings, lent to the Ta-Onta Context plane
   // (expressions / techne / factory): hold the open file in the panel, or
   // open a file, a browser or a terminal in the centre exactly as the shell
@@ -1619,7 +1627,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
-        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
+        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={row=>factoryChoose(row)} activeEncounterRef={state.accompanying?.ref??activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onOpenWiki={(ref,title,project)=>void openKnowledge({kind:"wiki",value:ref},title,project).catch(report)} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {/* The modes' dedicated stages (surface/retention.tsx, stage law
         * 2026-09-20): one ALWAYS-PRESENT keyed slot per centre mode. Each
         * slot presents the centre binding living in its OWN mode's tree,
