@@ -16,6 +16,7 @@ import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {requestTechneFieldOpen,resetTechneFieldOpen} from "./expressions/fieldOpen";
+import {techneFieldOpenRequest} from "./surface/techneSummonRecord";
 import {ModeLeftBody,modeExtraPlanes} from "./workspace/modeBodies";
 import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
@@ -882,10 +883,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const summon=(event:Event)=>{
       const mode=stateRef.current.mode??"base";
       if(mode==="expressions"){void openModeSurfaceRef.current("expressions").catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));return;}
-      if(mode==="techne"){const ref=(event as CustomEvent<{expressionRef?:unknown}>).detail?.expressionRef;
-        // Name the presented Technē centre so only it consumes — a concealed
-        // Technē host (a warm tree, a foreign-tree pane tab) leaves the ref.
-        if(typeof ref==="string"&&ref.startsWith("expression:"))requestTechneFieldOpen(ref,centreBindingOf(workspaceRef.current.current,"techne","techne")?.id??null);}
+      // Technē: record for the presented field, naming its centre so a concealed
+      // Technē host leaves the ref. The mode gate and the presented-centre target
+      // resolution live in techneFieldOpenRequest, which is unit-tested.
+      const request=techneFieldOpenRequest(workspaceRef.current.current,mode,(event as CustomEvent<{expressionRef?:unknown}>).detail?.expressionRef,centreBindingOf);
+      if(request)requestTechneFieldOpen(request.ref,request.target);
     };
     window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);
     return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);

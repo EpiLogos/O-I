@@ -68,7 +68,7 @@ jobs:
           node tests/knowledge-expression.mjs
           node tests/techne-field-bindings.mjs
           node --test tests/verso-account-binding.test.mjs
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs tests/field-open.test.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs tests/field-open.test.mjs tests/techne-summon-record.test.mjs
       - name: Prove entrance and actual relation drawing with disconnected-binding negatives
         working-directory: desktop/cradle
         env:

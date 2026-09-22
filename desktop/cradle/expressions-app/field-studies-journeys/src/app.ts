@@ -739,11 +739,17 @@ function setHostMode(mode:'expressions'|'techne'){
 // previous field. If the kernel channel has not been announced yet it opens on
 // that announce, exactly as the boot ?expression= deep link does. Refs only —
 // the kernel document is the store, and a bad ref is refused by the owner.
+let pendingHostOpen:string|null=null,hostOpenArmed=false;
 function openHostExpression(ref:string){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
- const open=()=>void nativeWorkspace?.open(ref);
- if(kernelExpressionsAvailable())open();
- else window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);open();}});
+ if(kernelExpressionsAvailable()){void nativeWorkspace?.open(ref);return;}
+ // Buffer the LATEST ref and arm exactly one announce listener (not one per
+ // pre-ready call), so repeated posts before the channel is up converge to a
+ // single last-wins open and no message listeners accumulate.
+ pendingHostOpen=ref;
+ if(hostOpenArmed)return;
+ hostOpenArmed=true;
+ window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.open(r);}});
 }
 window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){

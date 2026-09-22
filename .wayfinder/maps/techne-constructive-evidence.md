@@ -238,13 +238,23 @@ cradle+app TypeScript clean. Both proofs are wired into the Technē workflow
 (the join into `native-application`, the store unit test into `source-runtime`),
 which runs them in CI on the Linux pinned cut.
 
-**Honest test-depth remainder.** The join test plays the composition root's
-record role (naming the presented centre) rather than mounting the whole
-`CradleFrame` + `AgentLayer`, so a regression that made `AgentLayer` stop
-yielding in the Technē cut, or `CradleFrame` record outside it, would not be
-caught by this proof alone (both are exercised by the cradle build/typecheck and
-are single-line mode checks). A full composition-root integration walk is a
-named follow-on.
+**Recorder coverage closed (two reviews).** The join browser proof stubs the
+composition root's record role, so the production `CradleFrame` recorder — its
+mode gate and its presented-centre `centreBindingOf` target resolution — had no
+automated coverage; both an in-session T3 and an independent second-session T3
+flagged it as the §41 fail-on-disconnect seam a null/wrong-binding regression
+would slip through (inspection-confirmed correct, so a coverage gap not a live
+defect). Closed: the recorder decision is extracted to
+`surface/techneSummonRecord.ts` (`techneFieldOpenRequest`) and unit-tested by
+`tests/techne-summon-record.test.mjs` (5 checks) — it records ONLY in the Technē
+cut, and names the presented centre by the SAME `centreBindingOf(ws,"techne",
+"techne")` call the stage slot uses to mount it, so the target always equals the
+presented host's binding id. The runtime pre-ready open-expression buffer is now
+single-flight (one announce listener, last-ref-wins). Still not driven by an
+automated proof: the `AgentLayer` Technē yield (a single-line mode check,
+covered by build/typecheck) — a full composition-root integration walk remains a
+named follow-on, as does the frame-first-to-field route and one-passage-in-two-
+constellations (C4), both proven cradle-side but not through the joined field.
 
 **Remaining, unchanged in scope:** both creation routes are already proven
 cradle-side (`wiki-constructive-browser.mjs`: material-first, frame-first,
