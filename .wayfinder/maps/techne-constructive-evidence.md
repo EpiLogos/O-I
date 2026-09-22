@@ -22,7 +22,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | §§5–6,15,36; C5–C6 | `kernelDocumentBridge`, `sceneCorrespondence`, `kernelComposition`, `nativeCorrespondence`, existing engine bindings and native Scene material | U: existing bridge/composition tests passed. N: complete saved/working material, repeated-entity Scene-local placement and material-binding removal negative passed. B: two distinct native relations drawn/hit-tested in the actual app without remount/clock/camera reset. Broader media/carrier/3D/QL forms still need joined coverage. |
 | §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + `nativeWorkspace.ts` (construction/commit) + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B: the compact M0′–M5′ chooser and floating Lens Studio stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens DISCLOSES its material from the open kernel Expression via `nativeWorkspace.construction()` — M1′ real member/relation counts, M2′ its relations, M3′ its actual Scenes — never hardcoded stats (§36); M3′ persists through the NATIVE commit (kernel scene_create/edit, expected-revision, no retry), not a browser save (§§17,29); M4′/M5′ derive their honest facet + eligible material from the real construction and name the unsurfaced native place/palace owner seam (§§18–21). `techne-lens-studio-browser.mjs` proves native-op wiring, a §29/§41 browser-save negative, derived facets, a11y focus/keyboard roving and lived-cut absence (standalone, no host); `techne-native-application.mjs` proves the Studio discloses the EXACT open construction and its Scenes, carries the native commit, and keeps the same construction across a lens change (subject-carrying continuity, §28) over a REAL committed construction. Both gated in the Technē workflow (green). Remaining depth: a native place (M4′)/Palace (M5′) owner operation to surface, and richer inline per-instrument editing. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
 | §§1,25,37; C8 | Native Action boundaries, Ta-Onta/Actuation/AIKit; `NativeWorking` and `NativeSelectionQueue` | U: queue scope, supersession, refusal and no retry. N: actual native focus serialization and stale construction refusal. Full canonical Agent co-work/source basis/disclosure/late-return proof remains open. |
-| §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery; `constructionProjection.attachCompositionReturn` | N+B (22 Sep): the whole Return through the LIVE field is proven in `techne-construction-join.mjs` — a constellation worked in the field is saved as a composition file carrying the field's edit and ATTACHED to the native constellation, found there exactly once (idempotent, distinguished from a bare file save), original memberships intact, constellation found via the native Wiki graph after the Return. `kernelTechneAdapter` rechecked: it distinguishes routed (proposal reached the seam) from executed (kernel applied, receipt names the effect); a revision conflict refreshes the mirror and never retries. Remaining: Journey/Palace composition Return, explicit hide/show≠delete and retract from the field, and generated-material derivation. |
+| §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery; `constructionProjection.attachCompositionReturn` | N+B (22 Sep): the whole Return through the LIVE field is proven in `techne-construction-join.mjs` — a constellation worked in the field is saved as a composition file carrying the field's edit and ATTACHED to the native constellation, attached to the constellation exactly once (register truth — the load-bearing witness, distinguished from a bare file save), original memberships intact, the returned composition keeps its derivation (source revision + member source). `kernelTechneAdapter` rechecked: it distinguishes routed (proposal reached the seam) from executed (kernel applied, receipt names the effect); a revision conflict refreshes the mirror and never retries. Honest remaining rigor (an independent review's finding, taken): real-kernel replay-idempotency, composition index/search readback as a §41 witness, and a sever-the-attach §41 negative — plus Journey/Palace composition Return and explicit hide/show≠delete from the field. |
 | §§20–22,39; C10 | Existing kernel retained models; imported recovery and native working checkpoint; native selection queue | U/N: latest focus survives in-flight work; invalidated old-work gestures do not cross inquiry; no-op commit is idempotent; restart preserves edited-since-save. Whole mode/lens/portal/restart/source-change walk remains open. |
 | §§23–24; C11 | Existing Projection/WorldPresentation/SharedField owners | No new public dataset. Current eligible/private endpoints, read-only refusal and explicit derivative cases remain unproven by this continuation. |
 | §§7–10,13,23,27–33; C12 | Real Library, navigator, verso and source portals; `versoAccount`/`resolveVersoSubject`, `TechneSummonSurface`, `PointCloudHost`, app `nativeWorkspace.nativeSubject` | U/B (partial): the verso summon now carries the EXACT open native work (Expression ref + current revision + Scene + entity-or-relation occurrence) and it takes precedence over the kernel global focus; the carried pointer is sanitised to refs and validated through the owner (revision drift disclosed, not trusted). `verso-account-binding.test.mjs` proves the precedence/sanitisation (U, gated); the current-app browser proof asserts the exact ref+revision carriage (B). Library scene rows, source portal open/return and the full navigator/gallery route remain to be closed with browser evidence. |
@@ -269,40 +269,40 @@ Agent co-work (§37, C8), eligible shared-world behaviour (§§23–24, C11) and
 retained walks §§27–33 with their §41 negatives all remain. This increment did
 not reduce that scope.
 
-## 22 September — item 3 (M4′/M5′ owner operations, §§18–19): a bounded proposal
+## 22 September — item 3 (M4′/M5′, §§18–19): grounded in the instrument spec
 
-Read of the actual owners, to carry the map's "surface the real owner seam, or a
-bounded proposal if the op genuinely doesn't exist":
+An earlier reading of this framed M4′/M5′ as owner decisions; that was wrong and
+is retracted. The owner corrected it and the instrument spec
+(`QL-MEF/docs/L5-TECHNE-INSTRUMENT-WAYFINDER.md`) defines both, with real
+capability already in tree — they are specified engagement modes over the SAME
+Expressions format items 1–2 joined, not new systems:
 
-- **M4′ place — no create op, and the map forbids one.** The kernel has no
-  place/world/occasion create op; places are DISCLOSED from a source that carries
-  a place-relation facet (TB0), read through the knowledge owner
-  (`techne/m0m5/place/*` treats place as disclosure-only, "never a hard-coded
-  route, and never the place inferred"; §18 says "Do not manufacture places or
-  coordinates. A truly absent spatial facet stays absent"). So the Lens Studio's
-  M4′ honest-facet state (absent when no source carries a place) is ALREADY the
-  correct operative behaviour — there is no seam to surface. To make M4′
-  *operative* the map-aligned path is to SITUATE work in a place a source
-  genuinely carries: add a place-carrying source to the corpus (a real TB0
-  place-relation facet, not a fabricated coordinate) and wire the existing
-  map/globe interactions over the disclosed place. A native place-AUTHORING op
-  would contradict "do not manufacture places" and is an explicit owner decision,
-  not something to fabricate.
-- **M5′ Palace — routes to the existing Expression owner.** Palace composition
-  (`techne/m0m5/palace/composition.ts`) ROUTES to the disclosed Expression-owner
-  Action; the Return action comes from the reading's disclosed actions. So a
-  bounded M5′ "compose a whole" control is buildable on the EXISTING composition/
-  commit path (the same native-owner edit M1′/M3′ use), composing the open
-  construction + its Scenes into a durable, re-openable whole. The full §19
-  feature — regions, portals, guided paths, multi-constellation/Journey/place
-  composition — is substantial and its scope is an owner call. Proposed first
-  increment: M5′ persists a composed whole through the existing owner (no second
-  Palace store/graph/renderer, per the non-goals), with regions/portals as a
-  named follow-on.
+- **M4′ Place / Map / Street / Globe (§8).** A general SPATIAL APERTURE over any
+  subject carrying valid Place readings (`TechnePlaceFacet`, `reading.spatial`),
+  sourced from Research Canvas map/globe components + the Temporal Place model
+  (a temporally-valid `PlaceRef`, not only lat/lon). The rendering model already
+  exists: `desktop/cradle/src/techne/m0m5/place/modes.ts renderMapModel(facets)`,
+  Globe/Street/Map as presentations of the SAME Place readings. The only gap is
+  the spec's OWN open item G3 — "no local PlaceFacet producer yet" (wayfinder
+  line 30): no source in the corpus produces a PlaceFacet, so the Lens Studio's
+  M4′ absent-facet state is spec-correct until a PlaceFacet-carrying source
+  exists (the map §18: "A truly absent spatial facet stays absent").
+- **M5′ Palace (§10).** "Mnemonic/artistic/pedagogical composition of
+  Expressions" — the O:I Web / integral whole. It owns NO second graph or Scene
+  type and introduces NO Palace persistence primitive; it composes REAL
+  Expression refs through the EXISTING O:I composition capability. That substrate
+  is in tree: kernel `expression_world.rs` portals (ES1/ES4 portal/whole/selection
+  state, `Request::PortalInspect`/`PortalRedock`, MAX_PORTALS) and
+  `techne/m0m5/palace/composition.ts` routing to the disclosed Expression owner.
+  So M5′ is buildable on the existing portal/composition path — a way to engage
+  the Expressions format, exactly as M3′ Journey (already wired: the Lens Studio
+  M3′ commits Scenes through the native owner) engages it.
 
-Neither is implemented in this session: M4′ needs a place-carrying source or an
-owner decision on place authoring; M5′ needs an owner decision on Palace scope
-before building past the bounded first increment.
+Both M4′ and M5′ are greenfield SURFACES per the spec (§12: Research Canvas is
+the UI/interaction source via a `TechneWorkspaceTransport` compatibility bridge,
+not a new substrate). Buildable now on existing capability: M5′ Palace
+composition of Expression refs. Gated on the spec's own G3: M4′ operative
+places, until a PlaceFacet-producing source exists.
 
 ## Historical evidence retained
 

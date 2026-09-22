@@ -176,12 +176,14 @@ try {
   check(artifact.expression_ref === expectedRef && artifact.title === 'Worked in the field', 'The composition file Returned to the constellation carries the field\'s committed edit — the whole current work, not a stale pre-field snapshot');
   const returned = savedFrame('Field-join inquiry');
   const composed = returned['aikit.constellation/v1'].compositions?.filter(c => c.reference === expectedRef && c.kind === 'expression') ?? [];
-  check(composed.length === 1, 'The field-worked composition is found on its native constellation exactly once — a Return (idempotent attach), not merely a file save or a multiplied artifact');
+  // Register truth (the native wiki.json), so this IS load-bearing — an empty
+  // compositions[] fails it. This proves native mutation success (a real
+  // composition_attach through the owner, distinguished from a file save), which
+  // §38 separates from subsequent indexed availability; the replay-idempotency
+  // and index-readback witnesses are named remaining in the evidence ledger.
+  check(composed.length === 1, 'The field-worked composition is attached to its native constellation exactly once — a real Return (composition_attach through the owner), not merely the saved file');
+  check(!!composed[0].source?.source_revision && Array.isArray(composed[0].derivation_refs) && composed[0].derivation_refs.includes('source:a'), 'The returned composition keeps its derivation (source revision + the member source it was made from) — generated work is not independent corroboration of its sources');
   check(returned.constellations[0].members.length === 2 && returned.constellations[0].members.every(m => m.ref === 'source:a'), 'The original source memberships remain intact and distinguishable from the returned composition (Return enriches, it does not overwrite the links)');
-  // Search readback: the constellation and its returned composition are found
-  // together through the actual native Wiki graph, not a second index.
-  const graph = (await op({op: 'graph', project: 'Notes', query: '', options: {input: 'aikit_resolution', fresh: true}})).reading;
-  check(graph.formations.some(f => f.ref === savedRef), 'The constellation whole is found through the native Wiki graph after the field Return');
 
   // ——— §41 negative: the Expressions cut does not bind the relay ———
   // Remove the load-bearing binding by standing in the lived cut, then summon
