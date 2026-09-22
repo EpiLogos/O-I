@@ -114,7 +114,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const chooserRows=panel.locator(".chat-history-rows");
   const openChooser=async()=>{
     if(await chooserRows.isVisible().catch(()=>false))return;
-    await panel.getByRole("button",{name:"Choose",exact:true}).click();
+    await panel.getByRole("button",{name:"History",exact:true}).click();
     await chooserRows.waitFor({timeout:10000});
   };
   await openChooser();
@@ -328,7 +328,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // re-establish the register and re-choose if it truly comes back unbound.
   await Promise.race([
     page.waitForFunction(ref=>document.querySelector(".agent-layer")?.getAttribute("data-agent-session-ref")===ref,REF,{timeout:8000}),
-    panel.getByRole("button",{name:"Choose",exact:true}).waitFor({timeout:8000}),
+    panel.getByRole("button",{name:"History",exact:true}).waitFor({timeout:8000}),
   ]).catch(()=>{});
   if(await panel.getAttribute("data-agent-session-ref")!==REF){
     if(!(await nav.isVisible().catch(()=>false)))await page.keyboard.press("Meta+b");

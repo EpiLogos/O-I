@@ -52,7 +52,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   const excerpt=content.slice(5,12);
   await selectRange(editor,5,12);
-  await page.getByRole("button",{name:"Context mode",exact:true}).click();
+  await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
   await page.getByRole("button",{name:"Attach selection",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.getByRole("combobox",{name:"Context destination"}).locator("option").filter({hasText:"Context draft acceptance"}).count()===1,"An existing real conversation is an explicit context destination");
@@ -74,7 +74,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.getByRole("button",{name:"Writing mode",exact:true}).click();
 
   await selectRange(editor,5,12);
-  await page.getByRole("button",{name:"Context mode",exact:true}).click();
+  await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
   await page.getByRole("button",{name:"Attach selection",exact:true}).click();await dialog.waitFor();
   await channel("invoke.source_edit",[source.binding.ref,`Changed after selection.\n${content}`]);
   await page.waitForFunction(()=>document.querySelector('.source-editor')?.getAttribute('data-dirty')==='true');
@@ -86,7 +86,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await dialog.getByRole('button',{name:'Close context selection'}).click();
   await nav.locator('[data-file-path="Work/Editor/context-check.html"]').click();
   const frame=page.frameLocator('iframe.material-frame');await frame.locator('button').waitFor();
-  await page.getByRole('button',{name:'Context mode',exact:true}).click();
+  await page.getByRole('button',{name:'Pick component for context',exact:true}).click();
   await page.waitForTimeout(400);
   await frame.locator('button').click();await dialog.waitFor();
   await dialog.getByRole('button',{name:'Add to draft',exact:true}).click();await dialog.waitFor({state:'detached'});

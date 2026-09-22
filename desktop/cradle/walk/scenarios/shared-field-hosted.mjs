@@ -191,7 +191,7 @@ export default async function run({page, baseUrl, check, metric, shot, channel, 
   await editor.waitFor({timeout: 15000});
   check(await page.locator(".shared-field-material").count() === 0, "No shared material is advertised before anything is published");
   await selectRange(editor, start, start + passage.length);
-  await page.getByRole("button", {name: "Context mode", exact: true}).click();
+  await page.getByRole("button", {name: "Pick component for context", exact: true}).click();
   await page.getByRole("button", {name: "Attach selection", exact: true}).click();
   const tray = page.getByRole("dialog", {name: "Include selected context"}); await tray.waitFor();
   check((await tray.locator("pre").innerText()) === passage, "The tray holds the exact selected passage", {passage});

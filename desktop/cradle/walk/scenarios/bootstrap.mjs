@@ -103,7 +103,7 @@ export default async function run(ctx) {
   const input = chooser.getByRole("textbox", { name: "Existing Central path" });
   await input.fill(p.root);
   await chooser.getByRole("button", { name: "Recognize", exact: true }).click();
-  await chooser.getByText("recognized", { exact: true }).waitFor({ timeout: 15_000 });
+  await chooser.getByRole("status").filter({ hasText: /^recognized/ }).first().waitFor({ timeout: 15_000 });
   await chooser.getByRole("button", { name: "Use as default Central" }).click();
   await chooser.getByText(/Default Central saved/).waitFor({ timeout: 15_000 });
   check(true, "BOOT-03: an existing candidate can be recognised and bound as the default from the empty-workspace chooser");
