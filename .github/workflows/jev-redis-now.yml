@@ -1,0 +1,103 @@
+name: Jev Redis NOW joined proof
+
+on:
+  pull_request:
+    paths:
+      - '.github/workflows/jev-redis-now.yml'
+      - 'scripts/jev_redis_now/**'
+      - 'tests/jev_redis_now/**'
+      - 'docs/experience/JEV-REDIS-NOW*'
+  workflow_dispatch:
+
+permissions:
+  contents: read
+
+concurrency:
+  group: jev-redis-now-${{ github.event.pull_request.number || github.ref }}
+  cancel-in-progress: true
+
+jobs:
+  source-basis:
+    name: Selected source basis (not runtime acceptance)
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    steps:
+      - name: Checkout O:I tested merge
+        uses: actions/checkout@v7.0.1
+        with:
+          path: owners/O-I
+          persist-credentials: false
+      - name: Checkout AIKit source owner
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EpiLogos/ai-kit
+          ref: c24d7392dd63fb6e667a072ddd1fba2ee538b591
+          path: owners/ai-kit
+          persist-credentials: false
+      - name: Checkout Central source owner
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EpiLogos/Central
+          ref: 918fed159bee26b4fd1f20341f955cb6f60e1cbe
+          path: owners/Central
+          persist-credentials: false
+      - name: Checkout Workcell source owner
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EpiLogos/Workcell
+          ref: 58ceb4a6a0d4b8f25a6b2d01201798e5092b88c4
+          path: owners/Workcell
+          persist-credentials: false
+      - name: Checkout Factory source owner
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EpiLogos/Factory
+          ref: e2d16dbdfabec4157e47028d1bbe7a8cf7b8fc59
+          path: owners/Factory
+          persist-credentials: false
+      - name: Checkout Actuation source owner
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EpiLogos/Actuation
+          ref: b88fa2a097f790222fd63f0ffd1b9b5a4cefde09
+          path: owners/Actuation
+          persist-credentials: false
+      - name: Checkout QL source-owned definitions
+        uses: actions/checkout@v7.0.1
+        with:
+          repository: EpiLogos/QL-MEF
+          ref: 2bcdc78c2f97ce13312bf96011bd18bea7b73ea5
+          path: owners/QL-MEF
+          persist-credentials: false
+      - name: Retain reproducible source and exact revisions
+        shell: bash
+        run: |
+          set -euo pipefail
+          evidence="$RUNNER_TEMP/jev-redis-now-source"
+          mkdir -p "$evidence"
+          for owner in O-I ai-kit Central Workcell Factory Actuation QL-MEF; do
+            git -C "owners/$owner" rev-parse HEAD > "$evidence/$owner.revision"
+            git -C "owners/$owner" rev-parse 'HEAD^{tree}' > "$evidence/$owner.tree"
+            git -C "owners/$owner" archive --format=tar.gz --prefix="$owner/" HEAD > "$evidence/$owner.tar.gz"
+          done
+          (cd "$evidence" && sha256sum *.tar.gz > SHA256SUMS)
+      - name: Existing experience-source tests
+        working-directory: owners/O-I
+        env:
+          PYTHONDONTWRITEBYTECODE: '1'
+        shell: bash
+        run: |
+          set -euo pipefail
+          python3 -m unittest discover -s tests/experience -p 'test_*.py' -v 2>&1 | tee "$RUNNER_TEMP/jev-redis-now-source/experience-tests.log"
+          python3 scripts/experience_map.py 2>&1 | tee "$RUNNER_TEMP/jev-redis-now-source/experience-compiler.log"
+      - name: Preserve scope of this initial proof stage
+        if: always()
+        run: |
+          printf '%s\n' 'This stage records the selected cloud source cut and source checks only. It does not certify Jev, Redis, BKMR, model delivery or installed-world acceptance.' >> "$GITHUB_STEP_SUMMARY"
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: jev-redis-now-source-${{ github.run_id }}
+          path: ${{ runner.temp }}/jev-redis-now-source/
+          retention-days: 7
+          if-no-files-found: error
