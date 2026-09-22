@@ -105,6 +105,7 @@ const SCENARIOS = {
   "agent-dictation": {module:"scenarios/agent-dictation.mjs",kernel:true,aliases:["dictation"]},
   "context-draft": {module:"scenarios/context-draft.mjs",kernel:true,aliases:[]},
   "canvas-context": {module:"scenarios/canvas-context.mjs",kernel:true,aliases:["canvas"]},
+  "context-canvas-insert": {module:"scenarios/context-canvas-insert.mjs",kernel:true,aliases:[]},
   "remember": {module:"scenarios/remember.mjs",kernel:true,aliases:["u3.3"]},
   "contemplate": {module:"scenarios/contemplate.mjs",kernel:true,aliases:["w14"]},
   "select-send": {module:"scenarios/select-send.mjs",kernel:true,aliases:["6b"]},
@@ -196,6 +197,7 @@ const SCENARIO_SPEC = {
   "left-lens": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.1 D2 A5 (Epi-Logos lens)" },
   "left-forms": { spec_ref: "docs/cradle/10-SIDEBARS.md §3.7 §6.1.6 D5 (forms create a copy; Goal and Vision in place; Factory INTENT)" },
   "left-gallery": { spec_ref: "docs/cradle/10-SIDEBARS.md §3 (the left frame in light and dark at 1440 / 1000 / 760)" },
+  "context-canvas-insert": { spec_ref: "docs/cradle/10-SIDEBARS.md §4.6 (Context canvas baseline)" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 
