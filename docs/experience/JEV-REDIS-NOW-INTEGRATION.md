@@ -121,3 +121,10 @@ They validate retained source/obligation relationships, not Jev, Redis or instal
 ## Local installed-world handoff
 
 After the cloud implementation cut is accepted, execute the installed-world and live-provider phase from [JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md](JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md). That handoff is derived from the native AIKit/Workcell/Central/Factory implementation and exact cloud evidence; it is not a substitute architecture or a place to defer unfinished routine cloud code.
+
+
+## 8. Installed-world handoff
+
+The executable installed-world handoff is [JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md](JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md). It is written from the cloud implementation and native owner routes rather than as a replacement design: preserve the actual installation and active work, reconcile AIKit PR #393 and current owner revisions, adopt/reuse Redis through Workcell's delivered service path, resolve Jev credentials through AIKit's native secret mechanism, run the controlled/native-service proof first, then execute the first real Factory undertaking and live-provider episode.
+
+The handoff keeps environment-only observations distinct from cloud completion. In particular, machine-local credential material, the installed/running binary cut, existing Redis/BKMR state, the first live Jev response, the selected worker-model episode and required human Recognition are discovered and exercised locally; routine implementation is not delegated back to the local agent.
