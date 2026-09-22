@@ -93,7 +93,18 @@ try {
     'an instrument’s cross-open switches the HUD to that instrument through the ONE session, subject and basis carried (§4)');
   ok((afterCross.navigation || []).some((hop) => hop.to_instrument === 'timeline'), 'the cross-open records a navigation hop — Epii reads the same session, not the HUD');
 
-  ok(errors.length === 0, `no uncaught errors across the whole six-instrument walk (${errors.join('; ')})`);
+  // ---- C10: collapse to the field and back preserves the one session ----
+  await page.$eval('.techne-hud-collapse', (b) => b.click());
+  await page.waitForSelector('.techne-hud--collapsed .techne-hud-reveal', {timeout: 5000});
+  await page.$eval('.techne-hud-reveal', (b) => b.click());
+  await page.waitForSelector('.techne-hud-chooser .techne-hud-lens', {timeout: 5000});
+  const afterToggle = await page.evaluate(() => window.sweepProbe.session());
+  ok(afterToggle.instrument === 'timeline' && afterToggle.subject_ref === 'wiki:central' && afterToggle.reading_ref === readingRef0,
+    'C10: collapsing to the field and re-opening the HUD preserves the session — instrument, subject and basis unchanged, no reset or remint');
+  await page.waitForSelector('.techne-hud-pane .techne-timeline', {timeout: 10000});
+  ok(true, 'C10: the active instrument re-mounts on the same basis after the collapse cycle');
+
+  ok(errors.length === 0, `no uncaught errors across the whole walk, cross-open and collapse cycle (${errors.join('; ')})`);
 
   console.log(`\nTechnē walk sweep: ${pass} checks passed`);
 } finally {
