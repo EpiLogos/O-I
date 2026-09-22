@@ -28,10 +28,37 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   check(entries.length<=4&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t))&&entries.some(t=>/^Day/.test(t)),
     'The fresh page offers only its real entries',{entries});
   check(await rest.locator('.welcome-prompt h2').count()===1,'The rolling welcome prompt is the page heading');
-  // Length robustness: every eligible phrase renders in the invisible reserve,
-  // so the stage's height is the tallest statement's and a rotation onto a
-  // longer (two- or three-line) phrase can never displace the boxes below.
-  const stability=await rest.locator('.welcome-prompt').first().evaluate(header=>{
+  // Length robustness, two-sided and exercised. Every eligible phrase renders
+  // in the invisible reserve, so the stage's height IS the tallest statement's
+  // — asserted within half a pixel in BOTH directions, so a stacked reserve
+  // (each phrase contributing its own row) can no longer read as a pass the
+  // way the old one-sided bound allowed. And the triggering transition is
+  // exercised, not assumed: the check waits through the roller's real
+  // timer-driven rotations until the longest phrase is the active heading,
+  // then measures the landed pose.
+  const roller=rest.locator('.welcome-prompt').first();
+  const longest=await roller.evaluate(header=>{
+    const reserve=header.querySelector('.welcome-prompt-roller')?.querySelector('.welcome-prompt-reserve');
+    const spans=reserve?[...reserve.querySelectorAll(':scope > span')]:[];
+    const heights=spans.map(span=>span.getBoundingClientRect().height);
+    const tallestIndex=heights.indexOf(Math.max(...heights));
+    return {phrases:spans.length,tallestText:spans[tallestIndex]?.textContent};
+  });
+  const drive={rotated:false};
+  if(longest.tallestText) {
+    try {
+      if(await page.evaluate(()=>document.querySelector('.welcome-prompt h2')?.textContent)===longest.tallestText) {
+        // Already posing the longest statement: prove a real rotation happens
+        // at all, then wait for the cycle to land back on that statement.
+        await page.waitForFunction(expected=>document.querySelector('.welcome-prompt h2')?.textContent!==expected,longest.tallestText,{timeout:12000});
+      }
+      await page.waitForFunction(expected=>document.querySelector('.welcome-prompt h2')?.textContent===expected,longest.tallestText,{timeout:longest.phrases*8000+8000});
+      // Measure after the heading's entry animation has finished landing.
+      await page.waitForFunction(()=>[...(document.querySelector('.welcome-prompt h2')?.getAnimations()??[])].every(animation=>animation.playState==='finished'),null,{timeout:5000});
+      drive.rotated=true;
+    } catch {drive.reason='the roller never landed on its longest phrase through real rotations';}
+  } else drive.reason='the reserve was unreadable, so no rotation could be driven';
+  const stability=await roller.evaluate((header,expected)=>{
     const roller=header.querySelector('.welcome-prompt-roller');
     const reserve=roller?.querySelector('.welcome-prompt-reserve');
     const nav=header.nextElementSibling;
@@ -41,9 +68,16 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
     const tallest=Math.max(...spans.map(span=>span.getBoundingClientRect().height));
     const stage=roller.getBoundingClientRect();
     const navTop=nav.getBoundingClientRect().top;
-    return {ok:stage.height>=tallest-0.5&&navTop>=stage.bottom-0.5,phrases:spans.length,tallest:Math.round(tallest),stageHeight:Math.round(stage.height)};
-  });
-  check(stability.ok&&stability.phrases>=4,'The rolling prompt reserves its tallest statement, so rotation never displaces the boxes',stability);
+    // Two-sided ±0.5px: the stage stands exactly the tallest statement tall —
+    // taller means the phrases stack, shorter means the reserve is missing.
+    const landedOn=header.querySelector('.welcome-prompt h2')?.textContent;
+    return {ok:tallest-0.5<=stage.height&&stage.height<=tallest+0.5&&navTop>=stage.bottom-0.5,
+      phrases:spans.length,tallest:Math.round(tallest),stageHeight:Math.round(stage.height),
+      landedOnLongest:landedOn===expected,landedOn:(landedOn??'').slice(0,60)};
+  },longest.tallestText);
+  check(stability.ok&&stability.phrases>=4&&drive.rotated&&stability.landedOnLongest,
+    'A real rotation onto the longest statement leaves the stage exactly the tallest phrase tall (±0.5px) and nothing below displaced',
+    {...stability,drive});
   check(await page.getByRole('button',{name:'Back to workspace'}).count()===0,
     'No "back to workspace" control that only returns to this same page');
 

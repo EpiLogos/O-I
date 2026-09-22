@@ -198,10 +198,15 @@ try {
   await appReady(failed);
   const escape=failed.getByRole('button',{name:'Open O:I without the opening field.',exact:true});
   assert.equal(await escape.isEnabled(),true);
-  assert.ok((await failed.getByRole('alert').innerText()).length>0,'the real failure is disclosed');
+  // The alert must NAME the real failure — the engine's WebGL context could
+  // not be created — not merely appear. Equality pins the exact message the
+  // app renders for this condition; a generic apology fails here.
+  const disclosed=(await failed.getByRole('alert').innerText()).trim();
+  assert.equal(disclosed,'THREE.WebGLRenderer: Error creating WebGL context.',
+    'the alert must name the real failure — the WebGL context could not be created — not a generic message');
   await escape.click();await entered(failed);
   assert.equal(await failed.locator('.oi-welcome').count(),0,'engine failure leaves a working route into the app');
-  results.push({webglUnavailable:'truthful failure with usable Continue'});
+  results.push({webglUnavailable:{alert:disclosed,continueIntoApp:'usable'}});
  }finally{await failedBrowser.close();}
  }
  assert.deepEqual(errors,[]);

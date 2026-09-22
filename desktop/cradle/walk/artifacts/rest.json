@@ -3,7 +3,7 @@
   "scenario": "rest",
   "spec_ref": "docs/cradle/05-EXECUTION.md §3",
   "grade": "C",
-  "generated_at": "2026-09-22T19:27:24.463Z",
+  "generated_at": "2026-09-22T19:48:13.569Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -17,17 +17,13 @@
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "a617119b77cc0aba7ca7eea46e38ca3ffd099905",
+      "repository_head": "ee5f458d707839aaee7b21531a43f340a231a71c",
       "tracked_changes": [
         "desktop/cradle/src-tauri/icons/icon.png",
-        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-conflict-resolved.png",
-        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-saved.png",
-        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-sessions-bound.png",
-        "desktop/cradle/walk/artifacts/flow-canvas-flow-cocurrency-reference.png",
-        "desktop/cradle/walk/artifacts/flow-canvas.json",
-        "desktop/cradle/walk/artifacts/rest.json"
+        "desktop/cradle/tests/welcome-lifecycle.mjs",
+        "desktop/cradle/walk/scenarios/rest.mjs"
       ],
-      "dirty_digest": "d0f2a8ca274581794cba0208e7b410b5fc07cfd52d69e66f8c5ec8d6832ed8c8",
+      "dirty_digest": "3e12860841132cd53476ad970003ec80ce13d519b10e549f8d52770dc3c22479",
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -35,7 +31,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1364,
+  "duration_ms": 70993,
   "checks": [
     {
       "ok": true,
@@ -87,12 +83,17 @@
     },
     {
       "ok": true,
-      "label": "The rolling prompt reserves its tallest statement, so rotation never displaces the boxes",
+      "label": "A real rotation onto the longest statement leaves the stage exactly the tallest phrase tall (±0.5px) and nothing below displaced",
       "data": {
         "ok": true,
         "phrases": 10,
         "tallest": 81,
-        "stageHeight": 81
+        "stageHeight": 81,
+        "landedOnLongest": true,
+        "landedOn": "Darwin wrote down the facts that went against the theory as ",
+        "drive": {
+          "rotated": true
+        }
       }
     },
     {
@@ -132,20 +133,20 @@
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 1.3,
+      "duration_ms": 0.4,
       "data": {
-        "fcp_ms": 304,
-        "dom_content_loaded_ms": 82.7,
-        "load_ms": 82.7
+        "fcp_ms": 152,
+        "dom_content_loaded_ms": 39.4,
+        "load_ms": 39.4
       }
     },
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T19:27:24.794Z",
+        "mounted_at": "2026-09-22T19:48:13.718Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -159,7 +160,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T19:27:25.626Z",
+        "mounted_at": "2026-09-22T19:49:24.395Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -170,14 +171,14 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 82,
+      "duration_ms": 67,
       "data": {
         "file": "rest-desktop-rest.png"
       }
     }
   ],
   "metrics": {
-    "cold_start_fcp_ms": 304
+    "cold_start_fcp_ms": 152
   },
   "screenshots": [
     "rest-desktop-rest.png"
