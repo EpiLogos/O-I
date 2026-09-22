@@ -138,6 +138,23 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.waitForFunction(()=>document.querySelector(".agent-layer .chat-composer")?.getAttribute("data-connection")==="connected",null,{timeout:30000});
   check(true,"Connecting through the conversation updates the composer's live state from the owner");
 
+  // --- Status → Preview: the collapsed frame carries the owner's real state --
+  // The gradient (dossier §3.3): with the panel collapsed the frame shows a
+  // presence dot and a state line derived ONLY from observed encounter facts;
+  // the chip's one action is opening the pinned panel, which stands the chip
+  // down. Asserted across two distinct owner states: disconnected, then the
+  // resident state after the connect above.
+  const presenceChip=()=>page.locator(".shell-agent-presence");
+  await page.getByRole("button",{name:"Toggle right region",exact:true}).click();
+  await presenceChip().waitFor({timeout:15000});
+  check(await presenceChip().getAttribute("data-presence-state")==="idle",
+    "Collapsed frame: the status chip reads the owner's real resident state (idle) — no invented activity");
+  await presenceChip().click();
+  await panel.waitFor({timeout:15000});
+  check(await page.locator(".shell-agent-presence").count()===0 && await panel.isVisible(),
+    "The chip hands over to the pinned panel (Preview) and stands down");
+  await panel.locator('.chat-composer[data-connection="connected"]').waitFor({timeout:15000});
+
   // --- Context: SELECTED is not CARRIED ---------------------------------------
   const contextBlock="@context — Walk source · source/agent-panel-walk · revision rev-walk-1\n> quoted walk line";
   await message.fill(`${contextBlock}\n\nACTIVITY_THINK_TOOL`);

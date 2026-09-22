@@ -9,6 +9,7 @@ import { Glyph } from "./Glyph";
 import { focusGroup, groupsOf } from "../surface/engine";
 import { WorldModeStrip } from "../surfaces/navigator/WorldNavigator";
 import { MODE_CURATION, TREE_MODES, type TabPresentation, type WorkspaceMode } from "./mode";
+import type { AgentPresence } from "../agent/presence";
 
 type Side = "left" | "right";
 const FOOTER_KEY="oi-shell-footer.v2";
@@ -39,6 +40,10 @@ interface Props {
   /** FND-02: when provided, replaces the right region's legacy plane body
    * (the accompanying agent layer owns its own header/planes/composer). */
   right?: ReactNode;
+  /** The Status face of the agent-work gradient (Status → Preview →
+   * Takeover): the observed encounter state carried in the frame while the
+   * panel itself is collapsed. Clicking it opens the pinned panel. */
+  agentPresence?: AgentPresence;
   namingRequest: "create" | "rename" | null; onNamingHandled: () => void;
   error: string | null; onErrorDismiss?: () => void;
   /** The workspace-recovery state surfaces only here, inside the footer
@@ -277,6 +282,12 @@ export function DesktopShell(p: Props) {
     <header className="shell-topbar" aria-label="Window and focused pane" data-tauri-drag-region>
       <button className="shell-region-toggle oi-tool" aria-label="Toggle left region" aria-expanded={left === "panel" || left === "full"} onClick={summonNavigator} title="Show / hide Central (⌘B)"><Glyph name="sidebar"/></button>
       <div className="shell-focus" data-tauri-drag-region>{width < 640 && groupCount > 1 ? <select aria-label="Focused pane" value={l.focusedGroupId ?? ""} onChange={event => { const id=event.target.value; p.setLayout(state => focusGroup(state,id)); }}>{groupsOf(l.root).map((group,index) => <option key={group.id} value={group.id}>{index+1}/{groupCount} · {group.active ? l.surfaces[group.active]?.title : "Empty pane"}</option>)}</select> : null}</div>
+      {/* Status → Preview: while the panel is collapsed the frame carries the
+        * agent's observed state as a dot and a state line; opening it is the
+        * one action, so the chip IS the way to the pinned panel. */}
+      {!rightOpen && p.agentPresence && <button type="button" className="shell-agent-presence" data-presence-state={p.agentPresence.state} aria-label={`Accompanying agent: ${p.agentPresence.label} — show the panel`} title={`Accompanying agent: ${p.agentPresence.label}`} onClick={() => toggle("right")}>
+        <span className="shell-agent-presence-dot" aria-hidden="true"/><span className="shell-agent-presence-label">{p.agentPresence.label}</span>
+      </button>}
       <button className="shell-region-toggle shell-agent-toggle oi-tool" aria-label="Toggle right region" aria-expanded={right === "panel" || right === "full"} onClick={() => toggle("right")} title="Show / hide accompanying agent (⌘⇧B)"><Glyph name="sidebar"/></button>
     </header>
     {naming && <form className="workspace-name" onSubmit={e => { e.preventDefault(); if (!name.trim()) return; if (naming === "create") p.create(name); else p.rename(name); setNaming(null); }}>

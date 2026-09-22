@@ -12,6 +12,7 @@ import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
+import {useAgentPresence} from "./agent/presence";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
@@ -1592,6 +1593,11 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         nativeWindows={kernel.transport.kind==="tauri"}
         workspaceName={workspace.current.name}/>);})(),
   };
+  /** The Status face of the agent-work gradient (Status → Preview →
+    * Takeover): the observed encounter state, carried in the frame while the
+    * panel is collapsed. One more subscriber on the SAME shared observer —
+    * never a second poll loop. */
+  const agentPresence=useAgentPresence(state.accompanying?{project:state.accompanying.project,ref:state.accompanying.ref,space:state.accompanying.space}:undefined,state.rightDepth!=="collapsed");
   const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
@@ -1607,6 +1613,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}
+        agentPresence={agentPresence}
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
@@ -1640,7 +1647,25 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * law as always — with no active root nothing in them is presented. */}
       <div className="rest-host" hidden={!!state.root || undefined}>
         <RestPane>
-          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
+          {/* "Graph" enters Technè (owner ruling 4, 2026-09-22: the rest page
+            * carries Day / Card / Graph) — the same summon the shell's own
+            * mode entries use, so the aperture the mode stands is the real
+            * one and names its own state when no ground is reachable. No
+            * silent fallback to another surface.
+            *
+            * "Card" opens the Epi-Card form through the document-forms route:
+            * the roster's real carrier resolved through Central's own file
+            * route — the same resolveDocumentForm → openFile path the blank
+            * tab's form buttons use (freshChoice). With no readable ground
+            * the resolver's own precise refusal surfaces on this page. */}
+          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")}
+            onGraph={()=>enterMode("techne")}
+            onCard={async () => {
+              const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
+              if(!form)throw new Error("The Epi-Card form is not offered by the document roster");
+              await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));
+            }}
+            onWiki={(() => {
             const reading=kernel.snapshot.navigator;
             const project=reading?.project?.project;
             const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;

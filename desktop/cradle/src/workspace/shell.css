@@ -16,6 +16,19 @@
 .shell-focus span { overflow: hidden; text-overflow: ellipsis; white-space: nowrap; font-size: var(--oi-shell-type-ui); color: var(--oi-muted); }
 .shell-focus select { min-width: 0; max-width: 100%; text-overflow: ellipsis; font-size: var(--oi-shell-type-ui); }
 .shell-agent-toggle svg { transform: scaleX(-1); }
+/* Status face of the agent-work gradient (Status → Preview → Takeover): the
+   observed encounter state carried in the frame while the panel is collapsed.
+   A dot and a state line, coloured only by the real state; static by design —
+   no animation without a state change, never a whole-pane effect. */
+.shell-agent-presence { width: auto !important; gap: 6px; padding: 0 10px; font-size: var(--oi-shell-type-ui); }
+.shell-agent-presence-label { white-space: nowrap; }
+.shell-agent-presence-dot { width: 8px; height: 8px; border-radius: 50%; flex: none; background: var(--oi-muted-2, var(--oi-muted)); }
+.shell-agent-presence[data-presence-state="working"] .shell-agent-presence-dot,
+.shell-agent-presence[data-presence-state="stopping"] .shell-agent-presence-dot,
+.shell-agent-presence[data-presence-state="arrived"] .shell-agent-presence-dot { background: var(--oi-accent-ink); }
+.shell-agent-presence[data-presence-state="attention"] .shell-agent-presence-dot { background: var(--oi-gold); }
+.shell-agent-presence[data-presence-state="attention"] { color: var(--oi-foreground); }
+.shell-agent-presence[data-presence-state="disconnected"] .shell-agent-presence-dot { background: transparent; box-shadow: inset 0 0 0 1.5px var(--oi-muted-2, var(--oi-muted)); }
 @media (max-width: 639px) {
   .desktop-centre .pane.split { display: contents; }
   .desktop-centre .pane.group:not(.focused):not([data-maximized="true"]), .desktop-centre .split-resizer { display: none !important; }
