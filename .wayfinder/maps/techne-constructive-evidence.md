@@ -408,13 +408,31 @@ is unavailable, the instrument does not mount and nothing renders, proving the
 producer→reading→HUD binding is load-bearing. `tsc --noEmit` clean; full
 `npm run build` green (`TechneSurfaceHost` chunked and lazily loaded).
 
-**What this closes and what remains.** The dormant boundary is repaired: the
-instruments are live over one real reading, no rebuild, no second renderer, no
-second chooser. The M4′ producer now surfaces in the app. Honest remaining: the
-in-field iframe `lensStudio` chooser (M0′–M3′ operative) still stands alongside
-this HUD — reconciling the two into one presentation grammar (replace-focus vs
-beside vs detach; the iframe `visibility` handoff when an instrument covers the
-field, §16/§22) is presentation refinement on the convergence UI track. M5′
+**Adversarial T3 round (commit `bfcff8e9`) — two real findings closed with
+executed proof.** An independent read-only T3 returned PARTIAL: (F2) the HUD
+covered the running `PointCloudHost` field with no suspend handoff — a hidden
+heavy renderer against §16/§22; (F1) the browser proof pre-registered a fixture
+provider, so the LIVE `ensureWikiProvider → wikiTechneReadingProvider →
+readWikiRegister` leg had no executed coverage. Both fixed: a new `TechneCentre`
+owns the collapse state and the one-renderer handoff — the field stands visible
+and running while the HUD is collapsed (now the default; entering Technē mode
+preserves the field and a Wiki summon still opens in it), and opening the HUD
+suspends the field with `display:none` (the stage's own hide) so nothing heavy
+runs hidden behind it; `TechneSurfaceHost`'s collapse is controlled;
+`ensureWikiProvider` binds only on a successful register. Proof grew to 15 B
+checks (`?mount=centre` proves the field is visible collapsed and `display:none`
+when the HUD opens; `?provider=wiki` proves the HUD registers the LIVE
+`oi-cradle.wiki-reading/v1` provider itself with the six lenses and no crash),
+plus `techne-wiki-provider.test.mjs` (2 U — the provider's stable ref and its
+honest transport-unavailable rejection). The one leg still app/native-CI-level
+(named honestly): the full `readWikiRegister` over a real Tauri kernel.
+
+**What this closes and what remains.** The dormant boundary is repaired: the six
+instruments are live over one real reading, no rebuild, no second renderer, with
+the field-vs-HUD one-renderer handoff in place. The M4′ producer surfaces in the
+app. Honest remaining: the in-field iframe `lensStudio` chooser (M0′–M3′
+operative) still stands as the collapsed-field's own tools — folding it and this
+HUD into one presentation grammar is refinement on the convergence UI track. M5′
 Palace durable composition, item 4 (Agent co-work C8, shared-world C11) and the
 retained walks §§27–33 with their §41 negatives also remain.
 
