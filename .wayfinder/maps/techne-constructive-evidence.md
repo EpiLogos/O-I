@@ -18,7 +18,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | Map / matrix | Production home | Executing evidence / current gap |
 |---|---|---|
 | §§0–3,9,11–14; C12 | `PointCloudHost` → imported `field-studies-journeys/src/app.ts`; native rail/workspace; retained mode slots | B: current mounted route, Epii no-subject entrance, native file save/restart and relation selection passed 19 checks at 07e32d3. Earlier isolated tests alone did not certify this route. Six working lens controls and correct home/Library/portal experience still require joined proof. |
-| §§4–7,34–35; C1–C4 | Merged Wiki reader, `WikiConstructionPanel`, `constructionDraft`/`constructionProjection`; AIKit native constructor; kernel `construction.rs`/`construction_source.rs` | Native ownership and prior Wiki evidence retained. Full current-app exact passage → working constellation staging, variants/nesting and both creation walks remain unclosed here. No second parser/store. |
+| §§4–7,34–35; C1–C4 | Merged Wiki reader, `WikiConstructionPanel`, `constructionDraft`/`constructionProjection`; AIKit native constructor; kernel `construction.rs`/`construction_source.rs`; join via `expressions/fieldOpen.ts` + `CradleFrame`/`AgentLayer`/`PointCloudHost` + app `open-expression` | B (22 Sep): a Wiki-authored constellation now opens as the LIVE field's own document and is worked and committed there — `techne-construction-join.mjs` 12 checks, both §41 no-relay negatives (see the 22 Sep section). Native ownership and prior cradle Wiki evidence retained; no second parser/store. Both creation routes proven cradle-side and route-agnostic to the field open; a direct in-app construction entry, variants/nesting worked in the field, remain. |
 | §§5–6,15,36; C5–C6 | `kernelDocumentBridge`, `sceneCorrespondence`, `kernelComposition`, `nativeCorrespondence`, existing engine bindings and native Scene material | U: existing bridge/composition tests passed. N: complete saved/working material, repeated-entity Scene-local placement and material-binding removal negative passed. B: two distinct native relations drawn/hit-tested in the actual app without remount/clock/camera reset. Broader media/carrier/3D/QL forms still need joined coverage. |
 | §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + `nativeWorkspace.ts` (construction/commit) + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B: the compact M0′–M5′ chooser and floating Lens Studio stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens DISCLOSES its material from the open kernel Expression via `nativeWorkspace.construction()` — M1′ real member/relation counts, M2′ its relations, M3′ its actual Scenes — never hardcoded stats (§36); M3′ persists through the NATIVE commit (kernel scene_create/edit, expected-revision, no retry), not a browser save (§§17,29); M4′/M5′ derive their honest facet + eligible material from the real construction and name the unsurfaced native place/palace owner seam (§§18–21). `techne-lens-studio-browser.mjs` proves native-op wiring, a §29/§41 browser-save negative, derived facets, a11y focus/keyboard roving and lived-cut absence (standalone, no host); `techne-native-application.mjs` proves the Studio discloses the EXACT open construction and its Scenes, carries the native commit, and keeps the same construction across a lens change (subject-carrying continuity, §28) over a REAL committed construction. Both gated in the Technē workflow (green). Remaining depth: a native place (M4′)/Palace (M5′) owner operation to surface, and richer inline per-instrument editing. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
 | §§1,25,37; C8 | Native Action boundaries, Ta-Onta/Actuation/AIKit; `NativeWorking` and `NativeSelectionQueue` | U: queue scope, supersession, refusal and no retry. N: actual native focus serialization and stale construction refusal. Full canonical Agent co-work/source basis/disclosure/late-return proof remains open. |
@@ -150,6 +150,83 @@ through Wiki/graph/search/Library (§§16–19,25,38, C9), the rest of the
 Library/navigator/portal route and its browser evidence (§§7–10,27–33), the
 canonical Agent co-work (§§1,25,37, C8) and eligible shared-world behaviour
 (§§23–24, C11). This continuation did not reduce that scope.
+
+## 22 September — source→construction opens and is worked in the live field (§§34–35, C1–C4)
+
+Local agent continuation from head `caf9a76c`. No owner machine, paid model,
+live SharedField or private corpus was accessed or mutated. All work on the one
+integration branch; no force-push, reset or unrelated merge.
+
+**The join closed.** The #418 Wiki construction already bound cradle-side — the
+`WikiConstructionPanel` authors a constellation (`aikit.constellation.apply`)
+and projects it to a real kernel `oi.expression/v1` Expression (`expression:
+knowledge-<digest>`) — but that Expression only opened in the cradle's own
+composer (`ExpressionView`), never in the live imported field-studies app that
+IS the Technē mount. It does now, through the ONE renderer, on the SAME kernel
+Expression:
+
+- app (`app.ts`): a new `host-command` `open-expression` opens an existing
+  native Expression in place through the app's own native workspace (kernel
+  inspect, no iframe reload), buffering until the kernel channel is announced —
+  the boot `?expression=` wait. Opening a summoned subject is a subject change
+  (§28): the field stands on the opened work's own scene/camera/selection, it
+  does not pretend to preserve the previous field.
+- cradle: a small buffered `expressions/fieldOpen.ts` store with ONE recorder
+  and ONE consumer. `CradleFrame` — the only place that knows the ACTIVE
+  workspace mode — records the ref only while the workspace stands in the Technē
+  cut, so the field is the PRESENTED centre, never a concealed one; it clears
+  the ref on leaving the cut. The presented Technē `PointCloudHost` consumes it
+  (buffered for the author-then-enter sequence) and posts `open-expression`
+  (`hostedApp.postOpenExpression`). `AgentLayer` now yields in the Technē cut
+  too (as it already did in Expressions), so a single summon opens exactly once
+  — in the field, not also in the panel's Composition plane.
+
+**T3 adversarial review drove the design.** The first cut listened to the
+global `oi:expression-compose` from `PointCloudHost` directly, gated on the
+host's static `mode` prop. An independent read-only review (the §26 T3 role)
+found two real defects: a double-open (`AgentLayer` opened the same summon in
+every non-Expressions mode, so Technē opened it twice), and that a concealed,
+still-mounted Technē host would open summons app-wide; plus a dropped-ref race
+(no buffer for the author-then-enter sequence) and a misleading `native-construct`
+control that opened the Library browse while its label promised authoring. The
+one-recorder/one-consumer store, the `AgentLayer` Technē yield, and removing the
+`native-construct` control (the connected-world entry is the existing
+`native-library`) answer all four; the review's findings are the spec this
+section is proven against.
+
+**Executed proof (green locally on the pinned native cut; gated in CI).**
+`tests/techne-construction-join.mjs` + `-page.tsx`/`.html` mount BOTH production
+surfaces — the real Wiki (`KnowledgeSurface`) and the live app (`PointCloudHost`)
+— over one real kernel, and prove **12 checks**: a material-first two-member
+constellation with a typed relation authored in the Wiki; `summonExpression`
+opens the EXACT projected Expression as the FIELD's own open document (read
+frame-bound from `__FIELD_STUDIES__.nativeWorking()`, revision-exact); the
+buffered request consumed exactly once (no double-open); the field renders the
+constellation's real members read from the kernel document (one renderer); an
+edit made in the field commits to the SAME native Expression through the owner
+(revision advanced, title changed). Two §41 negatives: standing the app in the
+Expressions cut, the same summon does NOT reach the field, and the recorded ref
+is left UNCONSUMED — proving `PointCloudHost`'s `mode==="techne"` gate, not a
+shared kernel, is the load-bearing relay. Ran on the pinned native binaries
+(ai-kit `6c700cee`, Central `4a5834b7`; O-I `oi`/`walk-bridge` from this head) on
+macOS software-GL Chromium `153.0.8010.12`. Regression on the same cut:
+`techne-native-application.mjs` 23/23, `techne-native-composition.mjs`,
+`techne-lens-studio-browser.mjs`, and the full cradle build all green;
+cradle+app TypeScript clean. The proof is wired into the `native-application`
+job of the Technē workflow, which runs it in CI on the Linux pinned cut.
+
+**Remaining, unchanged in scope:** both creation routes are already proven
+cradle-side (`wiki-constructive-browser.mjs`: material-first, frame-first,
+contextual reuse, save/Return), and the field-open path is route-agnostic — any
+constellation projects to the same kind of kernel Expression the field opens; a
+direct M0′ "create a constellation" entry that opens the `WikiConstructionPanel`
+from the app (rather than reaching it through `native-library` → a Web/Wiki)
+still needs a resolvable Wiki ref and is a follow-on. Variants/nesting worked in
+the field, whole Return through Wiki/graph/search/Library from the field (§38,
+C9), the native place (M4′)/Palace (M5′) owner operations (§§18–19), canonical
+Agent co-work (§37, C8), eligible shared-world behaviour (§§23–24, C11) and the
+retained walks §§27–33 with their §41 negatives all remain. This increment did
+not reduce that scope.
 
 ## Historical evidence retained
 

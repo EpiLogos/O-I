@@ -2,16 +2,14 @@
  * The Technē summon seam (owner Wayfinder §13, T1/T2 contract): T1's Technē
  * HUD dispatches window CustomEvents —
  *
- *   "oi:techne-summon"          {kind: "library" | "verso" | "search" | "construct"}
+ *   "oi:techne-summon"          {kind: "library" | "verso" | "search"}
  *   "oi:techne-summon-closed"   {kind}
  *
  * and this component answers them through the surfaces that already exist:
  *
- *   library  → the Library overlay, BROWSE (the columnar Web inventory);
- *   construct→ the same BROWSE horizon — M0′'s "gather & construct" entry,
- *              where the person opens a Web or Wiki and authors a constellation;
- *   search   → the Library overlay, the gallery with the search focused;
- *   verso    → the current face subject's verso account, presented as an
+ *   library → the Library overlay, BROWSE (the columnar Web inventory);
+ *   search  → the Library overlay, the gallery with the search focused;
+ *   verso   → the current face subject's verso account, presented as an
  *             overlay in the Library's own scrim grammar over the untouched
  *             field.
  *
@@ -38,7 +36,7 @@ import {resolveVersoSubject, useVersoAccount, type VersoSubject, type CarriedNat
 export const TECHNE_SUMMON_EVENT = "oi:techne-summon";
 export const TECHNE_SUMMON_CLOSED_EVENT = "oi:techne-summon-closed";
 
-type SummonKind = "library" | "verso" | "search" | "construct";
+type SummonKind = "library" | "verso" | "search";
 
 /** The last presentation ask the summon made, for a Library browser that
  * mounts after the ask (the overlay's browser is lazy). */
@@ -62,13 +60,8 @@ export function TechneSummonSurface(host: SummonHostContext & {onOpenLibrary: ()
     const onSummon = (event: Event) => {
       const detail = (event as CustomEvent<{kind?: SummonKind; subject?: CarriedNativeSubject}>).detail;
       const kind = detail?.kind;
-      if (kind === "library" || kind === "search" || kind === "construct") {
-        // M0′ "gather & construct" opens the same connected-world discovery
-        // horizon as the Library browse (My World / O:I Web, §§7–8): the
-        // person finds a Web or Wiki there and enters its construction. The
-        // constructed constellation returns to the field through the separate
-        // open-expression seam, not a second surface here.
-        summonView = kind === "search" ? "gallery" : "browse";
+      if (kind === "library" || kind === "search") {
+        summonView = kind === "library" ? "browse" : "gallery";
         hostRef.current.onOpenLibrary();
         // A late-mounting Library browser reads the same ask at init; this
         // event answers an already-mounted one.

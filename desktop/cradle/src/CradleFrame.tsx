@@ -15,6 +15,7 @@ import {AgentLayer} from "./agent/AgentLayer";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
+import {requestTechneFieldOpen,resetTechneFieldOpen} from "./expressions/fieldOpen";
 import {ModeLeftBody,modeExtraPlanes} from "./workspace/modeBodies";
 import type {TaPaneOpens} from "./expressions/TaOntaSide";
 import type {FactoryPanelHost} from "./contributions/factory/sidebar/sidebarModel";
@@ -872,10 +873,23 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // panel's own Composition plane as the summon's answer.
   const openModeSurfaceRef=useRef(openModeSurface);openModeSurfaceRef.current=openModeSurface;
   useEffect(()=>{
-    const summon=()=>{if((stateRef.current.mode??"base")==="expressions")void openModeSurfaceRef.current("expressions").catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));};
+    // The composition root is the ONE place that knows the active workspace
+    // mode, so it alone routes a summon to its cut's composer. Expressions:
+    // focus the centre Expressions surface (the panel never goes full). Technē:
+    // record the ref for the live field — the PRESENTED centre — to open; the
+    // record happens only while Technē is active, so a concealed field never
+    // opens a summon and the panel (AgentLayer) does not also open it.
+    const summon=(event:Event)=>{
+      const mode=stateRef.current.mode??"base";
+      if(mode==="expressions"){void openModeSurfaceRef.current("expressions").catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));return;}
+      if(mode==="techne"){const ref=(event as CustomEvent<{expressionRef?:unknown}>).detail?.expressionRef;if(typeof ref==="string"&&ref.startsWith("expression:"))requestTechneFieldOpen(ref);}
+    };
     window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);
     return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);
   },[]);
+  // Leaving the Technē cut clears any ref that was never consumed, so it cannot
+  // later open in a field the person is no longer looking at.
+  useEffect(()=>{if((state.mode??"base")!=="techne")resetTechneFieldOpen();},[state.mode]);
   // Technè's scene opens a referenced file in the centre through the frame's
   // own file opener (⌘⏎ on a material item) — never a second open path.
   useEffect(()=>{

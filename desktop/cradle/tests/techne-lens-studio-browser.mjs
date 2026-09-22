@@ -36,11 +36,6 @@ const OFFICE = {project: 'M0′', canvas: 'M1′', timeline: 'M2′', journey: '
 // NATIVE operation (a `lens-op`, not a browser-local save).
 const ROUTED = {project: 'native-library', canvas: 'native-work', timeline: 'open-timeline', journey: 'sequence-panel'};
 const NATIVE_OP = ['canvas', 'journey'];
-// The lenses that offer the source→construction entry — M0′ always, and M1′
-// when no construction is open yet (both creation routes reach the connected
-// Wiki through the `construct` summon, §§34–35). No host stands in this
-// standalone walk, so construction() is null and both carry it.
-const CONSTRUCT_ENTRY = ['project', 'canvas'];
 const FACET = {place: 'place', palace: 'palace'};
 const receipt = {schema: 'oi.techne-lens-studio/v1', standing: 'current-app instrument surface in a real browser; native operations are a separate host-channel proof', passed: false, lenses: []};
 
@@ -93,12 +88,6 @@ try {
       // M1′/M3′ persist through a NATIVE operation (the owner's commit), not a
       // browser save — the misroute the review caught.
       assert.ok(await studio.locator('.lens-control-native[data-action="lens-op"][data-op="commit"]').count(), `${id} commits through the native owner, not a browser save`);
-    }
-    if (CONSTRUCT_ENTRY.includes(id)) {
-      // The source→construction entry (§§34–35): a `construct` summon opens the
-      // connected world so the person gathers sources and authors a
-      // constellation, which returns to THIS field through open-expression.
-      assert.ok(await studio.locator('.lens-control[data-action="native-construct"]').count(), `${id} offers the source→construction entry`);
     }
     receipt.lenses.push(id);
   }

@@ -421,7 +421,6 @@ async function action(name:string,el:HTMLElement,event?:Event){const s=scene(),s
  case 'deep-verso':hostRequest({request:'summon',detail:{kind:'verso',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'native-work':nativeWorkspace?.toggle();break;
  case 'native-library':hostRequest({request:'summon',detail:{kind:'library'}});break;
- case 'native-construct':hostRequest({request:'summon',detail:{kind:'construct',subject:nativeWorkspace?.nativeSubject()??undefined}});break;
  case 'lens':lensStudio.select(el.dataset.lens as LensId);break;
  case 'lens-close':lensStudio.closeStudio();break;
  case 'lens-op':if(el.dataset.op==='commit'){await nativeWorkspace?.commit();lensStudio.refresh();}break;
@@ -735,10 +734,11 @@ function setHostMode(mode:'expressions'|'techne'){
 // Open an existing native Expression the host asked for at runtime — a
 // constellation just constructed in the Wiki, a Library subject, a returned
 // composition. It opens in place through the native workspace (kernel inspect,
-// no remount, the field/camera preserved by the open path itself); if the
-// kernel channel has not been announced yet it opens on that announce, exactly
-// as the boot ?expression= deep link does. Refs only — the kernel document is
-// the store, and a bad ref is refused by the owner, never guessed.
+// no iframe reload). This is a subject change (§28): the field then stands on
+// the opened work's own scene, camera and selection, it does not preserve the
+// previous field. If the kernel channel has not been announced yet it opens on
+// that announce, exactly as the boot ?expression= deep link does. Refs only —
+// the kernel document is the store, and a bad ref is refused by the owner.
 function openHostExpression(ref:string){
  if(typeof ref!=='string'||!ref.startsWith('expression:'))return;
  const open=()=>void nativeWorkspace?.open(ref);
