@@ -90,6 +90,9 @@ pub struct Entity {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq, Eq)]
 #[serde(deny_unknown_fields)]
 pub struct Scene {
+    /// Full existing authoring Scene; no source or knowledge objects are copied.
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<crate::expression_scene::Presentation>,
     pub scene_ref: String,
     pub revision: u64,
     pub title: String,
@@ -180,6 +183,8 @@ pub struct Refinement {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(deny_unknown_fields)]
 pub struct Document {
+    #[serde(default, skip_serializing_if = "Option::is_none")]
+    pub presentation: Option<crate::expression_scene::Composition>,
     pub schema: String,
     pub expression_ref: String,
     pub revision: u64,
@@ -204,10 +209,16 @@ pub struct Document {
 #[derive(Clone, Debug, Deserialize, Serialize, PartialEq)]
 #[serde(tag = "change", rename_all = "snake_case", deny_unknown_fields)]
 pub enum Change {
+    Rename { title: String },
+    CompositionSet { presentation: crate::expression_scene::Composition },
     SceneCreate {
         scene_ref: String,
         title: String,
     },
+    SceneRename { scene_ref: String, title: String },
+    SceneRemove { scene_ref: String },
+    SceneMaterialSet { scene_ref: String, presentation: crate::expression_scene::Presentation },
+    SceneMaterialClear { scene_ref: String },
     SceneReorder {
         scene_refs: Vec<String>,
     },
@@ -303,7 +314,10 @@ pub enum Request {
         actor: String,
     },
     Open {
-        document: Document,
+        // Boxed: an inline Document makes this the largest `Request` variant
+        // (and so the largest `KernelOp::Expression` payload). Indirection
+        // keeps the command enum compact without changing the wire shape.
+        document: Box<Document>,
         actor: String,
     },
     OpenFile {
@@ -419,7 +433,9 @@ pub enum Request {
     Restore {
         expression_ref: String,
         expected_revision: u64,
-        document: Document,
+        // Boxed for the same reason as `Open` above: keep the inline Document
+        // out of the command enum's stack footprint.
+        document: Box<Document>,
         actor: String,
     },
 }
@@ -452,8 +468,10 @@ pub fn capabilities() -> Value {
     json!({"schema":"oi.expression-capabilities/v1", "document_schema":SCHEMA,
         "operations":["capabilities","list","inspect","create","open","open_file","fork","edit","propose","review","export","save","save_as","invoke",
             "profile_define","profile_inspect","profile_resolve","edition_create","edition_inspect","index","asset_admit","asset_traverse","asset_subject"],
-        "changes":["scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
+        "changes":["rename","composition_set","scene_material_set","scene_material_clear","scene_rename","scene_remove","scene_create","scene_reorder","scene_compose","entity_add","entity_remove","subject_bind","subject_unbind","relation_bind","relation_remove","focus","relation_focus","parameter_set","parameter_automate","parameter_manual","representation_bind",
             "scene_body_set","scene_body_clear","scene_trigger_attach","scene_trigger_detach","profile_adopt","profile_release","collections_set"],
+        "composition_presentation":{"schema":"oi.journey-properties/v1","data_only":true,"scene_store":"Document.scenes"},
+        "scene_presentation":{"schema":"oi.journey-scene/v1","owner":"existing Expressions authoring Scene","data_only":true,"full_native_membership_retained":true},
         "composition_budget":{"scenes":64,"entities":LIMIT,"scene_members":LIMIT,"render_formations":10,"render_pins":8},
         "parameters":{"glyph":{"type":"string","max_length":128},"shape":{"values":["glyph","ring","disc","square","triangle","yantra","cymatic"]},"kind":{"values":["formation","pin"]},"ascii":{"max_bytes":32768},"image":{"formats":["embedded_png","embedded_jpeg","embedded_webp"]},"x":{"min":-1600,"max":1600},"y":{"min":-1600,"max":1600},"z":{"min":-1600,"max":1600},"scale":{"min":0.05,"max":4},"share":{"min":0,"max":1000}},
         "automation":{"type":"lfo","waveforms":["sine","triangle","square","saw"],"rate_hz":{"min":0.001,"max":10},"clock_owner":"accepted Expressions engine"},
@@ -589,6 +607,7 @@ impl Document {
         id(&self.expression_ref, "expression:")?;
         text(&self.title)?;
         readings(&self.provenance)?;
+        if let Some(presentation) = &self.presentation { presentation.validate()?; }
         if self.scenes.is_empty()
             || self.scenes.len() > 64
             || self.entities.len() > LIMIT
@@ -610,6 +629,9 @@ impl Document {
                 || s.entity_refs.iter().any(|r| !self.entities.contains_key(r))
             {
                 return Err("Scene contains duplicate, missing or too many entities".into());
+            }
+            if let Some(presentation) = &s.presentation {
+                crate::expression_scene::validate(presentation, s, self)?;
             }
             if let Some(body) = &s.body {
                 crate::expression_carrier::validate_body(body, &self.expression_ref)?;
@@ -772,11 +794,14 @@ impl Document {
     }
     fn change(&mut self, c: Change) -> Result<(), String> {
         match c {
+            Change::Rename { title } => { text(&title)?; self.title = title; }
+            Change::CompositionSet { presentation } => { presentation.validate()?; self.presentation = Some(presentation); }
             Change::SceneCreate { scene_ref, title } => {
                 if self.scenes.iter().any(|s| s.scene_ref == scene_ref) {
                     return Err("Scene already exists".into());
                 }
                 self.scenes.push(Scene {
+                    presentation: None,
                     scene_ref,
                     revision: self.revision,
                     title,
@@ -785,6 +810,24 @@ impl Document {
                     triggers: vec![],
                 });
             }
+            Change::SceneRename { scene_ref, title } => {
+                text(&title)?;
+                let scene = self.scene(&scene_ref)?;
+                if let Some(presentation) = &mut scene.presentation { presentation.scene["name"] = json!(title); }
+                scene.title = title;
+            }
+            Change::SceneRemove { scene_ref } => {
+                self.scene(&scene_ref)?;
+                if self.scenes.len() == 1 { return Err("An Expression retains at least one Scene".into()); }
+                self.scenes.retain(|scene| scene.scene_ref != scene_ref);
+                if self.selection.scene_ref == scene_ref {
+                    self.selection = Selection { scene_ref: self.scenes[0].scene_ref.clone(), entity_ref: None, relation_ref: None };
+                }
+                // Referencing triggers remain subject to document validation:
+                // remove/reconnect them explicitly in the same atomic edit.
+            }
+            Change::SceneMaterialSet { scene_ref, presentation } => self.scene(&scene_ref)?.presentation = Some(presentation),
+            Change::SceneMaterialClear { scene_ref } => self.scene(&scene_ref)?.presentation = None,
             Change::SceneReorder { scene_refs } => {
                 if scene_refs.len() != self.scenes.len()
                     || scene_refs.iter().collect::<BTreeSet<_>>().len() != scene_refs.len()
@@ -805,7 +848,15 @@ impl Document {
             Change::SceneCompose {
                 scene_ref,
                 entity_refs,
-            } => self.scene(&scene_ref)?.entity_refs = entity_refs,
+            } => {
+                let scene = self.scene(&scene_ref)?;
+                if let Some(presentation) = &mut scene.presentation {
+                    for reference in scene.entity_refs.iter().filter(|reference| !entity_refs.contains(reference)) {
+                        crate::expression_scene::remove_entity(presentation, reference);
+                    }
+                }
+                scene.entity_refs = entity_refs;
+            },
             Change::EntityAdd {
                 scene_ref,
                 entity_ref,
@@ -838,6 +889,7 @@ impl Document {
                 }
                 for s in &mut self.scenes {
                     s.entity_refs.retain(|r| r != &entity_ref);
+                    if let Some(presentation) = &mut s.presentation { crate::expression_scene::remove_entity(presentation, &entity_ref); }
                 }
                 self.relations.retain(|_, r| {
                     r.from_entity_ref != entity_ref && r.to_entity_ref != entity_ref
@@ -891,12 +943,14 @@ impl Document {
                     return Err("Take manual control before changing an automated parameter".into());
                 }
                 e.parameters.insert(
-                    key,
-                    Parameter {
-                        value,
-                        automation: None,
-                    },
+                    key.clone(),
+                    Parameter { value: value.clone(), automation: None },
                 );
+                for scene in &mut self.scenes {
+                    if let Some(presentation) = &mut scene.presentation {
+                        crate::expression_scene::set_parameter(presentation, &entity_ref, &key, &value);
+                    }
+                }
             }
             Change::ParameterAutomate {
                 entity_ref,
@@ -1054,11 +1108,13 @@ impl Application {
                 actor,
             } => {
                 let d = Document {
+                    presentation: None,
                     schema: SCHEMA.into(),
                     expression_ref: expression_ref.clone(),
                     revision: 1,
                     title,
                     scenes: vec![Scene {
+                        presentation: None,
                         scene_ref: format!("{expression_ref}:scene:main"),
                         revision: 1,
                         title: "Main".into(),
@@ -1081,7 +1137,7 @@ impl Application {
                 };
                 return self.open(d, actor);
             }
-            Request::Open { document, actor } => return self.open(document, actor),
+            Request::Open { document, actor } => return self.open(*document, actor),
             Request::OpenFile { location, actor } => {
                 let file = files::read(client, &location)?;
                 let d: Document = serde_json::from_str(&file.content)
@@ -1192,6 +1248,12 @@ impl Application {
                         (r.binding_ref.clone(), r)
                     })
                     .collect();
+                for scene in &mut d.scenes {
+                    if let Some(presentation) = &mut scene.presentation {
+                        crate::expression_scene::fork(presentation, &expression_ref, &new_expression_ref);
+                    }
+                }
+                if let Some(presentation) = &mut d.presentation { presentation.fork(&expression_ref, &new_expression_ref); }
                 d.selection.scene_ref = map(&d.selection.scene_ref);
                 d.selection.entity_ref = d.selection.entity_ref.map(|r| map(&r));
                 d.selection.relation_ref = d.selection.relation_ref.map(|r| map(&r));
@@ -1687,7 +1749,7 @@ impl Application {
                 if document.revision > expected_revision {
                     return Err("Restore document is not behind the current draft".into());
                 }
-                let mut d = document;
+                let mut d = *document;
                 d.revision = d.revision.checked_add(1).ok_or("Revision exhausted")?;
                 while d.revision <= expected_revision {
                     // Stay strictly ahead of the draft the checkpoint returns over.

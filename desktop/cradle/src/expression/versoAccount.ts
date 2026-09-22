@@ -45,6 +45,12 @@ export interface VersoSubject {
   /** The face's scene/entity position, when the subject is an Expression. */
   sceneRef?: string | null;
   entityRef?: string | null;
+  /** The exact relation occurrence the face had selected, when one stood. */
+  relationRef?: string | null;
+  /** The native revision the field stood on when the verso was summoned.
+   * The account reads the owner's CURRENT revision live and discloses any
+   * drift; this carried number is never treated as source truth. */
+  revision?: number;
 }
 
 /** World / Project / ProjectCentral identity — from the kernel navigator's
@@ -96,14 +102,50 @@ export type VersoAccountReading =
   | {state: "ready"; account: VersoAccount}
   | {state: "unavailable"; subject: VersoSubject; reason: string};
 
-/** The subject the summon presents: the kernel's own global focus first
- * (the face subject in the kernel's words), then the ONE projection state's
- * current selection, then the host's workspace subject. Nothing is minted —
- * when none stands, the verso says NO SUBJECT. */
+/** A native work carried by the hosted application's summon — an untrusted
+ * pointer (refs only, never content) to the exact Expression / Scene /
+ * entity-or-relation occurrence the person is actually looking at. */
+export interface CarriedNativeSubject {
+  ref?: unknown; kind?: unknown; nativeOwner?: unknown; title?: unknown; project?: unknown;
+  revision?: unknown; sceneRef?: unknown; entityRef?: unknown; relationRef?: unknown;
+}
+
+/** Sanitise a summon-carried native subject into a VersoSubject, or null.
+ * Only well-formed refs survive; nothing is minted and no content is read
+ * here — the owner validates the pointer in readVersoAccount. */
+function sanitiseCarriedSubject(carried: CarriedNativeSubject | undefined): VersoSubject | null {
+  if (!carried || typeof carried !== "object" || typeof carried.ref !== "string" || !carried.ref) return null;
+  const str = (value: unknown): string | undefined => (typeof value === "string" && value.length > 0 ? value : undefined);
+  const refOrNull = (value: unknown): string | null | undefined => (typeof value === "string" ? value : value === null ? null : undefined);
+  return {
+    ref: carried.ref,
+    kind: str(carried.kind),
+    nativeOwner: str(carried.nativeOwner),
+    title: str(carried.title),
+    project: str(carried.project),
+    sceneRef: refOrNull(carried.sceneRef),
+    entityRef: refOrNull(carried.entityRef),
+    relationRef: refOrNull(carried.relationRef),
+    revision: typeof carried.revision === "number" && Number.isFinite(carried.revision) ? carried.revision : undefined,
+  };
+}
+
+/** The subject the summon presents. The hosted application's exact current
+ * native work comes FIRST when it carries one — it is the subject the person
+ * is looking at, not a global fallback. Otherwise: the kernel's own global
+ * focus, then the ONE projection state's current selection, then the host's
+ * workspace subject. Nothing is minted — when none stands, the verso says NO
+ * SUBJECT. */
 export function resolveVersoSubject(
   focusSubject: {ref: string; kind: string; native_owner: string} | undefined,
   hostSubject?: {ref?: string; kind?: string; title?: string; project?: string},
+  carried?: CarriedNativeSubject,
 ): VersoSubject | null {
+  const native = sanitiseCarriedSubject(carried);
+  // The carried native work stands in the host's project unless it names its
+  // own — so a verso over native work in a project reads at that project's
+  // scope, not silently at Central root.
+  if (native) return {...native, project: native.project ?? hostSubject?.project};
   if (focusSubject?.ref) {
     const selection = getWikiProjectionState().selection;
     return {
@@ -182,6 +224,28 @@ export async function readVersoAccount(transport: KernelTransportStatus, subject
       const data = reply.outcome?.result === "expression" ? reply.outcome.data as ExpressionResult : undefined;
       if (reply.error || !data?.document) throw new Error(reply.error ?? "the kernel returned no document for this Expression");
       account.document = data.document;
+      // Validate through the owner: the carried revision is only what the
+      // field stood on; the owner's current revision is the truth, and any
+      // drift is disclosed rather than silently trusted.
+      if (typeof subject.revision === "number" && data.document.revision !== subject.revision) {
+        notices.push(`The field stood on native revision ${subject.revision}; this account reads the owner's current revision ${data.document.revision}.`);
+      }
+      // Name the exact occurrence the face selected, when the owner's document
+      // still carries it — never fabricated, never re-pointed to another.
+      if (subject.relationRef) {
+        const relation = Object.values(data.document.relations ?? {}).find(edge => edge.relation.ref === subject.relationRef);
+        notices.push(relation
+          ? `The face selected relation ${subject.relationRef} · ${relation.from_entity_ref} → ${relation.to_entity_ref}.`
+          : `The face selected relation ${subject.relationRef}, which the owner's current revision no longer carries.`);
+      }
+      // The scene/member occurrence is carried verbatim; a missing anchor is
+      // named explicitly, never silently shown as current (§§25,36).
+      if (subject.sceneRef && !data.document.scenes.some(scene => scene.scene_ref === subject.sceneRef)) {
+        notices.push(`The face stood on scene ${subject.sceneRef}, which the owner's current revision no longer carries.`);
+      }
+      if (subject.entityRef && !data.document.entities[subject.entityRef]) {
+        notices.push(`The face stood on member ${subject.entityRef}, which the owner's current revision no longer carries.`);
+      }
       if (data.file) account.savedFile = {ref: data.file.location.ref, revision: data.file.revision};
       for (const entity of Object.values(data.document.entities)) {
         const binding = entity.subject;
@@ -242,6 +306,6 @@ export function useVersoAccount(transport: KernelTransportStatus, subject: Verso
     // trailKey stands for returnTrail (the trail is host state; a changed
     // trail re-renders the account's Return line through the account read).
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [transport, subject?.ref, subject?.project, subject?.sourceLocation?.ref, subject?.sceneRef ?? null, subject?.entityRef ?? null, trailKey]);
+  }, [transport, subject?.ref, subject?.project, subject?.sourceLocation?.ref, subject?.sceneRef ?? null, subject?.entityRef ?? null, subject?.relationRef ?? null, subject?.revision ?? null, trailKey]);
   return reading;
 }

@@ -31,7 +31,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import {listFiles} from "../files/client";
 import type {CentralLocation} from "../kernel/types";
 import {ExpressionVerso} from "../expression/ExpressionVerso";
-import {resolveVersoSubject, useVersoAccount, type VersoSubject} from "../expression/versoAccount";
+import {resolveVersoSubject, useVersoAccount, type VersoSubject, type CarriedNativeSubject} from "../expression/versoAccount";
 
 export const TECHNE_SUMMON_EVENT = "oi:techne-summon";
 export const TECHNE_SUMMON_CLOSED_EVENT = "oi:techne-summon-closed";
@@ -58,7 +58,8 @@ export function TechneSummonSurface(host: SummonHostContext & {onOpenLibrary: ()
 
   useEffect(() => {
     const onSummon = (event: Event) => {
-      const kind = (event as CustomEvent<{kind?: SummonKind}>).detail?.kind;
+      const detail = (event as CustomEvent<{kind?: SummonKind; subject?: CarriedNativeSubject}>).detail;
+      const kind = detail?.kind;
       if (kind === "library" || kind === "search") {
         summonView = kind === "library" ? "browse" : "gallery";
         hostRef.current.onOpenLibrary();
@@ -67,7 +68,10 @@ export function TechneSummonSurface(host: SummonHostContext & {onOpenLibrary: ()
         window.dispatchEvent(new CustomEvent("oi:library-view", {detail: {view: summonView, focus: kind === "search" ? "search" : undefined}}));
         observeLibraryClose(kind);
       } else if (kind === "verso") {
-        setVerso({subject: resolveVersoSubject(kernel.snapshot.focus.subject, hostRef.current.subject), trail: hostRef.current.trail});
+        // The application's exact current native work (when it carried one)
+        // takes precedence over the kernel's global focus, so the verso
+        // accounts for the subject the person is actually looking at.
+        setVerso({subject: resolveVersoSubject(kernel.snapshot.focus.subject, hostRef.current.subject, detail?.subject), trail: hostRef.current.trail});
       }
     };
     window.addEventListener(TECHNE_SUMMON_EVENT, onSummon);

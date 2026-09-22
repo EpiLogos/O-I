@@ -37,7 +37,7 @@ window.measure=async(targetX,disconnect)=>{
   const result=engine.inspect(true);
   return {initial:initial.positions,positions:result.positions,velocities:result.velocities,seeds:result.seeds,initialSeeds:initial.seeds,steps:result.steps,particles:result.particleCount};
  }finally{projection?.dispose();engine.releaseRetainedField();engine.dispose();canvas.remove();Math.random=originalRandom;}
-};`},bundle:true,format:'esm',platform:'browser',outfile:join(temp,'test.js')});
+};`},bundle:true,format:'esm',platform:'browser',nodePaths:[resolve('expressions-app/node_modules')],outfile:join(temp,'test.js')});
 const server=createServer(async(req,res)=>{if(req.url==='/test.js'){res.setHeader('content-type','text/javascript');res.end(await readFile(join(temp,'test.js')));}else{res.setHeader('content-type','text/html');res.end('<!doctype html><script type="module" src="/test.js"></script>');}});
 await new Promise(r=>server.listen(0,'127.0.0.1',r));
 let browser;const report={schema:'oi.native-expression-gpu-effect/v1',standing:'controlled native target changes through actual production GPU; not native model/installed material proof',pass:false};

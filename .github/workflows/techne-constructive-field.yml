@@ -23,6 +23,7 @@ jobs:
     steps:
       - uses: actions/checkout@v4
         with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
           persist-credentials: false
       - uses: actions/setup-node@v4
         with:
@@ -36,8 +37,11 @@ jobs:
           mkdir -p "$RUNNER_TEMP/techne-evidence/sources"
           git rev-parse HEAD > "$RUNNER_TEMP/techne-evidence/O-I.revision"
           git archive --format=tar HEAD | gzip > "$RUNNER_TEMP/techne-evidence/sources/O-I.tar.gz"
-          for repo in QL-MEF ai-kit Central Actuation; do
+          for spec in QL-MEF:2bcdc78c2f97ce13312bf96011bd18bea7b73ea5 ai-kit:6c700ceeefb3ab9f3e3569e0488a8a05eadfdffd Central:4a5834b7d718b0272c913ee099a0f2c1cb627e21 Actuation:4bfe0b774304ced7a3cd3d6e18776cdfe6db90e1; do
+            repo=${spec%%:*}; revision=${spec#*:}
             git clone --depth=1 --branch main "https://github.com/EpiLogos/$repo.git" "$RUNNER_TEMP/techne-$repo"
+            git -C "$RUNNER_TEMP/techne-$repo" fetch --depth=1 origin "$revision"
+            git -C "$RUNNER_TEMP/techne-$repo" checkout --detach "$revision"
             git -C "$RUNNER_TEMP/techne-$repo" rev-parse HEAD > "$RUNNER_TEMP/techne-evidence/$repo.revision"
             git -C "$RUNNER_TEMP/techne-$repo" archive --format=tar HEAD | gzip > "$RUNNER_TEMP/techne-evidence/sources/$repo.tar.gz"
           done
@@ -53,7 +57,8 @@ jobs:
           npm ci --prefix desktop/cradle/expressions-app --no-audit --no-fund
           npm --prefix desktop/cradle/expressions-app run build
           npm --prefix desktop/cradle/expressions-app test
-          tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist
+          (cd desktop/cradle/expressions-app && node --test field-studies-journeys/tests/kernel-document-bridge.test.mjs field-studies-journeys/tests/native-composition.test.mjs field-studies-journeys/tests/native-selection-queue.test.mjs)
+          tar -czf "$RUNNER_TEMP/techne-evidence/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app node_modules dist field-studies-journeys/build
       - name: Build the actual integrated cradle
         run: npm --prefix desktop/cradle run build
       - name: Exercise native occurrence bindings and stale proposal refusal
@@ -62,7 +67,8 @@ jobs:
           node tests/expression-engine.mjs
           node tests/knowledge-expression.mjs
           node tests/techne-field-bindings.mjs
-          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs
+          node --test tests/verso-account-binding.test.mjs
+          node --experimental-strip-types --import ./tests/ts-register.mjs --test tests/techne-journey-submit.test.mjs tests/field-open.test.mjs tests/techne-summon-record.test.mjs tests/techne-place-facets.test.mjs tests/techne-wiki-provider.test.mjs
       - name: Prove entrance and actual relation drawing with disconnected-binding negatives
         working-directory: desktop/cradle
         env:
@@ -71,6 +77,9 @@ jobs:
           npx playwright install --with-deps chromium
           node tests/techne-entry-browser.mjs
           node tests/techne-field-browser.mjs
+          node tests/techne-lens-studio-browser.mjs
+          node tests/techne-hud-browser.mjs
+          node tests/techne-walk-sweep-browser.mjs
       - name: Retain exact sources, dependency graph and execution receipts
         if: always()
         uses: actions/upload-artifact@v4
@@ -98,25 +107,25 @@ jobs:
               cp desktop/cradle/kernel/target/debug/walk-bridge cli/target/debug/oi "$RUNNER_TEMP/techne-native/"
           - owner: Central
             repository: EpiLogos/Central
-            ref: 12ee31313e710378845baae190efc1a4b3e7ebdb
+            ref: 4a5834b7d718b0272c913ee099a0f2c1cb627e21
             commands: |
               cargo build --locked --manifest-path ctrl/Cargo.toml --bin ctrl
               cp target/debug/ctrl "$RUNNER_TEMP/techne-native/"
           - owner: ai-kit
             repository: EpiLogos/ai-kit
-            ref: 37994265f5727af50ec6446687ed629dde047412
+            ref: 6c700ceeefb3ab9f3e3569e0488a8a05eadfdffd
             commands: |
               cargo build --locked -p aikit-cli --bins
               cp target/debug/aikit "$RUNNER_TEMP/techne-native/"
           - owner: QL-MEF
             repository: EpiLogos/QL-MEF
-            ref: 5970757e25532c7329f07f4819273155c4f3f135
+            ref: 2bcdc78c2f97ce13312bf96011bd18bea7b73ea5
             commands: |
               cargo build --locked -p ql-cli
               cp target/debug/ql "$RUNNER_TEMP/techne-native/"
           - owner: Actuation
             repository: EpiLogos/Actuation
-            ref: 47f4fa3c184850e254ef5089696bf5fbbad907ec
+            ref: 4bfe0b774304ced7a3cd3d6e18776cdfe6db90e1
             commands: |
               cargo build --locked -p actuation-cli
               cp target/debug/actuation "$RUNNER_TEMP/techne-native/"
@@ -149,5 +158,81 @@ jobs:
         with:
           name: techne-native-${{ matrix.owner }}-${{ github.sha }}
           path: ${{ runner.temp }}/techne-native
+          retention-days: 7
+          if-no-files-found: error
+
+  native-application:
+    name: Current application / native files / restart
+    needs: [source-runtime, native-owner]
+    runs-on: ubuntu-latest
+    timeout-minutes: 20
+    steps:
+      - uses: actions/checkout@v4
+        with:
+          ref: ${{ github.event.pull_request.head.sha || github.sha }}
+          persist-credentials: false
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 22
+      - uses: actions/download-artifact@v4
+        with:
+          pattern: techne-native-*-${{ github.sha }}
+          path: ${{ runner.temp }}/native-owners
+      - uses: actions/download-artifact@v4
+        with:
+          name: techne-source-runtime-${{ github.sha }}
+          path: ${{ runner.temp }}/source-runtime
+      - name: Restore the exact built app and binaries
+        shell: bash
+        run: |
+          set -euo pipefail
+          npm ci --prefix desktop/cradle --no-audit --no-fund
+          tar -xzf "$RUNNER_TEMP/source-runtime/expressions-app-runtime.tar.gz" -C desktop/cradle/expressions-app
+          test "$(cat "$RUNNER_TEMP/source-runtime/O-I.revision")" = "$(git rev-parse HEAD)"
+          mkdir -p "$RUNNER_TEMP/native-bin"
+          for name in oi walk-bridge aikit ctrl; do
+            path=$(find "$RUNNER_TEMP/native-owners" -type f -name "$name")
+            test -n "$path"
+            cp "$path" "$RUNNER_TEMP/native-bin/$name"
+            chmod +x "$RUNNER_TEMP/native-bin/$name"
+          done
+          test "$(cat "$RUNNER_TEMP/native-owners/techne-native-O-I-${{ github.sha }}/O-I.revision")" = "$(git rev-parse HEAD)"
+          mkdir -p desktop/cradle/tests/artifacts/techne-native-application
+          git rev-parse HEAD > desktop/cradle/tests/artifacts/techne-native-application/O-I.revision
+          find "$RUNNER_TEMP/native-owners" -name '*.revision' -exec cp {} desktop/cradle/tests/artifacts/techne-native-application/ \;
+      - name: Native composition continuity and serialized selection against actual storage
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+        run: node tests/techne-native-composition.mjs
+      - name: Actual current app native save, separate kernel restart and disconnected save negative
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+        run: |
+          npx playwright install --with-deps chromium
+          node tests/techne-native-application.mjs
+      - name: Source→construction→live-field join and its §41 no-relay negative
+        working-directory: desktop/cradle
+        env:
+          OI_BIN: ${{ runner.temp }}/native-bin/oi
+          OI_AIKIT_BIN: ${{ runner.temp }}/native-bin/aikit
+          OI_CENTRAL_CTRL_BIN: ${{ runner.temp }}/native-bin/ctrl
+          WIKI_KERNEL_BIN: ${{ runner.temp }}/native-bin/walk-bridge
+        run: node tests/techne-construction-join.mjs
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: techne-current-app-${{ github.sha }}
+          path: |
+            desktop/cradle/tests/artifacts/techne-native-application
+            desktop/cradle/tests/artifacts/techne-native-composition
+            desktop/cradle/tests/artifacts/techne-construction-join
           retention-days: 7
           if-no-files-found: error

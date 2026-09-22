@@ -14,6 +14,8 @@ export default defineConfig(() => {
     resolve: {
       alias: {
         '@': path.resolve(__dirname, '.'),
+        // O:I-owned correspondence modules share this app's actual Three instance.
+        'three': path.resolve(__dirname, 'node_modules/three'),
       },
     },
     build: {rollupOptions: {input: {main:path.resolve(__dirname,'index.html'),legacy:path.resolve(__dirname,'legacy.html'),render:path.resolve(__dirname,'render.html')}}},

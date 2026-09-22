@@ -141,11 +141,14 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   const sessionState=session?.state;
   const expression=useMemo(()=>expressionReadingOf(sessionState),[sessionState?.status,sessionState?.reading,sessionState?.pending]);
   // The Expression summon selects Composition and goes full. A mode that does
-  // not list Composition still shows it for that visit. In Expressions mode
-  // the composition root focuses the centre Expressions surface instead: the
-  // panel (Anima) is never displaced and never goes full because of a summon.
+  // not list Composition still shows it for that visit. In Expressions mode the
+  // composition root focuses the centre Expressions surface instead, and in the
+  // Technē cut the composition root opens the summon in the live field (the
+  // imported application, the Technē composer): in BOTH those cuts the panel
+  // (Anima/Epii) is never displaced and never goes full because of a summon, so
+  // a single summon opens exactly once — in the centre, not also here.
   useEffect(()=>{
-    if(mode==="expressions")return;
+    if(mode==="expressions"||mode==="techne")return;
     const summon=(event:Event)=>{const ref=(event as CustomEvent<{expressionRef?:string}>).detail?.expressionRef;if(ref!==undefined&&!ref.startsWith("expression:"))return;if(ref)setCompositionRef(ref);show("Composition");if(!full)onFull();};
     window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);
   },[mode,full,onFull,show]);
