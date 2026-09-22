@@ -436,6 +436,68 @@ HUD into one presentation grammar is refinement on the convergence UI track. M5�
 Palace durable composition, item 4 (Agent co-work C8, shared-world C11) and the
 retained walks §§27–33 with their §41 negatives also remain.
 
+## 22 September — the instruments work, navigate and stay continuous (§28, §4, C5/C7/C10/C12, C8 co-reference)
+
+The six instruments are not only available but WORK and NAVIGATE as one field.
+Commits `b418b1f8` (walk sweep), `e7e55ce4` (session-driven active / §4),
+`fab927d2` (C10), `e21ab947` (rail).
+
+- **Walk sweep (§28/C5/C7/C12).** `tests/techne-walk-sweep-{page,browser}` (15 B
+  checks, gated) drives the live HUD through all six M0′–M5′ instruments over ONE
+  rich reading built by the real `wikiReadingPayload` (12 members and typed
+  revisioned relations, a standing Expression with two scenes, declared +
+  geography-related places). Each instrument renders its ACTUAL material — M1′ the
+  constellation, M2′ the relation field, M3′ the real Expression scenes, M4′ the
+  produced places, M5′ the composition over the reading's Expression refs, M0′ the
+  ground — not a stat panel; and one subject + one DisclosureSession are carried
+  across every lens (§28), no new session per instrument, no uncaught errors.
+- **§4 cross-instrument transition + C8 co-reference.** The HUD's active lens was
+  local state, so an instrument's own cross-open (`disclosureSession.openInInstrument`,
+  e.g. Place's "Open in timeline") changed the session but the HUD ignored it — §4
+  was dead — and Epii, which reads the session, disagreed with the HUD. Now the
+  active lens IS the session's instrument (subscribed), the chooser routes through
+  `openInInstrument`, and the cross-open switches the HUD, carrying subject/basis
+  and recording a navigation hop. One source of truth for the chooser, the
+  cross-open and Epii's co-reference (§4, §17). C8's stale-op reconciliation is
+  already proven on the execute lane (`techne-journey-submit`: a revision conflict
+  refreshes the mirror and never retries; a stale basis is refused).
+- **C10 continuity + one-renderer.** Collapsing to the field and re-opening the
+  HUD preserves the session (instrument, subject, basis unchanged; no reset or
+  remint), and opening the HUD suspends the field (`display:none`) so no heavy
+  renderer runs hidden (§16/§22). Collapsed, the six instruments stay available as
+  a thin rail over the live field.
+
+## Honest remaining (each a native-integration pass; proofs native/CI-gated)
+
+- **C11 shared-world (§§23–24).** No read-only/audience/eligible facet exists in
+  the techne read model yet; the eligible/private boundary, read-only refusal and
+  explicit-derivative behaviour are a new facet + the SharedField/Projection wiring.
+  Full proof needs the live SharedField (the map §24 forbids an in-memory double).
+- **M5′ Palace durable composition (§19/§25/G5).** The composition renders and the
+  Return route is authored, but the wiki reading discloses `oi.expression.edit`,
+  not the `governed-write` action `palaceReturnAction` seeks, so the live Return
+  leg is absent, and `kernelTechneAdapter.routeAction` executes only
+  `oi.expression.edit`+`scene_create` — the composition is not persisted. FINDING:
+  `m0m5/palace/composition.ts composeChange` emits `scene_compose` with `elements`
+  = Expression refs, but the kernel's `Change::SceneCompose` takes `entity_refs`
+  (entities in a scene); composing EXPRESSION refs is the Expression-composition
+  primitive (`composition_set`), not `scene_compose`. The Palace's durable persist
+  belongs on `composition_set`; the current `scene_compose` ride-along is latent
+  (never executed, since the Return route is null live). This needs the right
+  kernel primitive + adapter execution + a native proof.
+- **C8 live Agent-runtime.** The session now carries the active instrument/selection
+  and its subject aligns with the kernel focus Epii reads; wiring the AgentLayer to
+  read the session's instrument/selection (beyond the subject) and a live Epii
+  co-work proof remain.
+- **Fold the in-field chooser.** The imported app's own `lensStudio` chooser still
+  stands in the field alongside this HUD; suppressing it (a host-command to the
+  iframe) so the cradle HUD is the one chooser is an iframe change with a CI proof.
+- **C1–C4 direct construction entry, C9 Return through the field, C6 nested/variant.**
+  The source→construction join and whole Return are proven cradle-side (§§34–35,
+  §38); a direct in-app M0′ "create a constellation" entry, variants/nesting worked
+  in the field, and the Return read back through Wiki/graph/search from the field
+  remain.
+
 ## Historical evidence retained
 
 The [earlier ledger at 66f5711](https://github.com/EpiLogos/O-I/blob/66f5711b16e4d37fcdcdf8e1cde87e26ccd2dcdd/.wayfinder/maps/techne-constructive-evidence.md) retains the initial source/ownership receipts and failed transport history. In particular: main `b72d763` joined at `a64f6d5`; baseline source runtime `35484923767`/artifact `10597113549`; entrance successor proof `35503604014`/artifact `10602848282`; failed base64 delivery `35505214406` applied no production changes, later readable patch `35505596071` did; `125327f` action-required was an unexecuted gate. Earlier native AIKit binary `99306d8` differed from its recovered source `3799426` and must not be reported as one verified build.
