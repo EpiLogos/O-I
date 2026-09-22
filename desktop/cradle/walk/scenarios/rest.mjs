@@ -23,9 +23,10 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   check(await page.getByRole('textbox',{name:'Writing surface'}).count()===0,'No automatic textarea or address simulation at desktop start');
 
   // One composition, real entries only — Day (the owner's canonical day
-  // record), Search, the library, and Start writing (owner set, 2026-09-22).
+  // record), Graph (the graph aperture's mode), Search, the library, and
+  // Start writing (owner set, 2026-09-22; ruling 4 adds Card and Graph).
   const entries=await rest.getByRole('navigation',{name:'Start working'}).getByRole('button').allTextContents();
-  check(entries.length<=4&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t))&&entries.some(t=>/^Day/.test(t)),
+  check(entries.length<=5&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t))&&entries.some(t=>/^Day/.test(t))&&entries.some(t=>/^Graph/.test(t)),
     'The fresh page offers only its real entries',{entries});
   check(await rest.locator('.welcome-prompt h2').count()===1,'The rolling welcome prompt is the page heading');
   // Length robustness, two-sided and exercised. Every eligible phrase renders
@@ -88,6 +89,24 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   const refusal=(await page.locator('.rest-refusal').textContent())??'';
   check(refusal.trim().length>0,
     'Day without a register refuses honestly and names the failure');
+
+  // Graph enters the real graph aperture's mode — the one summon the shell's
+  // own mode entries use (owner ruling 4, 2026-09-22). It is never a second
+  // navigator or a stub: Technè's left body IS the aperture over the
+  // wiki/expressions projection, and with no transport that navigator names
+  // its requirement instead of drawing an invented graph.
+  await page.getByRole('button',{name:'Graph',exact:true}).click();
+  await page.locator('.desktop-shell[data-mode="techne"]').waitFor({timeout:30000});
+  check(true,'Graph enters the mode whose left body is the graph aperture');
+  const graphNavigator=page.locator('.xg-navigator');
+  await graphNavigator.waitFor({timeout:30000});
+  const graphText=(await graphNavigator.textContent())??'';
+  check(/Expressions are unavailable/.test(graphText),
+    'The real graph aperture stands and names its requirement with no ground',{graph:graphText.slice(0,140)});
+  await shot('desktop-rest-graph');
+  await page.locator('.world-mode-strip [data-mode="base"]').click();
+  await page.locator('.desktop-shell[data-mode="base"]').waitFor({timeout:15000});
+  check(await rest.isVisible(),'Returning to Base restores the rest page');
 
   // Writing never waits for a register. With no owner transport at all the
   // writing still opens and keeps itself on this device, rather than being

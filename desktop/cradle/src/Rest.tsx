@@ -15,6 +15,12 @@ import "./flow/flow.css";
  * "Day" opens the owner's canonical day record through the Day route
  * (kernel day_source_open) — the same open the navigator's Today carries.
  *
+ * "Graph" enters the Technè mode — the one summon the shell's own mode
+ * entries use (enterMode). That mode's left body IS the graph aperture over
+ * the wiki/expressions projection, so the entry routes to the real thing
+ * and lets it name its own state when no ground is reachable (owner
+ * ruling 4, 2026-09-22: the rest page carries Day / Card / Graph).
+ *
  * "Start writing" opens a real flow file: one dated 0/1 instance minted in
  * the owner's flows area through Central's own file operation (owner
  * direction, 2026-09-22). Only when no owner ground is reachable does
@@ -25,13 +31,16 @@ import "./flow/flow.css";
  * the empty-workspace region hosts the existing `GroundChooser` first, with
  * the honest reason line, above the ordinary start-working composition.
  */
-export function Rest({ project, onWrite, onDay, onWiki, onSearch, onExplore }: {
+export function Rest({ project, onWrite, onDay, onWiki, onSearch, onExplore, onGraph }: {
   project?: string;
   onWrite: (project?: string) => Promise<void>;
   onDay?: () => Promise<void>;
   onWiki?: () => void; onSearch: () => void; title: string;
   /** SF1: the stable global entrance to the open/shared field. */
   onExplore?: () => void;
+  /** Owner ruling 4 (2026-09-22): the rest page carries Day / Card / Graph.
+   *  Graph enters the real graph aperture's mode — never a copy of it. */
+  onGraph?: () => void;
 }) {
   const { boot } = useKernel();
   const [pending, setPending] = useState(false);
@@ -60,6 +69,7 @@ export function Rest({ project, onWrite, onDay, onWiki, onSearch, onExplore }: {
           and the entry to write stays reachable beside it. */}
       <nav className="rest-actions" aria-label="Start working">
         {onDay && <button disabled={pending} onClick={() => void openDay()}><Glyph name="today" size={13} /><span>Day</span></button>}
+        {onGraph && <button onClick={onGraph} title="Enter the graph — the Technè mode's aperture over the wiki and Expressions"><Glyph name="graph" size={13} /><span>Graph</span></button>}
         {onWiki && <button onClick={onWiki}><Glyph name="wiki" size={13} /><span>Open wiki</span></button>}
         <button onClick={onSearch}><Glyph name="search" size={13} /><span>Search</span><kbd>⌘K</kbd></button>
         {onExplore && <button className="rest-explore" onClick={onExplore}><Glyph name="field" size={13} /><span>Browse library</span></button>}
