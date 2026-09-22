@@ -75,6 +75,24 @@ export function subscribeScope(listener: () => void): () => void {
   return () => listeners.delete(listener);
 }
 
+let focusedProject: string | undefined;
+const focusListeners = new Set<() => void>();
+/** The project of the focused tab when it differs from the scope — the scope
+ * menu's "Focused tab is in X · Switch" row. Published by the frame only. */
+export function publishFocusedProject(project: string | undefined): void {
+  if (focusedProject === project) return;
+  focusedProject = project;
+  for (const listener of [...focusListeners]) listener();
+}
+function subscribeFocused(listener: () => void): () => void {
+  focusListeners.add(listener);
+  return () => focusListeners.delete(listener);
+}
+const readFocused = () => focusedProject;
+export function useFocusedProject(): string | undefined {
+  return useSyncExternalStore(subscribeFocused, readFocused, readFocused);
+}
+
 export function useScope(): Scope {
   return useSyncExternalStore(subscribeScope, readScope, readScope);
 }

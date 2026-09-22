@@ -14,6 +14,9 @@ export interface Workspace {
   id: string; name: string;
   /** Owner query restored by a native read; never imported as semantic focus. */
   project?: string;
+  /** Factory's "All projects" scope (10-SIDEBARS §3.6): only the Desk honours
+   * it; every other surface reads the workspace's project (or Central). */
+  allProjects?: boolean;
   centralFiles?: boolean;
   layout: LayoutState; writing: string; writingMode?: boolean;
   /** Presentation keyed by the owner ProjectRef, never a cached authority reading. */
@@ -379,7 +382,9 @@ export function useWorkspaces() {
   };
   const rename = (name: string) => { if (name.trim()) update(w => ({ ...w, name: name.trim() })); };
   const setCentralFiles = (centralFiles:boolean) => update(w=>({...w,centralFiles}));
-  const browse = (project?: string) => update(w => ({ ...w, project }));
+  const browse = (project?: string) => update(w => ({ ...w, project, allProjects: undefined }));
+  /** The one scope's writer (scope.ts): Central, a project, or Factory's All projects. */
+  const browseAll = () => update(w => ({ ...w, allProjects: true }));
   const switchMode = (next: WorkspaceMode) => update(w => switchWorkspaceMode(w, next));
   /** The world-context layer's one writer. `trail` pushes are bounded. */
   const setContext = (change: (context: WorldContext) => WorldContext) => update(w => { const next = change(w.context ?? {}); return { ...w, context: { ...next, trail: next.trail?.slice(-TRAIL_LIMIT) } }; });
@@ -432,5 +437,5 @@ export function useWorkspaces() {
   };
   const showRecovery=()=>{const saved=latestRecovery();if(saved)setRecovery({reason:saved.reason,key:saved.key});else setSaveError("There is no retained workspace recovery record on this device.");};
   const error=[quarantine,saveError].filter(Boolean).join(" ")||null;
-  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); } };
+  return { switchMode, setContext, replaceSurface, surfaceView, surfaceEngine, showRecovery,recovery,reload,startFresh,recoverAvailable, setCentralFiles, setProjectNavigation, browseAll, windowBounds, redock, current, setWritingMode, workspaces: book.workspaces, setLayout, setWriting, activate, browse, create, rename, error, dismissError: () => { setQuarantine(null); setSaveError(null); } };
 }
