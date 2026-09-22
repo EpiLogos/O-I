@@ -84,12 +84,12 @@ fn factory_owner_requests_follow_the_owner_grammar() {
     assert_eq!(sent["contract"], "factory.developmental-mutation-request/v1");
     assert_eq!(sent["mutation"]["kind"], "record-owner-recognition");
     assert_eq!(sent["mutation"]["journeyRef"], "journey:1");
-    assert_eq!(sent["mutation"]["recognition"]["subjectRef"], "return:1");
-    let recognition_ref = sent["mutation"]["recognition"]["recognitionRef"].as_str().unwrap().to_owned();
+    assert_eq!(sent["mutation"]["recognition"]["subject_ref"], "return:1");
+    let recognition_ref = sent["mutation"]["recognition"]["recognition_ref"].as_str().unwrap().to_owned();
     assert!(recognition_ref.starts_with("recognition:desk-"));
     // The owner requires the source reference among the basis refs.
     assert_eq!(sent["source"]["reference"], json!(recognition_ref));
-    assert_eq!(sent["mutation"]["recognition"]["basisRefs"], json!([recognition_ref, "evidence:1"]));
+    assert_eq!(sent["mutation"]["recognition"]["basis_refs"], json!([recognition_ref, "evidence:1"]));
     assert_eq!(sent["source"]["standing"], "owner-native-observation");
 
     match prior { Some(value) => std::env::set_var("OI_FACTORY_BIN", value), None => std::env::remove_var("OI_FACTORY_BIN") }

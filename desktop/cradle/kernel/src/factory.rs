@@ -436,7 +436,9 @@ pub fn owner(request: OwnerRequest, world: Option<&Value>) -> Result<Value, Erro
                 "mutation": {
                     "kind": "record-owner-recognition",
                     "journeyRef": journey_ref,
-                    "recognition": {"recognitionRef": recognition_ref, "subjectRef": subject_ref, "basisRefs": basis},
+                    // JourneyRecognitionLink carries no serde rename: its fields
+                    // are snake_case inside the camelCase mutation envelope.
+                    "recognition": {"recognition_ref": recognition_ref, "subject_ref": subject_ref, "basis_refs": basis},
                 },
             });
             let body = serde_json::to_vec(&request).map_err(|e| incompatible(e.to_string()))?;
