@@ -1,14 +1,15 @@
 {
-  "purpose": "Commissioned native integration and proof obligations within the existing #65 UX spine; no new story IDs, runtime, storage or evidence system. The 2026-09-16 Workcell-root NOW clarification is carried through these same obligations rather than a second test registry.",
+  "purpose": "Commissioned native integration and proof obligations within the existing #65 UX spine; no new story IDs, runtime, storage or evidence system. The 2026-09-16 Workcell-root NOW clarification is carried through these same obligations rather than a second test registry. The 2026-09-22 Jev/Redis amendment develops the existing native operations and their working backing, not a second semantic store.",
   "story_source": "docs/experience/SESSION-GROUNDING.md",
+  "document_operations_source": "docs/experience/JEV-REDIS-NOW-INTEGRATION.md",
   "families": [],
-  "standing": "agent-inference; source-grounded implementation/testing map commissioned 2026-09-14 and temporally clarified 2026-09-16",
+  "standing": "agent-inference; source-grounded implementation/testing map commissioned 2026-09-14, temporally clarified 2026-09-16 and extended under the 2026-09-22 Jev/Redis integration commission",
   "runtime_or_human_acceptance": false,
   "obligation_sources": {
     "grounding220": {
       "source_ref": "docs/experience/SESSION-GROUNDING.md",
       "issue": "https://github.com/EpiLogos/O-I/issues/220",
-      "policy": "Read full source, docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md, current owner tickets and exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence."
+      "policy": "Read full source, docs/experience/WORKCELL-NOW-TEMPORAL-FIELD.md, current owner tickets and exact source cut. These joins preserve accepted Factory design and earlier stories/obligations; declaration is not runtime or human evidence. Also consume docs/experience/JEV-REDIS-NOW-INTEGRATION.md and AIKit#388 for the 2026-09-22 early Factory integration; preserve C0–C5 and the existing Day/NOW broad-fan-out gate."
     }
   },
   "required_obligation_ids": [
@@ -31,22 +32,9 @@
       "source": "grounding220",
       "native_locator": "SG1 · §§1,4 · Workcell NOW §§2–4",
       "requirement": "Choose or continue legitimate existing/new work with real source, Workcell-root NOW, bounded child working destination and required/preferred environment; preserve thin/external sessions and the explicit rich Herdr reference.",
-      "story_ids": [
-        "TM01",
-        "TM02",
-        "AG01",
-        "MC01",
-        "DV02"
-      ],
-      "execution_lanes": [
-        "A",
-        "C"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["TM01", "TM02", "AG01", "MC01", "DV02"],
+      "execution_lanes": ["A", "C"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Each participating Workcell has one stable root NOW for the World; actual root/Project/task work resolves to a bounded child NOW beneath the selected Workcell horizon.",
         "Root versus Project concern follows the actual subject; root NOW, child NOW, material cwd and source ownership remain distinct.",
@@ -60,21 +48,9 @@
       "source": "grounding220",
       "native_locator": "SG2 · §§3,6 · Workcell NOW §§2,3,5",
       "requirement": "Maintain exact Workcell/root-NOW/child-NOW/AgentSession/SessionSpace/provider/material relations across view movement, re-observation, explicit recreation and concurrent sessions.",
-      "story_ids": [
-        "TM02",
-        "AG06",
-        "DV05",
-        "WK04"
-      ],
-      "execution_lanes": [
-        "A",
-        "W"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["TM02", "AG06", "DV05", "WK04"],
+      "execution_lanes": ["A", "W"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "WorkcellRef, root NowRef, child NowRef, SessionSpaceRef, AgentSessionRef, provider workspace and process identity remain separate.",
         "Two sessions may share Project, Workcell, provider server, executable and labels while retaining distinct child NOW/context/writable scope; host/start marker/provider generation distinguishes material.",
@@ -88,20 +64,9 @@
       "source": "grounding220",
       "native_locator": "SG3 · §§2,5 · Workcell NOW §3",
       "requirement": "Extend actual Workcell observations to provider places and each live process, preserving executable-based inventory aggregation, root/child NOW correlations supplied by owners, and external unattributed work.",
-      "story_ids": [
-        "TM03",
-        "WK04",
-        "MC03",
-        "MC07"
-      ],
-      "execution_lanes": [
-        "W"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["TM03", "WK04", "MC03", "MC07"],
+      "execution_lanes": ["W"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Reuse resource_usage process-start/executable evidence; a PID, pane or provider workspace is not Workcell/root NOW/child NOW identity.",
         "Unknown/failed/stale reads remain unknown, never empty healthy state or invented Agent/Factory/NOW ancestry.",
@@ -115,20 +80,9 @@
       "source": "grounding220",
       "native_locator": "SG4 · §§2,6,13 · Workcell NOW §§3,10",
       "requirement": "Make the existing Herdr adapter reachable through AIKit public environment operations and retained working-Surface bindings; prove actual open/attach/focus/close/recovery as Surfaces within the established Workcell root/child NOW relation.",
-      "story_ids": [
-        "TM02",
-        "TM06",
-        "TM08",
-        "AG09"
-      ],
-      "execution_lanes": [
-        "A"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["TM02", "TM06", "TM08", "AG09"],
+      "execution_lanes": ["A"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Herdr reference, tmux portability and optional cmux each require their own real evidence beneath the same provider-neutral temporal/session relation.",
         "Root NOW survives ordinary Surface/provider churn; finishing or releasing one child need not end the resident Workcell horizon.",
@@ -141,117 +95,69 @@
     {
       "id": "grounding220:composition",
       "source": "grounding220",
-      "native_locator": "SG5 · §7 · Workcell NOW §§2,3,10",
+      "native_locator": "SG5 · §7 · Workcell NOW §§2,3,10; Jev/Redis §§1–3",
       "requirement": "Resolve source/identity/praxis/context/model/harness/environment/authority through the existing native composition, bind it to the selected Workcell root/child NOW, and expose confirmed target-effective behaviour.",
-      "story_ids": [
-        "AG03",
-        "AG04",
-        "PX02",
-        "PX03",
-        "PX04",
-        "PX06",
-        "TM01"
-      ],
-      "execution_lanes": [
-        "A",
-        "C"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["AG03", "AG04", "PX02", "PX03", "PX04", "PX06", "TM01", "DO01", "DO04", "DO07"],
+      "execution_lanes": ["A", "C"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Scope-neutral composition includes Herdr, graphical and client/UI contributions; do not make all composition harness-shaped or NOW-shaped.",
         "Distinguish resolution scope, activation scope, temporal address and lifetime, plus selected/projected/loaded/action-usable/enforced states.",
         "Two sessions/child NOWs in one Project with different context/skills remain isolated when one changes.",
         "Native model policy/routes, required tools, harness faculties and material placement re-resolve together; no private desktop roster.",
         "Opening/focusing another Surface preserves the existing child NOW; deliberate move/re-placement establishes the target Workcell/root NOW relation explicitly.",
-        "Useful permitted source-dependent task proves loading; generated file alone is insufficient and unsupported readback remains explicit."
+        "Useful permitted source-dependent task proves loading; generated file alone is insufficient and unsupported readback remains explicit.",
+        "Jev remains generally callable with state and typed questions; existing document/matrix/Wiki/context practices use the actual organisation, view meanings, account passages and any eligible ContextSource rather than a separate assessment ontology.",
+        "Central/BKMR locates sources, Wiki supplies source-linked understanding and Redis retains participant-specific prepared NOW context with native refs/revisions, useful passages and neighbouring work. Full selected-scope assessment preserves all required contributions and can expose an unrepresented need.",
+        "Configured native entry/continuation prepares context before the relevant first model turn and proves delivery of the exact version through CLI/direct services without requiring MCP or a model-remembered preparation call. Warm reads do not invoke Jev again."
       ]
     },
     {
       "id": "grounding220:authority-delivery",
       "source": "grounding220",
-      "native_locator": "SG6 · §8 · Workcell NOW §6",
+      "native_locator": "SG6 · §8 · Workcell NOW §6; Jev/Redis §§2–4",
       "requirement": "Join actual governing authority to a bounded grant and admitted Agency, allocate/bind the correct child NOW, then exact prepared body, real dispatch/result and attributable Activity; correlate Factory only when commissioned.",
-      "story_ids": [
-        "AG07",
-        "AG08",
-        "GW06",
-        "GW09",
-        "DV01",
-        "TM03"
-      ],
-      "execution_lanes": [
-        "A"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["AG07", "AG08", "GW06", "GW09", "DV01", "TM03"],
+      "execution_lanes": ["A"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Actuation #84 continues accepted Rust #58; do not rebuild the gate or let Factory/React fabricate grants.",
         "Wrong holder, World, operation, bounds, revoked/expired or unknown authority refuses before effects.",
         "Addressing, session contribution, delegation and independent cooperation retain their native differences.",
         "Bounded delegation allocates a child NOW before child material/session launch; children have bounded effects/lifetime/budget/return and independent verification.",
         "Pi and harness-native delegation map to the same Agency→child NOW→session/material→Return contract; provider team/subagent IDs stay provenance.",
-        "A gateway append, transport ack, terminal creation or human unsent draft does not stand in for actual Agent action."
+        "A gateway append, transport ack, terminal creation or human unsent draft does not stand in for actual Agent action.",
+        "Redis preparation and delivery enforce current actor disclosure and Jev egress policy; key prefixes are not authority. Revocation prevents access to old cached private material and worker views exclude verifier expectations and sibling private context.",
+        "Jev selection may guide the next authorised act without a mandatory LLM approval turn; current native admission/revision rules still govern effects. Missing or malformed answers and provider failure remain explicit, not successful empty decisions."
       ]
     },
     {
       "id": "grounding220:recovery",
       "source": "grounding220",
-      "native_locator": "SG7 · §§3,6,8,9 · Workcell NOW §§3,4,7",
+      "native_locator": "SG7 · §§3,6,8,9 · Workcell NOW §§3,4,7; Jev/Redis §§3–4",
       "requirement": "Prove permitted work and return routes through detached UI, connection loss and selected service/provider restart while retaining the correct root/child NOW continuity or explicit successor/recovery.",
-      "story_ids": [
-        "AG06",
-        "AG09",
-        "GW05",
-        "GW07",
-        "MC06",
-        "DV04"
-      ],
-      "execution_lanes": [
-        "A",
-        "W"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["AG06", "AG09", "GW05", "GW07", "MC06", "DV04", "DO08"],
+      "execution_lanes": ["A", "W"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Provider server, Workcell service, Gateway, root NOW, child NOW and UI have separate lifetimes and tested failure boundaries.",
         "Account for pending tool/permission, uncertain external effect, late response and replay before consequential retry.",
         "Context/history restoration is not native session resume; re-created process is not the old material, while a stable root/child semantic continuation remains explicit where valid.",
         "Primary workstation can be offline while Omarchy continues attributable child work; later receipt retains original occurrence/Workcell/NOW provenance.",
         "Failure of one selected provider/connection leaves unrelated sessions and sibling child NOWs usable.",
-        "No unsupported exactly-once guarantee or hidden duplicated turn on restart."
+        "No unsupported exactly-once guarantee or hidden duplicated turn on restart.",
+        "Redis restart/service loss preserves native NOW identity and durable Return, recovers prepared context or reports actual degradation, and reconciles uncertain reservations before reuse. Active/waiting work is not discarded on session end or Day rollover.",
+        "A source change during Jev preparation invalidates the affected basis; a late older result cannot replace the newer prepared version. Replayable cursors, independent participant consumption and duplicate handling retain relevant changes without duplicating effects."
       ]
     },
     {
       "id": "grounding220:remote",
       "source": "grounding220",
-      "native_locator": "SG8 · §9 · Workcell NOW §§2,3,4",
+      "native_locator": "SG8 · §9 · Workcell NOW §§2,3,4; Jev/Redis §4",
       "requirement": "Prove remote access to the same living Workcell/root/child NOW separately from deliberate execution re-placement onto a real second material host/root NOW.",
-      "story_ids": [
-        "MC02",
-        "MC04",
-        "MC08",
-        "GW08",
-        "TM09"
-      ],
-      "execution_lanes": [
-        "W",
-        "A"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["MC02", "MC04", "MC08", "GW08", "TM09"],
+      "execution_lanes": ["W", "A"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Multi-host view leaves processes and root NOWs on their owning hosts; source sync, access and execution movement stay separate.",
         "Remote attach/open reaches the existing Workcell/root/child NOW; it does not allocate a new target horizon.",
@@ -259,63 +165,36 @@
         "Deliberate movement resolves the target Workcell root NOW, establishes explicit child continuation/successor provenance, accounts for in-flight effects and revalidates target loading/authority.",
         "Resume only where native support proves it; otherwise identify rehydration/successor and old/new attempt/material relation.",
         "Prove target operation before release; prevent competing consequential execution and reconcile late old-host output.",
-        "Two directories and sampled differing IDs do not prove second-host recovery or permanent identifier uniqueness."
+        "Two directories and sampled differing IDs do not prove second-host recovery or permanent identifier uniqueness.",
+        "The later two-Workcell Redis working views retain local continuity and remote source/observation freshness while one peer is offline; reconnect uses existing receiving/SharedField projection. The first single-Workcell episode does not claim this proof or wait for it."
       ]
     },
     {
       "id": "grounding220:guardians",
       "source": "grounding220",
-      "native_locator": "SG9 · §§2,8",
+      "native_locator": "SG9 · §§2,8; Jev/Redis §§2,5",
       "requirement": "Recover existing Field Guardian/product Agent expressions, formation/default/skill provenance, resolve supported selections and prove actual ordinary harness activation.",
-      "story_ids": [
-        "AG01",
-        "AG02",
-        "AG05",
-        "AG08",
-        "TM01",
-        "TM03"
-      ],
-      "execution_lanes": [
-        "C",
-        "A"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["AG01", "AG02", "AG05", "AG08", "TM01", "TM03", "DO04"],
+      "execution_lanes": ["C", "A"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Central world default_agent_set_ref and orchestrator_agent_ref already exist; repair consumers and source gaps rather than recreate fields.",
         "Generic support, declared source, local adoption, effective selection and target loading are separate.",
         "Private source/default adoption remains the owner's actual scoped choice; explicit and profile-less legitimate work remains usable.",
         "Purpose/Focus/Knowledge/praxis differentiates Guardians; no privileged meta-profile class or authority from being a Guardian.",
         "Guardian/default placement may select an eligible Workcell/root NOW but does not grant authority or collapse the Agent into that material horizon.",
-        "Central source operations stay in C; AIKit readers/projection/loading stay in A."
+        "Central source operations stay in C; AIKit readers/projection/loading stay in A.",
+        "Jev question examples and reusable helpers improve the existing native document/matrix/Wiki/Factory practices and Guardian repertoires. General novel questions remain available; do not create a competing SkillSet, special Jev Agent or mandatory full-QL harness."
       ]
     },
     {
       "id": "grounding220:factory-return",
       "source": "grounding220",
-      "native_locator": "SG10 · §10 · Workcell NOW §§5,7,8",
+      "native_locator": "SG10 · §10 · Workcell NOW §§5,7,8; Jev/Redis §§4–6",
       "requirement": "Carry real commissioned work through exact admitted execution, independent work/verification, native Git, durable structured outputs/handoff and Central temporal continuation across Workcell root/child NOWs and Routine occurrences.",
-      "story_ids": [
-        "DV01",
-        "DV02",
-        "DV03",
-        "DV04",
-        "WR05",
-        "WR06",
-        "TM05"
-      ],
-      "execution_lanes": [
-        "A",
-        "U"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M"
-      ],
+      "story_ids": ["DV01", "DV02", "DV03", "DV04", "WR05", "WR06", "TM05", "DO03", "DO05", "DO07", "DO08"],
+      "execution_lanes": ["A", "U"],
+      "required_evidence": ["C", "P", "M"],
       "required_branches": [
         "Trace Run/attempt, Agency/session, Workcell/root NOW/child NOW, working Surface, material observation, Activity and exact tested Git basis.",
         "Queued Run plus unrelated terminal never counts as Factory execution; native direct/external work stays valid.",
@@ -323,32 +202,19 @@
         "Routine trigger origin and execution destination temporal addresses remain distinct; Day rollover schedules nothing.",
         "Actual result bodies remain reachable after terminal/view closure and feed the adopted shared HTML template family and exact continuing child work.",
         "New revision exposes stale evidence; completion, Recognition and Git integration stay distinct.",
-        "Factory telemetry/readback preserves owner-native temporal/material provenance rather than creating a second NOW/DAY/event store."
+        "Factory telemetry/readback preserves owner-native temporal/material provenance rather than creating a second NOW/DAY/event store.",
+        "A real returned change is interpreted against the same UX/account/matrix field; the agent performs the warranted authorised companion-source/Wiki/practice update and the next participant uses that revised field. Unknown CSV/JSON fields, source identities and exact historical bases survive.",
+        "Automated knowledge return classifies actual results/corrections through existing practices. Redis is hot working representation; useful learning returns to native Wiki/practice/document owners rather than a generic permanent conversation-fact store. Human authored position and EX use their actual separate decision."
       ]
     },
     {
       "id": "grounding220:presence",
       "source": "grounding220",
-      "native_locator": "SG11 · §10 · Workcell NOW §§5,9,10",
+      "native_locator": "SG11 · §10 · Workcell NOW §§5,9,10; Jev/Redis §§3–4",
       "requirement": "Connect native desktop/TUI/Gateway/Omarchy entry and attention to the exact current work through one frameable NOW grammar, preserving accepted Factory and ordinary arrangements.",
-      "story_ids": [
-        "UI02",
-        "UI04",
-        "UI05",
-        "TM07",
-        "TM09",
-        "GW05"
-      ],
-      "execution_lanes": [
-        "U",
-        "A"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M",
-        "H"
-      ],
+      "story_ids": ["UI02", "UI04", "UI05", "TM07", "TM09", "GW05"],
+      "execution_lanes": ["U", "A"],
+      "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "One canonical conversation/session Surface; movement preserves draft/focus and does not clone or redirect work.",
         "My Now aggregates eligible personal Workcell root NOWs; Workcell Now, Project Now, Journey Now and Agent Now are frames over the same native refs.",
@@ -357,31 +223,19 @@
         "Personal Today remains the human Day while Omarchy can continue independently and late Returns preserve original occurrence address.",
         "Provider-bound focus and alternate Surface open exact permitted subject; denied compositor action gets supported recovery.",
         "Closing desktop leaves supported work alive; one unavailable service does not obscure unrelated usable work.",
-        "Record narrow/medium/wide and keyboard/pointer behaviour in actual installed host; human visual acceptance remains separate."
+        "Record narrow/medium/wide and keyboard/pointer behaviour in actual installed host; human visual acceptance remains separate.",
+        "Redis-backed NOW context exposes each participant's relevant neighbourhood of actual work, write scopes, dependencies and Returns, with exact prepared-versus-delivered context. Existing inspection surfaces consume these facts without a new dashboard or shared private transcript.",
+        "Jev can identify semantic overlap while owner operations enforce actual reservations and revisions. Lost heartbeat is uncertain presence, not permission to overwrite; cooperative external-shell coordination is not misreported as enforced locking."
       ]
     },
     {
       "id": "grounding220:joined",
       "source": "grounding220",
-      "native_locator": "SG12 · §§11–14 · Workcell NOW §§11–12",
+      "native_locator": "SG12 · §§11–14 · Workcell NOW §§11–12; Jev/Redis §§5–7",
       "requirement": "Execute the complete connected source→two Workcell root NOWs→operative Agent→Herdr Factory work alongside Direct tmux/external harness→bounded delegation→independent verification→output→recovery→Routine→real remote access/re-placement→personal Day→SharedField projection walk.",
-      "story_ids": [
-        "DV08",
-        "TM03",
-        "TM10",
-        "MC06",
-        "GW08"
-      ],
-      "execution_lanes": [
-        "A",
-        "V"
-      ],
-      "required_evidence": [
-        "C",
-        "P",
-        "M",
-        "H"
-      ],
+      "story_ids": ["DV08", "TM03", "TM10", "MC06", "GW08", "DO01", "DO03", "DO04", "DO05", "DO07", "DO08"],
+      "execution_lanes": ["A", "V"],
+      "required_evidence": ["C", "P", "M", "H"],
       "required_branches": [
         "Primary workstation and Omarchy each retain one stable root NOW with multiple bounded children under one personal Day.",
         "Exercise every available admitted harness against actual faculties with economical eligible models; label unavailable/unsupported/failed branches.",
@@ -394,9 +248,12 @@
         "Preserve original TM02 failed certification and bounded successes; repair invalid syntax/count/PTY/PID assertions without rewriting evidence.",
         "Keep actual source/build/install/running/provider versions, production checks and real material receipts; fixtures establish only their own boundary.",
         "Independent verifier tests the same changed cut; required H comes from the human.",
-        "Existing CAW/QL/installation and Factory obligations remain; no provider smoke or map compilation closes the whole."
+        "Existing CAW/QL/installation and Factory obligations remain; no provider smoke or map compilation closes the whole.",
+        "Start Jev/Redis native construction now under AIKit#388/#220; run the first real Factory episode when bounded Factory/Day/NOW is usable. Preserve the existing foundation-first broad-fan-out gate; do not wait for all QL/EBM/Prime modes or the later two-Workcell extension.",
+        "Prove implementer, related worker and independent verifier views; actual Jev and Redis, CLI/harness entry without MCP, relevant source/Return update, fresh-session handover, Redis restart, stale preparation refusal and coherent native document/Wiki Return. Fixtures do not establish this live verdict.",
+        "Compare matched ordinary-context, Redis-prepared-without-Jev and Jev-assisted episodes. Record time to first useful act, redundant retrieval, source omissions, stale decisions, duplicated work, handover success, human corrections and complete model/retrieval costs in the existing round."
       ]
     }
   ],
-  "closure": "A integrates native results; U completes accepted desktop experience; W/C are independent optional staffing. #201/#202–205 and #65 retain independent and human evidence requirements. Workcell-root NOW, child allocation, cross-Workcell Routine/delegation, personal-Day reconciliation and FieldNow/FieldDay are part of those same obligations. No plan/test declaration promotes runtime readiness."
+  "closure": "A integrates native results; U completes accepted desktop experience; W/C are independent optional staffing. #201/#202–205 and #65 retain independent and human evidence requirements. Workcell-root NOW, child allocation, cross-Workcell Routine/delegation, personal-Day reconciliation and FieldNow/FieldDay are part of those same obligations. No plan/test declaration promotes runtime readiness. The 2026-09-22 Jev/Redis first Factory episode is an early bounded movement within these obligations, with AIKit#388 as the native implementation assignment; it does not close the full later field."
 }
