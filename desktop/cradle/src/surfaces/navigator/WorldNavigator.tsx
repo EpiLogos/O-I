@@ -1,6 +1,7 @@
 import {EncounterList,type EncounterRow} from "../../encounter/EncounterList";
 import {RememberedList} from "../../context/RememberedList";
 import {ReturnsTray} from "../../receiving/ReturnsTray";
+import {UserFlowsList} from "../../flow/UserFlowsList";
 import { useEffect, useRef, useState, type ReactNode } from "react";
 import { useKernel } from "../../kernel/KernelProvider";
 import type { CentralLocation } from "../../kernel/types";
@@ -18,7 +19,7 @@ const ROW_GLYPH = 13;
 
 /** Summoned reading over Central's owner operations; selection lives in the
  * kernel. Local state is only filter text and in-flight presentation. */
-export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onOpenToday, activeEncounterRef, onMessage }: { onExplore?:()=>void;mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut?: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch?: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlowInstance?: (row:import("../../flow/instances").FlowInstanceRow)=>Promise<void>; onNewFlow?: ()=>void; onMessage?: (message: string) => void }) {
+export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centralFiles, onCentralFilesChange, workspaceSelector, projectNavigation, onNavigationChange, onOpenFile, onProjectChange, onOpenWiki, onOpenToday, activeEncounterRef, onMessage, onOpenFlowInstance, onNewFlow }: { onExplore?:()=>void;mode: WorkspaceMode; onMode: (mode: WorkspaceMode) => void;onOpenEncounter:(row:EncounterRow)=>Promise<void>; centralFiles: boolean; onCentralFilesChange:(files:boolean)=>void; workspaceSelector: ReactNode; searchShortcut?: string; projectNavigation: Record<string, ProjectNavigation>; onNavigationChange: (ref: string, change: Partial<ProjectNavigation>) => void; onSearch?: () => void; onOpenWiki: (ref:string,title:string,project?:string)=>Promise<void>; onOpenFile: (location:CentralLocation)=>Promise<void>; onProjectChange?: (project?: string) => void; onOpenToday?: () => Promise<void>; onAgent?: () => void; activeEncounterRef?: string; onOpenFlowInstance?: (row:import("../../flow/instances").FlowInstanceRow)=>Promise<void>; onNewFlow?: ()=>void; onMessage?: (message: string) => void }) {
   const kernel = useKernel();
   const reading = kernel.snapshot.navigator;
   const [error,setError] = useState<string>();
@@ -109,6 +110,10 @@ export function WorldNavigator({ onExplore, mode, onMode, onOpenEncounter, centr
         {/* Owner direction 2026-09-18: the Control tree is ONE space — the
         * user and agent grounds are its regions, reached by expanding. */}
       <RootSpace name="Control" path="Control" refresh={fileRefresh} onOpen={onOpenFile}/>
+      {/* The flow carrier's navigator face (restored 2026-09-22: the Control
+        * consolidation of 32450cff dropped it as collateral, orphaning the
+        * flows list and its New flow entry — flow-canvas has been red since). */}
+      <UserFlowsList onOpen={row=>onOpenFlowInstance ? onOpenFlowInstance(row) : Promise.resolve()} onNewFlow={onNewFlow}/>
       </>}
       {root && <>
       {rootFiles && <FileTree path="" onOpen={onOpenFile} refresh={fileRefresh} onRootRef={ref=>setDirectoryRefs(held=>({...held,"":ref}))} expanded={projectNavigation[centralKey]?.directories??[]} onExpansion={directories=>{if(centralKey)onNavigationChange(centralKey,{directories,locationPath:""});}}/>}

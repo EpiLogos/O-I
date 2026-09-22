@@ -1036,7 +1036,10 @@ body.oi-desktop[data-oi-opening="true"] { background: var(--oi-inverse-canvas-gr
    * so the chrome is coherent whatever mode holds the centre. */
   border: var(--oi-shell-edge) solid var(--oi-hairline);
   border-radius: var(--oi-shell-radius); }
-.mode-stage::-webkit-scrollbar { display: none; }
+/* The same scrollbar law as .surface-body: the stage and everything it
+ * holds never show a scrollbar — local rules cannot out-compete this. */
+.mode-stage,.mode-stage * { scrollbar-width: none; }
+.mode-stage::-webkit-scrollbar,.mode-stage *::-webkit-scrollbar { display: none; width: 0; height: 0; }
 /* The per-mode stage slots (CradleFrame.tsx): a slot is ALWAYS PRESENT and
  * hides by visibility alone — the authored display:flex above would
  * otherwise override the UA [hidden] rule, and an off stage must genuinely

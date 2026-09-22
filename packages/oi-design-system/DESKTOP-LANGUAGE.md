@@ -5,6 +5,58 @@ The companion desktop studies establish composition; this document records the
 owner rulings the desktop ground stands on, newest first, so the provenance of
 each value stays legible. Existing canonical design documents remain intact.
 
+## Owner rulings, 22 September 2026 — shell behavior law
+
+Recorded from the owner's convergence review (given in conversation, 2026-09-22),
+after repeated agent regressions against unwritten rules. These are behavior
+law, binding on every surface and every agent session:
+
+1. **Invisible scrollbars universally.** No surface shows scrollbar chrome.
+   Scroll regions scroll; the chrome stays clean. New module CSS never styles
+   a scrollbar locally — it inherits the shell kills (`.surface-body`,
+   `.mode-stage`) or opts into the design system's own treatments. (Restated;
+   it lived only in CSS comments before, and agents kept reintroducing
+   visible bars — most recently `32450cff`, 2026-09-19.)
+2. **No raw JSON in user surfaces.** No panel, plane, tray or settings view
+   reels out raw JSON, wire shapes or internal ids where a person reads.
+   Everything renders as a real component; verbatim technical material sits
+   only behind an explicit disclosure. There are no "developer" surfaces in
+   the shipping application.
+3. **Build the real working application, not a demo or developer prototype.**
+   Settings are the standing example: pick a harness by name, pick a model
+   relative to that harness, enter and see API keys — functional, normalised,
+   readable. A census readout is not a settings page.
+4. **Canonical wiring only.** The pages speak to the real carriers — the
+   document html files and the canonical `day.md` record — never to fixtures,
+   local scratch or side-effect files. The rest page carries Day / Card /
+   Graph, and "Start writing" opens a flow file (implemented on the rest page
+   the same day; the navigator's New flow keeps the ratified mint-nothing law
+   of 2026-09-13).
+5. **The left corner wedge works with the corner icons, and is not removed.**
+   The corner treatment at the window's left corner exists in every shell
+   state and works with the corner icons. Its precise geometry returns to the
+   owner for recognition; until then, no agent may delete or silently reshape
+   the corner regime (`data-window-corner`, `--shell-window-reserve`, the
+   corner toggles). Losses of uncommitted refinements (resets of 09-20 and
+   09-22) are the named mechanism to prevent: shell refinements commit at
+   once.
+6. **Expose what the real harnesses expose.** Settings and configuration are
+   mapped from Claude Code, Codex and Hermes — their option coverage is the
+   requirement, normalised into this desktop's grammar. Everything is
+   configurable: harness by name, model per harness, credentials
+   (enter/rotate/verify through the owner's aikit credential and varlock
+   path — surfaced, never a diagnostic dump), skills as manageable settings,
+   in the desktop app and the TUI/CLI alike.
+7. **Nothing in the app says "returns".** The term has drifted into noise and
+   blocks the real thing: work returning to the person already flows through
+   the context tabs and the canvas embeds. No "returns" boxes, trays or bands
+   — the surfaces render the returned material itself.
+8. **Acceptance derives from the designs, not from what got built.** The
+   specs are made into the real test fixtures; the known "plausible
+   compromises" (raw dumps, census readouts, fixture-backed paths,
+   presence-without-presentation) are removed from acceptance — a check that
+   a shortcut satisfies is not acceptance of the thing it pretends to test.
+
 ## Owner revision, 15 September 2026 — canonical light and dark
 
 The desktop's canonical appearance is **neutral light** and **neutral dark**.
