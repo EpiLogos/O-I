@@ -377,52 +377,46 @@ provider is registered (`useTechneDisclosure` → `NO_PROVIDER_REASON`) and no l
 host mounts it. Closing M4′ IN THE APP is the live-mount step below, which this
 producer unblocks (it supplies the real reading the mounted instrument needs).
 
-## Live-instrument mount (§§14, 16, C7, C12) — the boundary, mapped for the next pass
+## 22 September — the six M0′–M5′ instruments are AVAILABLE in the live Technē HUD (§§13–19, C7, C12)
 
-The owner's PR #420 finding ("the six `instrumentLenses` / `useTechneDisclosure`
+The owner's PR #420 finding — "the six `instrumentLenses` / `useTechneDisclosure`
 are referenced by tests, not that live host … parent integration will repair
-that actual boundary") is now mapped precisely, both sides:
+that actual boundary" — is closed. Commit `b6b7bc26`.
 
-- **The live Technē centre is the iframe.** `surface/retention.tsx:120` mounts
-  `<PointCloudHost mode="techne">` as the only techne centre body; the M0′–M5′
-  chooser the user sees is the iframe-internal `lensStudio.ts` (M0′–M3′
-  operative; M4′ place and M5′ palace show an honest-absent note naming "the
-  native owner operation not surfaced in this application" — precisely what the
-  React `PlaceInstrument`/`PalaceInstrument` are).
-- **The React `m0m5` instruments are a complete read-model port, dormant live.**
-  Each is a pure consumer of ONE `TechneReading` via `bridgeReading`
-  (`m0m5/reading.ts`) and the one `DisclosureSession` (`session.ts`); the mount
-  contract exists (`lensMount.ts` `TechneLens`/`TechneLensStudio`), the six
-  register through `instrumentLenses.ts`, but no `TechneSurface` HUD consumes
-  `techneLenses()` and no `registerTechneReadingProvider` runs in `src/` — so the
-  whole chain is test-only.
-- **The boundary between them is the postMessage relay only** (`expressions/
-  hostedApp.ts`/`nativeChannel.ts`): the host answers the iframe's kernel/file
-  requests and pushes `host-mode`/`open-expression`; it never pushes a
-  `TechneReading` in.
+**Delivered.** `desktop/cradle/src/techne/TechneSurfaceHost.tsx` — the Technē
+HUD — mounts the existing lensMount-registered M0′–M5′ instruments
+(`m0m5/**`, unchanged) as ONE chooser over ONE live reading, and
+`surface/retention.tsx` presents it beside `<PointCloudHost mode="techne">` for
+the techne centre. It is NOT a second renderer: the iframe stays the one
+physics field; the instruments are the deep 4:2 DOM/SVG apertures. The
+wiki-grounded provider (`wikiReadingProvider.ts`) is registered here
+(`ensureWikiProvider`, one provider stands) so `useTechneDisclosure` resolves
+the register's real `ql.techne/v1` reading — whole, temporal, expressions,
+actions and the M4′ producer's **spatial** facets — and each lens shows its
+honest availability from the reading's own disclosure, never from what is
+mounted (`lensMount` law). A collapse returns the field.
 
-The determinate next pass (each step small, but the placement is a product-
-experience fork on the owner's convergence track — hence recorded, not
-unilaterally committed here):
+**Evidence — grade B (browser), gated in the Technē workflow.**
+`tests/techne-hud-browser.mjs` (real Chromium via Playwright, swiftshader) — 9
+checks over a REAL `wikiReadingPayload` reading: the six instruments stand
+available in the HUD chooser; M0′/M1′/M4′/M5′ available and M3′ journey honestly
+unavailable with its reason; selecting M4′ mounts the real `PlaceInstrument`
+and renders the produced places (the georeferenced Londinium via `OCCURRED_AT`
+and the unlocated Avalon via `MYTH_LOCATED_AT`, the relation legend verbatim);
+no uncaught errors; and the §41 negative — with no place ground the M4′ aperture
+is unavailable, the instrument does not mount and nothing renders, proving the
+producer→reading→HUD binding is load-bearing. `tsc --noEmit` clean; full
+`npm run build` green (`TechneSurfaceHost` chunked and lazily loaded).
 
-1. register `wikiTechneReadingProvider(transport)` at the cradle boot seam so
-   `useTechneDisclosure` resolves the register's live reading (now place-carrying);
-2. build the `TechneSurface` HUD to the `lensMount` contract (chooser +
-   active lens `Body` + the `TechneLensStudio` slot), reusing the six existing
-   instruments — no rebuild;
-3. keep the iframe's `lensStudio` the ONE chooser: the deferred M4′/M5′ (and any
-   deep instrument that wants the rich React surface) post an open-instrument
-   request up through `PointCloudHost`, and the cradle presents the React
-   instrument as a native surface (§14 inline/beside/detach) over the live
-   reading, handing the iframe its `visibility` (§16/§22, one active renderer)
-   — never a second parallel chooser, never a hidden duplicate render loop;
-4. prove live in the Technē workflow's browser job (the reading's place facets
-   render in the mounted M4′; §41 negatives on the mount and the provider).
-
-Step 3's surface grammar (replace-focus vs beside vs detach, and how the iframe
-chooser and the cradle surface become one experience) is the fork that belongs
-with the owner's actively-authored convergence UI track; it is named here so the
-next pass executes it with the fork resolved rather than guessed.
+**What this closes and what remains.** The dormant boundary is repaired: the
+instruments are live over one real reading, no rebuild, no second renderer, no
+second chooser. The M4′ producer now surfaces in the app. Honest remaining: the
+in-field iframe `lensStudio` chooser (M0′–M3′ operative) still stands alongside
+this HUD — reconciling the two into one presentation grammar (replace-focus vs
+beside vs detach; the iframe `visibility` handoff when an instrument covers the
+field, §16/§22) is presentation refinement on the convergence UI track. M5′
+Palace durable composition, item 4 (Agent co-work C8, shared-world C11) and the
+retained walks §§27–33 with their §41 negatives also remain.
 
 ## Historical evidence retained
 
