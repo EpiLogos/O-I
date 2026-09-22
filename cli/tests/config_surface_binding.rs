@@ -360,20 +360,33 @@ sys.exit(9)
 }
 
 /// A runtime surface catalogue: the deployed catalogue with the `ai-kit`
-/// position pointed at the fake owner executable.
+/// position pointed at the fake owner executable and every other product
+/// position pointed at a guaranteed-absent executable. The other positions
+/// keep bare names in the deployed catalogue, and bare names resolve through
+/// the ambient `PATH` — on a machine with the suite installed the real
+/// products answer discovery, and the scene's assertions about absent
+/// positions (`config list` degradations, `config doctor`'s
+/// `owner_unavailable` findings) would flip with whatever is installed.
+/// Absence is by construction here, not machine luck.
 fn write_catalogue(home: &Path, owner: &Path) -> PathBuf {
     let deployed = PathBuf::from(env!("CARGO_MANIFEST_DIR")).join("../surfaces.json");
     let mut catalogue: Value = serde_json::from_str(
         &std::fs::read_to_string(&deployed).expect("deployed catalogue readable"),
     )
     .expect("deployed catalogue is JSON");
-    let patched = catalogue["surfaces"]
+    for surface in catalogue["surfaces"]
         .as_array_mut()
         .expect("surfaces array")
         .iter_mut()
-        .find(|surface| surface["id"] == "ai-kit")
-        .expect("the ai-kit position exists in the deployed catalogue");
-    patched["native"]["executable"] = Value::String(owner.display().to_string());
+    {
+        if surface["id"] == "ai-kit" {
+            surface["native"]["executable"] = Value::String(owner.display().to_string());
+        } else {
+            let id = surface["id"].as_str().unwrap_or("unknown").to_owned();
+            surface["native"]["executable"] =
+                Value::String(format!("/nonexistent/oi-env-isolation/{id}"));
+        }
+    }
     let path = home.join("catalogue.json");
     std::fs::write(&path, catalogue.to_string()).expect("catalogue written");
     path
