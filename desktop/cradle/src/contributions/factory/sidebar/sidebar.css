@@ -155,3 +155,12 @@
    navigator.css 2026-09-17). */
 .ta-active-context{flex:none;max-height:168px;overflow-y:auto;scrollbar-width:none;box-sizing:border-box}
 .ta-active-context::-webkit-scrollbar,.ta-active-context *::-webkit-scrollbar{display:none;width:0;height:0}
+
+/* Native Run events stay readable in both compact and expanded planes. */
+.factory-native-log { display: grid; gap: 12px; min-width: 0; }
+.factory-native-log section { min-width: 0; }
+.factory-native-log p { overflow-wrap: anywhere; }
+.factory-native-log-event { border-top: 1px solid var(--oi-hairline-soft); padding: 6px 0; }
+.factory-native-log-event summary { cursor: pointer; overflow-wrap: anywhere; }
+.factory-native-log-event time { display: block; font-size: 10px; opacity: .65; }
+.factory-native-log-event pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; }

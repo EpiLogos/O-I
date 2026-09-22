@@ -90,14 +90,14 @@ export class NativeAgentController {
       || value.execution_authority_granted !== false) throw new Error("The native Agent roster is not available");
   return {scope:value.scope_ref,profiles:value.profiles.map(p => validateReview(p,value.scope_ref as string))};
  }
- refreshReadiness = async () => {
+ refreshReadiness = async (includeSkills = true) => {
   const generation=++this.readinessGeneration;
-  this.set({readinessPending:true,world:undefined,skills:undefined,readinessError:undefined});
-  const results=await Promise.allSettled([this.owner({action:"scope"}),this.owner({action:"skills"})]);
+  this.set({readinessPending:true,world:undefined,...(includeSkills?{skills:undefined}:{}),readinessError:undefined});
+  const results=await Promise.allSettled([this.owner({action:"scope"}),includeSkills?this.owner({action:"skills"}):Promise.resolve(undefined)]);
   if(generation!==this.readinessGeneration)return;
   const errors:string[]=[]; let world:NativeAgentScope|undefined,skills:NativeAgentSkill[]|undefined;
   try {if(results[0].status==="rejected")throw results[0].reason;world=readAgentScope(results[0].value);}catch(e){errors.push(String(e));}
-  try {if(results[1].status==="rejected")throw results[1].reason;skills=readAgentSkills(results[1].value);}catch(e){errors.push(String(e));}
+  try {if(includeSkills){if(results[1].status==="rejected")throw results[1].reason;skills=readAgentSkills(results[1].value);}else{skills=this.state.skills;}}catch(e){errors.push(String(e));}
   this.set({world,skills,readinessPending:false,readinessError:errors.length?errors.join("; "):undefined});
  };
  refresh = async () => {

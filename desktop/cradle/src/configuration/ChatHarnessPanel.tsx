@@ -215,7 +215,7 @@ function CatalogueSection({state}:{state:HarnessReading["catalogue"]|undefined})
   const shown=matches.slice(0,CATALOGUE_CAP);
   return <section className="config-section" data-catalogue-ok>
     <h4>Model catalogue</h4>
-    <p className="config-desc">{count} model{count===1?"":"s"} resolved across the suite's provider sources. Models are chosen per conversation and per launch — this is what is resolvable, not a default.</p>
+    <p className="config-desc">{count} model{count===1?"":"s"} catalogued across the suite's provider sources. Available choices depend on the selected harness, credentials and the work's current policy.</p>
     <div className="config-control">
       <input className="config-input" type="search" placeholder={`Search ${count} models…`} aria-label="Search the model catalogue"
         data-catalogue-search value={query} onChange={(event)=>setQuery(event.target.value)}/>

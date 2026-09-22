@@ -288,12 +288,17 @@ function RunCard({row, onOpen}:{row:DeskRow; onOpen:(row:DeskRow)=>void}) {
 }
 
 function SourceStates({states}:{states:SourceState[]}) {
-  const visible = states.filter(state => state.state !== "read" || state.runs === 0);
-  if (!visible.length) return null;
-  return <div className="desk-source-states" aria-label="Source coverage">
-    {visible.map(state => <p key={deskRowKey(state.source, "")} data-source-state={state.state} role={state.state === "refused" ? "alert" : "status"}>
-      <code>{state.source.projectRef}</code>{state.source.centralProject ? <small> · {state.source.centralProject}</small> : null} — {state.state === "reading" ? "reading…" : state.state === "read" ? "the owner's project reading names no Runs." : `read refused: ${state.detail}`}
-    </p>)}
+  if (!states.length) return null;
+  const failures = states.filter(state => state.state === "refused");
+  return <div className="desk-source-states" aria-label="Factory project availability">
+    {failures.map(state => <p key={deskRowKey(state.source, "")} role="alert">{state.source.centralProject || "Central"}: {state.detail}</p>)}
+    <details>
+      <summary>{states.filter(state => state.state === "read").length} of {states.length} projects read{failures.length ? ` · ${failures.length} need attention` : ""}</summary>
+      {states.map(state => <div key={deskRowKey(state.source, "")} data-source-state={state.state}>
+        <p>{state.source.centralProject || "Central — personal ground"} · {state.state === "reading" ? "Reading…" : state.state === "refused" ? "Could not be read" : `${state.runs ?? 0} Runs`}</p>
+        <details><summary>Source</summary><p><code>{state.source.projectRef}</code></p><p><code>{state.source.statePath}</code></p></details>
+      </div>)}
+    </details>
   </div>;
 }
 

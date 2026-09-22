@@ -18,9 +18,9 @@ import {useVoiceDictation} from "./voice";
  * opens a fresh conversation (the kernel provisions it), so the chat is
  * usable by default; a disconnected or absent provider reads as a quiet
  * local explanation with the real connect/select action — never as a missing
- * composer. Whatever is typed reaches the harness verbatim — a leading
- * `/model` or any other slash-command is the harness's own surface, never
- * intercepted here.
+ * composer. `/model` opens the native model control. Other command support
+ * depends on the connected harness; RPC routes do not necessarily implement
+ * their terminal UI commands.
  */
 export interface ComposerTools {
   /** Quote the active centre subject (a file surface) into the draft. */
@@ -72,7 +72,9 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   const voice=useVoiceDictation(text=>setMessage(text),()=>message);
   useLayoutEffect(()=>{const el=input.current;if(!el)return;el.style.height="auto";el.style.height=`${Math.min(el.scrollHeight,220)}px`;},[message]);
   useLayoutEffect(()=>{if(focusToken)input.current?.focus();},[focusToken]);
-  const canSend=promptAllowed&&!pending&&!busy&&!!draft.trim();
+  const modelCommand=message.trim()==="/model"&&selected.length===0;
+  const canSend=!pending&&!busy&&(modelCommand?connected:promptAllowed&&!!draft.trim());
+  const send=()=>{if(modelCommand){setProviderOpen(true);onDraft("");}else onSend();};
   const chip=(item:ContextItem,index:number)=><span key={index} className="oi-chip chat-attachment" data-state="selected" title={`${item.meta}\n\n${item.quote}`}><Glyph name="attach" size={10}/><span className="chat-attachment-title">{item.title}</span>{editable&&<button className="oi-tool" aria-label={`Remove ${item.title}`} onClick={()=>onDraft(removeContextItem(draft,item))}><Glyph name="close" size={9}/></button>}</span>;
   /** Files pasted straight into the message field attach like dropped ones. */
   const onPaste=(event:ClipboardEvent)=>{const files=event.clipboardData?.files;if(files?.length&&editable){event.preventDefault();void tools.pickFiles(files);}};
@@ -109,7 +111,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     {selected.length>0&&<div className="chat-attachments" aria-label="Attached context">{selected.map(chip)}</div>}
     <textarea ref={input} disabled={!editable} aria-label="Message" placeholder={drafting?"Write the first message…":!reading?"Reading…":connected?"Message the agent…":"Connect a provider, then write…"} value={message} rows={3}
       onChange={event=>setMessage(event.target.value)} onPaste={onPaste}
-      onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)onSend();}}}/>
+      onKeyDown={event=>{if(event.key==="Enter"&&!event.shiftKey&&!event.nativeEvent.isComposing){event.preventDefault();if(canSend)send();}}}/>
     <div className="chat-composer-row">
       {/* Plain tools, no menus: files from this computer, the centre subject.
           Everything else attaches by drop — a sidebar file, a tab. The
@@ -131,7 +133,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
       <span className="chat-composer-status" role="status">{voice.listening?"Listening…":pending?"Updating…":busy?"Saving…":drafting?"First send opens the conversation":paged?<button className="oi-action" onClick={onLatest}>Latest</button>:<span className="chat-drop-hint">Drop a file or a tab to attach</span>}</span>
       {running
         ?<button className="chat-stop" disabled={pending||!cancelAllowed} aria-label="Stop" title="Stop the provider turn" onClick={onCancel}><Glyph name="stop" size={12}/><span>Stop</span></button>
-        :<button className="chat-send" disabled={!canSend} aria-label="Send" title={drafting?"Send — opens a new conversation":promptReason??"Send (Enter)"} onClick={onSend}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
+        :<button className="chat-send" disabled={!canSend} aria-label="Send" title={drafting?"Send — opens a new conversation":promptReason??"Send (Enter)"} onClick={send}><Glyph name="arrow" size={13}/><span className="sr-only">Send</span></button>}
     </div>
   </div>;
 }
