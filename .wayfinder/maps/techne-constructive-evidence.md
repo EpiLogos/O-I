@@ -194,26 +194,49 @@ one-recorder/one-consumer store, the `AgentLayer` Technē yield, and removing th
 `native-library`) answer all four; the review's findings are the spec this
 section is proven against.
 
+**A second T3 review closed the residual.** Reviewing the fix, the T3 found the
+consume gate was `mode==="techne"` (kind + readiness), not PRESENTED identity —
+so if two Technē hosts were ever mounted (a warm tree, a foreign-tree pane tab)
+a concealed one that reached `ready` first could win the consume and open the
+constellation off-screen (the class the redesign set out to kill; rated SUSPECT,
+reachability unconfirmed). Closed by naming the presented centre: the recorder
+(`CradleFrame`, via `centreBindingOf`) records the presented Technē centre's
+binding id as the request `target`, and only the host whose own binding id
+matches consumes (`consumeTechneFieldOpen(bindingId)`); a concealed host reads
+the ref and LEAVES it. "One consumer" is now enforced, not assumed.
+
 **Executed proof (green locally on the pinned native cut; gated in CI).**
 `tests/techne-construction-join.mjs` + `-page.tsx`/`.html` mount BOTH production
 surfaces — the real Wiki (`KnowledgeSurface`) and the live app (`PointCloudHost`)
-— over one real kernel, and prove **12 checks**: a material-first two-member
+— over one real kernel, and prove **13 checks**: a material-first two-member
 constellation with a typed relation authored in the Wiki; `summonExpression`
-opens the EXACT projected Expression as the FIELD's own open document (read
-frame-bound from `__FIELD_STUDIES__.nativeWorking()`, revision-exact); the
-buffered request consumed exactly once (no double-open); the field renders the
-constellation's real members read from the kernel document (one renderer); an
-edit made in the field commits to the SAME native Expression through the owner
-(revision advanced, title changed). Two §41 negatives: standing the app in the
-Expressions cut, the same summon does NOT reach the field, and the recorded ref
-is left UNCONSUMED — proving `PointCloudHost`'s `mode==="techne"` gate, not a
-shared kernel, is the load-bearing relay. Ran on the pinned native binaries
+opens the EXACT projected Expression as the presented FIELD's own open document
+(read frame-bound from `__FIELD_STUDIES__.nativeWorking()`, revision-exact); the
+buffered request consumed exactly once (no double-open); a SECOND, concealed-and-
+ready Technē host, subscribed to the same store, does NOT open it (the presented-
+identity gate); the field renders the constellation's real members read from the
+kernel document (one renderer); an edit made in the field commits to the SAME
+native Expression through the owner (revision advanced, title changed). Two §41
+negatives: standing the presented host in the Expressions cut, the same summon
+does NOT reach the field, and the recorded ref is left UNCONSUMED — proving
+`PointCloudHost`'s `mode==="techne"` gate, not a shared kernel, is the
+load-bearing relay. The store's target semantics are proven directly by
+`tests/field-open.test.mjs` (6 checks). Ran on the pinned native binaries
 (ai-kit `6c700cee`, Central `4a5834b7`; O-I `oi`/`walk-bridge` from this head) on
 macOS software-GL Chromium `153.0.8010.12`. Regression on the same cut:
 `techne-native-application.mjs` 23/23, `techne-native-composition.mjs`,
 `techne-lens-studio-browser.mjs`, and the full cradle build all green;
-cradle+app TypeScript clean. The proof is wired into the `native-application`
-job of the Technē workflow, which runs it in CI on the Linux pinned cut.
+cradle+app TypeScript clean. Both proofs are wired into the Technē workflow
+(the join into `native-application`, the store unit test into `source-runtime`),
+which runs them in CI on the Linux pinned cut.
+
+**Honest test-depth remainder.** The join test plays the composition root's
+record role (naming the presented centre) rather than mounting the whole
+`CradleFrame` + `AgentLayer`, so a regression that made `AgentLayer` stop
+yielding in the Technē cut, or `CradleFrame` record outside it, would not be
+caught by this proof alone (both are exercised by the cradle build/typecheck and
+are single-line mode checks). A full composition-root integration walk is a
+named follow-on.
 
 **Remaining, unchanged in scope:** both creation routes are already proven
 cradle-side (`wiki-constructive-browser.mjs`: material-first, frame-first,

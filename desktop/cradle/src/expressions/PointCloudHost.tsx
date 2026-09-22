@@ -48,7 +48,7 @@ import {
 import {consumeTechneFieldOpen, peekTechneFieldOpen, subscribeTechneFieldOpen} from "./fieldOpen";
 import "./point-cloud-host.css";
 
-export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: {mode?: HostedAppMode; deepLink?: string; onHostedState?: (state: HostedAppState) => void}) {
+export function PointCloudHost({mode = "expressions", deepLink, bindingId, onHostedState}: {mode?: HostedAppMode; deepLink?: string; bindingId?: string; onHostedState?: (state: HostedAppState) => void}) {
   const kernel = useKernel();
   const [entry, setEntry] = useState<NativeFileEntry | undefined>();
   const [state, setState] = useState<"reading" | "ready" | "refused">("reading");
@@ -128,23 +128,24 @@ export function PointCloudHost({mode = "expressions", deepLink, onHostedState}: 
   // The Technē cut's summon answer: a constellation constructed in the Wiki
   // opens IN this same living field, not a second renderer and not the panel's
   // Composition plane. The composition root records the ref in the buffered
-  // field-open store only while the workspace stands in the Technē cut (so THIS
-  // is the presented centre, never a concealed one); this presented host is the
-  // ONE consumer. A ref recorded before the frame was ready — the natural
-  // author-then-enter sequence — is buffered and opened here on ready; later
-  // ones open live. The app opens it through its own native workspace (kernel
-  // inspect, no iframe reload); the field then stands on the opened subject's
-  // own view (a subject change, §28), it does not keep the previous camera.
-  // Refs only; the kernel document is the store. The Expressions cut keeps its
-  // own selection path and never consumes this.
+  // field-open store while the workspace stands in the Technē cut, and NAMES the
+  // presented centre by its binding id; only the host whose id matches consumes
+  // (`consumeTechneFieldOpen(bindingId)`), so a concealed Technē host that stayed
+  // mounted leaves the ref for the presented one — "one consumer" is enforced.
+  // A ref recorded before the frame was ready — the natural author-then-enter
+  // sequence — is buffered and opened here on ready; later ones open live. The
+  // app opens it through its own native workspace (kernel inspect, no iframe
+  // reload); the field then stands on the opened subject's own view (a subject
+  // change, §28), it does not keep the previous camera. Refs only; the kernel
+  // document is the store. The Expressions cut keeps its own selection path.
   useEffect(() => {
     const node = frame.current;
     if (mode !== "techne" || !node || state !== "ready") return;
-    const open = () => { const ref = consumeTechneFieldOpen(); if (ref) postOpenExpression(node, ref); };
+    const open = () => { const ref = consumeTechneFieldOpen(bindingId ?? null); if (ref) postOpenExpression(node, ref); };
     open(); // a ref recorded before this host was ready
     return subscribeTechneFieldOpen(() => { if (peekTechneFieldOpen()) open(); });
     // eslint-disable-next-line react-hooks/exhaustive-deps
-  }, [mode, state]);
+  }, [mode, state, bindingId]);
 
   // The deep cut's requests ride back through the host: a workspace-mode
   // switch goes to the shell's own mode pipeline (enterMode); a summon asks

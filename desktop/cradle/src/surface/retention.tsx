@@ -116,8 +116,8 @@ function retainedBody(binding: SurfaceBinding, _subject?: WorkbenchSubject, fact
   // The centre arms of the workbench's own SurfaceBody, mirrored here with
   // the props the shell itself holds. Factory's arm composes the frame-built
   // chat node the shell received — one body with it, never a second copy.
-  if (binding.kind === "expressions") return <PointCloudHost mode="expressions" deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
-  if (binding.kind === "techne") return <PointCloudHost mode="techne" deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
+  if (binding.kind === "expressions") return <PointCloudHost mode="expressions" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
+  if (binding.kind === "techne") return <PointCloudHost mode="techne" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>;

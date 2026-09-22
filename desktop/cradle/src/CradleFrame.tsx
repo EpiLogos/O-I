@@ -882,7 +882,10 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
     const summon=(event:Event)=>{
       const mode=stateRef.current.mode??"base";
       if(mode==="expressions"){void openModeSurfaceRef.current("expressions").catch(reason=>setWindowError(String(reason instanceof Error?reason.message:reason)));return;}
-      if(mode==="techne"){const ref=(event as CustomEvent<{expressionRef?:unknown}>).detail?.expressionRef;if(typeof ref==="string"&&ref.startsWith("expression:"))requestTechneFieldOpen(ref);}
+      if(mode==="techne"){const ref=(event as CustomEvent<{expressionRef?:unknown}>).detail?.expressionRef;
+        // Name the presented Technē centre so only it consumes — a concealed
+        // Technē host (a warm tree, a foreign-tree pane tab) leaves the ref.
+        if(typeof ref==="string"&&ref.startsWith("expression:"))requestTechneFieldOpen(ref,centreBindingOf(workspaceRef.current.current,"techne","techne")?.id??null);}
     };
     window.addEventListener(EXPRESSION_COMPOSE_EVENT,summon);
     return()=>window.removeEventListener(EXPRESSION_COMPOSE_EVENT,summon);
