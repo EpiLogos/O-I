@@ -1,5 +1,5 @@
 import {ExpressionLayout} from "./shared/Expression";
-import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
+import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,listFiles,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
@@ -941,44 +941,50 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const localStamp=()=>{const d=new Date(),p=(n:number)=>String(n).padStart(2,"0");
     return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;};
   /** Writing opens on this device and never mints a placeholder: no Flow, no
-   *  file, no Day, no NOW allocation as a side effect of opening. The ground
-   *  is written only when the human explicitly saves real content
-   *  (placeDraft): one dated 0/1 instance in Control/user/flows/ — the
-   *  ratified carrier. */
+   *  file, no Day, no NOW allocation as a side effect of opening (ratified
+   *  2026-09-13, #267). The ground is written only when the human explicitly
+   *  saves real content (placeDraft). The navigator's New flow keeps this
+   *  law; the rest page's Start writing is the exception (startFlowWriting). */
   const startWriting=async()=>{
     setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
   };
-  /** Save unsaved writing: one dated 0/1 instance created in the user
-   *  section's flows area through Central's own file operation, replacing
-   *  the surface in place. Only real content reaches the ground — an empty
-   *  draft has nothing to place, and no blank placeholder is ever minted in
-   *  its name. The local copy is released only once the owner holds it. */
-  const placeDraft=async(bindingId:string,content:string)=>{
-    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+  /** The rest page's "Start writing" (owner direction, 2026-09-22): writing
+   *  starts in a real flow file — one dated 0/1 instance minted in the user
+   *  section's flows area through Central's own file operation and opened at
+   *  once as a document surface. Only when no owner ground is reachable does
+   *  it fall back to the device draft, which placeDraft later carries to the
+   *  same home on explicit save. */
+  const startFlowWriting=async()=>{
     let area:import("./flow/instances").UserFlowsArea|undefined;
     try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
-    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
+    if(!area){setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));return;}
+    await openMintedFlow(area,()=>mintBlankInstance(),crypto.randomUUID());
+  };
+  /** Mint one dated 0/1 instance in the user flows area (Central's own file
+   *  operation) and open it as a flow document surface. `surfaceId` may be
+   *  an existing draft binding, which this replaces in place. A name
+   *  collision retries with the next suffix; any other refusal propagates. */
+  const openMintedFlow=async(area:import("./flow/instances").UserFlowsArea,mint:()=>string,surfaceId:string)=>{
     const stamp=localStamp();
     let lastError:unknown;
     for(let n=0;n<8;n++){
       const name=instanceFileName(stamp,n);
       const location={schema:"central.path-ref/v1" as const,ref:`${area.baseRef}/flows/${name}`,root:area.root,path:`${area.basePath}/flows/${name}`};
       try{
-        const html=mintInstance(content);
+        const html=mint();
         const result=await fileOperation<FileMutation>(kernel.transport,location,{action:"write",expected_revision:"",content:html});
         if(result.outcome!=="created")throw new Error(`Central did not create the flow instance (${result.outcome}).`);
         const doc=parseInstance(html);
         const documentId=doc.meta.documentId??name;
         const title=name;
-        const binding:SurfaceBinding={id:bindingId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
+        const binding:SurfaceBinding={id:surfaceId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
         // The owner-mediated read registers the file ref for the surface-open
         // gate and hands back the live central revision.
         await readFile(kernel.transport,location);
-        const opened=await kernel.apply({op:"surface_open",surface_id:bindingId,kind:"flow",title,source_ref:location.ref});
-        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened; your writing is still kept on this device.");
-        await kernel.apply({op:"surface_focus",surface_id:bindingId});
-        setState(s=>({...s,surfaces:{...s.surfaces,[bindingId]:binding}}));
-        try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
+        const opened=await kernel.apply({op:"surface_open",surface_id:surfaceId,kind:"flow",title,source_ref:location.ref});
+        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened.");
+        await kernel.apply({op:"surface_focus",surface_id:surfaceId});
+        setState(s=>({...s,surfaces:{...s.surfaces,[surfaceId]:binding}}));
         return;
       }catch(reason){
         lastError=reason;
@@ -986,6 +992,19 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }
     }
     throw new Error(`Central would not accept a new flow instance this minute: ${String(lastError)}`);
+  };
+  /** Save unsaved writing: one dated 0/1 instance created in the user
+   *  section's flows area through Central's own file operation, replacing
+   *  the surface in place. Only real content reaches the ground — an empty
+   *  draft has nothing to place. The local copy is released only once the
+   *  owner holds it. */
+  const placeDraft=async(bindingId:string,content:string)=>{
+    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+    let area:import("./flow/instances").UserFlowsArea|undefined;
+    try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
+    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
+    await openMintedFlow(area,()=>mintInstance(content),bindingId);
+    try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
   };
   const placeDraftRef=useRef(placeDraft);placeDraftRef.current=placeDraft;
   useEffect(()=>{
@@ -1364,37 +1383,40 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // conversation selected — the one task-open path, from the navigator,
       // the Run detail's carried conversations, or the chat's own chooser.
       publishCentreView("tasks");
-    }catch(error){setWindowError(String(error));}
+    }catch(error){setWindowError(String(error));throw error;}
     finally{setFactoryChoosing(false);}
   };
   const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onMessage:(message:string)=>void}={
-    project:workspace.current.project??state.accompanying?.project,
+    project:workspace.current.project ?? "",
     accompanying:state.accompanying??undefined,
-    onOpenTask:row=>factoryChoose(row),
+    onOpenTask:async row=>{try{await factoryChoose(row);}catch{/* factoryChoose reports the error to the window. */}},
     onMessage:message=>setWindowError(message),
   };
   const factoryCentre=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
-      project={workspace.current.project??state.accompanying?.project}
+      project={workspace.current.project ?? ""}
       agentName="Factory agent"
-      situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
+      situating={`Situated in ${state.accompanying?.project || (state.accompanying ? "Central" : workspace.current.project || "Central")}`}
       choosing={factoryChoosing}
       variant="centre"
       subject={{title:subjectTitle,location:subjectBinding?.location}}
       onMessage={message=>setWindowError(message)}
       onNewChat={()=>setState(s=>({...s,accompanying:undefined}))}
       onChoose={row=>factoryChoose(row)}
-      onProvision={async provisionProject=>{
+      onProvision={async (provisionProject,provider)=>{
         // New-chat first Send: the kernel provisions the conversation (the
         // owner's own SessionSpace sequence, one op) and this binds it — the
         // parked draft is applied and sent by the chat face once the shared
         // observer is live. No chooser.
-        const provisioned=await encounterProvision(kernel.transport,provisionProject);
+        const provisioned=await encounterProvision(kernel.transport,provisionProject,provider);
         setState(s=>({...s,accompanying:{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space}}));
+        return provisioned;
       }}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface
   // reads as selected — `subjectBinding` above is already that binding.
-  const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
+  const activeEncounterRef=(state.mode??"base")==="factory"
+    ? state.accompanying?.ref
+    : subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
   const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
   const mode:WorkspaceMode=state.mode??"base";
   // The retention warm set (WF4): the warm trees of the active workspace and
@@ -1469,7 +1491,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // hidden state — the agent manages them — and they surface in the panel's
   // Active Context; the human's full-page mode experience never un-fullscreens.
   const modeSoloStage=!!modeCentreKind;
-  const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location};
+  const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:mode==="factory" ? factoryCentreProps.project ?? "" : subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location};
   const report=(reason:unknown)=>setWindowError(String(reason instanceof Error?reason.message:reason));
 
   // Close the menu on any pointerdown outside it.
@@ -1510,7 +1532,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const factoryPanelHost:FactoryPanelHost={onOpenFullRun:()=>{setState(s=>{const plane=s.panelPlanes?.factory==="run"?s:{...s,panelPlanes:{...s.panelPlanes,factory:"run"}};return s.rightDepth==="full"?plane:{...plane,rightDepth:"full"};});},
     onExpandPanel:()=>setState(s=>s.rightDepth==="full"?s:{...s,rightDepth:"full"}),
     onOpenPlane:plane=>setState(s=>s.panelPlanes?.factory===plane?s:{...s,panelPlanes:{...s.panelPlanes,factory:plane}}),
-    onOpenEncounterRow:(row:EncounterRow)=>void openEncounter(row).catch(report)};
+    onOpenEncounterRow:(row:EncounterRow)=>mode==="factory" ? factoryChoose(row) : openEncounter(row)};
   // The centre canvas's own pane openings, lent to the Ta-Onta Context plane
   // (expressions / techne / factory): hold the open file in the panel, or
   // open a file, a browser or a terminal in the centre exactly as the shell
@@ -1553,7 +1575,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
-        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
+        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={factoryChoose} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {/* The modes' dedicated stages (surface/retention.tsx, stage law
         * 2026-09-20): one ALWAYS-PRESENT keyed slot per centre mode. Each
         * slot presents the centre binding living in its OWN mode's tree,
@@ -1583,7 +1605,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * law as always — with no active root nothing in them is presented. */}
       <div className="rest-host" hidden={!!state.root || undefined}>
         <RestPane>
-          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
+          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
             const reading=kernel.snapshot.navigator;
             const project=reading?.project?.project;
             const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;

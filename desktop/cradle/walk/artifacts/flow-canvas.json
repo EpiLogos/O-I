@@ -1,18 +1,51 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "flow-canvas",
-  "generated_at": "2026-09-13T19:28:35.631Z",
+  "generated_at": "2026-09-22T15:37:55.595Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "187ea8cdfb671d411d18a985a84ae88689dfc5d4a6f14004fcad986f3988b3df"
+    },
     "node": "v24.16.0",
-    "platform": "darwin"
+    "platform": "darwin",
+    "source": {
+      "repository_root": "/Users/admin/Central/Work/O-I",
+      "repository_head": "4141add37e72b46221d3bcd71e8ccb483752332d",
+      "tracked_changes": [
+        "desktop/cradle/src/CradleFrame.tsx",
+        "desktop/cradle/src/Rest.tsx",
+        "desktop/cradle/src/agency/AgencySurface.tsx",
+        "desktop/cradle/src/agency/agency.css",
+        "desktop/cradle/src/agent/desk/desk.css",
+        "desktop/cradle/src/cradle.css",
+        "desktop/cradle/src/flow/instance.ts",
+        "desktop/cradle/src/flow/welcome.css",
+        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx",
+        "desktop/cradle/walk/artifacts/flow-canvas-failure.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-conflict-resolved.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-saved.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-sessions-bound.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-cocurrency-reference.png",
+        "desktop/cradle/walk/artifacts/flow-canvas.json",
+        "desktop/cradle/walk/artifacts/rest-desktop-rest.png",
+        "desktop/cradle/walk/artifacts/rest.json",
+        "desktop/cradle/walk/scenarios/flow-canvas.mjs",
+        "desktop/cradle/walk/scenarios/rest.mjs"
+      ],
+      "dirty_digest": "9167040ba792204cca0c8c5bd7a9ec4b0729c577a41560492cce9f331fdaa2f9",
+      "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
+      "engine_source": "EpiLogos/Point-Cloud-Demo",
+      "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
+    }
   },
   "passed": true,
   "error": null,
-  "duration_ms": 6166,
+  "duration_ms": 5641,
   "checks": [
     {
       "ok": true,
@@ -110,9 +143,9 @@
       "ok": true,
       "label": "Binding and kernel focus co-refer the same document path-ref",
       "data": {
-        "bindingRef": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
-        "focusRef": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
-        "expectedRef": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html"
+        "bindingRef": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+        "focusRef": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+        "expectedRef": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html"
       }
     },
     {
@@ -128,10 +161,10 @@
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0.1,
+      "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-13T19:28:35.747Z",
+        "mounted_at": "2026-09-22T15:37:55.705Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -142,44 +175,43 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.7,
+      "duration_ms": 0.1,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "401ec3fb-87b0-489f-ae2a-7c2ea69f5925"
+              "10178fce-bad7-4315-ba64-a34783912918"
             ],
             "pinned": [],
-            "active": "401ec3fb-87b0-489f-ae2a-7c2ea69f5925"
+            "active": "10178fce-bad7-4315-ba64-a34783912918"
           },
           "surfaces": {
-            "bd9d2579-abdc-46fa-8c33-9992a434125b": {
-              "id": "bd9d2579-abdc-46fa-8c33-9992a434125b",
+            "468e6c59-e15a-4265-8168-35a02b945c80": {
+              "id": "468e6c59-e15a-4265-8168-35a02b945c80",
               "kind": "draft",
-              "title": "Draft",
-              "project": "Editor"
+              "title": "Draft"
             },
-            "401ec3fb-87b0-489f-ae2a-7c2ea69f5925": {
-              "id": "401ec3fb-87b0-489f-ae2a-7c2ea69f5925",
+            "10178fce-bad7-4315-ba64-a34783912918": {
+              "id": "10178fce-bad7-4315-ba64-a34783912918",
               "kind": "flow",
-              "title": "flow-2026-09-13-2028.html",
-              "ref": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
+              "title": "flow-2026-09-22-1637.html",
+              "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
               "location": {
                 "schema": "central.path-ref/v1",
-                "ref": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
-                "root": "/private/tmp/oi-cradle-editor-9nmHcl",
-                "path": "Control/user/flows/flow-2026-09-13-2028.html"
+                "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+                "root": "/private/tmp/oi-cradle-editor-MAi16S",
+                "path": "Control/user/flows/flow-2026-09-22-1637.html"
               },
               "flow": {
-                "flowRef": "23c5d379-642b-40e8-8f44-b53d94e8cb37",
-                "path": "Control/user/flows/flow-2026-09-13-2028.html"
+                "flowRef": "50e5854f-9776-43da-b890-f9847e955c58",
+                "path": "Control/user/flows/flow-2026-09-22-1637.html"
               }
             }
           },
           "closedStack": [
-            "bd9d2579-abdc-46fa-8c33-9992a434125b"
+            "468e6c59-e15a-4265-8168-35a02b945c80"
           ],
           "focusedGroupId": "g1",
           "agencyDepth": "panel",
@@ -192,7 +224,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 29,
+      "duration_ms": 35,
       "data": {
         "file": "flow-canvas-flow-canvas-saved.png"
       }
@@ -200,7 +232,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 45,
       "data": {
         "file": "flow-canvas-flow-canvas-sessions-bound.png"
       }
@@ -208,7 +240,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 31,
+      "duration_ms": 42,
       "data": {
         "file": "flow-canvas-flow-canvas-conflict-resolved.png"
       }
@@ -223,45 +255,44 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "401ec3fb-87b0-489f-ae2a-7c2ea69f5925",
-              "d020b1e6-aac3-43cf-bb21-46551ff6fc14"
+              "10178fce-bad7-4315-ba64-a34783912918",
+              "7aa7effd-413a-4afe-bacb-cfebf6fa286b"
             ],
             "pinned": [],
-            "active": "401ec3fb-87b0-489f-ae2a-7c2ea69f5925"
+            "active": "10178fce-bad7-4315-ba64-a34783912918"
           },
           "surfaces": {
-            "bd9d2579-abdc-46fa-8c33-9992a434125b": {
-              "id": "bd9d2579-abdc-46fa-8c33-9992a434125b",
+            "468e6c59-e15a-4265-8168-35a02b945c80": {
+              "id": "468e6c59-e15a-4265-8168-35a02b945c80",
               "kind": "draft",
-              "title": "Draft",
-              "project": "Editor"
+              "title": "Draft"
             },
-            "401ec3fb-87b0-489f-ae2a-7c2ea69f5925": {
-              "id": "401ec3fb-87b0-489f-ae2a-7c2ea69f5925",
+            "10178fce-bad7-4315-ba64-a34783912918": {
+              "id": "10178fce-bad7-4315-ba64-a34783912918",
               "kind": "flow",
-              "title": "flow-2026-09-13-2028.html",
-              "ref": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
+              "title": "flow-2026-09-22-1637.html",
+              "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
               "location": {
                 "schema": "central.path-ref/v1",
-                "ref": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
-                "root": "/private/tmp/oi-cradle-editor-9nmHcl",
-                "path": "Control/user/flows/flow-2026-09-13-2028.html"
+                "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+                "root": "/private/tmp/oi-cradle-editor-MAi16S",
+                "path": "Control/user/flows/flow-2026-09-22-1637.html"
               },
               "flow": {
-                "flowRef": "23c5d379-642b-40e8-8f44-b53d94e8cb37",
-                "path": "Control/user/flows/flow-2026-09-13-2028.html"
+                "flowRef": "50e5854f-9776-43da-b890-f9847e955c58",
+                "path": "Control/user/flows/flow-2026-09-22-1637.html"
               }
             },
-            "d020b1e6-aac3-43cf-bb21-46551ff6fc14": {
-              "id": "d020b1e6-aac3-43cf-bb21-46551ff6fc14",
+            "7aa7effd-413a-4afe-bacb-cfebf6fa286b": {
+              "id": "7aa7effd-413a-4afe-bacb-cfebf6fa286b",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-              "project": "Editor",
-              "title": "00 01-DESIGN.md"
+              "title": "00 01-DESIGN.md",
+              "project": "Editor"
             }
           },
           "closedStack": [
-            "bd9d2579-abdc-46fa-8c33-9992a434125b"
+            "468e6c59-e15a-4265-8168-35a02b945c80"
           ],
           "focusedGroupId": "g1",
           "agencyDepth": "panel",
@@ -274,7 +305,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 14.3,
+      "duration_ms": 12,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -305,7 +336,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html"
+            "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html"
           },
           "world": {
             "kind": "world",
@@ -391,7 +422,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/private/tmp/oi-cradle-editor-9nmHcl",
+            "root": "/private/tmp/oi-cradle-editor-MAi16S",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 11,
@@ -460,7 +491,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/private/tmp/oi-cradle-editor-9nmHcl",
+            "root": "/private/tmp/oi-cradle-editor-MAi16S",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -612,21 +643,21 @@
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/01 02-ARCHITECTURE.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/01%2002-ARCHITECTURE.md",
-                "revision": "central.content-fnv1a64/v1:16605:6a00870aa4f8d1e2",
+                "revision": "central.content-fnv1a64/v1:20779:ff69d180a7269111",
                 "treatment": "projectcentral-user"
               },
               {
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/02 03-UX-STATES.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/02%2003-UX-STATES.md",
-                "revision": "central.content-fnv1a64/v1:32215:9d8030d70a675ecd",
+                "revision": "central.content-fnv1a64/v1:33353:0fc183db8404a58b",
                 "treatment": "projectcentral-user"
               },
               {
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/03 04-VERIFICATION.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/03%2004-VERIFICATION.md",
-                "revision": "central.content-fnv1a64/v1:33138:9091d6660c618678",
+                "revision": "central.content-fnv1a64/v1:35109:ab9ef726d341428d",
                 "treatment": "projectcentral-user"
               },
               {
@@ -647,7 +678,7 @@
                 "agent_retrieval_allowed": true,
                 "path": "ProjectCentral/user/06 CANONICAL-PRODUCT-FIELD.md",
                 "ref": "central:source:project:editor-walk:ProjectCentral/user/06%20CANONICAL-PRODUCT-FIELD.md",
-                "revision": "central.content-fnv1a64/v1:33820:ee6914b1bd5555b1",
+                "revision": "central.content-fnv1a64/v1:33909:6fb243ad64731445",
                 "treatment": "projectcentral-user"
               },
               {
@@ -676,16 +707,16 @@
           }
         },
         "surfaces": {
-          "401ec3fb-87b0-489f-ae2a-7c2ea69f5925": {
+          "10178fce-bad7-4315-ba64-a34783912918": {
             "kind": "flow",
-            "source_ref": "central:path:/private/tmp/oi-cradle-editor-9nmHcl:Control/user/flows/flow-2026-09-13-2028.html",
-            "surface_id": "401ec3fb-87b0-489f-ae2a-7c2ea69f5925",
-            "title": "flow-2026-09-13-2028.html"
+            "source_ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+            "surface_id": "10178fce-bad7-4315-ba64-a34783912918",
+            "title": "flow-2026-09-22-1637.html"
           },
-          "d020b1e6-aac3-43cf-bb21-46551ff6fc14": {
+          "7aa7effd-413a-4afe-bacb-cfebf6fa286b": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "d020b1e6-aac3-43cf-bb21-46551ff6fc14",
+            "surface_id": "7aa7effd-413a-4afe-bacb-cfebf6fa286b",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -694,7 +725,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 21,
+      "duration_ms": 40,
       "data": {
         "file": "flow-canvas-flow-cocurrency-reference.png"
       }

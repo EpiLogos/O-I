@@ -1,50 +1,39 @@
-import {useEffect,useRef,useState} from "react";
+import {useEffect,useState} from "react";
 import {useKernel} from "../../kernel/KernelProvider";
-import type {ProfileDocumentWire} from "../../kernel/types";
+import {kernelOp} from "../../kernel/bridge";
 import {Glyph} from "../../workspace/Glyph";
 
-/**
- * Who the person is talking to: the active AIKit profile, shown as an image
- * and a name. The listing is the real one (`profile_list`, the engine `oi
- * profile` drives); the image is the profile's own when its document carries
- * one (`image` / `avatar` / `icon`, a URL or data URI) and a monogram until
- * the profile integration supplies it. This is a display slot, not a picker:
- * choosing a profile stays with Settings → Configuration.
- */
-export interface AgentIdentityReading {name:string;ref?:string;description?:string;image?:string;state:"read"|"none"|"reading"|"unavailable"}
+/** The selected session's native Agent basis, never the global profile. */
+export interface AgentIdentityReading {name:string;ref?:string;description?:string;image?:string;sourceState?:"current"|"changed"|"revoked"|"unavailable";state:"read"|"none"|"reading"|"unavailable"}
 
-export function useAgentIdentity(fallbackName:string,read=true):AgentIdentityReading {
+export function useAgentIdentity(accompanying:{ref:string;project:string}|undefined,read=true):AgentIdentityReading {
   const kernel=useKernel();
-  const [reading,setReading]=useState<AgentIdentityReading>({name:fallbackName,state:read?"reading":"none"});
-  const listed=useRef(false);
+  const [reading,setReading]=useState<AgentIdentityReading>({name:"Conversation",state:"none"});
+  const sessionRef=accompanying?.ref, project=accompanying?.project;
   useEffect(()=>{
-    if(!read||listed.current)return;
-    listed.current=true;
+    if(!read||!sessionRef){setReading({name:"Conversation",state:"none"});return;}
     let live=true;
-    kernel.apply({op:"profile_list"}).then(outcome=>{
+    setReading({name:"Conversation",state:"reading"});
+    void kernelOp(kernel.transport,{op:"agent_definition",project:project || null,request:{action:"session",agent_session:sessionRef}}).then(response=>{
+      if(response.error || response.outcome?.result!=="agent_definition_reading") throw new Error(response.error ?? "Session Agent reading unavailable");
+      const data=response.outcome.data as {session:null|{agent_ref:string;profile_ref:string;profile_revision:string};profile:null|{name?:string;purpose?:string};source_state?:AgentIdentityReading["sourceState"]};
       if(!live)return;
-      if(outcome?.result!=="profile_listing"){setReading({name:fallbackName,state:"unavailable"});return;}
-      const active=outcome.profiles.find(profile=>profile.profile_ref===outcome.active_profile_ref);
-      if(!active){setReading({name:fallbackName,state:"none"});return;}
-      setReading({name:active.title||active.profile_ref,ref:active.profile_ref,description:active.description??undefined,image:imageOf(active),state:"read"});
-    }).catch(()=>{if(live)setReading({name:fallbackName,state:"unavailable"});});
+      if(!data.session){setReading({name:"Conversation",state:"none"});return;}
+      setReading({name:data.profile?.name || data.session.agent_ref,ref:data.session.agent_ref,sourceState:data.source_state,
+        description:`${data.session.profile_ref} · ${data.session.profile_revision}${data.profile?.purpose ? " · "+data.profile.purpose : ""}`,state:"read"});
+    }).catch(error=>{if(live)setReading({name:"Conversation",state:"unavailable",description:String(error)});});
     return()=>{live=false;};
-  },[kernel,fallbackName,read]);
+  },[kernel.transport,sessionRef,project,read]);
   return reading;
 }
 
-const imageOf=(profile:ProfileDocumentWire):string|undefined=>{
-  for(const key of ["image","avatar","icon"]){const value=profile[key];if(typeof value==="string"&&value.trim())return value;}
-  return undefined;
-};
-
 export function AgentIdentity({identity,situating}:{identity:AgentIdentityReading;situating:string}) {
   const monogram=identity.name.split(/[\s·/-]+/).filter(Boolean).slice(0,2).map(part=>part[0]?.toUpperCase()??"").join("")||"A";
-  return <div className="agent-identity" data-state={identity.state} data-profile-ref={identity.ref} title={identity.description??identity.ref??undefined}>
+  return <div className="agent-identity" data-state={identity.state} data-agent-ref={identity.ref} title={identity.description??identity.ref??undefined}>
     <span className="agent-identity-image" aria-hidden="true">{identity.image?<img src={identity.image} alt=""/>:identity.state==="read"?monogram:<Glyph name="agent" size={13}/>}</span>
     <span className="agent-identity-text">
       <strong className="agent-identity-name">{identity.name}</strong>
-      <small className="agent-identity-line">{identity.state==="reading"?"Reading the profile…":identity.state==="none"?`${situating} · no active profile`:identity.state==="unavailable"?situating:situating}</small>
+      <small className="agent-identity-line">{identity.state==="reading"?"Reading session Agent…":identity.state==="unavailable"?"Session Agent could not be read":identity.sourceState&&identity.sourceState!=="current"?`${situating} · source ${identity.sourceState}; session retains its pinned basis`:situating}</small>
     </span>
   </div>;
 }

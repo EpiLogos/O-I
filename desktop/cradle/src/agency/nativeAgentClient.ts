@@ -12,7 +12,7 @@ export function nativeAgentOwner(transport: KernelTransportStatus, project?: str
 // represented as persisted is read back from Central/AIKit. Never localStorage.
 const held = new Map<string,NativeAgentController>();
 export function agentController(transport: KernelTransportStatus, project?: string): NativeAgentController {
- const key=JSON.stringify([transport,project??null]);
+ const key=JSON.stringify([transport,project||null]);
  let controller=held.get(key);
  if (!controller) { controller=new NativeAgentController(nativeAgentOwner(transport,project));held.set(key,controller); }
  else controller.bind(nativeAgentOwner(transport,project));

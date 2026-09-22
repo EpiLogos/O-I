@@ -13,6 +13,7 @@ import {TrajectoryPlane} from "../../../agent/desk/TrajectoryPlane";
 import type {DeskPlaneProps} from "../../../agent/desk/deskTypes";
 import {SessionCards} from "../components/SessionCards";
 import {SpanDetail} from "../components/SpanDetail";
+import {NativeRunLog} from "../components/NativeRunLog";
 import {TraceWaterfall} from "../components/TraceWaterfall";
 import {factoryBuildFixture} from "../fixtures/factory-build";
 import {
@@ -142,8 +143,10 @@ export function RunPlane({subject, accompanying, onMessage, host, full, withScen
       <h4>Activity</h4>
       {fixtureRun
         ? <FixtureTrajectory rows={fixtureRun.trajectory} arrivals={fixtureRun.arrivals ?? 0} />
-        : accompanying
-          ? <div className="factory-side-embed"><TrajectoryPlane subject={subject} accompanying={accompanying} onMessage={onMessage} /></div>
+        : view
+          ? <NativeRunLog traces={view.trajectories}/>
+          : accompanying
+          ? <div className="factory-side-embed"><p className="oi-note">Conversation activity</p><TrajectoryPlane subject={subject} accompanying={accompanying} onMessage={onMessage} /></div>
           : <p className="oi-empty">No conversation bound.</p>}
     </section>
 

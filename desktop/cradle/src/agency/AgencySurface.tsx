@@ -59,7 +59,7 @@ export function AgencySurface({ project, onMessage, onOpenSettings }: { project?
       </div>
     </header>
 
-    <div className="agency-body oi-scroll">
+    <div className="agency-body">
       {view === "roster" && (
         <div><NativeAgentLauncher project={project}/><div className="agency-roster-layout">
           <AgencyRoster reading={reading} pending={pending} error={error} selected={selected} onSelect={setSelected}/>

@@ -4,9 +4,8 @@
    --oi-* tokens; accent stays ink, never a hue). */
 
 .agency-surface { height: 100%; min-height: 0; display: flex; flex-direction: column; }
-.agency-body { flex: 1; min-height: 0; overflow: auto; padding: var(--oi-desktop-gap) var(--oi-desktop-gap-lg); scrollbar-width: thin; overscroll-behavior: contain; }
-.agency-body::-webkit-scrollbar { width: var(--oi-scrollbar-size); }
-.agency-body::-webkit-scrollbar-thumb { background: var(--oi-scrollbar-thumb); border-radius: var(--oi-radius-pill); }
+.agency-body { flex: 1; min-height: 0; overflow: auto; padding: var(--oi-desktop-gap) var(--oi-desktop-gap-lg); scrollbar-width: none; overscroll-behavior: contain; }
+.agency-body::-webkit-scrollbar { display: none; width: 0; height: 0; }
 
 .agency-roster-layout { display: grid; grid-template-columns: minmax(220px, 320px) 1fr; gap: var(--oi-desktop-gap-lg); align-items: start; min-width: 0; }
 @media (max-width: 560px) { .agency-roster-layout { grid-template-columns: 1fr; } }

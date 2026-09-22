@@ -1,16 +1,13 @@
 import {docText, waitForDoc} from '../editor-doc.mjs';
 /** Empty desktop remains usable without an owner transport; no sample world.
  *
- *  Writing is no longer a mode this pane owns, and it no longer waits for an
- *  owner either. The study-era isolated canvas ("Start writing" → a local
- *  textarea, "Back to workspace" → back to this same page) was a parallel to
- *  the real Flow work, not a route into it. The entry now opens the retained
- *  local draft (supersession, 2026-09-13: with no owner transport the writing
- *  still opens and is kept on this device — the early reading that it should
- *  be refused named a door the carrier law has since closed). Nothing reaches
- *  the ground until an explicit Save places it through Central's own flow
- *  operation; that kernel-backed half is asserted in the `flow-canvas`
- *  scenario. */
+ *  With an owner ground reachable, "Start writing" opens a real flow file —
+ *  a dated 0/1 instance minted in Control/user/flows through Central's own
+ *  file operation (owner direction, 2026-09-22). This scenario runs with no
+ *  transport at all, so it asserts the honest fallback: the retained local
+ *  draft (2026-09-13) that placeDraft still carries to that same home on
+ *  explicit Save. The kernel-backed halves are asserted in the `flow-canvas`
+ *  and `document-entry` scenarios. */
 export default async function run({page,baseUrl,check,metric,shot,channel}) {
   await page.goto(baseUrl);
   const timing=(await channel('capture.timing')).data;
@@ -25,9 +22,10 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   check(await rest.isVisible(),'An empty workspace opens as the one fresh-surface composition');
   check(await page.getByRole('textbox',{name:'Writing surface'}).count()===0,'No automatic textarea or address simulation at desktop start');
 
-  // One composition, three real entries — never a fabricated fourth.
+  // One composition, real entries only — Day (the owner's canonical day
+  // record), Search, the library, and Start writing (owner set, 2026-09-22).
   const entries=await rest.getByRole('navigation',{name:'Start working'}).getByRole('button').allTextContents();
-  check(entries.length<=3&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t)),
+  check(entries.length<=4&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t))&&entries.some(t=>/^Day/.test(t)),
     'The fresh page offers only its real entries',{entries});
   check(await rest.locator('.welcome-prompt h2').count()===1,'The rolling welcome prompt is the page heading');
   // Length robustness: every eligible phrase renders in the invisible reserve,
@@ -48,6 +46,14 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   check(stability.ok&&stability.phrases>=4,'The rolling prompt reserves its tallest statement, so rotation never displaces the boxes',stability);
   check(await page.getByRole('button',{name:'Back to workspace'}).count()===0,
     'No "back to workspace" control that only returns to this same page');
+
+  // The Day button speaks the owner's Day route (day_source_open). With no
+  // transport at all it refuses honestly instead of simulating a day.
+  await page.getByRole('button',{name:'Day',exact:true}).click();
+  await page.locator('.rest-refusal').waitFor({timeout:10000});
+  const refusal=(await page.locator('.rest-refusal').textContent())??'';
+  check(refusal.trim().length>0,
+    'Day without a register refuses honestly and names the failure');
 
   // Writing never waits for a register. With no owner transport at all the
   // writing still opens and keeps itself on this device, rather than being

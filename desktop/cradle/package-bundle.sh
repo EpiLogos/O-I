@@ -74,8 +74,9 @@ case "${OS}/${ARCH}" in
      fi ;;
 esac
 
-APPIMAGE_GLOB="${TAURI_DIR}/target/release/bundle/appimage/*.AppImage"
-MACOS_APP_PATH="${TAURI_DIR}/target/release/bundle/macos/O-I.app"
+TAURI_TARGET_DIR="${CARGO_TARGET_DIR:-${TAURI_DIR}/target}"
+APPIMAGE_GLOB="${TAURI_TARGET_DIR}/release/bundle/appimage/*.AppImage"
+MACOS_APP_PATH="${TAURI_TARGET_DIR}/release/bundle/macos/O-I.app"
 
 if [ "${DRY_RUN}" -eq 1 ]; then
   log "dry-run plan:"
@@ -111,7 +112,8 @@ if [ "${SKIP_BUILD}" -eq 0 ]; then
 fi
 
 if [ "${TARGET}" = "aarch64-apple-darwin" ]; then
-  MACOS_APP="$(ls -d ${MACOS_APP_PATH} 2>/dev/null | head -1 || true)"
+  MACOS_APP=""
+  if [ -d "${MACOS_APP_PATH}" ]; then MACOS_APP="${MACOS_APP_PATH}"; fi
   [ -n "${MACOS_APP}" ] || die "no .app found at ${MACOS_APP_PATH}; run the tauri build first (or drop --skip-build)"
 else
   MACOS_APP=""

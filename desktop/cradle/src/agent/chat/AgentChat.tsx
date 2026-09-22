@@ -10,6 +10,7 @@ import {LOCATION_DRAG_TYPE,SURFACE_DRAG_TYPE} from "../../files/drag";
 import {AgentIdentity,useAgentIdentity,type AgentIdentityReading} from "./AgentIdentity";
 import {ChatTranscript} from "./ChatTranscript";
 import {ChatComposer} from "./ChatComposer";
+import {encounter} from "../../encounter/client";
 import {chatProvisionTarget} from "./firstSend";
 import {appendBlock,contextBlockForLocation,contextBlockForOsFile,contextBlockForSurface,type ContextBlock} from "./attach";
 import {CHAT_PREVIEW_EVENT} from "./previewGate";
@@ -83,7 +84,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
    * project (kernel `encounter_provision`) and bind it — the composition root
    * sets its binding so the shared observer mounts and the parked draft is
    * applied and sent. Undefined in fixtures: fresh Send there is inert. */
-  onProvision?:(project:string)=>Promise<void>;
+  onProvision?:(project:string,provider?:string)=>Promise<{agent_session:string;connection?:{state:"resident"}|{state:"prepared";refusal:string}}>;
   /** Developer preview override: a fixed identity, no profile read. */
   identity?:AgentIdentityReading;
   /** Developer preview: attachment paths stay local in fixtures, so they are
@@ -97,8 +98,8 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
 }) {
   const centre=variant==="centre";
   const kernel=useKernel();
-  const liveIdentity=useAgentIdentity(agentName,!(identityOverride||fixture));
-  const identity=identityOverride??liveIdentity;
+  const liveIdentity=useAgentIdentity(accompanying,!(identityOverride||fixture));
+  const identity=identityOverride ?? (fixture ? {name:agentName,state:"read" as const} : liveIdentity);
   const [dropping,setDropping]=useState(false);
   const [attaching,setAttaching]=useState<string>();
   const dragDepth=useRef(0);
@@ -113,7 +114,14 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
   /** Set when Send was pressed with nothing bound; the provisioned binding
    * below completes it. The draft waits for the bind and is never lost. */
   const pendingSend=useRef(false);
+  const [provisionedSession,setProvisionedSession]=useState<string>();
+  const pendingDraft=useRef(false);
+  const [configureModel,setConfigureModel]=useState(false);
+  const [freshProviders,setFreshProviders]=useState<{id:string;label:string}[]>([]);
+  const [freshProvider,setFreshProvider]=useState("");
+  const [providerError,setProviderError]=useState<string>();
   const flushed=useRef<string>();
+  const transferredDraft=useRef<string>();
   const [provisioning,setProvisioning]=useState(false);
   const [composerFocusToken,setComposerFocusToken]=useState(0);
   const state=session?.state;const actions=session?.actions;
@@ -123,31 +131,43 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
    * draft, then finish the Send that opened this state. A conversation that
    * already holds a draft is never clobbered. */
   useEffect(()=>{
-    if(!pendingSend.current||!session||!state||!actions)return;
+    if(!pendingDraft.current||!session||!state||!actions||state.agentSession!==provisionedSession)return;
     if(!state.reading||state.pending||state.busy)return;
     const key=state.key;
     if(flushed.current!==key){
-      if(!localRef.current.trim()){pendingSend.current=false;return;}
-      if(state.draft!==""){pendingSend.current=false;onMessage?.("That conversation already holds a draft; yours is kept in the composer.");return;}
-      if(!actions.allowed("draft")){pendingSend.current=false;onMessage?.(action("draft")?.reason??"The owner does not allow editing this draft.");return;}
-      flushed.current=key;actions.change(localRef.current);setLocal("");return;
+      if(!localRef.current.trim()){pendingSend.current=false;pendingDraft.current=false;return;}
+      if(state.draft!==""){pendingSend.current=false;pendingDraft.current=false;onMessage?.("That conversation already holds a draft; yours is kept in the composer.");return;}
+      if(!actions.allowed("draft")){pendingSend.current=false;pendingDraft.current=false;onMessage?.(action("draft")?.reason??"The owner does not allow editing this draft.");return;}
+      flushed.current=key;transferredDraft.current=localRef.current;actions.change(localRef.current);return;
     }
-    if(!actions.allowed("prompt")){pendingSend.current=false;return;}
-    pendingSend.current=false;void actions.send();
+    // change() starts a native CAS. Keep the durable parked copy until the
+    // same session settles successfully with the exact transferred text.
+    if(state.draftFailed)return;
+    if(state.draft!==transferredDraft.current){pendingSend.current=false;pendingDraft.current=false;onMessage?.("The conversation draft changed; your original text remains saved for recovery.");return;}
+    setLocal("");transferredDraft.current=undefined;
+    if(!pendingSend.current){pendingDraft.current=false;return;}
+    if(!actions.allowed("prompt")){pendingSend.current=false;pendingDraft.current=false;return;}
+    pendingSend.current=false;pendingDraft.current=false;void actions.send();
   // eslint-disable-next-line react-hooks/exhaustive-deps
-  },[session,state,actions]);
+  },[session,state,actions,provisionedSession]);
   const chooseRow=async(row:EncounterRow)=>{try{await onChoose?.(row);}catch(error){onMessage?.(String(error));}};
   /** The project a fresh chat provisions into: the face's project, else
    * Central (firstSend.ts carries the placement law). */
   const provisionProject=chatProvisionTarget(project);
-  const send=()=>{
-    if(session&&actions){void actions.send();return;}
+  const refreshFreshProviders=async()=>{
+    try {setFreshProviders(await encounter<{id:string;label:string}[]>(kernel.transport,provisionProject,{action:"providers"}));setProviderError(undefined);}
+    catch(error){setProviderError(String(error));}
+  };
+  useEffect(()=>{if(!session&&!fixture)void refreshFreshProviders();},[session?.state.key,provisionProject,fixture]);
+  const provision=(sendAfter:boolean)=>{
     if(!onProvision){onMessage?.("Provisioning a new conversation is not available in this view.");return;}
-    pendingSend.current=true;setProvisioning(true);
-    onProvision(provisionProject)
-      .catch(error=>{pendingSend.current=false;onMessage?.(String(error));})
+    setProvisionedSession(undefined);setConfigureModel(!sendAfter);pendingSend.current=sendAfter;pendingDraft.current=true;flushed.current=undefined;transferredDraft.current=undefined;setProvisioning(true);
+    onProvision(provisionProject,freshProvider||undefined)
+      .then(result=>{if(result.connection?.state==="prepared"){pendingSend.current=false;setConfigureModel(false);onMessage?.(result.connection.refusal);}setProvisionedSession(result.agent_session);})
+      .catch(error=>{setConfigureModel(false);pendingSend.current=false;pendingDraft.current=false;onMessage?.(String(error));})
       .finally(()=>setProvisioning(false));
   };
+  const send=()=>{if(session&&actions){void actions.send();return;}provision(true);};
   /** Edit a sent message: its text (with its attachments) returns to the
    * composer — the recording stays; the new turn is the person's to send. */
   const editTurn=(text:string)=>{if(session&&actions)actions.change(text);else setLocal(text);setComposerFocusToken(token=>token+1);};
@@ -191,7 +211,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
 
   const status=state?.status;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
-  const agentLabel=status?.provider?.label??identity.name;
+  const agentLabel=identity.name;
   const bound=!!(session&&state&&actions);
   const suggestions=suggestionsOf(project,subject);
   // The history menu is the head's own control; the sidebar is the other way
@@ -206,7 +226,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         <div className="chat-history" ref={historyRef}>
           <button className="oi-tool chat-history-open" aria-label="History" aria-haspopup="true" aria-expanded={menuOpen} title="History — the project's attached conversations" disabled={!onChoose} onClick={()=>setHistoryOpen(value=>!value)}><Glyph name="history" size={14}/></button>
           {menuOpen&&<div className="chat-history-menu oi-menu" role="group" aria-label="Conversations">
-            {project
+            {project!==undefined
               ?<div className="chat-history-rows oi-scroll"><EncounterList project={project} variant="panel" activeRef={accompanying?.ref} onOpen={chooseRow}/></div>
               :<p className="chat-history-note oi-note">Select a project in the sidebar to list its conversations.</p>}
             {onNewChat&&accompanying&&<button className="oi-menu-item" onClick={()=>{setHistoryOpen(false);onNewChat();}}>New chat</button>}
@@ -229,6 +249,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         <ChatTranscript reading={state.reading} status={status} error={state.error} agentLabel={agentLabel} onEarlier={actions.earlier} onLatest={actions.latest} paged={state.before!==undefined} onEdit={editTurn}/>
         <ChatComposer reading={state.reading} draft={state.draft} pending={state.pending} busy={state.busy&&!state.pending} error={state.error} editable={!!state.reading&&allowed("draft")}
           promptAllowed={allowed("prompt")} promptReason={action("prompt")?.reason??undefined} cancelAllowed={allowed("cancel")}
+          openModelInitially={configureModel&&state.agentSession===provisionedSession} onModelOpened={()=>setConfigureModel(false)}
           onDraft={actions.change} onSend={send} onCancel={actions.cancel}
           onPermission={(id,decision)=>void actions.permission(id,decision)} permissionAllowed={allowed("permission")}
           connection={{onSetup:()=>openAgentSetup({project:state.project||undefined,destination:{owner:"ai-kit",topic:"harness"},reason:state.error??"Harness, model or credential setup",refresh:()=>actions.refreshProviders()}),status,model:state.model,modelActions:{refresh:actions.readModel,select:actions.selectModel},onRefreshProviders:()=>void actions.refreshProviders(),providers:state.providers,resume:state.resume,onProvider:provider=>void actions.connect(provider),onReconnect:provider=>void actions.reconnect(provider),openAllowed:allowed("open"),openReason:action("open")?.reason??undefined}}
@@ -239,16 +260,16 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         <div className="chat-welcome">
           <p className="chat-welcome-title">{choosing?"Opening the conversation…":provisioning?"Opening a new conversation…":"New conversation"}</p>
           <p className="chat-welcome-line oi-note">{choosing?"The conversation binds through the owner's own start and read."
-            :`Write below — your first message opens a new conversation in ${provisionProject}, ready to send. Older conversations wait in the sidebar.`}</p>
+            :`Write below — your first message opens a new conversation in ${provisionProject || "Central"}, ready to send. Older conversations wait in the sidebar.`}</p>
         </div>
         {!choosing&&!provisioning&&suggestions.length>0&&<div className="chat-suggestions" aria-label="Starting suggestions">
           {suggestions.map(suggestion=><button key={suggestion} className="chat-suggestion" onClick={()=>{setLocal(suggestion);setComposerFocusToken(token=>token+1);}}>{suggestion}</button>)}
         </div>}
-        <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={undefined} editable={!choosing&&!provisioning}
+        <ChatComposer reading={undefined} draft={localDraft} pending={false} busy={choosing||provisioning} error={providerError} editable={!choosing&&!provisioning}
           promptAllowed={!choosing&&!provisioning} cancelAllowed={false}
           onDraft={setLocal} onSend={send} onCancel={()=>{}}
           onPermission={()=>{}} permissionAllowed={false}
-          connection={{status:undefined,providers:[],resume:undefined,onProvider:()=>{},onReconnect:()=>{},openAllowed:false,openReason:undefined}}
+          connection={{status:undefined,providers:freshProviders,resume:undefined,onProvider:setFreshProvider,onReconnect:()=>{},openAllowed:!choosing&&!provisioning,chosenProvider:freshProvider,onPrepare:()=>provision(false),onRefreshProviders:()=>void refreshFreshProviders()}}
           tools={{pickFiles:attachFiles}} drafting provisionProject={provisionProject}
           draftFailed={false} onRecover={()=>{}} paged={false} onLatest={()=>{}} focusToken={composerFocusToken}/>
       </div>}

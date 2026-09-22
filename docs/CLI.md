@@ -243,3 +243,7 @@ Migration is a narrow composition-level placement operation. Central defines `Wo
 ## Success criterion
 
 A new human or agent can install `oi`, install or register Central through the native contract, initialize a valid personal ground, inspect status/doctor/Actions, use any of the six product commands transparently, and place existing ordinary work under Central without O:I absorbing Central, Actuation, AIKit, Factory, Workcell or Quaternal Logic behavior.
+
+## Native Factory project placement
+
+`oi factory-projects --json` reads Factory locations for Central root and Central-disclosed Work projects. Each source carries the native state path, Factory ProjectRef, stable project key and Central scope; failures stay separate from empty work. `--reconcile` explicitly performs installation/migration bootstrap through native Central and Factory owners. It creates no Run or execution. See [Migration](MIGRATION.md).

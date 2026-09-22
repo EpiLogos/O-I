@@ -19,7 +19,7 @@ export function EncounterList({project,onOpen,activeRef,variant="navigator",onRo
  useEffect(()=>{let live=true;setPending(true);void kernelOp(kernel.transport,{op:"agency_read",project}).then(result=>{
   if(result.error||result.outcome?.result!=="agency_reading")throw new Error(result.error??"AIKit SessionSpace reading unavailable");
   const found:EncounterRow[]=[];
-  for(const raw of result.outcome.spaces){const space=raw as {definition:{id:string};label?:string;agent_sessions:Record<string,{purpose?:string}>};for(const [ref,attachment] of Object.entries(space.agent_sessions))found.push({space:space.definition.id,ref,title:attachment.purpose||space.label||ref,project});}
+  for(const raw of result.outcome.spaces){const space=raw as {definition:{id:string};label?:string;agent_sessions:Record<string,{purpose?:string}>};for(const [ref,attachment] of Object.entries(space.agent_sessions))found.push({space:space.definition.id,ref,title:space.label||attachment.purpose?.split("\n")[0].slice(0,120)||ref,project});}
   if(live){setRows(found);setObservedAt(result.outcome.observed_at_unix_ms);setError(undefined);report.current?.(found);}
  }).catch(error=>{if(live)setError(String(error));}).finally(()=>{if(live)setPending(false);});return()=>{live=false;};},[project]);
  const open=(row:EncounterRow)=>{if(!onOpen)return;setOpening(row.ref);void Promise.resolve(onOpen(row)).catch(error=>setError(String(error))).finally(()=>setOpening(current=>current===row.ref?undefined:current));};
