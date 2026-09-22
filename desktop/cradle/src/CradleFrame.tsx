@@ -1,5 +1,5 @@
 import {ExpressionLayout} from "./shared/Expression";
-import {mintInstance,parseInstance,instanceFileName} from "./flow/instance";
+import {mintInstance,mintBlankInstance,parseInstance,instanceFileName} from "./flow/instance";
 import {userFlowsArea} from "./flow/instances";
 import {fileOperation,listFiles,type FileMutation} from "./files/client";
 import {DRAFT_KEY} from "./flow/DraftSurface";
@@ -941,44 +941,50 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const localStamp=()=>{const d=new Date(),p=(n:number)=>String(n).padStart(2,"0");
     return `${d.getFullYear()}-${p(d.getMonth()+1)}-${p(d.getDate())}-${p(d.getHours())}${p(d.getMinutes())}`;};
   /** Writing opens on this device and never mints a placeholder: no Flow, no
-   *  file, no Day, no NOW allocation as a side effect of opening. The ground
-   *  is written only when the human explicitly saves real content
-   *  (placeDraft): one dated 0/1 instance in Control/user/flows/ — the
-   *  ratified carrier. */
+   *  file, no Day, no NOW allocation as a side effect of opening (ratified
+   *  2026-09-13, #267). The ground is written only when the human explicitly
+   *  saves real content (placeDraft). The navigator's New flow keeps this
+   *  law; the rest page's Start writing is the exception (startFlowWriting). */
   const startWriting=async()=>{
     setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));
   };
-  /** Save unsaved writing: one dated 0/1 instance created in the user
-   *  section's flows area through Central's own file operation, replacing
-   *  the surface in place. Only real content reaches the ground — an empty
-   *  draft has nothing to place, and no blank placeholder is ever minted in
-   *  its name. The local copy is released only once the owner holds it. */
-  const placeDraft=async(bindingId:string,content:string)=>{
-    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+  /** The rest page's "Start writing" (owner direction, 2026-09-22): writing
+   *  starts in a real flow file — one dated 0/1 instance minted in the user
+   *  section's flows area through Central's own file operation and opened at
+   *  once as a document surface. Only when no owner ground is reachable does
+   *  it fall back to the device draft, which placeDraft later carries to the
+   *  same home on explicit save. */
+  const startFlowWriting=async()=>{
     let area:import("./flow/instances").UserFlowsArea|undefined;
     try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
-    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
+    if(!area){setState(s=>openBinding(s,{id:crypto.randomUUID(),kind:"draft",title:"Draft"}));return;}
+    await openMintedFlow(area,()=>mintBlankInstance(),crypto.randomUUID());
+  };
+  /** Mint one dated 0/1 instance in the user flows area (Central's own file
+   *  operation) and open it as a flow document surface. `surfaceId` may be
+   *  an existing draft binding, which this replaces in place. A name
+   *  collision retries with the next suffix; any other refusal propagates. */
+  const openMintedFlow=async(area:import("./flow/instances").UserFlowsArea,mint:()=>string,surfaceId:string)=>{
     const stamp=localStamp();
     let lastError:unknown;
     for(let n=0;n<8;n++){
       const name=instanceFileName(stamp,n);
       const location={schema:"central.path-ref/v1" as const,ref:`${area.baseRef}/flows/${name}`,root:area.root,path:`${area.basePath}/flows/${name}`};
       try{
-        const html=mintInstance(content);
+        const html=mint();
         const result=await fileOperation<FileMutation>(kernel.transport,location,{action:"write",expected_revision:"",content:html});
         if(result.outcome!=="created")throw new Error(`Central did not create the flow instance (${result.outcome}).`);
         const doc=parseInstance(html);
         const documentId=doc.meta.documentId??name;
         const title=name;
-        const binding:SurfaceBinding={id:bindingId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
+        const binding:SurfaceBinding={id:surfaceId,kind:"flow",title,ref:location.ref,location,flow:{flowRef:documentId,path:location.path}};
         // The owner-mediated read registers the file ref for the surface-open
         // gate and hands back the live central revision.
         await readFile(kernel.transport,location);
-        const opened=await kernel.apply({op:"surface_open",surface_id:bindingId,kind:"flow",title,source_ref:location.ref});
-        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened; your writing is still kept on this device.");
-        await kernel.apply({op:"surface_focus",surface_id:bindingId});
-        setState(s=>({...s,surfaces:{...s.surfaces,[bindingId]:binding}}));
-        try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
+        const opened=await kernel.apply({op:"surface_open",surface_id:surfaceId,kind:"flow",title,source_ref:location.ref});
+        if(opened?.result!=="surface_opened")throw new Error("Central created the flow document but the surface could not be opened.");
+        await kernel.apply({op:"surface_focus",surface_id:surfaceId});
+        setState(s=>({...s,surfaces:{...s.surfaces,[surfaceId]:binding}}));
         return;
       }catch(reason){
         lastError=reason;
@@ -986,6 +992,19 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }
     }
     throw new Error(`Central would not accept a new flow instance this minute: ${String(lastError)}`);
+  };
+  /** Save unsaved writing: one dated 0/1 instance created in the user
+   *  section's flows area through Central's own file operation, replacing
+   *  the surface in place. Only real content reaches the ground — an empty
+   *  draft has nothing to place. The local copy is released only once the
+   *  owner holds it. */
+  const placeDraft=async(bindingId:string,content:string)=>{
+    if(!content.trim())throw new Error("Nothing to place yet — write first, then save.");
+    let area:import("./flow/instances").UserFlowsArea|undefined;
+    try{area=await userFlowsArea(kernel.transport);}catch{area=undefined;}
+    if(!area)throw new Error("No Central ground is reachable; the writing is still kept on this device.");
+    await openMintedFlow(area,()=>mintInstance(content),bindingId);
+    try{localStorage.removeItem(DRAFT_KEY(bindingId));}catch{/* The owner holds it now. */}
   };
   const placeDraftRef=useRef(placeDraft);placeDraftRef.current=placeDraft;
   useEffect(()=>{
@@ -1583,7 +1602,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         * law as always — with no active root nothing in them is presented. */}
       <div className="rest-host" hidden={!!state.root || undefined}>
         <RestPane>
-          <Rest project={workspace.current.project} onWrite={startWriting} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
+          <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")} onWiki={(() => {
             const reading=kernel.snapshot.navigator;
             const project=reading?.project?.project;
             const ref=project ? project.projectcentral.agent_wiki.wiki.space_ref : reading?.root?.control.agent_wiki.wiki.space_ref;
