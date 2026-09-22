@@ -34,7 +34,10 @@ What the runner boots, as needed:
 Each scenario writes `walk/artifacts/<scenario>.json` (the receipt) plus
 `walk/artifacts/<scenario>-<label>.png` screenshots. The receipts for the
 three standing scenarios are **committed as evidence**; re-running the walk
-regenerates them.
+regenerates them. Committed receipts carry `spec_ref` (the design row they
+serve) and a `grade` — A live/installed/native, B real-kernel walk-bridge,
+C contract/static, D controlled/fixture; controlled standing forces D
+(DESKTOP-LANGUAGE ruling 8). Verify with `npm run lint:receipts`.
 
 Scenarios (ported from the ad-hoc u0.3/u0.3b/u0.4 scripts, which are
 retired):
@@ -149,6 +152,8 @@ grep -rl "__cradle" dist/assets/ 2>/dev/null | wc -l   # expect 0
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "surfaces",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "generated_at": "2026-09-05T…",
   "environment": { "base_url": "…", "bridge_url": "…", "viewport": "1280x820", "bundle": "walk (WALK=1) served by vite preview", "node": "…", "platform": "…" },
   "passed": true,

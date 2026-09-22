@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "standing": "Executed native CUA observations; shared overlay telemetry is separate from production engine browser metrics",
   "binary_sha256": "387441546c1ea758177529f9432d0d2ac5860ce98e62895dcd76bb731f351913",
   "launch": {
@@ -32,7 +34,7 @@
             "height": 1606,
             "width": 2118
           },
-          "scale_factor": 2.0
+          "scale_factor": 2
         },
         "report": {
           "emitters": 0,
@@ -63,7 +65,7 @@
             "height": 1606,
             "width": 2118
           },
-          "scale_factor": 2.0
+          "scale_factor": 2
         },
         "report": {
           "emitters": 0,
@@ -229,7 +231,7 @@
             "height": 1300,
             "width": 1600
           },
-          "scale_factor": 2.0
+          "scale_factor": 2
         },
         "report": {
           "emitters": 0,
@@ -258,7 +260,7 @@
             "height": 1300,
             "width": 1600
           },
-          "scale_factor": 2.0
+          "scale_factor": 2
         },
         "report": {
           "emitters": 0,
@@ -422,7 +424,7 @@
             "height": 1300,
             "width": 1600
           },
-          "scale_factor": 2.0
+          "scale_factor": 2
         },
         "report": {
           "emitters": 0,
@@ -451,7 +453,7 @@
             "height": 1300,
             "width": 1600
           },
-          "scale_factor": 2.0
+          "scale_factor": 2
         },
         "report": {
           "emitters": 0,

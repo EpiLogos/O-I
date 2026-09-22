@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "schema": "oi-p1-readonly-capability-reconciliation/v1",
   "standing": "agent-inference; no canonical mutation or native acceptance",
   "inspected_head": "3a4f69d65c15bf0b3caf069f0152ec14c8986107",
@@ -973,7 +975,7 @@
         "desktop/cradle/walk/artifacts/review/FINAL-LAYERS-2026-09-08.md"
       ],
       "desktop_disposition": "not_accepted",
-      "remaining": "Chromium 20537.8 B/cycle and DOM 3.729/cycle after CDP GC are browser-only. Native tranche observations are bounded. Full native FND-00\u201306, baseline/resource budgets, repeated child-window cycles and expression measurements remain open."
+      "remaining": "Chromium 20537.8 B/cycle and DOM 3.729/cycle after CDP GC are browser-only. Native tranche observations are bounded. Full native FND-00–06, baseline/resource budgets, repeated child-window cycles and expression measurements remain open."
     }
   ],
   "expression": {

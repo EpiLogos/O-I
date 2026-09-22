@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "canvas-context",
   "generated_at": "2026-09-20T21:24:00.626Z",

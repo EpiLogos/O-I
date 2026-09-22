@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "standing": "Native repair source reviewed; repeated actual acceptance required",
   "defect_evidence": "native-rev3-browser-redock-failure.json",
   "native_changes": [

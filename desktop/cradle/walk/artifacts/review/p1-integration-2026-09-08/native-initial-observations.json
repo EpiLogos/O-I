@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "standing": "partial native evidence; FND gate remains open",
   "source_save": {
     "native_action": "Opened adopted Central source; appended test marker; Cmd-S",
@@ -23,7 +25,7 @@
     "samples": 53,
     "rss_min_kib": 15104,
     "rss_max_kib": 96848,
-    "last_10_median_kib": 24336.0,
+    "last_10_median_kib": 24336,
     "disposition": "Initial idle includes startup/cache reclamation, not yet predeclared cycle budget; WebKit attribution uncertain"
   },
   "resize": {

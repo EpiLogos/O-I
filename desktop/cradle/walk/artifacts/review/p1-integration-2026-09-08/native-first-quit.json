@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "native_action": "Cmd-Q in uniquely selected O-I P1 Acceptance",
   "verified_exited_pids": [
     19773,

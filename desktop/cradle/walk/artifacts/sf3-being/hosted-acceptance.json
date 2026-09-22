@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "schema": "oi.sf3-hosted-acceptance/v1",
   "base_revision": "48e298bc2f1cea71b4d1f9367a9c81ebdf209800",
   "run_ref": "sf3-1789486929296",
@@ -38,9 +40,16 @@
       "terminal_cursor": 1056,
       "proposal_ref": "expression:sf3-1789486929296:proposal:db2f53a1-4cdb-4b8b-b9c9-29ac57d1679e",
       "continues_proposal_ref": "expression:sf3-1789486929296:proposal:8a61987c-d83e-4331-a280-c972f954a045",
-      "visible_change": {"change":"entity_add","entity_ref":"expression:sf3-1789486929296:entity:model","scene_ref":"expression:sf3-1789486929296:scene:main","title":"Model perspective"}
+      "visible_change": {
+        "change": "entity_add",
+        "entity_ref": "expression:sf3-1789486929296:entity:model",
+        "scene_ref": "expression:sf3-1789486929296:scene:main",
+        "title": "Model perspective"
+      }
     }
   ],
-  "privacy": {"personal_agent_encounter_operations": 0},
+  "privacy": {
+    "personal_agent_encounter_operations": 0
+  },
   "standing": "Observed through a current-main desktop bridge and hosted SharedField. The native Expression had no source-backed readings, so none were invented; only each native delivery receipt is evidence for its proposal."
 }

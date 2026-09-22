@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "standing": "native-application-observed",
   "transport": "native desktop Unix socket via rebuilt oi CLI",
   "human_operation": "Add Thing through native UI; observed revision 2",
@@ -72,7 +74,7 @@
                     "rate_hz": 0.2,
                     "waveform": "sine"
                   },
-                  "value": 1.0
+                  "value": 1
                 }
               },
               "revision": 3,
@@ -171,7 +173,7 @@
                       "rate_hz": 0.2,
                       "waveform": "sine"
                     },
-                    "value": 1.0
+                    "value": 1
                   },
                   "x": {
                     "automation": null,

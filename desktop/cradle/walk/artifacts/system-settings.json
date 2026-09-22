@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/06-SYSTEM-SETTINGS.md §7",
+  "grade": "B",
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "system-settings",
   "generated_at": "2026-09-18T11:03:32.184Z",

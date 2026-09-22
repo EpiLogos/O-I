@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
   "atomic_full_basis_adoption": true,
   "condition_and_vimarsha_same_native_owner": false,
   "current_sky_snapshot": "sha256:2a88f8a1ee8708b90a62562d6042e5937cc5e2fd5e3ccca100259a9d715715a3",

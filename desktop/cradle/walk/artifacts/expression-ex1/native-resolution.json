@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "A",
   "standing": "executed-native-macos-tauri-and-cli",
   "expression_ref": "expression:ex1-native-walk",
   "entity_ref": "expression:ex1-native-walk:entity:26d18463-9762-4af8-953e-8b9b3037f772",
@@ -24,7 +26,7 @@
       },
       "scale": {
         "automation": null,
-        "value": 1.0
+        "value": 1
       },
       "x": {
         "automation": null,

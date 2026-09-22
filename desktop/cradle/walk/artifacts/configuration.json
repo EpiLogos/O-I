@@ -1,4 +1,6 @@
 {
+  "spec_ref": "docs/cradle/09-CONFIGURATION-PLANE.md",
+  "grade": "B",
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "configuration",
   "generated_at": "2026-09-18T11:02:08.320Z",
