@@ -120,6 +120,14 @@ try {
   const expectedRef = projectedRef(savedRef);
   check(savedFrame('Field-join inquiry').constellations[0].members.length === 2, 'The Wiki authored a native two-member constellation from selected passages');
 
+  // Bring the concealed Technē host to ready — and therefore subscribed to the
+  // store (PointCloudHost subscribes at state==="ready", which precedes the
+  // iframe's own kernel-channel announce that `ready()` waits on) — BEFORE the
+  // summon fires, so it genuinely contends for the buffered ref and "the
+  // concealed host loses" is a real race, not a host that never woke.
+  const concealed = await frameOf('concealed');
+  await ready(concealed);
+
   await openLiveThenSummon();
   // The summon crossed the iframe seam through the production relay: the live
   // field's OWN open document is now the EXACT constellation Expression, read
@@ -127,12 +135,11 @@ try {
   await frame.waitForFunction(ref => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === ref, expectedRef);
   check(true, 'summonExpression from the Wiki opens the exact constellation Expression in the live field (open-expression relay), not the cradle composer');
   check(await page.evaluate(() => window.__TECHNE_FIELD_OPEN__.peek()) === null, 'The presented field consumed the summon exactly once — the buffered request was cleared, not left standing for a second surface (no double-open)');
-  // The concealed Technē host stood mounted and ready throughout, subscribed to
-  // the same store; it read the summon but left it, because the recorder named
-  // the presented centre. Only the presented field opened it (§§17,19,22).
-  const concealed = await frameOf('concealed');
-  await ready(concealed);
-  check(await concealed.evaluate(() => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === undefined), 'A concealed Technē host, mounted and ready and subscribed, does NOT open the summon — the presented-identity gate makes "one consumer" enforced, not assumed');
+  // The concealed Technē host was ready and subscribed BEFORE the summon fired
+  // (above), so it genuinely contended for the buffered ref; it read it and
+  // left it, because the recorder named the presented centre. Only the
+  // presented field opened it (§§17,19,22).
+  check(await concealed.evaluate(() => window.__FIELD_STUDIES__.nativeWorking()?.native_ref === undefined), 'A concealed Technē host, ready and subscribed before the summon, does NOT open it — the presented-identity gate makes "one consumer" enforced, not assumed');
   const opened = await frame.evaluate(() => window.__FIELD_STUDIES__.getDocument());
   check(await frame.locator('canvas').count() > 0, 'The live renderer holds the constellation — one field, not a second renderer');
   const kernelDoc = (await op({op: 'expression', request: {operation: 'inspect', expression_ref: expectedRef}})).data.document;
