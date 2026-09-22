@@ -1,6 +1,6 @@
 ---
 Register: episteme
-Standing: design-commitment (proposed 2026-09-22; awaiting owner Recognition)
+Standing: design-commitment (owner rulings on D1–D6 given 2026-09-22, recorded in §7)
 ---
 
 # 10 — The two sidebars
@@ -45,7 +45,7 @@ that were never specified. It builds on, and does not discard:
 2. **One conversation, one place.** A session is visible in exactly one place at a time, with one composer and one draft. Choosing it again focuses that place instead of opening a copy. Moving it (side ↔ centre ↔ detached) moves it, draft included.
 3. **State lives on the thing.** Working, needs-you, unread and failed are marks on the row, avatar or tab they belong to. There are no banners or trays for them, and a status change never moves the layout (#190 D18).
 4. **Status → Preview → Takeover.** Agent work shows at three depths, chosen by the person: a presence dot (anywhere the agent appears); the live Activity tape (right panel); full-screen conversation (⌘⌥J). Nothing escalates on its own.
-5. **Inspect is a drawer, not a tab.** Anything handed to "inspect" opens a drawer over the current right tab, with **Back** to return. This extends the Factory ruling ("Inspect attaches to objects, not tabs") to every mode. *(Decision D1.)*
+5. **Inspect opens the object.** Inspecting something opens that object's own page — in the canvas as an ordinary tab, or popped out into its own window. It is never a right-panel tab and never a drawer; the right panel keeps its conversation, tape or roster. *(Ruling D1.)*
 6. **Headers only above real rows.** An empty optional section takes zero height. A failed read is never shown as empty: it says what could not be read and offers Retry.
 7. **Nothing that reads like a log file.** No "returns", no raw JSON outside an explicit *Show raw* disclosure, no visible scrollbars, no observer sentences ("Situated in …", "Observed …"), no hardcoded rosters presented as live.
 
@@ -70,8 +70,9 @@ that were never specified. It builds on, and does not discard:
 - **Scope selector** replaces the hardcoded "My O:I / Personal ground" heading. It names the current scope: **Central** (the root; valid without a child project) or a Work project. Its menu is the real census: Central, then each project with its live marks (`● 2` working, `! 1` needs you), remote machines labelled (`Omarchy`) with a reachability dot. When another project has activity, the chevron carries a dot. This one control serves the Factory request "a project picker, and a place for agent activity per project".
 - **Search** is an icon that opens the ⌘K palette. Following the standing law, there is no persistent search field. The palette has typed tabs: All · Chats · Agents · Files · Flows · Actions.
 - **+ Create** is one menu, and its entries depend on the mode: *New chat* and *New flow* always; *New run…* in Factory; *New Expression* in Expressions; *New agent…* everywhere the agent-create route exists. It replaces every standing "New …" button in the sidebars.
-- **Inbox** is the app's one queue of material waiting for your judgement, reachable in every mode. The badge is the native count (or a true lower bound, `20+`). With nothing waiting, the row stays and the badge is absent. *(Decision D3.)*
-- **Mode switcher**: Base · Factory · Expressions · Technè · Epi-Logos, then Settings after a divider. Epi-Logos becomes a real fifth mode here, replacing the footer toggle that currently opens it into a hidden tree. *(Decision D2.)* The duplicate mode radios in the footer "…" menu are removed.
+- **Inbox** is the app's one queue of material waiting for your judgement, reachable in every mode. The badge is the native count (or a true lower bound, `20+`). With nothing waiting, the row stays and the badge is absent. *(Ruling D3.)*
+- **Mode switcher**: Base · Factory · Expressions · Technè, then the small **Epi-Logos lens** toggle, then Settings after a divider. The duplicate mode radios in the footer "…" menu are removed.
+- **Epi-Logos is a lens, not a mode** *(Ruling D2)*. The minimal toggle re-roots the file system on the Epi-Logos corpus while you stay in whatever mode you are in; nothing locks you to one page or surface. While it is on, the head shows an **Epi-Logos** chip beside the scope with × to leave, the file trees show the corpus, context sources narrow to the corpus (§3.7), and Nara joins the right panel's agent menu. Turning it off restores the trees exactly as they were.
 - The left corner wedge and window-lights reserve are untouched (ruling 5). The head starts below the lights row.
 
 ### 3.2 Bodies by mode
@@ -79,11 +80,10 @@ that were never specified. It builds on, and does not discard:
 | Mode | Destinations | Sections |
 |---|---|---|
 | **Base** | Central · Today · Library · Explore | CONTROL (file tree) · FLOWS (+ New flow) · WORK (projects; each expands to Chats · Files · Wiki · Remembered) |
-| **Factory** | Desk · Tasks | TASKS (conversation rows) · FILES (project tree, collapsed by default — *Decision D5*) |
+| **Factory** | Desk · Tasks | TASKS (conversation rows) · INTENT (the project's vision and goals documents — *Ruling D5*, §3.7) |
 | **Expressions** | — | EXPRESSION: the current Expression only, as scenes → entities; not a global graph |
 | **Technè** | — | WIKI MAP with a List / Tree / Graph switch, over the one projection store. **This restores the owner's ruling, which regressed** (§6.1) |
-| **Epi-Logos** | — | PLACES: Essay · Bimba · Epii · Products, each with its availability and the reason when unavailable |
-| **Settings** | — | Both sides collapse on entry (existing); the settings page carries its own section navigation |
+| **Settings** | — | The settings sections and the product pages ([12-SETTINGS](12-SETTINGS.md)); the right panel stays collapsed |
 
 Base keeps the accepted file handling; only the refinements in §3.4 apply. Library (the O:I Web overlay) is a Base destination and a ⌘K entry, not a heading button.
 
@@ -125,12 +125,51 @@ This keeps the owner's "agent activity per project" requirement without adding a
 
 ### 3.5 Opening things from the left
 
-| From | Base / Expressions / Technè / Epi-Logos | Factory |
+| From | Base / Expressions / Technè | Factory |
 |---|---|---|
-| Conversation row | Opens in the **right panel's Chat** (focuses it if it is already there). *Open in centre* promotes it. *(Decision D4)* | Opens in the **centre Tasks view** (fixes today's routing into the side tab group) |
+| Conversation row | Opens in the **right panel's Chat** (focuses it if it is already there). *Open in centre* promotes it. *(Ruling D4)* | Opens in the **centre Tasks view** (fixes today's routing into the side tab group) |
 | File row | Opens in the focused pane (existing) | Same |
 | Inbox item | Opens the material in a pane; its review controls sit beside it | Same |
-| Project row | Browses that project (existing); does not change scope unless chosen from the scope menu | Changes the Factory project |
+| Project row | Expands in place; does not change scope (scope changes only in the scope menu, §3.6) | Same |
+
+### 3.6 Scope and workspace — one model across modes *(Ruling D6)*
+
+Two things are easy to confuse, and today they are set in four different places:
+
+| | Is | Chosen in | Remembers |
+|---|---|---|---|
+| **Scope** | *What you are working on*: Central (the root) or one Work project. In Factory the scope menu also offers **All projects**, which only the Desk honours | The scope selector at the top of the left sidebar — nowhere else | — |
+| **Workspace** | *How your screen is arranged*: tabs, splits, side widths, each mode's layout | The same scope menu, in its footer: current workspace, Switch…, New, Rename, Recover arrangement | Its own scope |
+
+Rules:
+
+1. **Scope changes only when you change it.** Focusing a tab from another project no longer changes the scope silently (today `CradleFrame.tsx:404-415` does). The tab carries a small project chip, and the scope menu offers **Switch to ai-kit** as its first row while such a tab is focused.
+2. **Everything reads the one scope**: the left body, the Desk filter (today a separate localStorage label, `DeskBoard.tsx:41-44`), where a new chat or document is created, the right panel's agent list and context, and the new-tab form picker.
+3. **Switching workspace restores its arrangement and its scope together.** A detached window belongs to its workspace and follows its scope.
+4. **Expressions, Technè and Settings respect the scope too.** Technè opens the scoped project's wiki first; Settings uses it for project-scoped settings.
+5. The footer "…" menu loses New/Rename workspace and Recover — they live in the scope menu's footer. The footer keeps status only.
+
+### 3.7 Context sources — each mode is a slice *(Ruling D5)*
+
+There is one field of context sources (AIKit's `ContextSource`: known, askable, retrieved, focused). Each mode shows the slice that matters there, in the left body and in the Context tab. It is a filter over one registry, not six separate pickers.
+
+| Mode | Its slice |
+|---|---|
+| Base | Day, Flows, Control files, project files, Remembered, wikis, open tabs |
+| Factory | The project's **intent** — vision (`ProjectCentral/user/<project>.html`), goals (`ProjectCentral/user/telos/<goal>/`), learnings — plus run material (candidates, evidence, handoffs), NOW records (root and child), and the run's conversations |
+| Expressions | The current Expression's scenes and entities, expression worlds from the Library, open tabs |
+| Technè | The root and project wikis and their projections |
+| Epi-Logos lens (any mode) | The corpus files only, laid over the current mode's slice |
+| Settings | None (the help chat reads settings only) |
+
+**Intent documents lean on the HTML template system.** Vision and goal documents open as HTML template documents, like Flow and the Daily Die. Two changes make that real:
+
+- New `forms.json` entries **Goal** and **Vision**, created in place under the scoped project's `ProjectCentral/user/` (its `human_source`).
+- One general *create-in-place* step for every form, generalising Flow's `mintBlankInstance` + `openMintedFlow`. Flow's location is hard-coded to `Control/user/flows` today.
+
+**Repair folded in:** choosing Day, Beings, Things or Epi-Card from a new tab currently opens the template file itself in `desktop/cradle/documents/`, and saving would write into the repo's template. Forms must always create a copy.
+
+What exists on disk today: the vision page `user/<project>.html` (agent-recovered, awaiting your review) exists in six of eight projects. Goals (`user/telos/README.md`) are committed only in Actuation and Workcell. So INTENT shows **"No goals yet — Write the first goal"** where goals are missing, and marks agent-recovered vision pages as such.
 
 ## 4. Right sidebar
 
@@ -167,10 +206,9 @@ This keeps the owner's "agent activity per project" requirement without adding a
 | Factory | the run's lead or selected agent | **Run · Agents · Context** (the chat is the centre Tasks view — owner ruling) |
 | Expressions | Anima | Chat · Activity · Agents · Context |
 | Technè | Aletheia | Chat · Activity · Agents · Context |
-| Epi-Logos | Nara (Epii via the identity menu) | Chat · Activity · Agents · Context |
 | Settings | collapsed; opening it gives a Chat-only panel for help | Chat |
 
-"Nara·Anima" and "Epii" stop being tabs. They become agents you pick in the identity menu. **Activity** and **Run** are the same tape component (§4.4). It is called Run when a Factory run is bound, and Activity otherwise.
+"Nara·Anima" and "Epii" stop being tabs. They become agents you pick in the identity menu; Nara appears there while the Epi-Logos lens is on. **Activity** and **Run** are the same tape component (§4.4). It is called Run when a Factory run is bound, and Activity otherwise.
 
 ### 4.3 Chat
 
@@ -188,15 +226,17 @@ This follows the DeepSeek Harness run-log reference. It is a turn-aware event ta
 
 ### 4.5 Agents
 
-The v2 roster, kept: a search icon and one `+` (*New agent… / New team…*). Rows show avatar, name and one purpose line, the current assignment only when real, and a state mark. **Message** and `…` reveal on hover. Clicking a row opens a detail drawer (Back) with **Skills · Setup · Activity**. Sections: WORKING WITH YOU, GUARDIANS, both from real identities only. The hardcoded Guardians and Ta-Onta lists are removed. If discovery fails, it says so; it is never an empty roster.
+The v2 roster, kept: a search icon and one `+` (*New agent… / New team…*). Rows show avatar, name and one purpose line, the current assignment only when real, and a state mark. **Message** and `…` reveal on hover. Clicking a row opens the agent's page in the canvas (§4.7) with **Skills · Setup · Activity**. Sections: WORKING WITH YOU, GUARDIANS, both from real identities only. The hardcoded Guardians and Ta-Onta lists are removed. If discovery fails, it says so; it is never an empty roster.
 
 ### 4.6 Context
 
 **Preserve.** The existing canvas insertion of files, terminals and browser material is the accepted specimen (owner, 21 Sep). This design only removes repeated empty instructions and "returns" wording. The Codex-style launcher (Files · Browser · Terminal) is this tab's empty state: three insert entries, each opening the existing insertion route.
 
-### 4.7 Inspect drawer
+### 4.7 Inspect opens the object *(Ruling D1)*
 
-The drawer slides over the current tab, with `← Back` and the subject's title. Content renders as labelled fields: Source, Revision, Owner, Changed by, Changed at, Relations. Verbatim material sits behind *Show raw*. Escape and Back close it and restore focus. It replaces the Inspect tab and the `JSON.stringify` rendering in `planes/InspectPlane.tsx:72-80`.
+Every inspectable object has its own page. **Click** opens it as a tab in the focused pane. **⌥-click**, or *Pop out* in its menu, opens it in its own window, with the same identity so it docks back unchanged. A page shows labelled fields first (what it is, its state, who changed it and when, its relations), then its content. Verbatim material sits behind *Show raw*. This replaces the Inspect plane and its `JSON.stringify` rendering (`planes/InspectPlane.tsx:72-80`).
+
+In Factory the objects are the Run, a work unit, an attempt or execution, a tool call, a candidate or produced material, a check or evidence, an agent, and a NOW record. [11-FACTORY §6](11-FACTORY.md) lists each page.
 
 ## 5. State catalogue
 
@@ -250,7 +290,7 @@ Each state has an ID, what the person sees, and the check that proves it. The ch
 | P12 | Subject switched | New subject gets its own tabs; the previous conversation is kept in history, not shown | Nothing from the prior subject remains visible |
 | P13 | Full (takeover) | Conversation fills the centre; tabs kept; left still available | ⌘⌥J round-trip with no remount (scroll and draft kept) |
 | P14 | Promoted to centre | The right Chat shows one line: "Open in the centre — Bring back" | Exactly one composer in the DOM |
-| P15 | Inspect drawer | Drawer over the tab; Back; fields, not JSON | No `<pre>` or JSON text outside *Show raw* |
+| P15 | Inspect | The object's page opens as a canvas tab; ⌥-click pops it out | Same object identity docked and popped out; no JSON text outside *Show raw* |
 | P16 | Activity live / paused | Tail-follow on; after scrolling, the **Resume live** pill | An event arriving while paused does not scroll |
 | P17 | Agents: empty / error / search-empty | "Create an agent to work with." / "Couldn't load agents." + Retry / "No agents match "x"." + Clear | The three copies are distinct and reachable |
 | P18 | Narrow (≤760px) | Right becomes an overlay drawer; a detail drawer replaces the body with Back | Focus trap; Escape steps one layer |
@@ -263,9 +303,11 @@ Paths are relative to `desktop/cradle/src`.
 
 1. **Technè left body.** `workspace/mode.ts` gives Technè `left: "expression-graph"` under a comment that says wiki map, and `workspace/modeBodies.tsx:52` mounts `ExpressionGraphNavigator`. PR #470 fixed this and was closed on the claim that main already matched, which it does not (origin/main `6bd64976`). Re-land it; `WikiMapNavigator.tsx` exists and is unmounted.
 2. **Factory conversation routing.** Tasks rows and Agents conversations call `openEncounter`, which lands them in the side tab group, not the centre Tasks view (`CradleFrame.tsx:1570,1613`). Route them through `factoryChoose` / `publishCentreView("tasks")`.
-3. **Epi-Logos unreachable.** `switchWorkspaceMode` refuses `epi-logos` (`workspace/store.ts:90`), and it is missing from `STRIP_MODES` and the keys.
+3. **The Epi-Logos toggle opens a surface into a hidden tree** in the full-page modes (`CradleFrame.tsx:1524-1528,1557-1566`). As a lens it re-roots the file trees instead (§3.1) and opens no surface.
 4. **Activity unreachable.** It is in `KEPT_PLANES`, but no mode offers it (`agent/AgentLayer.tsx`).
-5. **Raw JSON in Inspect** (`planes/InspectPlane.tsx:72-80`) → the §4.7 drawer.
+5. **Raw JSON in Inspect** (`planes/InspectPlane.tsx:72-80`) → object pages (§4.7).
+6. **Document forms edit the repo template** (§3.7) → create a copy in place.
+7. **The current project is set in four places** (§3.6) → one scope.
 
 ### 6.2 Keep, refine, move, remove
 
@@ -278,7 +320,9 @@ Paths are relative to `desktop/cradle/src`.
 | Factory "Reading Work… ▾" select + Refresh + PROVIDER pill + "Elsewhere" | **Replace** with the scope selector (activity marks inside); provider state moves to the composer model chip |
 | Factory Returns / Now / Remembered bands | **Remove** (ruling 7); the waiting material is in Inbox |
 | `receiving/ReturnsTray.tsx` in the navigator | **Becomes** the single Inbox body |
-| Footer Epi-Logos toggle | **Move** into the mode switcher |
+| Footer Epi-Logos toggle | **Keep**, minimal, as the lens toggle beside the modes; it re-roots file trees instead of opening a surface |
+| Footer workspace select, New/Rename workspace, Recover arrangement | **Move** into the scope menu's footer |
+| Factory project select, Desk "All Projects" filter | **Replace** with the one scope (All projects is a scope-menu entry in Factory) |
 | Footer "…" menu mode radios | **Remove** (duplicate) |
 | "System" vs "Settings" labels (`DesktopShell.tsx:302`) | **One label**: Settings |
 | Right header "Agent · Situated in Central" | **Replace** with the identity control |
@@ -290,23 +334,21 @@ Paths are relative to `desktop/cradle/src`.
 | Width tokens unused (`--oi-sidebar-*`, `--oi-agent-*`) vs code clamps 600/720 | **Tokens win**; the code reads them |
 | `strip` and `collapsed` render the same | **Merge** into one collapsed state |
 
-## 7. Decisions for the owner
+## 7. Owner rulings (22 Sep 2026)
 
-Each has a recommendation. Everything else in this page follows existing rulings.
-
-- **D1 — Inspect as a drawer in every mode.** #375 §2 kept four planes including Inspect for ordinary modes; the Factory ruling made Inspect attach to objects. *Recommend: drawer everywhere*, one grammar.
-- **D2 — Epi-Logos as the fifth mode in the switcher.** It is in your mode list (17 Sep) but unreachable. *Recommend: yes*, replacing the footer toggle.
-- **D3 — Inbox in the fixed foot, all modes.** v2 placed it in the Factory left only. *Recommend: foot*, since the queue is app-wide.
-- **D4 — A chat row opens in the right panel outside Factory.** Today it opens a centre encounter tab, which can duplicate the right Chat. *Recommend: right panel*, with *Open in centre* as the explicit promotion.
-- **D5 — Factory FILES.** You said on 18 Sep that the file tree isn't needed there; the 21 Sep v2 kept it. *Recommend: keep it, collapsed by default.*
-- **D6 — The scope selector is the one place for "which project".** It drives the left body and the right's agent list. *Recommend: yes.*
+- **D1 — Inspect.** *"inspect can naturally use the canvas or popout."* Inspect opens the object's own page in the canvas or a popped-out window (§4.7). There is no drawer and no tab.
+- **D2 — Epi-Logos.** *"a mode in the footer, very minimal button … meant to just focus the corpus via the file system … rather than being locked to one page/surface."* It is a lens toggle (§3.1).
+- **D3 — Inbox.** Universal. It replaces the scattered receiving and returns locations.
+- **D4 — Chat routing.** Confirmed as specified (§3.5).
+- **D5 — Factory files.** Focus the ProjectCentral intent and vision files, and lean into the HTML template system. Each mode has its own slice of the context sources (§3.7).
+- **D6 — Project and workspace.** One clean logic across modes (§3.6).
 
 ## 8. Build order
 
-1. Repairs §6.1 (each small; each with its walk).
+1. Repairs §6.1 (each small; each with its walk). Technè's wiki map is PR #480.
 2. The left frame: head, foot, scope selector, Inbox, mode switcher; bodies unchanged except the removals.
 3. Row and section grammar across all bodies; marks wired to real session state.
 4. Right identity, tabs per mode, the status line, composer chips.
-5. Activity tape; Inspect drawer.
+5. Activity tape; object pages for Inspect.
 6. Agents roster per v2; removal of fixtures and hardcoded lists.
 7. Acceptance: one walk scenario per state ID in §5, run against the real kernel (grade B or better); the receipts cite this page's IDs as `spec_ref`.
