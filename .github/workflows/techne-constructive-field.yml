@@ -79,6 +79,7 @@ jobs:
           node tests/techne-field-browser.mjs
           node tests/techne-lens-studio-browser.mjs
           node tests/techne-hud-browser.mjs
+          node tests/techne-walk-sweep-browser.mjs
       - name: Retain exact sources, dependency graph and execution receipts
         if: always()
         uses: actions/upload-artifact@v4
