@@ -107,7 +107,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // 2 — select a passage; the tray offers the shared-field destination.
   await selectRange(editor,start+1,start+1+passage.length);
   await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
-  await page.getByRole("button",{name:"Attach selection",exact:true}).click();
+  await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.locator("pre").innerText()===passage,"The tray presents the exact selected passage — the selected-projection state begins here");
   await dialog.getByRole("button",{name:"Publish to the shared field"}).click();

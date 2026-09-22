@@ -13,6 +13,10 @@
 .chat-head-tools>.oi-tool{flex:none}
 .chat-inside-out{color:var(--oi-accent-ink)}
 .chat-history{position:relative;flex:none;display:flex}
+/* The plane variant's fresh-card chooser: one quiet action over the
+   project's real conversations; the menu opens under the card's action. */
+.chat-history-plane{margin:10px 0 10px 2px;align-items:flex-start}
+.chat-history-plane .chat-history-open{width:auto;height:26px;display:inline-flex;align-items:center;gap:5px;padding:0 9px;border-radius:var(--oi-shell-radius-control,5px);font-size:var(--oi-shell-type-meta)}
 .chat-history-menu{position:absolute;top:calc(100% + 4px);right:0;z-index:var(--oi-z-popover,30);width:min(320px,calc(100vw - 24px));max-height:min(60vh,420px);display:flex;flex-direction:column}
 .chat-history-note{margin:0;padding:4px 2px}
 .chat-history-rows{flex:1;min-height:0;max-height:280px;display:flex;flex-direction:column}

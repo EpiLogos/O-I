@@ -53,7 +53,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   const excerpt=content.slice(5,12);
   await selectRange(editor,5,12);
   await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
-  await page.getByRole("button",{name:"Attach selection",exact:true}).click();
+  await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();
   const dialog=page.getByRole("dialog",{name:"Include selected context"});await dialog.waitFor();
   check(await dialog.getByRole("combobox",{name:"Context destination"}).locator("option").filter({hasText:"Context draft acceptance"}).count()===1,"An existing real conversation is an explicit context destination");
   check(await dialog.locator("pre").innerText()===excerpt,"The tray presents the exact selected source text");
@@ -75,7 +75,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   await selectRange(editor,5,12);
   await page.getByRole("button",{name:"Pick component for context",exact:true}).click();
-  await page.getByRole("button",{name:"Attach selection",exact:true}).click();await dialog.waitFor();
+  await page.getByRole("button",{name:"Add selected text to context",exact:true}).click();await dialog.waitFor();
   await channel("invoke.source_edit",[source.binding.ref,`Changed after selection.\n${content}`]);
   await page.waitForFunction(()=>document.querySelector('.source-editor')?.getAttribute('data-dirty')==='true');
   await dialog.getByRole("button",{name:"Add to draft",exact:true}).click();

@@ -109,8 +109,10 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(JSON.stringify(basePlanes)===JSON.stringify(["Chat","Run","Agents","Context"]),"Base offers exactly the mode contract's planes, in its order",basePlanes);
   check((await panel.locator(".agent-head strong").innerText())==="Agent","The head carries the mode's curated agent name");
   check(await panel.locator('.chat-composer[data-connection="drafting"]').count()===1,"With no conversation bound the composer says so — it drafts, it invents no session");
-  // Choosing happens through the unbound composer's own chooser: the panel
-  // offers the project's real attached conversations there.
+  // --- choose: the existing start/read pair binds the real session ------------
+  // The panel's fresh card carries the project's real attached conversations
+  // (the same start/read pair the centre head uses). The row is activated by
+  // keyboard (focus + Enter): a real activation path through the chooser.
   const chooserRows=panel.locator(".chat-history-rows");
   const openChooser=async()=>{
     if(await chooserRows.isVisible().catch(()=>false))return;
@@ -118,13 +120,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
     await chooserRows.waitFor({timeout:10000});
   };
   await openChooser();
-  await chooserRows.getByRole("button",{name:TITLE,exact:true}).waitFor({timeout:30000});
   await shot("panel-base-no-session");
-
-  // --- choose: the existing start/read pair binds the real session ------------
-  // The row is activated by keyboard (focus + Enter): a real activation path
-  // through the composer's picker.
   const titleRow=chooserRows.getByRole("button",{name:TITLE,exact:true});
+  await titleRow.waitFor({timeout:30000});
   await titleRow.focus();
   await titleRow.press("Enter");
   const message=panel.getByRole("textbox",{name:"Message",exact:true});

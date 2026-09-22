@@ -48,7 +48,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   const excerpt = content.slice(5, 12);
   await selectRange(editor, 5, 12);
   await page.getByRole("button", {name: "Pick component for context", exact: true}).click();
-  await page.getByRole("button", { name: "Attach selection", exact: true }).click();
+  await page.getByRole("button", {name: "Add selected text to context", exact: true}).click();
   const dialog = page.getByRole("dialog", { name: "Include selected context" }); await dialog.waitFor();
 
   const rememberButton = dialog.getByRole("button", { name: "Remember this", exact: true });
@@ -102,7 +102,7 @@ export default async function run({ page, baseUrl, check, shot, channel, provisi
   await page.getByRole("button", { name: "Close context selection" }).click();
   await selectRange(editor, 8, 15);
   await page.getByRole("button", {name: "Pick component for context", exact: true}).click();
-  await page.getByRole("button", { name: "Attach selection", exact: true }).click(); await dialog.waitFor();
+  await page.getByRole("button", {name: "Add selected text to context", exact: true}).click(); await dialog.waitFor();
   await channel("invoke.source_edit", [source.binding.ref, `Changed after selection.\n${content}`]);
   await page.waitForFunction(() => document.querySelector('.source-editor')?.getAttribute('data-dirty') === 'true');
   await rememberButton.click();

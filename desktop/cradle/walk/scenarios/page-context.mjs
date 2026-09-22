@@ -19,7 +19,7 @@ export default async function run({page,baseUrl,channel,check,shot}){
  const selected=await frame.locator('h1').evaluate(()=>getSelection().toString());
  check(selected.trim().length>0&&selected.trim()!=='Material study','Rendered HTML supports granular text selection');
  await page.getByRole('button',{name:'Pick component for context',exact:true}).click();await page.waitForTimeout(400);
- await page.getByRole('button',{name:'Attach selection',exact:true}).click();
+ await page.getByRole('button',{name:'Add selected text to context',exact:true}).click();
  const dialog=page.getByRole('dialog',{name:'Include selected context'});await dialog.waitFor();
  check(await dialog.locator('pre').innerText()===selected,'Opaque HTML frame returns exactly the user-selected text');
  await dialog.getByRole('button',{name:'Close context selection'}).click();
