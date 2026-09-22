@@ -116,3 +116,8 @@ python3 scripts/experience_map.py
 They validate retained source/obligation relationships, not Jev, Redis or installed Factory behaviour. The added source tests must fail when this note is disconnected from the existing compiler or a mapped branch disappears.
 
 **Next condition:** AIKit #388 and #220's native owners implement the first joined path, publish current callable operations and practice changes, then run the first Factory episode above as soon as Factory/Day/NOW is usable. Keep this as an early #65 priority through the existing campaign rather than a later optional research backlog item.
+
+
+## Local installed-world handoff
+
+After the cloud implementation cut is accepted, execute the installed-world and live-provider phase from [JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md](JEV-REDIS-NOW-LOCAL-INTEGRATION-PROMPT.md). That handoff is derived from the native AIKit/Workcell/Central/Factory implementation and exact cloud evidence; it is not a substitute architecture or a place to defer unfinished routine cloud code.
