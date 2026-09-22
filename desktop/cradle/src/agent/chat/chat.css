@@ -110,8 +110,13 @@
 .chat-composer-row{display:flex;align-items:center;gap:2px}
 .chat-composer-row>.oi-tool{width:26px;height:26px}
 .chat-provider-menu{position:relative;display:flex;flex:none}
-.chat-provider-config{width:auto;height:26px;display:inline-flex;align-items:center;gap:4px;padding:0 7px;border-radius:var(--oi-shell-radius-control,5px);font-size:var(--oi-shell-type-meta)}
-.chat-provider-config-label{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+/* Harness/model picker chips (dossier §3.4): labeled chips on the composer
+   row; each opens the session menu with the owner's native model selector.
+   Hit bounds stay at the composer's control height; no local scrollbar. */
+.chat-composer-chips{display:inline-flex;align-items:center;gap:4px;flex:none}
+.chat-composer-chip{height:26px;display:inline-flex;align-items:center;gap:4px;padding:0 8px;border-radius:var(--oi-shell-radius-control,5px);font-size:var(--oi-shell-type-meta);cursor:pointer}
+.chat-composer-chip[aria-expanded="true"]{background:var(--oi-wash);color:var(--oi-accent-ink)}
+.chat-composer-chip-label{max-width:110px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chat-provider-menu>.oi-menu{position:absolute;bottom:calc(100% + 6px);left:0;z-index:var(--oi-z-popover,30);min-width:200px}
 .chat-composer-status{flex:1;min-width:0;text-align:right;padding-right:6px;font-size:var(--oi-shell-type-meta);color:var(--oi-muted-2);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
 .chat-drop-hint{color:var(--oi-muted-3)}
@@ -166,7 +171,7 @@
 @container (max-width:359px){
  .chat-head{gap:6px;padding-left:12px}
  .agent-identity-line{display:none}
- .chat-provider-config-label{display:none}
+ .chat-composer-chips [data-chip="model"] .chat-composer-chip-label{display:none}
 }
 @container (max-width:319px){
  .chat-new{display:none}

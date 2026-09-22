@@ -138,6 +138,18 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await page.waitForFunction(()=>document.querySelector(".agent-layer .chat-composer")?.getAttribute("data-connection")==="connected",null,{timeout:30000});
   check(true,"Connecting through the conversation updates the composer's live state from the owner");
 
+  // --- composer chips: harness named, model only what the owner advertises ---
+  // The composer grammar (dossier §3.4): harness/model picker chips live on
+  // the composer. The harness chip names the real connected harness; the
+  // model chip renders only the owner's own model observation — the
+  // controlled provider never advertises one, so no model chip may exist.
+  const harnessChip=panel.locator('.chat-composer-chips [data-chip="harness"]');
+  await harnessChip.waitFor({timeout:15000});
+  check((await harnessChip.innerText()).includes("Agent panel ACP"),
+    "The composer's harness chip names the connected harness by its real label");
+  check(await panel.locator('.chat-composer-chips [data-chip="model"]').count()===0,
+    "No model chip is invented when the owner advertises no model observation");
+
   // --- Status → Preview: the collapsed frame carries the owner's real state --
   // The gradient (dossier §3.3): with the panel collapsed the frame shows a
   // presence dot and a state line derived ONLY from observed encounter facts;
