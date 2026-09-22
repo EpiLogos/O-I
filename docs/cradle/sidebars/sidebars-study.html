@@ -1,0 +1,682 @@
+<meta charset="utf-8">
+<title>Cradle Sidebars</title>
+<meta name="description" content="Design study for the O:I cradle's left and right sidebars: every mode and state, rendered with the desktop's own tokens.">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Mulish:wght@400;500;600;700&display=swap">
+<style>
+:root{
+  --paper:#f7f7f4; --ink:#1c1c1a; --muted:#6a6a66; --muted2:#8b8b86; --muted3:#adada8;
+  --rule:#dededa; --hair:#d8d8d3; --hair-soft:#e5e5e0; --shell:#e9e9e5; --side:#f3f3f0;
+  --canvas:#fbfbf9; --agent:#f1f1ee; --wash:#ecece8; --wash2:#e2e2dd; --accent:#2a2a27;
+  --composer:#ffffff; --msg:#e9e9e4; --gold:#a8873f; --tape:#ecece7; --menu:#ffffff;
+  --shadow:0 10px 40px rgba(0,0,0,.14),0 1px 2px rgba(0,0,0,.1);
+  --sans:'Avenir Next',Avenir,'Mulish','Helvetica Neue',Arial,sans-serif;
+  --mono:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,monospace;
+}
+@media (prefers-color-scheme: dark){
+  :root:not([data-theme="light"]){
+    color-scheme:dark;
+    --paper:#121211; --ink:#eeeee8; --muted:#a2a29c; --muted2:#83837d; --muted3:#5b5b56;
+    --rule:#2b2b28; --hair:#2c2c29; --hair-soft:#242422; --shell:#0b0b0a; --side:#151514;
+    --canvas:#1a1a18; --agent:#141413; --wash:#1f1f1d; --wash2:#2a2a27; --accent:#dcdcd6;
+    --composer:#1c1c1a; --msg:#242421; --tape:#101010; --menu:#1d1d1b;
+    --shadow:0 10px 40px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4);
+  }
+}
+:root[data-theme="dark"]{
+  color-scheme:dark;
+  --paper:#121211; --ink:#eeeee8; --muted:#a2a29c; --muted2:#83837d; --muted3:#5b5b56;
+  --rule:#2b2b28; --hair:#2c2c29; --hair-soft:#242422; --shell:#0b0b0a; --side:#151514;
+  --canvas:#1a1a18; --agent:#141413; --wash:#1f1f1d; --wash2:#2a2a27; --accent:#dcdcd6;
+  --composer:#1c1c1a; --msg:#242421; --tape:#101010; --menu:#1d1d1b;
+  --shadow:0 10px 40px rgba(0,0,0,.5),0 1px 2px rgba(0,0,0,.4);
+}
+*{box-sizing:border-box}
+body{background:var(--paper);color:var(--ink);font-family:var(--sans);font-size:14px;line-height:1.55;padding-inline:20px;padding-block:0 64px}
+.page{max-width:1240px;margin:0 auto}
+a{color:inherit}
+header.top{padding-block:40px 20px;display:grid;gap:10px;max-width:780px}
+.eyebrow{font-size:11px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+h1{font-size:34px;line-height:1.1;margin:0;font-weight:600;letter-spacing:-.01em;text-wrap:balance}
+h2{font-size:21px;margin:0 0 6px;font-weight:600;text-wrap:balance}
+h3{font-size:15px;margin:18px 0 6px;font-weight:600}
+.lede{font-size:16px;color:var(--muted);margin:0;max-width:68ch}
+.standing{display:inline-flex;gap:8px;align-items:center;font-size:12px;color:var(--muted)}
+.standing i{width:7px;height:7px;border-radius:50%;background:var(--gold);display:inline-block}
+.questions{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:12px;margin-top:8px}
+.q{border-top:1px solid var(--hair);padding-top:10px}
+.q b{display:block;font-size:12px;letter-spacing:.1em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.q span{font-size:17px}
+
+/* ---- controls ---- */
+.controls{display:flex;flex-wrap:wrap;gap:14px 22px;padding-block:14px;border-top:1px solid var(--hair);border-bottom:1px solid var(--hair);margin-top:18px;position:sticky;top:env(safe-area-inset-top,0px);background:var(--paper);z-index:5}
+.ctl{display:grid;gap:5px}
+.ctl>span{font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:600}
+.seg{display:flex;flex-wrap:wrap;gap:2px;background:var(--wash);border-radius:7px;padding:2px}
+.seg button{font:inherit;font-size:12px;border:0;background:transparent;color:var(--muted);padding:4px 9px;border-radius:5px;cursor:pointer}
+.seg button[aria-pressed="true"]{background:var(--canvas);color:var(--ink);box-shadow:0 1px 2px rgba(0,0,0,.12)}
+.seg button:focus-visible,.m button:focus-visible{outline:2px solid var(--accent);outline-offset:1px}
+.caption{display:flex;flex-wrap:wrap;gap:6px 14px;align-items:baseline;padding-block:12px 0;font-size:13px}
+.caption .ids{font-family:var(--mono);font-size:12px;color:var(--ink);background:var(--wash);padding:2px 7px;border-radius:4px}
+.caption .desc{color:var(--muted)}
+
+/* ---- stage ---- */
+.stage{margin-top:10px;overflow-x:auto;border-radius:12px}
+.stage-inner{position:relative}
+.m{width:1200px;height:740px;transform-origin:0 0;position:absolute;left:0;top:0;border-radius:11px;overflow:hidden;background:var(--shell);font-family:var(--sans);font-size:12px;color:var(--ink);box-shadow:0 0 0 1px var(--hair),0 30px 60px -30px rgba(0,0,0,.35);display:grid;grid-template-rows:30px 1fr;user-select:none}
+.m button{font:inherit;color:inherit;background:none;border:0;padding:0;cursor:pointer}
+.m svg{width:15px;height:15px;stroke:currentColor;fill:none;stroke-width:1.5;stroke-linecap:round;stroke-linejoin:round;flex:none}
+.bar{display:flex;align-items:center;padding:0 10px;gap:8px;position:relative}
+.lights{display:flex;gap:7px;margin-right:36px}.lights i{width:11px;height:11px;border-radius:50%;background:#ec6a5e;display:block}.lights i:nth-child(2){background:#f4bf4f}.lights i:nth-child(3){background:#61c554}
+.tgl{color:var(--muted);display:grid;place-items:center;width:26px;height:22px;border-radius:5px}
+.tgl:hover{background:var(--wash)}
+.bar .spacer{flex:1}
+.companion{position:relative}
+.companion .dot{position:absolute;right:2px;top:2px;width:7px;height:7px;border-radius:50%;background:var(--ink);box-shadow:0 0 0 2px var(--shell)}
+.body{display:grid;grid-template-columns:var(--lw,240px) 1fr var(--rw,320px);gap:4px;padding:0 4px 4px;min-height:0}
+.m[data-left="collapsed"] .body{--lw:0px}
+.m[data-right="closed"] .body{--rw:0px}
+.m[data-right="full"] .body{grid-template-columns:var(--lw,240px) 0 1fr}
+.m[data-left="collapsed"] .left{display:none}
+.m[data-right="closed"] .right{display:none}
+
+/* left */
+.left{background:var(--side);border-radius:6px;display:grid;grid-template-rows:auto 1fr auto;min-height:0;position:relative}
+.head{display:flex;align-items:center;gap:4px;padding:10px 8px 8px 10px}
+.scope{display:flex;align-items:center;gap:7px;flex:1;min-width:0;padding:5px 6px;border-radius:6px;text-align:left}
+.scope:hover,.scope[aria-expanded="true"]{background:var(--wash)}
+.scope .sg{width:20px;height:20px;border-radius:5px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:10px;font-weight:700;flex:none}
+.scope .nm{font-weight:600;font-size:13px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.scope .chev{position:relative;color:var(--muted2)}
+.scope .chev .dot{position:absolute;right:-3px;top:-1px;width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.ib{width:28px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
+.ib:hover,.ib[aria-expanded="true"]{background:var(--wash);color:var(--ink)}
+.lbody{overflow:hidden;padding:2px 6px 10px;min-height:0;scrollbar-width:none}
+.dest{display:flex;align-items:center;gap:9px;height:30px;padding:0 8px;border-radius:6px;color:var(--ink);width:100%;text-align:left;font-size:12.5px}
+.dest svg{color:var(--muted)}
+.dest:hover{background:var(--wash)}
+.dest[aria-current="true"]{background:var(--wash2);font-weight:600}
+.dest .badge{margin-left:auto;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.sec{margin-top:12px}
+.sech{display:flex;align-items:center;gap:6px;height:24px;padding:0 8px;color:var(--muted2);font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;font-weight:600}
+.sech .n{letter-spacing:0;font-variant-numeric:tabular-nums}
+.sech .act{margin-left:auto;opacity:0;color:var(--muted)}
+.sec:hover .sech .act{opacity:1}
+.tree{display:flex;align-items:center;gap:7px;height:26px;padding:0 8px;border-radius:6px;font-size:12px;color:var(--ink)}
+.tree:hover{background:var(--wash)}
+.tree .tw{color:var(--muted3);width:10px;display:inline-grid;place-items:center}
+.tree svg{color:var(--muted);width:14px;height:14px}
+.proj{display:flex;align-items:center;gap:7px;height:32px;padding:0 8px;border-radius:6px;font-size:12.5px}
+.proj:hover{background:var(--wash)}
+.proj .marks{margin-left:auto;display:flex;gap:6px;align-items:center;font-size:10.5px;color:var(--muted);font-variant-numeric:tabular-nums}
+.mk{display:inline-flex;align-items:center;gap:3px}
+.mk .d{width:6px;height:6px;border-radius:50%;background:var(--ink)}
+.mk.need{background:var(--wash2);color:var(--ink);font-weight:700;border-radius:4px;padding:0 5px;height:16px}
+.child{margin-left:17px;border-left:1px solid var(--hair-soft);padding-left:4px}
+.chat{display:grid;grid-template-columns:12px 1fr auto;column-gap:6px;padding:6px 8px 7px;border-radius:6px;width:100%;text-align:left}
+.chat:hover{background:var(--wash)}
+.chat[aria-current="true"]{background:var(--wash2)}
+.chat .st{grid-row:1/3;padding-top:4px;display:grid;justify-items:center}
+.chat .meta{font-size:9.5px;letter-spacing:.06em;text-transform:uppercase;color:var(--muted2)}
+.chat .tm{font-size:10.5px;color:var(--muted2);display:flex;align-items:center;gap:5px}
+.chat .ti{grid-column:2/4;font-size:12px;line-height:1.35;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical;overflow:hidden}
+.chat.unread .ti{font-weight:600}
+.u{width:5px;height:5px;border-radius:50%;background:var(--ink);display:inline-block}
+.sdot{width:7px;height:7px;border-radius:50%;background:var(--ink)}
+.sdot.breath{animation:breath 1.6s ease-in-out infinite}
+.sneed{font-size:10px;font-weight:800;line-height:1;background:var(--wash2);border-radius:3px;padding:1px 3px}
+.sfail{color:var(--muted2);font-size:11px;line-height:1}
+@keyframes breath{0%,100%{opacity:1}50%{opacity:.25}}
+@media (prefers-reduced-motion: reduce){.sdot.breath{animation:none}}
+.reading{font-size:11.5px;color:var(--muted);padding:6px 8px}
+.err{padding:10px 8px;font-size:12px;display:grid;gap:6px}
+.err b{font-weight:600}
+.err button{justify-self:start;border:1px solid var(--hair)!important;border-radius:5px;padding:3px 10px!important;font-size:11.5px}
+.foot{padding:6px 6px 8px;border-top:1px solid var(--hair-soft);display:grid;gap:4px}
+.modes{display:flex;align-items:center;gap:2px;padding:0 2px}
+.mode{width:30px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
+.mode:hover{background:var(--wash);color:var(--ink)}
+.mode[aria-pressed="true"]{background:var(--wash2);color:var(--ink)}
+.modes .div{width:1px;height:16px;background:var(--hair);margin:0 4px}
+.seg-mini{display:flex;gap:2px;background:var(--wash);border-radius:6px;padding:2px;margin:4px 8px 6px}
+.seg-mini span{flex:1;text-align:center;font-size:10.5px;padding:2px 0;border-radius:4px;color:var(--muted)}
+.seg-mini span.on{background:var(--canvas);color:var(--ink);box-shadow:0 1px 1px rgba(0,0,0,.08)}
+.avail{font-size:10.5px;color:var(--muted);margin-left:auto}
+.place{display:grid;grid-template-columns:1fr auto;padding:6px 8px;border-radius:6px;gap:0 6px}
+.place:hover{background:var(--wash)}
+.place small{grid-column:1/3;color:var(--muted2);font-size:10.5px}
+
+/* menus */
+.menu{position:absolute;z-index:4;background:var(--menu);border-radius:9px;box-shadow:var(--shadow),0 0 0 1px var(--hair);padding:6px;width:246px;font-size:12px}
+.menu .mh{font-size:9.5px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);font-weight:600;padding:6px 8px 4px}
+.menu .mi{display:flex;align-items:center;gap:8px;height:30px;padding:0 8px;border-radius:6px}
+.menu .mi:hover{background:var(--wash)}
+.menu .mi .r{margin-left:auto;display:flex;gap:6px;color:var(--muted);font-size:10.5px}
+.menu hr{border:0;border-top:1px solid var(--hair-soft);margin:5px 4px}
+.menu kbd{font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.gd{width:6px;height:6px;border-radius:50%;background:#5aa469}
+
+/* centre */
+.centre{background:var(--canvas);border-radius:6px;min-width:0;display:grid;grid-template-rows:32px 1fr;overflow:hidden;position:relative}
+.tabs{display:flex;align-items:flex-end;gap:0;padding:0 8px;background:var(--canvas);border-bottom:1px solid var(--hair-soft)}
+.ctab{height:28px;display:flex;align-items:center;gap:6px;padding:0 12px;font-size:11.5px;color:var(--muted);border-radius:6px 6px 0 0}
+.ctab.on{color:var(--ink);background:var(--canvas);box-shadow:inset 0 -1.5px 0 var(--accent)}
+.doc{padding:44px 64px;max-width:720px}
+.doc h4{font-size:20px;margin:0 0 4px;font-weight:600}
+.doc .sub{font-size:11px;color:var(--muted2);margin-bottom:20px}
+.ln{height:9px;border-radius:3px;background:var(--wash2);margin:10px 0}
+.ln.s{width:62%}.ln.m2{width:84%}
+.desk{padding:28px 36px;display:grid;grid-template-columns:1fr 1fr;gap:20px 28px;align-content:start}
+.desk .col h5{font-size:10px;letter-spacing:.14em;text-transform:uppercase;color:var(--muted2);margin:0 0 8px;font-weight:600}
+.card{border:1px solid var(--hair);border-radius:8px;padding:10px 12px;margin-bottom:8px;display:grid;gap:3px}
+.card small{color:var(--muted2);font-size:10.5px}
+.field{background:radial-gradient(circle at 30% 40%,var(--muted3) 0 1px,transparent 1.5px) 0 0/9px 9px,radial-gradient(circle at 70% 60%,var(--muted3) 0 1px,transparent 1.5px) 0 0/13px 13px;opacity:.55;position:absolute;inset:32px 0 0 0}
+.graph{position:absolute;inset:32px 0 0 0}
+.graph svg{width:100%;height:100%;stroke:var(--muted3);stroke-width:1}
+.graph circle{fill:var(--canvas);stroke:var(--ink);stroke-width:1.2}
+.graph text{fill:var(--muted);font-size:11px;stroke:none;font-family:var(--sans)}
+
+/* right */
+.right{background:var(--agent);border-radius:6px;display:grid;grid-template-rows:auto auto 1fr auto;min-height:0;position:relative;overflow:hidden}
+.id{display:flex;align-items:center;gap:6px;padding:10px 8px 4px 10px}
+.idbtn{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;min-width:0;flex:1;text-align:left}
+.idbtn:hover{background:var(--wash)}
+.av{width:24px;height:24px;border-radius:50%;background:var(--wash2);display:grid;place-items:center;font-size:10px;font-weight:700;flex:none;position:relative}
+.av.lg{width:32px;height:32px;font-size:11px}
+.idbtn .nm{font-weight:600;font-size:13px}
+.pres{width:8px;height:8px;border-radius:50%;flex:none}
+.pres.idle{border:1.5px solid var(--muted2)}
+.pres.work{background:var(--ink)}
+.pres.hollow{border:1.5px dashed var(--muted)}
+.pres.need{width:auto;height:auto;border-radius:3px;background:var(--wash2);font-weight:800;font-size:10px;padding:0 4px}
+.rtabs{display:flex;gap:16px;padding:4px 14px 0;border-bottom:1px solid var(--hair-soft)}
+.rtab{height:28px;font-size:12px;color:var(--muted);display:flex;align-items:center;gap:4px;position:relative}
+.rtab.on{color:var(--ink);box-shadow:inset 0 -1.5px 0 var(--accent)}
+.rtab .tm{width:5px;height:5px;border-radius:50%;background:var(--ink)}
+.rtab .tn{font-size:9.5px;font-weight:800;background:var(--wash2);padding:0 3px;border-radius:3px;color:var(--ink)}
+.rbody{overflow:hidden;min-height:0;padding:12px 14px;display:flex;flex-direction:column;gap:12px}
+.note{font-size:11px;color:var(--muted);padding:6px 14px;border-bottom:1px solid var(--hair-soft)}
+.msg-me{align-self:flex-end;background:var(--msg);border-radius:12px 12px 4px 12px;padding:8px 11px;max-width:85%;font-size:12px;line-height:1.45}
+.msg-ag{display:grid;grid-template-columns:24px 1fr;gap:8px;font-size:12px;line-height:1.5}
+.msg-ag .who{font-size:10.5px;color:var(--muted2);margin-bottom:1px}
+.msg-ag .who b{color:var(--ink);font-weight:600;margin-right:6px}
+.wm{font-size:11px;color:var(--muted);display:flex;align-items:center;gap:6px;margin-top:5px}
+.wm .g{font-family:var(--mono);color:var(--muted2)}
+.perm{border:1px solid var(--hair);border-radius:9px;background:var(--canvas);padding:10px 12px;display:grid;gap:7px;font-size:12px}
+.perm code{font-family:var(--mono);font-size:11px;background:var(--wash);padding:2px 5px;border-radius:4px}
+.perm .scope{display:flex;gap:4px}
+.perm .pill{font-size:10.5px;border:1px solid var(--hair);border-radius:99px;padding:2px 8px;color:var(--muted)}
+.perm .pill.on{border-color:var(--accent);color:var(--ink)}
+.perm .acts{display:flex;gap:8px}
+.btn{font-size:11.5px!important;border-radius:6px!important;padding:5px 12px!important}
+.btn.pri{background:var(--accent)!important;color:var(--paper)!important}
+.btn.q{border:1px solid var(--hair)!important}
+.chips{display:flex;gap:6px;flex-wrap:wrap;margin-top:6px}
+.chipa{display:inline-flex;gap:6px;align-items:center;border:1px solid var(--hair);border-radius:6px;padding:3px 8px;font-size:11px;background:var(--canvas)}
+.chipa small{color:var(--muted2);font-family:var(--mono);font-size:10px}
+.sugg{display:grid;gap:6px;margin-top:auto}
+.sugg span{border:1px solid var(--hair);border-radius:8px;padding:7px 10px;font-size:11.5px;color:var(--muted)}
+.statusl{display:flex;align-items:center;gap:7px;font-size:11px;color:var(--muted);padding:0 14px 6px}
+.statusl b{color:var(--ink);font-weight:600}
+.comp{margin:0 10px 10px;background:var(--composer);border:1px solid var(--hair);border-radius:12px;padding:8px 10px;display:grid;gap:6px}
+.to{display:flex;gap:6px;align-items:center;font-size:11px;color:var(--muted2)}
+.to .chip{background:var(--wash);color:var(--ink);border-radius:5px;padding:1px 7px;font-size:11px}
+.ph{font-size:12px;color:var(--muted3);min-height:30px}
+.crow{display:flex;align-items:center;gap:4px;color:var(--muted)}
+.crow .ib{width:24px;height:24px}
+.model{margin-left:auto;font-size:11px;color:var(--muted);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px}
+.send{width:26px;height:26px;border-radius:50%;background:var(--accent);color:var(--paper);display:grid;place-items:center}
+.send svg{width:13px;height:13px}
+.recon{font-size:11px;color:var(--muted);padding:6px 14px;border-bottom:1px solid var(--hair-soft);display:flex;gap:6px;align-items:center}
+.tape{font-family:var(--mono);font-size:10.5px;background:var(--tape);border-radius:7px;padding:4px 0;display:grid}
+.tr{display:grid;grid-template-columns:52px 40px 1fr auto;gap:8px;padding:0 10px;min-height:24px;align-items:center;color:var(--muted)}
+.tr .v{color:var(--ink)}
+.tr.grp{color:var(--ink)}
+.tr.live{background:var(--wash)}
+.tfilt{display:flex;gap:4px;font-size:10.5px}
+.tfilt span{padding:2px 7px;border-radius:99px;color:var(--muted)}
+.tfilt span.on{background:var(--wash2);color:var(--ink)}
+.follow{white-space:nowrap;font-size:10.5px;color:var(--muted);display:flex;gap:6px;align-items:center;margin-left:auto}
+.resume{position:absolute;left:50%;bottom:120px;transform:translateX(-50%);background:var(--accent);color:var(--paper);font-size:11px;border-radius:99px;padding:4px 12px;box-shadow:var(--shadow)}
+.agrow{display:grid;grid-template-columns:32px 1fr auto;gap:10px;align-items:start;padding:7px 4px;border-radius:7px}
+.agrow:hover{background:var(--wash)}
+.agrow .p{font-size:11px;color:var(--muted)}
+.agrow .as{font-size:10.5px;color:var(--muted2);margin-top:2px}
+.agrow .st{display:flex;gap:6px;align-items:center;padding-top:4px;color:var(--muted)}
+.srch{display:flex;justify-content:flex-end;gap:2px;margin:-4px 0 -6px}
+.launch{display:grid;gap:6px}
+.launch .li{display:flex;align-items:center;gap:10px;border:1px solid var(--hair);border-radius:9px;padding:9px 11px;font-size:12px;background:var(--canvas)}
+.launch .li kbd{margin-left:auto;font-family:var(--mono);font-size:10px;color:var(--muted2)}
+.drawer{position:absolute;inset:0;background:var(--agent);z-index:3;display:grid;grid-template-rows:auto 1fr}
+.drawer .dh{display:flex;align-items:center;gap:8px;padding:11px 12px;border-bottom:1px solid var(--hair-soft);font-size:12.5px}
+.drawer .dh b{font-weight:600}
+.kv{display:grid;grid-template-columns:92px 1fr;gap:8px 10px;padding:14px;font-size:11.5px;align-content:start}
+.kv dt{color:var(--muted2)}
+.kv dd{margin:0}
+.kv .raw{grid-column:1/3;border-top:1px solid var(--hair-soft);padding-top:10px;color:var(--muted);display:flex;gap:6px;align-items:center}
+.runsum{display:grid;gap:4px;font-size:12px}
+.runsum .rt{font-weight:600;font-size:13px}
+.steps{display:flex;gap:3px;margin-top:4px}
+.steps i{height:4px;flex:1;border-radius:2px;background:var(--wash2)}
+.steps i.d{background:var(--ink)}
+.steps i.a{background:var(--muted)}
+.centre-chat{padding:24px 0;display:flex;flex-direction:column;gap:14px;max-width:620px;margin:0 auto;width:100%}
+.promoted{font-size:11.5px;color:var(--muted);padding:14px;display:flex;gap:8px;align-items:center}
+.promoted u{color:var(--ink);text-decoration:none;border-bottom:1px solid var(--hair)}
+
+/* ---- document sections ---- */
+section.s{padding-block:40px 8px;border-top:1px solid var(--hair);margin-top:36px}
+.cols{display:grid;grid-template-columns:repeat(auto-fit,minmax(300px,1fr));gap:18px 36px}
+p{max-width:70ch}
+.laws{list-style:none;padding:0;margin:14px 0 0;display:grid;grid-template-columns:repeat(auto-fit,minmax(320px,1fr));gap:14px 32px}
+.laws li{display:grid;grid-template-columns:22px 1fr;gap:4px 8px}
+.laws li b{grid-column:2}
+.laws li span{grid-column:2;color:var(--muted);font-size:13.5px}
+.laws .n{grid-row:1/3;font-variant-numeric:tabular-nums;color:var(--muted2);font-size:12px;padding-top:2px}
+.tw{overflow-x:auto;margin-top:10px}
+table{border-collapse:collapse;width:100%;font-size:13px;min-width:640px}
+th{text-align:left;font-size:10.5px;letter-spacing:.12em;text-transform:uppercase;color:var(--muted2);font-weight:600;border-bottom:1px solid var(--hair);padding:8px 10px 6px 0}
+td{border-bottom:1px solid var(--hair-soft);padding:8px 12px 8px 0;vertical-align:top}
+td:first-child{font-family:var(--mono);font-size:12px;white-space:nowrap}
+td.muted{color:var(--muted)}
+code{font-family:var(--mono);font-size:.9em;background:var(--wash);padding:1px 5px;border-radius:4px}
+.dec{display:grid;gap:14px;margin-top:12px}
+.dec div{display:grid;grid-template-columns:44px 1fr;gap:2px 12px;border-top:1px solid var(--hair-soft);padding-top:12px}
+.dec b.k{grid-row:1/4;font-family:var(--mono);color:var(--gold);font-size:13px}
+.dec .rec{color:var(--ink);font-size:13px}
+.dec .rec::before{content:"Recommend — ";color:var(--muted2)}
+.dec .why{color:var(--muted);font-size:13px}
+ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
+.src{font-size:12.5px;color:var(--muted)}
+@media (max-width:640px){h1{font-size:27px}.controls{position:static}}
+</style>
+
+<div class="page">
+<header class="top">
+  <div class="eyebrow">O:I cradle · desktop design</div>
+  <h1>The two sidebars, in every state</h1>
+  <p class="lede">One design for the left and right sidebars across all six modes, built to be implemented once and tested against. The study below renders each state with the desktop's own tokens and example content. Everything is judged by one question: is this good to use?</p>
+  <span class="standing"><i></i>Proposed 22 Sep 2026 · awaiting your Recognition · spec: <code>docs/cradle/10-SIDEBARS.md</code></span>
+  <div class="questions">
+    <div class="q"><b>Left</b><span>Where is my work, and what is moving in it?</span></div>
+    <div class="q"><b>Right</b><span>Who am I working with, and what are they doing?</span></div>
+    <div class="q"><b>Centre</b><span>The work itself.</span></div>
+  </div>
+</header>
+
+<div class="controls" role="group" aria-label="Study controls">
+  <div class="ctl"><span>Mode</span><div class="seg" id="c-mode"></div></div>
+  <div class="ctl"><span>Left</span><div class="seg" id="c-left"></div></div>
+  <div class="ctl"><span>Right</span><div class="seg" id="c-right"></div></div>
+  <div class="ctl"><span>Theme</span><div class="seg" id="c-theme"></div></div>
+</div>
+<div class="caption"><span class="ids" id="cap-ids"></span><span class="desc" id="cap-desc"></span></div>
+<div class="stage" id="stage"><div class="stage-inner" id="stage-inner"><div class="m" id="m"></div></div></div>
+<p class="src">Example content only (project, chat and agent names are illustrative). Click inside the mock too: the mode icons, scope, <b>+</b>, right tabs and the <b>⤢</b> / <b>✕</b> controls all respond.</p>
+
+<section class="s">
+  <h2>The seven laws</h2>
+  <p>These are the rules that kept being lost between rebuilds. Every state below follows from them.</p>
+  <ol class="laws">
+    <li><span class="n">1</span><b>One frame, changing body.</b><span>The left head (scope, search, create) and foot (Inbox, modes, Settings) never move. Only the body changes with the mode, and every body uses the same row grammar.</span></li>
+    <li><span class="n">2</span><b>One conversation, one place.</b><span>A session appears once, with one composer and one draft. Choosing it again focuses it; moving it carries the draft.</span></li>
+    <li><span class="n">3</span><b>State lives on the thing.</b><span>Working, needs-you, unread and failed are marks on the row, avatar or tab. No banners, no trays, and the layout never moves.</span></li>
+    <li><span class="n">4</span><b>Status → Preview → Takeover.</b><span>A dot, then the live Activity tape, then full-screen chat (⌘⌥J). You choose the depth; nothing escalates by itself.</span></li>
+    <li><span class="n">5</span><b>Inspect is a drawer.</b><span>It opens over the current tab with Back, never as a tab of its own.</span></li>
+    <li><span class="n">6</span><b>Headers only above real rows.</b><span>Empty sections take no space. A failed read says so and offers Retry; it never looks like "empty".</span></li>
+    <li><span class="n">7</span><b>Nothing reads like a log file.</b><span>No "returns", no raw JSON outside <i>Show raw</i>, no scrollbars, no "Situated in…" sentences, no fake rosters.</span></li>
+  </ol>
+</section>
+
+<section class="s">
+  <h2>Anatomy</h2>
+  <div class="cols">
+    <div>
+      <h3>Left: head · body · foot</h3>
+      <p><b>Scope ▾</b> replaces the hardcoded "My O:I" heading. Its menu lists Central, then every project with live marks (<code>● 2</code> working, <code>! 1</code> needs you), then remote machines. A dot on the chevron means another project has news. This one control is both the project picker and the per-project activity overview.</p>
+      <p><b>⌕</b> opens the ⌘K palette (no permanent search field). <b>+</b> is the one create menu: New chat, New flow, plus the mode's own (New run, New Expression, New agent).</p>
+      <p><b>Inbox</b> is the single queue of material waiting for you, reachable from every mode. <b>Modes</b>: Base · Factory · Expressions · Technè · Epi-Logos | Settings.</p>
+    </div>
+    <div>
+      <h3>Right: identity · tabs · body · composer</h3>
+      <p><b>The agent's name is a control.</b> It switches between agents in the current scope, drawn from real AIKit profiles, and replaces "Agent / Situated in Central". A presence dot sits beside it; <b>⤢</b> is full screen and <b>✕</b> collapses the panel.</p>
+      <p><b>At most four text tabs</b>, never a "More" menu. A tab carries a dot for new activity or <code>!</code> when something needs you.</p>
+      <p><b>A status line</b> shows only while a turn runs. The composer carries To: chips, Insert context, the microphone, the model chip for this agent's harness, and Send, which becomes Stop.</p>
+    </div>
+  </div>
+  <div class="tw"><table>
+    <thead><tr><th>Mode</th><th>Left body</th><th>Right agent</th><th>Right tabs</th></tr></thead>
+    <tbody>
+      <tr><td>Base</td><td>Central · Today · Library · Explore / CONTROL / FLOWS / WORK</td><td>Selected profile</td><td>Chat · Activity · Agents · Context</td></tr>
+      <tr><td>Factory</td><td>Desk · Tasks / TASKS / FILES (collapsed)</td><td>Run lead</td><td>Run · Agents · Context (chat is the centre Tasks view)</td></tr>
+      <tr><td>Expressions</td><td>EXPRESSION: current one, scenes → entities</td><td>Anima</td><td>Chat · Activity · Agents · Context</td></tr>
+      <tr><td>Technè</td><td>WIKI MAP: List / Tree / Graph (restores the regressed ruling)</td><td>Aletheia</td><td>Chat · Activity · Agents · Context</td></tr>
+      <tr><td>Epi-Logos</td><td>PLACES: Essay · Bimba · Epii · Products, with availability</td><td>Nara (Epii via the name menu)</td><td>Chat · Activity · Agents · Context</td></tr>
+      <tr><td>Settings</td><td>Both sides collapse; settings has its own section navigation</td><td>—</td><td>Chat only, if opened for help</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="s">
+  <h2>State catalogue</h2>
+  <p>Each state has an ID, what you see, and the check that proves it. These checks become the acceptance fixtures. A check that only counts elements is never enough.</p>
+  <h3>Left frame, rows and sections</h3>
+  <div class="tw"><table>
+    <thead><tr><th>ID</th><th>State</th><th>What you see</th><th>Check</th></tr></thead>
+    <tbody>
+      <tr><td>L1</td><td>Rest</td><td>Head and foot pinned, body scrolls, 240px (200–330)</td><td class="muted">Head and foot boxes fixed during body scroll; no scrollbar pixels</td></tr>
+      <tr><td>L2</td><td>Collapsed</td><td>Region gone; the corner toggle stays</td><td class="muted">⌘B round-trip restores width and scroll</td></tr>
+      <tr><td>L3</td><td>Compact ≤1000</td><td>Times yield before titles</td><td class="muted">Titles intact at 1000px</td></tr>
+      <tr><td>L4</td><td>Overlay &lt;640</td><td>Over the centre, focus trapped</td><td class="muted">Escape returns focus to the invoker</td></tr>
+      <tr><td>L6</td><td>Scope reading</td><td>"Reading Central…" in the body; no invented projects</td><td class="muted">No rows before the read resolves</td></tr>
+      <tr><td>L7</td><td>Scope unreadable</td><td>"Couldn't read Central." + Retry; modes still switch</td><td class="muted">Transport killed → text + Retry, foot usable</td></tr>
+      <tr><td>L8</td><td>Mode switch</td><td>Head and foot hold still; body cross-fades ≤160ms</td><td class="muted">Head/foot rects identical before and after</td></tr>
+      <tr><td>R2</td><td>Working</td><td>Breathing ink dot on the chat row and its project</td><td class="muted">Appears on turn start, stops on turn end</td></tr>
+      <tr><td>R3</td><td>Needs you</td><td><code>!</code> on the row, the project and the scope menu</td><td class="muted">Answering the request clears all three</td></tr>
+      <tr><td>R4</td><td>Unread</td><td>Dot before the time; title semibold</td><td class="muted">Cleared on open</td></tr>
+      <tr><td>R5</td><td>Failed</td><td>Muted ×, reason in the tooltip</td><td class="muted">Refused send shows × and the reason</td></tr>
+      <tr><td>R7</td><td>Hover / focus</td><td>Wash; … revealed; no height change</td><td class="muted">Row height identical at rest and on hover</td></tr>
+      <tr><td>R9</td><td>Section empty</td><td>Absent: zero height, no header</td><td class="muted">No header text in the DOM</td></tr>
+      <tr><td>R10</td><td>Section error</td><td>"Couldn't load this project." + Retry</td><td class="muted">Distinct from R9</td></tr>
+      <tr><td>R12</td><td>Drag source</td><td>Files and chats drag into the composer or panes</td><td class="muted">Drop inserts context; never sends</td></tr>
+    </tbody></table></div>
+  <h3>Right panel</h3>
+  <div class="tw"><table>
+    <thead><tr><th>ID</th><th>State</th><th>What you see</th><th>Check</th></tr></thead>
+    <tbody>
+      <tr><td>P1</td><td>Closed</td><td>Corner companion mark carries ● or ! from the agent</td><td class="muted">Mark mirrors agent state while closed</td></tr>
+      <tr><td>P2</td><td>Fresh</td><td>≤3 suggestions that fill the draft</td><td class="muted">Suggestion fills the draft; nothing dispatched</td></tr>
+      <tr><td>P3</td><td>Composing</td><td>Draft kept per conversation</td><td class="muted">Mode round-trip: draft byte-identical</td></tr>
+      <tr><td>P4</td><td>Turn in flight</td><td>Status line; Send becomes Stop; work marks stream</td><td class="muted">Stop shows "Stopping…" then the native outcome</td></tr>
+      <tr><td>P5</td><td>Needs you</td><td>Inline permission card with real scopes; ! on tab and name</td><td class="muted">One activation resolves one request</td></tr>
+      <tr><td>P6</td><td>Complete</td><td>One result line + artifact chips at exact revisions</td><td class="muted">Chip opens that revision</td></tr>
+      <tr><td>P8</td><td>Not sent</td><td>"Message not sent." + Retry beside the kept draft</td><td class="muted">Draft retained</td></tr>
+      <tr><td>P10</td><td>Reconnecting</td><td>Hollow dot; one line: last seen, draft kept</td><td class="muted">Replay without duplicates</td></tr>
+      <tr><td>P11</td><td>Agents unreachable</td><td>"Agents aren't reachable here right now." + what still works</td><td class="muted">No perpetual loading</td></tr>
+      <tr><td>P13</td><td>Full</td><td>Chat fills the centre; left stays</td><td class="muted">⌘⌥J without remount</td></tr>
+      <tr><td>P14</td><td>Promoted</td><td>Right shows "Open in the centre — Bring back"</td><td class="muted">Exactly one composer in the DOM</td></tr>
+      <tr><td>P15</td><td>Inspect drawer</td><td>Fields, Back, <i>Show raw</i></td><td class="muted">No JSON text outside the disclosure</td></tr>
+      <tr><td>P16</td><td>Activity live / paused</td><td>Tail-follow; Resume live after scrolling up</td><td class="muted">Arrival while paused does not scroll</td></tr>
+      <tr><td>P17</td><td>Agents empty / error / no match</td><td>Three distinct messages</td><td class="muted">All three reachable</td></tr>
+    </tbody></table></div>
+</section>
+
+<section class="s">
+  <h2>What changes from today</h2>
+  <h3>Repair first — these are regressions or dead ends</h3>
+  <ol class="build">
+    <li><b>Technè's left body is the wiki map again.</b> Main still mounts the Expressions graph there. The fix (PR #470) was closed on the claim that main already had it, and main does not.</li>
+    <li><b>Factory Tasks rows open in the centre.</b> Today they land in the right panel's hidden tab group.</li>
+    <li><b>Epi-Logos becomes reachable.</b> The mode switch refuses it today.</li>
+    <li><b>Activity becomes reachable.</b> It is built but offered by no mode.</li>
+    <li><b>Inspect stops printing JSON.</b></li>
+  </ol>
+  <h3>Removed</h3>
+  <p>Factory Returns / Now / Remembered bands; the "PROVIDER — Bind a conversation to pick" pill; "Situated in Central"; the duplicate New chat; standing New Agent / New Team buttons; the hardcoded Guardians and Ta-Onta lists; the Nara·Anima and Epii tabs (they become agents in the name menu); the footer's duplicate mode radios; the unused legacy right-panel fallback; the "System" vs "Settings" split.</p>
+</section>
+
+<section class="s">
+  <h2>Decisions for you</h2>
+  <p>Everything else follows rulings you have already made. These six are new positions or settle conflicts between rulings.</p>
+  <div class="dec">
+    <div><b class="k">D1</b><span>Inspect becomes a drawer in every mode, not a tab.</span><span class="rec">yes: one grammar; it extends your Factory ruling.</span><span class="why">#375 §2 kept Inspect as a tab in ordinary modes.</span></div>
+    <div><b class="k">D2</b><span>Epi-Logos becomes the fifth mode in the switcher.</span><span class="rec">yes, replacing the footer toggle.</span><span class="why">It is in your mode list but cannot be reached.</span></div>
+    <div><b class="k">D3</b><span>Inbox sits in the fixed foot, in every mode.</span><span class="rec">yes: the queue is app-wide.</span><span class="why">The 21 Sep spec placed it only in Factory.</span></div>
+    <div><b class="k">D4</b><span>Outside Factory, a chat row opens in the right panel.</span><span class="rec">yes, with Open in centre as an explicit move.</span><span class="why">Today it opens a centre tab and can duplicate the right chat.</span></div>
+    <div><b class="k">D5</b><span>Factory keeps FILES.</span><span class="rec">keep it, collapsed by default.</span><span class="why">You said on 18 Sep it wasn't needed; the 21 Sep spec kept it.</span></div>
+    <div><b class="k">D6</b><span>The scope selector is the one place to choose the project.</span><span class="rec">yes: it drives the left body and the right's agent list.</span><span class="why">Today Factory has its own project select and base has none.</span></div>
+  </div>
+</section>
+
+<section class="s">
+  <h2>Build order</h2>
+  <ol class="build">
+    <li>The five repairs, each with its walk.</li>
+    <li>Left frame: head, foot, scope selector, Inbox, mode switcher.</li>
+    <li>Row and section grammar across every body, with marks from real session state.</li>
+    <li>Right identity, tabs per mode, status line, composer chips.</li>
+    <li>Activity tape (the run-log pattern) and the Inspect drawer.</li>
+    <li>Agents roster from real identities; fixtures and hardcoded lists removed.</li>
+    <li>One walk per state ID against the real kernel; receipts cite these IDs.</li>
+  </ol>
+  <p class="src">Built on: 01-DESIGN §4 and §6, 03-UX-STATES E/E.G/J/K, DESKTOP-LANGUAGE rulings of 22 Sep, #190 D17/D18, #375 and amendments, the 21 Sep UI v2 specs (commit 397cd001, never landed), and the DeepSeek Harness trajectory reference from #289.</p>
+</section>
+</div>
+
+<script>
+(function(){
+const I={
+ search:'<svg viewBox="0 0 16 16"><circle cx="7" cy="7" r="4.5"/><path d="M10.5 10.5 14 14"/></svg>',
+ plus:'<svg viewBox="0 0 16 16"><path d="M8 3v10M3 8h10"/></svg>',
+ chev:'<svg viewBox="0 0 16 16" style="width:12px;height:12px"><path d="m4 6 4 4 4-4"/></svg>',
+ right:'<svg viewBox="0 0 16 16" style="width:10px;height:10px"><path d="m6 4 4 4-4 4"/></svg>',
+ down:'<svg viewBox="0 0 16 16" style="width:10px;height:10px"><path d="m4 6 4 4 4-4"/></svg>',
+ inbox:'<svg viewBox="0 0 16 16"><path d="M2.5 9.5 4 3.5h8l1.5 6v3h-11z"/><path d="M2.5 9.5h3.2l.8 1.5h3l.8-1.5h3.2"/></svg>',
+ gear:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="2.2"/><path d="M8 1.8v1.8M8 12.4v1.8M1.8 8h1.8M12.4 8h1.8M3.6 3.6l1.3 1.3M11.1 11.1l1.3 1.3M3.6 12.4l1.3-1.3M11.1 4.9l1.3-1.3"/></svg>',
+ base:'<svg viewBox="0 0 16 16"><path d="M4 2h5.5L12 4.5V14H4z"/><path d="M6 7h4M6 9.5h4"/></svg>',
+ factory:'<svg viewBox="0 0 16 16"><path d="M2.5 13.5h11M4 13V8M7 13V5M10 13V9M13 13V3"/></svg>',
+ expressions:'<svg viewBox="0 0 16 16"><path d="m8 2 5 3v6l-5 3-5-3V5z"/><path d="m3 5 5 3 5-3M8 8v6"/></svg>',
+ techne:'<svg viewBox="0 0 16 16"><path d="M8 2a4 4 0 0 0-2.3 7.3V11h4.6V9.3A4 4 0 0 0 8 2z"/><path d="M6.3 13.5h3.4"/></svg>',
+ epi:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.2"/><path d="M8 2v12"/></svg>',
+ central:'<svg viewBox="0 0 16 16"><path d="M2.5 7.5 8 3l5.5 4.5V13h-11z"/></svg>',
+ today:'<svg viewBox="0 0 16 16"><rect x="2.5" y="3.5" width="11" height="10" rx="1.5"/><path d="M2.5 6.5h11M5.5 2v3M10.5 2v3"/></svg>',
+ library:'<svg viewBox="0 0 16 16"><path d="M3 2.5v11M6 2.5v11M9 3l3.5 10"/></svg>',
+ explore:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="m10.3 5.7-1.3 3.3-3.3 1.3 1.3-3.3z"/></svg>',
+ folder:'<svg viewBox="0 0 16 16"><path d="M2 4.5h4l1.2 1.3H14v7H2z"/></svg>',
+ file:'<svg viewBox="0 0 16 16"><path d="M4 2h5.5L12 4.5V14H4z"/></svg>',
+ flow:'<svg viewBox="0 0 16 16"><path d="M3 4.5h10M3 8h7M3 11.5h9"/></svg>',
+ desk:'<svg viewBox="0 0 16 16"><rect x="2.5" y="3" width="11" height="10" rx="1.5"/><path d="M2.5 7h11M7 7v6"/></svg>',
+ tasks:'<svg viewBox="0 0 16 16"><path d="M3 3.5h10v7H7l-3 2.5v-2.5H3z"/></svg>',
+ wiki:'<svg viewBox="0 0 16 16"><circle cx="4" cy="4.5" r="1.6"/><circle cx="12" cy="5" r="1.6"/><circle cx="8" cy="12" r="1.6"/><path d="M5.4 5.2 10.5 5M4.8 6 7.3 10.6M11.4 6.4l-2.6 4.2"/></svg>',
+ remember:'<svg viewBox="0 0 16 16"><path d="M4.5 2.5h7v11l-3.5-2.5-3.5 2.5z"/></svg>',
+ sidebar:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M6 3v10"/></svg>',
+ sidebarR:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M10 3v10"/></svg>',
+ expand:'<svg viewBox="0 0 16 16"><path d="M9.5 2.5h4v4M6.5 13.5h-4v-4M13.5 2.5l-4.5 4.5M2.5 13.5 7 9"/></svg>',
+ close:'<svg viewBox="0 0 16 16"><path d="m4 4 8 8M12 4l-8 8"/></svg>',
+ mic:'<svg viewBox="0 0 16 16"><rect x="6" y="2" width="4" height="8" rx="2"/><path d="M3.5 8a4.5 4.5 0 0 0 9 0M8 12.5V14"/></svg>',
+ up:'<svg viewBox="0 0 16 16" style="stroke-width:2"><path d="M8 13V3M4 7l4-4 4 4"/></svg>',
+ stop:'<svg viewBox="0 0 16 16" style="fill:currentColor;stroke:none"><rect x="4.5" y="4.5" width="7" height="7" rx="1.2"/></svg>',
+ back:'<svg viewBox="0 0 16 16"><path d="M10 3 5 8l5 5"/></svg>',
+ term:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="m5 7 2 1.5L5 10M8.5 10.5h2.5"/></svg>',
+ globe:'<svg viewBox="0 0 16 16"><circle cx="8" cy="8" r="5.5"/><path d="M2.5 8h11M8 2.5c2 2 2 9 0 11M8 2.5c-2 2-2 9 0 11"/></svg>',
+ more:'<svg viewBox="0 0 16 16" style="fill:currentColor;stroke:none"><circle cx="4" cy="8" r="1.1"/><circle cx="8" cy="8" r="1.1"/><circle cx="12" cy="8" r="1.1"/></svg>'
+};
+const MODES=[['base','Base'],['factory','Factory'],['expressions','Expressions'],['techne','Technè'],['epi','Epi-Logos']];
+const LEFTS=[['rest','Rest'],['loading','Reading'],['error','Unreadable'],['scope','Scope menu'],['create','+ menu'],['collapsed','Collapsed']];
+const RIGHTS=[['fresh','Fresh'],['working','Working'],['needs','Needs you'],['done','Complete'],['reconnect','Reconnecting'],['activity','Activity'],['paused','Activity paused'],['agents','Agents'],['context','Context'],['inspect','Inspect'],['full','Full'],['closed','Closed']];
+const S={mode:'base',left:'rest',right:'working',theme:'system'};
+const AG={base:['Ep','Epii'],factory:['Bu','Builder'],expressions:['An','Anima'],techne:['Al','Aletheia'],epi:['Na','Nara']};
+const TABS={base:['Chat','Activity','Agents','Context'],factory:['Run','Agents','Context'],expressions:['Chat','Activity','Agents','Context'],techne:['Chat','Activity','Agents','Context'],epi:['Chat','Activity','Agents','Context']};
+
+function seg(id,items,key){const el=document.getElementById(id);el.innerHTML=items.map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${S[key]===v}">${l}</button>`).join('');el.onclick=e=>{const b=e.target.closest('button');if(!b)return;S[key]=b.dataset.v;if(key==='theme'){applyTheme();try{localStorage.setItem('sidebars-theme',S.theme)}catch(e){}}render()}}
+function applyTheme(){const r=document.documentElement;try{if(S.theme==='system')r.removeAttribute('data-theme');else r.setAttribute('data-theme',S.theme)}catch(e){}}
+function chatMark(){if(S.right==='working'||S.right==='activity'||S.right==='paused')return'<span class="sdot breath" title="Working"></span>';if(S.right==='needs')return'<span class="sneed" title="Needs you">!</span>';return'<span class="sdot" style="background:transparent"></span>'}
+function rowChat(meta,time,title,mark,opts={}){return`<button class="chat${opts.unread?' unread':''}" ${opts.cur?'aria-current="true"':''}><span class="st">${mark||''}</span><span class="meta">${meta}</span><span class="tm">${opts.unread?'<span class="u"></span>':''}${time}</span><span class="ti">${title}</span></button>`}
+function dest(ic,label,cur,badge){return`<button class="dest" ${cur?'aria-current="true"':''}>${I[ic]}<span>${label}</span>${badge?`<span class="badge">${badge}</span>`:''}</button>`}
+function sec(label,inner,n,act){return`<div class="sec"><div class="sech">${I.down}<span>${label}</span>${n?`<span class="n">${n}</span>`:''}${act?`<span class="act">${I.plus}</span>`:''}</div>${inner}</div>`}
+function tree(ic,label,depth,open){return`<div class="tree" style="padding-left:${8+depth*12}px"><span class="tw">${open===undefined?'':(open?I.down:I.right)}</span>${I[ic]}<span>${label}</span></div>`}
+function needMarkProj(){return S.right==='needs'?'<span class="mk need">! 1</span>':''}
+function workMarkProj(){return(S.right==='working'||S.right==='activity'||S.right==='paused')?'<span class="mk"><span class="d"></span>1</span>':''}
+
+function leftBody(){
+ const m=S.mode;
+ if(S.left==='error')return base0(m)+`<div class="err"><b>Couldn't read ${m==='base'?'Central':'O-I'}.</b><span style="color:var(--muted)">The world mapping didn't answer. Everything already open still works.</span><button>Retry</button></div>`;
+ if(m==='base'){
+  const work=S.left==='loading'?'<div class="reading">Reading Central…</div>':
+   `<div class="proj">${I.folder}<span>O-I</span><span class="marks">${workMarkProj()}${needMarkProj()}</span></div>
+    <div class="child">
+     ${rowChat('Chat · Epii','now','Fix agent UI regressions and settings usability',chatMark(),{cur:S.right!=='closed'})}
+     ${rowChat('Chat · Aletheia','1h','Restore the Technè wiki map sidebar','',{unread:true})}
+     ${rowChat('Chat · Epii','Tue','Harness settings research dossier','<span class="sfail" title="Refused: provider credential missing">×</span>')}
+     ${tree('file','Files',0,false)}${tree('wiki','Wiki',0,false)}${tree('remember','Remembered',0,false)}
+    </div>
+    <div class="proj">${I.folder}<span>ai-kit</span><span class="marks"><span class="mk"><span class="d"></span>1</span></span></div>
+    <div class="proj">${I.folder}<span>Factory</span></div>
+    <div class="proj">${I.folder}<span>Actuation</span></div>
+    <div class="proj">${I.folder}<span>Workcell</span></div>
+    <div class="proj">${I.folder}<span>Quaternal-Logic</span><span class="marks"><span class="mk" title="1 unread"><span class="u"></span></span></span></div>`;
+  return base0(m)+sec('Control',tree('folder','user',0,false)+tree('folder','agents',0,false)+tree('folder','machines',0,false))+sec('Flows',tree('flow','Sidebar design · 22 Sep')+tree('flow','Harness settings notes'),null,true)+sec('Work',work,'6');
+ }
+ if(m==='factory'){
+  const t=S.left==='loading'?'<div class="reading">Reading O-I tasks…</div>':
+   rowChat('Task · Builder','now','Harness adapter fan-out: one subagent per harness',chatMark(),{cur:true})+
+   rowChat('Task · Verifier','14m','Adversarial check of the adapter census','<span class="sdot" title="Working" style="opacity:.5"></span>')+
+   rowChat('Discussion · Builder','2h','The opening section of the run plan','',{unread:true})+
+   rowChat('Task · Builder','Mon','Retire the node oracle','');
+  return base0(m)+sec('Tasks',t,'4')+`<div class="sec"><div class="sech">${I.right}<span>Files</span></div></div>`;
+ }
+ if(m==='expressions'){
+  const t=S.left==='loading'?'<div class="reading">Reading scenes…</div>':
+   tree('expressions','Return of Zero',0,true)+tree('flow','Opening field',1,true)+tree('file','The wedge',2)+tree('file','Point swarm',2)+tree('flow','Zero returns',1,false)+tree('flow','Colophon',1,false);
+  return sec('Expression',t,null,true);
+ }
+ if(m==='techne'){
+  const t=S.left==='loading'?'<div class="reading">Reading the root wiki…</div>':
+   `<div class="seg-mini"><span>List</span><span class="on">Tree</span><span>Graph</span></div>`+tree('wiki','Root wiki',0,true)+tree('file','Central',1)+tree('file','Harness profile',1,false)+tree('file','Day and NOW field',1)+tree('wiki','O-I project wiki',0,true)+tree('file','Cradle shell',1)+tree('file','Expression field',1);
+  return sec('Wiki map',t);
+ }
+ if(m==='epi'){
+  const t=S.left==='loading'?'<div class="reading">Reading places…</div>':
+   `<div class="place"><span>Essay</span><span class="avail">available</span></div>
+    <div class="place"><span>Bimba</span><span class="avail">partial</span><small>Graph reachable; search index is stale</small></div>
+    <div class="place"><span>Epii</span><span class="avail">available</span></div>
+    <div class="place"><span>Products</span><span class="avail">not connected</span><small>No product feed is configured</small></div>`;
+  return sec('Places',t);
+ }
+}
+function base0(m){
+ if(m==='base')return dest('central','Central',true)+dest('today','Today')+dest('library','Library')+dest('explore','Explore');
+ if(m==='factory')return dest('desk','Desk',S.right!=='fresh'&&S.right!=='working'&&S.right!=='needs'&&S.right!=='done')+dest('tasks','Tasks',['fresh','working','needs','done'].includes(S.right));
+ return'';
+}
+function scopeName(){return S.mode==='base'?['C','Central']:['O','O-I']}
+function leftHTML(){
+ const [g,n]=scopeName();
+ const other=true;
+ let menu='';
+ if(S.left==='scope')menu=`<div class="menu" style="left:10px;top:44px"><div class="mh">Scope</div>
+  <div class="mi"><span class="sg" style="width:16px;height:16px;border-radius:4px;background:var(--ink);color:var(--paper);display:grid;place-items:center;font-size:9px;font-weight:700">C</span>Central<span class="r">${S.mode==='base'?'✓':''}</span></div>
+  <div class="mh">Work</div>
+  <div class="mi">${I.folder}O-I<span class="r">${workMarkProj()}${needMarkProj()}${S.mode!=='base'?'✓':''}</span></div>
+  <div class="mi">${I.folder}ai-kit<span class="r"><span class="mk"><span class="d"></span>1</span></span></div>
+  <div class="mi">${I.folder}Factory<span class="r"></span></div>
+  <div class="mi">${I.folder}Quaternal-Logic<span class="r"><span class="u"></span></span></div>
+  <hr><div class="mh">Machines</div>
+  <div class="mi">${I.term}Omarchy<span class="r"><span class="gd"></span>reachable</span></div></div>`;
+ if(S.left==='create'){const extra={factory:'New run…',expressions:'New Expression',techne:'New wiki note',epi:'New essay draft'}[S.mode];
+  menu=`<div class="menu" style="left:150px;top:44px"><div class="mi">${I.tasks}New chat<span class="r"><kbd>⌘⇧N</kbd></span></div><div class="mi">${I.flow}New flow</div>${extra?`<div class="mi">${I.plus}${extra}</div>`:''}<hr><div class="mi">${I.central}New agent…</div></div>`}
+ return`<aside class="left"><div class="head">
+   <button class="scope" data-act="scope" aria-expanded="${S.left==='scope'}"><span class="sg">${g}</span><span class="nm">${n}</span><span class="chev">${I.chev}${other?'<span class="dot"></span>':''}</span></button>
+   <button class="ib" title="Search ⌘K">${I.search}</button><button class="ib" data-act="create" aria-expanded="${S.left==='create'}" title="Create">${I.plus}</button></div>
+  <div class="lbody">${leftBody()}</div>
+  <div class="foot"><button class="dest">${I.inbox}<span>Inbox</span><span class="badge">3</span></button>
+   <div class="modes">${MODES.map(([v,l])=>`<button class="mode" data-mode="${v}" title="${l}" aria-pressed="${S.mode===v}">${I[v]}</button>`).join('')}<span class="div"></span><button class="mode" title="Settings">${I.gear}</button></div></div>
+  ${menu}</aside>`;
+}
+function centreHTML(){
+ const m=S.mode;
+ const chatStates=['fresh','working','needs','done','reconnect'];
+ if(S.right==='full')return`<main class="centre" style="display:none"></main>`;
+ if(m==='factory'&&chatStates.includes(S.right)){
+  return`<main class="centre"><div class="tabs"><div class="ctab">${I.desk}Desk</div><div class="ctab on">${I.tasks}Tasks · Harness adapter fan-out</div></div><div style="overflow:hidden;display:grid;grid-template-rows:1fr auto;padding:0 20px">${chatBody(true)}${S.right==='working'?statusLine():''}${composer()}</div></main>`;
+ }
+ if(m==='base')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.flow}Sidebar design · 22 Sep</div><div class="ctab">${I.file}mode.ts</div></div><div class="doc"><h4>Sidebar design</h4><div class="sub">Flow · Central · edited just now</div><div class="ln"></div><div class="ln m2"></div><div class="ln s"></div><div class="ln"></div><div class="ln m2"></div><br><div class="ln s"></div><div class="ln"></div><div class="ln m2"></div></div></main>`;
+ if(m==='factory')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.desk}Desk</div></div><div class="desk">
+  <div class="col"><h5>Needs you · ${S.right==='needs'?1:0}</h5>${S.right==='needs'?'<div class="card"><b>Harness adapter fan-out</b><small>Builder wants to run a command</small></div>':'<div style="color:var(--muted2);font-size:11.5px">Nothing waiting.</div>'}</div>
+  <div class="col"><h5>Active · 2</h5><div class="card"><b>Harness adapter fan-out</b><small>step 3 of 5 · Builder</small></div><div class="card"><b>Adapter census check</b><small>Verifier</small></div></div>
+  <div class="col"><h5>Queued · 1</h5><div class="card"><b>Now surface for session spaces</b><small>waiting on fan-out</small></div></div>
+  <div class="col"><h5>Recent</h5><div class="card"><b>Retire the node oracle</b><small>landed Mon</small></div></div></div></main>`;
+ if(m==='expressions')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.expressions}Return of Zero</div></div><div class="field"></div></main>`;
+ if(m==='techne')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.wiki}Root wiki projection</div></div><div class="graph"><svg viewBox="0 0 600 500"><path d="M300 240 180 140M300 240 440 150M300 240 200 360M300 240 420 350M440 150 520 250"/><circle cx="300" cy="240" r="16"/><circle cx="180" cy="140" r="10"/><circle cx="440" cy="150" r="10"/><circle cx="200" cy="360" r="10"/><circle cx="420" cy="350" r="10"/><circle cx="520" cy="250" r="7"/><text x="322" y="244">Central</text><text x="120" y="120">Harness profile</text><text x="455" y="135">Day and NOW</text><text x="130" y="385">Cradle shell</text><text x="432" y="378">Expression field</text></svg></div></main>`;
+ return`<main class="centre"><div class="tabs"><div class="ctab on">${I.epi}Essay · Return of Zero</div></div><div class="doc"><h4>Return of Zero</h4><div class="sub">Essay · Epi-Logos</div><div class="ln"></div><div class="ln m2"></div><div class="ln"></div><div class="ln s"></div><div class="ln m2"></div></div></main>`;
+}
+function agName(){return AG[S.mode][1]}
+function chatBody(centre){
+ const n=agName(),a=AG[S.mode][0];
+ if(S.right==='fresh')return`<div class="${centre?'centre-chat':''}" style="display:flex;flex-direction:column;gap:10px;${centre?'':'flex:1'}"><div class="sugg"><span>Read Context with me and tell me what stands out.</span><span>Help me think through what to do next.</span></div></div>`;
+ const me=`<div class="msg-me">Can you make the left sidebar's head and foot stay fixed across modes?</div>`;
+ const first=`<div class="msg-ag"><span class="av">${a}</span><div><div class="who"><b>${n}</b>2m</div>Reading the shell and the mode table first, then I'll move the scope selector and mode switcher out of the mode bodies.<div class="wm"><span class="g">⟡</span>read DesktopShell.tsx, mode.ts · 2s · 2 calls</div></div></div>`;
+ let tail='';
+ if(S.right==='working'||S.right==='reconnect')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div><div class="wm"><span class="g">⟡</span>editing shell.css · running</div></div></div>`;
+ if(S.right==='needs')tail=`<div class="perm"><div><b>${n} wants to run a command</b></div><div><code>npm run build</code> <span style="color:var(--muted)">in desktop/cradle</span></div><div class="scope"><span class="pill on">This time</span><span class="pill">This session</span></div><div class="acts"><button class="btn pri">Allow</button><button class="btn q">Refuse</button></div></div>`;
+ if(S.right==='done')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div>Head and foot are fixed; only the body changes with the mode.<div class="chips"><span class="chipa">${I.file}shell.css <small>rev 15</small></span><span class="chipa">${I.file}mode.ts <small>rev 9</small></span></div></div></div>`;
+ return`<div class="${centre?'centre-chat':''}" style="display:flex;flex-direction:column;gap:14px">${me}${first}${tail}</div>`;
+}
+function statusLine(){return`<div class="statusl"><span class="sdot breath"></span><b>${agName()}</b> · editing shell.css · 1m 12s</div>`}
+function composer(){const run=S.right==='working';return`<div class="comp"><div class="to">To:<span class="chip">${agName()}</span></div><div class="ph">${S.right==='reconnect'?'Keep writing — your draft is kept':'Message…'}</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button><span class="model">GLM-5.3 ${I.chev}</span><button class="send" title="${run?'Stop current response':'Send message'}">${run?I.stop:I.up}</button></div></div>`}
+function tape(paused){
+ const rows=[['12:04:10','read','src/workspace/mode.ts','0.2s'],['12:04:11','read','src/workspace/DesktopShell.tsx','0.3s'],['12:04:14','think','plan: move scope + modes into frame','4.1s'],['12:04:19','edit','shell.css  +12 −4','0.1s'],['12:04:20','edit','DesktopShell.tsx  +31 −18','0.1s'],['12:04:22','run','npm run build','14.1s ✓'],['12:04:37','tool','walk mode-sweep-probe','running']];
+ return`<div style="display:flex;align-items:center;gap:6px"><div class="tfilt"><span class="on">All</span><span>Edits</span><span>Commands</span><span>Tools</span><span>Waits</span></div><span class="follow">${paused?'Paused':'<span class="sdot breath"></span>Following live'}</span></div>
+ <div class="tape">${rows.map((r,i)=>`<div class="tr${i===rows.length-1&&!paused?' live':''}"><span>${r[0]}</span><span class="v">${r[1]}</span><span style="color:var(--ink);white-space:nowrap;overflow:hidden;text-overflow:ellipsis">${r[2]}</span><span>${r[3]}</span></div>`).join('')}<div class="tr grp"><span></span><span class="v">edit</span><span>shell.css ×3 (coalesced)</span><span>▸</span></div></div>${paused?'<button class="resume">Resume live · 4 new</button>':''}`;
+}
+function rightHTML(){
+ const m=S.mode, st=S.right, [a,n]=AG[m];
+ const tabs=TABS[m];
+ let cur={fresh:tabs[0],working:tabs[0],needs:tabs[0],done:tabs[0],reconnect:tabs[0],activity:m==='factory'?'Run':'Activity',paused:m==='factory'?'Run':'Activity',agents:'Agents',context:'Context',inspect:tabs[0],full:tabs[0]}[st];
+ const pres=st==='needs'?'<span class="pres need" title="Needs you">!</span>':st==='reconnect'?'<span class="pres hollow" title="Reconnecting"></span>':(['working','activity','paused'].includes(st)?'<span class="pres work sdot breath" title="Working"></span>':'<span class="pres idle" title="Idle"></span>');
+ const tabHTML=tabs.map(t=>{let mk='';if(t===tabs[0]&&st==='needs')mk='<span class="tn">!</span>';if((t==='Activity'||t==='Run')&&st==='working')mk='<span class="tm"></span>';return`<button class="rtab${t===cur?' on':''}" data-tab="${t}">${t}${mk}</button>`}).join('');
+ let body='',foot='',extra='';
+ const factoryChat=m==='factory'&&['fresh','working','needs','done','reconnect','full'].includes(st);
+ if(factoryChat||(m==='factory'&&cur==='Run')){
+  body=`<div class="runsum"><span class="rt">Harness adapter fan-out</span><span style="color:var(--muted);font-size:11px">Builder + 3 · step 3 of 5 · checks 12/14</span><div class="steps"><i class="d"></i><i class="d"></i><i class="a"></i><i></i><i></i></div></div>${tape(st==='paused')}`;
+  if(factoryChat)extra=`<div class="note">The conversation is open in the centre (Tasks).</div>`;
+ } else if(cur==='Chat'){
+  body=chatBody(false);
+  if(st==='working')foot=statusLine();
+  foot+=composer();
+  if(st==='reconnect')extra=`<div class="recon"><span class="pres hollow"></span>Reconnecting — last seen 40s ago. Your draft is kept.</div>`;
+  if(st==='fresh')body=`<div style="color:var(--muted);font-size:11.5px">Start a conversation with ${n}. Your first message opens it in ${m==='base'?'Central':'O-I'}.</div>`+body;
+ } else if(cur==='Activity'){body=tape(st==='paused')}
+ else if(cur==='Agents'){
+  body=`<div class="srch"><button class="ib" title="Search agents">${I.search}</button><button class="ib" title="Create agent or team">${I.plus}</button></div>
+  <div class="sech" style="padding:0">Working with you</div>
+  <div class="agrow"><span class="av lg">${a}</span><div><b>${n}</b><div class="p">Develops the O:I desktop across its repos</div><div class="as">Fixing sidebar regressions</div></div><span class="st"><span class="sdot breath"></span></span></div>
+  <div class="agrow"><span class="av lg">Ve</span><div><b>Verifier</b><div class="p">Checks claims against running software</div></div><span class="st"><span class="pres idle"></span></span></div>
+  <div class="sech" style="padding:0;margin-top:6px">Guardians</div>
+  <div class="agrow"><span class="av lg">CG</span><div><b>Central Guardian</b><div class="p">Continuity of the personal ground</div></div><span class="st"><span class="pres idle"></span></span></div>
+  <div class="agrow"><span class="av lg">WG</span><div><b>Workcell Guardian</b><div class="p">Situation: where work runs</div></div><span class="st" title="Unavailable">×</span></div>`;
+ } else if(cur==='Context'){
+  body=`<div style="font-size:11.5px;color:var(--muted)">Bring material into this conversation's context.</div><div class="launch"><div class="li">${I.file}File<kbd>⌘P</kbd></div><div class="li">${I.term}Terminal<kbd>⌃\`</kbd></div><div class="li">${I.globe}Browser page<kbd>⌘T</kbd></div></div><div style="font-size:10.5px;color:var(--muted2)">Empty state only. Once something is inserted, the existing Context canvas is kept exactly as it works today.</div>`;
+ }
+ let drawer='';
+ if(st==='inspect'){drawer=`<div class="drawer"><div class="dh"><button class="ib" title="Back">${I.back}</button><b>mode.ts</b><span style="color:var(--muted2);font-size:11px">inspecting</span></div><dl class="kv"><dt>Source</dt><dd>desktop/cradle/src/workspace/mode.ts</dd><dt>Revision</dt><dd>9 · saved 2m ago</dd><dt>Owner</dt><dd>O-I repository</dd><dt>Changed by</dt><dd>${n}, in this conversation</dd><dt>Relations</dt><dd>Used by DesktopShell, modeBodies</dd><dd class="raw">${I.right}Show raw</dd></dl></div>`;if(m!=='factory'){body=chatBody(false);foot=composer()}}
+ return`<aside class="right"><div class="id"><button class="idbtn"><span class="av">${a}</span><span class="nm">${n}</span>${I.chev}</button>${pres}<button class="ib" data-act="full" title="Full screen ⌘⌥J">${I.expand}</button><button class="ib" data-act="closeR" title="Collapse ⌘⇧B">${I.close}</button></div>
+  <nav class="rtabs">${tabHTML}</nav>
+  <div style="display:grid;grid-template-rows:auto 1fr;min-height:0">${extra}<div class="rbody">${body}</div></div>
+  <div>${foot}</div>${drawer}</aside>`;
+}
+const CAP={
+ left:{rest:['L1','Rest: head and foot fixed; body is the mode\'s own'],loading:['L6 · R8','Reading: one quiet line where the rows will be; no invented rows'],error:['L7','Unreadable: says what could not be read and offers Retry; modes still switch'],scope:['D6','Scope menu: the project picker doubles as per-project activity'],create:['+ menu','One create menu; mode adds its own entry'],collapsed:['L2','Collapsed: the corner toggle stays; nothing else moves']},
+ right:{fresh:['P2','Fresh: at most three suggestions, which fill the draft'],working:['P4 · R2','Turn in flight: status line, Stop in the send slot, dot on the row'],needs:['P5 · R3','Needs you: inline permission with real scopes; ! on the tab, name, row, project'],done:['P6','Complete: one line plus artifacts at exact revisions'],reconnect:['P10','Reconnecting: hollow dot, one line, draft kept'],activity:['P16','Activity: the run-log tape, following live'],paused:['P16','Paused: scrolled up, so the view holds; Resume live counts new events'],agents:['§4.5','Agents: real identities, one + menu, actions on hover'],context:['§4.6','Context empty state: the three existing insert routes'],inspect:['P15','Inspect drawer: labelled fields, Back, Show raw'],full:['P13','Full: the conversation takes the centre; left stays'],closed:['P1','Closed: the corner companion mark carries the agent\'s state']}
+};
+function render(){
+ seg('c-mode',MODES,'mode');seg('c-left',LEFTS,'left');seg('c-right',RIGHTS,'right');seg('c-theme',[['system','System'],['light','Light'],['dark','Dark']],'theme');
+ const m=document.getElementById('m');
+ m.dataset.left=S.left==='collapsed'?'collapsed':'open';m.dataset.right=S.right;
+ const compDot=S.right==='closed'?'<span class="dot"></span>':'';
+ m.innerHTML=`<div class="bar"><span class="lights"><i></i><i></i><i></i></span><button class="tgl" data-act="toggleL" title="Toggle left ⌘B">${I.sidebar}</button><span class="spacer"></span><button class="tgl companion" data-act="toggleR" title="Toggle right ⌘⇧B">${I.sidebarR}${compDot}</button></div>
+  <div class="body">${leftHTML()}${centreHTML()}${rightHTML()}</div>`;
+ if(S.right==='full'){m.querySelector('.body').style.gridTemplateColumns=(S.left==='collapsed'?'0px':'240px')+' 0px 1fr'}
+ const c1=CAP.left[S.left],c2=CAP.right[S.right];
+ document.getElementById('cap-ids').textContent=`${c1[0]} + ${c2[0]}`;
+ document.getElementById('cap-desc').textContent=`${c1[1]}. ${c2[1]}.`+(S.mode==='factory'&&['fresh','working','needs','done','reconnect'].includes(S.right)?' In Factory the conversation is the centre Tasks view; the right keeps Run.':'');
+ fit();
+}
+document.getElementById('m').addEventListener('click',e=>{
+ const b=e.target.closest('[data-mode],[data-act],[data-tab]');if(!b)return;
+ if(b.dataset.mode){S.mode=b.dataset.mode}
+ const a=b.dataset.act;
+ if(a==='scope')S.left=S.left==='scope'?'rest':'scope';
+ if(a==='create')S.left=S.left==='create'?'rest':'create';
+ if(a==='toggleL')S.left=S.left==='collapsed'?'rest':'collapsed';
+ if(a==='toggleR')S.right=S.right==='closed'?'working':'closed';
+ if(a==='closeR')S.right='closed';
+ if(a==='full')S.right=S.right==='full'?'working':'full';
+ if(b.dataset.tab){const t=b.dataset.tab;S.right={Chat:'working',Activity:'activity',Run:'activity',Agents:'agents',Context:'context'}[t]}
+ render();
+});
+function fit(){const st=document.getElementById('stage'),inner=document.getElementById('stage-inner'),m=document.getElementById('m');const w=st.clientWidth;const s=Math.max(.5,Math.min(1,w/1200));m.style.transform=`scale(${s})`;inner.style.width=(1200*s)+'px';inner.style.height=(740*s)+'px'}
+window.addEventListener('resize',fit);
+try{const t=localStorage.getItem('sidebars-theme');if(t)S.theme=t}catch(e){}
+applyTheme();render();
+})();
+</script>
