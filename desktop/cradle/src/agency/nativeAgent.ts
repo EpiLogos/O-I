@@ -16,6 +16,7 @@ export interface NativePrepared {
 }
 export type AgentRequest =
  | {action: "roster" | "scope" | "skills"}
+ | {action: "session"; agent_session: string}
  | {action: "propose"; name: string; purpose: string; skill_refs: string[]; expected_scope_ref: string}
  | {action: "review"; profile_ref: string}
  | {action: "accept"; profile_ref: string; expected_revision: string; expected_content_digest: string}

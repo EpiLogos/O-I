@@ -72,9 +72,8 @@ export function FactoryNavigator({project,accompanying,onProjectChange,onOpenEnc
       <button role="radio" aria-checked={centreView==="tasks"} onClick={()=>choose("tasks")}><Glyph name="chat" size={12}/><span>Tasks</span></button>
     </div>
     <div className="factory-body oi-scroll">
-      {!current&&<p className="factory-note oi-note">{projects.length?"Choose a project above.":reading?.root?"No projects under Work.":"Reading Central…"}</p>}
       {current&&centreView==="desk"&&<DeskReceiving project={current.name} refresh={refresh}/>}
-      {current&&centreView==="tasks"&&<EncounterList project={current.name} onOpen={onOpenEncounter} activeRef={activeEncounterRef}/>}
+      {centreView==="tasks"&&<EncounterList key={`${project ?? ""}:${accompanying?.ref ?? ""}:${refresh}`} project={project ?? ""} onOpen={onOpenEncounter} activeRef={accompanying?.project===(project ?? "") ? activeEncounterRef : undefined}/>}
     </div>
   </nav>;
 }
@@ -138,11 +137,11 @@ function ProjectSpace({projects,current,pending,accompanying,onBrowse,onMessage,
     <div className="factory-space-row">
       <span className="factory-space-mark" aria-hidden="true"><Glyph name="factory" size={13}/></span>
       <label className="factory-picker" data-empty={!current}>
-        <select aria-label="Project" value={current?.name??""} disabled={pending||!projects.length} onChange={event=>void onBrowse(event.target.value||undefined)}>
-          <option value="">{projects.length?"Choose a project":"Reading Work…"}</option>
+        <select aria-label="Project" value={current?.name??""} disabled={pending} onChange={event=>void onBrowse(event.target.value||undefined)}>
+          <option value="">Central</option>
           {projects.map(entry=><option key={entry.path} value={entry.name}>{entry.name}</option>)}
         </select>
-        <span className="factory-picker-face"><strong>{current?.name??(projects.length?"Choose a project":"Reading Work…")}</strong><Glyph name="down" size={10}/></span>
+        <span className="factory-picker-face"><strong>{current?.name??"Central"}</strong><Glyph name="down" size={10}/></span>
       </label>
       <button className="oi-tool" aria-label="Refresh" title="Refresh" disabled={pending} onClick={()=>void onBrowse(current?.name)}><Glyph name="refresh" size={12}/></button>
     </div>

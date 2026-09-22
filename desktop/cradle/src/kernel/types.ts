@@ -222,6 +222,7 @@ export type KernelOp =
   | {op:"receiving";project:string|null;request:import("../receiving/client").ReceivingWireRequest}
   | {op:"now";project:string|null;request:import("../receiving/now").NowRequest}
   | {op:"factory_development_read";project?:string;state_path:string;read:string;subject?:string}
+  | {op:"factory_project_sources"}
   | {op:"factory_build_snapshot";project?:string;state_path:string;project_ref:string;run_ref:string}
   | {op:"factory_attempt_read";state_path:string;run_ref:string}
   | {op:"factory_attempt_task_list_read";state_path:string;run_ref:string}
@@ -313,6 +314,7 @@ export type KernelOpResult =
   | { result:"native_owner_reading";owner:string;data:unknown;failure:unknown }
   | { result:"a2a_exchange";data:unknown }
   | { result:"factory_development_reading";data:unknown }
+  | { result:"factory_project_sources_reading";data:unknown }
   | { result:"factory_attempt_reading";data:unknown }
   | { result:"factory_attempt_task_list_reading";data:unknown }
   | { result:"factory_attempt_task_reading";data:unknown }

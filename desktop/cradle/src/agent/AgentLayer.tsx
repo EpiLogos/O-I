@@ -215,7 +215,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
   </section>;
 
   return <section className="agent-layer" aria-label="Accompanying agent" data-full={full} data-mode={mode} data-plane={plane} data-agent-session-ref={expression.agentSessionRef} data-owner-state={expression.state} data-owner-activity-block={expression.latestOwnerActivity?.blockId}>
-    <SessionHeader agentName={curation.agent} situating={project ? `Situated in ${project}` : "Situated in Central"}/>
+    <SessionHeader agentName={mode==="factory" ? "Factory" : curation.agent} situating={project ? `Situated in ${project}` : "Situated in Central"}/>
     <PlaneNav entries={nav} current={plane} onSelect={select}/>
     {/* Factory relocates the conversation to the centre: the panel offers no
         Conversation plane and never a second composer — only the way there. */}

@@ -1364,20 +1364,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       // conversation selected — the one task-open path, from the navigator,
       // the Run detail's carried conversations, or the chat's own chooser.
       publishCentreView("tasks");
-    }catch(error){setWindowError(String(error));}
+    }catch(error){setWindowError(String(error));throw error;}
     finally{setFactoryChoosing(false);}
   };
   const factoryCentreProps:{project?:string;accompanying?:{ref:string;project:string;space:string};onOpenTask:(row:EncounterRow)=>Promise<void>;onMessage:(message:string)=>void}={
-    project:workspace.current.project??state.accompanying?.project,
+    project:workspace.current.project ?? "",
     accompanying:state.accompanying??undefined,
-    onOpenTask:row=>factoryChoose(row),
+    onOpenTask:async row=>{try{await factoryChoose(row);}catch{/* factoryChoose reports the error to the window. */}},
     onMessage:message=>setWindowError(message),
   };
   const factoryCentre=
     <AgentChat session={factoryChatSession} accompanying={state.accompanying??undefined}
-      project={workspace.current.project??state.accompanying?.project}
+      project={workspace.current.project ?? ""}
       agentName="Factory agent"
-      situating={workspace.current.project?`Situated in ${workspace.current.project}`:"Situated in Central"}
+      situating={`Situated in ${state.accompanying?.project || (state.accompanying ? "Central" : workspace.current.project || "Central")}`}
       choosing={factoryChoosing}
       variant="centre"
       subject={{title:subjectTitle,location:subjectBinding?.location}}
@@ -1394,7 +1394,9 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
       }}/>;
   // Sidebar C6: the chat row for the encounter that is the active surface
   // reads as selected — `subjectBinding` above is already that binding.
-  const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
+  const activeEncounterRef=(state.mode??"base")==="factory"
+    ? state.accompanying?.ref
+    : subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
   const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
   const mode:WorkspaceMode=state.mode??"base";
   // The retention warm set (WF4): the warm trees of the active workspace and
@@ -1469,7 +1471,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   // hidden state — the agent manages them — and they surface in the panel's
   // Active Context; the human's full-page mode experience never un-fullscreens.
   const modeSoloStage=!!modeCentreKind;
-  const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location};
+  const panelSubject={ref:subjectRef??subjectBinding?.ref,kind:subjectBinding?.kind,title:subjectTitle,project:mode==="factory" ? factoryCentreProps.project ?? "" : subjectBinding?.project ?? subjectBuffer?.project,location:subjectBinding?.location};
   const report=(reason:unknown)=>setWindowError(String(reason instanceof Error?reason.message:reason));
 
   // Close the menu on any pointerdown outside it.
@@ -1510,7 +1512,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const factoryPanelHost:FactoryPanelHost={onOpenFullRun:()=>{setState(s=>{const plane=s.panelPlanes?.factory==="run"?s:{...s,panelPlanes:{...s.panelPlanes,factory:"run"}};return s.rightDepth==="full"?plane:{...plane,rightDepth:"full"};});},
     onExpandPanel:()=>setState(s=>s.rightDepth==="full"?s:{...s,rightDepth:"full"}),
     onOpenPlane:plane=>setState(s=>s.panelPlanes?.factory===plane?s:{...s,panelPlanes:{...s.panelPlanes,factory:plane}}),
-    onOpenEncounterRow:(row:EncounterRow)=>void openEncounter(row).catch(report)};
+    onOpenEncounterRow:(row:EncounterRow)=>mode==="factory" ? factoryChoose(row) : openEncounter(row)};
   // The centre canvas's own pane openings, lent to the Ta-Onta Context plane
   // (expressions / techne / factory): hold the open file in the panel, or
   // open a file, a browser or a terminal in the centre exactly as the shell
@@ -1553,7 +1555,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         layout={state} setLayout={setState} workspace={workspace.current} workspaces={workspace.workspaces} activate={workspace.activate} create={workspace.create} rename={workspace.rename} onRecover={workspace.showRecovery} error={workspace.error ?? windowError ?? kernel.opError ?? null} onErrorDismiss={()=>{setWindowError(undefined); workspace.dismissError(); kernel.dismissOpError();}}
         epiLogos={state.epiLogos===true} onEpiLogosToggle={()=>{epiWorldActive()?leaveEpiWorld():enterEpiWorld();}}
         recovery={workspace.recovery} onRecoverAvailable={workspace.recoverAvailable} onStartFresh={workspace.startFresh} onReload={()=>workspace.reload()}
-        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={openEncounter} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
+        navigator={workspaceSelector => curation.left==="factory" ? <FactoryNavigator project={workspace.current.project} accompanying={state.accompanying} onProjectChange={workspace.browse} onOpenEncounter={factoryChoose} activeEncounterRef={activeEncounterRef} onMessage={message=>setWindowError(message)}/> : curation.left!=="world" ? <ModeLeftBody mode={mode} onOpenPlace={()=>void openModeSurface("epi-logos").catch(report)} project={workspace.current.project} onOpenExpressions={()=>void openModeSurface("expressions").catch(report)} onOpenTechne={()=>enterMode("techne")} onOpenFile={openFile} onMessage={message=>setWindowError(message)}/> : worldNavigator(workspaceSelector)}>
       {/* The modes' dedicated stages (surface/retention.tsx, stage law
         * 2026-09-20): one ALWAYS-PRESENT keyed slot per centre mode. Each
         * slot presents the centre binding living in its OWN mode's tree,

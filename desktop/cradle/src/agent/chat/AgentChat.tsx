@@ -97,8 +97,8 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
 }) {
   const centre=variant==="centre";
   const kernel=useKernel();
-  const liveIdentity=useAgentIdentity(agentName,!(identityOverride||fixture));
-  const identity=identityOverride??liveIdentity;
+  const liveIdentity=useAgentIdentity(accompanying,!(identityOverride||fixture));
+  const identity=identityOverride ?? (fixture ? {name:agentName,state:"read" as const} : liveIdentity);
   const [dropping,setDropping]=useState(false);
   const [attaching,setAttaching]=useState<string>();
   const dragDepth=useRef(0);
@@ -191,7 +191,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
 
   const status=state?.status;
   const stateLabel=!accompanying?undefined:!state?.reading&&!status?"Reading…":sessionStateLabel(status);
-  const agentLabel=status?.provider?.label??identity.name;
+  const agentLabel=identity.name;
   const bound=!!(session&&state&&actions);
   const suggestions=suggestionsOf(project,subject);
   // The history menu is the head's own control; the sidebar is the other way
@@ -206,7 +206,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         <div className="chat-history" ref={historyRef}>
           <button className="oi-tool chat-history-open" aria-label="History" aria-haspopup="true" aria-expanded={menuOpen} title="History — the project's attached conversations" disabled={!onChoose} onClick={()=>setHistoryOpen(value=>!value)}><Glyph name="history" size={14}/></button>
           {menuOpen&&<div className="chat-history-menu oi-menu" role="group" aria-label="Conversations">
-            {project
+            {project!==undefined
               ?<div className="chat-history-rows oi-scroll"><EncounterList project={project} variant="panel" activeRef={accompanying?.ref} onOpen={chooseRow}/></div>
               :<p className="chat-history-note oi-note">Select a project in the sidebar to list its conversations.</p>}
             {onNewChat&&accompanying&&<button className="oi-menu-item" onClick={()=>{setHistoryOpen(false);onNewChat();}}>New chat</button>}
@@ -239,7 +239,7 @@ export function AgentChat({session,accompanying,project,agentName,situating,sess
         <div className="chat-welcome">
           <p className="chat-welcome-title">{choosing?"Opening the conversation…":provisioning?"Opening a new conversation…":"New conversation"}</p>
           <p className="chat-welcome-line oi-note">{choosing?"The conversation binds through the owner's own start and read."
-            :`Write below — your first message opens a new conversation in ${provisionProject}, ready to send. Older conversations wait in the sidebar.`}</p>
+            :`Write below — your first message opens a new conversation in ${provisionProject || "Central"}, ready to send. Older conversations wait in the sidebar.`}</p>
         </div>
         {!choosing&&!provisioning&&suggestions.length>0&&<div className="chat-suggestions" aria-label="Starting suggestions">
           {suggestions.map(suggestion=><button key={suggestion} className="chat-suggestion" onClick={()=>{setLocal(suggestion);setComposerFocusToken(token=>token+1);}}>{suggestion}</button>)}

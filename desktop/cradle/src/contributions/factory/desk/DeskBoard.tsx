@@ -18,6 +18,7 @@
  */
 import {useCallback, useEffect, useMemo, useRef, useState} from "react";
 import {useKernel} from "../../../kernel/KernelProvider";
+import {kernelOp} from "../../../kernel/bridge";
 import {Glyph} from "../../../workspace/Glyph";
 import {formatRelativeTime} from "../../../shared/relativeTime";
 import {handToPanelInspect} from "../../../agent/planes/panelInspect";
@@ -47,7 +48,21 @@ export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(mes
   const kernel = useKernel();
   const live = useFactoryLive();
   const fixtureRows = useDeskFixture();
-  const [sources, setSources] = useState<DeskSource[]>(() => readDeskSources());
+  const [extraSources, setExtraSources] = useState<DeskSource[]>(() => readDeskSources());
+  const [nativeSources, setNativeSources] = useState<DeskSource[]>([]);
+  const [discoveryErrors, setDiscoveryErrors] = useState<string[]>([]);
+  const sources = useMemo(() => [...new Map([...extraSources, ...nativeSources].map(source => [deskRowKey(source, ""), source])).values()], [nativeSources, extraSources]);
+  const discover = useCallback(async () => {
+    if (fixtureRows) return;
+    try {
+      const response = await kernelOp(kernel.transport, {op:"factory_project_sources"});
+      if (response.error || response.outcome?.result!=="factory_project_sources_reading") throw new Error(response.error ?? "Factory project locations could not be read");
+      const reading=response.outcome.data as {sources:DeskSource[];errors:{project:string;error:string}[]};
+      setNativeSources(reading.sources);
+      setDiscoveryErrors(reading.errors.map(row => `${row.project || "Central"}: ${row.error}`));
+    } catch(error) { setDiscoveryErrors([String(error)]); }
+  }, [kernel.transport, fixtureRows]);
+  useEffect(() => { void discover(); }, [discover]);
   const [rows, setRows] = useState<Record<string, DeskRow>>({});
   const [sourceStates, setSourceStates] = useState<Record<string, SourceState>>({});
   const [prefs, setPrefs] = useState<BoardPrefs>(() => readPrefs());
@@ -110,6 +125,7 @@ export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(mes
     const gen = ++generation.current;
     setBusy(true);
     setRows({});
+    setSourceStates({});
     void Promise.all([...(fixtureRows ? [] : sources.map(source => readSource(source, gen)))]).finally(() => { if (generation.current === gen) setBusy(false); });
   }, [fixtureRows, readSource, sources]);
 
@@ -165,8 +181,11 @@ export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(mes
   const needsYouCount = grouped.get("attention")!.reduce((sum, row) => sum + (row.view?.humanRequests.length ?? 0), 0);
 
   const addSource = (source: DeskSource) => {
-    setSources(existing => existing.some(entry => entry.statePath === source.statePath && entry.projectRef === source.projectRef) ? existing : [...existing, source]);
-    writeDeskSources(sources.some(entry => entry.statePath === source.statePath && entry.projectRef === source.projectRef) ? sources : [...sources, source]);
+    setExtraSources(existing => {
+      const next=existing.some(entry => entry.statePath === source.statePath && entry.projectRef === source.projectRef) ? existing : [...existing, source];
+      writeDeskSources(next);
+      return next;
+    });
   };
 
   return <div className="desk-board" aria-label="Desk — live Runs">
@@ -184,15 +203,16 @@ export function DeskBoard({project, onMessage}:{project?:string; onMessage?:(mes
           <option value="all">All Projects</option>
           {scopeOptions.map(entry => <option key={entry} value={entry}>{entry}</option>)}
         </select>
-        <button className="oi-action" onClick={refresh} disabled={busy}>{busy ? "Reading…" : "Refresh"}</button>
+        <button className="oi-action" onClick={() => {void discover(); refresh();}} disabled={busy}>{busy ? "Reading…" : "Refresh"}</button>
         <ScenarioBar/>
       </div>
     </header>
 
-    <AddSource onAdd={addSource} fixtureActive={!!fixtureRows}/>
+    <details><summary>Additional Factory locations</summary><AddSource onAdd={addSource} fixtureActive={!!fixtureRows}/></details>
 
     {fixtureRows ? <p className="desk-board-fixture-note oi-note">Dev scenario — labelled fixture Runs, no native read behind them.</p> : <>
-      {sources.length === 0 && <p className="desk-board-empty oi-note">No Factory source is configured yet. Add one — a developmental state path and the Project ref it serves — and its Runs appear here. The desk reads only what you name; it never invents a source.</p>}
+      {discoveryErrors.map(error => <p key={error} className="oi-refusal" role="alert">{error}</p>)}
+      {!busy && sources.length > 0 && boardRows.length === 0 && !discoveryErrors.length && <p className="desk-board-empty oi-note">No work has been commissioned yet. Open Tasks to start a conversation.</p>}
       <SourceStates states={Object.values(sourceStates)}/>
     </>}
     <div className="desk-columns">

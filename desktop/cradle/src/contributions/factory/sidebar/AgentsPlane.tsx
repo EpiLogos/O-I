@@ -1,15 +1,14 @@
 /**
  * The Factory sidebar's Agents plane (FACTORY-UI-INTEGRATION-HANDOFF §2/§3):
  * a working roster — creation, teams and assignment, the selected agent's
- * Skills / Capabilities / routines / setup, and the explicit bounded
- * Suggest-skills flow. Real project conversations are the live roster rows;
- * the labelled dev fixture supplies the durable-worker shapes no native
- * roster operation exposes yet (named gap), and every fixture control
- * mutates the fixture, never native data.
+ * Skills / Capabilities / setup through the existing native Agent owner.
+ * Project conversations stay distinct from accepted Agent definitions.
+ * The development fixture is isolated from the production owner route.
  */
 import {useMemo, useState} from "react";
 import {Glyph} from "../../../workspace/Glyph";
 import {EncounterList} from "../../../encounter/EncounterList";
+import {NativeAgentLauncher} from "../../../agency/NativeAgentLauncher";
 import {handToPanelInspect} from "../../../agent/planes/panelInspect";
 import type {DeskPlaneProps} from "../../../agent/desk/deskTypes";
 import {
@@ -25,7 +24,7 @@ import {ScenarioBar} from "./ScenarioBar";
  * the desktop seam yet, so no identities are minted here. */
 const GUARDIAN_PRODUCTS = ["Central", "Actuation", "AIKit", "Software Factory", "Workcell", "Quaternal Logic"] as const;
 
-export function AgentsPlane({subject, host, withScenarioBar=true}: DeskPlaneProps & {host?: FactoryPanelHost; withScenarioBar?: boolean}) {
+export function AgentsPlane({subject, accompanying, host, withScenarioBar=true}: DeskPlaneProps & {host?: FactoryPanelHost; withScenarioBar?: boolean}) {
   const fixture = useFactoryFixture();
   const [query, setQuery] = useState("");
   const [selected, setSelected] = useState<string>();
@@ -36,7 +35,18 @@ export function AgentsPlane({subject, host, withScenarioBar=true}: DeskPlaneProp
   const agent = agents.find(entry => entry.ref === selected);
   const team = teams.find(entry => entry.ref === teamOpen);
   const filtered = useMemo(() => agents.filter(entry => !query.trim() || `${entry.name} ${entry.purpose} ${entry.assignment ?? ""}`.toLowerCase().includes(query.trim().toLowerCase())), [agents, query]);
-  const project = subject.project;
+  // Browsing scope and conversation recipient are distinct. Empty is
+  // Central root; a carried conversation must not override that selection.
+  const project = subject.project ?? accompanying?.project ?? "";
+
+  if (!fixture) return <div className="desk-plane factory-side" data-plane="Agents">
+    <NativeAgentLauncher project={project} onChoose={host?.onOpenEncounterRow}/>
+    <section className="factory-side-group" aria-label="Project conversations">
+      <h4>Conversations in {project || "Central"}</h4>
+      <EncounterList key={`${project}:${accompanying?.ref ?? ""}`} project={project}
+        activeRef={accompanying?.project===project ? accompanying.ref : undefined} variant="panel" onOpen={host?.onOpenEncounterRow}/>
+    </section>
+  </div>;
 
   return <div className="desk-plane factory-side" data-plane="Agents" data-fixture={agents.length ? fixture?.scenario : undefined}>
     {withScenarioBar && <ScenarioBar />}

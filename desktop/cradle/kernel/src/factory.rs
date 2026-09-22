@@ -27,6 +27,13 @@ impl Client {
     pub fn with(executable: PathBuf) -> Self {
         Self { executable }
     }
+    pub fn project_sources(&self) -> Result<Value, Error> {
+        let data = invoke(&self.executable, &["factory-projects".into(), "--json".into()], None)?;
+        if data["contract"] != "oi.factory-project-sources/v1" || !data["sources"].is_array() || !data["errors"].is_array() {
+            return Err(incompatible("Unsupported Factory project locations reading"));
+        }
+        Ok(data)
+    }
     /// One developmental read through the owner's own `factory development`
     /// family (queue cell 3). The state path is the caller's disclosure —
     /// the desktop never invents a Factory state — and the payload is

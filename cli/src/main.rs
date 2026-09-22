@@ -10,6 +10,7 @@ mod composition {
     include!("composition.rs");
     include!("ground_binding.rs");
     include!("bootstrap.rs");
+    include!("factory_projects.rs");
     include!("verification.rs");
     include!("first_suite.rs");
     include!("first_suite_finalize.rs");

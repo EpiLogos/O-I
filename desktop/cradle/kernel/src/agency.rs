@@ -32,6 +32,7 @@ impl Client {
         match (operation, argument.map(|(flag,_)|flag)) {
             ("agent-session-scope", None) |
             ("agent-session-skills", None) |
+            ("agent-session-read", Some("--agent-session")) |
             ("agent-session-prepare", Some("--request-json")) |
             ("agent-session-find", Some("--request-id")) => (),
             _ => return Err("Unsupported native Agent operation".into()),

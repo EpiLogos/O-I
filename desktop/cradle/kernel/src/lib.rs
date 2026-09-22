@@ -375,6 +375,7 @@ pub enum KernelOp {
         #[serde(default)]
         subject: Option<String>,
     },
+    FactoryProjectSources,
     /// Run-in-Expressions: the whole SSSF attempt reading
     /// (`factory attempt read <state> <run-ref>`) — legs, attempts,
     /// verifications and the readable Return — so the Expression presents the
@@ -668,6 +669,7 @@ pub enum KernelOpResult {
     NowReading {data:serde_json::Value},
     EncounterTaskReading {data:serde_json::Value},
     FactoryDevelopmentReading {data:serde_json::Value},
+    FactoryProjectSourcesReading {data:serde_json::Value},
     FactoryAttemptReading {data:serde_json::Value},
     FactoryAttemptTaskListReading {data:serde_json::Value},
     FactoryAttemptTaskReading {data:serde_json::Value},
@@ -933,6 +935,10 @@ impl Kernel {
             }
             KernelOp::MaterialRead { target } => {
                 native_owner_reading("workcell", material::Client::discover().read(&target))
+            }
+            KernelOp::FactoryProjectSources => {
+                let data = factory::Client::discover().project_sources().map_err(|e| e.message)?;
+                Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::FactoryProjectSourcesReading {data}})
             }
             KernelOp::FactoryBuildSnapshot {
                 project,
@@ -1463,10 +1469,11 @@ impl Kernel {
                 })
             }
             KernelOp::EncounterProvision {project} => {
-                // The same disclosure gate as every project-scoped op: the
-                // project must be inside Central's disclosed ground, and the
-                // canonical ProjectRef is Central's own, never the caller's.
-                let (cwd,project_ref)=self.project_ground(&project)?;
+                // Provision in the same native scope used by encounter reads
+                // and the roster. Empty is Central root, not a child named
+                // "Central". Named projects retain the disclosure gate.
+                let cwd=self.agent_location((!project.is_empty()).then_some(project.as_str()))?;
+                let project_ref=self.agent_project_ref(&project,&cwd)?;
                 let data=self.agency.provision(&cwd,&project_ref)?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterProvisioned {data}})
             }
@@ -2243,19 +2250,6 @@ impl Kernel {
         let reading = world::read_world(&self.client)?;
         self.reads.put("world".into(), reading.clone());
         Ok(reading)
-    }
-
-    /// The project-scoped ground every project-named op shares: the project
-    /// must be inside Central's disclosed ground, the cwd comes from that
-    /// disclosure, and the canonical ProjectRef is Central's own inspect
-    /// reading — never a caller-supplied path or ref.
-    fn project_ground(&mut self, project: &str) -> Result<(std::path::PathBuf, String), String> {
-        let root=self.world_map(false)?;
-        let row=root["work"]["projects"].as_array().and_then(|rows|rows.iter().find(|r|r["name"].as_str()==Some(project))).ok_or("Project is outside Central's disclosed ground")?;
-        let cwd=std::path::Path::new(root["root"].as_str().ok_or("Central root location unavailable")?).join(row["path"].as_str().ok_or("Project location unavailable")?);
-        let inspection=self.client.run("projectcentral.inspect",serde_json::json!({"project":project})).map_err(|e|e.to_string())?;
-        let project_ref=inspection["manifest"]["project_id"].as_str().ok_or("Central has not bound a canonical ProjectRef")?.to_owned();
-        Ok((cwd,project_ref))
     }
 
     fn project_map(&mut self, project: &str, fresh: bool) -> Result<serde_json::Value, String> {

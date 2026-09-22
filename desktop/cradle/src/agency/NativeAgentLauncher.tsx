@@ -24,7 +24,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
  };
  const {draft,review,prepared}=state;
  return <section className="oi-section native-agent-launcher" aria-label="Native Agent creation" aria-busy={state.busy||opening}>
-  <header className="oi-panel-head"><strong>Agents in {project??"Central root"}</strong><button type="button" className="oi-action" disabled={state.busy} onClick={()=>void refresh()}>Read native roster</button></header>
+  <header className="oi-panel-head"><strong>Agents in {project||"Central"}</strong><button type="button" className="oi-action" disabled={state.busy} onClick={()=>void refresh()}>Refresh</button></header>
   <p className="oi-note">A reusable Agent is an accepted native definition. Temporary task roles and runtime sessions stay separate. Preparing a session neither starts a harness nor grants execution authority.</p>
   {state.profiles.length>0&&<div role="group" aria-label="Native Agent roster">{state.profiles.map(item=><button key={item.profile.ref} type="button" className="oi-row" disabled={state.busy||state.unknown==="prepare"} onClick={()=>void controller.select(item.profile.ref)}>
    <span>{item.profile.name??item.profile.agent_ref}</span><span className="oi-note">{item.accepted?"Accepted definition":"Proposal — not accepted"}</span>

@@ -238,6 +238,7 @@ fn print_help(catalog: &Catalog) {
     println!("  oi catalogue show [--json]");
     println!("  oi catalogue adopt <surfaces.json>");
     println!("  oi migrate <path>");
+    println!("  oi factory-projects [--reconcile] [--json]");
     println!("  oi <alias> [native arguments...]");
     println!();
     println!("Native aliases verified {}:", catalog.verified_at);
@@ -652,6 +653,11 @@ fn command_register(catalog: &Catalog, args: &[OsString]) -> Result<i32, String>
         println!("{{O:I}} alias: none (no native CLI exists to alias)");
     }
     println!("Docs: {}", registration.docs);
+    if surface.id == "software-factory" {
+        if let Some(ground) = composition.personal_ground.as_deref() {
+            reconcile_installed_factory_projects(catalog, &composition, Path::new(ground))?;
+        }
+    }
     Ok(0)
 }
 
@@ -777,6 +783,11 @@ fn register_existing_in_modality(
         println!("{{O:I}} alias: oi {alias}");
     }
     println!("Docs: {}", registration.docs);
+    if surface.id == "software-factory" {
+        if let Some(ground) = composition.personal_ground.as_deref() {
+            reconcile_installed_factory_projects(_catalog, &composition, Path::new(ground))?;
+        }
+    }
     Ok(0)
 }
 
