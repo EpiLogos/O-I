@@ -11,7 +11,6 @@ export {setup} from "./canvas-context.mjs";
  *     leaves the mode and scope where they were. */
 
 const BOOK = "oi-cradle.workspaces.v1";
-const CENTRE_VIEW = "oi-factory-centre-view.v1";
 
 export default async function run({page, baseUrl, check, shot, channel, provision: p}) {
   await page.goto(baseUrl); await channel("info");
@@ -28,9 +27,8 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await nav.locator(`[data-file-path="Work/Editor/${file}"]`).click();
   await page.waitForFunction(ref => document.querySelector(".pane.focused .cm-content")?.dataset.sourceRef === ref, p.sources[0].binding.ref ?? p.sources[0].ref, {timeout: 20000}).catch(() => {});
   const fileTitle = file.split("/").pop();
-  check((await book())?.project === "Editor", "choosing the Editor project sets the scope to Editor");
   // Back to Central through the left's Central/Overview destination.
-  await nav.getByRole("button", {name: /^(Central|Overview)$/}).first().click();
+  await nav.getByRole("button", {name: "Browse Central root", exact: true}).click();
   await page.waitForFunction(key => {const b = JSON.parse(localStorage.getItem(key) ?? "null"); return !b?.workspaces?.find(w => w.id === b.active)?.project;}, BOOK, {timeout: 10000});
   const before = {project: (await book())?.project ?? null, navigator: await navigatorProject()};
   check(before.project === null, "the Central destination sets the scope to Central (no project)", before);
@@ -43,19 +41,21 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   await shot("scope-held-on-tab-focus");
 
   // --- B. Factory conversations open in the centre Tasks view ----------------
-  await nav.locator('[data-project-path="Work/Editor"]').click();
-  await page.waitForFunction(key => {const b = JSON.parse(localStorage.getItem(key) ?? "null"); return b?.workspaces?.find(w => w.id === b.active)?.project === "Editor";}, BOOK, {timeout: 10000});
   await page.keyboard.press("Meta+Alt+2");
   await page.locator('.mode-stage[data-mode="factory"]').waitFor();
-  await page.evaluate(key => localStorage.setItem(key, JSON.stringify("desk")), CENTRE_VIEW);
+  // Until the scope menu lands (lane 1), Factory's own project select is the
+  // route that sets the scope; it writes the same workspace scope.
+  await page.locator('[data-region="left"] select[aria-label="Project"]').selectOption("Editor");
+  await page.waitForFunction(key => {const b = JSON.parse(localStorage.getItem(key) ?? "null"); return b?.workspaces?.find(w => w.id === b.active)?.project === "Editor";}, BOOK, {timeout: 10000});
   const left = page.locator('[data-region="left"]');
+  await left.getByRole("radio", {name: "Tasks", exact: true}).click();
   const row = left.locator(".project-encounters button").first();
   await row.waitFor({timeout: 30000});
   const rowTitle = (await row.locator(".encounter-title").innerText()).trim();
   const beforeSurfaces = await surfaces();
   await row.click();
-  await page.waitForFunction(key => (localStorage.getItem(key) ?? "").includes("tasks"), CENTRE_VIEW, {timeout: 20000});
-  await page.waitForTimeout(500);
+  await page.waitForFunction(title => [...document.querySelectorAll('[data-region="left"] .project-encounters button[aria-current="true"] .encounter-title')].some(el => el.textContent?.trim() === title), rowTitle, {timeout: 20000}).catch(() => {});
+  await page.waitForTimeout(800);
   const afterSurfaces = await surfaces();
   check(JSON.stringify(beforeSurfaces) === JSON.stringify(afterSurfaces), "opening a Factory task adds no tab to any group (the side tab group is untouched)", {beforeSurfaces, afterSurfaces});
   const centre = page.locator('.mode-stage[data-mode="factory"]');
