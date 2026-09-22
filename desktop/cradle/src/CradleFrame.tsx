@@ -7,13 +7,14 @@ import {DOCUMENT_FORMS,resolveDocumentForm} from "./flow/documentForms";
 import {ContextTray} from "./context/ContextTray";
 import {addToActiveMaterialScene} from "./techne/material";
 import {FileHistory} from "./files/FileHistory";
-import {EPI_PRIME_QL_BODY_REF,encounter,encounterProvision} from "./encounter/client";
+import {encounter,encounterProvision} from "./encounter/client";
 import {useEncounterSession} from "./encounter/session";
 import {AgentChat} from "./agent/chat/AgentChat";
 import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
+import {modeDefaultAgentBody} from "./workspace/agentBody";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {requestTechneFieldOpen,resetTechneFieldOpen} from "./expressions/fieldOpen";
 import {techneFieldOpenRequest} from "./surface/techneSummonRecord";
@@ -1397,10 +1398,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
   const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
   const mode:WorkspaceMode=state.mode??"base";
-  const epiPrimeBodyDefault=workspace.current.context?.world==="epi-logos"
-    && (mode==="epi-logos"||mode==="expressions"||mode==="techne")
-    ? EPI_PRIME_QL_BODY_REF
-    : undefined;
+  const epiPrimeBodyDefault=modeDefaultAgentBody(workspace.current.context?.world,mode);
   // The retention warm set (WF4): the warm trees of the active workspace and
   // the recently visited ones, rendered whole and hidden at stable positions —
   // a mode swap or a workspace swap flips visibility, it never unmounts a
