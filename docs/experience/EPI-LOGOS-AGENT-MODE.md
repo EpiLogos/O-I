@@ -114,3 +114,31 @@ Provider precedence stays explicit. A person's held provider choice wins even if
 The branch's complete triggered desktop/kernel suite is green, including Agent-session-native, O:I desktop, Technē constructive field, Native Expression backcheck, Canvas/context, shell recovery, adoption, Wiki integration and O:I Verify. That proves the receiving application and state law on the cloud cut; it does not assert installation on the owner's machines, a live Prime/Jev/EBM turn or human acceptance.
 
 The general Jev/Redis/NOW implementation remains owned by AIKit #388. This mode consumes the same Encounter prepared-context seam; until #388 publishes its runtime provider, Jev preparation is a dependency standing, not a fixture renamed as live context.
+
+
+### Native continuation follow-up
+
+The descendant continuation mechanism now uses Central's existing
+`projectcentral.now.return` owner rather than a chat transcript or an
+Actuation-local handoff file. When the installed Prime provider is configured
+with the optional Central `ctrl` binary/root/project inputs, the inherited
+`ql-relational` Skill can write a pithy
+`central.project-now.handoff/v1` record carrying the actual session,
+source/evidence/preserve refs and repo/branch/optional-worktree lane claim. A
+fresh cheapest-eligible Prime child re-reads that exact Central record through
+NOW inspection and continues from its refs; the parent does not reconstruct the
+investigation.
+
+The installed acceptance runner in AIKit exercises this branch when its Central
+and lane inputs are supplied. It separately retains cancellation/same-session
+continuation and child-owned QL faculty receipt checks.
+
+One material branch is still deliberately not called complete: Prime Agent
+0.9.4 owns `rlm.run` child creation and exposes no per-child supervisor hook
+through which Workcell's write boundary can be applied before exec. Workcell
+does have a real Linux Landlock process-tree boundary, but wrapping the whole
+Prime body would not prove independently assigned child worktrees, and a
+writable worker directory alone cannot prove that an editable full-tree copy
+was impossible. Until Prime exposes that host seam (or a Workcell-owned worker
+session replaces the child launch), the installed verifier names
+OS/worktree-confinement as unproved rather than using a command-name filter.
