@@ -2,6 +2,14 @@
 
 This tooling supports the existing story/capability conventions. It is **not** an execution engine, a substitute for normal AIKit discovery, or a verifier of the user's experience. The UX source remains vision-level. Its readable and compiled forms connect to native documentation, capability and practice operations as described in [DOCUMENT-OPERATIONS.md](DOCUMENT-OPERATIONS.md).
 
+## Early Factory integration — Jev and Redis, 22 September 2026
+
+For the owner's current #65 bring-up round, read [Jev and Redis in the existing NOW and development field](JEV-REDIS-NOW-INTEGRATION.md). [AIKit #388](https://github.com/EpiLogos/ai-kit/issues/388) is the bounded native implementation assignment, coordinated by O:I #220. Start native construction and controlled testing alongside Factory bring-up; exercise the first live integrated episode as soon as the bounded Factory/Day/NOW path is usable. Preserve the existing foundation-first broad-fan-out gate, C0–C5 and all later obligations.
+
+Jev stays a general classifier/decider used by the existing document/matrix/Wiki/context/Factory practices. Central/BKMR supplies source locations and continuity; the Wiki can use any eligible ContextSource; Redis holds prepared participant-specific context and relevant NOW-plane activity. Native CLI/direct-service delivery leads and MCP is optional. This is not a new Wiki, source inventory, memory ontology or full-QL-harness prerequisite.
+
+The existing `session-grounding.json` declares this note as its `document_operations_source` and extends its original obligations for prepared context, actual delivery, cooperation, recovery and document Return. The source compiler includes the full note in its source/digest reading; the source checks below exercise that connection and retained obligation IDs. They do not certify a live Jev call, Redis service or Factory execution. Bind actual public operations when the native implementation returns; do not invent working command names from this plan.
+
 ## Source checks
 
 From the O:I checkout containing this publication:
