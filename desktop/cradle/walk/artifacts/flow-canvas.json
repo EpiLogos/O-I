@@ -1,7 +1,9 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "flow-canvas",
-  "generated_at": "2026-09-22T15:37:55.595Z",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "B",
+  "generated_at": "2026-09-22T19:27:27.804Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
@@ -9,35 +11,23 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "187ea8cdfb671d411d18a985a84ae88689dfc5d4a6f14004fcad986f3988b3df"
+      "bundle_fingerprint": "6f51f839c18c0356d2d82650d59053be70a45e45465e7e56a3fc1114c7a6906a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "4141add37e72b46221d3bcd71e8ccb483752332d",
+      "repository_head": "a617119b77cc0aba7ca7eea46e38ca3ffd099905",
       "tracked_changes": [
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/Rest.tsx",
-        "desktop/cradle/src/agency/AgencySurface.tsx",
-        "desktop/cradle/src/agency/agency.css",
-        "desktop/cradle/src/agent/desk/desk.css",
-        "desktop/cradle/src/cradle.css",
-        "desktop/cradle/src/flow/instance.ts",
-        "desktop/cradle/src/flow/welcome.css",
-        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx",
-        "desktop/cradle/walk/artifacts/flow-canvas-failure.png",
+        "desktop/cradle/src-tauri/icons/icon.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-conflict-resolved.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-saved.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-sessions-bound.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-cocurrency-reference.png",
         "desktop/cradle/walk/artifacts/flow-canvas.json",
-        "desktop/cradle/walk/artifacts/rest-desktop-rest.png",
-        "desktop/cradle/walk/artifacts/rest.json",
-        "desktop/cradle/walk/scenarios/flow-canvas.mjs",
-        "desktop/cradle/walk/scenarios/rest.mjs"
+        "desktop/cradle/walk/artifacts/rest.json"
       ],
-      "dirty_digest": "9167040ba792204cca0c8c5bd7a9ec4b0729c577a41560492cce9f331fdaa2f9",
+      "dirty_digest": "d0f2a8ca274581794cba0208e7b410b5fc07cfd52d69e66f8c5ec8d6832ed8c8",
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -45,7 +35,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 5641,
+  "duration_ms": 7602,
   "checks": [
     {
       "ok": true,
@@ -143,9 +133,9 @@
       "ok": true,
       "label": "Binding and kernel focus co-refer the same document path-ref",
       "data": {
-        "bindingRef": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
-        "focusRef": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
-        "expectedRef": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html"
+        "bindingRef": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
+        "focusRef": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
+        "expectedRef": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html"
       }
     },
     {
@@ -164,7 +154,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T15:37:55.705Z",
+        "mounted_at": "2026-09-22T19:27:27.958Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
@@ -175,43 +165,43 @@
     {
       "ok": true,
       "op": "read.layout",
-      "duration_ms": 0.1,
+      "duration_ms": 0.2,
       "data": {
         "layout": {
           "root": {
             "type": "group",
             "id": "g1",
             "tabs": [
-              "10178fce-bad7-4315-ba64-a34783912918"
+              "c0545b55-b889-4607-9362-77ce3f8544b8"
             ],
             "pinned": [],
-            "active": "10178fce-bad7-4315-ba64-a34783912918"
+            "active": "c0545b55-b889-4607-9362-77ce3f8544b8"
           },
           "surfaces": {
-            "468e6c59-e15a-4265-8168-35a02b945c80": {
-              "id": "468e6c59-e15a-4265-8168-35a02b945c80",
+            "18018d3d-edbe-435e-87de-443eba7b9b27": {
+              "id": "18018d3d-edbe-435e-87de-443eba7b9b27",
               "kind": "draft",
               "title": "Draft"
             },
-            "10178fce-bad7-4315-ba64-a34783912918": {
-              "id": "10178fce-bad7-4315-ba64-a34783912918",
+            "c0545b55-b889-4607-9362-77ce3f8544b8": {
+              "id": "c0545b55-b889-4607-9362-77ce3f8544b8",
               "kind": "flow",
-              "title": "flow-2026-09-22-1637.html",
-              "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+              "title": "flow-2026-09-22-2027.html",
+              "ref": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
               "location": {
                 "schema": "central.path-ref/v1",
-                "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
-                "root": "/private/tmp/oi-cradle-editor-MAi16S",
-                "path": "Control/user/flows/flow-2026-09-22-1637.html"
+                "ref": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
+                "root": "/private/tmp/oi-cradle-editor-S69Xtd",
+                "path": "Control/user/flows/flow-2026-09-22-2027.html"
               },
               "flow": {
-                "flowRef": "50e5854f-9776-43da-b890-f9847e955c58",
-                "path": "Control/user/flows/flow-2026-09-22-1637.html"
+                "flowRef": "8e7a3ec1-bda0-4e29-9307-1aeda8a879b5",
+                "path": "Control/user/flows/flow-2026-09-22-2027.html"
               }
             }
           },
           "closedStack": [
-            "468e6c59-e15a-4265-8168-35a02b945c80"
+            "18018d3d-edbe-435e-87de-443eba7b9b27"
           ],
           "focusedGroupId": "g1",
           "agencyDepth": "panel",
@@ -224,7 +214,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 35,
+      "duration_ms": 68,
       "data": {
         "file": "flow-canvas-flow-canvas-saved.png"
       }
@@ -232,7 +222,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 45,
+      "duration_ms": 58,
       "data": {
         "file": "flow-canvas-flow-canvas-sessions-bound.png"
       }
@@ -240,7 +230,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 42,
+      "duration_ms": 91,
       "data": {
         "file": "flow-canvas-flow-canvas-conflict-resolved.png"
       }
@@ -255,36 +245,36 @@
             "type": "group",
             "id": "g1",
             "tabs": [
-              "10178fce-bad7-4315-ba64-a34783912918",
-              "7aa7effd-413a-4afe-bacb-cfebf6fa286b"
+              "c0545b55-b889-4607-9362-77ce3f8544b8",
+              "effd163e-500f-4a6b-8ae5-d7d0b15cf1fa"
             ],
             "pinned": [],
-            "active": "10178fce-bad7-4315-ba64-a34783912918"
+            "active": "c0545b55-b889-4607-9362-77ce3f8544b8"
           },
           "surfaces": {
-            "468e6c59-e15a-4265-8168-35a02b945c80": {
-              "id": "468e6c59-e15a-4265-8168-35a02b945c80",
+            "18018d3d-edbe-435e-87de-443eba7b9b27": {
+              "id": "18018d3d-edbe-435e-87de-443eba7b9b27",
               "kind": "draft",
               "title": "Draft"
             },
-            "10178fce-bad7-4315-ba64-a34783912918": {
-              "id": "10178fce-bad7-4315-ba64-a34783912918",
+            "c0545b55-b889-4607-9362-77ce3f8544b8": {
+              "id": "c0545b55-b889-4607-9362-77ce3f8544b8",
               "kind": "flow",
-              "title": "flow-2026-09-22-1637.html",
-              "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
+              "title": "flow-2026-09-22-2027.html",
+              "ref": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
               "location": {
                 "schema": "central.path-ref/v1",
-                "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
-                "root": "/private/tmp/oi-cradle-editor-MAi16S",
-                "path": "Control/user/flows/flow-2026-09-22-1637.html"
+                "ref": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
+                "root": "/private/tmp/oi-cradle-editor-S69Xtd",
+                "path": "Control/user/flows/flow-2026-09-22-2027.html"
               },
               "flow": {
-                "flowRef": "50e5854f-9776-43da-b890-f9847e955c58",
-                "path": "Control/user/flows/flow-2026-09-22-1637.html"
+                "flowRef": "8e7a3ec1-bda0-4e29-9307-1aeda8a879b5",
+                "path": "Control/user/flows/flow-2026-09-22-2027.html"
               }
             },
-            "7aa7effd-413a-4afe-bacb-cfebf6fa286b": {
-              "id": "7aa7effd-413a-4afe-bacb-cfebf6fa286b",
+            "effd163e-500f-4a6b-8ae5-d7d0b15cf1fa": {
+              "id": "effd163e-500f-4a6b-8ae5-d7d0b15cf1fa",
               "kind": "source",
               "ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
               "title": "00 01-DESIGN.md",
@@ -292,7 +282,7 @@
             }
           },
           "closedStack": [
-            "468e6c59-e15a-4265-8168-35a02b945c80"
+            "18018d3d-edbe-435e-87de-443eba7b9b27"
           ],
           "focusedGroupId": "g1",
           "agencyDepth": "panel",
@@ -305,7 +295,7 @@
     {
       "ok": true,
       "op": "read.state",
-      "duration_ms": 12,
+      "duration_ms": 6.9,
       "data": {
         "buffers": {
           "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md": {
@@ -336,7 +326,7 @@
             "provenance": {
               "source": "central.projectcentral"
             },
-            "ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html"
+            "ref": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html"
           },
           "world": {
             "kind": "world",
@@ -422,7 +412,7 @@
               "source_files": 0
             },
             "projection": "project",
-            "root": "/private/tmp/oi-cradle-editor-MAi16S",
+            "root": "/private/tmp/oi-cradle-editor-S69Xtd",
             "schema": "central.world-map/v1",
             "sources": {
               "bindings": 11,
@@ -491,7 +481,7 @@
               "detected": false,
               "signals": []
             },
-            "root": "/private/tmp/oi-cradle-editor-MAi16S",
+            "root": "/private/tmp/oi-cradle-editor-S69Xtd",
             "root_state": "directory",
             "schema": "central.world-map/v1",
             "valid": true,
@@ -707,16 +697,16 @@
           }
         },
         "surfaces": {
-          "10178fce-bad7-4315-ba64-a34783912918": {
+          "c0545b55-b889-4607-9362-77ce3f8544b8": {
             "kind": "flow",
-            "source_ref": "central:path:/private/tmp/oi-cradle-editor-MAi16S:Control/user/flows/flow-2026-09-22-1637.html",
-            "surface_id": "10178fce-bad7-4315-ba64-a34783912918",
-            "title": "flow-2026-09-22-1637.html"
+            "source_ref": "central:path:/private/tmp/oi-cradle-editor-S69Xtd:Control/user/flows/flow-2026-09-22-2027.html",
+            "surface_id": "c0545b55-b889-4607-9362-77ce3f8544b8",
+            "title": "flow-2026-09-22-2027.html"
           },
-          "7aa7effd-413a-4afe-bacb-cfebf6fa286b": {
+          "effd163e-500f-4a6b-8ae5-d7d0b15cf1fa": {
             "kind": "source",
             "source_ref": "central:source:project:editor-walk:ProjectCentral/user/00%2001-DESIGN.md",
-            "surface_id": "7aa7effd-413a-4afe-bacb-cfebf6fa286b",
+            "surface_id": "effd163e-500f-4a6b-8ae5-d7d0b15cf1fa",
             "title": "00 01-DESIGN.md"
           }
         }
@@ -725,7 +715,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 91,
       "data": {
         "file": "flow-canvas-flow-cocurrency-reference.png"
       }

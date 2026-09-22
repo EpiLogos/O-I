@@ -1,7 +1,9 @@
 {
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "rest",
-  "generated_at": "2026-09-22T15:38:25.593Z",
+  "spec_ref": "docs/cradle/05-EXECUTION.md §3",
+  "grade": "C",
+  "generated_at": "2026-09-22T19:27:24.463Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": null,
@@ -9,35 +11,23 @@
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "187ea8cdfb671d411d18a985a84ae88689dfc5d4a6f14004fcad986f3988b3df"
+      "bundle_fingerprint": "6f51f839c18c0356d2d82650d59053be70a45e45465e7e56a3fc1114c7a6906a"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "4141add37e72b46221d3bcd71e8ccb483752332d",
+      "repository_head": "a617119b77cc0aba7ca7eea46e38ca3ffd099905",
       "tracked_changes": [
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/Rest.tsx",
-        "desktop/cradle/src/agency/AgencySurface.tsx",
-        "desktop/cradle/src/agency/agency.css",
-        "desktop/cradle/src/agent/desk/desk.css",
-        "desktop/cradle/src/cradle.css",
-        "desktop/cradle/src/flow/instance.ts",
-        "desktop/cradle/src/flow/welcome.css",
-        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx",
-        "desktop/cradle/walk/artifacts/flow-canvas-failure.png",
+        "desktop/cradle/src-tauri/icons/icon.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-conflict-resolved.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-saved.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-sessions-bound.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-cocurrency-reference.png",
         "desktop/cradle/walk/artifacts/flow-canvas.json",
-        "desktop/cradle/walk/artifacts/rest-desktop-rest.png",
-        "desktop/cradle/walk/artifacts/rest.json",
-        "desktop/cradle/walk/scenarios/flow-canvas.mjs",
-        "desktop/cradle/walk/scenarios/rest.mjs"
+        "desktop/cradle/walk/artifacts/rest.json"
       ],
-      "dirty_digest": "2b7f901a0bb8425afea203ea08d02c95e1010d14246f72c6d4843717fe92e481",
+      "dirty_digest": "d0f2a8ca274581794cba0208e7b410b5fc07cfd52d69e66f8c5ec8d6832ed8c8",
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -45,7 +35,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 481,
+  "duration_ms": 1364,
   "checks": [
     {
       "ok": true,
@@ -142,20 +132,20 @@
     {
       "ok": true,
       "op": "capture.timing",
-      "duration_ms": 0.4,
+      "duration_ms": 1.3,
       "data": {
-        "fcp_ms": 112,
-        "dom_content_loaded_ms": 28.7,
-        "load_ms": 28.8
+        "fcp_ms": 304,
+        "dom_content_loaded_ms": 82.7,
+        "load_ms": 82.7
       }
     },
     {
       "ok": true,
       "op": "info",
-      "duration_ms": 0,
+      "duration_ms": 0.1,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T15:38:25.702Z",
+        "mounted_at": "2026-09-22T19:27:24.794Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -169,7 +159,7 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T15:38:26.012Z",
+        "mounted_at": "2026-09-22T19:27:25.626Z",
         "transport": {
           "kind": "unavailable",
           "reason": "no kernel transport: neither the Tauri host nor a dev walk bridge is reachable"
@@ -180,14 +170,14 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 20,
+      "duration_ms": 82,
       "data": {
         "file": "rest-desktop-rest.png"
       }
     }
   ],
   "metrics": {
-    "cold_start_fcp_ms": 112
+    "cold_start_fcp_ms": 304
   },
   "screenshots": [
     "rest-desktop-rest.png"
