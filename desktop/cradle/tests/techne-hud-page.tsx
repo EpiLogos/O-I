@@ -8,11 +8,12 @@
 import React from 'react';
 import {createRoot} from 'react-dom/client';
 import {wikiReadingPayload} from '../src/techne/wikiReadingProvider';
-import {registerTechneReadingProvider, type TechneSubject} from '../src/techne/techneReading';
+import {registerTechneReadingProvider, techneReadingProvider, type TechneSubject} from '../src/techne/techneReading';
 import {KernelProvider} from '../src/kernel/KernelProvider';
 import {VisualsProvider} from '../src/visuals/ParticleExpression';
 import {ExpressionStageProvider} from '../src/stage/ExpressionStage';
 import {TechneSurfaceHost} from '../src/techne/TechneSurfaceHost';
+import {TechneCentre} from '../src/techne/TechneCentre';
 import '@epilogos/oi-design-system/tokens.css';
 
 const REGISTER = {key: 'central', title: 'Central'};
@@ -43,25 +44,55 @@ const bareRegisterReading = {
   relations: {state: 'available', focusRef: 'central:wiki:root', edges: [{relation: 'wiki:child', from: 'central:wiki:root', to: 'central:wiki:battle', provider: null, authority: null, revision: 'r9'}], truncated: false, warnings: []},
 };
 
-const bare = new URLSearchParams(location.search).get('reading') === 'bare';
+const params = new URLSearchParams(location.search);
+const bare = params.get('reading') === 'bare';
+// `?provider=wiki` registers NOTHING here, so TechneSurfaceHost's own
+// ensureWikiProvider registers the LIVE wikiTechneReadingProvider — the leg
+// the fixture scenarios deliberately bypass. The probe reads which provider
+// stands (window.hudProbe.providerRef).
+const useLiveProvider = params.get('provider') === 'wiki';
 // eslint-disable-next-line @typescript-eslint/no-explicit-any
 const payload = wikiReadingPayload({register: REGISTER, subject: SUBJECT, reading: (bare ? bareRegisterReading : placeRegisterReading) as any});
 
-registerTechneReadingProvider({ref: 'hud-probe.ql-techne', async read() { return payload; }});
+if (!useLiveProvider) {
+  registerTechneReadingProvider({ref: 'hud-probe.ql-techne', async read() { return payload; }});
+}
+// eslint-disable-next-line @typescript-eslint/no-explicit-any
+(window as any).hudProbe = {get providerRef() { return techneReadingProvider()?.ref ?? null; }};
 
 const binding = {id: 'hud-binding', kind: 'techne' as const, ref: 'wiki:central', title: 'Central'};
 
-// eslint-disable-next-line @typescript-eslint/no-explicit-any
+// The HUD is controlled; the probe mounts it EXPANDED so the chooser and the
+// active instrument stand for inspection (TechneCentre's own default is
+// collapsed-with-the-field-visible; the field-suspend handoff is TechneCentre's
+// concern, not this component-level HUD proof).
+function HudHarness() {
+  const [collapsed, setCollapsed] = React.useState(false);
+  return (
+    <div style={{width: '960px', height: '620px', position: 'relative'}}>
+      {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+      <TechneSurfaceHost binding={binding as any} subject={SUBJECT} collapsed={collapsed} onCollapsedChange={setCollapsed}/>
+    </div>
+  );
+}
+
+// `?mount=centre` mounts the real TechneCentre (field + HUD) to prove the
+// suspend handoff: the field stands visible while the HUD is collapsed (the
+// default), and is display:none — suspended — when the HUD is opened.
+const mountCentre = params.get('mount') === 'centre';
+
 const root = createRoot(document.getElementById('root')!);
 root.render(
   <React.StrictMode>
     <KernelProvider>
       <VisualsProvider>
         <ExpressionStageProvider>
-          <div style={{width: '960px', height: '620px', position: 'relative'}}>
-            {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
-            <TechneSurfaceHost binding={binding as any} subject={SUBJECT}/>
-          </div>
+          {mountCentre
+            ? <div style={{width: '960px', height: '620px', position: 'relative'}}>
+                {/* eslint-disable-next-line @typescript-eslint/no-explicit-any */}
+                <TechneCentre binding={binding as any} subject={SUBJECT}/>
+              </div>
+            : <HudHarness/>}
         </ExpressionStageProvider>
       </VisualsProvider>
     </KernelProvider>

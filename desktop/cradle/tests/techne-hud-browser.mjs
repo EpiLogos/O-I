@@ -65,6 +65,34 @@ try {
   ok(!(await bare.$('.techne-hud-pane .techne-place-rail')), '§41: the PlaceInstrument does not mount when the reading discloses no place');
   ok(!/Londinium|Avalon/.test(barePane), '§41: no places render once the producer emits none — the binding is load-bearing');
 
+  // ---- The live provider leg: the HUD registers the wiki provider itself ----
+  // With no fixture pre-registered, TechneSurfaceHost's ensureWikiProvider must
+  // register the real wikiTechneReadingProvider (the leg the fixture scenarios
+  // bypass). In a plain browser the transport cannot reach a kernel, so the
+  // reading resolves honestly unavailable — the point here is that the LIVE
+  // provider is the one that stands, and the HUD renders without crashing.
+  const live = await browser.newPage();
+  const liveErrors = [];
+  live.on('pageerror', (e) => liveErrors.push(String(e)));
+  await live.goto(`http://127.0.0.1:${port}/techne-hud?provider=wiki`);
+  await live.waitForSelector('.techne-hud-chooser .techne-hud-lens', {timeout: 20000});
+  const providerRef = await live.evaluate(() => (window.hudProbe ? window.hudProbe.providerRef : null));
+  ok(providerRef === 'oi-cradle.wiki-reading/v1', `the HUD registers the LIVE wiki reading provider itself — ensureWikiProvider → wikiTechneReadingProvider (${providerRef})`);
+  ok((await live.$$('.techne-hud-lens')).length === 6, 'the six lenses still stand under the live provider');
+  ok(liveErrors.length === 0, `no crash when the live provider cannot reach a kernel in a plain browser (${liveErrors.join('; ')})`);
+
+  // ---- The one-renderer handoff (TechneCentre): field suspends when the HUD opens ----
+  const centre = await browser.newPage();
+  await centre.goto(`http://127.0.0.1:${port}/techne-hud?mount=centre`);
+  await centre.waitForSelector('.techne-centre-field', {timeout: 20000});
+  const fieldCollapsed = await centre.$eval('.techne-centre-field', (e) => getComputedStyle(e).display);
+  ok(fieldCollapsed !== 'none', 'the field stands visible + running while the HUD is collapsed (the default) — no field regression on entering Technē');
+  ok(!!(await centre.$('.techne-hud--collapsed .techne-hud-reveal')), 'the HUD stands as a reveal chip by default, the field its home');
+  await centre.$eval('.techne-hud-reveal', (b) => b.click());
+  await centre.waitForSelector('.techne-hud-chooser .techne-hud-lens', {timeout: 10000});
+  const fieldExpanded = await centre.$eval('.techne-centre-field', (e) => getComputedStyle(e).display);
+  ok(fieldExpanded === 'none', 'opening the HUD suspends the field (display:none) — no heavy renderer runs hidden behind it (§16/§22)');
+
   console.log(`\nTechnē HUD: ${pass} checks passed`);
 } finally {
   await browser.close();

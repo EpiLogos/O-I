@@ -33,12 +33,14 @@ import "./techneHud.css";
 let providerBound = false;
 function ensureWikiProvider(transport: KernelTransportStatus): void {
   if (providerBound || techneReadingProvider()) { providerBound = true; return; }
-  providerBound = true;
-  try { registerTechneReadingProvider(wikiTechneReadingProvider(transport)); }
+  // Bind only on a SUCCESSFUL registration: a throw here means another host
+  // won the race (one provider of this ref stands), and techneReadingProvider()
+  // short-circuits the next call — a real registration failure is not masked.
+  try { registerTechneReadingProvider(wikiTechneReadingProvider(transport)); providerBound = true; }
   catch { /* another host bound it between the check and here — one provider stands */ }
 }
 
-export function TechneSurfaceHost({binding, subject}: {binding: SurfaceBinding; subject?: TechneSubject}) {
+export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChange}: {binding: SurfaceBinding; subject?: TechneSubject; collapsed: boolean; onCollapsedChange: (collapsed: boolean) => void}) {
   const kernel = useKernel();
   useEffect(() => { ensureWikiProvider(kernel.transport); }, [kernel.transport]);
 
@@ -47,7 +49,6 @@ export function TechneSurfaceHost({binding, subject}: {binding: SurfaceBinding; 
   const disclosure = useTechneDisclosure(groundSubject);
 
   const [active, setActive] = useState<TechneInstrumentId>("project");
-  const [collapsed, setCollapsed] = useState(false);
 
   // The floating Studio slot the active lens parks its controls into.
   const [studioBody, setStudioBody] = useState<ReactNode>(null);
@@ -61,7 +62,7 @@ export function TechneSurfaceHost({binding, subject}: {binding: SurfaceBinding; 
   if (collapsed) {
     return (
       <div className="techne-hud techne-hud--collapsed">
-        <button type="button" className="techne-hud-reveal" onClick={() => setCollapsed(false)} title="Show the Technē instruments">
+        <button type="button" className="techne-hud-reveal" onClick={() => onCollapsedChange(false)} title="Show the Technē instruments">
           <Glyph name={activeLens?.glyph ?? "material"}/> Technē
         </button>
       </div>
@@ -91,7 +92,7 @@ export function TechneSurfaceHost({binding, subject}: {binding: SurfaceBinding; 
             </button>
           );
         })}
-        <button type="button" className="techne-hud-collapse" onClick={() => setCollapsed(true)} title="Hide the instruments and return to the field">–</button>
+        <button type="button" className="techne-hud-collapse" onClick={() => onCollapsedChange(true)} title="Hide the instruments and return to the field">–</button>
       </nav>
       {studioTools && <div className="techne-hud-tools">{studioTools}</div>}
       <section className="techne-hud-pane" aria-label={`${activeLens?.label ?? "instrument"} instrument`}>

@@ -52,7 +52,7 @@ import type {HostedAppState} from "../expressions/hostedApp";
 // The retained centre bodies are the same lazy chunks the workbench mounts;
 // a retained centre loads on first presentation, never at startup.
 const PointCloudHost = lazy(() => import("../expressions/PointCloudHost").then((module) => ({default: module.PointCloudHost})));
-const TechneSurfaceHost = lazy(() => import("../techne/TechneSurfaceHost").then((module) => ({default: module.TechneSurfaceHost})));
+const TechneCentre = lazy(() => import("../techne/TechneCentre").then((module) => ({default: module.TechneCentre})));
 
 const EpiLogosSurface = lazy(() => import("../epilogos/EpiLogosSurface").then((module) => ({default: module.EpiLogosSurface})));
 const SystemPanel = lazy(() => import("../workspace/SystemPanel").then((module) => ({default: module.SystemPanel})));
@@ -119,14 +119,10 @@ function retainedBody(binding: SurfaceBinding, subject?: WorkbenchSubject, facto
   // chat node the shell received — one body with it, never a second copy.
   if (binding.kind === "expressions") return <PointCloudHost mode="expressions" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
   // Technē mode: the Expressions app is the one field (physics, 3:3); the
-  // Technē HUD mounts the six existing M0′–M5′ instruments over it as the
-  // deep 4:2 apertures on the same live reading — not a second renderer.
-  if (binding.kind === "techne") return (
-    <div className="techne-centre">
-      <PointCloudHost mode="techne" bindingId={binding.id} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>
-      <TechneSurfaceHost binding={binding} subject={subject}/>
-    </div>
-  );
+  // Technē HUD mounts the six existing M0′–M5′ instruments over it as the deep
+  // 4:2 apertures on the same live reading — not a second renderer, and the
+  // field suspends while the HUD covers it (TechneCentre owns that handoff).
+  if (binding.kind === "techne") return <TechneCentre binding={binding} subject={subject} deepLink={binding.engine?.expressionRef} onHostedState={onHostedState}/>;
   if (binding.kind === "epi-logos") return <EpiLogosSurface binding={binding}/>;
   if (binding.kind === "system") return <SystemPanel binding={binding}/>;
   if (binding.kind === "factory") return <FactoryCentre chat={factoryCentre} project={factoryTasks?.project} accompanying={factoryTasks?.accompanying} onOpenTask={factoryTasks?.onOpenTask} onMessage={factoryTasks?.onMessage}/>;
