@@ -72,11 +72,11 @@
       "label": "Epi-Card",
       "family": "Epi-Card",
       "hint": "Symbolic, visual and sonic rendition",
-      "file": null,
+      "file": "oi-epi-card.html",
       "templateRef": "oi.template/epi-card",
-      "version": null,
-      "standing": "intake-required",
-      "source": "spec verified 2026-09-17: Antykathera-Essay-Work/submission-package/epi-card-system-v1 complete (SPEC.md, contracts, ui/epi-card.d.ts); the only real implementation on disk is the <epi-card> web component in recovery bundle epi-card-local-branches-2026-09-10.bundle branch codex/epi-card-card-contract (packages/card: src/epi-card.ts, demo harness, print-proof evidence); no self-contained retained-source form HTML exists yet — nothing fabricated to fill this slot"
+      "version": "1.0.0",
+      "standing": "retained-source",
+      "source": "realized 2026-09-22 as a retained-source form carrier derived byte-from-source: the canonical frame is SPEC.md §3.1 quoted verbatim (Antykathera-Essay-Work/submission-package/epi-card-system-v1), the document contract is the package's ui/epi-card.d.ts (EpiCardData v1.0.0), and the interaction law is the real <epi-card> web component recovered from recovery bundle epi-card-local-branches-2026-09-10.bundle branch codex/epi-card-card-contract commit 2c53bb81 (epi-card/packages/card/src/epi-card.ts + state-reducer.ts + projection.ts). Every position's local articulation is honestly empty (occupancy unknown); the carrier header names what remains behind the live component: verified-asset film/symbol/audio, QR, nested depth, host action events, and the public-disclosure gate."
     }
   ]
 }

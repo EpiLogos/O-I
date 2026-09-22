@@ -23,10 +23,11 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   check(await page.getByRole('textbox',{name:'Writing surface'}).count()===0,'No automatic textarea or address simulation at desktop start');
 
   // One composition, real entries only — Day (the owner's canonical day
-  // record), Graph (the graph aperture's mode), Search, the library, and
-  // Start writing (owner set, 2026-09-22; ruling 4 adds Card and Graph).
+  // record), Card (the Epi-Card form), Graph (the graph aperture's mode),
+  // Search, the library, and Start writing (owner set, 2026-09-22; ruling 4:
+  // the rest page carries Day / Card / Graph).
   const entries=await rest.getByRole('navigation',{name:'Start working'}).getByRole('button').allTextContents();
-  check(entries.length<=5&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t))&&entries.some(t=>/^Day/.test(t))&&entries.some(t=>/^Graph/.test(t)),
+  check(entries.length<=6&&entries.some(t=>/Start writing/.test(t))&&entries.some(t=>/Search/.test(t))&&entries.some(t=>/^Day/.test(t))&&entries.some(t=>/^Card$/.test(t.trim()))&&entries.some(t=>/^Graph/.test(t)),
     'The fresh page offers only its real entries',{entries});
   check(await rest.locator('.welcome-prompt h2').count()===1,'The rolling welcome prompt is the page heading');
   // Length robustness, two-sided and exercised. Every eligible phrase renders
@@ -89,6 +90,17 @@ export default async function run({page,baseUrl,check,metric,shot,channel}) {
   const refusal=(await page.locator('.rest-refusal').textContent())??'';
   check(refusal.trim().length>0,
     'Day without a register refuses honestly and names the failure');
+
+  // The Card button speaks the document-forms route — the Epi-Card roster
+  // entry resolved through Central's own file route, exactly as the blank
+  // tab's form buttons resolve theirs. With no transport at all the
+  // resolver's own precise refusal names the directory it could not read —
+  // never a fabricated card, never a silent fallback.
+  await page.getByRole('button',{name:'Card',exact:true}).click();
+  await page.locator('.rest-refusal').waitFor({timeout:10000});
+  const cardRefusal=(await page.locator('.rest-refusal').textContent())??'';
+  check(/Epi-Card/.test(cardRefusal)&&/desktop\/cradle\/documents/.test(cardRefusal),
+    'Card without a register refuses through the form resolver, naming the route it could not read',{cardRefusal});
 
   // Graph enters the real graph aperture's mode — the one summon the shell's
   // own mode entries use (owner ruling 4, 2026-09-22). It is never a second

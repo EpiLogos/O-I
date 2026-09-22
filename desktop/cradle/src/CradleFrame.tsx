@@ -1651,9 +1651,20 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
             * carries Day / Card / Graph) — the same summon the shell's own
             * mode entries use, so the aperture the mode stands is the real
             * one and names its own state when no ground is reachable. No
-            * silent fallback to another surface. */}
+            * silent fallback to another surface.
+            *
+            * "Card" opens the Epi-Card form through the document-forms route:
+            * the roster's real carrier resolved through Central's own file
+            * route — the same resolveDocumentForm → openFile path the blank
+            * tab's form buttons use (freshChoice). With no readable ground
+            * the resolver's own precise refusal surfaces on this page. */}
           <Rest project={workspace.current.project} onWrite={startFlowWriting} onDay={()=>openToday()} title={workspace.current.name} onSearch={()=>setSearchOpen(true)} onExplore={()=>setLibrary("open")}
             onGraph={()=>enterMode("techne")}
+            onCard={async () => {
+              const form=DOCUMENT_FORMS.find(candidate=>candidate.kind==="document-epi-card");
+              if(!form)throw new Error("The Epi-Card form is not offered by the document roster");
+              await openFile(await resolveDocumentForm(kernel.transport,form,kernel.snapshot.navigator?.root?.work.projects));
+            }}
             onWiki={(() => {
             const reading=kernel.snapshot.navigator;
             const project=reading?.project?.project;
