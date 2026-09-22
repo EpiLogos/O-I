@@ -81,6 +81,18 @@ try {
   const session1 = await page.evaluate(() => window.sweepProbe.session());
   ok(session1.subject_ref === 'wiki:central' && session1.reading_ref === readingRef0,
     'the same subject and DisclosureSession are carried across all six lenses — no new session per instrument (§28)');
+
+  // ---- §4: an instrument's OWN cross-open drives the HUD through the session ----
+  await clickLens(page, 'World');
+  await page.waitForSelector('.techne-hud-pane .techne-place-rail', {timeout: 15000});
+  const crossOpened = await page.$$eval('.techne-hud-pane button', (els) => { const b = els.find((e) => /Open in timeline/i.test(e.textContent || '')); if (b) { b.click(); return true; } return false; });
+  ok(crossOpened, 'the M4′ Place instrument offers a cross-open into Timeline');
+  await page.waitForSelector('.techne-hud-pane .techne-timeline', {timeout: 10000});
+  const afterCross = await page.evaluate(() => window.sweepProbe.session());
+  ok(afterCross.instrument === 'timeline' && afterCross.subject_ref === 'wiki:central' && afterCross.reading_ref === readingRef0,
+    'an instrument’s cross-open switches the HUD to that instrument through the ONE session, subject and basis carried (§4)');
+  ok((afterCross.navigation || []).some((hop) => hop.to_instrument === 'timeline'), 'the cross-open records a navigation hop — Epii reads the same session, not the HUD');
+
   ok(errors.length === 0, `no uncaught errors across the whole six-instrument walk (${errors.join('; ')})`);
 
   console.log(`\nTechnē walk sweep: ${pass} checks passed`);

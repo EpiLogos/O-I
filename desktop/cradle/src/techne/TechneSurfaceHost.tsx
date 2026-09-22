@@ -23,8 +23,11 @@ import "./instrumentLenses"; // side effect: registers the six M′ lenses
 import {subscribeTechneLenses, techneLenses, type TechneLensStudio} from "./lensMount";
 import {registerTechneReadingProvider, techneReadingProvider, useTechneDisclosure, type TechneInstrumentId, type TechneSubject} from "./techneReading";
 import {useTechneGroundSubject, wikiTechneReadingProvider} from "./wikiReadingProvider";
+import {disclosureSession} from "./session";
 import type {KernelTransportStatus} from "../kernel/types";
 import "./techneHud.css";
+
+const subscribeSession = (listener: () => void) => disclosureSession.subscribe(listener);
 
 /** Register the wiki-grounded reading provider once for the app: the HUD may
  * mount more than once (warm trees, a second pane), but exactly one provider
@@ -48,7 +51,21 @@ export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChang
   const groundSubject = useTechneGroundSubject(subject);
   const disclosure = useTechneDisclosure(groundSubject);
 
-  const [active, setActive] = useState<TechneInstrumentId>("project");
+  // The active lens follows the ONE DisclosureSession's instrument, so the
+  // chooser, an instrument's own cross-open (openInInstrument) and Epii — which
+  // reads the session, not the HUD — all agree on which instrument is live
+  // (§4 cross-instrument transition, §17 one co-referencing session). A local
+  // fallback stands only until the first lens mounts a session.
+  const session = useSyncExternalStore(subscribeSession, disclosureSession.get);
+  const [fallback, setFallback] = useState<TechneInstrumentId>("project");
+  const active = session?.instrument ?? fallback;
+  const choose = (instrument: TechneInstrumentId) => {
+    if (disclosureSession.get()) {
+      try { disclosureSession.openInInstrument(instrument); } catch { setFallback(instrument); }
+    } else {
+      setFallback(instrument);
+    }
+  };
 
   // The floating Studio slot the active lens parks its controls into.
   const [studioBody, setStudioBody] = useState<ReactNode>(null);
@@ -84,7 +101,7 @@ export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChang
               data-available={standing.available}
               aria-pressed={current}
               title={standing.available ? `${lens.label} · M${lens.mPrime}′` : `${lens.label} — ${standing.reason}`}
-              onClick={() => setActive(lens.instrument)}
+              onClick={() => choose(lens.instrument)}
             >
               <Glyph name={lens.glyph}/>
               <span className="techne-hud-lens-label">{lens.label}</span>
