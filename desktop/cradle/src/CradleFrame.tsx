@@ -123,6 +123,12 @@ declare const __CRADLE_WALK__: boolean;
  * engine and in-memory state survive every round trip. */
 const STAGE_MODES:readonly WorkspaceMode[] = WORKSPACE_MODES.filter(mode => !!MODE_CURATION[mode].centreKind);
 
+/** macOS runs the traffic lights whose presence earns the window-controls
+ * reserve (CradleFrame's windowLights signal, gated by
+ * tests/window-lights-contract.test.mjs). One platform read, module level —
+ * navigator.platform is fixed for the process's lifetime. */
+const MAC_PLATFORM = /Mac|iPhone|iPad/.test(navigator.platform);
+
 export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const [WalkChannel, setWalkChannel] = useState<ComponentType<{layout:LayoutState}> | null>(null);
   useEffect(() => {
@@ -132,6 +138,38 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const kernel = useKernel();
   const leader = useSearchLeader();
   const [searchOpen,setSearchOpen] = useState(false);
+  // The macOS traffic lights are the ONLY thing that earns the window-controls
+  // reserve (its corner cutouts and the header's left offset): Tauri on a Mac,
+  // and not fullscreen — the system hides the lights there, and the reserve
+  // then gives the corner's space back. "Is Tauri" alone reserved phantom
+  // lights on Linux. SHAPE OF THE SIGNAL (gated by
+  // tests/window-lights-contract.test.mjs — this block has been merge-dropped
+  // three times): lights-present is the DERIVED BASELINE — it never depends
+  // on a native query succeeding; only a CONFIRMED isFullscreen() true
+  // suppresses it, because fullscreen transitions race (a resize event
+  // mid-transition can still report fullscreen) and one stale sample with no
+  // later resize would strand the wedge off. Each resize re-asks on a short
+  // settle ladder to land after the transition instead of inside it.
+  const [fullscreen,setFullscreen]=useState(false);
+  const windowLights = kernel.transport.kind==="tauri" && MAC_PLATFORM && !fullscreen;
+  useEffect(() => {
+    if (kernel.transport.kind !== "tauri" || !MAC_PLATFORM) { setFullscreen(false); return; }
+    let disposed = false; let cleanup: (() => void) | undefined; const timers: number[] = [];
+    void import("@tauri-apps/api/window").then(async ({ getCurrentWindow }) => {
+      const appWindow = getCurrentWindow();
+      const sync = () => {
+        if (disposed) return;
+        for (const delay of [0, 150, 450, 900]) timers.push(window.setTimeout(() => {
+          if (disposed) return;
+          void appWindow.isFullscreen().then(full => { if (!disposed) setFullscreen(!!full); }).catch(() => {});
+        }, delay));
+      };
+      const unlisten = await appWindow.onResized(sync);
+      sync();
+      if (disposed) unlisten(); else cleanup = unlisten;
+    }).catch(() => {});
+    return () => { disposed = true; timers.forEach(t => window.clearTimeout(t)); cleanup?.(); };
+  }, [kernel.transport.kind]);
   // The ONE Library (library/): O:I Web is the connective field, not a mode —
   // so the Library is summoned over whatever mode you are in and scoped by
   // it. Once opened it stays mounted (hidden) so a return lands on the same
@@ -1565,7 +1603,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   return (
     <>
       <ExpressionLayout layout={state}/>
-      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
+      <DesktopShell onLibrary={()=>setLibrary(value=>value==="open"?"held":"open")} world={workspace.current.context?.world} onLeaveWorld={leaveEpiWorld} returnTo={workspace.current.context?.trail?.slice(-1)[0]} onReturn={()=>window.dispatchEvent(new Event("oi:context-return"))} mode={mode} onMode={enterMode} windowLights={windowLights} onTabPresentation={presentation=>execute(`frame.tabs:${presentation}`)} onToggleNavigator={()=>navigatorRef.current ? dismissWorld() : summonWorld()} onCloseNavigator={dismissWorld} native={kernel.transport.kind==="tauri"} namingRequest={namingRequest} onNamingHandled={()=>setNamingRequest(null)}
         arrangementActions={<ArrangementActions state={state} execute={execute} openFrameMenu={openFrameMenu} nativeWindows={kernel.transport.kind==="tauri"}/>}
         subject={{ref:subjectRef,title:subjectTitle,context:<><h2>{subjectTitle}</h2>{subjectBinding?.flow&&<p data-subject-flow-ref={subjectBinding.flow.flowRef}>Working through <code>{subjectBinding.flow.flowRef}</code></p>}{subjectBuffer ? <p>{subjectBuffer.project} · {subjectBuffer.dirty ? "Unsaved changes" : "Saved"}</p> : subjectBinding?.project ? <p>{subjectBinding.project}</p> : <p>Select a surface to inspect its context.</p>}</>,history:subjectHistory}}
         right={agentLayer}

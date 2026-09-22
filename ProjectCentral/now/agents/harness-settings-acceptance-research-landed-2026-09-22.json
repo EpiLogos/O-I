@@ -1,0 +1,17 @@
+{
+  "schema": "central.project-now.handoff/v1",
+  "id": "harness-settings-acceptance-research-landed-2026-09-22",
+  "provenance": "agent-authored-bounded-return",
+  "actor": "agent:harness-session",
+  "kind": "handoff",
+  "recorded_at_unix_seconds": 1790097290,
+  "subject": "Harness settings & acceptance research landed: dossier at docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md",
+  "result": "Six research passes completed and synthesized into the dossier (committed on ui/shell-law-2026-09-22). FINDINGS: (1) Settings backend already exists — aikit system --json emits oi.product-settings-disclosure/v2 (10 sections, axes+drift) and config-contribution; credential system complete (discover/setup/verify/rotate/revoke/explain, keychain dev.aikit.credentials, no secret field by construction, varlock native default of central.security/v1); refusal strings are ready UX copy. The desktop ships diagnostic dumps instead of rendering this contract. (2) Convergent harness grammar from Hermes (~/.hermes local install), Claude Code, Codex: one canonical store, friendly rows + dialog managers for lists, masked credential status by law, catalogs/profiles as data (Codex model_catalog_json + sparse overlay profiles), skills as first-class settings with declared per-skill settings (Hermes lead). (3) Visual grammar from Buzz/Grok Bot/DeepSeek Harness (63 screenshots in docs/experience/research/ui-research-2026-09-22/): object rosters with presence, Status/Preview/Takeover gradient for agent work (the replacement shape for returns boxes), composer-carried model pickers, cards-in-transcript, settings modal with provider cards + write-only keys. (4) Test scour: ~25-30% of cradle UI assertions below the working bar (Factory/Desk ~90-100% fixture-proven, Configuration ~70%); 8 mechanisms; negative roster (10 banned patterns with enforcement: receipt lint, L5 no-raw-JSON walk check, two-sided geometry, no fixture-world acceptance) and positive roster (10 seeds incl. document-entry, day-edit, verify-live-settings). PROPOSED ORDER in dossier §6: acceptance floor first, then settings rebuild rendering the disclosure contract, sidebar grammar pass, wedge re-authoring, Card after Epi-Card form realization. Follow-up agent: read the dossier and execute from §6 once the owner rules.",
+  "status": "active",
+  "source_refs": [
+    "central:source:control:root:Work/O-I/docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md"
+  ],
+  "evidence_refs": [
+    "central:source:control:root:Work/O-I/docs/experience/research/ui-research-2026-09-22"
+  ]
+}

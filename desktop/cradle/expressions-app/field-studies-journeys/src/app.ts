@@ -751,10 +751,11 @@ function openHostExpression(ref:string){
  hostOpenArmed=true;
  window.addEventListener('message',function ready(event){if(event.source===window.parent&&event.data?.v===1&&event.data?.kind==='oi-kernel-channel'){window.removeEventListener('message',ready);hostOpenArmed=false;const r=pendingHostOpen;pendingHostOpen=null;if(r)void nativeWorkspace?.open(r);}});
 }
-window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown}|null;
+window.addEventListener('message',ev=>{if(ev.source!==window.parent)return;const d=ev.data as {type?:string;width?:number;height?:number;right?:number;v?:unknown;kind?:unknown;mode?:unknown;command?:unknown;ref?:unknown}|null;
  if(d&&d.type==='oi-shell-cutout'&&typeof d.width==='number'&&typeof d.height==='number'){
   document.documentElement.style.setProperty('--shell-cutout-w',Math.max(0,d.width)+'px');
   document.documentElement.style.setProperty('--shell-cutout-h',Math.max(24,d.height)+'px');
+  document.documentElement.style.setProperty('--shell-cutout-r',Math.max(0,typeof d.right==='number'?d.right:0)+'px');
   return;
  }
  if(d&&d.v===1&&d.kind==='host-mode'&&(d.mode==='expressions'||d.mode==='techne')){setHostMode(d.mode);announceHostState();return;}
