@@ -87,8 +87,8 @@ try {
   await centre.waitForSelector('.techne-centre-field', {timeout: 20000});
   const fieldCollapsed = await centre.$eval('.techne-centre-field', (e) => getComputedStyle(e).display);
   ok(fieldCollapsed !== 'none', 'the field stands visible + running while the HUD is collapsed (the default) — no field regression on entering Technē');
-  ok(!!(await centre.$('.techne-hud--collapsed .techne-hud-reveal')), 'the HUD stands as a reveal chip by default, the field its home');
-  await centre.$eval('.techne-hud-reveal', (b) => b.click());
+  ok((await centre.$$('.techne-hud--collapsed .techne-hud-rail-lens')).length === 6, 'the six instruments stay available as a rail over the field by default');
+  await centre.$eval('.techne-hud-rail-lens', (b) => b.click());
   await centre.waitForSelector('.techne-hud-chooser .techne-hud-lens', {timeout: 10000});
   const fieldExpanded = await centre.$eval('.techne-centre-field', (e) => getComputedStyle(e).display);
   ok(fieldExpanded === 'none', 'opening the HUD suspends the field (display:none) — no heavy renderer runs hidden behind it (§16/§22)');

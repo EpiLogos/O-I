@@ -30,22 +30,46 @@
 .techne-hud--collapsed {
   inset: auto;
   top: 8px;
-  right: 8px;
+  left: 8px;
   background: transparent;
 }
 
-.techne-hud-reveal {
+.techne-hud-rail {
+  display: inline-flex;
+  gap: 4px;
+  padding: 4px;
+  border: 1px solid var(--oi-control-edge);
+  border-radius: 10px;
+  background: var(--oi-surface);
+}
+
+.techne-hud-rail-lens {
   display: inline-flex;
   align-items: center;
-  gap: 6px;
-  padding: 6px 10px;
-  border: 1px solid var(--oi-control-edge);
+  justify-content: center;
+  width: 30px;
+  height: 30px;
+  border: 1px solid transparent;
   border-radius: 8px;
-  background: var(--oi-surface);
+  background: transparent;
   color: inherit;
-  font: inherit;
-  font-size: 12px;
   cursor: pointer;
+  opacity: 0.75;
+}
+.techne-hud-rail-lens:hover { opacity: 1; background: var(--oi-accent-soft); }
+.techne-hud-rail-lens[data-current="true"] { opacity: 1; border-color: var(--oi-accent); }
+.techne-hud-rail-lens[data-available="false"] { opacity: 0.45; }
+
+.techne-hud-sr {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0 0 0 0);
+  white-space: nowrap;
+  border: 0;
 }
 
 .techne-hud-chooser {

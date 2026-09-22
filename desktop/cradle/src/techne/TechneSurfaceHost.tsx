@@ -77,11 +77,29 @@ export function TechneSurfaceHost({binding, subject, collapsed, onCollapsedChang
   const sceneId = binding.engine?.expressionRef ?? binding.id;
 
   if (collapsed) {
+    // Collapsed, the six instruments stay AVAILABLE as a thin rail over the
+    // live field: choosing one opens the HUD onto it (and suspends the field).
     return (
       <div className="techne-hud techne-hud--collapsed">
-        <button type="button" className="techne-hud-reveal" onClick={() => onCollapsedChange(false)} title="Show the Technē instruments">
-          <Glyph name={activeLens?.glyph ?? "material"}/> Technē
-        </button>
+        <nav className="techne-hud-rail" aria-label="Technē instruments">
+          {lenses.map(lens => {
+            const standing = lens.standing(disclosure);
+            return (
+              <button
+                key={lens.instrument}
+                type="button"
+                className="techne-hud-rail-lens"
+                data-current={lens.instrument === active}
+                data-available={standing.available}
+                title={standing.available ? `${lens.label} · M${lens.mPrime}′` : `${lens.label} — ${standing.reason}`}
+                onClick={() => { choose(lens.instrument); onCollapsedChange(false); }}
+              >
+                <Glyph name={lens.glyph}/>
+                <span className="techne-hud-sr">{lens.label}</span>
+              </button>
+            );
+          })}
+        </nav>
       </div>
     );
   }

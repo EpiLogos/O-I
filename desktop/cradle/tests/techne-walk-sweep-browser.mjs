@@ -95,8 +95,9 @@ try {
 
   // ---- C10: collapse to the field and back preserves the one session ----
   await page.$eval('.techne-hud-collapse', (b) => b.click());
-  await page.waitForSelector('.techne-hud--collapsed .techne-hud-reveal', {timeout: 5000});
-  await page.$eval('.techne-hud-reveal', (b) => b.click());
+  await page.waitForSelector('.techne-hud--collapsed .techne-hud-rail-lens', {timeout: 5000});
+  // Re-open onto the same instrument from the collapsed rail (Timeline).
+  await page.$$eval('.techne-hud--collapsed .techne-hud-rail-lens', (els) => { const b = els.find((e) => /Timeline/.test(e.getAttribute('title') || '')); (b || els[0]).click(); });
   await page.waitForSelector('.techne-hud-chooser .techne-hud-lens', {timeout: 5000});
   const afterToggle = await page.evaluate(() => window.sweepProbe.session());
   ok(afterToggle.instrument === 'timeline' && afterToggle.subject_ref === 'wiki:central' && afterToggle.reading_ref === readingRef0,
