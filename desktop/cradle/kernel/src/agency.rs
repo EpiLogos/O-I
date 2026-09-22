@@ -356,14 +356,19 @@ impl Client {
                     .ok_or_else(||format!(
                         "The selected mode requires acting body {body_ref}, but no configured AIKit encounter provider discloses that exact body. Configure the Prime-RPC provider first; a generic provider will not be relabelled Prime–QL."
                     ))?;
-                let revision=row["body_revision"].as_str().ok_or_else(||format!(
-                    "Provider {provider} names body {body_ref} without an attributable body_revision"
-                ))?;
-                (provider,rule,Some(serde_json::json!({
-                    "body_ref":body_ref,
-                    "body_revision":revision,
-                    "standing":"mode-selected-default; provider readback required"
-                })))
+                let resolved_body=if row["body_ref"].as_str()==Some(body_ref) {
+                    let revision=row["body_revision"].as_str().ok_or_else(||format!(
+                        "Provider {provider} names body {body_ref} without an attributable body_revision"
+                    ))?;
+                    Some(serde_json::json!({
+                        "body_ref":body_ref,
+                        "body_revision":revision,
+                        "standing":if rule=="owner-choice" {"explicit-provider-override-resolves-same-body"} else {"mode-selected-default; provider readback required"}
+                    }))
+                } else {
+                    None
+                };
+                (provider,rule,resolved_body)
             }
             None=>{
                 let (provider,rule)=default_provider_choice(configured,held.as_deref())
@@ -389,6 +394,7 @@ impl Client {
             "agency":agency,
             "provider":provider,
             "provider_default":provider_default,
+            "preferred_body_ref":preferred_body_ref,
             "resolved_body":resolved_body,
             "open":opened,
         }))
@@ -520,17 +526,17 @@ pub fn preferred_body_provider_choice<'a>(
     owner_choice:Option<&str>,
     body_ref:&str,
 )->Option<(String,&'a Value,&'static str)> {
+    if let Some(choice)=owner_choice.map(str::trim).filter(|choice|!choice.is_empty()) {
+        if let Some(row)=rows.iter().find(|row|row["id"].as_str()==Some(choice)) {
+            return Some((choice.to_owned(),row,"owner-choice"));
+        }
+    }
     let eligible=rows.iter().filter(|row|
         row["id"].as_str().is_some()
         && row["body_ref"].as_str()==Some(body_ref)
         && row["body_revision"].as_str().is_some_and(|revision|!revision.trim().is_empty())
     ).collect::<Vec<_>>();
     if eligible.is_empty(){return None;}
-    if let Some(choice)=owner_choice.map(str::trim).filter(|choice|!choice.is_empty()) {
-        if let Some(row)=eligible.iter().copied().find(|row|row["id"].as_str()==Some(choice)) {
-            return Some((choice.to_owned(),row,"owner-choice-within-mode-body"));
-        }
-    }
     let row=eligible[0];
     Some((row["id"].as_str()?.to_owned(),row,"mode-body"))
 }
