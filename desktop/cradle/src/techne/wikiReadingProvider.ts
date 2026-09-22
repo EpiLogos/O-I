@@ -42,6 +42,7 @@ import type {ExpressionDocument} from "../expression/types";
 import {readWikiRegister, type WikiRegister, type WikiRegisterReading, type WikiRelationEdge} from "./wikiExpression";
 import {getWikiProjectionState, subscribeWikiProjection, wikiDocumentOf} from "./wikiProjectionStore";
 import {TECHNE_CONTRACT, type TechneReadingProvider, type TechneSubject} from "./techneReading";
+import {placeFacetsFromReading} from "./placeFacets";
 import {useSyncExternalStore} from "react";
 
 /** The reading's Expression facet source: the register's standing kernel
@@ -107,8 +108,10 @@ function relationOf(edge: WikiRelationEdge, sourceRef: string) {
  * available on the real whole except the ones whose facets the wiki reading
  * genuinely does not carry — those name the real reason. Timeline is
  * available exactly when the typed edges carry revisions (real temporal
- * basis); place has no spatial basis in a wiki reading. */
-function disclosureFor(hasTemporalBasis: boolean, hasExpression: boolean) {
+ * basis); place is available exactly when the reading discloses a real
+ * spatial facet (a declared place or a hard geography relation) — a truly
+ * absent spatial facet stays absent, with the real reason. */
+function disclosureFor(hasTemporalBasis: boolean, hasExpression: boolean, hasSpatial: boolean) {
   return {
     instruments: [
       {instrument: "project", available: true, m_prime: 0, reading: "4:2-deep"},
@@ -117,8 +120,8 @@ function disclosureFor(hasTemporalBasis: boolean, hasExpression: boolean) {
         ...(hasTemporalBasis ? {} : {reason: "the register's wiki reading carries no temporal facets"})},
       {instrument: "journey", available: hasExpression, m_prime: 3, reading: "4:2-deep",
         ...(hasExpression ? {} : {reason: "the register's Expression generation is not open in this window — enter its Web (M0′) first, and Journey composes into it"})},
-      {instrument: "place", available: false, m_prime: 4, reading: "4:2-deep",
-        reason: "the register's wiki reading carries no spatial facets"},
+      {instrument: "place", available: hasSpatial, m_prime: 4, reading: "4:2-deep",
+        ...(hasSpatial ? {} : {reason: "the register's wiki reading carries no spatial facets"})},
       {instrument: "palace", available: true, m_prime: 5, reading: "4:2-deep"},
     ],
     degraded: [],
@@ -149,6 +152,9 @@ export function wikiReadingPayload(input: {
   const edges = relations?.state === "available" ? relations.edges : [];
   const hasTemporalBasis = edges.some(edge => typeof edge.revision === "string" && edge.revision.length > 0);
   const hasExpression = !!document;
+  // M4′: the register's own spatial facets (declared places + hard geography
+  // relations), never an invented coordinate. Empty → place stays absent.
+  const spatial = placeFacetsFromReading(reading);
   return {
     contract: TECHNE_CONTRACT,
     reading_ref: `ql.techne:reading:wiki:${register.key}${basis?.revision ? `@${basis.revision}` : ""}`,
@@ -187,7 +193,8 @@ export function wikiReadingPayload(input: {
         ],
       }],
     } : {}),
-    disclosure: disclosureFor(hasTemporalBasis, hasExpression),
+    ...(spatial.length ? {spatial} : {}),
+    disclosure: disclosureFor(hasTemporalBasis, hasExpression, spatial.length > 0),
   };
 }
 
