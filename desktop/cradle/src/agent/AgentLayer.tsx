@@ -240,7 +240,7 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
             onProvision={async provisionProject=>{
               // New-chat first Send: provision through the kernel, then bind —
               // the same one binding the chooser sets, no chooser on the way.
-              const provisioned=await encounterProvision(kernel.transport,provisionProject);
+              const provisioned=await encounterProvision(kernel.transport,provisionProject,preferredBodyRef);
               const value={ref:provisioned.agent_session,project:provisionProject,space:provisioned.space};
               learnTitles([{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space,title:provisioned.space}]);
               onAccompanying(value);
