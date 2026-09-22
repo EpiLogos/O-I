@@ -56,6 +56,7 @@ pub mod shared_field;
 pub mod setup;
 pub mod agent_definition;
 pub mod chat_defaults;
+pub mod credentials;
 pub mod system_composition;
 pub mod material;
 /// Short-horizon read-through cache for the owner readings the UI re-reads
@@ -438,6 +439,17 @@ pub enum KernelOp {
     /// Withdraw the held default — an explicit operation; the discard
     /// document carries the observed `removed` fact.
     ChatDefaultDiscard,
+    /// Settings · Credentials (docs/cradle/12-SETTINGS.md §3.4, S12/S13):
+    /// the owner's own `aikit credential …` verbs (`credentials.rs`). A
+    /// pasted key crosses to AIKit on STDIN only and never comes back out.
+    CredentialList,
+    CredentialDiscover,
+    CredentialSetup { credential: String, #[serde(default)] reference: Option<String>, #[serde(default)] material: Option<credentials::SecretMaterial> },
+    CredentialRotate { credential: String, #[serde(default)] reference: Option<String>, #[serde(default)] material: Option<credentials::SecretMaterial> },
+    CredentialVerify { credential: String },
+    CredentialRevoke { credential: String },
+    /// Settings · Harnesses (12 §3.2): `aikit client install <client>`.
+    ClientInstall { client: String },
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -691,6 +703,12 @@ pub enum KernelOpResult {
     ChatDefaultReading {document:Option<serde_json::Value>},
     ChatDefaultHeld {document:serde_json::Value},
     ChatDefaultDiscarded {document:serde_json::Value},
+    /// The owner's credential readings/changes (`credentials.rs`), verbatim
+    /// `data` — binding metadata and verdicts only, never material.
+    CredentialReading {data:serde_json::Value},
+    CredentialChanged {data:serde_json::Value},
+    CredentialVerified {data:serde_json::Value},
+    ClientInstalled {data:serde_json::Value},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
     ConfigRegistryReading {
@@ -1138,6 +1156,12 @@ impl Kernel {
             KernelOp::ChatDefaultDiscard => {
                 let document=chat_defaults::discard()?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ChatDefaultDiscarded{document}})
+            }
+            KernelOp::CredentialList|KernelOp::CredentialDiscover|KernelOp::CredentialSetup{..}|KernelOp::CredentialRotate{..}|KernelOp::CredentialVerify{..}|KernelOp::CredentialRevoke{..}|KernelOp::ClientInstall{..} => {
+                let root=self.world_map(false).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let result=credentials::apply(&cwd,op)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result})
             }
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.
