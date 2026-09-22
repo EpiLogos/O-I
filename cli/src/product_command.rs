@@ -71,7 +71,9 @@ pub struct ProductCommandDescriptor {
 
 impl ProductCommandDescriptor {
     pub fn matches(&self, value: &str) -> bool {
-        self.namespace == value || self.aliases.iter().any(|alias| alias == value)
+        self.id == value
+            || self.namespace == value
+            || self.aliases.iter().any(|alias| alias == value)
     }
 }
 
@@ -191,7 +193,16 @@ pub fn product_command_catalogue_from_json(
         aliases.sort();
         aliases.dedup();
 
-        for route in std::iter::once(namespace.as_str()).chain(aliases.iter().map(String::as_str)) {
+        // Every name `resolve` consults is a command route: the surface id
+        // (the canonical name the update plan, receipt and `oi update --check`
+        // print), the native namespace and the compatibility aliases. Deduped
+        // per product so an id that coincides with its own namespace is not a
+        // self-collision.
+        let mut routes_for_product = vec![surface.id.as_str(), namespace.as_str()];
+        routes_for_product.extend(aliases.iter().map(String::as_str));
+        routes_for_product.sort_unstable();
+        routes_for_product.dedup();
+        for route in routes_for_product {
             if route.is_empty() {
                 return Err(format!(
                     "{} declares an empty O:I command route",
@@ -278,5 +289,33 @@ mod tests {
         assert_eq!(catalogue.resolve("kit").unwrap().id, "ai-kit");
         assert_eq!(catalogue.resolve("factory").unwrap().id, "software-factory");
         assert_eq!(catalogue.resolve("ql").unwrap().id, "quaternal-logic");
+    }
+
+    /// The surface id is the canonical name every other surface prints and
+    /// keys by (`oi update --check`, the managed-update receipt, the suite
+    /// manifest), so it must resolve like a namespace or alias — pinned
+    /// hermetically against the embedded snapshot.
+    #[test]
+    fn surface_ids_resolve_to_their_own_product() {
+        let catalogue = product_command_catalogue_from_json(
+            crate::catalog_source::embedded_catalogue_json(),
+            "test-embedded",
+        )
+        .unwrap();
+        for id in [
+            "central",
+            "actuation",
+            "ai-kit",
+            "software-factory",
+            "workcell",
+            "quaternal-logic",
+        ] {
+            assert_eq!(
+                catalogue.resolve(id).map(|product| product.id.as_str()),
+                Some(id),
+                "surface id '{id}' must resolve to its own product"
+            );
+        }
+        assert!(catalogue.resolve("nonsense").is_none());
     }
 }
