@@ -450,6 +450,10 @@ pub enum KernelOp {
     CredentialRevoke { credential: String },
     /// Settings · Harnesses (12 §3.2): `aikit client install <client>`.
     ClientInstall { client: String },
+    /// Settings · product pages (12 §3.9): run one owner-disclosed action.
+    ProductActionRun { product_id: String, action_ref: String },
+    /// Settings · read-only rows (12 §2, S11): reveal the owner's own file.
+    SettingsReveal { path: String },
     /// The configuration-plane binding (#299 C6 live leg,
     /// `configuration.rs`): every operation routes through the INSTALLED
     /// `oi` executable — the same engine `oi config` / `oi profile` drive —
@@ -709,6 +713,8 @@ pub enum KernelOpResult {
     CredentialChanged {data:serde_json::Value},
     CredentialVerified {data:serde_json::Value},
     ClientInstalled {data:serde_json::Value},
+    ProductActionRan {data:serde_json::Value},
+    SettingsRevealed {data:serde_json::Value},
     /// The configuration registry reading (`configuration.rs`): the seven
     /// canonical positions, each honestly mounted or degraded by name.
     ConfigRegistryReading {
@@ -1163,6 +1169,13 @@ impl Kernel {
                 let result=credentials::apply(&cwd,op)?;
                 Ok(KernelOpOutcome{receipts:Vec::new(),result})
             }
+            KernelOp::ProductActionRun{product_id,action_ref} => {
+                let root=self.world_map(false).ok();
+                let cwd=root.as_ref().and_then(|value|value["root"].as_str()).map(std::path::PathBuf::from).unwrap_or(std::env::current_dir().map_err(|e|e.to_string())?);
+                let data=system_composition::Client::discover().run_action(&cwd,&product_id,&action_ref)?;
+                Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::ProductActionRan{data}})
+            }
+            KernelOp::SettingsReveal{path} => Ok(KernelOpOutcome{receipts:Vec::new(),result:KernelOpResult::SettingsRevealed{data:system_composition::reveal(&path)?}}),
             KernelOp::Ground{request} => {
                 // A ground change re-bases every path the cache holds.
                 self.reads.clear();

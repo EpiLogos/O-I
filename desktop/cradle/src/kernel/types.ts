@@ -254,6 +254,10 @@ export type KernelOp =
   | {op:"credential_revoke";credential:string}
   /** Settings · Harnesses (12-SETTINGS §3.2): `aikit client install <client>`. */
   | {op:"client_install";client:string}
+  /** Settings · product pages (12-SETTINGS §3.9): run one owner-disclosed action. */
+  | {op:"product_action_run";product_id:string;action_ref:string}
+  /** Settings · read-only rows (12-SETTINGS §2, S11): reveal the owner's own file. */
+  | {op:"settings_reveal";path:string}
   | {op:"day_read";day_ref?:string}
   | {op:"day_source_open";day_ref?:string}
   | { op: "knowledge"; project?: string; request: KnowledgeRequest; fresh?: boolean }
@@ -340,6 +344,8 @@ export type KernelOpResult =
   | { result:"credential_changed";data:unknown }
   | { result:"credential_verified";data:unknown }
   | { result:"client_installed";data:unknown }
+  | { result:"product_action_ran";data:unknown }
+  | { result:"settings_revealed";data:unknown }
   | { result:"day_reading";data:unknown }
   | { result: "agency_reading"; project_ref: string; spaces: unknown[]; observed_at_unix_ms: number }
   | { result: "knowledge"; data: unknown }
