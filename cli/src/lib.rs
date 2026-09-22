@@ -17,4 +17,5 @@ pub mod product_command;
 pub mod setup;
 pub mod skillset;
 pub mod status;
+pub mod worktree_project;
 pub mod world_recognition;

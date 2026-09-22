@@ -32,6 +32,7 @@ mod composition {
     include!("profile_command.rs");
     include!("desktop_command.rs");
     include!("dev_world_command.rs");
+    include!("dev_project_command.rs");
     include!("frontdoor.rs");
     include!("mode_command.rs");
     include!("factory_proving.rs");
