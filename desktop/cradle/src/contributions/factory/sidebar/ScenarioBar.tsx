@@ -13,7 +13,7 @@ export function ScenarioBar() {
   // The desk scenario seeds the board's own fixture rows (not a sidebar
   // fixture), so its presence is what marks it active here.
   const deskFixtureActive = Boolean(peekDeskFixture());
-  return <div className="factory-side-scenarios">
+  return <div className="oi-side-scenarios">
     <select
       className="oi-input"
       value={active ?? ""}

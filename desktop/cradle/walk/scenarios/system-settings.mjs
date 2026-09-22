@@ -2,6 +2,13 @@ import {chmodSync} from 'node:fs';
 import {join} from 'node:path';
 import {setup as baseSetup} from './system.mjs';
 import {assertNoRawJson} from '../lib/read-model.mjs';
+import {
+  assertStatusPanel,
+  assertHarnessesPanel,
+  assertModelsPanel,
+  assertCredentialsPanel,
+  assertSkillsPanel,
+} from '../lib/settings-sections.mjs';
 /** The walk reads the EMPTY fixture world through the real census seam:
  * OI_BIN points at walk/fixtures/oi-fixture-world.mjs, a minimal `oi`
  * stand-in whose census answers all six products missing (docs/cradle/06
@@ -223,5 +230,28 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   await rawDisclosures[0].locator('summary').click();
   await sections[0].locator(':scope > summary').click();
   await shot('settings-system');
+
+  // --- the rebuilt sections (HARNESS-SETTINGS-RESEARCH §2) in the empty
+  // fixture-oi world ---------------------------------------------------------
+  // OI_BIN here is the EMPTY fixture world, so the AIKit disclosure does
+  // not mount: Status/Credentials/Skills must render that absence by name
+  // (L3) while the aikit-driven reads (harness status, model catalogue)
+  // stay real and assert their live round trips. The aikit binary is NOT
+  // fixture-scoped: these are the machine's own harnesses and catalogue.
+  await panel.getByRole('button',{name:'Settings',exact:true}).click();
+  await panel.locator('[data-settings-home]').waitFor({timeout:30000});
+  await assertStatusPanel({page, check, disclosureAvailable:false});
+  await shot('section-status-absent-disclosure');
+  await assertHarnessesPanel({page, check});
+  await assertModelsPanel({page, check});
+  await assertCredentialsPanel({page, check, disclosureAvailable:false});
+  await assertSkillsPanel({page, check, disclosureAvailable:false});
+  // The section panels keep the L5 law too.
+  for (const name of ['status','harnesses','models','credentials','skills']) {
+    const sectionPanel = page.locator(`[data-${name==='harnesses'?'harness':name}-panel]`);
+    await assertNoRawJson({check}, sectionPanel, `${name}: the rebuilt section renders no raw JSON (L5, fixture world)`);
+  }
+  await page.locator('.settings-toc button', {hasText:'All settings'}).first().click();
+  await panel.locator('[data-owner]').first().waitFor({timeout:15000});
   check(JSON.stringify((await channel('read.focus')).data)===focusBefore,'Settings inspection never reassigns semantic focus');
 }

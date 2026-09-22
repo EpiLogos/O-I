@@ -1,0 +1,1055 @@
+{
+  "schema": "oi.cradle.walk.bindings/v1",
+  "purpose": "Declared source relations between the cradle's executable frontend tests and the #65 obligation field (docs/experience/campaign.json source_modules). The compiler (scripts/experience_map.py --coverage) validates every relation against that field and joins receipts (walk/artifacts/*.json) as the latest performed evidence.",
+  "standing": "declared relations, not performed evidence; a binding asserts what a test CAN prove, the receipt records what it DID prove on its recorded cut",
+  "evidence_rule": "#201 grade law: a passed deterministic walk earns D (deterministic) at most, or C (cross-product conformance) only when its receipt grade is A/B (native/real-kernel bridge). No automation earns P (real provider/harness), M (physical/material) or H (human UX/Recognition); those stay unproved here and belong to their owning proving rounds.",
+  "negative_vocabulary": [
+    "missing",
+    "withheld",
+    "denied",
+    "stale",
+    "conflicting",
+    "interrupted",
+    "duplicate",
+    "late",
+    "provider-unavailable",
+    "reconnect",
+    "changed-source",
+    "unsupported-capability",
+    "partial-return"
+  ],
+  "tests": {
+    "a2a-exchange": {
+      "kind": "walk",
+      "serves": [
+        "gateway:D"
+      ],
+      "branches": {},
+      "negatives": [
+        "denied",
+        "unsupported-capability",
+        "withheld"
+      ],
+      "note": "The desktop composes a bounded A2A v1 exchange from an exact selected passage — card-first negotiation, refusal of a mismatched peer before any send, exactly one wire send, pending admission of the returned difference, and a revision-checked source include that carries the exchange and binding lineage to human review."
+    },
+    "agency-a2a": {
+      "kind": "walk",
+      "serves": [
+        "gateway:D"
+      ],
+      "branches": {},
+      "negatives": [
+        "denied",
+        "unsupported-capability",
+        "withheld"
+      ],
+      "note": "The same A2A v1 exchange moves into the agency panel: the resident's reply seeds the message, a card-mismatched peer is refused with zero message sends, the real peer answers once over the exact wire, and the difference stays pending admission in the panel, applied nowhere."
+    },
+    "agency-planes": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:authority-delivery",
+        "grounding220:recovery",
+        "factory289:conversation",
+        "alpha:F"
+      ],
+      "branches": {
+        "grounding220:authority-delivery": [
+          0
+        ],
+        "grounding220:recovery": [
+          0
+        ]
+      },
+      "negatives": [
+        "interrupted",
+        "provider-unavailable"
+      ],
+      "note": "The Activity plane discloses only the real resident session — consent answered over the owner's consent wire, owner verdicts and stop records shown verbatim, delivery identities inspectable at their owner phases, a provider fault disclosed with the seat held and recovery named as the owner's, and journal rows on the owner's cursors."
+    },
+    "agent-dictation": {
+      "kind": "walk",
+      "serves": [
+        "factory289:session-compose"
+      ],
+      "branches": {
+        "factory289:session-compose": [
+          5
+        ]
+      },
+      "negatives": [
+        "missing",
+        "provider-unavailable"
+      ],
+      "note": "Local dictation captures real audio, lands an editable transcript in the AIKit-owned draft that only an explicit send dispatches, and names each honest failure — service down probed before the microphone opens, HTTP 500, empty transcript — without inventing text or turns."
+    },
+    "agent-panel": {
+      "kind": "walk",
+      "serves": [
+        "factory289:arrangement",
+        "factory289:praxis-context",
+        "factory289:session-compose",
+        "factory289:visual",
+        "grounding220:presence",
+        "alpha:F"
+      ],
+      "branches": {
+        "factory289:arrangement": [
+          2,
+          3
+        ],
+        "factory289:praxis-context": [
+          1
+        ],
+        "factory289:session-compose": [
+          3
+        ],
+        "factory289:visual": [
+          6
+        ],
+        "grounding220:presence": [
+          0
+        ]
+      },
+      "negatives": [
+        "missing"
+      ],
+      "note": "The one accompanying panel binds real sessions through the owner's start/read pair, keeps selected context distinct from carried context, renders owner state verbatim (harness chip, connection, trajectory, inspect hand-offs, honest empty states, no invented model chip), and holds exactly one session observer and one canonical draft across presenters, mode changes, widths and themes."
+    },
+    "bootstrap": {
+      "kind": "walk",
+      "serves": [
+        "alpha:A"
+      ],
+      "branches": {},
+      "negatives": [
+        "missing",
+        "provider-unavailable"
+      ],
+      "note": "Boot is honest in the browser: local writing survives a missing kernel transport, an unrecognised ground shows the chooser with real recognise-and-bind, a fresh kernel against a stale persisted binding shows a labelled failure with Retry, and the System composition labels products discovered-not-ready and gateway obligations not-available-yet rather than inventing readiness."
+    },
+    "canvas-context": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:composition",
+        "factory289:praxis-context"
+      ],
+      "branches": {
+        "grounding220:composition": [
+          1,
+          5
+        ],
+        "factory289:praxis-context": [
+          1
+        ]
+      },
+      "negatives": [
+        "changed-source",
+        "stale"
+      ],
+      "note": "Selection prepares an exact UTF-16 context at the exact source revision in the native store (Project scope, then explicitly adopted into the conversation), resolution answers through the real knowledge owner, a source change after selection is refused with nothing dispatched, and explicit delivery with a real provider records an honestly-standing prepared-context receipt and a real return."
+    },
+    "configuration": {
+      "kind": "walk",
+      "serves": [
+        "alpha:F"
+      ],
+      "branches": {},
+      "negatives": [
+        "provider-unavailable",
+        "stale"
+      ],
+      "note": "The live settings surface equals the owners' own `oi config list` row by row with owner refs and disclosed/observed timestamps, availability labels are the owners' own states, and the fixture mount proves the reconciliation vocabulary, a named owner outage and an honest empty registry without fabricated rows."
+    },
+    "context-draft": {
+      "kind": "walk",
+      "serves": [
+        "factory289:praxis-context"
+      ],
+      "branches": {
+        "factory289:praxis-context": [
+          7
+        ]
+      },
+      "negatives": [
+        "changed-source",
+        "stale"
+      ],
+      "note": "Context attach operates on native refs — exact quote, source ref and selection-time revision into the AIKit-owned draft with no prompt sent — and a source or page that changes after selection is visibly refused, leaving the owner draft revision and text untouched."
+    },
+    "continuity-matrix": {
+      "kind": "walk",
+      "serves": [
+        "factory289:visual",
+        "grounding220:presence",
+        "wc65:WC12"
+      ],
+      "branches": {
+        "factory289:visual": [
+          5
+        ],
+        "grounding220:presence": [
+          0
+        ],
+        "wc65:WC12": [
+          0
+        ]
+      },
+      "negatives": [
+        "changed-source",
+        "stale"
+      ],
+      "note": "Structural moves (tabs, split, maximize, merge), cached tree expansion, region toggles and workspace switches preserve document identity, revisions and drafts with zero owner re-reads, a renamed source is disclosed honestly instead of silently swapped, keyboard-only and reduced-motion operation never parks focus in a hidden view, and idle resources stay bounded."
+    },
+    "contribution-return-sf4": {
+      "kind": "walk",
+      "serves": [
+        "gateway:D",
+        "alpha:G"
+      ],
+      "branches": {},
+      "negatives": [
+        "denied",
+        "stale",
+        "withheld"
+      ],
+      "note": "Two independent native roots exchange a real contribution over the hosted field — quarantine, owner-only pending visibility, owner admission, a native EX1 Expression review, a revision-checked source Return and inclusion, refusal of the stale return after the source advances, contributor withdrawal, and no private sentinel anywhere in the hosted read."
+    },
+    "corpus-return-of-zero": {
+      "kind": "walk",
+      "serves": [
+        "alpha:E",
+        "vakcraft65:joined-experience",
+        "vakcraft65:live-faculties"
+      ],
+      "branches": {
+        "vakcraft65:joined-experience": [
+          0
+        ],
+        "vakcraft65:live-faculties": [
+          0,
+          3
+        ]
+      },
+      "negatives": [
+        "changed-source",
+        "interrupted",
+        "missing",
+        "stale"
+      ],
+      "note": "The real Return-of-Zero corpus enters through one public path — byte-verified sources, native knowledge search, the bounded local whole as a live Expression, saved editable corpus expressions, shared selection over exact refs, portals with honest refusal, an ExpressiveAct held, checkpointed and restored — and a saved source change makes the recorded basis stale, with explicit rebase refusing both a stale expectation and a no-op."
+    },
+    "day-edit": {
+      "kind": "walk",
+      "serves": [
+        "factory289:temporal-routine"
+      ],
+      "branches": {},
+      "negatives": [
+        "changed-source",
+        "stale"
+      ],
+      "note": "The Day die's in-frame edits write only through the owner's human-attributed, CAS-checked field.set, unmapped edits are disclosed as frame-only, an external change behind the open face arrives through the explicit Re-read affordance, and a byte-level external edit makes the owner refuse native mutation with the refusal surfaced verbatim and nothing applied."
+    },
+    "document-entry": {
+      "kind": "walk",
+      "serves": [
+        "factory289:templates"
+      ],
+      "branches": {
+        "factory289:templates": [
+          1,
+          2,
+          3
+        ]
+      },
+      "negatives": [
+        "missing",
+        "stale"
+      ],
+      "note": "The supplied document forms open as their real files with their actual contracts intact (die payload and seventeen fields, distinct 0/1 collections, Epi-Card canonical units with honestly unknown occupancy), save losslessly through Central with a structured conflict on a stale basis, export their own HTML copy, and a missing form names its exact open location instead of fabricating content."
+    },
+    "editor": {
+      "kind": "walk",
+      "serves": [
+        "alpha:F"
+      ],
+      "branches": {},
+      "negatives": [
+        "denied"
+      ],
+      "note": "Ordinary direct work runs through the owner end to end — fast opens rendering exact bytes, buffers and carets preserved across tabs, scoped saves that advance only the owner revision while never committing a sibling buffer, and an actual exclusion marker surfacing as a source-scoped refusal that changes no bytes."
+    },
+    "encounter": {
+      "kind": "walk",
+      "serves": [
+        "alpha:F",
+        "grounding220:identity",
+        "grounding220:presence"
+      ],
+      "branches": {
+        "grounding220:identity": [
+          3
+        ],
+        "grounding220:presence": [
+          0
+        ]
+      },
+      "negatives": [
+        "interrupted"
+      ],
+      "note": "Against a real resident provider, the transcript, thinking disclosure and Stop cancellation stay on the one canonical session, the draft is persisted by AIKit before view departure, and a reload retains the exact native session id — no reconstructed session and no cloned conversation."
+    },
+    "explore-sf1": {
+      "kind": "walk",
+      "serves": [
+        "alpha:G",
+        "grounding220:presence",
+        "wc65:WC11"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          6
+        ],
+        "wc65:WC11": [
+          1
+        ]
+      },
+      "negatives": [
+        "provider-unavailable",
+        "unsupported-capability",
+        "withheld"
+      ],
+      "note": "Explore consumes the hosted field as one kernel Surface carrying exact projection refs with honest live-or-fallback rendering; Share/Project names every withheld private item in the omissions and publishes a preview and hosted read carrying none of them; and with no field target the surface reports the client's own unavailability reason while local work stays intact."
+    },
+    "explore-sf2": {
+      "kind": "walk",
+      "serves": [
+        "alpha:E",
+        "grounding220:recovery",
+        "wc65:WC11"
+      ],
+      "branches": {
+        "grounding220:recovery": [
+          1,
+          6
+        ],
+        "wc65:WC11": [
+          0
+        ]
+      },
+      "negatives": [
+        "late",
+        "provider-unavailable",
+        "reconnect"
+      ],
+      "note": "The desktop consumes one hosted Wiki bounded whole without adding nodes or relations, reads it as graph/list/tree/page/Expression over exact provenance-bearing refs, recentres safely past a deliberately delayed native reply that can neither remount the departed surface nor edit the owner document, and survives real connection loss with the address retained until reconnect restores the same subject and pin."
+    },
+    "expression-controls": {
+      "kind": "walk",
+      "serves": [
+        "vakcraft65:live-faculties"
+      ],
+      "branches": {
+        "vakcraft65:live-faculties": [
+          3
+        ]
+      },
+      "negatives": [
+        "conflicting"
+      ],
+      "note": "The Expression inspector edits the real native document — commits through owner operations, refuses invalid input without advancing the revision, and on a concurrent owner revision preserves the human draft and offers both real recovery choices (apply to the newer revision, or take the owner value)."
+    },
+    "expression-page": {
+      "kind": "walk",
+      "serves": [
+        "vakcraft65:joined-experience",
+        "vakcraft65:live-faculties"
+      ],
+      "branches": {
+        "vakcraft65:joined-experience": [
+          3
+        ],
+        "vakcraft65:live-faculties": [
+          2
+        ]
+      },
+      "negatives": [
+        "denied",
+        "stale",
+        "unsupported-capability"
+      ],
+      "note": "The authored page embeds one exact native Expression identity under an honest live lease — forged or mismatched leases cannot alter it, iframe editing or a native revision advance drops the lease to the explicit fallback without mutating owner bytes or relabelling stale pixels, and the same production canvas returns through focus, capture and a frontstate restore."
+    },
+    "expression-world-join": {
+      "kind": "walk",
+      "serves": [
+        "vakcraft65:joined-experience",
+        "vakcraft65:live-faculties",
+        "wc65:WC06"
+      ],
+      "branches": {
+        "vakcraft65:joined-experience": [
+          3
+        ],
+        "vakcraft65:live-faculties": [
+          3
+        ],
+        "wc65:WC06": [
+          1
+        ]
+      },
+      "negatives": [
+        "interrupted",
+        "missing",
+        "stale"
+      ],
+      "note": "A generated artifact imports through the existing path as an ordinary oi.expression/v1 document; shared selection moves over exact refs in both directions, portals open and degrade honestly through the real host, an ExpressiveAct is held, checkpointed and restored over exact revisions, and front/verso reuse the same renderer canvas with no engine fork."
+    },
+    "factory-development": {
+      "kind": "walk",
+      "serves": [
+        "factory289:arrangement",
+        "factory289:runs",
+        "factory289:agents",
+        "factory289:visual",
+        "grounding220:factory-return",
+        "alpha:F"
+      ],
+      "branches": {
+        "factory289:arrangement": [
+          3,
+          5
+        ],
+        "factory289:runs": [
+          1,
+          2,
+          7
+        ],
+        "factory289:visual": [
+          2
+        ],
+        "grounding220:factory-return": [
+          1,
+          6
+        ]
+      },
+      "negatives": [
+        "missing"
+      ],
+      "note": "The Factory Desk reads only what the person names through the owner — honest empty and refused states render the owner's own words, every Run card, depth and step equals the owner's CLI answer by content, Inspect is a hand-off rather than a destination, a conversation no Run carried is disclosed as direct work rather than falsely attributed, the Agents roster equals the kernel SessionSpace read, and absent production operations are named gaps instead of masquerades."
+    },
+    "file-edit": {
+      "kind": "walk",
+      "serves": [
+        "alpha:F"
+      ],
+      "branches": {},
+      "negatives": [
+        "conflicting",
+        "stale"
+      ],
+      "note": "An ordinary file opens with exact owner bytes, its unsaved draft survives reload without writing the source, explicit Save writes real bytes through Central's CAS, a concurrent external write yields a structured conflict preserving both sides, and recovery previews retained revisions before an explicit restore."
+    },
+    "files": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:source-place"
+      ],
+      "branches": {
+        "grounding220:source-place": [
+          2,
+          3
+        ]
+      },
+      "negatives": [
+        "denied",
+        "missing"
+      ],
+      "note": "File browsing follows the owner: exact bytes, external updates re-read on focus without a desktop index, a deleted file keeps a labelled read-only last reading with no save offered, symlinks cannot escape the owner root, and browsing never adopts a project or clears a stale authority by invention."
+    },
+    "first-vertical": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:authority-delivery",
+        "grounding220:composition",
+        "oi97:human-return"
+      ],
+      "branches": {
+        "grounding220:authority-delivery": [
+          0,
+          2,
+          5
+        ],
+        "grounding220:composition": [
+          8
+        ]
+      },
+      "negatives": [
+        "withheld"
+      ],
+      "note": "The joined vertical: a selected passage composes an addressed request carrying the exact source ref and selection-time revision, real Actuation admission gates every dispatch, the attributable reply arrives in the canonical transcript with the human draft never riding it, and the reply returns through Central's receiving field for human review and a revision-checked include."
+    },
+    "flow-canvas": {
+      "kind": "walk",
+      "serves": [
+        "factory289:session-compose",
+        "grounding220:identity"
+      ],
+      "branches": {
+        "factory289:session-compose": [
+          5
+        ],
+        "grounding220:identity": [
+          1
+        ]
+      },
+      "negatives": [
+        "conflicting"
+      ],
+      "note": "Flow writing mints nothing until the explicit Save places one instance at the ratified path through Central's CAS; appends advance the revision with the document id stable, AgentSessions bind beside the document without owning its identity, a dirty composer meets an external write as a structured conflict with both sides preserved, and every revision in the owner history is human-attributed."
+    },
+    "ground": {
+      "kind": "walk",
+      "serves": [
+        "alpha:A",
+        "alpha:F"
+      ],
+      "branches": {},
+      "negatives": [],
+      "note": "Ground recognition is explicit and native: an ordinary project is refused as a Central, the real root recognises and binds as the default, the isolated native suite binding records the canonical root, and recognition preserves the open arrangement, the writing and the actual source bytes across reload."
+    },
+    "history": {
+      "kind": "walk",
+      "serves": [
+        "alpha:F"
+      ],
+      "branches": {},
+      "negatives": [
+        "conflicting",
+        "stale"
+      ],
+      "note": "Source History equals the owner's retained records — a refused CAS save adds no record, a concurrent external write is shown with both sides and the competing revision, the resolved save increments history exactly once with the owner change ref and native human attribution, and a no-change save fabricates nothing."
+    },
+    "html-continuity": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:identity",
+        "wc65:WC12"
+      ],
+      "branches": {
+        "grounding220:identity": [
+          3
+        ],
+        "wc65:WC12": [
+          1
+        ]
+      },
+      "negatives": [
+        "late"
+      ],
+      "note": "Document identity survives tab, mode and workspace movement and a full renderer restart while every directory listing is stalled — the warm return keeps the same document instance, the pending open lands in its origin workspace despite the late read, and restart restores the saved binding with exactly one owner read."
+    },
+    "instrument": {
+      "kind": "walk",
+      "serves": [
+        "vakcraft65:live-faculties",
+        "wc65:WC06"
+      ],
+      "branches": {
+        "vakcraft65:live-faculties": [
+          5
+        ],
+        "wc65:WC06": [
+          0
+        ]
+      },
+      "negatives": [
+        "missing",
+        "provider-unavailable"
+      ],
+      "note": "The privileged composition keeps the desktop's law while hosting a foreign owner — an unregistered source refuses by name, the retained lease records attach, checkpoint, recovery-observation and detach, commands reach the registered owner, an unavailable owner pauses the field and a returning one resumes it, and after relaunch the absent source is named honestly."
+    },
+    "instrument-host": {
+      "kind": "walk",
+      "serves": [
+        "vakcraft65:live-faculties",
+        "wc65:WC06"
+      ],
+      "branches": {
+        "vakcraft65:live-faculties": [
+          5
+        ],
+        "wc65:WC06": [
+          0
+        ]
+      },
+      "negatives": [
+        "denied"
+      ],
+      "note": "The real QL focused-instrument adapter, served byte-exact from its checkout, registers through the owner registry and drives the real engine lease — native attach acknowledgement, commands onto the exact host sequence, refusals disclosed, advances moving the native cursor, and checkpointed recovery after a real WebGL context loss."
+    },
+    "instrument-native-host": {
+      "kind": "walk",
+      "serves": [
+        "vakcraft65:live-faculties"
+      ],
+      "branches": {
+        "vakcraft65:live-faculties": [
+          5
+        ]
+      },
+      "negatives": [
+        "denied"
+      ],
+      "note": "The real ql-focused-host binary computes the Personal reception (seven centres), refuses foreign reception while retaining the current reading, keeps the retained field un-reseeded through real M1–M4 focus and re-entry, recovers its checkpoint after context loss, and safe-cue composition opens the same native Expression identity with no invented Agent loop."
+    },
+    "kernel-cas": {
+      "kind": "walk",
+      "serves": [
+        "alpha:F"
+      ],
+      "branches": {},
+      "negatives": [
+        "conflicting",
+        "duplicate"
+      ],
+      "note": "The kernel seam is proven by operation in the running app — verbatim renders, exactly one event per state change, revision hashes advancing and returning through real saves, a structured conflict carrying both revisions with both sides preserved, a harness-driven focus change that never moves the UI, and a strictly monotonic event log with no gaps or duplicate emissions."
+    },
+    "knowledge": {
+      "kind": "walk",
+      "serves": [
+        "adaptive65:AP01",
+        "alpha:E",
+        "wc65:WC01",
+        "wc65:WC02",
+        "wc65:WC12",
+        "wc65:WC13"
+      ],
+      "branches": {
+        "adaptive65:AP01": [
+          0
+        ],
+        "wc65:WC01": [
+          1
+        ],
+        "wc65:WC12": [
+          1
+        ],
+        "wc65:WC13": [
+          0
+        ]
+      },
+      "negatives": [
+        "unsupported-capability"
+      ],
+      "note": "The leader-summoned search renders the real AIKit ordering without recording use, moving kernel focus or training familiarity, the wiki opens as one canonical native ref across search/graph/page/Expression with absent QL participation disclosed instead of inferred, and the dirty source buffer and saved camera survive navigation and relaunch."
+    },
+    "knowledge-expression": {
+      "kind": "walk",
+      "serves": [
+        "alpha:E",
+        "wc65:WC13"
+      ],
+      "branches": {
+        "wc65:WC13": [
+          0
+        ]
+      },
+      "negatives": [
+        "unsupported-capability"
+      ],
+      "note": "Native AIKit search opens the exact ProjectMap/source and SemanticWiki refs, the local whole projects through the Expression application at measured subjects and relations, keyboard activation and pin retain the exact native subject, the projected glyph renders whole inside its artboard in light and dark ink, and the native-only popout is disclosed honestly as unavailable in the browser."
+    },
+    "leave-reenter": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:presence",
+        "grounding220:recovery",
+        "oi97:human-return"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          4
+        ],
+        "grounding220:recovery": [
+          1,
+          2
+        ]
+      },
+      "negatives": [
+        "denied",
+        "late"
+      ],
+      "note": "A Return that arrived while the desktop was closed stays beside the open Day document with its original occurrence/receipt times and exact pre-close basis, the outstanding Return blocks NOW archive until the human's reviewed inclusion settles it, and explicit re-entry restores Day/Flow/NOW identity across an advanced day boundary without closing yesterday's writing."
+    },
+    "mode-workspaces": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:presence"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          0
+        ]
+      },
+      "negatives": [],
+      "note": "Per-mode dedicated views leave the base tree intact in the store and remount it exactly, so unsaved writing survives every mode switch and reload without cloning, with zero scheduled frames when idle."
+    },
+    "modes": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:presence"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          0
+        ]
+      },
+      "negatives": [],
+      "note": "Mode switches dedicate each view while unsaved writing rides through every switch, the workbench remounts exactly as left, the tab pin model persists its geometry, and everything restores after a reload."
+    },
+    "navigator": {
+      "kind": "walk",
+      "serves": [
+        "adaptive65:AP04"
+      ],
+      "branches": {
+        "adaptive65:AP04": [
+          0
+        ]
+      },
+      "negatives": [
+        "provider-unavailable"
+      ],
+      "note": "Project rows match the real Central World map in owner order with distinct root/project wiki identities and no fabricated identity for unbound projects, and with no owner transport the navigator discloses the absence locally and fabricates no rows."
+    },
+    "permission": {
+      "kind": "walk",
+      "serves": [
+        "oi97:human-return"
+      ],
+      "branches": {},
+      "negatives": [],
+      "note": "The consent surface displays the exact native tool request with its native choices, and the human's allow_once completes a real isolated tool write whose result stays in Activity — approval at the proper boundary without any chat relay."
+    },
+    "receive-include": {
+      "kind": "walk",
+      "serves": [
+        "oi97:human-return",
+        "wc65:WC08"
+      ],
+      "branches": {
+        "wc65:WC08": [
+          1
+        ]
+      },
+      "negatives": [
+        "stale"
+      ],
+      "note": "The human inspects the exact proposal, basis revision and producer before deciding, inclusion lands through the owner's revision-checked operation with author and reviewer as distinct native facts, and an externally advanced revision makes the stale acceptance refused verbatim with no document bytes changed."
+    },
+    "receive-recover": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:recovery",
+        "oi97:human-return"
+      ],
+      "branches": {
+        "grounding220:recovery": [
+          1,
+          5
+        ]
+      },
+      "negatives": [
+        "denied",
+        "interrupted"
+      ],
+      "note": "Rejection records the human reviewer and cannot be resurrected by the desktop, a filesystem-refused inclusion lands honest `uncertain` with no bytes changed, and the owner's recover replays the recorded intent exactly once with attribution intact — no hidden duplicate."
+    },
+    "remember": {
+      "kind": "walk",
+      "serves": [
+        "adaptive65:AP01",
+        "adaptive65:AP02"
+      ],
+      "branches": {
+        "adaptive65:AP01": [
+          0
+        ],
+        "adaptive65:AP02": [
+          0
+        ]
+      },
+      "negatives": [
+        "changed-source",
+        "unsupported-capability"
+      ],
+      "note": "A remembered selection lands as the owner's generated-proposal note carrying the verbatim selection and exact source ref with recognition left unrecognised as the human's separate act, a source changed after selection is visibly refused with nothing dispatched, and a revision-less component selection offers no Remember at all."
+    },
+    "rest": {
+      "kind": "walk",
+      "serves": [
+        "factory289:visual",
+        "grounding220:presence"
+      ],
+      "branches": {
+        "factory289:visual": [
+          6
+        ],
+        "grounding220:presence": [
+          6
+        ]
+      },
+      "negatives": [
+        "missing",
+        "provider-unavailable"
+      ],
+      "note": "With no owner transport the empty desktop stays genuinely usable — real entries only, an honest Day refusal naming the failure, the graph aperture standing and naming its requirement, and writing that opens, names its owner-section destination and survives relaunch without fabricating projects."
+    },
+    "select-send": {
+      "kind": "walk",
+      "serves": [
+        "gateway:D",
+        "grounding220:authority-delivery"
+      ],
+      "branches": {
+        "grounding220:authority-delivery": [
+          0,
+          1,
+          2,
+          5
+        ]
+      },
+      "negatives": [
+        "denied",
+        "duplicate",
+        "withheld"
+      ],
+      "note": "The addressed turn dispatches through the real Actuation-admitted agency with an exact sender/recipient/basis preview, the human draft buffer never rides the machine turn, a duplicate delivery identity returns the durable receipt without resending, and an undisclosed audience is refused by the owner before any transport effect."
+    },
+    "send-group-reconnect": {
+      "kind": "walk",
+      "serves": [
+        "gateway:D",
+        "grounding220:authority-delivery",
+        "grounding220:recovery"
+      ],
+      "branches": {
+        "grounding220:authority-delivery": [
+          0,
+          1
+        ],
+        "grounding220:recovery": [
+          0,
+          5
+        ]
+      },
+      "negatives": [
+        "denied",
+        "duplicate",
+        "interrupted",
+        "reconnect"
+      ],
+      "note": "The group dispatch admits every recipient before the first transport effect and settles independent durable results per recipient, audience/source/disclosure violations are refused with zero provider effect, repeats return receipts without resend, and after an owner restart a fresh open is refused while explicit reconnect resumes the recorded native session identity with receipts intact."
+    },
+    "sf5-protected-nara": {
+      "kind": "walk",
+      "serves": [
+        "alpha:G",
+        "grounding220:joined",
+        "vakcraft65:joined-experience"
+      ],
+      "branches": {
+        "grounding220:joined": [
+          7
+        ]
+      },
+      "negatives": [
+        "denied",
+        "interrupted",
+        "reconnect",
+        "stale",
+        "withheld"
+      ],
+      "note": "The restricted Nara projection binds the safe Expression to the explicitly consented target with protected sentinels withheld from the outward payload, an independent transport identity cannot read before admission, changing the target invalidates consent, withdrawal stops the second desktop's rendering at the stable ref, and a real offline recovery failure locks fresh publication until the retained hosted presences recover per projection ref."
+    },
+    "sf6-joined-two-worlds": {
+      "kind": "walk",
+      "serves": [
+        "alpha:G",
+        "grounding220:joined",
+        "grounding220:recovery",
+        "oi97:human-return"
+      ],
+      "branches": {
+        "grounding220:joined": [
+          7
+        ],
+        "grounding220:recovery": [
+          0,
+          1,
+          4
+        ]
+      },
+      "negatives": [
+        "denied",
+        "interrupted",
+        "provider-unavailable",
+        "reconnect",
+        "withheld"
+      ],
+      "note": "Two independently grounded worlds meet on one second-machine hosted field at exact source revisions, summoning refuses without the native owner binding, a quarantined contribution is admitted and returned into the real receiving field and included at the exact revision, refs survive owner restart and reconnect, the dark owner's hosted representation stays attributed rather than canonical, and the consented safe Nara presence joins and withdraws at its stable ref."
+    },
+    "shared-field-hosted": {
+      "kind": "walk",
+      "serves": [
+        "alpha:G",
+        "vakcraft65:joined-experience"
+      ],
+      "branches": {},
+      "negatives": [
+        "missing",
+        "provider-unavailable"
+      ],
+      "note": "The desktop pulls the hosted field only when a graph is asked for, names unbound and absent states with the client's own reasons instead of fabrications, renders hosted nodes with owner provenance, no invented Actions and no ref collisions, publishes a passage that reads back at the same projection/source revisions, and the hosting machine's Explore page shows the same ref."
+    },
+    "shared-field-return": {
+      "kind": "walk",
+      "serves": [
+        "alpha:G",
+        "oi97:human-return"
+      ],
+      "branches": {},
+      "negatives": [
+        "denied"
+      ],
+      "note": "Publication demands an explicit publisher and audience before any envelope exists, the receiver quarantines under a payload fingerprint and admits as its own actor, withdrawal is a new projection revision that deletes no source history, and the admitted material returns through the receiving seam with its shared-field lineage disclosed and all four material states visible on one canvas."
+    },
+    "spatial": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:presence"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          0
+        ]
+      },
+      "negatives": [],
+      "note": "Workspace switches, maximize, region promotion and disclosure changes preserve canonical semantic focus and unsaved source writing without cloning or redirecting work."
+    },
+    "surfaces": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:presence"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          0
+        ]
+      },
+      "negatives": [],
+      "note": "Frame operations over real owner sources reuse bindings, keep one kernel focus, retain dirty writing through split/move/tile, disclose exact menu operations, refuse pinned closes, and restore the pane tree, pins, weights and writing exactly after reload."
+    },
+    "system-settings": {
+      "kind": "walk",
+      "serves": [
+        "factory289:praxis-context",
+        "factory289:visual",
+        "oi97:human-return"
+      ],
+      "branches": {
+        "factory289:praxis-context": [
+          6
+        ],
+        "factory289:visual": [
+          6
+        ]
+      },
+      "negatives": [
+        "missing",
+        "stale"
+      ],
+      "note": "Settings renders drift with both sides, refs and a visible out-of-step word, routes remediation plan-first through the product's own operation with owner authority shown before anything moves, reads the real census seam where the empty world renders honest bootstrap with the install entry on the same page, and keeps every position's availability honest with raw records only behind collapsed disclosure."
+    },
+    "task-basis": {
+      "kind": "walk",
+      "serves": [
+        "factory289:session-compose",
+        "grounding220:authority-delivery",
+        "grounding220:source-place"
+      ],
+      "branches": {
+        "factory289:session-compose": [
+          2
+        ],
+        "grounding220:authority-delivery": [
+          0,
+          1,
+          3
+        ],
+        "grounding220:source-place": [
+          4
+        ]
+      },
+      "negatives": [
+        "denied",
+        "missing",
+        "unsupported-capability"
+      ],
+      "note": "The composer renders the owner's actual task record verbatim — uncertain preparation disclosed, no invented NOW ref, agency expectation or owner read — a fabricated expectation against the unready task is refused before any transport, and the Workcell boundary's unsupported protection on this host leaves the owner's uncertain record rather than any weaker fallback."
+    },
+    "welcome": {
+      "kind": "walk",
+      "serves": [
+        "factory289:visual"
+      ],
+      "branches": {
+        "factory289:visual": [
+          0
+        ]
+      },
+      "negatives": [],
+      "note": "The opening runs one production Expression canvas whose reduced-motion path paints the final authored still and releases without continuing a simulation, with entry governed by rendered engine time in both themes."
+    },
+    "workspace-continuity": {
+      "kind": "walk",
+      "serves": [
+        "grounding220:presence",
+        "grounding220:recovery",
+        "vakcraft65:joined-experience"
+      ],
+      "branches": {
+        "grounding220:presence": [
+          0,
+          6
+        ],
+        "grounding220:recovery": [
+          2
+        ]
+      },
+      "negatives": [
+        "missing",
+        "provider-unavailable"
+      ],
+      "note": "One ref-bound workspace spans project source, a wiki page bound to its origin graph, global Explore and a SharedField surface, degrades honestly when the field is absent or unbound, restores exactly across the journey, kill/relaunch and workspace switches, and persists refs and compact view state only — never a cloned payload."
+    },
+    "background-completion": {
+      "kind": "walk",
+      "serves": [
+        "factory289:arrangement"
+      ],
+      "branches": {
+        "factory289:arrangement": [
+          0
+        ]
+      },
+      "negatives": [
+        "missing",
+        "stale"
+      ],
+      "note": "A Run completes in the owner's world while the person is focused elsewhere: the arrival marks only its own card, the Run view's owner build revision advances by content, acknowledge is the person's own answer, and scope, selection, focus, regions and the kernel log do not move; the adverse face renders the owner's read-refusal as the Run's own line with the held view standing and no global takeover."
+    }
+  }
+}

@@ -28,6 +28,14 @@
  *     code change.
  */
 import { ALL_GROUPS, assertOwnerGroupLive, readLiveListing, readRegistryViaBridge } from "../live-settings-acceptance.mjs";
+import { assertNoRawJson } from "../lib/read-model.mjs";
+import {
+  assertStatusPanel,
+  assertHarnessesPanel,
+  assertModelsPanel,
+  assertCredentialsPanel,
+  assertSkillsPanel,
+} from "../lib/settings-sections.mjs";
 
 const oiBin = process.env.OI_BIN ?? "oi"; // the same resolution the walk bridge uses
 
@@ -65,6 +73,24 @@ export default async function run({page,baseUrl,check,shot,bridgeUrl,log}) {
   }
   await shot('live-groups');
   log(`live per-group verdicts: ${Object.entries(verdicts).map(([owner, verdict]) => `${owner}=${verdict}`).join(", ")}`);
+
+  // --- 1b · The rebuilt sections (HARNESS-SETTINGS-RESEARCH §2), live -----
+  // In this live world the real `oi` serves the AIKit disclosure, so every
+  // section asserts its full row-by-row round trip; each panel is also held
+  // to the L5 law on its own.
+  const sectionLegs = [
+    ["Status", () => assertStatusPanel({page, check, disclosureAvailable: true})],
+    ["Harnesses", () => assertHarnessesPanel({page, check})],
+    ["Models", () => assertModelsPanel({page, check})],
+    ["Credentials", () => assertCredentialsPanel({page, check, disclosureAvailable: true})],
+    ["Skills", () => assertSkillsPanel({page, check, disclosureAvailable: true})],
+  ];
+  for (const [name, leg] of sectionLegs) {
+    const panel = await leg();
+    await assertNoRawJson({check}, panel, `${name}: the rebuilt section renders no raw JSON (L5)`);
+    await shot(`section-${name.toLowerCase()}`);
+  }
+  await page.locator('.settings-toc button', {hasText: 'All settings'}).first().click();
 
   // --- 2 · FIXTURE: only the generic-projection proofs remain -------------
   await page.goto(baseUrl);

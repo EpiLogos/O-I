@@ -4,7 +4,7 @@ export {setup};
 import {renderedBounds} from '../knowledge-projection-geometry.mjs';
 
 export default async function run({page,baseUrl,check,metric,shot,channel,provision:p}){
-  const native=(...args)=>JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'/Users/admin/.cargo/bin/aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env}})).data;
+  const native=(...args)=>JSON.parse(execFileSync(process.env.OI_AIKIT_BIN??'aikit',['--json','-C',p.projectRoot,'knowledge',...args],{encoding:'utf8',env:{...process.env,...p.env}})).data;
   await page.goto(baseUrl);await channel('info');check(JSON.stringify(p.knowledgeStatus).includes('semantic-wiki'),'Isolated owner ground reports the native SemanticWiki provider',p.knowledgeStatus);
   await page.locator('[data-project-path="Work/Editor"]').click();const files=page.getByRole('button',{name:'Editor: files',exact:true});if(await files.getAttribute('aria-pressed')!=='true')await files.click();
   const source=p.sources[0],editor=page.locator(`[data-file-path="Work/Editor/${source.binding.path}"]`);await editor.click();

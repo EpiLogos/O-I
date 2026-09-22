@@ -6,6 +6,11 @@
   "story_source": "docs/experience/STORIES.md",
   "practice_source": "docs/experience/PRACTICE-CONDITIONS.md",
   "operator_source": "docs/experience/LOCAL-CAMPAIGN.md",
+  "executable_test_bindings": {
+    "path": "desktop/cradle/walk/scenario-bindings.json",
+    "receipts": "desktop/cradle/walk/artifacts/",
+    "standing": "declared source relations between executable frontend tests and the obligation field; the compiler validates them, receipts carry them as executed evidence; not an acceptance database"
+  },
   "source_modules": ["docs/experience/developer-field.json", "docs/experience/personal-web.json", "docs/experience/factory-agency.json", "docs/experience/session-grounding.json", "docs/experience/harness-first-adoption.json", "docs/experience/vak-expression-craft.json", "docs/experience/wiki-constellation.json"],
   "document_operations_source": "docs/experience/DOCUMENT-OPERATIONS.md",
   "ux_tier": 1,

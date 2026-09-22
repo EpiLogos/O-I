@@ -186,3 +186,12 @@
 .ground-fact dt { color: var(--oi-muted-2); min-width: 11ch; }
 .ground-fact dd { margin: 0; }
 .ground-checks { margin: 0; padding-left: 16px; }
+
+/* The rebuilt suite sections: harness cards, credential cards, named
+ * obligations. Cards over censuses (owner ruling 3, 2026-09-22). */
+.harness-cards, .credential-cards { display: grid; gap: 10px; margin: 8px 0; }
+.harness-card, .credential-card { border: 1px solid var(--oi-hairline-soft); border-radius: 8px; padding: 10px 12px; display: grid; gap: 4px; }
+.harness-card-head { display: flex; align-items: baseline; gap: 8px; flex-wrap: wrap; }
+.harness-card-effect { margin: 0; font-size: var(--oi-shell-type-ui); }
+.config-obligations { margin: 6px 0 0; padding-left: 18px; display: grid; gap: 4px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.config-obligations code { color: var(--oi-ink); }

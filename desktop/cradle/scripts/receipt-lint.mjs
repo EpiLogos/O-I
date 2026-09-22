@@ -64,6 +64,7 @@ const SCENARIO_SPEC = {
   "system-settings": "docs/cradle/06-SYSTEM-SETTINGS.md §7",
   configuration: "docs/cradle/09-CONFIGURATION-PLANE.md",
   "factory-development": "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12",
+  "background-completion": "docs/experience/FACTORY-AGENCY.md §1 + handoff §4",
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

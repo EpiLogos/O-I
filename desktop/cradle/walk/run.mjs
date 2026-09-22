@@ -25,7 +25,7 @@ import { mkdirSync, writeFileSync, readFileSync, realpathSync } from "node:fs";
 import { createRequire } from "node:module";
 import { dirname, join, resolve } from "node:path";
 import { fileURLToPath } from "node:url";
-import { chromium } from "playwright";
+import { chromium, webkit } from "playwright";
 import { normalizeRegistry, resolveScenarioNames, classifyFailure, DisposerStack, dirtyTreeDigest, buildInputIdentity } from "./run-support.mjs";
 
 const here = dirname(fileURLToPath(import.meta.url));
@@ -142,6 +142,7 @@ const SCENARIOS = {
   study: { module: "scenarios/study.mjs", kernel: false, aliases: ["ui-study"] },
   native: { module: "scenarios/native.mjs", kernel: false, aliases: ["package"] },
   "document-entry": { module: "scenarios/document-entry.mjs", kernel: true, aliases: ["6a"] },
+  "background-completion": {module:"scenarios/background-completion.mjs",kernel:true,aliases:[]},
 };
 
 // Which design/spec row each scenario's receipt serves, and an optional grade
@@ -155,14 +156,38 @@ const SCENARIO_SPEC = {
   "system-settings": { spec_ref: "docs/cradle/06-SYSTEM-SETTINGS.md §7" },
   configuration: { spec_ref: "docs/cradle/09-CONFIGURATION-PLANE.md" },
   "factory-development": { spec_ref: "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12" },
+  "background-completion": { spec_ref: "docs/experience/FACTORY-AGENCY.md §1 + handoff §4" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
+
+// Declared source relations (walk/scenario-bindings.json): which #65
+// obligations/stories a scenario serves, which required branches and
+// source-defined negative classes its checks exercise. The compiler
+// (scripts/experience_map.py --coverage) validates these against the
+// obligation field and joins receipts as latest performed evidence; the
+// receipt carries the declaration so executed evidence keeps its relation.
+let DECLARED_BINDINGS = {};
+try {
+  DECLARED_BINDINGS = JSON.parse(readFileSync(join(here, "scenario-bindings.json"), "utf8")).tests ?? {};
+} catch (error) {
+  if (error.code !== "ENOENT") throw error;
+}
+const declaredBinding = (name) => {
+  const binding = DECLARED_BINDINGS[name];
+  return binding ? {
+    serves: binding.serves,
+    branches: binding.branches ?? {},
+    negatives: binding.negatives ?? [],
+    claims_grade: binding.claims_grade ?? "D",
+  } : null;
+};
 
 function receiptStanding(name, kernelScenario) {
   const declared = SCENARIO_SPEC[name];
   return {
     spec_ref: declared?.spec_ref ?? DEFAULT_SPEC_REF,
     grade: declared?.grade ?? (kernelScenario ? "B" : "C"),
+    binding: declaredBinding(name),
   };
 }
 
@@ -273,6 +298,7 @@ function makeHarness({ scenario, page, baseUrl, bridgeUrl, kernelScenario }) {
       base_url: baseUrl,
       bridge_url: kernelScenario ? bridgeUrl : null,
       viewport: "1280x820",
+      browser_engine: process.env.WALK_ENGINE === "webkit" ? "webkit" : "chromium",
       bundle: "walk (WALK=1) served by vite preview",
       build_input: buildInput,
       node: process.version,
@@ -421,6 +447,7 @@ function failedReceipt({ name, kernelScenario, baseUrl, startedAt, failure, clea
       base_url: baseUrl,
       bridge_url: kernelScenario ? BRIDGE_URL : null,
       viewport: "1280x820",
+      browser_engine: process.env.WALK_ENGINE === "webkit" ? "webkit" : "chromium",
       bundle: "walk (WALK=1) served by vite preview",
       build_input: buildInput,
       node: process.version,
@@ -489,7 +516,12 @@ async function runScenario(name, { baseUrl }) {
     }
 
     stage = "browser";
-    const browser = await chromium.launch(process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
+    // WALK_ENGINE selects the browser engine (chromium default; webkit for
+    // conditions whose receiving semantics materially differ across engines).
+    // The engine is recorded in every receipt's environment.
+    const engineName = process.env.WALK_ENGINE === "webkit" ? "webkit" : "chromium";
+    const browser = await (engineName === "webkit" ? webkit : chromium).launch(
+      engineName === "chromium" && process.env.OI_CHROMIUM ? {executablePath:process.env.OI_CHROMIUM} : {});
     disposers.push("browser", () => browser.close());
 
     stage = "page";

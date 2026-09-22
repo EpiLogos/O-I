@@ -9,6 +9,7 @@
     "preview": "vite preview --port 4173 --strictPort",
     "walk": "node walk/run.mjs",
     "lint:receipts": "node scripts/receipt-lint.mjs",
+    "coverage": "cd ../.. && python3 scripts/experience_map.py --coverage-out docs/experience/coverage-reading",
     "predev": "node documents/build-personal.mjs",
     "prebuild": "node documents/build-personal.mjs",
     "test:personal-web": "node documents/build-personal.mjs && node --test tests/personal-web.test.mjs && node tests/personal-web-browser.mjs",
