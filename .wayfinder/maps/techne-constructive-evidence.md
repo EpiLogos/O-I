@@ -269,6 +269,41 @@ Agent co-work (§37, C8), eligible shared-world behaviour (§§23–24, C11) and
 retained walks §§27–33 with their §41 negatives all remain. This increment did
 not reduce that scope.
 
+## 22 September — item 3 (M4′/M5′ owner operations, §§18–19): a bounded proposal
+
+Read of the actual owners, to carry the map's "surface the real owner seam, or a
+bounded proposal if the op genuinely doesn't exist":
+
+- **M4′ place — no create op, and the map forbids one.** The kernel has no
+  place/world/occasion create op; places are DISCLOSED from a source that carries
+  a place-relation facet (TB0), read through the knowledge owner
+  (`techne/m0m5/place/*` treats place as disclosure-only, "never a hard-coded
+  route, and never the place inferred"; §18 says "Do not manufacture places or
+  coordinates. A truly absent spatial facet stays absent"). So the Lens Studio's
+  M4′ honest-facet state (absent when no source carries a place) is ALREADY the
+  correct operative behaviour — there is no seam to surface. To make M4′
+  *operative* the map-aligned path is to SITUATE work in a place a source
+  genuinely carries: add a place-carrying source to the corpus (a real TB0
+  place-relation facet, not a fabricated coordinate) and wire the existing
+  map/globe interactions over the disclosed place. A native place-AUTHORING op
+  would contradict "do not manufacture places" and is an explicit owner decision,
+  not something to fabricate.
+- **M5′ Palace — routes to the existing Expression owner.** Palace composition
+  (`techne/m0m5/palace/composition.ts`) ROUTES to the disclosed Expression-owner
+  Action; the Return action comes from the reading's disclosed actions. So a
+  bounded M5′ "compose a whole" control is buildable on the EXISTING composition/
+  commit path (the same native-owner edit M1′/M3′ use), composing the open
+  construction + its Scenes into a durable, re-openable whole. The full §19
+  feature — regions, portals, guided paths, multi-constellation/Journey/place
+  composition — is substantial and its scope is an owner call. Proposed first
+  increment: M5′ persists a composed whole through the existing owner (no second
+  Palace store/graph/renderer, per the non-goals), with regions/portals as a
+  named follow-on.
+
+Neither is implemented in this session: M4′ needs a place-carrying source or an
+owner decision on place authoring; M5′ needs an owner decision on Palace scope
+before building past the bounded first increment.
+
 ## Historical evidence retained
 
 The [earlier ledger at 66f5711](https://github.com/EpiLogos/O-I/blob/66f5711b16e4d37fcdcdf8e1cde87e26ccd2dcdd/.wayfinder/maps/techne-constructive-evidence.md) retains the initial source/ownership receipts and failed transport history. In particular: main `b72d763` joined at `a64f6d5`; baseline source runtime `35484923767`/artifact `10597113549`; entrance successor proof `35503604014`/artifact `10602848282`; failed base64 delivery `35505214406` applied no production changes, later readable patch `35505596071` did; `125327f` action-required was an unexecuted gate. Earlier native AIKit binary `99306d8` differed from its recovered source `3799426` and must not be reported as one verified build.
