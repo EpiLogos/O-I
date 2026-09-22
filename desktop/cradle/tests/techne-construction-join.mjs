@@ -161,6 +161,28 @@ try {
   const reread = (await op({op: 'expression', request: {operation: 'inspect', expression_ref: expectedRef}})).data.document;
   check(reread.revision > openedRevision && reread.title === 'Worked in the field', 'An edit made in the field commits to the SAME native constellation Expression through the owner (revision advanced, title changed)');
 
+  // ——— Whole Return through the connected field (§38, C9) ———
+  // The field's committed edit returns to the native constellation: saved as a
+  // composition file (its CURRENT revision, carrying the field's edit — not a
+  // stale pre-field snapshot), then attached to the constellation, findable
+  // alongside the original source memberships but as a distinguishable result.
+  await drawer().getByText('Save and Return composition', {exact: true}).click();
+  await drawer().getByLabel('Expression destination folder').fill('Work/Notes');
+  await drawer().getByLabel('Expression filename').fill('field-worked.expression.json');
+  await drawer().getByRole('button', {name: 'Save Expression file', exact: true}).click();
+  await drawer().getByRole('button', {name: 'Return saved Expression to constellation', exact: true}).click();
+  await drawer().getByRole('button', {name: 'Returned to constellation', exact: true}).waitFor();
+  const artifact = JSON.parse(readFileSync(resolve(project, 'field-worked.expression.json'), 'utf8'));
+  check(artifact.expression_ref === expectedRef && artifact.title === 'Worked in the field', 'The composition file Returned to the constellation carries the field\'s committed edit — the whole current work, not a stale pre-field snapshot');
+  const returned = savedFrame('Field-join inquiry');
+  const composed = returned['aikit.constellation/v1'].compositions?.filter(c => c.reference === expectedRef && c.kind === 'expression') ?? [];
+  check(composed.length === 1, 'The field-worked composition is found on its native constellation exactly once — a Return (idempotent attach), not merely a file save or a multiplied artifact');
+  check(returned.constellations[0].members.length === 2 && returned.constellations[0].members.every(m => m.ref === 'source:a'), 'The original source memberships remain intact and distinguishable from the returned composition (Return enriches, it does not overwrite the links)');
+  // Search readback: the constellation and its returned composition are found
+  // together through the actual native Wiki graph, not a second index.
+  const graph = (await op({op: 'graph', project: 'Notes', query: '', options: {input: 'aikit_resolution', fresh: true}})).reading;
+  check(graph.formations.some(f => f.ref === savedRef), 'The constellation whole is found through the native Wiki graph after the field Return');
+
   // ——— §41 negative: the Expressions cut does not bind the relay ———
   // Remove the load-bearing binding by standing in the lived cut, then summon
   // the very same saved constellation. The field must NOT receive it.

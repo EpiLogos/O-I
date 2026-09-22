@@ -22,7 +22,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | §§5–6,15,36; C5–C6 | `kernelDocumentBridge`, `sceneCorrespondence`, `kernelComposition`, `nativeCorrespondence`, existing engine bindings and native Scene material | U: existing bridge/composition tests passed. N: complete saved/working material, repeated-entity Scene-local placement and material-binding removal negative passed. B: two distinct native relations drawn/hit-tested in the actual app without remount/clock/camera reset. Broader media/carrier/3D/QL forms still need joined coverage. |
 | §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + `nativeWorkspace.ts` (construction/commit) + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B: the compact M0′–M5′ chooser and floating Lens Studio stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens DISCLOSES its material from the open kernel Expression via `nativeWorkspace.construction()` — M1′ real member/relation counts, M2′ its relations, M3′ its actual Scenes — never hardcoded stats (§36); M3′ persists through the NATIVE commit (kernel scene_create/edit, expected-revision, no retry), not a browser save (§§17,29); M4′/M5′ derive their honest facet + eligible material from the real construction and name the unsurfaced native place/palace owner seam (§§18–21). `techne-lens-studio-browser.mjs` proves native-op wiring, a §29/§41 browser-save negative, derived facets, a11y focus/keyboard roving and lived-cut absence (standalone, no host); `techne-native-application.mjs` proves the Studio discloses the EXACT open construction and its Scenes, carries the native commit, and keeps the same construction across a lens change (subject-carrying continuity, §28) over a REAL committed construction. Both gated in the Technē workflow (green). Remaining depth: a native place (M4′)/Palace (M5′) owner operation to surface, and richer inline per-instrument editing. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
 | §§1,25,37; C8 | Native Action boundaries, Ta-Onta/Actuation/AIKit; `NativeWorking` and `NativeSelectionQueue` | U: queue scope, supersession, refusal and no retry. N: actual native focus serialization and stale construction refusal. Full canonical Agent co-work/source basis/disclosure/late-return proof remains open. |
-| §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery | N: actual first file save and independent separate-process reopen passed. File-execution removal fails and keeps its pending intent. The full constellation/Journey/Palace/artifact → Wiki/graph/search/Library Return loop is not closed by this file proof. |
+| §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery; `constructionProjection.attachCompositionReturn` | N+B (22 Sep): the whole Return through the LIVE field is proven in `techne-construction-join.mjs` — a constellation worked in the field is saved as a composition file carrying the field's edit and ATTACHED to the native constellation, found there exactly once (idempotent, distinguished from a bare file save), original memberships intact, constellation found via the native Wiki graph after the Return. `kernelTechneAdapter` rechecked: it distinguishes routed (proposal reached the seam) from executed (kernel applied, receipt names the effect); a revision conflict refreshes the mirror and never retries. Remaining: Journey/Palace composition Return, explicit hide/show≠delete and retract from the field, and generated-material derivation. |
 | §§20–22,39; C10 | Existing kernel retained models; imported recovery and native working checkpoint; native selection queue | U/N: latest focus survives in-flight work; invalidated old-work gestures do not cross inquiry; no-op commit is idempotent; restart preserves edited-since-save. Whole mode/lens/portal/restart/source-change walk remains open. |
 | §§23–24; C11 | Existing Projection/WorldPresentation/SharedField owners | No new public dataset. Current eligible/private endpoints, read-only refusal and explicit derivative cases remain unproven by this continuation. |
 | §§7–10,13,23,27–33; C12 | Real Library, navigator, verso and source portals; `versoAccount`/`resolveVersoSubject`, `TechneSummonSurface`, `PointCloudHost`, app `nativeWorkspace.nativeSubject` | U/B (partial): the verso summon now carries the EXACT open native work (Expression ref + current revision + Scene + entity-or-relation occurrence) and it takes precedence over the kernel global focus; the carried pointer is sanitised to refs and validated through the owner (revision drift disclosed, not trusted). `verso-account-binding.test.mjs` proves the precedence/sanitisation (U, gated); the current-app browser proof asserts the exact ref+revision carriage (B). Library scene rows, source portal open/return and the full navigator/gallery route remain to be closed with browser evidence. |
@@ -208,7 +208,7 @@ the ref and LEAVES it. "One consumer" is now enforced, not assumed.
 **Executed proof (green locally on the pinned native cut; gated in CI).**
 `tests/techne-construction-join.mjs` + `-page.tsx`/`.html` mount BOTH production
 surfaces — the real Wiki (`KnowledgeSurface`) and the live app (`PointCloudHost`)
-— over one real kernel, and prove **13 checks**: a material-first two-member
+— over one real kernel, and prove **17 checks**: a material-first two-member
 constellation with a typed relation authored in the Wiki; `summonExpression`
 opens the EXACT projected Expression as the presented FIELD's own open document
 (read frame-bound from `__FIELD_STUDIES__.nativeWorking()`, revision-exact); the
@@ -216,8 +216,16 @@ buffered request consumed exactly once (no double-open); a SECOND, concealed-and
 ready Technē host, subscribed to the same store, does NOT open it (the presented-
 identity gate); the field renders the constellation's real members read from the
 kernel document (one renderer); an edit made in the field commits to the SAME
-native Expression through the owner (revision advanced, title changed). Two §41
-negatives: standing the presented host in the Expressions cut, the same summon
+native Expression through the owner (revision advanced, title changed); then the
+WHOLE RETURN (§38, C9): that field-committed work is saved as a composition file
+carrying the field's edit (not a stale pre-field snapshot) and ATTACHED to the
+native constellation — found there exactly once (idempotent, a Return not merely
+a file save), the original source memberships left intact and distinguishable,
+and the constellation whole found through the actual native Wiki graph after the
+Return. This completes the map's §26-step-3 canonical loop — ordinary source →
+construction → live Expression → work → native save/Return → Wiki readback —
+through the LIVE FIELD. Two §41 negatives: standing the presented host in the
+Expressions cut, the same summon
 does NOT reach the field, and the recorded ref is left UNCONSUMED — proving
 `PointCloudHost`'s `mode==="techne"` gate, not a shared kernel, is the
 load-bearing relay. The store's target semantics are proven directly by
