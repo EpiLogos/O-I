@@ -3,6 +3,7 @@ import {useKernel} from "../kernel/KernelProvider";
 import type {EncounterRow} from "../encounter/EncounterList";
 import {agentController} from "./nativeAgentClient";
 import type {NativeAgentController,NativePrepared,NativeReview} from "./nativeAgent";
+import "./native-agent.css";
 import {openAgentSetup} from "./agentSetup";
 
 const label=(review:NativeReview)=>review.profile.name||review.profile.purpose?.split("\n")[0].slice(0,90)||"Unnamed Agent";
@@ -16,7 +17,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
  const [opening,setOpening]=useState(false);const [openError,setOpenError]=useState<string>();
  const [creating,setCreating]=useState(false);const [skillQuery,setSkillQuery]=useState("");
  const refresh=async()=>{await controller.refresh();if(creating||state.review)await controller.refreshReadiness(creating);};
- useEffect(()=>{void controller.refresh();},[controller]);
+ useEffect(()=>{setCreating(false);setSkillQuery("");void controller.refresh();},[controller]);
  const choose=async(prepared:NativePrepared)=>{
   if(opening)return;setOpening(true);setOpenError(undefined);
   const row:EncounterRow={ref:prepared.agent_session,space:prepared.space,project:project??"",title:state.review?label(state.review):"Agent conversation"};
@@ -33,7 +34,7 @@ export function NativeAgentLauncher({project,onChoose,controller:injected}:{proj
   <header className="oi-panel-head"><strong>Agents in {project||"Central"}</strong><button type="button" className="oi-action" disabled={state.busy} onClick={()=>void refresh()}>Refresh</button></header>
   {!review&&!creating&&<>
    {state.profiles.length>0?<div role="group" aria-label="Agent roster">{state.profiles.map(item=><button key={item.profile.ref} type="button" className="oi-row" disabled={state.busy||!!state.unknown} onClick={()=>select(item.profile.ref)}>
-    <span>{label(item)}</span><span className="oi-note">{item.accepted?"Accepted":"Draft"}</span>
+    <span className="oi-row-title" title={label(item)}>{label(item)}</span><span className="oi-state">{item.accepted?"Accepted":"Draft"}</span>
    </button>)}</div>:!state.busy&&!state.error&&<p className="oi-note">No Agent definitions in this project yet.</p>}
    <button type="button" className="oi-action" disabled={state.busy||!!state.unknown} onClick={create}>New Agent</button>
   </>}

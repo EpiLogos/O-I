@@ -234,14 +234,15 @@ export function AgentLayer({project, subject, history, historyAvailable, accompa
           {name==="Chat"&&<AgentChat variant="plane" session={session} accompanying={accompanying} project={project??accompanying?.project} agentName={curation.agent} situating={project?`Situated in ${project}`:"Situated in Central"} sessionTitle={accompanying?titles[accompanying.ref]:undefined} choosing={choosing}
             subject={{title:subject.title,location:subject.location}} resolveSurface={resolveSurface} onMessage={onError??(message=>console.error(message))}
             onNewChat={()=>onAccompanying(undefined)} onChoose={choose}
-            onProvision={async provisionProject=>{
+            onProvision={async (provisionProject,provider)=>{
               // New-chat first Send: provision through the kernel, then bind —
               // the same one binding the chooser sets, no chooser on the way.
-              const provisioned=await encounterProvision(kernel.transport,provisionProject);
+              const provisioned=await encounterProvision(kernel.transport,provisionProject,provider);
               const value={ref:provisioned.agent_session,project:provisionProject,space:provisioned.space};
               learnTitles([{ref:provisioned.agent_session,project:provisionProject,space:provisioned.space,title:provisioned.space}]);
               onAccompanying(value);
               if(offered.some(entry=>entry.id==="Chat"))select("Chat");
+              return provisioned;
             }}/>}
           {name==="Activity"&&(session?<ActivityPlane key={session.state.key} session={session} onInspect={handToPanelInspect} conversation={conversation}/>:<NoAccompanying project={project} onOpen={choose}/>)}
           {name==="Context"&&<ContextPlane subject={subject} history={history} historyAvailable={historyAvailable} accompanying={accompanying} session={session} onOpenSubject={onOpenSubject}/>}

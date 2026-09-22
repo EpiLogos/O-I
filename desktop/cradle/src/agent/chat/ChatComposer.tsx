@@ -35,13 +35,14 @@ export interface ComposerConnection {
   onProvider: (id:string)=>void;
   onReconnect: (provider:string)=>void;
   openAllowed: boolean;
+  chosenProvider?:string;onPrepare?:()=>void;
   openReason?: string;
   model?:NativeModelState;
   modelActions?:NativeModelActions;
   onSetup?:()=>void;onRefreshProviders?:()=>void;
 }
 
-export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,onPermission,permissionAllowed,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject}:{
+export function ChatComposer({reading,draft,pending,busy,error,editable,promptAllowed,promptReason,cancelAllowed,onDraft,onSend,onCancel,onPermission,permissionAllowed,connection,tools,draftFailed,onRecover,paged,onLatest,focusToken,drafting,provisionProject,openModelInitially,onModelOpened}:{
   reading?:EncounterReading;draft:string;pending:boolean;busy:boolean;error?:string;
   editable:boolean;promptAllowed:boolean;promptReason?:string;cancelAllowed:boolean;
   onDraft:(text:string)=>void;onSend:()=>void;onCancel:()=>void;
@@ -50,6 +51,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   draftFailed:boolean;onRecover:()=>void;paged:boolean;onLatest:()=>void;
   /** Bump to move focus to the message field (a suggestion or an edit filled it). */
   focusToken?:number;
+  openModelInitially?:boolean;onModelOpened?:()=>void;
   /** Drafting before any conversation exists: Send opens a fresh conversation
    * (the kernel provisions it); nothing is gated on a chooser. */
   drafting?:boolean;
@@ -62,6 +64,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
   const status=connection.status;
   const running=status?.state==="TurnInFlight"||status?.state==="InterruptRequested";
   const connected=!!status?.native_session_id&&!status.error&&["Resident","TurnInFlight","InterruptRequested"].includes(status.state);
+  useEffect(()=>{if(openModelInitially&&connected){setProviderOpen(true);onModelOpened?.();}},[openModelInitially,connected,onModelOpened]);
   const selected=useMemo(()=>parseContextItems(draft),[draft]);
   /** The message text without its attachment blocks — what the person reads as theirs. */
   const message=useMemo(()=>{let text=draft;for(const item of [...selected].reverse())text=text.slice(0,item.start)+text.slice(item.end);return text.replace(/^\n+|\n+$/g,"");},[draft,selected]);
@@ -87,7 +90,7 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     return()=>{document.removeEventListener("mousedown",outside);document.removeEventListener("keydown",escape);};
   },[providerOpen]);
   return <div className="chat-composer" data-connection={drafting?"drafting":connected?running?"running":"connected":"disconnected"}>
-    {(error||status?.error)&&reading&&<p className="chat-composer-error oi-refusal" role="alert">{error||status?.error}</p>}
+    {(error||status?.error)&&<p className="chat-composer-error oi-refusal" role="alert">{error||status?.error}</p>}
     {status?.error&&status.native_session_id&&<p className="oi-note" role="status">The owner still holds this session&apos;s seat ({status.native_session_id}); recovery is the owner&apos;s service restart.</p>}
     {draftFailed&&<button className="oi-action" onClick={onRecover}>Apply my typing to the current shared draft</button>}
     {reading?.permissions?.map(request=><section className="chat-consent" key={request.native_request_id} aria-label="Provider consent">
@@ -98,7 +101,10 @@ export function ChatComposer({reading,draft,pending,busy,error,editable,promptAl
     {drafting
       ?<div className="chat-connect" data-fact="new-chat">
         <span className="chat-connect-label"><Glyph name="link" size={11}/> New conversation</span>
-        {provisionProject&&<span className="oi-note">First send opens it in {provisionProject}.</span>}
+        <span className="oi-note">First send opens it in {provisionProject||"Central"}.</span>
+        <label>Harness <select className="oi-input" aria-label="New conversation harness" value={connection.chosenProvider??""} disabled={!connection.openAllowed} onChange={event=>connection.onProvider(event.target.value)}><option value="">Use saved/default harness</option>{connection.providers.map(provider=><option key={provider.id} value={provider.id}>{provider.label}</option>)}</select></label>
+        {connection.onPrepare&&<button type="button" className="oi-action" disabled={busy||pending||!connection.openAllowed} onClick={connection.onPrepare}>Configure model before sending</button>}
+        {connection.onRefreshProviders&&<button type="button" className="oi-action" disabled={busy||pending} onClick={connection.onRefreshProviders}>Refresh harnesses</button>}
       </div>
       :!connected&&<div className="chat-connect" data-fact="disconnected">
       {status&&status.state!=="Disconnected"&&<span className="oi-note" role="status">{connectionLabel(status)}</span>}

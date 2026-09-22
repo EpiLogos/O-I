@@ -3,7 +3,7 @@
 //! real `aikit` reads and provisions one real conversation (SessionSpace,
 //! agent session, agency binding, provider open) WITHOUT spending any
 //! provider prompt: no draft, no send; the conversation rests idle when the
-//! proof ends, like any conversation opened from the chat face. Run
+//! proof ends, like any conversation opened from the chat face. No pre-existing default is changed. Run
 //! explicitly:
 //!
 //! ```text
@@ -15,7 +15,7 @@
 use oi_cradle_kernel::{Kernel, KernelOp, KernelOpResult};
 
 #[test]
-#[ignore = "live proof: real harness/model reads plus one prompt-free provision (fallback reuse) through the installed suite"]
+#[ignore = "live proof: real harness/model reads plus one prompt-free provision (fresh native Agency) through the installed suite"]
 fn settings_reads_and_a_prompt_free_provision_return_real_data() {
     let mut kernel = Kernel::discover();
 
@@ -44,72 +44,40 @@ fn settings_reads_and_a_prompt_free_provision_return_real_data() {
     );
     assert!(data["entries"].as_array().is_some_and(|rows| !rows.is_empty()));
 
-    // 3. The held chat default: none to start, held `pi` wins the
-    //    precedence, withdrawn again — the desktop's own state only.
-    let outcome = kernel.apply(KernelOp::ChatDefaultRead).expect("read the held chat default");
-    let KernelOpResult::ChatDefaultReading { document } = outcome.result else {
-        panic!("chat default read returned the wrong result variant");
-    };
-    if document.is_some() {
-        kernel.apply(KernelOp::ChatDefaultDiscard).expect("clear a pre-existing held default for the proof");
-    }
-    let KernelOpResult::ChatDefaultHeld { document: held } = kernel
-        .apply(KernelOp::ChatDefaultHold { provider: "pi".into() })
-        .expect("hold the default provider")
-        .result
-    else {
-        panic!("chat default hold returned the wrong result variant");
-    };
-    assert_eq!(held["value"], "pi", "{held}");
+    // Read-only preference observation: this proof must not discard the
+    // person's held choice. Explicit harness selection does not overwrite it.
+    let held_before = kernel.apply(KernelOp::ChatDefaultRead).expect("read held choice");
+    let KernelOpResult::ChatDefaultReading { document: before } = held_before.result else { panic!("default reading"); };
+    let outcome = kernel.apply(KernelOp::EncounterProvision { project: "".into(), provider: Some("pi".into()) })
+        .expect("prepare root conversation with explicit native harness");
+    let KernelOpResult::EncounterProvisioned { data } = outcome.result else { panic!("provision result"); };
+    assert_eq!(data["provider"], "pi");
+    assert_eq!(data["provider_default"], "explicit-choice");
+    assert_eq!(data["agency"], "minted-per-project");
+    assert!(data["agency_source"].is_object(), "owner source basis must be carried: {data}");
+    assert!(data["agency_admission"].is_object(), "owner admission must be carried: {data}");
+    assert_eq!(data["agency_admission"]["agent_ref"], data["agent_ref"]);
+    assert_eq!(data["open"]["resident"], true, "real native resident: {data}");
+    let KernelOpResult::ChatDefaultReading { document: after } = kernel.apply(KernelOp::ChatDefaultRead).unwrap().result else { panic!("default reading"); };
+    assert_eq!(before, after, "explicit selection must preserve held default");
+    println!("Prompt-free native provision: {} in {}", data["agent_session"], data["space"]);
+}
 
-    // 4. Provision one real conversation — no prompt. The mint verb is not
-    //    in the installed cut yet, so the provision must fall back to the
-    //    disclosed reuse of the newest admitted agency source, and the
-    //    held `pi` choice must win the provider precedence (rule
-    //    `owner-choice`, beating the pi-row default it would otherwise be).
-    let outcome = kernel
-        .apply(KernelOp::EncounterProvision { project: "Central".into() })
-        .expect("provision a fresh Central chat conversation");
-    let KernelOpResult::EncounterProvisioned { data } = outcome.result else {
-        panic!("provision returned the wrong result variant");
+#[test]
+#[ignore = "read-only native owner proof; invalid explicit provider must not allocate a SessionSpace"]
+fn invalid_explicit_provider_does_not_create_native_state() {
+    use std::process::Command;
+    let root=std::env::var("OI_CENTRAL_ROOT").expect("explicit current ground");
+    let oi=std::env::var("OI_BIN").unwrap_or_else(|_|"oi".into());
+    let discover=|| {
+        let out=Command::new(&oi).args(["aikit","session-space","-C",&root,"discover"]).output().unwrap();
+        assert!(out.status.success(),"{}",String::from_utf8_lossy(&out.stderr));
+        serde_json::from_slice::<serde_json::Value>(&out.stdout).unwrap()
     };
-    let agent_session = data["agent_session"].as_str().expect("agent session ref").to_owned();
-    println!(
-        "provisioned {agent_session}: provider={} via {} | agency={} | agent_ref={}",
-        data["provider"], data["provider_default"], data["agency"], data["agent_ref"]
-    );
-    assert_eq!(data["provider"], "pi", "{data}");
-    assert_eq!(data["provider_default"], "owner-choice", "the held choice must win: {data}");
-    assert_eq!(data["agency"], "reused-admitted-source", "the installed suite has no mint verb yet: {data}");
-    assert!(data["agent_ref"].as_str().is_some_and(|r| r.starts_with("agent")), "{data}");
-    assert!(
-        data["open"]["resident"].as_bool().unwrap_or(false)
-            || data["open"]["resident"].as_str().is_some_and(|v| v == "true"),
-        "the open result must name a live resident: {}",
-        data["open"]
-    );
-
-    // 5. Best-effort interrupt of the fresh conversation. `cancel` only
-    //    interrupts an in-flight turn — this provision sent none, so the
-    //    owner refuses with `no_turn_in_flight` and the conversation rests
-    //    idle, exactly like one opened from the chat face and left alone.
-    //    The provisioned session itself stays as owner state either way.
-    let cancelled = kernel.apply(KernelOp::Encounter {
-        project: "Central".into(),
-        request: oi_cradle_kernel::agency::EncounterRequest::Cancel {
-            agent_session,
-            reason: Some("live settings proof complete".into()),
-        },
-    });
-    println!("best-effort interrupt accepted: {}", cancelled.is_ok());
-
-    // 6. Withdraw the held default; the suite rows decide again.
-    let KernelOpResult::ChatDefaultDiscarded { document: discarded } = kernel
-        .apply(KernelOp::ChatDefaultDiscard)
-        .expect("withdraw the held default")
-        .result
-    else {
-        panic!("chat default discard returned the wrong result variant");
-    };
-    assert_eq!(discarded["removed"], true, "{discarded}");
+    let before=discover();
+    let mut kernel=Kernel::discover();
+    let result=kernel.apply(KernelOp::EncounterProvision {project:"".into(),provider:Some("not-a-configured-harness-oi65-negative".into())});
+    match result {Err(message)=>assert!(message.to_string().contains("no longer configured"),"{message:?}"),Ok(_)=>panic!("invalid harness was admitted")}
+    assert_eq!(before,discover(),"rejected selection must not allocate native conversation state");
+    println!("INVALID_PROVIDER_REFUSED_BEFORE_NATIVE_CREATION");
 }

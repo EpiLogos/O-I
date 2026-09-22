@@ -1,0 +1,6 @@
+.native-agent-launcher { padding: 10px; min-width: 0; display: flex; flex-direction: column; gap: 8px; }
+.native-agent-launcher .oi-panel-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+.native-agent-launcher fieldset { min-width: 0; margin: 0; padding: 8px; border: var(--oi-shell-edge) solid var(--oi-hairline-soft); }
+.native-agent-launcher details { min-width: 0; overflow-wrap: anywhere; }
+.native-agent-launcher .oi-action { align-self: flex-start; }
+.native-agent-launcher .oi-row-title { line-height: 1.4; }
