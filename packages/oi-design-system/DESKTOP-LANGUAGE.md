@@ -40,6 +40,22 @@ law, binding on every surface and every agent session:
    corner toggles). Losses of uncommitted refinements (resets of 09-20 and
    09-22) are the named mechanism to prevent: shell refinements commit at
    once.
+6. **Expose what the real harnesses expose.** Settings and configuration are
+   mapped from Claude Code, Codex and Hermes — their option coverage is the
+   requirement, normalised into this desktop's grammar. Everything is
+   configurable: harness by name, model per harness, credentials
+   (enter/rotate/verify through the owner's aikit credential and varlock
+   path — surfaced, never a diagnostic dump), skills as manageable settings,
+   in the desktop app and the TUI/CLI alike.
+7. **Nothing in the app says "returns".** The term has drifted into noise and
+   blocks the real thing: work returning to the person already flows through
+   the context tabs and the canvas embeds. No "returns" boxes, trays or bands
+   — the surfaces render the returned material itself.
+8. **Acceptance derives from the designs, not from what got built.** The
+   specs are made into the real test fixtures; the known "plausible
+   compromises" (raw dumps, census readouts, fixture-backed paths,
+   presence-without-presentation) are removed from acceptance — a check that
+   a shortcut satisfies is not acceptance of the thing it pretends to test.
 
 ## Owner revision, 15 September 2026 — canonical light and dark
 
