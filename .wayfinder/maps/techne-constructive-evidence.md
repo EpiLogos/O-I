@@ -20,7 +20,7 @@ Evidence grades: **S** source inspection; **U** unit/contract; **N** actual nati
 | §§0–3,9,11–14; C12 | `PointCloudHost` → imported `field-studies-journeys/src/app.ts`; native rail/workspace; retained mode slots | B: current mounted route, Epii no-subject entrance, native file save/restart and relation selection passed 19 checks at 07e32d3. Earlier isolated tests alone did not certify this route. Six working lens controls and correct home/Library/portal experience still require joined proof. |
 | §§4–7,34–35; C1–C4 | Merged Wiki reader, `WikiConstructionPanel`, `constructionDraft`/`constructionProjection`; AIKit native constructor; kernel `construction.rs`/`construction_source.rs`; join via `expressions/fieldOpen.ts` + `CradleFrame`/`AgentLayer`/`PointCloudHost` + app `open-expression` | B (22 Sep): a Wiki-authored constellation now opens as the LIVE field's own document and is worked and committed there — `techne-construction-join.mjs` 12 checks, both §41 no-relay negatives (see the 22 Sep section). Native ownership and prior cradle Wiki evidence retained; no second parser/store. Both creation routes proven cradle-side and route-agnostic to the field open; a direct in-app construction entry, variants/nesting worked in the field, remain. |
 | §§5–6,15,36; C5–C6 | `kernelDocumentBridge`, `sceneCorrespondence`, `kernelComposition`, `nativeCorrespondence`, existing engine bindings and native Scene material | U: existing bridge/composition tests passed. N: complete saved/working material, repeated-entity Scene-local placement and material-binding removal negative passed. B: two distinct native relations drawn/hit-tested in the actual app without remount/clock/camera reset. Broader media/carrier/3D/QL forms still need joined coverage. |
-| §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + `nativeWorkspace.ts` (construction/commit) + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B: the compact M0′–M5′ chooser and floating Lens Studio stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens DISCLOSES its material from the open kernel Expression via `nativeWorkspace.construction()` — M1′ real member/relation counts, M2′ its relations, M3′ its actual Scenes — never hardcoded stats (§36); M3′ persists through the NATIVE commit (kernel scene_create/edit, expected-revision, no retry), not a browser save (§§17,29); M4′/M5′ derive their honest facet + eligible material from the real construction and name the unsurfaced native place/palace owner seam (§§18–21). `techne-lens-studio-browser.mjs` proves native-op wiring, a §29/§41 browser-save negative, derived facets, a11y focus/keyboard roving and lived-cut absence (standalone, no host); `techne-native-application.mjs` proves the Studio discloses the EXACT open construction and its Scenes, carries the native commit, and keeps the same construction across a lens change (subject-carrying continuity, §28) over a REAL committed construction. Both gated in the Technē workflow (green). Remaining depth: a native place (M4′)/Palace (M5′) owner operation to surface, and richer inline per-instrument editing. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port; they are not mounted as a second renderer over a second model. |
+| §§16–19; C7 | `field-studies-journeys/src/lensStudio.ts` + `nativeWorkspace.ts` (construction/commit) + app.ts; existing M0′–M5′ native owners and `src/techne/m0m5/**` | B: the compact M0′–M5′ chooser and floating Lens Studio stand in the LIVE mount (the imported app), one renderer, on the SAME native construction. Each lens DISCLOSES its material from the open kernel Expression via `nativeWorkspace.construction()` — M1′ real member/relation counts, M2′ its relations, M3′ its actual Scenes — never hardcoded stats (§36); M3′ persists through the NATIVE commit (kernel scene_create/edit, expected-revision, no retry), not a browser save (§§17,29); M4′/M5′ derive their honest facet + eligible material from the real construction and name the unsurfaced native place/palace owner seam (§§18–21). `techne-lens-studio-browser.mjs` proves native-op wiring, a §29/§41 browser-save negative, derived facets, a11y focus/keyboard roving and lived-cut absence (standalone, no host); `techne-native-application.mjs` proves the Studio discloses the EXACT open construction and its Scenes, carries the native commit, and keeps the same construction across a lens change (subject-carrying continuity, §28) over a REAL committed construction. Both gated in the Technē workflow (green). Remaining depth: a native place (M4′)/Palace (M5′) owner operation to surface, and richer inline per-instrument editing. U (22 Sep): the M4′ place producer (`placeFacets.ts`) now derives real spatial facets into the register reading and flips `place` available (see the 22 Sep producer section) — the honest-absent iframe M4′ note stands until the React `PlaceInstrument` is mounted over that reading. The parallel QL-DisclosureSession m0m5 React instruments remain the read-model port, wired only in the test harness against a fixture reading; mounting them live over ONE real reading (register the wiki provider + a `TechneSurface` HUD coordinated with the iframe chooser) is the mapped next pass (see "Live-instrument mount"), never a second renderer over a second model. |
 | §§1,25,37; C8 | Native Action boundaries, Ta-Onta/Actuation/AIKit; `NativeWorking` and `NativeSelectionQueue` | U: queue scope, supersession, refusal and no retry. N: actual native focus serialization and stale construction refusal. Full canonical Agent co-work/source basis/disclosure/late-return proof remains open. |
 | §§19,25,38; C9 | Wiki constructor/Return; production `hostedCompositionFile`, native file owner and artifact recovery; `constructionProjection.attachCompositionReturn` | N+B (22 Sep): the whole Return through the LIVE field is proven in `techne-construction-join.mjs` — a constellation worked in the field is saved as a composition file carrying the field's edit and ATTACHED to the native constellation, attached to the constellation exactly once (register truth — the load-bearing witness, distinguished from a bare file save), original memberships intact, the returned composition keeps its derivation (source revision + member source). `kernelTechneAdapter` rechecked: it distinguishes routed (proposal reached the seam) from executed (kernel applied, receipt names the effect); a revision conflict refreshes the mirror and never retries. Honest remaining rigor (an independent review's finding, taken): real-kernel replay-idempotency, composition index/search readback as a §41 witness, and a sever-the-attach §41 negative — plus Journey/Palace composition Return and explicit hide/show≠delete from the field. |
 | §§20–22,39; C10 | Existing kernel retained models; imported recovery and native working checkpoint; native selection queue | U/N: latest focus survives in-flight work; invalidated old-work gestures do not cross inquiry; no-op commit is idempotent; restart preserves edited-since-save. Whole mode/lens/portal/restart/source-change walk remains open. |
@@ -286,7 +286,12 @@ Expressions format items 1–2 joined, not new systems:
   the spec's OWN open item G3 — "no local PlaceFacet producer yet" (wayfinder
   line 30): no source in the corpus produces a PlaceFacet, so the Lens Studio's
   M4′ absent-facet state is spec-correct until a PlaceFacet-carrying source
-  exists (the map §18: "A truly absent spatial facet stays absent").
+  exists (the map §18: "A truly absent spatial facet stays absent"). **Producer
+  built 22 Sep** — see "M4′ PlaceFacet producer built" below: `placeFacets.ts`
+  now derives real spatial facets (declared places + hard geography relations),
+  the payload emits `spatial` and the disclosure flips `place` available; the
+  honest-absent state remains exactly when the ground carries no place. The live
+  React-instrument mount (over this reading) is the remaining step.
 - **M5′ Palace (§10).** "Mnemonic/artistic/pedagogical composition of
   Expressions" — the O:I Web / integral whole. It owns NO second graph or Scene
   type and introduces NO Palace persistence primitive; it composes REAL
@@ -303,6 +308,121 @@ the UI/interaction source via a `TechneWorkspaceTransport` compatibility bridge,
 not a new substrate). Buildable now on existing capability: M5′ Palace
 composition of Expression refs. Gated on the spec's own G3: M4′ operative
 places, until a PlaceFacet-producing source exists.
+
+## 22 September — M4′ PlaceFacet producer built (§18, gate G3 closed at the reading)
+
+Local agent continuation from head `2203463f` (baseline: all ten workflows
+green there). No owner machine, paid model, live SharedField or private corpus
+accessed or mutated. One integration branch; no force-push, reset or unrelated
+merge. Commit `a6ea98ef`.
+
+**The gap G3 named is closed at the reading.** The L5 Technē Instrument
+Wayfinder recorded G3 open — "no local PlaceFacet producer yet" — and the O:I
+side confirmed it: `wikiReadingProvider.ts` hard-coded `place` unavailable and
+`wikiReadingPayload` never emitted `spatial`; QL-MEF's own wiki→techne producer
+(`crates/ql-adapters/src/techne_wiki.rs`) likewise emits empty spatial. So the
+register's reading disclosed no place and the M4′ aperture stood honestly empty.
+There is now a producer — `desktop/cradle/src/techne/placeFacets.ts`
+(`placeFacetsFromReading`) — deriving real `ql.techne/v1` spatial facets from
+what the register's wiki ground ACTUALLY carries, never an invented coordinate:
+
+- a hard geography relation (the CONSUMER's own `GEOGRAPHY_RELATIONS` in
+  `m0m5/place/world.ts` — OCCURRED_AT / LOCATED_IN / OPERATED_IN / TRAVELLED_TO /
+  MYTH_LOCATED_AT; one legend, producer and instrument agree) whose target is a
+  node → the subject's place, the native relation preserved verbatim;
+- a wiki node that DECLARES a place facet (`node.place`, or a bare
+  `type:"place"`) → the owner's geometry/precision/names/hierarchy/validity/
+  uncertainty carried verbatim.
+
+`wikiReading.ts` gains the optional owner-declarable `WikiPlaceFacet` on
+`WikiNode` (additive, mirrors the `ql.techne/v1` `TechnePlaceFacet` subset, read
+alongside the existing `ql?` facet the M0′ projection consumes).
+`wikiReadingPayload` emits `spatial` when the ground discloses a place and flips
+the `place` disclosure available on that basis — a truly absent spatial facet
+stays absent with its real reason (the map's §18/§21 law). A declaration with no
+geometry stays precision `unlocated` — a real place, honestly unlocated, no
+coordinate manufactured; a declared geometry with no declared precision stays
+`approximate`, never silently upgraded to `exact`.
+
+**Evidence — grade U (unit/contract), gated in the Technē workflow.**
+`tests/techne-place-facets.test.mjs` (6 checks, wired into
+`.github/workflows/techne-constructive-field.yml`): the producer derives a
+declared georeferenced historical place (OCCURRED_AT, exact, valid interval) and
+an unlocated mythic place (MYTH_LOCATED_AT, no geometry) — gate G3's two required
+spatial cases, one historical/georeferenced and one other; the payload emits
+`spatial`, validates via `validateReading`, and discloses `place` available; the
+CONSUMER path (`place/modes.ts` `placeState`/`renderMapModel`, `place/world.ts`
+`placeRelations`/`relationStandingClass`) reads them present, projects the point,
+slots the unlocated place, and keeps factual/mythic classes distinct; honest
+absence when no place ground exists; a §41 negative proving the
+producer→reading→consumer binding is load-bearing (sever the source → the aperture
+is not present, nothing renders); and no-fabrication (no geometry → unlocated;
+uncertainty never invented). 6/6 green locally; the existing `wikiReadingPayload`
+consumers unbroken (24/24 across journey-submit/field-open/summon-record);
+`tsc --noEmit` clean; expression-engine (58) / knowledge-expression (29) /
+techne-field-bindings (32) / verso-account-binding (4) regression green.
+
+**Honest remaining — the M4′ producer feeds the reading; the live React
+instrument is not yet mounted.** This closes G3 AT THE READING: the reading now
+carries real spatial facets and the existing `PlaceInstrument` (its consumer
+functions proven here) would render them. It does NOT yet change the live
+experience, because the live Technē centre is the imported iframe app
+(`PointCloudHost` → `field-studies-journeys`), whose in-field `lensStudio.ts`
+M4′ lens reads `nativeWorkspace.construction()` (the kernel Expression's own
+facets, which carry no `ql.techne` place) and correctly shows the honest-absent
+note. The React `m0m5/place/PlaceInstrument.tsx` that DOES consume `reading.spatial`
+is, with the whole `m0m5` constellation, wired end-to-end only in the test
+harness (`tests/techne-lenses-page.tsx`), against a fixture reading — no live
+provider is registered (`useTechneDisclosure` → `NO_PROVIDER_REASON`) and no live
+host mounts it. Closing M4′ IN THE APP is the live-mount step below, which this
+producer unblocks (it supplies the real reading the mounted instrument needs).
+
+## Live-instrument mount (§§14, 16, C7, C12) — the boundary, mapped for the next pass
+
+The owner's PR #420 finding ("the six `instrumentLenses` / `useTechneDisclosure`
+are referenced by tests, not that live host … parent integration will repair
+that actual boundary") is now mapped precisely, both sides:
+
+- **The live Technē centre is the iframe.** `surface/retention.tsx:120` mounts
+  `<PointCloudHost mode="techne">` as the only techne centre body; the M0′–M5′
+  chooser the user sees is the iframe-internal `lensStudio.ts` (M0′–M3′
+  operative; M4′ place and M5′ palace show an honest-absent note naming "the
+  native owner operation not surfaced in this application" — precisely what the
+  React `PlaceInstrument`/`PalaceInstrument` are).
+- **The React `m0m5` instruments are a complete read-model port, dormant live.**
+  Each is a pure consumer of ONE `TechneReading` via `bridgeReading`
+  (`m0m5/reading.ts`) and the one `DisclosureSession` (`session.ts`); the mount
+  contract exists (`lensMount.ts` `TechneLens`/`TechneLensStudio`), the six
+  register through `instrumentLenses.ts`, but no `TechneSurface` HUD consumes
+  `techneLenses()` and no `registerTechneReadingProvider` runs in `src/` — so the
+  whole chain is test-only.
+- **The boundary between them is the postMessage relay only** (`expressions/
+  hostedApp.ts`/`nativeChannel.ts`): the host answers the iframe's kernel/file
+  requests and pushes `host-mode`/`open-expression`; it never pushes a
+  `TechneReading` in.
+
+The determinate next pass (each step small, but the placement is a product-
+experience fork on the owner's convergence track — hence recorded, not
+unilaterally committed here):
+
+1. register `wikiTechneReadingProvider(transport)` at the cradle boot seam so
+   `useTechneDisclosure` resolves the register's live reading (now place-carrying);
+2. build the `TechneSurface` HUD to the `lensMount` contract (chooser +
+   active lens `Body` + the `TechneLensStudio` slot), reusing the six existing
+   instruments — no rebuild;
+3. keep the iframe's `lensStudio` the ONE chooser: the deferred M4′/M5′ (and any
+   deep instrument that wants the rich React surface) post an open-instrument
+   request up through `PointCloudHost`, and the cradle presents the React
+   instrument as a native surface (§14 inline/beside/detach) over the live
+   reading, handing the iframe its `visibility` (§16/§22, one active renderer)
+   — never a second parallel chooser, never a hidden duplicate render loop;
+4. prove live in the Technē workflow's browser job (the reading's place facets
+   render in the mounted M4′; §41 negatives on the mount and the provider).
+
+Step 3's surface grammar (replace-focus vs beside vs detach, and how the iframe
+chooser and the cradle surface become one experience) is the fork that belongs
+with the owner's actively-authored convergence UI track; it is named here so the
+next pass executes it with the fork resolved rather than guessed.
 
 ## Historical evidence retained
 
