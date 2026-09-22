@@ -39,9 +39,10 @@ preserve newer local work. Existing Technè mode, Stage, native ownership and
 | [03-UX-STATES.md](03-UX-STATES.md) | The complete UX state space, each state derived from intent. |
 | [04-VERIFICATION.md](04-VERIFICATION.md) | What is true when the design exists — the conditions the app meets, and the build order. |
 | [05-EXECUTION.md](05-EXECUTION.md) | The standing injunction for the orchestrator and subagents doing the development work. |
-| [10-SIDEBARS.md](10-SIDEBARS.md) | The left and right sidebars in every mode and state, with the acceptance check for each state (owner rulings D1–D6 recorded 2026-09-22). Visual study: [sidebars/sidebars-study.html](sidebars/sidebars-study.html). |
+| [10-SIDEBARS.md](10-SIDEBARS.md) | The left and right sidebars in every mode and state, with the acceptance check for each state (the accepted UI lead, 23 Sep 2026). Visual study: [sidebars/sidebars-study.html](sidebars/sidebars-study.html). |
 | [11-FACTORY.md](11-FACTORY.md) | Factory: the Desk, Tasks, the Run page (Map · Trajectory · Live · Handoff), the right panel and the object pages Inspect opens, built on the fields owners actually write. |
 | [12-SETTINGS.md](12-SETTINGS.md) | Settings and System: task sections, the stage → review → apply → read-back change model, harnesses, models, credentials, skills, profiles, permissions, product pages. |
+| [13-BUILD-PROMPT.md](13-BUILD-PROMPT.md) | The execution prompt for building the UI lead: reconcile, protect, four lanes, acceptance by walks. |
 | [PROMPT.md](PROMPT.md) | The minimal dispatch prompt to hand a subagent at the start of a vertical. |
 
 ## Provenance class

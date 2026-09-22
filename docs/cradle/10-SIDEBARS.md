@@ -1,6 +1,6 @@
 ---
 Register: episteme
-Standing: design-commitment (owner rulings on D1–D6 given 2026-09-22, recorded in §7)
+Standing: design-commitment — owner-accepted as the UI lead, 2026-09-23 (rulings D1–D6 of 22 Sep and amendments A1–A6 of 23 Sep recorded in §7)
 ---
 
 # 10 — The two sidebars
@@ -63,15 +63,18 @@ that were never specified. It builds on, and does not discard:
 │     rows …                   │
 ├──────────────────────────────┤
 │ [▣] Inbox                  3 │  foot — fixed in every mode
-│ ▢ ▦ ◇ ✦ ⌀  │  ⚙              │
+│ ▢ ▦ ◇ ✦    │  ⚙              │
 └──────────────────────────────┘
+━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━  window footer, hidden to a
+ workspace status · messages · … · ⌀ Epi-Logos                      3px edge; reveals on approach
 ```
 
 - **Scope selector** replaces the hardcoded "My O:I / Personal ground" heading. It names the current scope: **Central** (the root; valid without a child project) or a Work project. Its menu is the real census: Central, then each project with its live marks (`● 2` working, `! 1` needs you), remote machines labelled (`Omarchy`) with a reachability dot. When another project has activity, the chevron carries a dot. This one control serves the Factory request "a project picker, and a place for agent activity per project".
 - **Search** is an icon that opens the ⌘K palette. Following the standing law, there is no persistent search field. The palette has typed tabs: All · Chats · Agents · Files · Flows · Actions.
 - **+ Create** is one menu, and its entries depend on the mode: *New chat* and *New flow* always; *New run…* in Factory; *New Expression* in Expressions; *New agent…* everywhere the agent-create route exists. It replaces every standing "New …" button in the sidebars.
 - **Inbox** is the app's one queue of material waiting for your judgement, reachable in every mode. The badge is the native count (or a true lower bound, `20+`). With nothing waiting, the row stays and the badge is absent. *(Ruling D3.)*
-- **Mode switcher**: Base · Factory · Expressions · Technè, then the small **Epi-Logos lens** toggle, then Settings after a divider. The duplicate mode radios in the footer "…" menu are removed.
+- **Mode switcher**: Base · Factory · Expressions · Technè, then Settings after a divider. The duplicate mode radios in the window footer's "…" menu are removed.
+- **The window footer** keeps its existing behaviour: hidden to a hairline and revealed on approach, focus or pin. It carries status and messages, and the **Epi-Logos lens toggle** as a minimal icon at its end *(Amendment A5)*. While the lens is on, the head chip (below) makes the state visible even with the footer hidden.
 - **Epi-Logos is a lens, not a mode** *(Ruling D2)*. The minimal toggle re-roots the file system on the Epi-Logos corpus while you stay in whatever mode you are in; nothing locks you to one page or surface. While it is on, the head shows an **Epi-Logos** chip beside the scope with × to leave, the file trees show the corpus, context sources narrow to the corpus (§3.7), and Nara joins the right panel's agent menu. Turning it off restores the trees exactly as they were.
 - The left corner wedge and window-lights reserve are untouched (ruling 5). The head starts below the lights row.
 
@@ -118,6 +121,8 @@ This keeps the owner's "agent activity per project" requirement without adding a
 - No height shift on hover. Incoming activity never re-sorts the row under the pointer.
 
 **Project row**: glyph, name, marks on the right. The mode icons (chats/files/wiki) appear on hover. It expands in place.
+
+**Open-where affordances** *(Amendment A6)*. Any row that opens material (file, flow, intent document, wiki entry, Remembered note) shows two subtle icons on hover or focus, in the reserved trailing space: **Open beside** (into the right panel's Context canvas, the existing `openInSidePane` route) and **Pop out** (its own window, the existing detach route). Plain click still opens in the centre. On coarse pointers both live in the row's `…` menu.
 
 **File row**: the existing tree. Add the missing selected state: `aria-current` on the file open in the focused pane, drawn with the CSS rule that already exists.
 
@@ -177,8 +182,7 @@ What exists on disk today: the vision page `user/<project>.html` (agent-recovere
 
 ```text
 ┌──────────────────────────────────┐
-│ (Ep) Epii ▾            ●  ⤢   ✕ │  identity — the agent is a control
-│ Chat  Activity• Agents  Context  │  ≤ 4 tabs; marks on tabs
+│ (Ep)▾ Chat Activity• Agents Ctx ⤢✕│  one row: avatar menu, tabs, controls
 ├──────────────────────────────────┤
 │ tab body                         │
 │                                  │
@@ -186,17 +190,30 @@ What exists on disk today: the vision page `user/<project>.html` (agent-recovere
 │ ┌──────────────────────────────┐ │
 │ │ To: Epii                     │ │
 │ │ Message…                     │ │
-│ │ [+] [mic]      [GLM-5.3 ▾][↑]│ │
+│ │ [+][mic] [Ask ▾]  Pi ▾ glm-5.3 ▾ [↑]│
 │ └──────────────────────────────┘ │
 └──────────────────────────────────┘
 ```
 
-- **Identity**: avatar and name, and the name is a control. Its menu lists the agents available in the current scope, from real AIKit profiles, plus *Agent details* and *New agent…*. It replaces "Agent / Situated in Central"; scope already shows on the left.
-- **Presence dot**: idle ○, working ● (breathing only while a turn is actually in flight), needs you !, unavailable ×.
+- **No title band** *(Amendment A3)*. The panel's top is one row: a tiny **avatar menu**, then the tabs, then ⤢ and ✕. The avatar carries the presence mark as a small badge on its corner. Its menu lists the agents available in the current scope, from real AIKit profiles, plus *Agent details* and *New agent…*. There is no agent name heading and no "Situated in …" line.
+- **Presence** (on the avatar): idle ○, working ● (breathing only while a turn is actually in flight), needs you !, unavailable ×.
 - **⤢** toggles full-screen conversation (⌘⌥J; the takeover depth). **✕** collapses the panel (⌘⇧B).
 - **Tabs**: plain text with an ink underline for the selected one. A tab can carry a dot (new activity) or `!` (needs you). Overflow never produces a "More" menu. If a mode needs a fifth tab, the design is wrong.
 - **Status line**: one line above the composer, present only while a turn is in flight (the Buzz "Honey: Working" pattern). Clicking it opens Activity at that event.
-- **Composer**: To: chips (@ opens the same picker); *Insert context* (+); dictation (mic; local STT); the model chip for this agent's harness (lists routes that are actually available, with the credential condition shown for gated ones); Send, which becomes **Stop** in the same slot while a turn runs.
+- **Composer**: To: chips (@ opens the same picker); *Insert context* (+); dictation (mic; local STT); the **permission mode chip**; the **harness chip** and **model chip**; Send, which becomes **Stop** in the same slot while a turn runs.
+- **Permission mode chip** *(Amendment A2)*: **Ask before acting · Accept edits · Plan only · Bypass permissions**, limited to the modes the connected harness actually supports.
+  - Bypass is chosen deliberately: a one-line confirmation names what it allows. While it is on, the chip stays visibly marked and the avatar shows a small shield.
+  - The session's mode is shown at a glance and changes apply to the next action.
+  - The default mode per harness lives in Settings → Permissions.
+- **Harness, connection and model are three different things** *(Amendment A1, an open error today)*:
+  - The **harness chip** shows the harness *name* (Pi, Hermes, Gemini CLI, Codex, Claude Code), derived from the connection's protocol and command.
+  - A connection variant (e.g. sandboxed) is a quiet badge, and free-text campaign labels are a second line inside the picker, never the chip.
+  - The **model chip** shows a real model name from the session's native model reading (`model-read`: `current_model_id`, `available_models`). Its menu lists only models.
+  - Today the harness chip prints the connection's free-text label (`ChatComposer.tsx:131`), and Settings offers a connection as "Model for new chats". Both are fixed by this rule.
+
+### 4.1a Full-page centres *(Amendment A4)*
+
+Factory, Expressions, Technè and Settings present their main page **full-centre, with no pane tab bar**. Base keeps panes and tabs. In a full-page mode, opening an object (§4.7) replaces the page in place with `← back` to where you were, or pops it out. It never adds a tab bar.
 
 ### 4.2 Tabs by mode
 
@@ -234,7 +251,7 @@ The v2 roster, kept: a search icon and one `+` (*New agent… / New team…*). R
 
 ### 4.7 Inspect opens the object *(Ruling D1)*
 
-Every inspectable object has its own page. **Click** opens it as a tab in the focused pane. **⌥-click**, or *Pop out* in its menu, opens it in its own window, with the same identity so it docks back unchanged. A page shows labelled fields first (what it is, its state, who changed it and when, its relations), then its content. Verbatim material sits behind *Show raw*. This replaces the Inspect plane and its `JSON.stringify` rendering (`planes/InspectPlane.tsx:72-80`).
+Every inspectable object has its own page. **Click** opens it as a tab in the focused pane (Base) or in place with `← back` (full-page modes, §4.1a). **⌥-click**, or *Pop out* in its menu, opens it in its own window, with the same identity so it docks back unchanged. A page shows labelled fields first (what it is, its state, who changed it and when, its relations), then its content. Verbatim material sits behind *Show raw*. This replaces the Inspect plane and its `JSON.stringify` rendering (`planes/InspectPlane.tsx:72-80`).
 
 In Factory the objects are the Run, a work unit, an attempt or execution, a tool call, a candidate or produced material, a check or evidence, an agent, and a NOW record. [11-FACTORY §6](11-FACTORY.md) lists each page.
 
@@ -320,12 +337,12 @@ Paths are relative to `desktop/cradle/src`.
 | Factory "Reading Work… ▾" select + Refresh + PROVIDER pill + "Elsewhere" | **Replace** with the scope selector (activity marks inside); provider state moves to the composer model chip |
 | Factory Returns / Now / Remembered bands | **Remove** (ruling 7); the waiting material is in Inbox |
 | `receiving/ReturnsTray.tsx` in the navigator | **Becomes** the single Inbox body |
-| Footer Epi-Logos toggle | **Keep**, minimal, as the lens toggle beside the modes; it re-roots file trees instead of opening a surface |
+| Footer Epi-Logos toggle | **Keep**, minimal, in the hidden window footer (A5), as the lens toggle; it re-roots file trees instead of opening a surface |
 | Footer workspace select, New/Rename workspace, Recover arrangement | **Move** into the scope menu's footer |
 | Factory project select, Desk "All Projects" filter | **Replace** with the one scope (All projects is a scope-menu entry in Factory) |
 | Footer "…" menu mode radios | **Remove** (duplicate) |
 | "System" vs "Settings" labels (`DesktopShell.tsx:302`) | **One label**: Settings |
-| Right header "Agent · Situated in Central" | **Replace** with the identity control |
+| Right header "Agent · Situated in Central" | **Replace** with the avatar menu in the tab row (A3) |
 | Right tabs Chat · Run · Agents · Context (base) | **Becomes** Chat · Activity · Agents · Context |
 | Chat header "+" and History menu's "New chat" | **One** New chat, in the left `+` menu; history is the left's chat rows |
 | Agents: New Agent / New Team buttons, hardcoded Guardians, Ta-Onta offices list | **Replace** with one `+` menu and real identities |
@@ -342,6 +359,16 @@ Paths are relative to `desktop/cradle/src`.
 - **D4 — Chat routing.** Confirmed as specified (§3.5).
 - **D5 — Factory files.** Focus the ProjectCentral intent and vision files, and lean into the HTML template system. Each mode has its own slice of the context sources (§3.7).
 - **D6 — Project and workspace.** One clean logic across modes (§3.6).
+
+### Amendments (23 Sep 2026)
+
+- **A1 — Models are models.** Model pickers list real model names only. Harness and connection are separate chips. This fixes the current error where connection labels appear as models.
+- **A2 — Permission modes.** A selector in the composer (Ask · Accept edits · Plan only · Bypass permissions) and a per-harness default in Settings → Permissions.
+- **A3 — No title band on the right.** An avatar menu sits in the tab row; the top of the panel is one row.
+- **A4 — Full-page centres.** Factory, Expressions, Technè and Settings have no pane tab bars.
+- **A5 — Epi-Logos lives in the hidden window footer**, not the mode bar.
+- **A6 — Open beside / Pop out** on every left-sidebar row that opens material.
+- **S1 accepted:** Settings with the left-sidebar section list, as shown in the study.
 
 ## 8. Build order
 

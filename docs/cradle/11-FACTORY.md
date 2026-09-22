@@ -1,6 +1,6 @@
 ---
 Register: episteme
-Standing: design-commitment (proposed 2026-09-22; builds on 10-SIDEBARS rulings D1–D6)
+Standing: design-commitment — owner-accepted as part of the UI lead, 2026-09-23 (with amendments A1–A6 in 10-SIDEBARS §7)
 ---
 
 # 11 — Factory: Desk, Tasks, the Run and its objects
@@ -39,7 +39,7 @@ goals)                 check, agent, NOW record (canvas or pop-out)
 ```
 
 - **Desk** and **Tasks** are the two left destinations, as today. Desk is for *the work*, Tasks is for *talking about it*. Both are views of the same runs; neither holds a copy of the other.
-- **Opening a run** from the Desk shows the Run page in the same pane, with `← Desk` in the pane header and the Desk's scroll kept.
+- **Factory's centre is full-page, with no pane tab bar** (10-SIDEBARS §4.1a). Opening a run from the Desk replaces the Desk with the Run page, with `← Desk` at the top of the page; going back keeps the Desk's scroll.
 - The right panel always answers about **the selected run**, or the conversation's own activity when the conversation is Direct.
 
 ## 2. Desk — the run board
@@ -182,11 +182,11 @@ Recognition controls sit at the top of the tab when recognition is the applicabl
 - The **left TASKS rows** are the conversations in scope (10-SIDEBARS §3.4 row anatomy), including the **Run** they belong to as a meta word: `TASK · Builder · Native conversation identity`.
 - The **centre** is the selected conversation at full size. The header is avatar · title · a **Run chip** only when truly joined · `⋯`. The Run chip opens the Run page; hovering it shows the run's state.
 - **The join is repaired.** A conversation belongs to a run when its session appears in the run's executions, attempts or journey sessions, not only in its trajectories. Today it can never join on real data (`deskModel.ts:142-159`). Otherwise the conversation is **Direct**, and says so once in the header.
-- **Composer** (10-SIDEBARS §4.1): To: · Insert context · dictation · **connection chip** · Send/Stop.
-  - The connection chip replaces the plain-text "Connect with …" list. It opens a picker **grouped by harness** (Pi, Hermes, Gemini CLI, Codex …).
+- **Composer** (10-SIDEBARS §4.1): To: · Insert context · dictation · **permission mode** · **harness** · **model** · Send/Stop. Harness and model are separate chips; a model picker never lists a connection (Amendment A1).
+  - The **harness chip** replaces the plain-text "Connect with …" list. It opens a picker **grouped by harness name** (Pi, Hermes, Gemini CLI, Codex …).
   - Each row is the provider's cleaned label, its model, and badges such as *sandboxed*. Campaign names like "(AG campaign)" become a quiet second line.
   - The first Send provisions the session (#454).
-  - Once connected, the chip reads `Pi · deepseek-v4-pro ▾` and switches the model where the provider allows it.
+  - Once connected, the harness chip reads `Pi ▾` and the **model chip** beside it reads `deepseek-v4-pro ▾`, listing only the session's real available models and switching where the provider allows it.
 - Messages, work marks, permission cards and completion lines follow the v2 conversation spec (10-SIDEBARS §4.3). A work mark's **Open activity** opens the right Run tape at that event.
 
 ## 5. The right panel in Factory — Run · Agents · Context
@@ -199,7 +199,7 @@ Recognition controls sit at the top of the tab when recognition is the applicabl
 
 ## 6. Object pages — what Inspect opens *(Ruling D1)*
 
-Each opens as a canvas tab, or pops out with ⌥-click. Fields come first, content second, *Show raw* last.
+Factory's centre is full-page, so each opens **in place** with `← back`, or pops out into its own window with ⌥-click or *Pop out*. Fields come first, content second, *Show raw* last.
 
 | Object | Page shows | Opened from |
 |---|---|---|

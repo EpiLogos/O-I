@@ -177,7 +177,7 @@ h3{font-size:15px;margin:18px 0 6px;font-weight:600}
 .graph text{fill:var(--muted);font-size:11px;stroke:none;font-family:var(--sans)}
 
 /* right */
-.right{background:var(--agent);border-radius:6px;display:grid;grid-template-rows:auto auto 1fr auto;min-height:0;position:relative;overflow:hidden}
+.right{background:var(--agent);border-radius:6px;display:grid;grid-template-rows:auto 1fr auto;min-height:0;position:relative;overflow:hidden}
 .id{display:flex;align-items:center;gap:6px;padding:10px 8px 4px 10px}
 .idbtn{display:flex;align-items:center;gap:8px;padding:4px 6px;border-radius:6px;min-width:0;flex:1;text-align:left}
 .idbtn:hover{background:var(--wash)}
@@ -292,6 +292,35 @@ ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
 
 /* ---- v2 additions: pages ---- */
 .ctl[hidden]{display:none}
+.m[data-footer="revealed"]{grid-template-rows:30px 1fr 26px}
+.m[data-footer="hidden"]{grid-template-rows:30px 1fr 4px}
+.wfoot{display:flex;align-items:center;gap:12px;padding:0 12px;font-size:10.5px;color:var(--muted);overflow:hidden}
+.m[data-footer="hidden"] .wfoot{padding:0;background:transparent}
+.m[data-footer="hidden"] .wfoot>*{display:none}
+.m[data-footer="hidden"] .wfoot::before{content:"";display:block;height:1px;width:100%;background:var(--hair);align-self:start}
+.wfoot .sp{flex:1}
+.wfoot .lens{width:22px;height:20px}
+.centre.full{grid-template-rows:1fr}
+.centre.full .field,.centre.full .graph,.centre.full .sheet{top:0}
+.rtop{display:flex;align-items:center;gap:2px;padding:6px 6px 0 8px;border-bottom:1px solid var(--hair-soft)}
+.rtop .rtabs{border:0;padding:0 0 0 6px;gap:14px;flex:1;min-width:0}
+.avbtn{position:relative;display:flex;align-items:center;gap:1px;padding:2px;border-radius:6px;color:var(--muted)}
+.avbtn:hover{background:var(--wash)}
+.avbtn .av{width:20px;height:20px;font-size:8.5px}
+.avbtn .badge2{position:absolute;left:15px;top:0;display:grid;place-items:center}
+.avbtn .badge2 .sdot,.avbtn .badge2 .pres{width:7px;height:7px;box-shadow:0 0 0 2px var(--agent)}
+.avbtn .badge2 .pres.need{width:auto;height:auto;font-size:8px;padding:0 2px}
+.avbtn .shield{position:absolute;left:14px;top:12px;font-size:8px;background:var(--ink);color:var(--paper);border-radius:3px;padding:0 2px;line-height:1.3}
+.pchip{font-size:10.5px;display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px;color:var(--muted);border:1px solid transparent}
+.pchip.byp{border-color:var(--ink);color:var(--ink);font-weight:600}
+.hchip{font-size:11px;color:var(--ink);display:flex;align-items:center;gap:3px;padding:2px 6px;border-radius:5px}
+.ow{display:flex;gap:1px;margin-left:auto;opacity:0}
+.tree:hover .ow,.tree.hov .ow{opacity:1}
+.tree.hov{background:var(--wash)}
+.ow span{width:18px;height:18px;display:grid;place-items:center;border-radius:4px;color:var(--muted)}
+.ow span:hover{background:var(--wash2);color:var(--ink)}
+.ow svg{width:12px!important;height:12px!important}
+.bypc{font-size:10.5px;color:var(--ink);border:1px solid var(--ink);border-radius:6px;padding:6px 9px;margin:0 10px 6px}
 .tree>span:not(.tw){white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0;flex:1}
 .chat .meta{white-space:nowrap;overflow:hidden;text-overflow:ellipsis;min-width:0}
 .lens{width:30px;height:28px;display:grid;place-items:center;border-radius:6px;color:var(--muted)}
@@ -447,7 +476,7 @@ ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
   <div class="eyebrow">O:I cradle · desktop design</div>
   <h1>The two sidebars, Factory and Settings, in every state</h1>
   <p class="lede">One design for the left and right sidebars across every mode, the Factory pages (Desk, Run, Tasks, and the object pages Inspect opens), and Settings. Built to be implemented once and tested against. The study renders each state with the desktop's own tokens, using real content from this machine where it exists. Everything is judged by one question: is this good to use?</p>
-  <span class="standing"><i></i>22 Sep 2026 · sidebar rulings D1–D6 recorded · Factory and Settings proposed · specs: <code>docs/cradle/10-SIDEBARS.md</code>, <code>11-FACTORY.md</code>, <code>12-SETTINGS.md</code></span>
+  <span class="standing"><i></i>The UI lead · accepted 23 Sep 2026 with amendments A1–A6 · specs: <code>docs/cradle/10-SIDEBARS.md</code>, <code>11-FACTORY.md</code>, <code>12-SETTINGS.md</code></span>
   <div class="questions">
     <div class="q"><b>Left</b><span>Where is my work, and what is moving in it?</span></div>
     <div class="q"><b>Right</b><span>Who am I working with, and what are they doing?</span></div>
@@ -460,6 +489,7 @@ ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
   <div class="ctl" id="w-page"><span>Page</span><div class="seg" id="c-page"></div></div>
   <div class="ctl"><span>Left</span><div class="seg" id="c-left"></div></div>
   <div class="ctl" id="w-right"><span>Right</span><div class="seg" id="c-right"></div></div>
+  <div class="ctl"><span>Window footer</span><div class="seg" id="c-footer"></div></div>
   <div class="ctl"><span>Epi-Logos lens</span><div class="seg" id="c-epi"></div></div>
   <div class="ctl"><span>Theme</span><div class="seg" id="c-theme"></div></div>
 </div>
@@ -470,11 +500,11 @@ ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
 <section class="s">
   <h2>The seven laws</h2>
   <ol class="laws">
-    <li><span class="n">1</span><b>One frame, changing body.</b><span>The left head (scope, search, create) and foot (Inbox, modes, lens, Settings) never move. Only the body changes with the mode, and in Settings the body is the section list.</span></li>
+    <li><span class="n">1</span><b>One frame, changing body.</b><span>The left head (scope, search, create) and foot (Inbox, modes, Settings) never move. Only the body changes with the mode, and in Settings the body is the section list.</span></li>
     <li><span class="n">2</span><b>One conversation, one place.</b><span>A session appears once, with one composer and one draft. Outside Factory a chat opens in the right panel; in Factory it opens in the centre Tasks view.</span></li>
     <li><span class="n">3</span><b>State lives on the thing.</b><span>Working, needs-you, unread and failed are marks on the row, avatar or tab. No banners, no trays, and the layout never moves.</span></li>
     <li><span class="n">4</span><b>Status → Preview → Takeover.</b><span>A dot, then the live tape, then full-screen chat (⌘⌥J). You choose the depth.</span></li>
-    <li><span class="n">5</span><b>Inspect opens the object.</b><span>Its own page, as a canvas tab or popped out into a window. Never a drawer, never a tab of the right panel.</span></li>
+    <li><span class="n">5</span><b>Inspect opens the object.</b><span>Its own page: a canvas tab in Base, in place with ← back in the full-page modes, or popped out into a window. Never a drawer, never a right-panel tab.</span></li>
     <li><span class="n">6</span><b>Headers only above real rows.</b><span>Empty sections take no space. A failed read says so; it never looks like "empty".</span></li>
     <li><span class="n">7</span><b>Nothing reads like a log file.</b><span>No "returns", no refs or JSON outside <i>Show raw</i>, no scrollbars, no "Situated in…", no fake rosters.</span></li>
   </ol>
@@ -484,10 +514,11 @@ ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
   <h2>Your rulings, applied</h2>
   <div class="dec">
     <div><b class="k">D1</b><span>Inspect opens the object's own page, in the canvas or popped out.</span><span class="why">Factory objects with pages: run, work unit, attempt, tool call, candidate, check, agent, NOW record.</span><span class="why"></span></div>
-    <div><b class="k">D2</b><span>Epi-Logos is a minimal lens toggle in the foot.</span><span class="why">It re-roots the file trees on the corpus while you stay in your mode. The head shows a chip with × to leave; Nara joins the agent menu.</span><span class="why"></span></div>
+    <div><b class="k">D2</b><span>Epi-Logos is a minimal lens toggle in the hidden window footer.</span><span class="why">It re-roots the file trees on the corpus while you stay in your mode. The head shows a chip with × to leave; Nara joins the agent menu.</span><span class="why"></span></div>
     <div><b class="k">D3</b><span>Inbox is universal.</span><span class="why">One queue in the foot of every mode. The scattered receiving and returns bands are gone.</span><span class="why"></span></div>
     <div><b class="k">D4</b><span>Chat routing as specified.</span><span class="why">Right panel outside Factory; centre Tasks inside it.</span><span class="why"></span></div>
     <div><b class="k">D5</b><span>Factory's files are the project's intent.</span><span class="why">Vision and goals open through the HTML template system; each mode shows its own slice of context sources.</span><span class="why"></span></div>
+    <div><b class="k">A1–A6</b><span>23 Sep amendments.</span><span class="why">Models list real model names only; harness and connection are their own chips. A permission-mode selector (including Bypass) sits on the composer and in Settings. The right panel has no title band, just an avatar menu in the tab row. Factory, Expressions, Technè and Settings are full-page centres with no tab bar. Epi-Logos lives in the hidden window footer. Left rows offer Open beside and Pop out.</span><span class="why"></span></div>
     <div><b class="k">D6</b><span>One scope, one workspace model.</span><span class="why">Scope (what you're working on) changes only in the scope menu; workspaces (arrangements) live in that menu's footer and remember their scope.</span><span class="why"></span></div>
   </div>
 </section>
@@ -532,7 +563,7 @@ ol.build{padding-left:20px;display:grid;gap:6px;max-width:80ch}
     </div>
   </div>
   <div class="dec">
-    <div><b class="k">S1</b><span>Sections by task first, per-product pages below.</span><span class="rec">both, tasks first.</span><span class="why">Resolves the research brief (categories) against the 21 Sep spec (owner rail).</span></div>
+    <div><b class="k">S1</b><span>Sections by task first, per-product pages below.</span><span class="why"><b>Accepted 23 Sep.</b></span><span class="why">Resolves the research brief (categories) against the 21 Sep spec (owner rail).</span></div>
     <div><b class="k">S2</b><span>Enter keys through a write-only field.</span><span class="rec">yes: you see that a key is present and working, never the key.</span><span class="why">Ruling 6 says enter and see keys; the 21 Sep spec forbids masked token fields.</span></div>
   </div>
 </section>
@@ -590,6 +621,7 @@ const I={
  refresh:'<svg viewBox="0 0 16 16"><path d="M13 8a5 5 0 1 1-1.5-3.6M13 2.5v3h-3"/></svg>',
  lockI:'<svg viewBox="0 0 16 16" style="width:11px;height:11px"><rect x="3.5" y="7" width="9" height="6.5" rx="1.2"/><path d="M5.5 7V5a2.5 2.5 0 0 1 5 0v2"/></svg>',
  key:'<svg viewBox="0 0 16 16"><circle cx="5.5" cy="10.5" r="2.8"/><path d="m7.5 8.5 5.5-5.5M11 5l1.5 1.5"/></svg>',
+ beside:'<svg viewBox="0 0 16 16"><rect x="2" y="3" width="12" height="10" rx="1.5"/><path d="M9.5 3v10M11 6.5h1.5M11 9h1.5"/></svg>',
  pop:'<svg viewBox="0 0 16 16"><path d="M9 3h4v4M13 3 7.5 8.5M11 9.5V13H3V5h3.5"/></svg>'
 };
 const MODES=[['base','Base'],['factory','Factory'],['expressions','Expressions'],['techne','Technè'],['settings','Settings']];
@@ -599,16 +631,16 @@ const PAGES={
 };
 const LEFTS=[['rest','Rest'],['loading','Reading'],['error','Unreadable'],['scope','Scope menu'],['create','+ menu'],['collapsed','Collapsed']];
 const RIGHTS={
- chat:[['fresh','Fresh'],['working','Working'],['needs','Needs you'],['done','Complete'],['reconnect','Reconnecting'],['activity','Activity'],['paused','Activity paused'],['agents','Agents'],['context','Context'],['inspect','Inspect → page'],['full','Full'],['closed','Closed']],
+ chat:[['fresh','Fresh'],['working','Working'],['bypass','Bypass on'],['needs','Needs you'],['done','Complete'],['reconnect','Reconnecting'],['activity','Activity'],['paused','Activity paused'],['agents','Agents'],['context','Context'],['inspect','Inspect → page'],['full','Full'],['closed','Closed']],
  factory:[['run','Run'],['paused','Run paused'],['agents','Agents'],['context','Context'],['closed','Closed']],
  settings:[['closed','Closed'],['help','Help chat']]
 };
 const DEF={base:{page:null,right:'working'},expressions:{page:null,right:'working'},techne:{page:null,right:'working'},factory:{page:'desk',right:'run'},settings:{page:'models',right:'closed'}};
-const S={mode:'base',page:null,left:'rest',right:'working',epi:'off',theme:'system'};
+const S={mode:'base',page:null,left:'rest',right:'working',epi:'off',footer:'hidden',theme:'system'};
 const AG={base:['Ep','Epii'],factory:['Bu','Builder'],expressions:['An','Anima'],techne:['Al','Aletheia'],settings:['Ep','Epii']};
 const TABS={base:['Chat','Activity','Agents','Context'],factory:['Run','Agents','Context'],expressions:['Chat','Activity','Agents','Context'],techne:['Chat','Activity','Agents','Context'],settings:['Chat']};
 const rightSet=()=>S.mode==='factory'?RIGHTS.factory:S.mode==='settings'?RIGHTS.settings:RIGHTS.chat;
-const working=()=>['working','activity','paused'].includes(S.right);
+const working=()=>['working','activity','paused','bypass'].includes(S.right);
 
 function seg(id,items,key){const el=document.getElementById(id);el.innerHTML=items.map(([v,l])=>`<button type="button" data-v="${v}" aria-pressed="${S[key]===v}">${l}</button>`).join('');el.onclick=e=>{const b=e.target.closest('button');if(!b)return;set(key,b.dataset.v)}}
 function set(key,v){S[key]=v;if(key==='mode'){S.page=DEF[v].page;S.right=DEF[v].right;if(S.left==='scope'||S.left==='create')S.left='rest'}if(key==='theme'){applyTheme();try{localStorage.setItem('sidebars-theme',S.theme)}catch(e){}}render()}
@@ -619,7 +651,7 @@ function chatMark(){if(working())return'<span class="sdot breath" title="Working
 function rowChat(meta,time,title,mark,opts={}){return`<button class="chat${opts.unread?' unread':''}" ${opts.cur?'aria-current="true"':''}><span class="st">${mark||''}</span><span class="meta">${meta}</span><span class="tm">${opts.unread?'<span class="u"></span>':''}${time}</span><span class="ti">${title}</span></button>`}
 function dest(ic,label,cur,badge,act){return`<button class="dest" ${cur?'aria-current="true"':''} ${act||''}>${I[ic]}<span>${label}</span>${badge!=null?`<span class="badge">${badge}</span>`:''}</button>`}
 function sec(label,inner,n,act){return`<div class="sec"><div class="sech">${I.down}<span>${label}</span>${n?`<span class="n">${n}</span>`:''}${act?`<span class="act">${I.plus}</span>`:''}</div>${inner}</div>`}
-function tree(ic,label,depth,open,extra){return`<div class="tree" style="padding-left:${8+depth*12}px"><span class="tw">${open===undefined?'':(open?I.down:I.right)}</span>${I[ic]}<span>${label}</span>${extra||''}</div>`}
+function tree(ic,label,depth,open,extra,hov){const ow=(ic==='file'||ic==='flow')?`<span class="ow"><span title="Open beside">${I.beside}</span><span title="Pop out">${I.pop}</span></span>`:'';return`<div class="tree${hov?' hov':''}" style="padding-left:${8+depth*12}px"><span class="tw">${open===undefined?'':(open?I.down:I.right)}</span>${I[ic]}<span>${label}</span>${extra||''}${ow}</div>`}
 const projWork=()=>working()?'<span class="mk"><span class="d"></span>1</span>':'';
 const projNeed=()=>(S.right==='needs'||S.page==='tasks-needs')?'<span class="mk need">! 1</span>':'';
 
@@ -648,7 +680,7 @@ function leftBody(){
     <div class="proj">${I.folder}<span>Workcell</span></div>
     <div class="proj">${I.folder}<span>Quaternal-Logic</span><span class="marks"><span class="mk" title="1 unread"><span class="u"></span></span></span></div>`;
   if(epi)return base0(m)+corpus()+sec('Flows',tree('flow','Sidebar design · 22 Sep'),null,true);
-  return base0(m)+sec('Control',tree('folder','user',0,false)+tree('folder','agents',0,false)+tree('folder','machines',0,false))+sec('Flows',tree('flow','Sidebar design · 22 Sep')+tree('flow','Harness settings notes'),null,true)+sec('Work',work,'6');
+  return base0(m)+sec('Control',tree('folder','user',0,false)+tree('folder','agents',0,false)+tree('folder','machines',0,false))+sec('Flows',tree('flow','Sidebar design · 22 Sep',0,undefined,'',true)+tree('flow','Harness settings notes'),null,true)+sec('Work',work,'6');
  }
  if(m==='factory'){
   const t=S.left==='loading'?'<div class="reading">Reading tasks…</div>':
@@ -656,7 +688,7 @@ function leftBody(){
    rowChat('Task · Verifier · Native conversation identity','14m','Independent check of the repair plan','')+
    rowChat('Direct · Epii','2h','Opening section of the run plan','',{unread:true})+
    rowChat('Task · Builder · Retire the node oracle','Mon','Retire the node oracle','');
-  const intent=sec('Intent',tree('file','Vision — O:I product ground',0,undefined,'<span class="dcl" title="Agent-recovered; awaiting your review">review</span>')+`<div class="tree" style="padding-left:20px;color:var(--muted)">${I.target}<span>No goals yet · <u style="text-decoration:none;border-bottom:1px solid var(--hair);color:var(--ink)">Write one</u></span></div>`+tree('folder','Learnings',0,false,'<span class="avail">2</span>'));
+  const intent=sec('Intent',tree('file','Vision — O:I product ground',0,undefined,'<span class="dcl" title="Agent-recovered; awaiting your review">review</span>',true)+`<div class="tree" style="padding-left:20px;color:var(--muted)">${I.target}<span>No goals yet · <u style="text-decoration:none;border-bottom:1px solid var(--hair);color:var(--ink)">Write one</u></span></div>`+tree('folder','Learnings',0,false,'<span class="avail">2</span>'));
   return base0(m)+(epi?corpus():'')+sec('Tasks',t,'4')+intent;
  }
  if(m==='expressions'){
@@ -698,7 +730,7 @@ function leftHTML(){
    <button class="ib" title="Search ⌘K">${I.search}</button><button class="ib" data-act="create" aria-expanded="${S.left==='create'}" title="Create">${I.plus}</button></div>
   <div class="lbody">${leftBody()}</div>
   <div class="foot"><button class="dest">${I.inbox}<span>Inbox</span><span class="badge">3</span></button>
-   <div class="modes">${MODES.filter(x=>x[0]!=='settings').map(([v,l])=>`<button class="mode" data-mode="${v}" title="${l}" aria-pressed="${S.mode===v}">${I[v]}</button>`).join('')}<span class="div"></span><button class="lens" data-act="epi" title="Epi-Logos lens: focus the corpus" aria-pressed="${S.epi==='on'}">${I.epi}</button><span class="div"></span><button class="mode" data-mode="settings" title="Settings" aria-pressed="${S.mode==='settings'}">${I.gear}</button></div></div>
+   <div class="modes">${MODES.filter(x=>x[0]!=='settings').map(([v,l])=>`<button class="mode" data-mode="${v}" title="${l}" aria-pressed="${S.mode===v}">${I[v]}</button>`).join('')}<span class="div"></span><button class="mode" data-mode="settings" title="Settings" aria-pressed="${S.mode==='settings'}">${I.gear}</button></div></div>
   ${menu}</aside>`;
 }
 
@@ -786,7 +818,7 @@ function handoff(){
  </div></div>`;
 }
 function unitPage(){
- return`<div class="pg"><div class="pgh"><h4>Verify conversation identity</h4><span class="poptag">popped out</span><span class="sp"></span><span class="tb">Dock back</span></div>
+ return`<div class="pg"><span class="bk" style="font-size:11px;color:var(--muted)" data-page="map">← Native conversation identity v3</span><div class="pgh"><h4>Verify conversation identity</h4><span class="poptag">work unit</span><span class="sp"></span><span class="tb">${I.pop}Pop out</span></div>
  <dl class="objp"><dt>Kind</dt><dd>Work unit · frontier of <u style="text-decoration:none;border-bottom:1px solid var(--hair)">${RUN.title}</u></dd><dt>Standing</dt><dd>Ready · not started</dd><dt>Concern</dt><dd>Why the Agency-bound conversation shows as a generic Conversation</dd><dt>Must change</dt><dd>The conversation names its Agency wherever it is shown</dd><dt>Required checks</dt><dd>0 of 5 passed</dd><dt>Depends on</dt><dd>—</dd><dt>Held by</dt><dd>gate · reviewed</dd><dt>May</dt><dd>Edit files in O-I and ai-kit; run tests</dd><dt>Stops when</dt><dd>A check needs a human decision</dd><dt>Attempts</dt><dd>None yet</dd></dl>
  <div class="more-l">${I.right}Show raw</div></div>`;
 }
@@ -795,17 +827,17 @@ function tasks(){
  const body=`<div class="msg-me">why does it still say Conversation in the sidebar?</div>
   <div class="msg-ag"><span class="av">Bu</span><div><div class="who"><b>Builder</b>4m</div>The sidebar row and the chat header both read the session space's label. The Agency's name never reaches them.<div class="wm"><span class="g">⟡</span>read binding.rs, EncounterList.tsx · 3s · 2 calls</div></div></div>
   ${needs?`<div class="perm"><div><b>Builder wants to run a command</b></div><div><code>cargo test -p agency binding</code> <span style="color:var(--muted)">in Work/ai-kit</span></div><div class="scope"><span class="pill on">This time</span><span class="pill">This session</span></div><div class="acts"><button class="btn pri">Allow</button><button class="btn q">Refuse</button></div></div>`:`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div><div class="wm"><span class="g">⟡</span>editing EncounterList.tsx · running</div></div></div>`}`;
- const picker=S.page==='tasks-picker'?`<div class="picker" style="right:24px;bottom:96px"><div class="mh">Pi</div>
-  <div class="pi on"><span>Pi rpc sandboxed</span><span class="b">sandboxed</span><small>AG campaign confined provider</small></div>
-  <div class="pi"><span>Pi RPC openrouter glm-flash</span><span></span><small>AG65 Alpha</small></div>
-  <div class="pi"><span>Pi · programme verification</span><span></span></div>
-  <div class="pi"><span>Codex Sol low</span><span class="b">via Pi rpc</span><small>for the joined field</small></div>
-  <div class="mh">Hermes (ACP)</div><div class="pi"><span>Hermes ACP</span><span></span><small>AG campaign second harness</small></div>
-  <div class="mh">Gemini CLI (ACP)</div><div class="pi"><span>Gemini CLI ACP</span><span></span><small>AG65 campaign test body</small></div></div>`:'';
+ const picker=S.page==='tasks-picker'?`<div class="picker" style="right:120px;bottom:96px"><div class="mh">Harness</div>
+  <div class="pi on"><span>Pi</span><span class="b">sandboxed</span><small>connection: AG campaign confined provider</small></div>
+  <div class="pi"><span>Pi</span><span class="b">OpenRouter route</span><small>connection: AG65 Alpha</small></div>
+  <div class="pi"><span>Pi</span><span></span><small>connection: programme verification</small></div>
+  <div class="pi"><span>Hermes</span><span class="b">ACP</span><small>connection: AG campaign second harness</small></div>
+  <div class="pi"><span>Gemini CLI</span><span class="b">ACP</span><small>connection: AG65 campaign test body</small></div>
+  <div class="mh">Models live in the model chip</div></div>`:'';
  return`<div class="pg" style="padding-top:6px;position:relative"><div class="taskh"><span class="av lg">Bu</span><div><b style="font-size:13px">Verify conversation identity: why the Agency name is lost</b><div style="font-size:10.5px;color:var(--muted)">Builder</div></div><span class="rchip" data-page="map">${I.desk}Run · ${RUN.title}</span><span class="sp" style="flex:1"></span><span class="tb">⋯</span></div>
  <div style="display:flex;flex-direction:column;gap:14px;max-width:640px;width:100%;margin:0 auto;flex:1">${body}</div>
  ${working()||S.right==='run'?`<div class="statusl" style="max-width:640px;margin:0 auto;width:100%"><span class="sdot breath"></span><b>Builder</b> · editing EncounterList.tsx · 1m 12s</div>`:''}
- <div class="comp" style="max-width:640px;margin:0 auto 4px;width:100%"><div class="to">To:<span class="chip">Builder</span></div><div class="ph">Message…</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button><span class="conn">Pi · deepseek-v4-pro ${I.chev}</span><button class="send">${I.stop}</button></div></div>${picker}</div>`;
+ <div class="comp" style="max-width:640px;margin:0 auto 4px;width:100%"><div class="to">To:<span class="chip">Builder</span></div><div class="ph">Message…</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button>${pchip()}<span class="hchip" style="margin-left:auto">Pi <span class="dcl">sandboxed</span> ${I.chev}</span><span class="hchip" style="color:var(--muted)">deepseek-v4-pro ${I.chev}</span><button class="send">${I.stop}</button></div></div>${picker}</div>`;
 }
 /* ---------- Settings centre ---------- */
 function sHead(t,extra){return`<div class="pgh"><h4>${t}</h4><span class="sp"></span>${extra||''}<span class="tb">${I.search}Search settings</span><span class="tb">Back to work</span></div>`}
@@ -833,16 +865,16 @@ function settings(){
  if(p==='models'||p==='pending'){const pend=p==='pending';
   const picker=p==='models'?`<div class="picker" style="right:40px;top:150px;width:330px"><div class="mh">Anthropic</div><div class="pi on"><span>Auto · Balanced</span><span class="b">policy</span><small>Picks per task under the Balanced policy</small></div><div class="pi"><span>claude-sonnet-5</span><span class="b">Usable</span><small>via OpenRouter · or add an Anthropic key for the native route</small></div><div class="pi"><span>claude-opus-5</span><span class="b">Usable</span><small>via OpenRouter</small></div><div class="mh">DeepSeek</div><div class="pi"><span>deepseek-v3.2</span><span class="b">Usable</span><small>via OpenRouter</small></div><div class="mh">Local</div><div class="pi"><span>qwen2.5-coder</span><span class="b">Local</span><small>Ollama · no key needed</small></div></div>`:'';
   return`<div class="pg" style="position:relative">${sHead('Models')}<div class="srows">
-  ${sr('Default for new chats','Which connection a new conversation starts with',pend?sel('Hermes ACP')+'<span class="und">Undo</span>':sel('Pi (default)'),pend?'chg':'')}
+  ${sr('Default connection for new chats','Which harness a new conversation starts with. A connection, not a model',pend?sel('Hermes · ACP')+'<span class="und">Undo</span>':sel('Pi · sandboxed'),pend?'chg':'')}
   ${sr('Claude Code','Model for this harness',sel('Auto · Balanced'))}
   <div class="sr"><div class="miss">Choosing a model per harness needs an AIKit setting that doesn't exist yet; the current choice is shown read-only.</div></div>
   ${sr('Codex','Set in Codex\'s own config',lock('From its config','Open file'))}
   ${sr('Ranking policy','How Auto chooses: Balanced, Cheapest that fits, Best for the task, Best for the role, Best for the profile, Best quality under budget, Independent reviewer, Local and inspectable',sel('Balanced'))}
   ${sr('Catalogue','345 models from OpenRouter and your own catalogue','<span class="tb">Browse…</span><span class="tb">'+I.refresh+'Refresh</span>')}
   </div>${picker}${pend?`<div class="pend"><b>2 changes pending</b><span class="tb pri" data-page="review">Review changes</span><span class="tb">Discard</span></div>`:''}</div>`;}
- if(p==='review')return`<div class="pg" style="position:relative">${sHead('Models')}<div class="srows">${sr('Default for new chats','',sel('Hermes ACP'),'chg')}</div>
+ if(p==='review')return`<div class="pg" style="position:relative">${sHead('Models')}<div class="srows">${sr('Default connection for new chats','',sel('Hermes · ACP'),'chg')}</div>
   <div class="sheet"><div class="card"><h5>Review 2 changes</h5>
-   <div class="chg2"><span>Default for new chats</span><span class="ef">New chats only</span><small>This machine · Pi → Hermes ACP</small></div>
+   <div class="chg2"><span>Default connection for new chats</span><span class="ef">New chats only</span><small>This machine · Pi · sandboxed → Hermes · ACP</small></div>
    <div class="chg2"><span>Skill · Knowledge route steering</span><span class="ef">Next session only</span><small>This project (O-I) · on → off</small></div>
    <div class="row"><span style="color:var(--muted);font-size:11px;margin-right:auto">Nothing is written until you apply. Each change is read back after.</span><span class="tb">Keep editing</span><span class="tb pri">Apply changes</span></div></div></div></div>`;
  if(p==='cred'||p==='cred-add'){const add=p==='cred-add';
@@ -861,7 +893,7 @@ function settings(){
   <div class="grp">${I.right}personal · 62</div><div class="grp">${I.right}mattpocock · 41</div><div class="grp">${I.right}nara-skills · 33</div>
   <div class="grp">Skill sets</div><div style="display:flex;gap:6px;flex-wrap:wrap">${['central-engineering','central-lifecycle','docs-methodology','nara','oi-guardian','suite-foundations'].map((n,i)=>`<span class="dcl" style="font-size:10.5px;padding:2px 8px;${i%2?'':'color:var(--ink);border-color:var(--accent)'}">${n}</span>`).join('')}</div></div>`;}
  if(p==='profiles')return`<div class="pg">${sHead('Profiles')}<div style="font-size:12px">No profiles yet.</div><div style="font-size:11.5px;color:var(--muted);max-width:60ch">A profile is a named set of settings you can switch to, like "demo" or "offline". Using one stages its changes for review; nothing applies on its own.</div><div style="display:flex;gap:8px"><span class="tb pri">New profile from current settings</span><span class="tb">Import…</span></div></div>`;
- if(p==='perms')return`<div class="pg">${sHead('Permissions')}<div class="srows">
+ if(p==='perms')return`<div class="pg">${sHead('Permissions')}<div class="grp">Default permission mode</div><div class="srows">${sr('Claude Code','Ask before acting · Accept edits · Plan only · Bypass permissions',sel('Ask before acting'))}${sr('Codex','Offered by Codex',sel('Accept edits'))}${sr('Hermes','ACP session modes',sel('Bypass permissions')+'<span class="und">Undo</span>','chg')}<div class="sr"><div class="miss">Bypass lets Hermes act without asking, in every new session. Confirm to stage it; the composer can still switch a single session back to Ask.</div></div>${sr('Pi','',`<span class="lock">Pi offers no permission modes</span>`)}</div><div class="grp">Trust and guardrails</div><div class="srows">
   ${sr('Codex trusts this project','',lock('Trusted','Open Codex config'))}
   ${sr('Codex trusts your home folder','',lock('No','Open Codex config'))}
   ${sr('Claude Code file guardrail','Blocks writes outside the project',lock('On','Open Claude settings'))}
@@ -881,13 +913,13 @@ function centreHTML(){
  if(m==='factory'){const p=S.page;
   const tab=p==='desk'?`${I.desk}Desk`:p.startsWith('tasks')?`${I.tasks}Tasks`:p==='unit'?`${I.target}Verify conversation identity`:`${I.factory}${RUN.title}`;
   const body={desk,map,traj,live,handoff,unit:unitPage}[p]||tasks;
-  return`<main class="centre"><div class="tabs"><div class="ctab on">${tab}</div>${p==='unit'?`<div class="ctab">${I.factory}${RUN.title}</div>`:''}</div>${body()}</main>`;
+  return`<main class="centre full">${body()}</main>`;
  }
- if(m==='settings')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.gear}Settings</div></div>${settings()}</main>`;
+ if(m==='settings')return`<main class="centre full">${settings()}</main>`;
  if(S.right==='inspect'&&m==='base')return`<main class="centre"><div class="tabs"><div class="ctab">${I.flow}Sidebar design · 22 Sep</div><div class="ctab on">${I.file}mode.ts</div></div><div class="pg"><div class="pgh"><h4>mode.ts</h4><span class="sp"></span><span class="tb">${I.pop}Pop out</span></div><dl class="objp"><dt>Source</dt><dd>desktop/cradle/src/workspace/mode.ts</dd><dt>Revision</dt><dd>9 · saved 2m ago</dd><dt>Owner</dt><dd>O-I repository</dd><dt>Changed by</dt><dd>Epii, in this conversation</dd><dt>Relations</dt><dd>Used by DesktopShell, modeBodies</dd></dl><div class="more-l">${I.right}Show raw</div><div class="ln"></div><div class="ln m2"></div><div class="ln s"></div></div></main>`;
  if(m==='base')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.flow}Sidebar design · 22 Sep</div><div class="ctab">${I.file}mode.ts</div></div><div class="doc"><h4>Sidebar design</h4><div class="sub">Flow · Central · edited just now</div><div class="ln"></div><div class="ln m2"></div><div class="ln s"></div><div class="ln"></div><div class="ln m2"></div><br><div class="ln s"></div><div class="ln"></div></div></main>`;
- if(m==='expressions')return`<main class="centre"><div class="tabs"><div class="ctab on">${I.expressions}Return of Zero</div></div><div class="field"></div></main>`;
- return`<main class="centre"><div class="tabs"><div class="ctab on">${I.wiki}Central wiki</div></div><div class="graph"><svg viewBox="0 0 600 500"><path d="M300 240 180 140M300 240 440 150M300 240 200 360M300 240 420 350M440 150 520 250"/><circle cx="300" cy="240" r="16"/><circle cx="180" cy="140" r="10"/><circle cx="440" cy="150" r="10"/><circle cx="200" cy="360" r="10"/><circle cx="420" cy="350" r="10"/><circle cx="520" cy="250" r="7"/><text x="322" y="244">Central</text><text x="120" y="120">Harness profile</text><text x="455" y="135">Day and NOW</text><text x="130" y="385">Cradle shell</text><text x="432" y="378">Expression field</text></svg></div></main>`;
+ if(m==='expressions')return`<main class="centre full"><div class="field"></div></main>`;
+ return`<main class="centre full"><div class="graph"><svg viewBox="0 0 600 500"><path d="M300 240 180 140M300 240 440 150M300 240 200 360M300 240 420 350M440 150 520 250"/><circle cx="300" cy="240" r="16"/><circle cx="180" cy="140" r="10"/><circle cx="440" cy="150" r="10"/><circle cx="200" cy="360" r="10"/><circle cx="420" cy="350" r="10"/><circle cx="520" cy="250" r="7"/><text x="322" y="244">Central</text><text x="120" y="120">Harness profile</text><text x="455" y="135">Day and NOW</text><text x="130" y="385">Cradle shell</text><text x="432" y="378">Expression field</text></svg></div></main>`;
 }
 /* ---------- right ---------- */
 function agName(){return AG[S.mode][1]}
@@ -897,13 +929,14 @@ function chatBody(){
  const me=`<div class="msg-me">Can you make the left sidebar's head and foot stay fixed across modes?</div>`;
  const first=`<div class="msg-ag"><span class="av">${a}</span><div><div class="who"><b>${n}</b>2m</div>Reading the shell and the mode table first, then I'll move the scope selector and mode switcher out of the mode bodies.<div class="wm"><span class="g">⟡</span>read DesktopShell.tsx, mode.ts · 2s · 2 calls</div></div></div>`;
  let tail='';
- if(S.right==='working'||S.right==='reconnect'||S.right==='inspect')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div><div class="wm"><span class="g">⟡</span>editing shell.css · running</div></div></div>`;
+ if(S.right==='working'||S.right==='reconnect'||S.right==='inspect'||S.right==='bypass')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div><div class="wm"><span class="g">⟡</span>editing shell.css · running</div></div></div>`;
  if(S.right==='needs')tail=`<div class="perm"><div><b>${n} wants to run a command</b></div><div><code>npm run build</code> <span style="color:var(--muted)">in desktop/cradle</span></div><div class="scope"><span class="pill on">This time</span><span class="pill">This session</span></div><div class="acts"><button class="btn pri">Allow</button><button class="btn q">Refuse</button></div></div>`;
  if(S.right==='done')tail=`<div class="msg-ag"><span class="av" style="visibility:hidden"></span><div>Head and foot are fixed; only the body changes with the mode.<div class="chips"><span class="chipa">${I.file}shell.css <small>rev 15</small></span><span class="chipa">${I.file}mode.ts <small>rev 9</small></span></div></div></div>`;
  return me+first+tail;
 }
 function statusLine(){return`<div class="statusl"><span class="sdot breath"></span><b>${agName()}</b> · editing shell.css · 1m 12s</div>`}
-function composer(){const run=['working','inspect'].includes(S.right);return`<div class="comp"><div class="to">To:<span class="chip">${agName()}</span></div><div class="ph">${S.right==='reconnect'?'Keep writing — your draft is kept':'Message…'}</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button><span class="model">GLM-5.3 ${I.chev}</span><button class="send" title="${run?'Stop current response':'Send message'}">${run?I.stop:I.up}</button></div></div>`}
+function composer(){const run=['working','inspect','bypass'].includes(S.right);return`<div class="comp"><div class="to">To:<span class="chip">${agName()}</span></div><div class="ph">${S.right==='reconnect'?'Keep writing — your draft is kept':'Message…'}</div><div class="crow"><button class="ib" title="Insert context">${I.plus}</button><button class="ib" title="Dictate">${I.mic}</button>${pchip()}<span class="model" style="margin-left:auto"></span><span class="hchip" title="Harness">${S.mode==='expressions'||S.mode==='techne'?'Claude Code':'Pi'} ${I.chev}</span><span class="hchip" title="Model" style="color:var(--muted)">${S.mode==='expressions'||S.mode==='techne'?'claude-sonnet-5':'glm-5.3'} ${I.chev}</span><button class="send" title="${run?'Stop current response':'Send message'}">${run?I.stop:I.up}</button></div></div>`}
+function pchip(){return S.right==='bypass'?`<span class="pchip byp" title="Permission mode">Bypass ${I.chev}</span>`:`<span class="pchip" title="Permission mode">Ask ${I.chev}</span>`}
 function tapeCompact(paused){
  return`<div style="display:flex;align-items:center;gap:6px"><div class="tfilt"><span class="on">All</span><span>Tools</span><span>Errors</span></div><span class="follow">${paused?'Paused':'<span class="sdot breath"></span>Following live'}</span></div><div class="dsh" style="font-size:10.5px"><div class="rows">${dshRows(true)}</div></div>${paused?'<button class="resume">Resume live · 4 new</button>':''}`;
 }
@@ -933,31 +966,30 @@ function rightHTML(){
  const tabHTML=tabs.map(t=>{let mk='';if(t==='Chat'&&st==='needs')mk='<span class="tn">!</span>';if(t==='Run'&&S.page==='tasks-needs')mk='<span class="tn">!</span>';if(t==='Activity'&&st==='working')mk='<span class="tm"></span>';return`<button class="rtab${t===cur?' on':''}" data-tab="${t}">${t}${mk}</button>`}).join('');
  let body='',foot='',extra='';
  if(cur==='Run'){body=`<div class="runsum"><span class="rt">${RUN.title}</span><span style="color:var(--muted);font-size:11px">Queued · next: Verify conversation identity</span><div class="steps"><i></i><i></i></div></div>`+tapeCompact(st==='paused')}
- else if(cur==='Chat'){body=chatBody();if(st==='working')foot=statusLine();foot+=composer();if(st==='reconnect')extra=`<div class="recon"><span class="pres hollow"></span>Reconnecting — last seen 40s ago. Your draft is kept.</div>`}
+ else if(cur==='Chat'){body=chatBody();if(st==='working'||st==='bypass')foot=statusLine();foot+=composer();if(st==='reconnect')extra=`<div class="recon"><span class="pres hollow"></span>Reconnecting — last seen 40s ago. Your draft is kept.</div>`}
  else if(cur==='Activity')body=tapeCompact(st==='paused');
  else if(cur==='Agents')body=roster();
  else if(cur==='Context')body=contextBody();
  const nm=m==='settings'?'Settings help':n;
- return`<aside class="right"><div class="id"><button class="idbtn"><span class="av">${a}</span><span class="nm">${nm}</span>${I.chev}</button>${pres}<button class="ib" data-act="full" title="Full screen ⌘⌥J">${I.expand}</button><button class="ib" data-act="closeR" title="Collapse ⌘⇧B">${I.close}</button></div>
-  <nav class="rtabs">${tabHTML}</nav>
+ return`<aside class="right"><div class="rtop"><button class="avbtn" title="${nm} — switch agent"><span class="av">${a}</span><span class="badge2">${pres}</span>${st==='bypass'?'<span class="shield">⛨</span>':''}${I.chev}</button><nav class="rtabs">${tabHTML}</nav><button class="ib" data-act="full" title="Full screen ⌘⌥J">${I.expand}</button><button class="ib" data-act="closeR" title="Collapse ⌘⇧B">${I.close}</button></div>
   <div style="display:grid;grid-template-rows:auto 1fr;min-height:0">${extra}<div class="rbody">${body}</div></div>
-  <div>${foot}</div></aside>`;
+  <div>${st==='bypass'?'<div class="bypc">Bypass permissions is on for this session: Epii acts without asking. <u style="text-decoration:none;border-bottom:1px solid var(--hair)">Back to Ask</u></div>':''}${foot}</div></aside>`;
 }
 /* ---------- captions ---------- */
 const CAP={
  left:{rest:['L1','Head and foot fixed; the body is the mode\'s own'],loading:['L6 · R8','Reading: one quiet line where rows will be'],error:['L7','Unreadable: says what could not be read; modes still switch'],scope:['D6','Scope menu: project picker with activity marks; workspaces in its footer'],create:['+ menu','One create menu; the mode adds its own entries'],collapsed:['L2','Collapsed: the corner toggle stays']},
- right:{fresh:['P2','Fresh: suggestions fill the draft'],working:['P4 · R2','Turn in flight: status line, Stop in the send slot, dot on the row'],needs:['P5 · R3','Needs you: inline permission; ! on tab, name, row, project'],done:['P6','Complete: one line plus artifacts'],reconnect:['P10','Reconnecting: hollow dot, draft kept'],activity:['P16','Activity: the run-log tape, following live'],paused:['P16 · F11','Paused: the view holds; Resume live counts new events'],agents:['§4.5','Agents: real identities; the agent\'s page opens in the canvas'],context:['§4.6','Context: the existing insert routes plus the mode\'s slice'],inspect:['P15 · D1','Inspect opens the object\'s page as a canvas tab; Pop out gives it a window'],full:['P13','Full: the conversation takes the centre'],closed:['P1','Closed: the corner mark carries the agent\'s state'],run:['§5 Run','Run tab: compact header and the tape for the selected run'],help:['§1','Help chat: reads settings, never changes them']},
- page:{desk:['F1–F5','Desk: four columns; titles from the commission purpose; unit segments, never percentages; one partial-source line'],map:['F7','Map: one lane per work unit, requires edge, gate, frontier outlined; detail band with the 5 required checks'],traj:['F9','Trajectory: execution waterfall, session selector, lane strip, typed rows joined by call, turn markers, stats from Pi\'s journal'],live:['§3.4','Live: who carries each leg, harness and model, where, Git basis, real actions only'],handoff:['F13','Handoff: recognition first, then outcome, changes, verification, observations, continuation'],tasks:['F14','Tasks: full-size conversation; Run chip only when truly joined'],'tasks-needs':['P5 · F4','Needs you: permission inline; ! on the Run tab and the task row'],'tasks-picker':['§4','Connection picker grouped by harness, campaign names as a second line'],unit:['D1 · F16','Inspect: the work unit\'s own page, popped out; docks back with the same identity'],status:['S3','Status: cards that link to sections; drift first'],harness:['§3.2','Harnesses by name: ready, adapter needed, not found'],models:['S14','Model picker: Auto keeps its name; each route Usable, Needs a key, or Local'],pending:['S4','Staged: row marked with Undo; pending strip only now'],review:['S5','Review: one sheet, each effect in plain words; Apply changes'],cred:['S13','Credentials: configured cards with Verify, Rotate, Revoke'],'cred-add':['S12','Write-only key field; empties after Save; never shown again'],skills:['§3.5','Skills as toggles by source, per scope; writable today'],profiles:['§3.6','Profiles: none yet; using one stages its changes'],perms:['S11','Read-only rows: a lock and where it is owned'],product:['§3.9 · S15','Product page: health, settings, actions; missing operations named once']}
+ right:{fresh:['P2','Fresh: suggestions fill the draft'],working:['P4 · R2','Turn in flight: status line, Stop in the send slot, dot on the row; the right top is one row with the avatar menu'],bypass:['A2','Bypass permissions on: the chip is marked, the avatar carries a shield, one line says what it allows'],needs:['P5 · R3','Needs you: inline permission; ! on tab, name, row, project'],done:['P6','Complete: one line plus artifacts'],reconnect:['P10','Reconnecting: hollow dot, draft kept'],activity:['P16','Activity: the run-log tape, following live'],paused:['P16 · F11','Paused: the view holds; Resume live counts new events'],agents:['§4.5','Agents: real identities; the agent\'s page opens in the canvas'],context:['§4.6','Context: the existing insert routes plus the mode\'s slice'],inspect:['P15 · D1','Inspect opens the object\'s page as a canvas tab; Pop out gives it a window'],full:['P13','Full: the conversation takes the centre'],closed:['P1','Closed: the corner mark carries the agent\'s state'],run:['§5 Run','Run tab: compact header and the tape for the selected run'],help:['§1','Help chat: reads settings, never changes them']},
+ page:{desk:['F1–F5','Desk: four columns; titles from the commission purpose; unit segments, never percentages; one partial-source line'],map:['F7','Map: one lane per work unit, requires edge, gate, frontier outlined; detail band with the 5 required checks'],traj:['F9','Trajectory: execution waterfall, session selector, lane strip, typed rows joined by call, turn markers, stats from Pi\'s journal'],live:['§3.4','Live: who carries each leg, harness and model, where, Git basis, real actions only'],handoff:['F13','Handoff: recognition first, then outcome, changes, verification, observations, continuation'],tasks:['F14','Tasks: full-size conversation; Run chip only when truly joined'],'tasks-needs':['P5 · F4','Needs you: permission inline; ! on the Run tab and the task row'],'tasks-picker':['A1','Harness picker: harness names, connection variants as badges and second lines; models live only in the model chip'],unit:['D1 · A4','Inspect in a full-page mode: the unit\'s page replaces the Run in place, ← back returns; Pop out gives it a window'],status:['S3','Status: cards that link to sections; drift first'],harness:['§3.2','Harnesses by name: ready, adapter needed, not found'],models:['S14','Model picker: Auto keeps its name; each route Usable, Needs a key, or Local'],pending:['S4','Staged: row marked with Undo; pending strip only now'],review:['S5','Review: one sheet, each effect in plain words; Apply changes'],cred:['S13','Credentials: configured cards with Verify, Rotate, Revoke'],'cred-add':['S12','Write-only key field; empties after Save; never shown again'],skills:['§3.5','Skills as toggles by source, per scope; writable today'],profiles:['§3.6','Profiles: none yet; using one stages its changes'],perms:['A2 · S11','Default permission mode per harness (Bypass staged with a confirmation); read-only rows show a lock'],product:['§3.9 · S15','Product page: health, settings, actions; missing operations named once']}
 };
 function render(){
  seg('c-mode',MODES,'mode');
  const pages=PAGES[S.mode];document.getElementById('w-page').hidden=!pages;if(pages)seg('c-page',pages,'page');
- seg('c-left',LEFTS,'left');seg('c-right',rightSet(),'right');seg('c-epi',[['off','Off'],['on','On']],'epi');seg('c-theme',[['system','System'],['light','Light'],['dark','Dark']],'theme');
+ seg('c-left',LEFTS,'left');seg('c-right',rightSet(),'right');seg('c-epi',[['off','Off'],['on','On']],'epi');seg('c-footer',[['hidden','Hidden'],['revealed','Revealed']],'footer');seg('c-theme',[['system','System'],['light','Light'],['dark','Dark']],'theme');
  const m=document.getElementById('m');
- m.dataset.left=S.left==='collapsed'?'collapsed':'open';m.dataset.right=S.right;
+ m.dataset.left=S.left==='collapsed'?'collapsed':'open';m.dataset.footer=S.footer;m.dataset.right=S.right;
  const compDot=S.right==='closed'&&S.mode!=='settings'?'<span class="dot"></span>':'';
  m.innerHTML=`<div class="bar"><span class="lights"><i></i><i></i><i></i></span><button class="tgl" data-act="toggleL" title="Toggle left ⌘B">${I.sidebar}</button><span class="spacer"></span><button class="tgl companion" data-act="toggleR" title="Toggle right ⌘⇧B">${I.sidebarR}${compDot}</button></div>
-  <div class="body">${leftHTML()}${centreHTML()}${rightHTML()}</div>`;
+  <div class="body">${leftHTML()}${centreHTML()}${rightHTML()}</div><div class="wfoot"><span>Main</span><span>All products read 2m ago</span><span class="sp"></span><span>⋯</span><button class="lens" data-act="epi" title="Epi-Logos lens: focus the corpus" aria-pressed="${S.epi==='on'}">${I.epi}</button></div>`;
  const b=m.querySelector('.body');
  if(S.right==='full'&&S.mode!=='factory'&&S.mode!=='settings')b.style.gridTemplateColumns=(S.left==='collapsed'?'0px':'240px')+' 0px 1fr';
  else if(S.mode==='factory'&&S.right!=='closed')b.style.gridTemplateColumns=(S.left==='collapsed'?'0px':'240px')+' 1fr 300px';
@@ -977,7 +1009,7 @@ document.getElementById('m').addEventListener('click',e=>{
  if(a==='toggleR')S.right=S.right==='closed'?DEF[S.mode].right==='closed'?'help':DEF[S.mode].right:'closed';
  if(a==='closeR')S.right='closed';
  if(a==='full'&&S.mode!=='factory')S.right=S.right==='full'?'working':'full';
- if(a==='epi')S.epi=S.epi==='on'?'off':'on';
+ if(a==='epi'){S.epi=S.epi==='on'?'off':'on';S.footer='revealed'}
  if(a==='epiOff')S.epi='off';
  if(b.dataset.tab){const t=b.dataset.tab;S.right=S.mode==='factory'?{Run:'run',Agents:'agents',Context:'context'}[t]:S.mode==='settings'?'help':{Chat:'working',Activity:'activity',Agents:'agents',Context:'context'}[t]}
  render();

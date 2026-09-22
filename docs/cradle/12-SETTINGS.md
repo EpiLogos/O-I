@@ -1,6 +1,6 @@
 ---
 Register: episteme
-Standing: design-commitment (proposed 2026-09-22; realises HARNESS-SETTINGS-RESEARCH-2026-09-22 §1–§3 and DESKTOP-LANGUAGE rulings 2, 3, 6)
+Standing: design-commitment — owner-accepted as part of the UI lead, 2026-09-23 (S1 accepted; S2 write-only key entry adopted as recommended); realises HARNESS-SETTINGS-RESEARCH-2026-09-22 §1–§3
 ---
 
 # 12 — Settings and System
@@ -18,7 +18,7 @@ Standing: design-commitment (proposed 2026-09-22; realises HARNESS-SETTINGS-RESE
 LEFT (body)              CENTRE
 Status                   Models                                   ⌕ Search settings
 Harnesses                ─────────────────────────────────────────────────────────
-Models        ◉          Default for new chats      Pi (sandboxed) ▾
+Models        ◉          Default connection         Pi · sandboxed ▾
 Credentials   1          Claude Code                Auto · Balanced ▾
 Skills        86         Codex                      from its config · Open file
 Profiles                 Ranking policy             Balanced ▾
@@ -83,7 +83,7 @@ The broker is AIKit itself, not a harness, and is not listed. Today `harnessSour
 
 ### 3.3 Models: pick a model relative to the harness
 
-- **Default for new chats**: the provider picker (the one live write today, `chat_default_hold`).
+- **Default connection for new chats**: the harness and its connection variant, labelled by harness name (the one live write today, `chat_default_hold`). **It is not a model and is never labelled as one** (Amendment A1; today the page calls it "Model for new chats").
 - **One row per ready harness**, e.g. `Claude Code · Auto · Balanced ▾`. The picker is searchable and grouped by provider. Each model shows its routes' availability in words:
   - **Usable** (route observed and credential bound; the UI joins routes with the bound credentials, because the route's own condition stays "required" even when a key is bound).
   - **Needs an Anthropic key**, with a link to Credentials.
@@ -121,6 +121,8 @@ One card per provider that matters: OpenRouter, Anthropic, OpenAI, DeepSeek, Z.a
 - **Import** never applies anything.
 
 ### 3.7 Permissions
+
+- **Default permission mode, per harness** *(Amendment A2)*: Ask before acting · Accept edits · Plan only · Bypass permissions, offering only the modes each harness supports. Choosing Bypass shows one line saying what it allows and needs a second click; it is staged like any change. The composer's permission chip overrides it for one session.
 
 - Per-harness approval and trust as friendly rows. Examples: *Codex trusts this project* and *Codex trusts your home folder* (both read-only today → *Open file*).
 - Environment import: *Closed*.
@@ -183,6 +185,13 @@ These are listed so they are built, not faked:
 - `client_install` over `aikit client install`
 - a per-harness model default: a new owner setting in AIKit's config contribution
 - `compose_read` for route availability
+
+- **Permission modes (A2): none of this exists yet.** It should mirror the session model controls that already exist in AIKit (`interactive_connection.rs` `session_model_controls` / `set_session_model`, `agent_session_host.rs` `set_model`, surfaced as `model-read` / `model-select`). Build:
+  - session **mode controls** per adapter: ACP `session/set_mode` where offered, Claude Code's permission modes, and none for Pi unless it exposes one;
+  - `mode-read` / `mode-select` encounter actions;
+  - a per-harness default as an AIKit config setting.
+
+  When a harness offers no modes, the chip is absent; it is never shown disabled.
 
 Skill toggles, profiles and the new-chat default already have operations.
 
