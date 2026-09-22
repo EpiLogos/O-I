@@ -3,25 +3,37 @@
   "scenario": "system-settings",
   "spec_ref": "docs/cradle/06-SYSTEM-SETTINGS.md §7",
   "grade": "B",
-  "generated_at": "2026-09-22T18:03:20.365Z",
+  "generated_at": "2026-09-22T20:47:56.453Z",
   "environment": {
-    "base_url": "http://localhost:4173",
+    "base_url": "http://localhost:4187",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
     "build_input": {
       "mode": "fresh-build",
-      "bundle_fingerprint": "310b2ede332cec413dc4283c6d0eb57d59375f18c0035ebcb40085f350bd4d5d"
+      "bundle_fingerprint": "28e2635a62a9a2ab0d0e49e38ca139d88cd57e7d32c950f44171f187bdd7b8b3"
     },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "d0062ae298f937a8922e877327ec4e8fc8c7f64d",
+      "repository_head": "0a66abcc4a50f00351cb0733680699729b436b67",
       "tracked_changes": [
-        "desktop/cradle/src/configuration/fixtureSource.ts",
-        "desktop/cradle/src/configuration/sourceHost.ts",
+        "ProjectCentral/now/promotions.json",
+        "desktop/cradle/documents/forms.json",
+        "desktop/cradle/src-tauri/icons/icon.png",
+        "desktop/cradle/src/Rest.tsx",
+        "desktop/cradle/src/configuration/AdoptionFlow.tsx",
+        "desktop/cradle/src/configuration/ChatHarnessPanel.tsx",
+        "desktop/cradle/src/configuration/configuration.css",
+        "desktop/cradle/src/workspace/GroundChooser.tsx",
+        "desktop/cradle/src/workspace/settings/settings-v2.css",
+        "desktop/cradle/src/workspace/settings/settings.css",
+        "desktop/cradle/src/workspace/settings/v2/NativeProductSectionV2.tsx",
+        "desktop/cradle/src/workspace/settings/v2/ProductSectionV2.tsx",
         "desktop/cradle/src/workspace/settings/v2/SettingsHome.tsx",
+        "desktop/cradle/walk/artifacts/configuration.json",
+        "desktop/cradle/walk/artifacts/flow-canvas-failure.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-conflict-resolved.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-saved.png",
         "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-sessions-bound.png",
@@ -30,11 +42,12 @@
         "desktop/cradle/walk/artifacts/rest.json",
         "desktop/cradle/walk/artifacts/system-settings-failure.png",
         "desktop/cradle/walk/artifacts/system-settings.json",
-        "desktop/cradle/walk/scenarios/configuration.mjs",
-        "desktop/cradle/walk/scenarios/system-settings.mjs",
-        "desktop/cradle/walk/verify-live-settings.mjs"
+        "desktop/cradle/walk/lib/read-model.mjs",
+        "desktop/cradle/walk/scenarios/document-entry.mjs",
+        "desktop/cradle/walk/scenarios/rest.mjs",
+        "desktop/cradle/walk/scenarios/system-settings.mjs"
       ],
-      "dirty_digest": "faff54f6fb96ee0fa36ba5ccf06271d34aebcdd9117f4ba680f18160c26455d1",
+      "dirty_digest": "ae86c7d26e88912229b6df75af4724c237e3b20fa401aa930fbb1c1a42694755",
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
@@ -42,7 +55,7 @@
   },
   "passed": true,
   "error": null,
-  "duration_ms": 1877,
+  "duration_ms": 2302,
   "checks": [
     {
       "ok": true,
@@ -93,7 +106,7 @@
     },
     {
       "ok": true,
-      "label": "L5 the raw documents behind the settings sit in the developer view, collapsed by default"
+      "label": "L5 the raw-documents developer view does not exist — the dump died, and the view is clean without it"
     },
     {
       "ok": true,
@@ -176,7 +189,11 @@
     },
     {
       "ok": true,
-      "label": "L5 each section keeps its developer record behind its own disclosure"
+      "label": "L5 each section keeps its raw record behind its own Advanced disclosure"
+    },
+    {
+      "ok": true,
+      "label": "no \"developer\" surface survives in the shipping application — the disclosure is named Advanced"
     },
     {
       "ok": true,
@@ -205,24 +222,24 @@
       "duration_ms": 0,
       "data": {
         "schema": "oi.cradle.walk/v1",
-        "mounted_at": "2026-09-22T18:03:20.495Z",
+        "mounted_at": "2026-09-22T20:47:56.657Z",
         "transport": {
           "kind": "bridge",
           "url": "http://127.0.0.1:4179"
         },
-        "url": "http://localhost:4173/"
+        "url": "http://localhost:4187/"
       }
     },
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 441.9,
+      "duration_ms": 323,
       "data": {}
     },
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 44,
+      "duration_ms": 57,
       "data": {
         "file": "system-settings-settings-drift-plan.png"
       }
@@ -230,7 +247,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 25,
+      "duration_ms": 40,
       "data": {
         "file": "system-settings-settings-bootstrap-empty.png"
       }
@@ -238,7 +255,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 40,
+      "duration_ms": 57,
       "data": {
         "file": "system-settings-settings-face.png"
       }
@@ -246,7 +263,7 @@
     {
       "ok": true,
       "op": "capture.screenshot",
-      "duration_ms": 33,
+      "duration_ms": 42,
       "data": {
         "file": "system-settings-settings-system.png"
       }
@@ -254,7 +271,7 @@
     {
       "ok": true,
       "op": "read.focus",
-      "duration_ms": 1.1,
+      "duration_ms": 1.4,
       "data": {}
     }
   ],

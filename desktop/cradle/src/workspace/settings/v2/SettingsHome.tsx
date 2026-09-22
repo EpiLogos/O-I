@@ -14,8 +14,12 @@
  *    copy action, not beside every title; the "In sync" state is silent —
  *    only settings needing attention carry a chip;
  *  - a pending-changes tray: held-but-unapplied edits gather in one place
- *    with one Apply, instead of a ceremony per row;
- *  - raw documents collapse into one developer view at the bottom.
+ *    with one Apply, instead of a ceremony per row.
+ *
+ * No raw documents render here at all (owner ruling 2026-09-22: no raw
+ * JSON in user surfaces, no developer surfaces in the shipping app) — the
+ * contribution documents live behind the product sections' Advanced
+ * disclosures on the System face, and nowhere else.
  */
 import {useEffect, useMemo, useState} from "react";
 import type {
@@ -352,7 +356,6 @@ export function SettingsHome({census,target}: {census?: CompositionReading;targe
     </div>
 
     {source.kind === "fixture" && <FixtureConsole onMutate={() => void refresh(source)}/>}
-    <DevView mounts={mounts}/>
 
     {pendingRequests.length > 0 && !drawerOpen && panel.kind !== "profiles" && panel.kind !== "chat" && (
       <div className="settings-tray" role="region" aria-label="Pending changes" data-settings-tray>
@@ -580,14 +583,3 @@ function FixtureConsole({onMutate}: {onMutate: () => void}) {
   </details>;
 }
 
-/** The one escape hatch: every raw contribution document, behind a single
- * explicit disclosure. Replaces the scattered JSON dumps. */
-function DevView({mounts}: {mounts: ContributionMount[]}) {
-  return <details className="settings-dev">
-    <summary>Developer view — the raw documents behind these settings</summary>
-    {mounts.map((mount) => <details key={mount.owner_ref} className="settings-dev-doc">
-      <summary>{productName(mount.owner_ref)}{mount.error ? ` — read failed: ${mount.error}` : ""}</summary>
-      <pre>{JSON.stringify(mount.document ?? {availability: mount.availability, error: mount.error}, null, 2)}</pre>
-    </details>)}
-  </details>;
-}

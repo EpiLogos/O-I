@@ -115,12 +115,14 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   await panel.getByRole('button',{name:'Restore the full registry'}).click();
   await panel.locator('[data-owner]').first().waitFor({timeout:15000});
 
-  // L5 on the primary Settings view: no raw JSON, no wire-shape dumps — the
-  // raw contribution documents live behind the collapsed developer view.
+  // L5 on the primary Settings view: no raw JSON, no wire-shape dumps — and
+  // (owner ruling 2026-09-22) the developer dump itself is GONE: there is
+  // no developer view in the shipping application, and the surface stays
+  // clean without it.
   await assertNoRawJson({check},panel,
     'L5 the primary Settings view renders no raw JSON and no wire-shape dumps');
-  check((await panel.locator('details.settings-dev').getAttribute('open'))===null,
-    'L5 the raw documents behind the settings sit in the developer view, collapsed by default');
+  check((await panel.locator('details.settings-dev').count())===0,
+    'L5 the raw-documents developer view does not exist — the dump died, and the view is clean without it');
   await shot('settings-face');
 
   // --- the System face: the census and the empty world ----------------------
@@ -193,13 +195,17 @@ export default async function run({page,baseUrl,check,shot,channel}) {
   const notYetAvailable=(await panel.locator('.product-action-availability.is-missing_native_obligation').allTextContents()).join(' ');
   check(notYetAvailable.includes('not available here yet'),'Missing native operations render as a plain not-yet-available note, never as disabled buttons');
   // L5 on the primary System view, then the disclosure proof: every section
-  // keeps its developer record behind its own collapsed disclosure, and an
-  // OPEN record stays clean because it is behind disclosure — the scanner
-  // discriminates on disclosure, not on the mere absence of JSON.
+  // keeps its raw record behind its own collapsed ADVANCED disclosure (the
+  // "developer surface" naming is gone from the shipping app — owner ruling
+  // 2026-09-22), and an OPEN record stays clean because it is behind
+  // disclosure — the scanner discriminates on disclosure, not on the mere
+  // absence of JSON.
   await assertNoRawJson({check},panel,
     'L5 the primary System view renders no raw JSON and no wire-shape dumps');
-  const rawDisclosures=await panel.locator(':scope > details.product-section > details.product-raw').all();
-  check(rawDisclosures.length===7,'L5 each section keeps its developer record behind its own disclosure');
+  const rawDisclosures=await panel.locator(':scope > details.product-section > details.product-advanced').all();
+  check(rawDisclosures.length===7,'L5 each section keeps its raw record behind its own Advanced disclosure');
+  check((await panel.getByText('Developer record').count())===0,
+    'no "developer" surface survives in the shipping application — the disclosure is named Advanced');
   let openRaw=0;
   for(const disclosure of rawDisclosures)if((await disclosure.getAttribute('open'))!==null)openRaw++;
   check(openRaw===0,'L5 raw records are collapsed by default — the primary view is the readable one');

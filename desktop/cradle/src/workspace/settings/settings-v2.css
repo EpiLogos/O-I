@@ -83,10 +83,9 @@
 .settings-tray-actions { display: flex; gap: 8px; }
 .settings-tray-actions [data-config-plan-all] { background: var(--oi-accent); color: var(--oi-accent-ink); border: none; border-radius: var(--oi-radius-sm); padding: 6px 13px; cursor: pointer; font: inherit; font-size: var(--oi-shell-type-ui); }
 
-.settings-fixture-console, .settings-dev { margin: 10px 0 4px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
-.settings-fixture-console summary, .settings-dev summary { cursor: pointer; }
-.settings-dev-doc { margin: 8px 0 8px 14px; }
-.settings-dev pre, .settings-dev-doc pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; background: var(--oi-wash); border-radius: var(--oi-radius-sm); padding: 8px 10px; }
+.settings-fixture-console { margin: 10px 0 4px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.settings-fixture-console summary { cursor: pointer; }
+.settings-fixture-console pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; background: var(--oi-wash); border-radius: var(--oi-radius-sm); padding: 8px 10px; }
 
 /* The System surface shares the page's tight rhythm. */
 .settings-world-header { display: flex; flex-wrap: wrap; justify-content: space-between; gap: 10px 22px; align-items: baseline; border-bottom: var(--oi-shell-edge) solid var(--oi-hairline-soft); padding-bottom: 8px; }
@@ -125,8 +124,8 @@
 .product-action-note { flex-basis: 100%; color: var(--oi-muted-2); }
 .product-empty { color: var(--oi-muted-2); font-style: italic; }
 .product-version { color: var(--oi-muted-2); }
-.product-raw { margin: 8px 0; }
-.product-raw pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; background: var(--oi-wash); border-radius: var(--oi-radius-sm); padding: 8px 10px; }
+.product-advanced { margin: 8px 0; }
+.product-advanced pre { white-space: pre-wrap; overflow-wrap: anywhere; max-height: 320px; overflow: auto; background: var(--oi-wash); border-radius: var(--oi-radius-sm); padding: 8px 10px; }
 .settings-rail-switch { margin-left: auto; border: 1px solid var(--oi-hairline); border-radius: 999px; padding: 3px 12px; background: var(--oi-accent-soft); color: var(--oi-accent-ink); font-size: var(--oi-shell-type-ui); cursor: pointer; }
 
 /* Rail (the three surfaces) — ported from the classic sheet the v2 page

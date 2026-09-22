@@ -103,9 +103,16 @@ export function ChatHarnessPanel() {
       }}
     />
 
-    <ProvidersSection providers={providers} state={reading?.providers} effective={effective}/>
-    <HarnessSection state={reading?.harnesses}/>
-    <CatalogueSection state={reading?.catalogue}/>
+    {/* The censuses are reference material, not the settings (owner ruling
+     * 2026-09-22: a census readout is not a settings page). They sit behind
+     * the Advanced disclosure; the working controls stay primary. */}
+    <details className="config-advanced" data-harness-census>
+      <summary>Advanced — the full census (providers, harnesses, models)</summary>
+      <p className="config-note" role="note">What this machine discloses, as the suite reads it. The working controls live above.</p>
+      <ProvidersSection providers={providers} state={reading?.providers} effective={effective}/>
+      <HarnessSection state={reading?.harnesses}/>
+      <CatalogueSection state={reading?.catalogue}/>
+    </details>
   </div>;
 }
 

@@ -169,3 +169,20 @@
   .config-drawer .config-ops td:nth-child(5)::before { content: "Status"; }
   .config-drawer .config-ops td:nth-child(6)::before { content: "Receipt"; }
 }
+
+/* Advanced disclosures — reference material behind an explicit collapsed
+ * disclosure (06-SYSTEM-SETTINGS L5); never the primary view. */
+.config-advanced { margin: 12px 0 4px; border: 1px solid var(--oi-hairline-soft); border-radius: 6px; padding: 4px 10px; font-size: var(--oi-shell-type-ui); color: var(--oi-muted-2); }
+.config-advanced > summary { cursor: pointer; }
+.config-advanced > summary::marker { color: var(--oi-muted-2); }
+.config-advanced[open] { color: var(--oi-ink); }
+
+/* The ground recognition facts (GroundChooser): the recognition rendered as
+ * components — label/value rows, never a raw dump. */
+.ground-recognition { margin: 8px 0; font-size: var(--oi-shell-type-ui); }
+.ground-recognition > summary { cursor: pointer; color: var(--oi-muted-2); }
+.ground-facts { margin: 8px 0; display: grid; gap: 4px; }
+.ground-fact { display: flex; gap: 8px; }
+.ground-fact dt { color: var(--oi-muted-2); min-width: 11ch; }
+.ground-fact dd { margin: 0; }
+.ground-checks { margin: 0; padding-left: 16px; }

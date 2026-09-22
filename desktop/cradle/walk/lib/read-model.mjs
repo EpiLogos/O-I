@@ -17,7 +17,7 @@
  *     `oi.product-settings-disclosure`, …).
  *
  * A disclosure container is an ancestor `<details>` (the app's established
- * raw-record pattern: `details.product-raw`, `details.settings-dev`,
+ * raw-record pattern: `details.product-advanced`, `details.config-advanced`,
  * `details.native-setting` — `<details>`-grade per spec L5) or an ancestor
  * carrying `aria-expanded` (the expanded-state disclosure pattern). Content
  * inside one is behind disclosure by construction and never a primary-view
