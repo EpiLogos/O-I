@@ -39,37 +39,37 @@ let runPlane=page.locator('[data-plane="Run"]');
 check(await runPlane.count()>0,"the Run plane body renders");
 await runPlane.locator("select[aria-label=\"Dev scenario\"]").selectOption("running");
 await page.waitForTimeout(400);
-check(await runPlane.locator('.factory-side-run-head strong').innerText().then(t=>t.length>0).catch(()=>false),"the fixture run header names the run");
+check(await runPlane.locator('.oi-side-run-head strong').innerText().then(t=>t.length>0).catch(()=>false),"the fixture run header names the run");
 check(await runPlane.getAttribute("data-fixture").then(v=>v==="running").catch(()=>false),"the plane discloses its fixture standing (data-fixture, not native data)");
-const stepsBefore=await runPlane.locator('.factory-side-steps>li').count();
+const stepsBefore=await runPlane.locator('.oi-side-steps>li').count();
 check(stepsBefore>=3,"the run's steps/lanes render",`count ${stepsBefore}`);
 await runPlane.locator("select[aria-label=\"Dev scenario\"]").selectOption("history");
 await page.waitForTimeout(300);
 await runPlane.getByRole("button",{name:"Simulate arrival"}).click();
 await page.waitForTimeout(300);
-check(/\d+ new/.test(await runPlane.locator('.factory-side-traj-strip').innerText().catch(()=>"" )),"the history scenario holds unread arrivals with a visible count");
+check(/\d+ new/.test(await runPlane.locator('.oi-side-traj-strip').innerText().catch(()=>"" )),"the history scenario holds unread arrivals with a visible count");
 await runPlane.getByRole("button",{name:"Resume",exact:true}).click();
 await page.waitForTimeout(200);
-check(/Live/.test(await runPlane.locator('.factory-side-traj-strip').innerText().catch(()=>"" )),"resume clears the held count back to live");
+check(/Live/.test(await runPlane.locator('.oi-side-traj-strip').innerText().catch(()=>"" )),"resume clears the held count back to live");
 await runPlane.getByRole("button",{name:"Hold",exact:true}).click();
 await page.waitForTimeout(200);
 await runPlane.getByRole("button",{name:"Simulate arrival"}).click();
 await page.waitForTimeout(300);
-check(/1 new/.test(await runPlane.locator('.factory-side-traj-strip').innerText().catch(()=>"" )),"an arrival lands in a held view with a visible count");
-const trajRow=runPlane.locator('.factory-side-traj-row').first();
+check(/1 new/.test(await runPlane.locator('.oi-side-traj-strip').innerText().catch(()=>"" )),"an arrival lands in a held view with a visible count");
+const trajRow=runPlane.locator('.oi-side-traj-row').first();
 await trajRow.click();
-check(await runPlane.locator('.factory-side-traj-detail').count()>0,"a trajectory row expands its exact detail");
+check(await runPlane.locator('.oi-side-traj-detail').count()>0,"a trajectory row expands its exact detail");
 await runPlane.locator("select[aria-label=\"Dev scenario\"]").selectOption("running");
 await page.waitForTimeout(300);
 
 // --- Run blocked scenario: permission resolve mutates the fixture ------------
 await runPlane.locator("select[aria-label=\"Dev scenario\"]").selectOption("blocked");
 await page.waitForTimeout(400);
-const blockedStep=runPlane.locator('.factory-side-steps>li[data-step-status="blocked"]').first();
+const blockedStep=runPlane.locator('.oi-side-steps>li[data-step-status="blocked"]').first();
 check(await blockedStep.count()>0,"the blocked scenario shows a permission-blocked step");
 await runPlane.getByRole("button",{name:"Permit",exact:true}).first().click();
 await page.waitForTimeout(300);
-check(await runPlane.locator('.factory-side-steps>li[data-step-status="blocked"]').count()===0,"permitting resolves the barrier — the step really leaves blocked");
+check(await runPlane.locator('.oi-side-steps>li[data-step-status="blocked"]').count()===0,"permitting resolves the barrier — the step really leaves blocked");
 
 // --- Agents plane -------------------------------------------------------------
 await nav.getByRole("button",{name:"Agents",exact:true}).click();
@@ -87,14 +87,14 @@ check(headings.includes("Capabilities"),"Capabilities is its own section");
 check(!headings.some(h=>/Skills & tools/.test(h)),"no “Skills & tools” category remains");
 await agentsPlane.getByRole("button",{name:"Suggest skills"}).click().catch(()=>{});
 // Suggest needs an intent first; type it, then suggest.
-await agentsPlane.locator('.factory-side-intent textarea').fill("Keep the render lane's Rust checks honest and prove the UI in the browser.");
+await agentsPlane.locator('.oi-side-plane-intent textarea').fill("Keep the render lane's Rust checks honest and prove the UI in the browser.");
 await agentsPlane.getByRole("button",{name:"Suggest skills"}).click();
 await page.waitForTimeout(300);
-check(await agentsPlane.locator('.factory-side-proposal').count()>0,"Suggest skills yields a reviewable proposal with reasons");
-const skillBefore=await agentsPlane.locator('.factory-side-skills>li[data-skill-state="selected"]').count();
+check(await agentsPlane.locator('.oi-side-proposal').count()>0,"Suggest skills yields a reviewable proposal with reasons");
+const skillBefore=await agentsPlane.locator('.oi-side-skills>li[data-skill-state="selected"]').count();
 await agentsPlane.getByRole("button",{name:"Apply selected"}).click();
 await page.waitForTimeout(300);
-const skillAfter=await agentsPlane.locator('.factory-side-skills>li[data-skill-state="selected"]').count();
+const skillAfter=await agentsPlane.locator('.oi-side-skills>li[data-skill-state="selected"]').count();
 check(skillAfter>skillBefore,"applying the proposal really selects the proposed skills",`${skillBefore} → ${skillAfter}`);
 
 // --- Context plane -------------------------------------------------------------
@@ -105,16 +105,16 @@ check(await contextPlane.count()>0,"the Context plane body renders");
 check(await contextPlane.getByRole("heading",{name:"Needs you"}).count()>0||await contextPlane.locator('h4',{hasText:"Needs you"}).count()>0,"Needs you is a group inside Context");
 await contextPlane.locator("select[aria-label=\"Dev scenario\"]").selectOption("review");
 await page.waitForTimeout(400);
-check(await contextPlane.locator('.factory-side-return').count()>0,"an addressed return waits in Needs you with its native state");
-const candidateRows=contextPlane.locator('.factory-side-rows>li[data-candidate-status]');
+check(await contextPlane.locator('.oi-side-arrival').count()>0,"an addressed return waits in Needs you with its native state");
+const candidateRows=contextPlane.locator('.oi-side-rows>li[data-candidate-status]');
 check(await candidateRows.count()>=2,"produced candidates render as material rows",`count ${await candidateRows.count()}`);
 await candidateRows.first().getByRole("button",{name:"Select to compare"}).click();
 await candidateRows.nth(1).getByRole("button",{name:"Select to compare"}).click();
 await page.waitForTimeout(300);
-check(await contextPlane.locator('.factory-side-compare-col').count()===2,"two selected candidates compare side-by-side with bodies");
+check(await contextPlane.locator('.oi-side-plane-compare-col').count()===2,"two selected candidates compare side-by-side with bodies");
 await candidateRows.first().getByRole("button",{name:"Reuse as input"}).click();
 await page.waitForTimeout(300);
-const sources=contextPlane.locator('.factory-side-rows>li[data-source-included]');
+const sources=contextPlane.locator('.oi-side-rows>li[data-source-included]');
 check(await sources.count()>0,"reuse-as-input adds the produced material as a source reference");
 
 // --- continuity: switching planes holds nothing hostile, roster not redirected

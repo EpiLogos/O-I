@@ -7,7 +7,7 @@
 //
 // Owner provisioning (policy sources, authority grants, document, producer
 // submit) is done owner-side exactly as the owner's own integration test
-// seeds it; the browser drive exercises the desktop consumer: the Returns tray,
+// seeds it; the browser drive exercises the desktop consumer: the receiving tray,
 // exact-basis acceptance, inclusion, and the stale-basis refusal.
 import {execFileSync} from "node:child_process";
 import {createHash} from "node:crypto";
@@ -73,14 +73,14 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   if (!await nav.isVisible()) await page.keyboard.press("Meta+b");
   await nav.locator('[data-project-path="Work/Editor"]').click();
 
-  const tray = nav.locator(".project-returns").first();
+  const tray = nav.locator(".project-receiving").first();
   await tray.waitFor();
-  await page.waitForFunction(() => document.querySelector(".project-returns header small")?.textContent?.includes("1 in the receiving field"), null, {timeout: 20000});
-  check((await tray.locator(".project-return .return-status").first().innerText()) === "pending", "A pending Return is visible in the project's receiving field before any human act");
+  await page.waitForFunction(() => document.querySelector(".project-receiving header small")?.textContent?.includes("1 in the receiving field"), null, {timeout: 20000});
+  check((await tray.locator(".receiving-row .receiving-status").first().innerText()) === "pending", "A pending Return is visible in the project's receiving field before any human act");
 
-  await tray.locator(".project-return").first().click();
-  await tray.locator(".return-detail").waitFor();
-  const detail = tray.locator(".return-detail");
+  await tray.locator(".receiving-row").first().click();
+  await tray.locator(".receiving-detail").waitFor();
+  const detail = tray.locator(".receiving-detail");
   check((await detail.innerText()).includes("Agent — agent:walk"), "The return presents its real producer attribution");
   check((await detail.innerText()).includes("entry.add") && (await detail.innerText()).includes("Reviewed contribution from the receive-include walk"), "The exact proposed operation and content are shown before any decision");
   check((await detail.innerText()).includes(p.doc.revision.revision), "The return shows the exact basis revision it was proposed against");
@@ -88,19 +88,19 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
 
   // Happy path first: review on the exact current basis and include.
   await tray.getByRole("button", {name: "Accept current basis"}).click();
-  await page.waitForFunction(() => document.querySelector(".project-returns .return-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
-  await page.waitForFunction(() => document.querySelector(".project-return .return-status")?.textContent === "accepted", null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("accepted by"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".receiving-row .receiving-status")?.textContent === "accepted", null, {timeout: 20000});
   check(true, "Explicit acceptance records the human reviewer and the exact reviewed basis");
   await shot("accepted-on-current-basis");
 
   await tray.getByRole("button", {name: "Include into the document"}).click();
   try {
-    await page.waitForFunction(() => document.querySelector(".project-returns .return-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
+    await page.waitForFunction(() => document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("Included into the document."), null, {timeout: 20000});
   } catch {
     const alertText = await tray.getByRole("alert").innerText().catch(() => "no alert rendered");
     throw new Error(`include did not complete; the tray shows: ${alertText}`);
   }
-  await page.waitForFunction(() => document.querySelector(".project-return .return-status")?.textContent === "included", null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".receiving-row .receiving-status")?.textContent === "included", null, {timeout: 20000});
   check(true, "Inclusion completes through the owner's revision-checked operation");
 
   const finalDoc = documentVia(p, HUMAN_TOKEN);
@@ -114,13 +114,13 @@ export default async function run({page, baseUrl, check, shot, channel, provisio
   // just been externally edited — the owner refuses with its own words, nothing
   // moves, and the refused basis is exactly what the tray showed.
   const second = p.agent("central.receiving.submit", {project: "Editor", producer_key: "producer:receive-walk-2", source_ref: p.doc.source.ref, document_id: p.doc.document_id, expected_source_revision: finalDoc.revision.revision, occurred_at_unix_seconds: 43, proposal: {operation: "field.append", field_id: "walk-field", contribution_id: "part:walk-2", html: "<p>Second reviewed contribution</p>"}});
-  await tray.getByRole("button", {name: "Refresh returns"}).click();
-  await page.waitForFunction(() => document.querySelector(".project-returns header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
-  await tray.locator(".project-return").filter({hasText: "pending"}).first().click();
-  await page.waitForFunction(() => document.querySelectorAll(".project-returns .return-detail").length === 1 && document.querySelector(".project-returns .return-detail")?.textContent?.includes("Second reviewed contribution"), null, {timeout: 20000});
+  await tray.getByRole("button", {name: "Refresh receiving"}).click();
+  await page.waitForFunction(() => document.querySelector(".project-receiving header small")?.textContent?.includes("2 in the receiving field"), null, {timeout: 20000});
+  await tray.locator(".receiving-row").filter({hasText: "pending"}).first().click();
+  await page.waitForFunction(() => document.querySelectorAll(".project-receiving .receiving-detail").length === 1 && document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("Second reviewed contribution"), null, {timeout: 20000});
   // The detail can render before its basis read lands; accepting a stale
   // basis only means something once the tray shows the basis it would accept.
-  await page.waitForFunction(() => document.querySelector(".project-returns .return-detail")?.textContent?.includes("Current document basis"), null, {timeout: 20000});
+  await page.waitForFunction(() => document.querySelector(".project-receiving .receiving-detail")?.textContent?.includes("Current document basis"), null, {timeout: 20000});
   const sourcePath = join(p.root, "Work/Editor", p.doc.source.path);
   writeFileSync(sourcePath, readFileSync(sourcePath, "utf8") + "\n");
   await tray.getByRole("button", {name: "Accept current basis"}).click();

@@ -1,5 +1,5 @@
 /*
- * Receiving family (ReturnsTray, DocumentReturns, DocumentContributions,
+ * Receiving family (ReceivingTray, DocumentReceiving, DocumentContributions,
  * NowRelations, SharedFieldMaterial, DayDieFace): pending Returns, accepted
  * document contributions, NOW relations and Shared Field / A2A composition,
  * plus the Day die face. Unstyled before this pass — this file gives every

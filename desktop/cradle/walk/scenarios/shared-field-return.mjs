@@ -190,13 +190,13 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   // 7 — the human reviews beside the document: the strip is this document's
   // arrival point, so the new Return is one refresh away; it is visibly an
   // admitted shared-field contribution, distinct from a plain return.
-  const returns=page.locator(".document-returns");
+  const returns=page.locator(".document-receiving");
   await returns.waitFor();
   check((await returns.locator("header small").innerText()).includes("0 in the receiving field"),"Before the Return arrives the strip honestly shows an empty receiving field");
-  await returns.getByRole("button",{name:"Refresh this document's returns"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-returns header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
-  await returns.locator(".document-return").first().click();
-  const detail=returns.locator(".return-detail");await detail.waitFor();
+  await returns.getByRole("button",{name:"Refresh this document's receiving"}).click();
+  await page.waitForFunction(()=>document.querySelector(".document-receiving header small")?.textContent?.includes("1 in the receiving field"),null,{timeout:20000});
+  await returns.locator(".receiving-row").first().click();
+  const detail=returns.locator(".receiving-detail");await detail.waitFor();
   const detailText=await detail.innerText();
   check(detailText.includes("Agent — agent:reader-walk"),"The Return's producer is the receiving participant");
   check(detailText.includes("admitted contribution")&&detailText.includes(envelope.projection_ref)&&detailText.includes("withdrawn by the publisher, admitted material retained"),"The return discloses its shared-field lineage — admitted, and withdrawn by the publisher yet retained");
@@ -204,9 +204,9 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   await shot("return-with-shared-field-lineage");
 
   await returns.getByRole("button",{name:"Accept current basis"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-returns .return-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-detail")?.textContent?.includes("accepted by"),null,{timeout:20000});
   await returns.getByRole("button",{name:"Include into the document"}).click();
-  await page.waitForFunction(()=>document.querySelector(".document-returns .return-status")?.textContent==="included",null,{timeout:20000});
+  await page.waitForFunction(()=>document.querySelector(".document-receiving .receiving-status")?.textContent==="included",null,{timeout:20000});
   check(true,"Inclusion lands through the owner's revision-checked operation on the exact reviewed basis");
 
   // 8 — the surface unmounts when its tab goes inactive; coming back is a
@@ -228,7 +228,7 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
   check(rowText.includes("Agent — agent:reader-walk")&&rowText.includes("reviewed by human:walk")&&rowText.includes("entry entry:shared"),"The accepted contribution shows producer, human reviewer and entry anchor as distinct facts");
   await page.waitForFunction(()=>document.querySelector(".shared-field-published")?.getAttribute("data-projection-state")==="withdrawn",null,{timeout:10000});
   // 10 — the four states are distinguishable in the one canvas.
-  await returns.locator(".document-return").first().click();
+  await returns.locator(".receiving-row").first().click();
   await page.locator(".return-shared-field").waitFor();
   check(await page.locator(".cm-content[data-source-ref]").count()===1
     &&await page.locator(".shared-field-published[data-projection-state='withdrawn']").count()===1

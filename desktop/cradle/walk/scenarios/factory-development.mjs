@@ -514,6 +514,20 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
     "No skill-proposal flow is offered without native authority — the fixture's suggest/apply pair has no real counterpart on this cut");
 
   // ---------------------------------------------------------------------
+  // Ruling 7 (DESKTOP-LANGUAGE.md, 2026-09-22): NOTHING in the app says
+  // "returns". The walked surfaces' VISIBLE text is scanned line by line —
+  // the Desk centre (board and detail) and the panel's planes. The arrived
+  // material itself renders through the roster rows, the desk's receiving
+  // strip and the Inspect hand-offs; the word renders nowhere.
+  // ---------------------------------------------------------------------
+  const assertNoReturnsText = async (root, label) => {
+    const lines = (await root.innerText()).split("\n").map(line => line.trim()).filter(line => /returns/i.test(line));
+    check(lines.length === 0, label, {offendingLines: lines.slice(0, 5)});
+  };
+  await assertNoReturnsText(centre, "L7 · the Factory centre's visible text never says \"returns\" — the Desk strip and detail render the material itself");
+  await assertNoReturnsText(panel, "L7 · the panel's visible text never says \"returns\" — the planes render the material itself");
+
+  // ---------------------------------------------------------------------
   // The sidebar's CONTEXT plane (owner direction 2026-09-20: the Context
   // plane IS the canvas): honest empty state on this cut, no raw record.
   // ---------------------------------------------------------------------
