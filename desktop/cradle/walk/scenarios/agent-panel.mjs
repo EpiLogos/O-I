@@ -190,14 +190,14 @@ export default async function run({page,baseUrl,check,shot,channel,provision:p})
 
   // --- Run: the shared run plane — honest run head, live trajectory ----------
   await plane("Run");
-  const runHead=panel.locator(".factory-side-run-head");
+  const runHead=panel.locator(".oi-side-run-head");
   await runHead.waitFor({timeout:15000});
-  check(await panel.locator('.factory-side-run-head[data-state="none"]').count()===1,"With no Factory run selected, the Run head says exactly that — no invented run");
-  const tool=panel.locator('.factory-side-embed details.desk-row').filter({hasText:"fixture-tool-1"}).first();
+  check(await panel.locator('.oi-side-run-head[data-state="none"]').count()===1,"With no Factory run selected, the Run head says exactly that — no invented run");
+  const tool=panel.locator('.oi-side-embed details.desk-row').filter({hasText:"fixture-tool-1"}).first();
   await tool.waitFor({timeout:20000});
-  const labels=await panel.locator('.factory-side-embed details.desk-row .desk-row-label').allInnerTexts();
+  const labels=await panel.locator('.oi-side-embed details.desk-row .desk-row-label').allInnerTexts();
   check(labels.length>0&&labels.every(label=>label.trim().length>0&&!label.includes("{")),"Trajectory rows read the block's own kind as their label, never raw JSON",labels);
-  check(await panel.locator('.factory-side-embed details.desk-row[open]').count()===0,"Trajectory rows are collapsed by default — never a log wall");
+  check(await panel.locator('.oi-side-embed details.desk-row[open]').count()===0,"Trajectory rows are collapsed by default — never a log wall");
   await tool.locator("summary").click();
   check((await tool.locator(".desk-row-detail pre").innerText()).includes("fixture-tool-1"),"A trajectory row expands into the owner block's own detail");
   await shot("panel-run-trajectory");

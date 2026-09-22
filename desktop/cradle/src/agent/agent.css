@@ -17,6 +17,9 @@
  * agent minimum (finding 5). A mode with more planes than fit scrolls the nav
  * itself, quietly — the panel never widens and the document never scrolls. */
 .agent-layer .agent-planes{gap:10px;overflow-x:auto;overflow-y:hidden;scrollbar-width:none}
+/* Leading plane glyphs: icon + label on one baseline (aria-hidden svg — the
+   accessible name stays the label). */
+.agent-layer .agent-planes>button,.agent-layer .agent-planes .oi-menu-item{display:inline-flex;align-items:center;gap:5px}
 .agent-layer .agent-planes::-webkit-scrollbar{display:none}
 .agent-head-glyph{width:var(--oi-shell-control);height:28px;flex:none;border:var(--oi-shell-edge) solid var(--oi-hairline);border-radius:7px;display:grid;place-items:center;background:var(--oi-canvas-ground);color:var(--oi-accent-ink)}
 

@@ -602,9 +602,9 @@ html, body, #root, .desktop-shell { overflow: clip; }
 .desktop-side.left .world-navigator { background: transparent; }
 /* Mode-specific sidebar components (factory steps/trajectories/skills and
    kin): no permanent box fills on the glass — hover keeps its feedback. */
-.desktop-shell .desktop-side :is(.factory-side-steps > li, .factory-side-traj-detail, .factory-side-skills > li),
-.desktop-shell .desktop-side .factory-side-steps > li[data-step-status="blocked"],
-.desktop-shell .desktop-side .factory-side-skills > li[data-permission="refused"],
+.desktop-shell .desktop-side :is(.oi-side-steps > li, .oi-side-traj-detail, .oi-side-skills > li),
+.desktop-shell .desktop-side .oi-side-steps > li[data-step-status="blocked"],
+.desktop-shell .desktop-side .oi-side-skills > li[data-permission="refused"],
 .desktop-shell .desktop-side .world-system button { background: transparent; }
 .desktop-shell .desktop-side .world-system button:hover { background: var(--oi-wash); }
 /* The icon belt container itself: same glass as everything else, in every

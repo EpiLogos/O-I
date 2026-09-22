@@ -30,10 +30,10 @@
 //     view and run reading; the sidebar's Run plane reads the same real
 //     selection, and Inspect receives the exact execution row — its raw
 //     record behind a collapsed disclosure (spec 06 §7 L5).
-//   - the Agents plane reads the kernel's SessionSpace reading for the
-//     project (the real roster rows it has), renders its honest emptiness
-//     where no native read exists, and offers no skill-proposal flow
-//     without native authority (the named gap, not a masquerading control).
+//   - the Agents plane situates its SessionSpace roster read by the Factory
+//     navigator's grounded project (this lane's wiring fix): the kernel's own
+//     conversation renders as a real roster row, and no skill-proposal flow
+//     is offered without native authority (the named gap, not a masquerade).
 //   - a real conversation (AIKit SessionSpace, attached in setup) binds
 //     through the Tasks chat's own chooser, and the exact-identity Run
 //     binding law holds negatively: the conversation's session carried none
@@ -422,21 +422,21 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   await runPlane.waitFor();
   check(await runPlane.getAttribute("data-fixture") === null,
     "The Run plane carries no fixture standing — the walk bundle mounts no dev scenario");
-  const runHead = runPlane.locator(".factory-side-run-head strong");
+  const runHead = runPlane.locator(".oi-side-run-head strong");
   await runHead.waitFor({timeout: 10000});
   check((await runHead.innerText()) === first.label,
     "The Run plane's run header EQUALS the owner's declared run label (was presence-only on the fixture)", {ownerLabel: first.label});
-  check((await runPlane.locator(".factory-side-run-state").innerText()).includes(first.status),
+  check((await runPlane.locator(".oi-side-run-state").innerText()).includes(first.status),
     "The Run plane's state line carries the owner's own status word", {ownerStatus: first.status});
   // Steps: the real executions of the Run, row for row the owner's reading.
-  const stepRows = runPlane.locator(".factory-side-steps > li");
+  const stepRows = runPlane.locator(".oi-side-steps > li");
   check(await stepRows.count() === first.executions.length,
     "The Run plane's step rows are exactly the executions the owner's build view carries", {ownerExecutions: first.executions.length});
   if (first.executions.length) {
     const stepRow = stepRows.first();
-    check((await stepRow.locator(".factory-side-step-label").innerText()) === first.executions[0].agencyRef,
+    check((await stepRow.locator(".oi-side-step-label").innerText()) === first.executions[0].agencyRef,
       "The step row names the owner's agency ref verbatim", {ownerAgencyRef: first.executions[0].agencyRef});
-    check((await stepRow.locator(".factory-side-step-meta").innerText()).includes(first.executions[0].status),
+    check((await stepRow.locator(".oi-side-step-meta").innerText()).includes(first.executions[0].status),
       "The step row carries the owner's execution status verbatim", {ownerStatus: first.executions[0].status});
   }
   // No invented attention: this Run carries no human request and no claim,
@@ -480,17 +480,21 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
     Object.entries(space.agent_sessions ?? {}).map(([ref, attachment]) => attachment.purpose || space.label || ref));
   check(kernelTitles.includes(p.conversationTitle),
     "The kernel's own SessionSpace reading names the conversation this walk provisioned", {kernelTitles});
-  // The plane situates its roster read by the canvas subject's project. In
-  // Factory mode the active subject is the Factory centre binding, which
-  // carries no project — so the real SessionSpace roster is unreachable
-  // here even though the Factory navigator is grounded in Editor (named
-  // wiring gap for the sidebar-grammar lane: the plane should situate from
-  // the Factory mode's own grounded project). The walk asserts that honest
-  // state rather than a row set no route can reach on this cut.
+  // The plane situates its roster read by the mode's own grounded project
+  // (the Factory navigator picker — this lane's wiring fix): the sidebar
+  // grammar pass wired the grounded project into the Agents plane, whose
+  // canvas subject carries none in Factory mode. The rendered roster must
+  // therefore EQUAL the kernel's SessionSpace reading — the provisioned
+  // conversation appears as a real row, by content equality.
   const conversationsSection = agentsPlane.locator('section[aria-label="Project conversations"]');
   await conversationsSection.waitFor({timeout: 30000});
-  check((await conversationsSection.innerText()).includes("Choose a project."),
-    "With no project-carrying subject, the roster section says so instead of inventing rows (named wiring gap: the plane ignores the Factory navigator's grounded project)");
+  const rosterRow = conversationsSection.locator(".encounter-row", {hasText: p.conversationTitle});
+  await rosterRow.waitFor({timeout: 60000});
+  check(await rosterRow.count() === 1,
+    "The Agents plane situates its roster read by the Factory navigator's grounded project: the kernel's conversation renders as a real roster row (the former Choose-a-project wiring gap, closed)",
+    {kernelTitles, conversationTitle: p.conversationTitle});
+  check((await rosterRow.innerText()).includes(p.conversationTitle),
+    "The roster row names the conversation by its real SessionSpace purpose — no invented title");
   // The durable-worker roster has no native read on this cut: the plane
   // renders its honest emptiness and names the gap — no invented agents.
   check(await agentsPlane.getByText("No agents yet.").count() === 1,
@@ -505,7 +509,7 @@ export default async function run({page, baseUrl, check, shot, channel, log, pro
   // suggest→apply skill-delta acceptance is retired with the fixture; it
   // returns here when the native AIKit search seam lands.
   check(await agentsPlane.getByRole("button", {name: "Suggest skills"}).count() === 0
-    && await agentsPlane.locator(".factory-side-proposal").count() === 0
+    && await agentsPlane.locator(".oi-side-proposal").count() === 0
     && await agentsPlane.getByRole("button", {name: "Apply selected"}).count() === 0,
     "No skill-proposal flow is offered without native authority — the fixture's suggest/apply pair has no real counterpart on this cut");
 
