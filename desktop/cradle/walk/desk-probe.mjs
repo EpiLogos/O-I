@@ -1,3 +1,16 @@
+// DEV-ONLY DIAGNOSTIC — NO ACCEPTANCE STANDING.
+//
+// This probe runs on the FIXTURE WORLD: the "Desk — cross-project board"
+// labelled dev scenario (six invented Runs; the fixture Run detail's depths
+// over labelled scenario data). It is excluded from the acceptance set
+// (research dossier docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md
+// §4, negative roster item 5; DESKTOP-LANGUAGE.md ruling 8, 2026-09-22):
+// acceptance for the Desk and Run detail lives in
+// walk/scenarios/factory-development.mjs, restated over the real kernel legs
+// (the owner's build views and run readings for a real conformance state).
+// This file survives as a developer diagnostic for the fixture scenario's
+// own mechanics.
+//
 // Desk probe: the labelled-fixture legs of the Desk's proof (handoff §10/§11)
 // — the legs the walk bundle cannot mount because the labelled dev scenarios
 // live behind import.meta.env.DEV and the walk bundle is a production build

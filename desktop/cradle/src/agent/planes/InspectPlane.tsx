@@ -69,7 +69,13 @@ export function InspectPlane({full,selection,onSelection,handed,onDismiss,subjec
 }
 
 function HandedMaterial({item}:{item:PanelInspectDetail}) {
- const text=typeof item.payload==="string"?item.payload:item.payload===undefined?undefined:JSON.stringify(item.payload,null,1);
+ // Owner ruling 2 (DESKTOP-LANGUAGE.md, 2026-09-22): no raw JSON where a
+ // person reads. Text handed as text stays readable prose; a structured
+ // payload's raw record sits behind a collapsed disclosure — the same
+ // <details>-grade pattern the session's Raw disclosure uses — so the
+ // primary view stays the readable identity facts above it.
+ const text=typeof item.payload==="string"?item.payload:undefined;
+ const raw=item.payload!==undefined&&typeof item.payload!=="string"?JSON.stringify(item.payload,null,1):undefined;
  return <article className="agent-inspect-handed" data-inspect-kind={item.kind} data-inspect-ref={item.ref}>
   <header className="oi-panel-head"><h3 className="oi-panel-head-title">{item.title}</h3></header>
   <dl className="oi-kv">
@@ -77,7 +83,9 @@ function HandedMaterial({item}:{item:PanelInspectDetail}) {
    <dt>Ref</dt><dd className="oi-ref">{item.ref}</dd>
    {item.source&&<><dt>Handed by</dt><dd>{item.source}</dd></>}
   </dl>
-  {text!==undefined?<pre className="agent-inspect-payload">{text}</pre>:<p className="oi-note">This selection carried no material of its own.</p>}
+  {text!==undefined?<pre className="agent-inspect-payload">{text}</pre>
+   :raw!==undefined?<details className="oi-disclosure"><summary>Raw record</summary><pre className="agent-inspect-payload">{raw}</pre></details>
+   :<p className="oi-note">This selection carried no material of its own.</p>}
  </article>;
 }
 

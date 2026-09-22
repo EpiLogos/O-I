@@ -154,6 +154,7 @@ const SCENARIOS = {
 const SCENARIO_SPEC = {
   "system-settings": { spec_ref: "docs/cradle/06-SYSTEM-SETTINGS.md §7" },
   configuration: { spec_ref: "docs/cradle/09-CONFIGURATION-PLANE.md" },
+  "factory-development": { spec_ref: "docs/experience/FACTORY-AGENCY.md §4/§5/§8/§12" },
 };
 const DEFAULT_SPEC_REF = "docs/cradle/05-EXECUTION.md §3";
 

@@ -1,8 +1,20 @@
-// factory-sidebar-probe: the Run / Agents / Context sidebar, behaviourally.
-// Enters Factory in the dev build, then asserts the three top-level tabs and
-// that the labelled dev scenarios' controls really mutate the fixture state
-// (handoff §8: "an inert labelled shell is insufficient"). Readbacks only —
-// no screenshots-as-proof.
+// DEV-ONLY DIAGNOSTIC — NO ACCEPTANCE STANDING.
+//
+// This probe runs on the FIXTURE WORLD: the dev bundle's labelled dev
+// scenarios (invented agents, simulated runs; every control mutates a typed
+// fixture, never native data). It proves the fixture mechanics only and is
+// excluded from the acceptance set (research dossier
+// docs/experience/HARNESS-SETTINGS-RESEARCH-2026-09-22.md §4, negative
+// roster item 5; DESKTOP-LANGUAGE.md ruling 8, 2026-09-22). Acceptance for
+// the Run / Agents / Context surfaces lives in
+// walk/scenarios/factory-development.mjs, restated over the real kernel legs
+// (owner build views, run readings, the kernel's SessionSpace reading).
+// Its two fixture-only proof legs are weak by design and are NOT acceptance:
+// the run-header check is presence-only (`strong` length > 0) and the
+// skill-delta check counts `selected` rows without matching titles.
+//
+// Mechanics (unchanged): start the dev bundle first (`npm run dev`,
+// http://localhost:1421), then `node walk/factory-sidebar-probe.mjs`.
 import {chromium} from 'playwright';
 const fails=[];
 const check=(ok,label,detail='')=>{console.log(`${ok?"ok":"FAIL"} — ${label}${detail?` · ${detail}`:""}`);if(!ok)fails.push(label);};
