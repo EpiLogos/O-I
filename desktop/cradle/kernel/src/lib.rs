@@ -350,7 +350,11 @@ pub enum KernelOp {
     /// → encounter open) and returns the minted refs plus the open result.
     /// Every other encounter action keeps its attachment gate; this is the one
     /// path allowed to create the attachment it needs.
-    EncounterProvision {project:String},
+    EncounterProvision {
+        project:String,
+        #[serde(default, skip_serializing_if="Option::is_none")]
+        preferred_body_ref:Option<String>,
+    },
     MaterialRead {target:material::Target},
     /// The re-pinned build view (queue cell B): the owner CLI reads it as
     /// `factory build snapshot <state> <project-ref> <run-ref>` — the old
@@ -1462,12 +1466,12 @@ impl Kernel {
                     result: KernelOpResult::EncounterReading { data },
                 })
             }
-            KernelOp::EncounterProvision {project} => {
+            KernelOp::EncounterProvision {project,preferred_body_ref} => {
                 // The same disclosure gate as every project-scoped op: the
                 // project must be inside Central's disclosed ground, and the
                 // canonical ProjectRef is Central's own, never the caller's.
                 let (cwd,project_ref)=self.project_ground(&project)?;
-                let data=self.agency.provision(&cwd,&project_ref)?;
+                let data=self.agency.provision(&cwd,&project_ref,preferred_body_ref.as_deref())?;
                 Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::EncounterProvisioned {data}})
             }
             KernelOp::BeingEncounter {request} => Ok(KernelOpOutcome {receipts:Vec::new(),result:KernelOpResult::BeingEncounter {data:being::apply(request)}}),

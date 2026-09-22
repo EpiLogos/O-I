@@ -26,7 +26,7 @@ fn provisions_a_central_chat_and_lands_one_turn() {
     // 1. Provision: SessionSpace, project context, agent session, agency
     //    binding, provider open — the owner's own CLI sequence, one op.
     let outcome = kernel
-        .apply(KernelOp::EncounterProvision { project: PROJECT.into() })
+        .apply(KernelOp::EncounterProvision { project: PROJECT.into(), preferred_body_ref: None })
         .expect("provision a fresh Central chat conversation");
     let KernelOpResult::EncounterProvisioned { data } = outcome.result else {
         panic!("provision returned the wrong result variant");

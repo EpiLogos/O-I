@@ -14,6 +14,7 @@ import type {EncounterRow} from "./encounter/EncounterList";
 import {AgentLayer} from "./agent/AgentLayer";
 import {navigateExplore,type PresentationMeta} from "./explore/navigate";
 import {MODE_CURATION,isWorkspaceMode,WORKSPACE_MODES,type WorkspaceMode} from "./workspace/mode";
+import {modeDefaultAgentBody} from "./workspace/agentBody";
 import {EXPRESSION_COMPOSE_EVENT,summonExpression} from "./expression/summon";
 import {requestTechneFieldOpen,resetTechneFieldOpen} from "./expressions/fieldOpen";
 import {techneFieldOpenRequest} from "./surface/techneSummonRecord";
@@ -1397,6 +1398,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
   const activeEncounterRef=subjectBinding?.kind==="encounter" ? subjectBinding.ref : undefined;
   const summonAgent=()=>setState(s=>({...s,rightDepth:"panel"}));
   const mode:WorkspaceMode=state.mode??"base";
+  const epiPrimeBodyDefault=modeDefaultAgentBody(workspace.current.context?.world,mode);
   // The retention warm set (WF4): the warm trees of the active workspace and
   // the recently visited ones, rendered whole and hidden at stable positions —
   // a mode swap or a workspace swap flips visibility, it never unmounts a
@@ -1535,7 +1537,7 @@ export function CradleFrame({onComposed}:{onComposed?:()=>void}) {
         nativeWindows={kernel.transport.kind==="tauri"}
         workspaceName={workspace.current.name}/>);})(),
   };
-  const agentLayer=<AgentLayer mode={mode} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens)} onError={report}
+  const agentLayer=<AgentLayer mode={mode} preferredBodyRef={epiPrimeBodyDefault} plane={state.panelPlanes?.[mode]} onPlane={plane=>setState(s=>s.panelPlanes?.[mode]===plane?s:{...s,panelPlanes:{...s.panelPlanes,[mode]:plane}})} extraPlanes={modeExtraPlanes(mode,panelSubject,state.accompanying,message=>setWindowError(message),factoryPanelHost,state.rightDepth==="full",taPaneOpens)} onError={report}
     onOpenConversation={accompanying=>void openConversationInCentre(accompanying).catch(report)}
     onOpenSubject={subject=>{if(subject.location){void openFile(subject.location).catch(report);return;}const held=Object.values(stateRef.current.surfaces).find(binding=>!!subject.ref&&binding.ref===subject.ref);if(held)execute("surface.activate",{surfaceId:held.id});}}
     resolveSurface={id=>stateRef.current.surfaces[id]??Object.assign({},...workspace.workspaces.map(w=>w.layout.surfaces))[id]}
