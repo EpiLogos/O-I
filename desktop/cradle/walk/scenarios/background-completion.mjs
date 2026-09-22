@@ -8,6 +8,12 @@
 // Run's own line with the held view still standing, no global takeover. Named
 // gap: no owner verb lands a RUN on its "fail" status on this cut, so the
 // run-status fail face is not exercised here; no stand-in was invented.
+// Carried finding (2026-09-22, owner = FactoryLive/DeskBoard): after a mere
+// board refresh, sibling cards also raise the live strip — the two observe
+// paths (DeskBoard build-snapshot read vs development-read) yield different
+// signatureOf revisions for the same unchanged state, so changed flips true.
+// "No other Run's card claims the movement" is that defect's regression; it
+// stays red until the owner lands the fix.
 import {execFileSync, spawnSync} from "node:child_process";
 import {mkdirSync, readFileSync, renameSync} from "node:fs";
 import {join} from "node:path";
@@ -143,7 +149,6 @@ export default async function run({page, baseUrl, check, metric, shot, channel, 
   // here the world moves, and nothing may move them.
   await board.locator('input[aria-label="Search Runs"]').click();
   await page.evaluate(() => document.activeElement?.setAttribute("data-walk-focus", "person"));
-  const scope = board.locator('select[aria-label="Project scope"]');
   const regionsBefore = await page.locator("[data-region]").count();
   const seqSettled = await lastSeq();
 
@@ -195,7 +200,8 @@ export default async function run({page, baseUrl, check, metric, shot, channel, 
   check(await firstCard.getAttribute("data-status") === first.status
     && await board.locator('section.desk-group[aria-label^="Queued"] .desk-card').count() === p.runs.length,
     "The Run's own state word is still the owner's and no card changed groups — the arrival moved no placement");
-  check(await scope.inputValue() === "Factory-walk", "The board's remembered project scope survived the read");
+  check((await firstCard.locator(".desk-card-project").innerText()).includes("Factory-walk"),
+    "The moved Run's card still carries the Central project scope label the person gave it");
   const focusAfterArrival = await page.evaluate(() => {
     const marked = document.querySelector('[data-walk-focus="person"]');
     return {
