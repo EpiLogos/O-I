@@ -665,7 +665,7 @@ mod tests {
     }
 
     #[test]
-    fn mode_body_never_falls_back_to_generic_provider() {
+    fn mode_body_is_default_but_explicit_provider_override_stays_explicit() {
         let rows=&[
             serde_json::json!({"id":"pi","label":"Pi"}),
             serde_json::json!({"id":"prime","label":"Prime","body_ref":EPI_PRIME_QL_BODY_REF,"body_revision":"actuation/110"}),
@@ -677,9 +677,13 @@ mod tests {
         assert_eq!(rule,"mode-body");
         let (provider,_,rule)=preferred_body_provider_choice(rows,Some("prime-alt"),EPI_PRIME_QL_BODY_REF).unwrap();
         assert_eq!(provider,"prime-alt");
-        assert_eq!(rule,"owner-choice-within-mode-body");
-        assert!(preferred_body_provider_choice(&rows[..1],Some("pi"),EPI_PRIME_QL_BODY_REF).is_none(),
-            "generic Pi cannot be relabelled as Prime–QL");
+        assert_eq!(rule,"owner-choice");
+        let (provider,row,rule)=preferred_body_provider_choice(rows,Some("pi"),EPI_PRIME_QL_BODY_REF).unwrap();
+        assert_eq!(provider,"pi");
+        assert_eq!(row["body_ref"],serde_json::Value::Null);
+        assert_eq!(rule,"owner-choice","an explicit provider override wins without being relabelled Prime–QL");
+        assert!(preferred_body_provider_choice(&rows[..1],None,EPI_PRIME_QL_BODY_REF).is_none(),
+            "without an explicit override a generic provider never substitutes for the required mode body");
     }
 
     #[test]
