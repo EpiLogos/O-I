@@ -137,7 +137,7 @@ export const MODE_CURATION: Record<WorkspaceMode, ModeCuration> = {
     // Owner direction 2026-09-18: the left body is the wiki map — the web
     // as its project's own regions, not a file listing. The panel follows
     // the same three views as Expressions, for the Aletheia mode (S5').
-    id: "techne", label: "Technè", hint: "The same living field, the deep cut — with Epii", glyph: "instrument", left: "expression-graph", centreKind: "techne",
+    id: "techne", label: "Technè", hint: "The same living field, the deep cut — with Epii", glyph: "instrument", left: "wiki-map", centreKind: "techne",
     panel: {agent: "Aletheia", planes: ["Chat", "ta-run", "ta-onta-agents", "ta-onta-context"], extra: ["ta-run", "ta-onta-agents", "ta-onta-context"]},
   },
   "epi-logos": {

@@ -6,6 +6,7 @@ import {
   ensureWikiProjection,
   requestWikiSelection,
   setWikiProjectionRegister,
+  setWikiProjectionRegisters,
   useWikiProjectionState,
   wikiDocumentOf,
   wikiProjectionOf,
@@ -13,7 +14,7 @@ import {
   type RegisterStanding,
 } from "./wikiProjectionStore";
 import type {ExpressionDocument} from "../expression/types";
-import type {ProjectedConstellation} from "./wikiExpression";
+import {wikiRegistersFrom, type ProjectedConstellation} from "./wikiExpression";
 import "./techne.css";
 
 /**
@@ -60,7 +61,15 @@ export function WikiMapNavigator({project, onOpenWiki, onMessage}: {
   onOpenWiki: (ref: string, title: string, project?: string) => void;
   onMessage: (message: string) => void;
 }) {
+  const kernel = useKernel();
   const store = useWikiProjectionState();
+  // The map publishes the registers itself, from the same disclosed census
+  // Instrument 0 reads: Technè's centre no longer seats the M0′ lens by
+  // default (#420), and the map must not wait on a centre body to learn
+  // which wikis exist. The store ignores an identical republication.
+  useEffect(() => {
+    setWikiProjectionRegisters(wikiRegistersFrom((kernel.snapshot.navigator?.root?.work.projects ?? []).map(row => ({name: row.name, path: row.path}))));
+  }, [kernel.snapshot.navigator?.root?.work.projects]);
   const [aperture, setAperture] = useState<Aperture>(() => {
     const remembered = typeof window !== "undefined" ? window.localStorage.getItem(APERTURE_STORAGE) as Aperture | null : null;
     return remembered === "list" || remembered === "tree" || remembered === "graph" ? remembered : "tree";
