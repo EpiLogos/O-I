@@ -1,209 +1,505 @@
 {
-  "spec_ref": "docs/cradle/09-CONFIGURATION-PLANE.md",
-  "grade": "B",
   "schema": "oi.cradle.walk.scenario/v1",
   "scenario": "configuration",
-  "generated_at": "2026-09-18T11:02:08.320Z",
+  "spec_ref": "docs/cradle/09-CONFIGURATION-PLANE.md",
+  "grade": "B",
+  "generated_at": "2026-09-22T19:20:47.712Z",
   "environment": {
     "base_url": "http://localhost:4173",
     "bridge_url": "http://127.0.0.1:4179",
     "viewport": "1280x820",
     "bundle": "walk (WALK=1) served by vite preview",
+    "build_input": {
+      "mode": "fresh-build",
+      "bundle_fingerprint": "6f51f839c18c0356d2d82650d59053be70a45e45465e7e56a3fc1114c7a6906a"
+    },
     "node": "v24.16.0",
     "platform": "darwin",
     "source": {
       "repository_root": "/Users/admin/Central/Work/O-I",
-      "repository_head": "d2115eba7e36982f860a198a90307a9e00dcb874",
+      "repository_head": "0ddd23204f76bb848ff91ce9adff610a5f01fd47",
       "tracked_changes": [
-        "desktop/cradle/documents/README.md",
-        "desktop/cradle/documents/forms.json",
-        "desktop/cradle/kernel/src/factory.rs",
-        "desktop/cradle/kernel/src/files.rs",
-        "desktop/cradle/kernel/src/lib.rs",
-        "desktop/cradle/kernel/tests/source_cas.rs",
-        "desktop/cradle/src/CradleFrame.tsx",
-        "desktop/cradle/src/Rest.tsx",
-        "desktop/cradle/src/agent/AgentLayer.tsx",
-        "desktop/cradle/src/agent/agent.css",
-        "desktop/cradle/src/configuration/configuration.css",
-        "desktop/cradle/src/context/ContextTray.tsx",
-        "desktop/cradle/src/context/RememberedList.tsx",
-        "desktop/cradle/src/contributions/factory/BuildSurface.tsx",
-        "desktop/cradle/src/contributions/factory/FactoryDevelopmentSurface.tsx",
-        "desktop/cradle/src/contributions/factory/build-surface.css",
-        "desktop/cradle/src/contributions/factory/development.css",
-        "desktop/cradle/src/cradle.css",
-        "desktop/cradle/src/encounter/AddressedComposer.tsx",
-        "desktop/cradle/src/encounter/EncounterList.tsx",
-        "desktop/cradle/src/encounter/EncounterSurface.tsx",
-        "desktop/cradle/src/encounter/EncounterView.tsx",
-        "desktop/cradle/src/encounter/encounter.css",
-        "desktop/cradle/src/expression/ExpressionView.tsx",
-        "desktop/cradle/src/files/FileTree.tsx",
-        "desktop/cradle/src/files/client.ts",
-        "desktop/cradle/src/flow/UserFlowsList.tsx",
-        "desktop/cradle/src/instrument/instrument.css",
-        "desktop/cradle/src/instrument/source.ts",
-        "desktop/cradle/src/kernel/KernelProvider.tsx",
-        "desktop/cradle/src/kernel/types.ts",
-        "desktop/cradle/src/knowledge/KnowledgeSurface.tsx",
-        "desktop/cradle/src/knowledge/SearchOverlay.tsx",
-        "desktop/cradle/src/knowledge/knowledge.css",
-        "desktop/cradle/src/knowledge/search.css",
-        "desktop/cradle/src/material/MaterialSurface.tsx",
-        "desktop/cradle/src/material/material.css",
-        "desktop/cradle/src/receiving/DayDieFace.tsx",
-        "desktop/cradle/src/receiving/DocumentContributions.tsx",
-        "desktop/cradle/src/receiving/DocumentReturns.tsx",
-        "desktop/cradle/src/receiving/NowRelations.tsx",
-        "desktop/cradle/src/receiving/ReturnsTray.tsx",
-        "desktop/cradle/src/receiving/SharedFieldMaterial.tsx",
-        "desktop/cradle/src/rest.css",
-        "desktop/cradle/src/shared/Expression.tsx",
-        "desktop/cradle/src/stage/recipes.ts",
-        "desktop/cradle/src/surface/ContextMenu.tsx",
-        "desktop/cradle/src/surface/SourceSurface.tsx",
-        "desktop/cradle/src/surface/Workbench.tsx",
-        "desktop/cradle/src/surface/keys.ts",
-        "desktop/cradle/src/surface/layout-codec.mjs",
-        "desktop/cradle/src/surface/persist.ts",
-        "desktop/cradle/src/surface/registry.ts",
-        "desktop/cradle/src/surface/types.ts",
-        "desktop/cradle/src/surfaces/navigator/ProjectBranch.tsx",
-        "desktop/cradle/src/surfaces/navigator/WorldNavigator.tsx",
-        "desktop/cradle/src/surfaces/navigator/navigator.css",
-        "desktop/cradle/src/visuals/oi-logo-state.json",
-        "desktop/cradle/src/workspace/DesktopShell.tsx",
-        "desktop/cradle/src/workspace/Glyph.tsx",
-        "desktop/cradle/src/workspace/settings/SettingsPage.tsx",
-        "desktop/cradle/src/workspace/settings/VisualsView.tsx",
-        "desktop/cradle/src/workspace/settings/settings.css",
-        "desktop/cradle/src/workspace/settings/visuals.css",
-        "desktop/cradle/src/workspace/shell.css",
-        "desktop/cradle/src/workspace/store.ts",
-        "desktop/cradle/tests/workspace-continuity.test.mjs",
-        "desktop/cradle/walk/README.md",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-consent-answered.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-consent-requested.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-context-facts.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-empty-honest.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-fault-held-seat.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-fault.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-inspect-deliveries.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-journal.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-stopped.png",
-        "desktop/cradle/walk/artifacts/agency-planes-activity-thought-tool-wait.png",
-        "desktop/cradle/walk/artifacts/agency-planes.json",
-        "desktop/cradle/walk/artifacts/companions.json",
-        "desktop/cradle/walk/artifacts/context-draft-real-owner-cas-and-stale-refusal.png",
-        "desktop/cradle/walk/artifacts/context-draft-rendered-component-stale-refusal.png",
-        "desktop/cradle/walk/artifacts/context-draft.json",
-        "desktop/cradle/walk/artifacts/explore-sf1-failure.png",
-        "desktop/cradle/walk/artifacts/explore-sf1.json",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-dark.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-light.png",
-        "desktop/cradle/walk/artifacts/expression-controls-expression-narrow.png",
-        "desktop/cradle/walk/artifacts/expression-controls.json",
-        "desktop/cradle/walk/artifacts/expression-page-captured-fallback-page.png",
-        "desktop/cradle/walk/artifacts/expression-page-live-reentry.png",
-        "desktop/cradle/walk/artifacts/expression-page-live-return-capture.png",
-        "desktop/cradle/walk/artifacts/expression-page-restored-opening-inline.png",
-        "desktop/cradle/walk/artifacts/expression-page.json",
-        "desktop/cradle/walk/artifacts/expression-world-join-join-front.png",
-        "desktop/cradle/walk/artifacts/expression-world-join-join-verso.png",
-        "desktop/cradle/walk/artifacts/expression-world-join.json",
-        "desktop/cradle/walk/artifacts/factory-development-factory-development-readings.png",
-        "desktop/cradle/walk/artifacts/factory-development-factory-trajectory-rows.png",
-        "desktop/cradle/walk/artifacts/factory-development-failure.png",
-        "desktop/cradle/walk/artifacts/factory-development-workcell-status-beside-factory.png",
-        "desktop/cradle/walk/artifacts/factory-development.json",
-        "desktop/cradle/walk/artifacts/instrument-host-instrument-host-focused.png",
-        "desktop/cradle/walk/artifacts/instrument-host.json",
-        "desktop/cradle/walk/artifacts/instrument-instrument-focused.png",
-        "desktop/cradle/walk/artifacts/instrument.json",
-        "desktop/cradle/walk/artifacts/knowledge-failure.png",
-        "desktop/cradle/walk/artifacts/knowledge.json",
-        "desktop/cradle/walk/artifacts/material-failure.png",
-        "desktop/cradle/walk/artifacts/material-html-rendered.png",
-        "desktop/cradle/walk/artifacts/material.json",
-        "desktop/cradle/walk/artifacts/navigator-failure.png",
-        "desktop/cradle/walk/artifacts/navigator.json",
-        "desktop/cradle/walk/artifacts/page-context-rendered-context-and-scroll.png",
-        "desktop/cradle/walk/artifacts/page-context.json",
-        "desktop/cradle/walk/artifacts/receive-include-accepted-on-current-basis.png",
-        "desktop/cradle/walk/artifacts/receive-include-included-with-attribution.png",
-        "desktop/cradle/walk/artifacts/receive-include-return-expanded-before-review.png",
-        "desktop/cradle/walk/artifacts/receive-include-stale-basis-refusal.png",
-        "desktop/cradle/walk/artifacts/receive-include.json",
-        "desktop/cradle/walk/artifacts/recovery.json",
-        "desktop/cradle/walk/artifacts/refinement-editor-and-chrome-refined.png",
-        "desktop/cradle/walk/artifacts/refinement-failure.png",
-        "desktop/cradle/walk/artifacts/refinement-fresh-canvas-refined.png",
-        "desktop/cradle/walk/artifacts/refinement.json",
-        "desktop/cradle/walk/artifacts/rest-desktop-rest.png",
+        "desktop/cradle/src-tauri/icons/icon.png",
+        "desktop/cradle/src/configuration/fixtureSource.ts",
+        "desktop/cradle/src/configuration/sourceHost.ts",
+        "desktop/cradle/src/workspace/settings/v2/SettingsHome.tsx",
+        "desktop/cradle/walk/artifacts/configuration.json",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-conflict-resolved.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-saved.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-canvas-sessions-bound.png",
+        "desktop/cradle/walk/artifacts/flow-canvas-flow-cocurrency-reference.png",
+        "desktop/cradle/walk/artifacts/flow-canvas.json",
         "desktop/cradle/walk/artifacts/rest.json",
-        "desktop/cradle/walk/artifacts/select-send-addressed-composed-before-dispatch.png",
-        "desktop/cradle/walk/artifacts/select-send-addressed-disclosure-refusal.png",
-        "desktop/cradle/walk/artifacts/select-send-addressed-returned-with-transcript.png",
-        "desktop/cradle/walk/artifacts/select-send.json",
-        "desktop/cradle/walk/artifacts/shell-recovery-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-390.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-639.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-760.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-failure.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-1280.png",
-        "desktop/cradle/walk/artifacts/shell-recovery-system-900.png",
-        "desktop/cradle/walk/artifacts/shell-recovery.json",
-        "desktop/cradle/walk/artifacts/surfaces-native-sources-tiled.png",
-        "desktop/cradle/walk/artifacts/surfaces-source-frame-menu.png",
-        "desktop/cradle/walk/artifacts/surfaces.json",
-        "desktop/cradle/walk/artifacts/system-settings-failure.png",
-        "desktop/cradle/walk/artifacts/system-settings-settings-activity.png",
-        "desktop/cradle/walk/artifacts/system-settings-settings-bootstrap.png",
-        "desktop/cradle/walk/artifacts/system-settings-settings-config.png",
-        "desktop/cradle/walk/artifacts/system-settings-settings-health.png",
-        "desktop/cradle/walk/artifacts/system-settings.json",
-        "desktop/cradle/walk/artifacts/visuals-visuals-expression.png",
-        "desktop/cradle/walk/artifacts/visuals-visuals-panel.png",
-        "desktop/cradle/walk/artifacts/visuals.json",
-        "desktop/cradle/walk/artifacts/welcome-failure.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-dark-entered.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-dark-explosion.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-dark-rest.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-light-entered.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-light-explosion.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-light-rest.png",
-        "desktop/cradle/walk/artifacts/welcome-welcome-reduced-motion.png",
-        "desktop/cradle/walk/artifacts/welcome.json",
-        "desktop/cradle/walk/artifacts/workspace-continuity-explore-unavailable-honest.png",
-        "desktop/cradle/walk/artifacts/workspace-continuity-restored-after-relaunch.png",
-        "desktop/cradle/walk/artifacts/workspace-continuity-returned-to-project.png",
-        "desktop/cradle/walk/artifacts/workspace-continuity-sharedfield-surface.png",
-        "desktop/cradle/walk/artifacts/workspace-continuity-switched-back.png",
-        "desktop/cradle/walk/artifacts/workspace-continuity-wiki-page-focus.png",
-        "desktop/cradle/walk/artifacts/workspace-continuity.json",
-        "desktop/cradle/walk/expression-resize-integration.mjs",
-        "desktop/cradle/walk/expression-resize-integration.tsx",
-        "desktop/cradle/walk/run.mjs",
-        "desktop/cradle/walk/scenarios/factory-development.mjs",
-        "desktop/cradle/walk/scenarios/recovery.mjs",
-        "desktop/cradle/walk/scenarios/refinement.mjs",
-        "desktop/cradle/walk/scenarios/shell-recovery.mjs",
-        "packages/oi-design-system/desktop.css",
-        "packages/oi-design-system/search.css",
-        "packages/oi-design-system/tokens.css"
+        "desktop/cradle/walk/scenarios/configuration.mjs",
+        "desktop/cradle/walk/verify-live-settings.mjs"
       ],
+      "dirty_digest": "42ed5d51a47fb625ebd330e76f26cfdefe291f02b99c746d9a259541f6d237ac",
       "engine_provenance_path": "/Users/admin/Central/Work/O-I/packages/oi-design-system/expressions-engine/PROVENANCE.json",
       "engine_source": "EpiLogos/Point-Cloud-Demo",
       "engine_revision": "91db8428fc9dfba06cd258ec5a58e7dd9eef5313"
     }
   },
-  "passed": false,
-  "error": "locator.click: Timeout 30000ms exceeded.\nCall log:\n  - waiting for getByRole('button', { name: 'System', exact: true })\n\n    at Module.run (/Users/admin/Central/Work/O-I/desktop/cradle/walk/scenarios/configuration.mjs:29:61)\n    at async runScenario (/Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:416:5)\n    at async file:///Users/admin/Central/Work/O-I/desktop/cradle/walk/run.mjs:492:18",
-  "duration_ms": 30032,
-  "checks": [],
-  "ops": [],
+  "passed": true,
+  "error": null,
+  "duration_ms": 268652,
+  "checks": [
+    {
+      "ok": true,
+      "label": "the live mount binds the LIVE source — the fixture banner never renders"
+    },
+    {
+      "ok": true,
+      "label": "the live source note renders (read and driven through the oi configuration engine)"
+    },
+    {
+      "ok": true,
+      "label": "oi: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)",
+      "data": {
+        "availability": "available",
+        "liveState": "available"
+      }
+    },
+    {
+      "ok": true,
+      "label": "oi: the rows rendered equal the live owner read's named rows — 7 rendered / 7 live",
+      "data": {
+        "rendered": 7,
+        "live": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "oi: the count the surface shows (table of contents) matches the live read",
+      "data": {
+        "shown": "7",
+        "live": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "oi: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)",
+      "data": {
+        "emptyTitles": [],
+        "ownerPrefixed": true,
+        "byTitle": true,
+        "renderedTitles": [
+          "Suite executable",
+          "Managed root",
+          "Build record",
+          "Containing frame",
+          "Install mode",
+          "Present positions",
+          "Update state"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "oi: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
+      "data": {
+        "observed_at_unix_ms": 1790105075729,
+        "disclosed_at_unix_ms": 1790105077233,
+        "mountedSettings": 7,
+        "listingSettings": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "oi: the value's own reading carries its observed-at stamp (oi:identity:suite-executable) (L2)",
+      "data": {
+        "setting_ref": "oi:identity:suite-executable",
+        "scope": "world",
+        "observed_at_unix_ms": 1790105079052,
+        "status": "satisfied"
+      }
+    },
+    {
+      "ok": true,
+      "label": "central: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)",
+      "data": {
+        "availability": "available",
+        "liveState": "available"
+      }
+    },
+    {
+      "ok": true,
+      "label": "central: the rows rendered equal the live owner read's named rows — 8 rendered / 8 live",
+      "data": {
+        "rendered": 8,
+        "live": 8
+      }
+    },
+    {
+      "ok": true,
+      "label": "central: the count the surface shows (table of contents) matches the live read",
+      "data": {
+        "shown": "8",
+        "live": 8
+      }
+    },
+    {
+      "ok": true,
+      "label": "central: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)",
+      "data": {
+        "emptyTitles": [],
+        "ownerPrefixed": true,
+        "byTitle": true,
+        "renderedTitles": [
+          "Skill standing",
+          "Civil-time timezone",
+          "Day boundary offset",
+          "Automatic day rollover",
+          "Work placement enforcement",
+          "Writable placement grants",
+          "Protected placement paths",
+          "Native action authority"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "central: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
+      "data": {
+        "observed_at_unix_ms": 1790105075729,
+        "disclosed_at_unix_ms": 1790105077245,
+        "mountedSettings": 8,
+        "listingSettings": 8
+      }
+    },
+    {
+      "ok": true,
+      "label": "central: the value's own reading carries its observed-at stamp (central:skills:central.skills) (L2)",
+      "data": {
+        "setting_ref": "central:skills:central.skills",
+        "scope": "ground",
+        "observed_at_unix_ms": 1790105083320,
+        "status": "satisfied"
+      }
+    },
+    {
+      "ok": true,
+      "label": "ai-kit: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)",
+      "data": {
+        "availability": "available",
+        "liveState": "available"
+      }
+    },
+    {
+      "ok": true,
+      "label": "ai-kit: the rows rendered equal the live owner read's named rows — 9 rendered / 9 live",
+      "data": {
+        "rendered": 9,
+        "live": 9
+      }
+    },
+    {
+      "ok": true,
+      "label": "ai-kit: the count the surface shows (table of contents) matches the live read",
+      "data": {
+        "shown": "9",
+        "live": 9
+      }
+    },
+    {
+      "ok": true,
+      "label": "ai-kit: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)",
+      "data": {
+        "emptyTitles": [],
+        "ownerPrefixed": true,
+        "byTitle": true,
+        "renderedTitles": [
+          "Native profile selection",
+          "Default skill-sets",
+          "Capability toggles",
+          "Model candidates",
+          "Provider credential reference",
+          "PreToolUse filesystem guardrail",
+          "Project workspace trust",
+          "Home wholesale trust",
+          "PreToolUse filesystem guardrail"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "ai-kit: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
+      "data": {
+        "observed_at_unix_ms": 1790105075729,
+        "disclosed_at_unix_ms": 1790105077337,
+        "mountedSettings": 9,
+        "listingSettings": 9
+      }
+    },
+    {
+      "ok": true,
+      "label": "ai-kit: the value's own reading carries its observed-at stamp (ai-kit:resolution:resolution.profiles) (L2)",
+      "data": {
+        "setting_ref": "ai-kit:resolution:resolution.profiles",
+        "scope": "machine",
+        "observed_at_unix_ms": 1790105090988,
+        "status": "blocked"
+      }
+    },
+    {
+      "ok": true,
+      "label": "workcell: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)",
+      "data": {
+        "availability": "available",
+        "liveState": "available"
+      }
+    },
+    {
+      "ok": true,
+      "label": "workcell: the rows rendered equal the live owner read's named rows — 1 rendered / 1 live",
+      "data": {
+        "rendered": 1,
+        "live": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "workcell: the count the surface shows (table of contents) matches the live read",
+      "data": {
+        "shown": "1",
+        "live": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "workcell: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)",
+      "data": {
+        "emptyTitles": [],
+        "ownerPrefixed": true,
+        "byTitle": true,
+        "renderedTitles": [
+          "Declared logical services"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "workcell: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
+      "data": {
+        "observed_at_unix_ms": 1790105075729,
+        "disclosed_at_unix_ms": 1790105077357,
+        "mountedSettings": 1,
+        "listingSettings": 1
+      }
+    },
+    {
+      "ok": true,
+      "label": "workcell: the value's own reading carries its observed-at stamp (workcell:processes-services:services.declared) (L2)",
+      "data": {
+        "setting_ref": "workcell:processes-services:services.declared",
+        "scope": "workcell:local",
+        "observed_at_unix_ms": 1790105102108,
+        "status": "satisfied"
+      }
+    },
+    {
+      "ok": true,
+      "label": "actuation: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)",
+      "data": {
+        "availability": "available",
+        "liveState": "available"
+      }
+    },
+    {
+      "ok": true,
+      "label": "actuation: the rows rendered equal the live owner read's named rows — 7 rendered / 7 live",
+      "data": {
+        "rendered": 7,
+        "live": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "actuation: the count the surface shows (table of contents) matches the live read",
+      "data": {
+        "shown": "7",
+        "live": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "actuation: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)",
+      "data": {
+        "emptyTitles": [],
+        "ownerPrefixed": true,
+        "byTitle": true,
+        "renderedTitles": [
+          "Determination kinds",
+          "WorldBinding constraint categories",
+          "Metagency operations",
+          "Derivation authority requirement",
+          "Federation authority rule",
+          "Durable stream store",
+          "Return policy modes"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "actuation: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
+      "data": {
+        "observed_at_unix_ms": 1790105075729,
+        "disclosed_at_unix_ms": 1790105077254,
+        "mountedSettings": 7,
+        "listingSettings": 7
+      }
+    },
+    {
+      "ok": true,
+      "label": "actuation: the value's own reading carries its observed-at stamp (actuation:agency:agency.determination.kinds) (L2)",
+      "data": {
+        "setting_ref": "actuation:agency:agency.determination.kinds",
+        "scope": "machine",
+        "observed_at_unix_ms": 1790105107492,
+        "status": "satisfied"
+      }
+    },
+    {
+      "ok": true,
+      "label": "quaternal-logic: the group's availability label is the owner's own disclosed state (L1 — no fabricated readiness)",
+      "data": {
+        "availability": "available",
+        "liveState": "available"
+      }
+    },
+    {
+      "ok": true,
+      "label": "quaternal-logic: the rows rendered equal the live owner read's named rows — 10 rendered / 10 live",
+      "data": {
+        "rendered": 10,
+        "live": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "quaternal-logic: the count the surface shows (table of contents) matches the live read",
+      "data": {
+        "shown": "10",
+        "live": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "quaternal-logic: every rendered row is a named, distinguishable row — titles equal the live read, refs carry the owner ref (L2)",
+      "data": {
+        "emptyTitles": [],
+        "ownerPrefixed": true,
+        "byTitle": true,
+        "renderedTitles": [
+          "Kernel version",
+          "Kernel schema version",
+          "Supported forms",
+          "Deterministic operators",
+          "Stochastic operators",
+          "Research operators",
+          "Verification status",
+          "Verification checks",
+          "Provider state",
+          "Negotiated operations"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "quaternal-logic: the kernel registry read behind the page carries observed-at + owner disclosed-at, and every listed value names its owner (L2)",
+      "data": {
+        "observed_at_unix_ms": 1790105075729,
+        "disclosed_at_unix_ms": 1790105077365,
+        "mountedSettings": 10,
+        "listingSettings": 10
+      }
+    },
+    {
+      "ok": true,
+      "label": "quaternal-logic: the value's own reading carries its observed-at stamp (quaternal-logic:kernel:kernel.version) (L2)",
+      "data": {
+        "setting_ref": "quaternal-logic:kernel:kernel.version",
+        "scope": "machine",
+        "observed_at_unix_ms": 1790105115663,
+        "status": "satisfied"
+      }
+    },
+    {
+      "ok": true,
+      "label": "the fixture registry projects every mounted contribution generically (two products, the oi composition owner, a connector)",
+      "data": {
+        "ownerRefs": [
+          "ai-kit",
+          "oi",
+          "connector/factory-actuation",
+          "workcell"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "the frozen reconciliation vocabulary renders — satisfied, drifted, pending and blocked (fixture world)",
+      "data": {
+        "statuses": [
+          "drifted",
+          "pending",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "blocked",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied",
+          "satisfied"
+        ]
+      }
+    },
+    {
+      "ok": true,
+      "label": "the unavailable owner renders its named absence with the disclosed reason — no fabricated rows (L1/L3)",
+      "data": {
+        "outageNote": "Unavailable — simulated for development — the deployed build does not answer"
+      }
+    },
+    {
+      "ok": true,
+      "label": "an empty world renders the honest beginning — same system, no fabricated rows (fixture world)"
+    },
+    {
+      "ok": true,
+      "label": "L6 (fixture-backed): a new section in a fixture descriptor changes the page — generic projection, zero cradle code per section"
+    }
+  ],
+  "ops": [
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 177,
+      "data": {
+        "file": "configuration-live-groups.png"
+      }
+    },
+    {
+      "ok": true,
+      "op": "capture.screenshot",
+      "duration_ms": 68,
+      "data": {
+        "file": "configuration-l6.png"
+      }
+    }
+  ],
   "metrics": {},
-  "screenshots": []
+  "screenshots": [
+    "configuration-live-groups.png",
+    "configuration-l6.png"
+  ]
 }

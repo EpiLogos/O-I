@@ -568,12 +568,15 @@ function FixtureConsole({onMutate}: {onMutate: () => void}) {
     <button type="button" className="settings-mini" disabled={externallyEdited}
       onClick={() => void mutate(async (world) => {await world.simulateExternalNativeEdit("ai-kit:resolution:model.default", "opus"); setExternallyEdited(true);})}
     >Simulate external native edit: ai-kit:resolution:model.default → opus</button>
-    <button type="button" className="settings-mini"
+    <button type="button" className="settings-mini" data-config-registry-mode
       onClick={() => void mutate((world) => {world.setRegistryMode(empty ? "full" : "empty"); setEmpty(!empty);})}
     >{empty ? "Restore the full registry" : "Empty the registry (bootstrap world)"}</button>
     <button type="button" className="settings-mini" data-config-workcell-outage
       onClick={() => void mutate((world) => {world.setOwnerAvailability("workcell", workcellOut ? "available" : "unavailable"); setWorkcellOut(!workcellOut);})}
     >{workcellOut ? "Restore Workcell (simulated outage over)" : "Simulate Workcell going unavailable"}</button>
+    <button type="button" className="settings-mini" data-config-l6-section
+      onClick={() => void mutate((world) => {world.addFixtureSection("oi");})}
+    >Ship a new section in a fixture descriptor (L6 proof — fixture-backed)</button>
   </details>;
 }
 

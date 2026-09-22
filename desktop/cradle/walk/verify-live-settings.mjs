@@ -1,14 +1,30 @@
 // Verifies the LIVE configuration plane in a production-semantics bundle:
-// no fixture source; O:I's own settings render with real reconciled values
-// through oi config-contribution + oi system (the owner verbs).
+// no fixture source; every owner group's settings render with real
+// reconciled values through oi config list + config_registry_read +
+// oi config show (the owner verbs) — row by row, in the P2 disclosure
+// order of docs/cradle/06-SYSTEM-SETTINGS §8.
+//
+// Invocation (the documented one): serve a plain production bundle
+// (`npm run build`, no WALK) on $DESK_URL (default http://localhost:4173)
+// — e.g. `node node_modules/.bin/vite preview --port 4173 --strictPort` —
+// then `node walk/verify-live-settings.mjs`. The script spawns its own
+// walk bridge (the real kernel seam) on port 4197 and reads the live
+// listing through the same `oi` executable the bridge drives.
 import {chromium} from 'playwright';
 import {spawn} from 'node:child_process';
+import {existsSync} from 'node:fs';
+import {ALL_GROUPS, assertOwnerGroupLive, readLiveListing, readRegistryViaBridge} from './live-settings-acceptance.mjs';
 
 const cradleRoot = '/Users/admin/Central/Work/O-I/desktop/cradle';
-const oiBin = '/Users/admin/Central/Work/O-I/cli/target/debug/oi';
+const oiBin = process.env.OI_BIN ?? '/Users/admin/Central/Work/O-I/cli/target/debug/oi';
 const url = process.env.DESK_URL ?? 'http://localhost:4173/';
 const bridgePort = 4197;
 const bridgeUrl = `http://127.0.0.1:${bridgePort}`;
+
+if (!existsSync(oiBin)) {
+  console.log(`FAIL oi executable: ${oiBin} is not present — build the cli dev tree or set OI_BIN`);
+  process.exit(1);
+}
 
 const bridge = spawn('cargo', ['run', '--quiet', '--manifest-path', cradleRoot + '/kernel/Cargo.toml', '--bin', 'walk-bridge', '--', `127.0.0.1:${bridgePort}`], {env: {...process.env, OI_BIN: oiBin}, stdio: ['ignore', 'ignore', 'ignore']});
 const cleanup = () => { try { bridge.kill(); } catch {} };
@@ -19,8 +35,14 @@ while (Date.now() - started < 240_000) { try { if ((await fetch(`${bridgeUrl}/st
 while (Date.now() - started < 240_000) { try { if ((await fetch(url)).ok) break; } catch {} await new Promise(r => setTimeout(r, 500)); }
 
 const fails = [];
-const ok = (step, detail = '') => console.log(`ok — ${step}${detail ? ` · ${detail}` : ''}`);
+const oks = [];
+const ok = (step, detail = '') => { console.log(`ok — ${step}${detail ? ` · ${detail}` : ''}`); oks.push(step); };
 const fail = (step, detail = '') => { console.log(`FAIL ${step}: ${detail}`); fails.push(step); };
+const check = (good, step, data) => { if (good) ok(step, data ? JSON.stringify(data) : ''); else fail(step, data ? JSON.stringify(data) : ''); };
+
+// The live owner reads BEFORE the page: what the owners disclose is the
+// expectation the rendered surface is held against (the round trip).
+const listing = readLiveListing(oiBin);
 
 const browser = await chromium.launch({headless: true});
 const page = await browser.newPage({viewport: {width: 1440, height: 900}});
@@ -40,16 +62,33 @@ const fixtureBanner = await page.locator('[data-config-source="fixture"]').count
 if (fixtureBanner) fail('live source', 'the fixture banner rendered in a production bundle');
 else ok('the production bundle binds the LIVE source (no fixture world)');
 
-const groupOwners = await page.locator('[data-owner-group]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-owner')));
-console.log('owner groups rendered:', groupOwners.join(', '));
-if (!groupOwners.includes('oi')) fail('oi owner group', 'the O:I owner group did not render');
-else {
-  ok('the O:I owner group renders with its contributed settings');
-  const text = await page.locator('[data-owner-group][data-owner="oi"]').innerText();
-  if (/0\.1\.0/.test(text)) ok('O:I rows carry real values (build record visible)');
-  else console.log('note — build record value not visible in group text');
+const liveNote = await page.locator('[data-config-source="live"]').count();
+if (liveNote) ok('the live source note renders');
+else fail('live source note', 'the live source note did not render');
+
+// Wait until the resolution reads land (rows carry their reconciliations
+// only after the second engine pass) — the group count settling is the
+// signal the registry read is fully projected.
+let groupCount = -1;
+for (let stable = 0, seen = 0; seen < 90;) {
+  const count = await page.locator('[data-owner-group]').count();
+  stable = count === groupCount ? stable + 1 : 0;
+  groupCount = count;
+  if (stable >= 8) break; // ~4s without a mount flip: the read has settled
+  await page.waitForTimeout(500); seen++;
+}
+
+const registry = await readRegistryViaBridge(bridgeUrl);
+console.log('owner groups rendered:', (await page.locator('[data-owner-group]').evaluateAll(nodes => nodes.map(n => n.getAttribute('data-owner')))).join(', '));
+
+const verdicts = {};
+for (const owner of ALL_GROUPS) {
+  verdicts[owner] = await assertOwnerGroupLive({page, owner, listing, registry, registryBridgeUrl: bridgeUrl, check});
 }
 await page.screenshot({path: '/tmp/live-settings.png'});
 await browser.close();
-console.log(fails.length ? `${fails.length} FAILURES` : 'all checks passed');
+
+console.log('per-group verdicts:');
+for (const [owner, verdict] of Object.entries(verdicts)) console.log(`  ${owner}: ${verdict}`);
+console.log(fails.length ? `${fails.length} FAILURES` : `all checks passed (${oks.length} ok)`);
 process.exit(fails.length ? 1 : 0);
